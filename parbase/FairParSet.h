@@ -1,0 +1,93 @@
+#ifndef FAIRPARSET_H
+#define FAIRPARSET_H
+
+#include "FairDbObjTableMap.h"             // for FairDbObjTableMap
+
+#include "Rtypes.h"                     // for Int_t, Bool_t, etc
+#include "TString.h"                    // for TString
+
+class FairLogger;
+class FairParIo;
+
+class FairParSet : public FairDbObjTableMap
+{
+  protected:
+    TString fName;         //
+    TString fTitle;        //
+    TString detName;         //! name of the detector the container belongs to
+    Int_t versions[3];       //! versions of container in the 2 possible inputs
+    Bool_t status;           //! static flag
+    Bool_t changed;          //! flag is kTRUE if parameters have changed
+    Bool_t  owned;          //! if flag is KTRUE FairDB has the par. class ownership
+    TString paramContext;    // Context/purpose for parameters and conditions
+    TString author;          // Author of parameters
+    TString description ;    // Description of parameters
+    /** Fair Logger */
+    FairLogger*  fLogger;  //!
+
+  public:
+    FairParSet(const char* name="",const char* title="",const char* context="", Bool_t owner=kFALSE);
+    virtual ~FairParSet() {}
+
+    virtual const char* GetName() const {return (char*)fName.Data();}
+    virtual const char* GetTitle() const {return (char*)fTitle.Data();}
+
+    virtual Bool_t init();
+    virtual Bool_t init(FairParIo* io) { return kFALSE; }
+    virtual Int_t write();
+    virtual Int_t write(FairParIo*) { return kFALSE; }
+    virtual void clear() {}
+    virtual void print();
+
+    const char* getDetectorName() {return detName.Data();}
+    void resetInputVersions();
+
+    void setInputVersion(Int_t v=-1,Int_t i=0) {
+      if (i>=0 && i<3) { versions[i]=v; }
+    }
+    Int_t getInputVersion(Int_t i) {
+      if (i>=0 && i<3) { return versions[i]; }
+      else { return 0; }
+    }
+
+    void setStatic(Bool_t flag=kTRUE) {status=flag;}
+    Bool_t isStatic() {return status;}
+
+    void setOwnership(Bool_t flag=kTRUE) {owned=flag;}
+    Bool_t isOwned() {return owned;}
+
+    void setChanged(Bool_t flag=kTRUE) {changed=flag;}
+    Bool_t hasChanged() {return changed;}
+
+    const char* getParamContext() const { return paramContext.Data(); }
+
+    void setAuthor(const char* s) {author=s;}
+    const char* getAuthor() const { return author.Data(); }
+
+    void setDescription(const char* s) {description=s;}
+    const char* getDescription() const { return description.Data(); }
+
+    void copyComment(FairParSet& r) {
+      author=r.getAuthor();
+      description=r.getDescription();
+    }
+
+    // SQL addon I/O  member functions
+    virtual FairDbObjTableMap* CreateObjTableMap() const {
+      return new FairParSet();
+    }
+
+
+    virtual void fill(UInt_t rid=0) {};
+    virtual void store(UInt_t rid=0) {};
+
+  private:
+
+    FairParSet& operator=(const FairParSet&);
+    FairParSet(const FairParSet&);
+
+    ClassDef(FairParSet,1) // Base class for all parameter containers
+};
+
+#endif  /* !FAIRPARSET_H */
+
