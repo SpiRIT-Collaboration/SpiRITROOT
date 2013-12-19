@@ -8,9 +8,9 @@
 # Check if cmake has the required version
 CMAKE_MINIMUM_REQUIRED(VERSION  2.8.2 FATAL_ERROR)
 
-# Set name of our project to "FAIRROOT". Has to be done
+# Set name of our project to "SPiRITROOT". Has to be done
 # after check of cmake version                        
-project(FAIRROOT)
+project(SPiRITROOT)
 
 # where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ 
 # is checked
@@ -141,6 +141,7 @@ add_subdirectory (eventdisplay)
 add_subdirectory (example)
 add_subdirectory (MbsAPI)
 add_subdirectory (datamatch)
+add_subdirectory (spirit)
 If (Boost_FOUND)
   add_subdirectory (fairmq)
 Else (Boost_FOUND)
