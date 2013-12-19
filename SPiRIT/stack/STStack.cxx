@@ -304,7 +304,7 @@ void STStack::UpdateTrackIndex(TRefArray* detList)
 
       // --> Update track index for all MCPoints in the collection
       for (Int_t iPoint=0; iPoint<nPoints; iPoint++) {
-        STMCPoint* point = (STMCPoint*)hitArray->At(iPoint);
+        FairMCPoint* point = (FairMCPoint*)hitArray->At(iPoint);
         Int_t iTrack = point->GetTrackID();
 
         fIndexIter = fIndexMap.find(iTrack);
