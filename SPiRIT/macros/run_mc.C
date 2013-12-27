@@ -53,11 +53,9 @@ void run_mc(Int_t nEvents = 10)
   cave->SetGeometryFileName("cave_vacuum.geo"); 
   run->AddModule(cave);
 
-/*
-  FairModule* target= new FairTarget("Target");
-  target->SetGeometryFileName("target_rutherford.geo"); 
+  FairModule* target= new FairTarget("SnTarget");
+  target->SetGeometryFileName("target.geo"); 
   run->AddModule(target);
-*/
 
   FairDetector* spirit = new SPiRIT("SPiRITDetector", kTRUE);
   spirit->SetGeometryFileName("spirit.geo"); 
