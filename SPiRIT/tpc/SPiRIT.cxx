@@ -139,6 +139,14 @@ void SPiRIT::ConstructGeometry()
       just copy this and use it for your detector, otherwise you can
       implement here you own way of constructing the geometry. */
 
+  TString fileName = GetGeometryFileName();
+  if(fileName.EndsWith(".root")) {
+    std::cout<<"SPiRIT::ConstructGeometry() "
+	     <<"  ...using ROOT geometry"<<std::endl;
+    ConstructRootGeometry();
+    return;
+  }
+
   FairGeoLoader*    geoLoad = FairGeoLoader::Instance();
   FairGeoInterface* geoFace = geoLoad->getGeoInterface();
   SPiRITGeo*  Geo  = new SPiRITGeo();

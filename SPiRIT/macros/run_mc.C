@@ -1,5 +1,7 @@
 void run_mc(Int_t nEvents = 10)
 {
+
+  gRandom -> SetSeed(time(0));
   
   TString dir = gSystem->Getenv("VMCWORKDIR");
   TString tutdir = dir + "/../SPiRIT/macros";
@@ -37,14 +39,15 @@ void run_mc(Int_t nEvents = 10)
  
   // -----   Create simulation run   ----------------------------------------
   FairRunSim* run = new FairRunSim();
-  run->SetName("TGeant3");              // Transport engine
+  run->SetName("TGeant4");              // Transport engine
   run->SetOutputFile(outFile);          // Output file
   FairRuntimeDb* rtdb = run->GetRuntimeDb();
   // ------------------------------------------------------------------------
 
   run->SetWriteRunInfoFile(kFALSE);  
   // -----   Create media   -------------------------------------------------
-  run->SetMaterials("media.geo");       // Materials
+//  run->SetMaterials("media.geo");       // Materials
+  run->SetMaterials("media_pnd.geo");       // Materials
   // ------------------------------------------------------------------------
   
   // -----   Create geometry   ----------------------------------------------
@@ -58,7 +61,8 @@ void run_mc(Int_t nEvents = 10)
   run->AddModule(target);
 
   FairDetector* spirit = new SPiRIT("SPiRITDetector", kTRUE);
-  spirit->SetGeometryFileName("spirit.geo"); 
+//  spirit->SetGeometryFileName("spirit.geo"); 
+  spirit->SetGeometryFileName("tpc_prototype_ArCo2.root"); 
   run->AddModule(spirit);
   // ------------------------------------------------------------------------
 
@@ -66,12 +70,11 @@ void run_mc(Int_t nEvents = 10)
   FairPrimaryGenerator* primGen = new FairPrimaryGenerator();
   run->SetGenerator(primGen);
 
-
   // Ion Generator
-                                               
-  FairIonGenerator *fIongen= new FairIonGenerator(2, 4, 2, 1, 0., 0., 1./20., 0., 0., -1.); 
+  // FairIonGenerator(z, a, q[e], mult, px/A, py/A, pz/A[GeV], x, y, z[cm])                                             
+//  FairIonGenerator *fIongen= new FairIonGenerator(1, 1, 1, 1, 0., 0., 0.5, 0., 0., -12.231);
+  FairParticleGenerator *fIongen = new FairParticleGenerator(2212, 1, 0., 0., 0.15, 0., 0., -12.231);
   primGen->AddGenerator(fIongen);
-
 
   FairBoxGenerator* boxGen1 = new FairBoxGenerator(2212, 1);
   boxGen1->SetPRange(.005,.005);
@@ -95,7 +98,7 @@ void run_mc(Int_t nEvents = 10)
   // that the file size of the output file depends on these cuts
 
   FairTrajFilter* trajFilter = FairTrajFilter::Instance();
- // trajFilter->SetStepSizeCut(0.01); // 1 cm
+  trajFilter->SetStepSizeCut(0.01); // 1 cm
   // trajFilter->SetVertexCut(-2000., -2000., 4., 2000., 2000., 100.);
   // trajFilter->SetMomentumCutP(10e-3); // p_lab > 10 MeV
   // trajFilter->SetEnergyCut(0., 1.02); // 0 < Etot < 1.04 GeV
@@ -113,10 +116,19 @@ void run_mc(Int_t nEvents = 10)
   rtdb->print();
   // ------------------------------------------------------------------------
    
+  // -----   Create and set magnetic field   --------------------------------
+  // Constant field
+  FairConstField *fMagField = new FairConstField();
+  fMagField -> SetField(0., 5., 0.); // in kG
+  // SetFieldRegion(xmin, xmax, ymin, ymax, zmin, zmax)
+  fMagField -> SetFieldRegion(-50, 50, -50, 50, -20, 200);
+  run -> SetField(fMagField);
+  // ------------------------------------------------------------------------
+
   // -----   Start run   ----------------------------------------------------
   run->Run(nEvents);
   // ------------------------------------------------------------------------
-  run->CreateGeometryFile("data/geofile_full.root");
+//  run->CreateGeometryFile("data/geofile_full.root");
   
   // -----   Finish   -------------------------------------------------------
   timer.Stop();
