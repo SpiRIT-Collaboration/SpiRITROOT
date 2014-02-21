@@ -61,9 +61,18 @@ void run_mc(Int_t nEvents = 10)
   run->AddModule(target);
 
   FairDetector* spirit = new SPiRIT("SPiRITDetector", kTRUE);
-//  spirit->SetGeometryFileName("spirit.geo"); 
-  spirit->SetGeometryFileName("tpc_prototype_ArCo2.root"); 
+  spirit->SetGeometryFileName("spirit.geo"); 
+//  spirit->SetGeometryFileName("tpc_prototype_ArCo2.root"); 
   run->AddModule(spirit);
+  // ------------------------------------------------------------------------
+  //
+  // -----   Create and set magnetic field   --------------------------------
+  // Constant field
+  FairConstField *fMagField = new FairConstField();
+  fMagField -> SetField(0., 50., 0.); // in kG
+  // SetFieldRegion(xmin, xmax, ymin, ymax, zmin, zmax)
+  fMagField -> SetFieldRegion(-50, 50, -50, 50, -20, 200);
+  run -> SetField(fMagField);
   // ------------------------------------------------------------------------
 
   // -----   Create PrimaryGenerator   --------------------------------------
@@ -91,7 +100,7 @@ void run_mc(Int_t nEvents = 10)
   // -----   Run initialisation   -------------------------------------------
   run->Init();
   // ------------------------------------------------------------------------
-  
+
   // Set cuts for storing the trajectories.
   // Switch this on only if trajectories are stored.
   // Choose this cuts according to your needs, but be aware
@@ -116,15 +125,6 @@ void run_mc(Int_t nEvents = 10)
   rtdb->print();
   // ------------------------------------------------------------------------
    
-  // -----   Create and set magnetic field   --------------------------------
-  // Constant field
-  FairConstField *fMagField = new FairConstField();
-  fMagField -> SetField(0., 5., 0.); // in kG
-  // SetFieldRegion(xmin, xmax, ymin, ymax, zmin, zmax)
-  fMagField -> SetFieldRegion(-50, 50, -50, 50, -20, 200);
-  run -> SetField(fMagField);
-  // ------------------------------------------------------------------------
-
   // -----   Start run   ----------------------------------------------------
   run->Run(nEvents);
   // ------------------------------------------------------------------------
