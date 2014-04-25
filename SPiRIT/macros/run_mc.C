@@ -65,7 +65,7 @@ void run_mc(Int_t nEvents = 10)
 //  spirit->SetGeometryFileName("tpc_prototype_ArCo2.root"); 
   run->AddModule(spirit);
   // ------------------------------------------------------------------------
-  //
+
   // -----   Create and set magnetic field   --------------------------------
   // Constant field
   FairConstField *fMagField = new FairConstField();
