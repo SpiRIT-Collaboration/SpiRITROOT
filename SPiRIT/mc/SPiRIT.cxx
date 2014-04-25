@@ -1,8 +1,8 @@
 #include "SPiRIT.h"
 
-#include "SPiRITPoint.h"
-#include "SPiRITGeo.h"
-#include "SPiRITGeoPar.h"
+#include "STPoint.h"
+#include "STGeo.h"
+#include "STGeoPar.h"
 
 #include "FairVolume.h"
 #include "FairGeoVolume.h"
@@ -31,7 +31,7 @@ SPiRIT::SPiRIT()
     fTime(-1.),
     fLength(-1.),
     fELoss(-1),
-    fSPiRITPointCollection(new TClonesArray("SPiRITPoint"))
+    fSTPointCollection(new TClonesArray("STPoint"))
 {
 }
 
@@ -44,15 +44,15 @@ SPiRIT::SPiRIT(const char* name, Bool_t active)
     fTime(-1.),
     fLength(-1.),
     fELoss(-1),
-    fSPiRITPointCollection(new TClonesArray("SPiRITPoint"))
+    fSTPointCollection(new TClonesArray("STPoint"))
 {
 }
 
 SPiRIT::~SPiRIT()
 {
-  if (fSPiRITPointCollection) {
-    fSPiRITPointCollection->Delete();
-    delete fSPiRITPointCollection;
+  if (fSTPointCollection) {
+    fSTPointCollection->Delete();
+    delete fSTPointCollection;
   }
 }
 
@@ -60,7 +60,7 @@ void SPiRIT::Initialize()
 {
   FairDetector::Initialize();
   FairRuntimeDb* rtdb= FairRun::Instance()->GetRuntimeDb();
-  SPiRITGeoPar* par=(SPiRITGeoPar*)(rtdb->getContainer("SPiRITGeoPar"));
+  STGeoPar* par=(STGeoPar*)(rtdb->getContainer("STGeoPar"));
 }
 
 Bool_t  SPiRIT::ProcessHits(FairVolume* vol)
@@ -79,7 +79,7 @@ Bool_t  SPiRIT::ProcessHits(FairVolume* vol)
   // Sum energy loss for all steps in the active volume
   fELoss += gMC->Edep();
 
-  // Create SPiRITPoint at exit of active volume
+  // Create STPoint at exit of active volume
   if ( gMC->IsTrackExiting()    ||
        gMC->IsTrackStop()       ||
        gMC->IsTrackDisappeared()   ) {
@@ -101,7 +101,7 @@ Bool_t  SPiRIT::ProcessHits(FairVolume* vol)
 void SPiRIT::EndOfEvent()
 {
 
-  fSPiRITPointCollection->Clear();
+  fSTPointCollection->Clear();
 
 }
 
@@ -111,26 +111,26 @@ void SPiRIT::Register()
 {
 
   /** This will create a branch in the output tree called
-      SPiRITPoint, setting the last parameter to kFALSE means:
+      STPoint, setting the last parameter to kFALSE means:
       this collection will not be written to the file, it will exist
       only during the simulation.
   */
 
-  FairRootManager::Instance()->Register("SPiRITPoint", "SPiRIT",
-                                        fSPiRITPointCollection, kTRUE);
+  FairRootManager::Instance()->Register("STPoint", "SPiRIT",
+                                        fSTPointCollection, kTRUE);
 
 }
 
 
 TClonesArray* SPiRIT::GetCollection(Int_t iColl) const
 {
-  if (iColl == 0) { return fSPiRITPointCollection; }
+  if (iColl == 0) { return fSTPointCollection; }
   else { return NULL; }
 }
 
 void SPiRIT::Reset()
 {
-  fSPiRITPointCollection->Clear();
+  fSTPointCollection->Clear();
 }
 
 void SPiRIT::ConstructGeometry()
@@ -149,7 +149,7 @@ void SPiRIT::ConstructGeometry()
 
   FairGeoLoader*    geoLoad = FairGeoLoader::Instance();
   FairGeoInterface* geoFace = geoLoad->getGeoInterface();
-  SPiRITGeo*  Geo  = new SPiRITGeo();
+  STGeo*  Geo  = new STGeo();
   Geo->setGeomFile(GetGeometryFileName());
   geoFace->addGeoModule(Geo);
 
@@ -160,7 +160,7 @@ void SPiRIT::ConstructGeometry()
   // store geo parameter
   FairRun* fRun = FairRun::Instance();
   FairRuntimeDb* rtdb= FairRun::Instance()->GetRuntimeDb();
-  SPiRITGeoPar* par=(SPiRITGeoPar*)(rtdb->getContainer("SPiRITGeoPar"));
+  STGeoPar* par=(STGeoPar*)(rtdb->getContainer("STGeoPar"));
   TObjArray* fSensNodes = par->GetGeoSensitiveNodes();
   TObjArray* fPassNodes = par->GetGeoPassiveNodes();
 
@@ -182,14 +182,14 @@ void SPiRIT::ConstructGeometry()
   ProcessNodes ( volList );
 }
 
-SPiRITPoint* SPiRIT::AddHit(Int_t trackID, Int_t detID,
+STPoint* SPiRIT::AddHit(Int_t trackID, Int_t detID,
                                       TVector3 pos, TVector3 mom,
                                       Double_t time, Double_t length,
                                       Double_t eLoss)
 {
-  TClonesArray& clref = *fSPiRITPointCollection;
+  TClonesArray& clref = *fSTPointCollection;
   Int_t size = clref.GetEntriesFast();
-  return new(clref[size]) SPiRITPoint(trackID, detID, pos, mom,
+  return new(clref[size]) STPoint(trackID, detID, pos, mom,
          time, length, eLoss);
 }
 

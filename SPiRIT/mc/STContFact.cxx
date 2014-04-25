@@ -1,33 +1,33 @@
-#include "SPiRITContFact.h"
+#include "STContFact.h"
 
-#include "SPiRITGeoPar.h"
+#include "STGeoPar.h"
 
 #include "FairRuntimeDb.h"
 
 #include <iostream>
 
-ClassImp(SPiRITContFact)
+ClassImp(STContFact)
 
-static SPiRITContFact gSPiRITContFact;
+static STContFact gSTContFact;
 
-SPiRITContFact::SPiRITContFact()
+STContFact::STContFact()
   : FairContFact()
 {
   /** Constructor (called when the library is loaded) */
-  fName="SPiRITContFact";
+  fName="STContFact";
   fTitle="Factory for parameter containers in libSPiRIT";
   setAllContainers();
   FairRuntimeDb::instance()->addContFactory(this);
 }
 
-void SPiRITContFact::setAllContainers()
+void STContFact::setAllContainers()
 {
   /** Creates the Container objects with all accepted
       contexts and adds them to
       the list of containers for the SPiRIT library.
   */
 
-  FairContainer* p= new FairContainer("SPiRITGeoPar",
+  FairContainer* p= new FairContainer("STGeoPar",
                                       "SPiRIT Geometry Parameters",
                                       "TestDefaultContext");
   p->addContext("TestNonDefaultContext");
@@ -35,7 +35,7 @@ void SPiRITContFact::setAllContainers()
   containers->Add(p);
 }
 
-FairParSet* SPiRITContFact::createContainer(FairContainer* c)
+FairParSet* STContFact::createContainer(FairContainer* c)
 {
   /** Calls the constructor of the corresponding parameter container.
       For an actual context, which is not an empty string and not
@@ -44,8 +44,8 @@ FairParSet* SPiRITContFact::createContainer(FairContainer* c)
   */
   const char* name=c->GetName();
   FairParSet* p=NULL;
-  if (strcmp(name,"SPiRITGeoPar")==0) {
-    p=new SPiRITGeoPar(c->getConcatName().Data(),
+  if (strcmp(name,"STGeoPar")==0) {
+    p=new STGeoPar(c->getConcatName().Data(),
                             c->GetTitle(),c->getContext());
   }
   return p;

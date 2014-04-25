@@ -4,10 +4,10 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class SPiRITContFact;
-#pragma link C++ class SPiRITGeo;
-#pragma link C++ class SPiRITGeoPar;
+#pragma link C++ class STContFact;
+#pragma link C++ class STGeo;
+#pragma link C++ class STGeoPar;
 #pragma link C++ class SPiRIT+;
-#pragma link C++ class SPiRITPoint+;
+#pragma link C++ class STPoint+;
 
 #endif

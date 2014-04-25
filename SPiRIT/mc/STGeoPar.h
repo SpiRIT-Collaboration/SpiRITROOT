@@ -6,7 +6,7 @@
 class TObjArray;
 class FairParamList;
 
-class SPiRITGeoPar       : public FairParGenericSet
+class STGeoPar       : public FairParGenericSet
 {
   public:
 
@@ -16,10 +16,10 @@ class SPiRITGeoPar       : public FairParGenericSet
     /** List of FairGeoNodes for sensitive  volumes */
     TObjArray*      fGeoPassNodes;
 
-    SPiRITGeoPar(const char* name="SPiRITGeoPar",
+    STGeoPar(const char* name="STGeoPar",
                       const char* title="SPiRIT Geometry Parameters",
                       const char* context="TestDefaultContext");
-    ~SPiRITGeoPar(void);
+    ~STGeoPar(void);
     void clear(void);
     void putParams(FairParamList*);
     Bool_t getParams(FairParamList*);
@@ -27,10 +27,10 @@ class SPiRITGeoPar       : public FairParGenericSet
     TObjArray* GetGeoPassiveNodes()   {return fGeoPassNodes;}
 
   private:
-    SPiRITGeoPar(const SPiRITGeoPar&);
-    SPiRITGeoPar& operator=(const SPiRITGeoPar&);
+    STGeoPar(const STGeoPar&);
+    STGeoPar& operator=(const STGeoPar&);
 
-    ClassDef(SPiRITGeoPar,1)
+    ClassDef(STGeoPar,1)
 };
 
 #endif

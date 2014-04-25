@@ -1,0 +1,13 @@
+################################################################################
+# Digitization and reconstruction parameters for SPiRIT-TPC
+# Format:
+# parameter_name:parameter_type(Int_t-integer, Double_t-double) parameter_value
+# STPar
+# Description of parameters
+################################################################################
+[STPar]
+STGasFile:Int_t 1
+EField:Double_t 0
+PadPlaneFile:Int_t 2
+PadShapeFile:Int_t 3 // might not be needed because the shape is simply rectangle
+################################################################################

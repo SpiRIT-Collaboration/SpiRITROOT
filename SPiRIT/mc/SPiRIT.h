@@ -6,7 +6,7 @@
 #include "TVector3.h"
 #include "TLorentzVector.h"
 
-class SPiRITPoint;
+class STPoint;
 class FairVolume;
 class TClonesArray;
 
@@ -50,9 +50,9 @@ class SPiRIT: public FairDetector
 
 
     /**      This method is an example of how to add your own point
-     *       of type SPiRITPoint to the clones array
+     *       of type STPoint to the clones array
     */
-    SPiRITPoint* AddHit(Int_t trackID, Int_t detID,
+    STPoint* AddHit(Int_t trackID, Int_t detID,
                              TVector3 pos, TVector3 mom,
                              Double_t time, Double_t length,
                              Double_t eLoss);
@@ -88,7 +88,7 @@ class SPiRIT: public FairDetector
 
     /** container for data points */
 
-    TClonesArray*  fSPiRITPointCollection;
+    TClonesArray*  fSTPointCollection;
 
     SPiRIT(const SPiRIT&);
     SPiRIT& operator=(const SPiRIT&);

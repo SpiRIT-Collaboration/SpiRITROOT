@@ -1,10 +1,10 @@
-#include "SPiRITGeo.h"
+#include "STGeo.h"
 #include "FairGeoNode.h"
 
-ClassImp(SPiRITGeo)
+ClassImp(STGeo)
 
 // -----   Default constructor   -------------------------------------------
-SPiRITGeo::SPiRITGeo()
+STGeo::STGeo()
   : FairGeoSet()
 {
   // Constructor
@@ -17,7 +17,7 @@ SPiRITGeo::SPiRITGeo()
 
 // -------------------------------------------------------------------------
 
-const char* SPiRITGeo::getModuleName(Int_t m)
+const char* STGeo::getModuleName(Int_t m)
 {
   /** Returns the module name of SPiRIT number m
       Setting SPiRIT here means that all modules names in the
@@ -28,7 +28,7 @@ const char* SPiRITGeo::getModuleName(Int_t m)
   return modName;
 }
 
-const char* SPiRITGeo::getEleName(Int_t m)
+const char* STGeo::getEleName(Int_t m)
 {
   /** Returns the element name of Det number m */
   sprintf(eleName,"SPiRIT%i",m+1);

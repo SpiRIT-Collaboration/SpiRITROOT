@@ -5,15 +5,15 @@
 
 class FairContainer;
 
-class SPiRITContFact : public FairContFact
+class STContFact : public FairContFact
 {
   private:
     void setAllContainers();
   public:
-    SPiRITContFact();
-    ~SPiRITContFact() {}
+    STContFact();
+    ~STContFact() {}
     FairParSet* createContainer(FairContainer*);
-    ClassDef( SPiRITContFact,0) // Factory for all SPiRIT parameter containers
+    ClassDef( STContFact,0) // Factory for all SPiRIT parameter containers
 };
 
 #endif

@@ -3,22 +3,22 @@
 
 #include "FairGeoSet.h"
 
-class  SPiRITGeo : public FairGeoSet
+class  STGeo : public FairGeoSet
 {
 
   protected:
     char modName[20];  // name of module
     char eleName[20];  // substring for elements in module
   public:
-    SPiRITGeo();
-    ~SPiRITGeo() {}
+    STGeo();
+    ~STGeo() {}
     const char* getModuleName(Int_t);
     const char* getEleName(Int_t);
     inline Int_t getModNumInMod(const TString&);
-    ClassDef(SPiRITGeo,1)
+    ClassDef(STGeo,1)
 };
 
-inline Int_t SPiRITGeo::getModNumInMod(const TString& name)
+inline Int_t STGeo::getModNumInMod(const TString& name)
 {
   /** returns the module index from module name
    ?? in name[??] has to be the length of the detector name in the

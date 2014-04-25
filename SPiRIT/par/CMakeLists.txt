@@ -22,11 +22,6 @@ ${ROOT_LIBRARY_DIR}
 link_directories( ${LINK_DIRECTORIES})
 
 set(SRCS
-ST.cxx
-STContFact.cxx
-STGeo.cxx
-STGeoPar.cxx
-STPoint.cxx
 )
 
 Set(LINKDEF STLinkDef.h)

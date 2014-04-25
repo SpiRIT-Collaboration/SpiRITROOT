@@ -1,4 +1,4 @@
-#include "SPiRITGeoPar.h"
+#include "STGeoPar.h"
 
 #include "FairParamList.h"
 
@@ -6,9 +6,9 @@
 
 #include <iostream>
 
-ClassImp(SPiRITGeoPar)
+ClassImp(STGeoPar)
 
-SPiRITGeoPar ::SPiRITGeoPar(const char* name,
+STGeoPar ::STGeoPar(const char* name,
                                       const char* title,
                                       const char* context)
   : FairParGenericSet(name,title,context),
@@ -17,24 +17,24 @@ SPiRITGeoPar ::SPiRITGeoPar(const char* name,
 {
 }
 
-SPiRITGeoPar::~SPiRITGeoPar(void)
+STGeoPar::~STGeoPar(void)
 {
 }
 
-void SPiRITGeoPar::clear(void)
+void STGeoPar::clear(void)
 {
   if(fGeoSensNodes) { delete fGeoSensNodes; }
   if(fGeoPassNodes) { delete fGeoPassNodes; }
 }
 
-void SPiRITGeoPar::putParams(FairParamList* l)
+void STGeoPar::putParams(FairParamList* l)
 {
   if (!l) { return; }
   l->addObject("FairGeoNodes Sensitive List", fGeoSensNodes);
   l->addObject("FairGeoNodes Passive List", fGeoPassNodes);
 }
 
-Bool_t SPiRITGeoPar::getParams(FairParamList* l)
+Bool_t STGeoPar::getParams(FairParamList* l)
 {
   if (!l) { return kFALSE; }
   if (!l->fillObject("FairGeoNodes Sensitive List", fGeoSensNodes)) { return kFALSE; }

@@ -7,13 +7,13 @@
 #include "TObject.h"
 #include "TVector3.h"
 
-class SPiRITPoint : public FairMCPoint
+class STPoint : public FairMCPoint
 {
 
   public:
 
     /** Default constructor **/
-    SPiRITPoint();
+    STPoint();
 
 
     /** Constructor with arguments
@@ -25,24 +25,24 @@ class SPiRITPoint : public FairMCPoint
      *@param length   Track length since creation [cm]
      *@param eLoss    Energy deposit [GeV]
      **/
-    SPiRITPoint(Int_t trackID, Int_t detID, TVector3 pos, TVector3 mom,
+    STPoint(Int_t trackID, Int_t detID, TVector3 pos, TVector3 mom,
                      Double_t tof, Double_t length, Double_t eLoss);
 
 
 
 
     /** Destructor **/
-    virtual ~SPiRITPoint();
+    virtual ~STPoint();
 
     /** Output to screen **/
     virtual void Print(const Option_t* opt) const;
 
   private:
     /** Copy constructor **/
-    SPiRITPoint(const SPiRITPoint& point);
-    SPiRITPoint operator=(const SPiRITPoint& point);
+    STPoint(const STPoint& point);
+    STPoint operator=(const STPoint& point);
 
-    ClassDef(SPiRITPoint,1)
+    ClassDef(STPoint,1)
 
 };
 
