@@ -1,4 +1,4 @@
-#include "STPoint.h"
+#include "STMCPoint.h"
 
 #include <iostream>
 using std::cout;
@@ -6,14 +6,14 @@ using std::endl;
 
 
 // -----   Default constructor   -------------------------------------------
-STPoint::STPoint()
+STMCPoint::STMCPoint()
   : FairMCPoint()
 {
 }
 // -------------------------------------------------------------------------
 
 // -----   Standard constructor   ------------------------------------------
-STPoint::STPoint(Int_t trackID, Int_t detID,
+STMCPoint::STMCPoint(Int_t trackID, Int_t detID,
                                    TVector3 pos, TVector3 mom,
                                    Double_t tof, Double_t length,
                                    Double_t eLoss)
@@ -23,13 +23,13 @@ STPoint::STPoint(Int_t trackID, Int_t detID,
 // -------------------------------------------------------------------------
 
 // -----   Destructor   ----------------------------------------------------
-STPoint::~STPoint() { }
+STMCPoint::~STMCPoint() { }
 // -------------------------------------------------------------------------
 
 // -----   Public method Print   -------------------------------------------
-void STPoint::Print(const Option_t* opt) const
+void STMCPoint::Print(const Option_t* opt) const
 {
-  cout << "-I- STPoint: SPiRIT point for track " << fTrackID
+  cout << "-I- STMCPoint: SPiRIT point for track " << fTrackID
        << " in detector " << fDetectorID << endl;
   cout << "    Position (" << fX << ", " << fY << ", " << fZ
        << ") cm" << endl;
@@ -40,5 +40,5 @@ void STPoint::Print(const Option_t* opt) const
 }
 // -------------------------------------------------------------------------
 
-ClassImp(STPoint)
+ClassImp(STMCPoint)
 

@@ -1,6 +1,6 @@
 #include "SPiRIT.h"
 
-#include "STPoint.h"
+#include "STMCPoint.h"
 #include "STGeo.h"
 #include "STGeoPar.h"
 
@@ -31,7 +31,7 @@ SPiRIT::SPiRIT()
     fTime(-1.),
     fLength(-1.),
     fELoss(-1),
-    fSTPointCollection(new TClonesArray("STPoint"))
+    fSTMCPointCollection(new TClonesArray("STMCPoint"))
 {
 }
 
@@ -44,15 +44,15 @@ SPiRIT::SPiRIT(const char* name, Bool_t active)
     fTime(-1.),
     fLength(-1.),
     fELoss(-1),
-    fSTPointCollection(new TClonesArray("STPoint"))
+    fSTMCPointCollection(new TClonesArray("STMCPoint"))
 {
 }
 
 SPiRIT::~SPiRIT()
 {
-  if (fSTPointCollection) {
-    fSTPointCollection->Delete();
-    delete fSTPointCollection;
+  if (fSTMCPointCollection) {
+    fSTMCPointCollection->Delete();
+    delete fSTMCPointCollection;
   }
 }
 
@@ -79,7 +79,7 @@ Bool_t  SPiRIT::ProcessHits(FairVolume* vol)
   // Sum energy loss for all steps in the active volume
   fELoss += gMC->Edep();
 
-  // Create STPoint at exit of active volume
+  // Create STMCPoint at exit of active volume
   if ( gMC->IsTrackExiting()    ||
        gMC->IsTrackStop()       ||
        gMC->IsTrackDisappeared()   ) {
@@ -101,7 +101,7 @@ Bool_t  SPiRIT::ProcessHits(FairVolume* vol)
 void SPiRIT::EndOfEvent()
 {
 
-  fSTPointCollection->Clear();
+  fSTMCPointCollection->Clear();
 
 }
 
@@ -111,26 +111,26 @@ void SPiRIT::Register()
 {
 
   /** This will create a branch in the output tree called
-      STPoint, setting the last parameter to kFALSE means:
+      STMCPoint, setting the last parameter to kFALSE means:
       this collection will not be written to the file, it will exist
       only during the simulation.
   */
 
-  FairRootManager::Instance()->Register("STPoint", "SPiRIT",
-                                        fSTPointCollection, kTRUE);
+  FairRootManager::Instance()->Register("STMCPoint", "SPiRIT",
+                                        fSTMCPointCollection, kTRUE);
 
 }
 
 
 TClonesArray* SPiRIT::GetCollection(Int_t iColl) const
 {
-  if (iColl == 0) { return fSTPointCollection; }
+  if (iColl == 0) { return fSTMCPointCollection; }
   else { return NULL; }
 }
 
 void SPiRIT::Reset()
 {
-  fSTPointCollection->Clear();
+  fSTMCPointCollection->Clear();
 }
 
 void SPiRIT::ConstructGeometry()
@@ -182,14 +182,14 @@ void SPiRIT::ConstructGeometry()
   ProcessNodes ( volList );
 }
 
-STPoint* SPiRIT::AddHit(Int_t trackID, Int_t detID,
+STMCPoint* SPiRIT::AddHit(Int_t trackID, Int_t detID,
                                       TVector3 pos, TVector3 mom,
                                       Double_t time, Double_t length,
                                       Double_t eLoss)
 {
-  TClonesArray& clref = *fSTPointCollection;
+  TClonesArray& clref = *fSTMCPointCollection;
   Int_t size = clref.GetEntriesFast();
-  return new(clref[size]) STPoint(trackID, detID, pos, mom,
+  return new(clref[size]) STMCPoint(trackID, detID, pos, mom,
          time, length, eLoss);
 }
 

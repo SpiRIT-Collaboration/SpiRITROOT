@@ -1,4 +1,4 @@
-# Create a library called "libSPiRIT" which includes the source files given in
+# Create a library called "libSTFormat" which includes the source files given in
 # the array .
 # The extension is already found.  Any number of sources could be listed here.
 
@@ -9,8 +9,6 @@ ${BASE_INCLUDE_DIRECTORIES}
 ${CMAKE_SOURCE_DIR}/fairtools
 ${CMAKE_SOURCE_DIR}/parbase
 ${CMAKE_SOURCE_DIR}/geobase
-${CMAKE_SOURCE_DIR}/SPiRIT/mc
-${CMAKE_SOURCE_DIR}/SPiRIT/stack
 ${CMAKE_SOURCE_DIR}/SPiRIT/format
 )
 
@@ -23,18 +21,14 @@ ${ROOT_LIBRARY_DIR}
 link_directories( ${LINK_DIRECTORIES})
 
 set(SRCS
-SPiRIT.cxx
-STContFact.cxx
-STGeo.cxx
-STGeoPar.cxx
+STMCPoint.cxx
 )
 
-Set(LINKDEF SPiRITLinkDef.h)
-Set(LIBRARY_NAME SPiRIT)
+Set(LINKDEF STFormatLinkDef.h)
+Set(LIBRARY_NAME STFormat)
 Set(DEPENDENCIES
     Base
     Stack
-    STFormat
 )
 
 GENERATE_LIBRARY()

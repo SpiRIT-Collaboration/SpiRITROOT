@@ -8,6 +8,5 @@
 #pragma link C++ class STGeo;
 #pragma link C++ class STGeoPar;
 #pragma link C++ class SPiRIT+;
-#pragma link C++ class STPoint+;
 
 #endif

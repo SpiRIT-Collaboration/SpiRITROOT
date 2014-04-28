@@ -1,5 +1,5 @@
-#ifndef SPIRITPOINT_H
-#define SPIRITPOINT_H 1
+#ifndef _STMCPOINT_H_
+#define _SPMCPOINT_H_ 1
 
 
 #include "FairMCPoint.h"
@@ -7,13 +7,12 @@
 #include "TObject.h"
 #include "TVector3.h"
 
-class STPoint : public FairMCPoint
+class STMCPoint : public FairMCPoint
 {
-
   public:
 
     /** Default constructor **/
-    STPoint();
+    STMCPoint();
 
 
     /** Constructor with arguments
@@ -25,24 +24,24 @@ class STPoint : public FairMCPoint
      *@param length   Track length since creation [cm]
      *@param eLoss    Energy deposit [GeV]
      **/
-    STPoint(Int_t trackID, Int_t detID, TVector3 pos, TVector3 mom,
+    STMCPoint(Int_t trackID, Int_t detID, TVector3 pos, TVector3 mom,
                      Double_t tof, Double_t length, Double_t eLoss);
 
 
 
 
     /** Destructor **/
-    virtual ~STPoint();
+    virtual ~STMCPoint();
 
     /** Output to screen **/
     virtual void Print(const Option_t* opt) const;
 
   private:
     /** Copy constructor **/
-    STPoint(const STPoint& point);
-    STPoint operator=(const STPoint& point);
+    STMCPoint(const STMCPoint& point);
+    STMCPoint operator=(const STMCPoint& point);
 
-    ClassDef(STPoint,1)
+    ClassDef(STMCPoint,1)
 
 };
 

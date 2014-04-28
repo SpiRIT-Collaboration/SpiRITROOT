@@ -40,14 +40,20 @@ class STClusterizerTask : public FairTask
     virtual void Exec(Option_t *opt);
 
   private:
-    TString fMCPointBranchName;
-    TCloneArray *fMCPointArray;
-    TCloneArray *fPrimaryClusterArray;
+    // variables
+    TString fMCPointBranchName;        //! Name of MC data branch
+    TCloneArray *fMCPointArray;        //! Point array for MC data
+    TCloneArray *fPrimaryClusterArray; //! Primary cluster array
 
-    const STGas fGas;
-    STPar *fPar;
+    const STGas *fGas;                 //! STGas pointer
+    STPar *fPar;                       //! STPar pointer
+    Float_t fFirstIonizationPotential; //! First ionization potential
 
     Bool_t fIsPersistant;
+    Bool_t fIsSimpleChargeConversion;  //! If true, do simple charge conversion
+
+    // methods
+    void ChargeConversion();
 
   ClassDef(STClusterizerTask, 1);
 };
