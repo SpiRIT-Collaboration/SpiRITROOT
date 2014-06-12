@@ -21,8 +21,8 @@
 
 // Collaborating Class Headers -------
 // #include <ostream> // remove if you do not need streaming op
-#include "STRiemannTrack.h"
-#include "STCluster.h"
+#include "STRiemannTrack.hh"
+#include "STCluster.hh"
 
 // Collaborating Class Declarations --
 class TClonesArray;
@@ -88,7 +88,7 @@ class STRiemannTrackingTask : public FairTask
     // Operations ----------------------
     virtual InitStatus Init();
     virtual void SetParContainers();
-    virtual void Exec(Option_t* opt);
+    virtual void Exec(Option_t *opt);
 
 
   private:
