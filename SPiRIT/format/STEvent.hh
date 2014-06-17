@@ -36,7 +36,7 @@ class STEvent : public TObject {
     Int_t fNumHits;
     STHit *fHitsArray[40000];
 
-  ClassDef(STEvent, 2);
+  ClassDef(STEvent, 1);
 };
 
 #endif
