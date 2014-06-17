@@ -19,8 +19,8 @@ ClassImp(STMap);
 
 STMap::STMap()
 {
-  LoadChToPadMap();
-  LoadUAMap();
+  fIsSetUAMap = 0;
+  fIsSetAGETMap = 0;
 }
 
 // Getters
@@ -87,34 +87,26 @@ void STMap::GetMapData(Int_t padRow, Int_t padLayer, Int_t &UAIdx, Int_t &coboId
   }
 }
 
-// Private functions
-void STMap::LoadChToPadMap()
+Bool_t STMap::IsSetUAMap()
 {
-  char dummy[25];
-  std::ifstream chToPadMap("ChToPad.map");
-  chToPadMap.getline(dummy, 200);
-
-  if (!chToPadMap.is_open()) {
-    std::cout << "ChToPad.map is not loaded! Check the existance of the file!" << std::endl;
-
-    return;
-  }
-
-  Int_t ch = -1;
-  while (!(chToPadMap.eof())) {
-    chToPadMap >> ch;
-    chToPadMap >> padLayerOfCh[ch] >> padRowOfCh[ch];
-  }
+  return fIsSetUAMap;
 }
 
-void STMap::LoadUAMap()
+Bool_t STMap::IsSetAGETMap()
+{
+  return fIsSetAGETMap;
+}
+
+void STMap::SetUAMap(Char_t *filename)
 {
   char dummy[25];
-  std::ifstream uaMap("UnitAsAd.map");
+  std::ifstream uaMap(filename);
   uaMap.getline(dummy, 200);
 
   if (!uaMap.is_open()) {
-    std::cout << "UnitAsAd.map is not loaded! Check the existance of the file!" << std::endl;
+    std::cout << filename << " is not loaded! Check the existance of the file!" << std::endl;
+
+    fIsSetUAMap = 0;
 
     return;
   }
@@ -126,6 +118,31 @@ void STMap::LoadUAMap()
 
     ua[idx] = idx;
   }
+
+  fIsSetUAMap = 1;
+}
+
+void STMap::SetAGETMap(Char_t *filename)
+{
+  char dummy[25];
+  std::ifstream chToPadMap(filename);
+  chToPadMap.getline(dummy, 200);
+
+  if (!chToPadMap.is_open()) {
+    std::cout << filename << " is not loaded! Check the existance of the file!" << std::endl;
+
+    fIsSetAGETMap = 0;
+
+    return;
+  }
+
+  Int_t ch = -1;
+  while (!(chToPadMap.eof())) {
+    chToPadMap >> ch;
+    chToPadMap >> padLayerOfCh[ch] >> padRowOfCh[ch];
+  }
+
+  fIsSetAGETMap = 1;
 }
 
 Int_t STMap::GetUAIdx(Int_t coboIdx, Int_t asadIdx)

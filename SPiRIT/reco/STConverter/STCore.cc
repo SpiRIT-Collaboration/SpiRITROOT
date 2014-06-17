@@ -100,6 +100,16 @@ void STCore::SetPedestalData(Char_t *filename)
     std::cout << "== Pedestal data is not set! Check it exists!" << std::endl;
 }
 
+void STCore::SetUAMap(Char_t *filename)
+{
+  fMapPtr -> SetUAMap(filename);
+}
+
+void STCore::SetAGETMap(Char_t *filename)
+{
+  fMapPtr -> SetAGETMap(filename);
+}
+
 STRawEvent *STCore::GetRawEvent(Int_t eventID)
 {
   if (!fIsGraw) {

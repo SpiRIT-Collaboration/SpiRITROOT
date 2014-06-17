@@ -21,7 +21,14 @@ class STMap : public TObject {
     STMap();
     ~STMap() {}
 
+    // Setter
+    void SetUAMap(Char_t *filename);
+    void SetAGETMap(Char_t *filename);
+
     // Getter
+    Bool_t IsSetUAMap();
+    Bool_t IsSetAGETMap();
+
     void GetRowNLayer(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx, Int_t &padRow, Int_t &padLayer);
     void GetMapData(Int_t padRow, Int_t padLayer, Int_t &UAIdx, Int_t &coboIdx, Int_t &asadIdx, Int_t &agetIdx, Int_t &chIdx);
 
@@ -30,8 +37,8 @@ class STMap : public TObject {
     Int_t GetAsadIdx(Int_t uaIdx);
 
   private:
-    void LoadChToPadMap();
-    void LoadUAMap();
+    Bool_t fIsSetUAMap;
+    Bool_t fIsSetAGETMap;
 
     Int_t padRowOfCh[68];
     Int_t padLayerOfCh[68];

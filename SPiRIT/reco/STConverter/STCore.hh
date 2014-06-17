@@ -34,6 +34,9 @@ class STCore : public TObject {
     void SetInternalPedestal(Int_t startTb = 10, Int_t numTbs = 20);
     void SetPedestalData(Char_t *filename);
 
+    void SetUAMap(Char_t *filename);
+    void SetAGETMap(Char_t *filename);
+
     // getters
     STRawEvent *GetRawEvent(Int_t eventID = -1);
     Int_t GetNumTbs();
