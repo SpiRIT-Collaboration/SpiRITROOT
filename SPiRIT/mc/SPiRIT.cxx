@@ -1,6 +1,6 @@
 #include "SPiRIT.h"
 
-#include "STMCPoint.h"
+#include "STMCPoint.hh"
 #include "STGeo.h"
 #include "STGeoPar.h"
 

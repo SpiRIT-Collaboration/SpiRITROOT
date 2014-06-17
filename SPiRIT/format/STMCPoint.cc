@@ -1,4 +1,4 @@
-#include "STMCPoint.h"
+#include "STMCPoint.hh"
 
 #include <iostream>
 using std::cout;
