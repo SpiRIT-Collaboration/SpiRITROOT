@@ -174,6 +174,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
             pad -> SetADC(iTb, adc[iTb]);
 
           pad -> SetMaxADCIdx(frame -> GetMaxADCIdx(iAget, iCh));
+          pad -> SetPedestalSubtracted(1);
         } else if (fIsPedestalData) {
           // Code using pedestal data file will be set here.
         }
