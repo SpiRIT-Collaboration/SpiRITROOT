@@ -14,6 +14,8 @@
 #ifndef _STPAR_H_
 #define _STPAR_H_
 
+#include "FairParGenericSet.h"
+
 #include "STGas.hh"
 
 class STPar : public FairParGenericSet

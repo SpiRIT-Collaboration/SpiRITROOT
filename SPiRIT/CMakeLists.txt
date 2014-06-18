@@ -5,5 +5,6 @@
 add_subdirectory(mc)
 add_subdirectory(stack)
 add_subdirectory(format)
+add_subdirectory(par)
 add_subdirectory(reco)
 #add_subdirectory(digi)

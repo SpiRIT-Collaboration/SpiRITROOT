@@ -11,9 +11,10 @@ ${CMAKE_SOURCE_DIR}/parbase
 ${CMAKE_SOURCE_DIR}/geobase
 ${CMAKE_SOURCE_DIR}/SPiRIT/mc
 ${CMAKE_SOURCE_DIR}/SPiRIT/stack
+${CMAKE_SOURCE_DIR}/SPiRIT/par
 )
 
-include_directories( ${INCLUDE_DIRECTORIES})
+include_directories(${INCLUDE_DIRECTORIES})
 
 set(LINK_DIRECTORIES
 ${ROOT_LIBRARY_DIR}
@@ -22,10 +23,14 @@ ${ROOT_LIBRARY_DIR}
 link_directories( ${LINK_DIRECTORIES})
 
 set(SRCS
+STPar.cc
+STGas.cc
 )
 
-Set(LINKDEF STLinkDef.h)
-Set(LIBRARY_NAME SPiRIT)
+CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
+
+Set(LINKDEF STParLinkDef.h)
+Set(LIBRARY_NAME STPar)
 Set(DEPENDENCIES
     Base
     Stack
