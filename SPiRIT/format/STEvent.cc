@@ -55,7 +55,7 @@ Int_t STEvent::GetNumHits()
 
 STHit *STEvent::GetHit(Int_t hitNo)
 {
-  return (hitNo < GetNumHits() ? fHitsArray -> At(hitNo) : 0);
+  return (hitNo < GetNumHits() ? (STHit *) fHitsArray -> At(hitNo) : 0);
 }
 
 STHit *STEvent::RemoveHit(Int_t hitNo)
@@ -63,7 +63,7 @@ STHit *STEvent::RemoveHit(Int_t hitNo)
   if (!(hitNo < GetNumHits()))
     return 0;
 
-  STHit *removedHit = fHitsArray -> At(hitNo);
+  STHit *removedHit = (STHit *) fHitsArray -> At(hitNo);
   fHitsArray -> RemoveAt(hitNo);
 
   return removedHit;
