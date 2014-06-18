@@ -19,15 +19,16 @@ ClassImp(STEvent);
 STEvent::STEvent()
 {
   fEventID = -4;
-  fNumHits = -4;
 
-  memset(fHitsArray, 0, sizeof(fHitsArray));
+  fIsClustered = 0;
+  fIsTracked = 0;
+
+  fHitsArray = new TClonesArray("STHit", 100);
 }
 
 STEvent::~STEvent()
 {
-  for (Int_t iHit = 0; iHit < fNumHits; iHit++)
-    delete fHitsArray[iHit];
+  delete fHitsArray;
 }
 
 // setters
@@ -36,10 +37,9 @@ void STEvent::SetEventID(Int_t evtid)
   fEventID = evtid;
 }
 
-void STEvent::SetHit(STHit *pad)
+void STEvent::AddHit(STHit *hit)
 {
-  fHitsArray[fNumHits] = pad;
-  fNumHits++;
+  fHitsArray -> AddLast(hit);
 }
 
 // getters
@@ -50,10 +50,21 @@ Int_t STEvent::GetEventID()
 
 Int_t STEvent::GetNumHits()
 {
-  return fNumHits;
+  return fHitsArray -> GetEntriesFast();
 }
 
-STHit *STEvent::GetHit(Int_t padNo)
+STHit *STEvent::GetHit(Int_t hitNo)
 {
-  return (padNo < fNumHits ? fHitsArray[padNo] : 0);
+  return (hitNo < GetNumHits() ? fHitsArray -> At(hitNo) : 0);
+}
+
+STHit *STEvent::RemoveHit(Int_t hitNo)
+{
+  if (!(hitNo < GetNumHits()))
+    return 0;
+
+  STHit *removedHit = fHitsArray -> At(hitNo);
+  fHitsArray -> RemoveAt(hitNo);
+
+  return removedHit;
 }

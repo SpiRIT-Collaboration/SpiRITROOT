@@ -13,9 +13,13 @@
 
 #include "TROOT.h"
 #include "TObject.h"
+#include "TClonesArray.h"
+
+#include <vector>
 
 #include "STHit.hh"
 //#include "STTrack.hh"
+
 
 class STEvent : public TObject {
   public:
@@ -24,17 +28,30 @@ class STEvent : public TObject {
 
     // setters
     void SetEventID(Int_t evtid);
-    void SetHit(STHit *hit);
+    void AddHit(STHit *hit);
+
+    void SetIsClustered(Bool_t value);
+    void SetIsTracked(Bool_t value);
 
     // getters
     Int_t GetEventID();
     Int_t GetNumHits();
+//    Int_t GetNumTracks();
+
     STHit *GetHit(Int_t hitNo);
+    STHit *RemoveHit(Int_t hitNo);
+
+    Bool_t IsClustered();
+    Bool_t IsTracked();
 
   private:
+    Bool_t fIsClustered;
+    Bool_t fIsTracked;
+
     Int_t fEventID;
-    Int_t fNumHits;
-    STHit *fHitsArray[40000];
+
+    TClonesArray *fHitsArray;
+//    TClonesArray *fTrackArray;
 
   ClassDef(STEvent, 1);
 };
