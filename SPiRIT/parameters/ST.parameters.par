@@ -5,7 +5,7 @@
 # STDigiPar
 # Description of parameters
 ################################################################################
-[STDIgiPar]
+[STDigiPar]
 STGasFile:Int_t 1
 EField:Double_t 0
 PadPlaneFile:Int_t 2
