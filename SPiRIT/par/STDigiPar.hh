@@ -24,8 +24,10 @@ class STDigiPar : public FairParGenericSet
     
     // Getters
     STGas *GetGas();
+    virtual Bool_t getParams(FairParamList *paramList);
 
     // Setters
+    virtual void putParams(FairParamList *paramList);
 
     // Main methods
 
