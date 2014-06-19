@@ -3,7 +3,7 @@
 // $Id$
 //
 // Description:
-//      STPar reads in parameters for digitization and reconstruction
+//      STDigiPar reads in parameters for digitization and reconstruction
 //      and stores them for later use.
 //
 // Author List:
@@ -11,19 +11,19 @@
 //
 //----------------------------------------------------------------------
 
-#ifndef _STPAR_H_
-#define _STPAR_H_
+#ifndef _STDIGIPAR_H_
+#define _STDIGIPAR_H_
 
 #include "FairParGenericSet.h"
 
 #include "STGas.hh"
 
-class STPar : public FairParGenericSet
+class STDigiPar : public FairParGenericSet
 {
   public:
     // Constructors and Destructors
-    STPar();
-    ~STPar();
+    STDigiPar();
+    ~STDigiPar();
 
     // Operators
     
@@ -37,7 +37,7 @@ class STPar : public FairParGenericSet
   private:
     STGas *fGas;
 
-  ClassDef(STPar, 1);
+  ClassDef(STDigiPar, 1);
 };
 
 #endif

@@ -68,9 +68,9 @@ STDecoderTask::SetParContainers()
   if (!db)
     Fatal("STDecoderTask::SetParContainers()", "No runtime database!");
 
-  fPar = (STPar *) db -> getContainer("STPar");
+  fPar = (STDigiPar *) db -> getContainer("STDigiPar");
   if (!fPar)
-    Fatal("STDecoderTask::SetParContainers()", "STPar not found!!");
+    Fatal("STDecoderTask::SetParContainers()", "STDigiPar not found!!");
 }
 
 void

@@ -27,7 +27,7 @@
 // Collaborating Class Declarations --
 class TClonesArray;
 class STRiemannTrackFinder;
-class STPar;
+class STDigiPar;
 
 class STRiemannTrackingTask : public FairTask
 {
@@ -111,7 +111,7 @@ class STRiemannTrackingTask : public FairTask
     TClonesArray *fRiemannTrackArray;
     TClonesArray *fRiemannHitArray;
 
-    STPar *fPar;
+    STDigiPar *fPar;
 
     std::map<UInt_t, std::vector<TpcCluster *> *> fBufferMap;
     std::vector<TpcCluster *> *fClusterBuffer;

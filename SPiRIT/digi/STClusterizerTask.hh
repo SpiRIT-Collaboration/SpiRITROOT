@@ -22,7 +22,7 @@
 
 // SPiRIT-TPC headers
 #include "STGas.hh"
-#include "STPar.hh"
+#include "STDigiPar.hh"
 
 class STClusterizerTask : public FairTask
 {
@@ -46,7 +46,7 @@ class STClusterizerTask : public FairTask
     TCloneArray *fPrimaryClusterArray; //! Primary cluster array
 
     const STGas *fGas;                 //! STGas pointer
-    STPar *fPar;                       //! STPar pointer
+    STDigiPar *fPar;                       //! STDigiPar pointer
     Float_t fFirstIonizationPotential; //! First ionization potential
 
     Bool_t fIsPersistant;

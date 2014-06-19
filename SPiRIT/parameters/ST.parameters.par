@@ -1,11 +1,11 @@
 ################################################################################
-# Digitization and reconstruction parameters for SPiRIT-TPC
+# Parameters used throughout SPiRITROOT software
 # Format:
 # parameter_name:parameter_type(Int_t-integer, Double_t-double) parameter_value
-# STPar
+# STDigiPar
 # Description of parameters
 ################################################################################
-[STPar]
+[STDIgiPar]
 STGasFile:Int_t 1
 EField:Double_t 0
 PadPlaneFile:Int_t 2

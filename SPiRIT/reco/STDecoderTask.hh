@@ -24,7 +24,7 @@
 #include "STMap.hh"
 #include "STPedestal.hh"
 
-#include "STPar.hh"
+#include "STDigiPar.hh"
 
 // ROOT classes
 
@@ -43,7 +43,7 @@ class STDecoderTask : public FairTask {
     GETDecoder *fDecoder;
     Int_t fNumTbs;
 
-    STPar *fPar;
+    STDigiPar *fPar;
 
   ClassDef(STDecoderTask, 1);
 };

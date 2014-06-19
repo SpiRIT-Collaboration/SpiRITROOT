@@ -4,7 +4,7 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class STPar+;
+#pragma link C++ class STDigiPar+;
 #pragma link C++ class STGas+;
 
 #endif

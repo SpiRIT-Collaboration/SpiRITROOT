@@ -3,7 +3,7 @@
 // $Id$
 //
 // Description:
-//      STPar reads in parameters for digitization and reconstruction
+//      STDigiPar reads in parameters for digitization and reconstruction
 //      and stores them for later use.
 //
 // Author List:
@@ -11,20 +11,20 @@
 //
 //----------------------------------------------------------------------
 
-#include "STPar.hh"
+#include "STDigiPar.hh"
 
-ClassImp(STPar)
+ClassImp(STDigiPar)
 
-STPar::STPar()
-:FairParGenericSet("STPar", "SPiRIT Parameter Container", "")
+STDigiPar::STDigiPar()
+:FairParGenericSet("STDigiPar", "SPiRIT Parameter Container", "")
 {
 }
 
-STPar::~STPar()
+STDigiPar::~STDigiPar()
 {
 }
 
-STGas *STPar::GetGas()
+STGas *STDigiPar::GetGas()
 {
   return fGas;
 }

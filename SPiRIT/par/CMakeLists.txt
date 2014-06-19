@@ -23,7 +23,7 @@ ${ROOT_LIBRARY_DIR}
 link_directories( ${LINK_DIRECTORIES})
 
 set(SRCS
-STPar.cc
+STDigiPar.cc
 STGas.cc
 )
 
