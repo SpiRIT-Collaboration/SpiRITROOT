@@ -19,7 +19,7 @@ STHit::STHit()
 STHit::~STHit()
 {}
 
-void STHit::SetTrackID(Int trackID)
+void STHit::SetTrackID(Int_t trackID)
 {
   fTrackID = trackID;
 }

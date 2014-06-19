@@ -35,6 +35,8 @@ GETDecoder/GETPlot.cc
 STConverter/STCore.cc
 STConverter/STPedestal.cc
 STConverter/STMap.cc
+
+STDecoderTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

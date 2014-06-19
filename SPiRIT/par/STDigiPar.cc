@@ -1,14 +1,9 @@
 //---------------------------------------------------------------------
-// File and Version Information:
-// $Id$
-//
 // Description:
-//      STDigiPar reads in parameters for digitization and reconstruction
-//      and stores them for later use.
+//      STDigiPar reads in parameters and stores them for later use.
 //
 // Author List:
 //      Genie Jhang     Korea Univ.            (original author)
-//
 //----------------------------------------------------------------------
 
 #include "STDigiPar.hh"

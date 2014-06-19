@@ -52,7 +52,10 @@ STDecoderTask::Init()
     return kERROR;
   }
 
-  fDecoder = new GETDecoder(grawFile, fNumTbs);
+  fDecoder = new GETDecoder(grawFile);
+  fDecoder -> SetNumTbs(fNumTbs);
+
+  Info("STDecoderTask::Init()", "Testing order - This should be deleted!");
 
   return kSUCCESS;
 }
@@ -71,9 +74,12 @@ STDecoderTask::SetParContainers()
   fPar = (STDigiPar *) db -> getContainer("STDigiPar");
   if (!fPar)
     Fatal("STDecoderTask::SetParContainers()", "STDigiPar not found!!");
+
+  Info("STDecoderTask::SetParContainers()", "Testing order - This should be deleted!");
 }
 
 void
 STDecoderTask::Exec(Option_t *opt)
 {
+  Info("STDecoderTask::Exec()", "Testing order - This should be deleted!");
 }
