@@ -25,6 +25,8 @@ class STHit : public TObject {
     STHit();
     ~STHit();
 
+    //!< Track ID setter
+    void SetTrackID(Int_t trackID);
     //!< Hit setter
     void SetHit(TVector3 vec, Double_t charge);
     void SetHit(Double_t x, Double_t y, Double_t z, Double_t charge);
@@ -34,12 +36,16 @@ class STHit : public TObject {
     //!< Charge setter
     void SetCharge(Double_t charge);
 
+    //!< Track ID getter
+    Int_t GetTrackID();
     //!< Position getter
     TVector3 GetPosition();
     //!< Charge getter
     Double_t GetCharge();
 
   private:
+    //!< Track ID
+    Int_t fTrackID;
     //!< Position
     TVector3 fPosition;
     //!< Charge

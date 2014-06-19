@@ -19,6 +19,11 @@ STHit::STHit()
 STHit::~STHit()
 {}
 
+void STHit::SetTrackID(Int trackID)
+{
+  fTrackID = trackID;
+}
+
 void STHit::SetHit(TVector3 vec, Double_t charge)
 {
   fPosition = vec;
@@ -44,6 +49,11 @@ void STHit::SetPosition(Double_t x, Double_t y, Double_t z)
 void STHit::SetCharge(Double_t charge)
 {
   fCharge = charge;
+}
+
+Int_t STHit::GetTrackID()
+{
+  return fTrackID;
 }
 
 TVector3 STHit::GetPosition()
