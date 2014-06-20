@@ -46,6 +46,8 @@ Set(LIBRARY_NAME STReco)
 Set(DEPENDENCIES
     Base
     Stack
+    STFormat
+    STPar
 )
 
 GENERATE_LIBRARY()

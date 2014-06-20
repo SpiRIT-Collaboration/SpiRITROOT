@@ -115,7 +115,7 @@ void STDetector::Register()
       only during the simulation.
   */
 
-  FairRootManager::Instance()->Register("STMCPoint", "STDetector",
+  FairRootManager::Instance()->Register("STMCPoint", "SPiRIT",
                                         fSTMCPointCollection, kTRUE);
 
 }

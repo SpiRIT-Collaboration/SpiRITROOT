@@ -1,6 +1,3 @@
-#ifndef __STGEOPAR_H__
-#define __STGEOPAR_H__
-
 // FAIRROOT classes
 #include "FairParamList.h"
 
@@ -48,5 +45,3 @@ Bool_t STGeoPar::getParams(FairParamList* l)
   if (!l->fillObject("FairGeoNodes Passive List", fGeoPassNodes)) { return kFALSE; }
   return kTRUE;
 }
-
-#endif

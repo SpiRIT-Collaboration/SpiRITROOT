@@ -34,7 +34,6 @@ void STContFact::setAllContainers()
   FairContainer* p = new FairContainer("STGeoPar",
                                        "SPiRIT Geometry Parameters",
                                        "TestDefaultContext");
-  p -> addContext("TestNonDefaultContext");
 
   containers -> Add(p);
 
@@ -54,10 +53,12 @@ FairParSet* STContFact::createContainer(FairContainer* c)
   */
   const char* name = c -> GetName();
   FairParSet* p = NULL;
+
   if (strcmp(name, "STGeoPar") == 0) {
     p = new STGeoPar(c->getConcatName().Data(),
                      c->GetTitle(),c->getContext());
   }
+
   if (strcmp(name, "STDigiPar") == 0) {
     p = new STDigiPar(c -> getConcatName().Data(),
                       c -> GetTitle(), c -> getContext());

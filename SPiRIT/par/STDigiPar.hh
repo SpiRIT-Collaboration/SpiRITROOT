@@ -9,15 +9,19 @@
 #ifndef _STDIGIPAR_H_
 #define _STDIGIPAR_H_
 
+// FAIRROOT classes
 #include "FairParGenericSet.h"
+#include "FairParamList.h"
+#include "FairLogger.h"
 
+// SPiRITROOT classes
 #include "STGas.hh"
 
 class STDigiPar : public FairParGenericSet
 {
   public:
     // Constructors and Destructors
-    STDigiPar();
+    STDigiPar(const Char_t *name, const Char_t *title, const Char_t *context);
     ~STDigiPar();
 
     // Operators
@@ -32,7 +36,16 @@ class STDigiPar : public FairParGenericSet
     // Main methods
 
   private:
+    FairLogger *fLogger;
+
     STGas *fGas;
+
+    Bool_t fInitialized;
+
+    Int_t fGasFile;
+    Double_t fEField;
+    Int_t fPadPlaneFile;
+    Int_t fPadShapeFile;
 
   ClassDef(STDigiPar, 1);
 };

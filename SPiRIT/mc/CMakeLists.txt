@@ -35,6 +35,8 @@ Set(LIBRARY_NAME SPiRIT)
 Set(DEPENDENCIES
     Base
     Stack
+    STPar
+    STFormat
 )
 
 GENERATE_LIBRARY()
