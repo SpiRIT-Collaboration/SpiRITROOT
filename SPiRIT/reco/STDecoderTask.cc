@@ -22,7 +22,6 @@ ClassImp(STDecoderTask);
 STDecoderTask::STDecoderTask()
 {
   fDecoder = NULL;
-  fNumTbs = 512;
 
   fPar = NULL;
 }
@@ -34,7 +33,13 @@ STDecoderTask::~STDecoderTask()
 void
 STDecoderTask::SetNumTbs(Int_t numTbs)
 {
-  fNumTbs = numTbs;
+  fDecoder -> SetNumTbs(numTbs);
+}
+
+void
+STDecoderTask::SetGraw(Char_t *filename)
+{
+  fDecoder -> AddGraw(filename);
 }
 
 InitStatus
@@ -46,16 +51,7 @@ STDecoderTask::Init()
     return kERROR;
   }
 
-  Char_t *grawFile = (Char_t *) ioMan -> GetObject("GRAWInputFileName");
-  if (grawFile == NULL) {
-    Error("STDecoderTask::Init()", "GRAW file not found!");
-    return kERROR;
-  }
-
-  fDecoder = new GETDecoder(grawFile);
-  fDecoder -> SetNumTbs(fNumTbs);
-
-  Info("STDecoderTask::Init()", "Testing order - This should be deleted!");
+  fDecoder = new GETDecoder();
 
   return kSUCCESS;
 }
@@ -74,12 +70,9 @@ STDecoderTask::SetParContainers()
   fPar = (STDigiPar *) db -> getContainer("STDigiPar");
   if (!fPar)
     Fatal("STDecoderTask::SetParContainers()", "STDigiPar not found!!");
-
-  Info("STDecoderTask::SetParContainers()", "Testing order - This should be deleted!");
 }
 
 void
 STDecoderTask::Exec(Option_t *opt)
 {
-  Info("STDecoderTask::Exec()", "Testing order - This should be deleted!");
 }

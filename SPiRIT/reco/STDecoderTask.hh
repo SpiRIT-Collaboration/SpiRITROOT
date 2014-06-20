@@ -34,6 +34,7 @@ class STDecoderTask : public FairTask {
     ~STDecoderTask();
 
     void SetNumTbs(Int_t numTbs);
+    void SetGraw(Char_t *filename);
 
     virtual InitStatus Init();
     virtual void SetParContainers();
@@ -41,7 +42,6 @@ class STDecoderTask : public FairTask {
 
   private:
     GETDecoder *fDecoder;
-    Int_t fNumTbs;
 
     STDigiPar *fPar;
 
