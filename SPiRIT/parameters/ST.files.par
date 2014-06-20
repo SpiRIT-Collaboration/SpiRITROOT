@@ -1,5 +1,5 @@
-SPiRIT/parameters/UnitAsAd.map
-SPiRIT/parameters/AGET.map
-SPiRIT/parameters/GASFILENAME.EXTENSION
-SPiRIT/parameters/PADPLANEFILE.EXTENSION
-SPiRIT/parameters/PADSHAPEFILE.EXTENSION
+parameters/UnitAsAd.map
+parameters/AGET.map
+parameters/GASFILENAME.EXTENSION
+parameters/PADPLANEFILE.EXTENSION
+parameters/PADSHAPEFILE.EXTENSION
