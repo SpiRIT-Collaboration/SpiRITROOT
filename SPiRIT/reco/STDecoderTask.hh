@@ -17,8 +17,7 @@
 #include "FairTask.h"
 
 // SPiRITROOT classes
-#include "GETDecoder.hh"
-#include "GETFrame.hh"
+#include "STCore.hh"
 
 #include "STCore.hh"
 #include "STMap.hh"
@@ -41,7 +40,7 @@ class STDecoderTask : public FairTask {
     virtual void Exec(Option_t *opt);
 
   private:
-    GETDecoder *fDecoder;
+    STCore *fDecoder;
 
     Char_t *fGrawFile;
     Int_t fNumTbs;

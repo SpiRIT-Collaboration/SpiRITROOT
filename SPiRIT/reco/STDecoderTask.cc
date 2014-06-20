@@ -50,8 +50,9 @@ STDecoderTask::Init()
     return kERROR;
   }
 
-  fDecoder = new GETDecoder(fGrawFile);
-  fDecoder -> SetNumTbs(fNumTbs);
+  fDecoder = new STCore(fGrawFile, fNumTbs);
+  fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
+  fDecoder -> SetAGETMap((fPar -> GetFile(1)).Data());
 
   return kSUCCESS;
 }
