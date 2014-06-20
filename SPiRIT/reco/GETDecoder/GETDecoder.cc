@@ -36,7 +36,7 @@ GETDecoder::GETDecoder()
   Initialize();
 }
 
-GETDecoder::GETDecoder(Char_t *filename)
+GETDecoder::GETDecoder(TString filename)
 {
   /**
     * Automatically add the rawdata file to the list
@@ -90,7 +90,7 @@ void GETDecoder::SetDebugMode(Bool_t value)
   fDebugMode = value;
 }
 
-void GETDecoder::AddGraw(const Char_t *filename)
+void GETDecoder::AddGraw(TString filename)
 {
   /**
     * Check if there is a file named `filename`. If exists, add it to the list.

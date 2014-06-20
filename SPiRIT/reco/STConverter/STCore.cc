@@ -27,13 +27,13 @@ STCore::STCore()
   Initialize();
 }
 
-STCore::STCore(Char_t *filename)
+STCore::STCore(TString filename)
 {
   Initialize();
   AddGraw(filename);
 }
 
-STCore::STCore(Char_t *filename, Int_t numTbs)
+STCore::STCore(TString filename, Int_t numTbs)
 {
   Initialize();
   AddGraw(filename);
@@ -70,7 +70,7 @@ void STCore::Initialize()
   fCurrFrameNo = 0;
 }
 
-void STCore::AddGraw(Char_t *filename)
+void STCore::AddGraw(TString filename)
 {
   fDecoderPtr -> AddGraw(filename);
   fIsGraw = fDecoderPtr -> SetData(0);
@@ -90,7 +90,7 @@ void STCore::SetInternalPedestal(Int_t startTb, Int_t numTbs)
   fNumTbs = numTbs;
 }
 
-void STCore::SetPedestalData(Char_t *filename)
+void STCore::SetPedestalData(TString filename)
 {
   fIsPedestalData = fPedestalPtr -> SetPedestalData(filename);
 
@@ -100,12 +100,12 @@ void STCore::SetPedestalData(Char_t *filename)
     std::cout << "== Pedestal data is not set! Check it exists!" << std::endl;
 }
 
-void STCore::SetUAMap(Char_t *filename)
+void STCore::SetUAMap(TString filename)
 {
   fMapPtr -> SetUAMap(filename);
 }
 
-void STCore::SetAGETMap(Char_t *filename)
+void STCore::SetAGETMap(TString filename)
 {
   fMapPtr -> SetAGETMap(filename);
 }

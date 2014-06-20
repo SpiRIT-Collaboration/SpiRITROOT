@@ -31,7 +31,7 @@ class GETDecoder : public TObject
     //! Constructor
     GETDecoder();
     //! Constructor
-    GETDecoder(Char_t *filename /*!< GRAW filename including path */);
+    GETDecoder(TString filename /*!< GRAW filename including path */);
     //! Destructor
     ~GETDecoder();
 
@@ -40,7 +40,7 @@ class GETDecoder : public TObject
     //! Setting the number of time buckets.
     void SetNumTbs(Int_t value = 512);
     //! Add the data file to the list of rawdata.
-    void AddGraw(const Char_t *filename);
+    void AddGraw(TString filename);
     //! Set the data file to the class.
     Bool_t SetData(Int_t index);
     //! Search the next file and set it if exists. Returns 1 if successful.

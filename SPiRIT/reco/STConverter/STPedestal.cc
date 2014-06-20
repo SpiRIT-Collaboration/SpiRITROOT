@@ -23,7 +23,7 @@ STPedestal::STPedestal() {
   Initialize();
 }
 
-STPedestal::STPedestal(Char_t *pedestalData) {
+STPedestal::STPedestal(TString pedestalData) {
   Initialize();
 
   SetPedestalData(pedestalData);
@@ -37,7 +37,7 @@ void STPedestal::Initialize() {
   pedestalSigma = 0;
 }
 
-Bool_t STPedestal::SetPedestalData(Char_t *pedestalData) {
+Bool_t STPedestal::SetPedestalData(TString pedestalData) {
   if (openFile != NULL)
     delete openFile;
 

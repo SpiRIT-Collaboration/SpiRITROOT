@@ -97,10 +97,10 @@ Bool_t STMap::IsSetAGETMap()
   return fIsSetAGETMap;
 }
 
-void STMap::SetUAMap(Char_t *filename)
+void STMap::SetUAMap(TString filename)
 {
   char dummy[25];
-  std::ifstream uaMap(filename);
+  std::ifstream uaMap(filename.Data());
   uaMap.getline(dummy, 200);
 
   if (!uaMap.is_open()) {
@@ -122,10 +122,10 @@ void STMap::SetUAMap(Char_t *filename)
   fIsSetUAMap = 1;
 }
 
-void STMap::SetAGETMap(Char_t *filename)
+void STMap::SetAGETMap(TString filename)
 {
   char dummy[25];
-  std::ifstream chToPadMap(filename);
+  std::ifstream chToPadMap(filename.Data());
   chToPadMap.getline(dummy, 200);
 
   if (!chToPadMap.is_open()) {

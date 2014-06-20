@@ -12,6 +12,7 @@
 #define _STCORE_H_
 
 #include "TObject.h"
+#include "TString.h"
 
 #include "STRawEvent.hh"
 #include "STMap.hh"
@@ -22,20 +23,20 @@
 class STCore : public TObject {
   public:
     STCore();
-    STCore(Char_t *filename);
-    STCore(Char_t *filename, Int_t numTbs);
+    STCore(TString filename);
+    STCore(TString filename, Int_t numTbs);
     ~STCore();
 
     void Initialize();
 
     // setters
-    void AddGraw(Char_t *filename);
+    void AddGraw(TString filename);
     void SetNumTbs(Int_t value);
     void SetInternalPedestal(Int_t startTb = 10, Int_t numTbs = 20);
-    void SetPedestalData(Char_t *filename);
+    void SetPedestalData(TString filename);
 
-    void SetUAMap(Char_t *filename);
-    void SetAGETMap(Char_t *filename);
+    void SetUAMap(TString filename);
+    void SetAGETMap(TString filename);
 
     // getters
     STRawEvent *GetRawEvent(Int_t eventID = -1);

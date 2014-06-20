@@ -15,6 +15,7 @@
 
 #include "TROOT.h"
 #include "TObject.h"
+#include "TString.h"
 
 class STMap : public TObject {
   public:
@@ -22,8 +23,8 @@ class STMap : public TObject {
     ~STMap() {}
 
     // Setter
-    void SetUAMap(Char_t *filename);
-    void SetAGETMap(Char_t *filename);
+    void SetUAMap(TString filename);
+    void SetAGETMap(TString filename);
 
     // Getter
     Bool_t IsSetUAMap();
