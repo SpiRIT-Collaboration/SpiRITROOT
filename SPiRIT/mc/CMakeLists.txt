@@ -24,11 +24,13 @@ ${ROOT_LIBRARY_DIR}
 link_directories( ${LINK_DIRECTORIES})
 
 set(SRCS
-SPiRIT.cxx
-STGeo.cxx
+STDetector.cc
+STGeo.cc
 )
 
-Set(LINKDEF SPiRITLinkDef.h)
+CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
+
+Set(LINKDEF STMCLinkDef.h)
 Set(LIBRARY_NAME SPiRIT)
 Set(DEPENDENCIES
     Base

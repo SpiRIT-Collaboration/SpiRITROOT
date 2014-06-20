@@ -10,7 +10,7 @@ class STMCPoint;
 class FairVolume;
 class TClonesArray;
 
-class SPiRIT: public FairDetector
+class STDetector: public FairDetector
 {
 
   public:
@@ -19,13 +19,13 @@ class SPiRIT: public FairDetector
      *       Active: kTRUE for active detectors (ProcessHits() will be called)
      *               kFALSE for inactive detectors
     */
-    SPiRIT(const char* Name, Bool_t Active);
+    STDetector(const char* Name, Bool_t Active);
 
     /**      default constructor    */
-    SPiRIT();
+    STDetector();
 
     /**       destructor     */
-    virtual ~SPiRIT();
+    virtual ~STDetector();
 
     /**      Initialization of the detector is done here    */
     virtual void   Initialize();
@@ -90,10 +90,10 @@ class SPiRIT: public FairDetector
 
     TClonesArray*  fSTMCPointCollection;
 
-    SPiRIT(const SPiRIT&);
-    SPiRIT& operator=(const SPiRIT&);
+    STDetector(const STDetector&);
+    STDetector& operator=(const STDetector&);
 
-    ClassDef(SPiRIT,1)
+    ClassDef(STDetector,1)
 };
 
 #endif //SPIRIT_H

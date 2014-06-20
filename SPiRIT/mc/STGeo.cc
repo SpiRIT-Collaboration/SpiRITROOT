@@ -1,5 +1,9 @@
-#include "STGeo.h"
+#ifndef STGEO_H
+#define STGEO_H
+
 #include "FairGeoNode.h"
+
+#include "STGeo.hh"
 
 ClassImp(STGeo)
 
@@ -34,3 +38,5 @@ const char* STGeo::getEleName(Int_t m)
   sprintf(eleName,"SPiRIT%i",m+1);
   return eleName;
 }
+
+#endif

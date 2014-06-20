@@ -11,6 +11,7 @@ ${CMAKE_SOURCE_DIR}/parbase
 ${CMAKE_SOURCE_DIR}/geobase
 ${CMAKE_SOURCE_DIR}/SPiRIT/mc
 ${CMAKE_SOURCE_DIR}/SPiRIT/stack
+${CMAKE_SOURCE_DIR}/SPiRIT/par
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
