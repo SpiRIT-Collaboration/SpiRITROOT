@@ -1,16 +1,23 @@
-#include "STGeoPar.h"
+#ifndef __STGEOPAR_H__
+#define __STGEOPAR_H__
 
+// FAIRROOT classes
 #include "FairParamList.h"
 
+// SPiRITROOT classes
+#include "STGeoPar.hh"
+
+// ROOT classes
 #include "TObjArray.h"
 
+// STL
 #include <iostream>
 
 ClassImp(STGeoPar)
 
 STGeoPar ::STGeoPar(const char* name,
-                                      const char* title,
-                                      const char* context)
+                    const char* title,
+                    const char* context)
   : FairParGenericSet(name,title,context),
     fGeoSensNodes(new TObjArray()),
     fGeoPassNodes(new TObjArray())
@@ -41,3 +48,5 @@ Bool_t STGeoPar::getParams(FairParamList* l)
   if (!l->fillObject("FairGeoNodes Passive List", fGeoPassNodes)) { return kFALSE; }
   return kTRUE;
 }
+
+#endif
