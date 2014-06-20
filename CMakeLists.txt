@@ -17,7 +17,8 @@ project(SPiRITROOT)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/cuda" ${CMAKE_MODULE_PATH})
 
-SET(VMCWORKDIR ${CMAKE_SOURCE_DIR}/example)
+SET(VMCWORKDIR ${CMAKE_SOURCE_DIR}/example) # This will be deleted after completing the development
+SET(SPIRITDIR ${CMAKE_SOURCE_DIR}/SPiRIT)
 
 # Check if the compiler support specific C++11 features
 # Up to now this is only a check since the code does not use
