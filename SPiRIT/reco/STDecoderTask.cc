@@ -22,7 +22,6 @@ ClassImp(STDecoderTask);
 STDecoderTask::STDecoderTask()
 {
   fDecoder = NULL;
-
   fPar = NULL;
 }
 
@@ -33,13 +32,13 @@ STDecoderTask::~STDecoderTask()
 void
 STDecoderTask::SetNumTbs(Int_t numTbs)
 {
-  fDecoder -> SetNumTbs(numTbs);
+  fNumTbs = numTbs;
 }
 
 void
 STDecoderTask::SetGraw(Char_t *filename)
 {
-  fDecoder -> AddGraw(filename);
+  fGrawFile = filename;
 }
 
 InitStatus
@@ -51,7 +50,8 @@ STDecoderTask::Init()
     return kERROR;
   }
 
-  fDecoder = new GETDecoder();
+  fDecoder = new GETDecoder(fGrawFile);
+  fDecoder -> SetNumTbs(fNumTbs);
 
   return kSUCCESS;
 }
@@ -70,6 +70,7 @@ STDecoderTask::SetParContainers()
   fPar = (STDigiPar *) db -> getContainer("STDigiPar");
   if (!fPar)
     Fatal("STDecoderTask::SetParContainers()", "STDigiPar not found!!");
+
 }
 
 void

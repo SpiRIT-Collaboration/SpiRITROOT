@@ -43,6 +43,9 @@ class STDecoderTask : public FairTask {
   private:
     GETDecoder *fDecoder;
 
+    Char_t *fGrawFile;
+    Int_t fNumTbs;
+
     STDigiPar *fPar;
 
   ClassDef(STDecoderTask, 1);
