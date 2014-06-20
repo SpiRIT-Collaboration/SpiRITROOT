@@ -68,3 +68,32 @@ void STDigiPar::putParams(FairParamList *paramList)
   paramList -> add("PadPlaneFile", fPadPlaneFile);
   paramList -> add("PadShapeFile", fPadShapeFile);
 }
+
+TString STDigiPar::GetFile(Int_t fileNum)
+{
+  ifstream fileList;
+  TString sysFile = gSystem -> Getenv("SPIRITDIR");
+  TString parFile = sysFile + "/parameters/ST.files.par";
+  fileList.open(parFile.Data());
+
+  if(!fileList) {
+    fLogger -> Fatal(MESSAGE_ORIGIN, Form("File %s not found!", parFile.Data()));
+
+    throw;
+  }
+
+  Char_t buffer[256];
+  for(Int_t iFileNum = 0; iFileNum < fileNum + 1; ++iFileNum){
+    if(fileList.eof()) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, Form("Did not find string #%d in file %s.", fileNum, parFile.Data()));
+
+      throw;
+    }
+
+    fileList.getline(buffer, 256);
+  }
+
+  fileList.close();
+
+  return TString(sysFile + "/" + buffer);
+}

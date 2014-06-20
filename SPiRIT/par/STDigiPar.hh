@@ -17,6 +17,10 @@
 // SPiRITROOT classes
 #include "STGas.hh"
 
+// ROOT classes
+#include "TString.h"
+#include "TSystem.h"
+
 class STDigiPar : public FairParGenericSet
 {
   public:
@@ -29,6 +33,8 @@ class STDigiPar : public FairParGenericSet
     // Getters
     STGas *GetGas();
     virtual Bool_t getParams(FairParamList *paramList);
+
+    TString GetFile(Int_t fileNum);
 
     // Setters
     virtual void putParams(FairParamList *paramList);
