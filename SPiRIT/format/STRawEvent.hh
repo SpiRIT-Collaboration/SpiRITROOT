@@ -16,7 +16,7 @@
 
 #include "STPad.hh"
 
-class STRawEvent : public TObject {
+class STRawEvent : public TNamed {
   public:
     STRawEvent();
     ~STRawEvent();

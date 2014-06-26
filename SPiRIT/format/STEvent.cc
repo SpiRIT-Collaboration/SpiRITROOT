@@ -17,6 +17,7 @@
 ClassImp(STEvent);
 
 STEvent::STEvent()
+:TNamed("STEvent", "Event container")
 {
   fEventID = -4;
 

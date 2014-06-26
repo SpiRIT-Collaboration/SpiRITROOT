@@ -21,7 +21,7 @@
 //#include "STTrack.hh"
 
 
-class STEvent : public TObject {
+class STEvent : public TNamed {
   public:
     STEvent();
     ~STEvent();

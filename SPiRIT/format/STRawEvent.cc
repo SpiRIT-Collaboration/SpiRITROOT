@@ -17,6 +17,7 @@
 ClassImp(STRawEvent);
 
 STRawEvent::STRawEvent()
+:TNamed("STRawEvent", "Raw event container")
 {
   fEventID = -1;
   fNumPads = 0;
