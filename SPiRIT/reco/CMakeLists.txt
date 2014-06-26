@@ -37,6 +37,7 @@ STConverter/STPedestal.cc
 STConverter/STMap.cc
 
 STDecoderTask.cc
+STPSATask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
