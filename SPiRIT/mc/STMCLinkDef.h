@@ -4,9 +4,7 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class STContFact;
 #pragma link C++ class STGeo;
-#pragma link C++ class STGeoPar;
-#pragma link C++ class SPiRIT+;
+#pragma link C++ class STDetector+;
 
 #endif

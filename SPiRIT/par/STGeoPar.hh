@@ -1,5 +1,5 @@
-#ifndef SPIRITGEOPAR_H
-#define SPIRITGEOPAR_H
+#ifndef STGEOPAR_H
+#define STGEOPAR_H
 
 #include "FairParGenericSet.h"
 
@@ -17,8 +17,8 @@ class STGeoPar       : public FairParGenericSet
     TObjArray*      fGeoPassNodes;
 
     STGeoPar(const char* name="STGeoPar",
-                      const char* title="SPiRIT Geometry Parameters",
-                      const char* context="TestDefaultContext");
+             const char* title="SPiRIT Geometry Parameters",
+             const char* context="TestDefaultContext");
     ~STGeoPar(void);
     void clear(void);
     void putParams(FairParamList*);

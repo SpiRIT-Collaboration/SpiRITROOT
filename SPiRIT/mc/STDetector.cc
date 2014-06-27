@@ -1,8 +1,7 @@
-#include "SPiRIT.h"
-
-#include "STMCPoint.h"
-#include "STGeo.h"
-#include "STGeoPar.h"
+#include "STDetector.hh"
+#include "STMCPoint.hh"
+#include "STGeo.hh"
+#include "STGeoPar.hh"
 
 #include "FairVolume.h"
 #include "FairGeoVolume.h"
@@ -22,7 +21,7 @@
 using std::cout;
 using std::endl;
 
-SPiRIT::SPiRIT()
+STDetector::STDetector()
   : FairDetector("SPiRIT", kTRUE, kSPiRIT),
     fTrackID(-1),
     fVolumeID(-1),
@@ -35,7 +34,7 @@ SPiRIT::SPiRIT()
 {
 }
 
-SPiRIT::SPiRIT(const char* name, Bool_t active)
+STDetector::STDetector(const char* name, Bool_t active)
   : FairDetector(name, active, kSPiRIT),
     fTrackID(-1),
     fVolumeID(-1),
@@ -48,7 +47,7 @@ SPiRIT::SPiRIT(const char* name, Bool_t active)
 {
 }
 
-SPiRIT::~SPiRIT()
+STDetector::~STDetector()
 {
   if (fSTMCPointCollection) {
     fSTMCPointCollection->Delete();
@@ -56,14 +55,14 @@ SPiRIT::~SPiRIT()
   }
 }
 
-void SPiRIT::Initialize()
+void STDetector::Initialize()
 {
   FairDetector::Initialize();
   FairRuntimeDb* rtdb= FairRun::Instance()->GetRuntimeDb();
   STGeoPar* par=(STGeoPar*)(rtdb->getContainer("STGeoPar"));
 }
 
-Bool_t  SPiRIT::ProcessHits(FairVolume* vol)
+Bool_t  STDetector::ProcessHits(FairVolume* vol)
 {
   /** This method is called from the MC stepping */
 
@@ -98,7 +97,7 @@ Bool_t  SPiRIT::ProcessHits(FairVolume* vol)
   return kTRUE;
 }
 
-void SPiRIT::EndOfEvent()
+void STDetector::EndOfEvent()
 {
 
   fSTMCPointCollection->Clear();
@@ -107,7 +106,7 @@ void SPiRIT::EndOfEvent()
 
 
 
-void SPiRIT::Register()
+void STDetector::Register()
 {
 
   /** This will create a branch in the output tree called
@@ -122,18 +121,18 @@ void SPiRIT::Register()
 }
 
 
-TClonesArray* SPiRIT::GetCollection(Int_t iColl) const
+TClonesArray* STDetector::GetCollection(Int_t iColl) const
 {
   if (iColl == 0) { return fSTMCPointCollection; }
   else { return NULL; }
 }
 
-void SPiRIT::Reset()
+void STDetector::Reset()
 {
   fSTMCPointCollection->Clear();
 }
 
-void SPiRIT::ConstructGeometry()
+void STDetector::ConstructGeometry()
 {
   /** If you are using the standard ASCII input for the geometry
       just copy this and use it for your detector, otherwise you can
@@ -141,7 +140,7 @@ void SPiRIT::ConstructGeometry()
 
   TString fileName = GetGeometryFileName();
   if(fileName.EndsWith(".root")) {
-    std::cout<<"SPiRIT::ConstructGeometry() "
+    std::cout<<"STDetector::ConstructGeometry() "
 	     <<"  ...using ROOT geometry"<<std::endl;
     ConstructRootGeometry();
     return;
@@ -182,7 +181,7 @@ void SPiRIT::ConstructGeometry()
   ProcessNodes ( volList );
 }
 
-STMCPoint* SPiRIT::AddHit(Int_t trackID, Int_t detID,
+STMCPoint* STDetector::AddHit(Int_t trackID, Int_t detID,
                                       TVector3 pos, TVector3 mom,
                                       Double_t time, Double_t length,
                                       Double_t eLoss)
@@ -193,4 +192,4 @@ STMCPoint* SPiRIT::AddHit(Int_t trackID, Int_t detID,
          time, length, eLoss);
 }
 
-ClassImp(SPiRIT)
+ClassImp(STDetector)

@@ -21,8 +21,14 @@ ${ROOT_LIBRARY_DIR}
 link_directories( ${LINK_DIRECTORIES})
 
 set(SRCS
-STMCPoint.cxx
+STMCPoint.cc
+STRawEvent.cc
+STPad.cc
+STEvent.cc
+STHit.cc
 )
+
+CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
 
 Set(LINKDEF STFormatLinkDef.h)
 Set(LIBRARY_NAME STFormat)

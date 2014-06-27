@@ -39,7 +39,7 @@
 #include "STHelixHTCorrelator.hh"
 #include "STDipTTCorrelator.hh"
 #include "STRiemannTTCorrelator.hh"
-#include "STPar.hh"
+#include "STDigiPar.hh"
 #include "STDigiMapper.hh"
 
 /*
@@ -304,9 +304,9 @@ STRiemannTrackingTask::SetParContainers() {
     Fatal("SetParContainers", "No runtime database");
 
   // Get ST digitisation parameter container
-  fPar = (STPar *) db -> GetContainer("STPar");
+  fPar = (STDigiPar *) db -> GetContainer("STDigiPar");
   if (!fPar)
-    Fatal("SetParContainers", "STPar not found");
+    Fatal("SetParContainers", "STDigiPar not found");
 }
 
 

@@ -1,16 +1,20 @@
-#include "STGeoPar.h"
-
+// FAIRROOT classes
 #include "FairParamList.h"
 
+// SPiRITROOT classes
+#include "STGeoPar.hh"
+
+// ROOT classes
 #include "TObjArray.h"
 
+// STL
 #include <iostream>
 
 ClassImp(STGeoPar)
 
 STGeoPar ::STGeoPar(const char* name,
-                                      const char* title,
-                                      const char* context)
+                    const char* title,
+                    const char* context)
   : FairParGenericSet(name,title,context),
     fGeoSensNodes(new TObjArray()),
     fGeoPassNodes(new TObjArray())

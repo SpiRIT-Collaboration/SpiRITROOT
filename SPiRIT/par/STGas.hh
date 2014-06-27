@@ -13,6 +13,8 @@
 #ifndef _STGAS_H_
 #define _STGAS_H_
 
+#include "TObject.h"
+
 class STGas
 {
   public:
@@ -21,6 +23,8 @@ class STGas
     ~STGas();
 
   private:
+
+  ClassDef(STGas, 1)
 };
 
 #endif

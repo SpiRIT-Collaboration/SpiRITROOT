@@ -9,7 +9,13 @@ ${BASE_INCLUDE_DIRECTORIES}
 ${CMAKE_SOURCE_DIR}/fairtools
 ${CMAKE_SOURCE_DIR}/parbase
 ${CMAKE_SOURCE_DIR}/geobase
+${CMAKE_SOURCE_DIR}/SPiRIT/mc
+${CMAKE_SOURCE_DIR}/SPiRIT/stack
 ${CMAKE_SOURCE_DIR}/SPiRIT/par
+${CMAKE_SOURCE_DIR}/SPiRIT/format
+${CMAKE_SOURCE_DIR}/SPiRIT/reco
+${CMAKE_SOURCE_DIR}/SPiRIT/reco/GETDecoder
+${CMAKE_SOURCE_DIR}/SPiRIT/reco/STConverter
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -21,19 +27,28 @@ ${ROOT_LIBRARY_DIR}
 link_directories( ${LINK_DIRECTORIES})
 
 set(SRCS
-STContFact.cc
-STGeoPar.cc
-STDigiPar.cc
-STGas.cc
+GETDecoder/GETDecoder.cc
+GETDecoder/GETFrame.cc
+GETDecoder/GETMath.cc
+GETDecoder/GETPlot.cc
+
+STConverter/STCore.cc
+STConverter/STPedestal.cc
+STConverter/STMap.cc
+
+STDecoderTask.cc
+STPSATask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
 
-Set(LINKDEF STParLinkDef.h)
-Set(LIBRARY_NAME STPar)
+Set(LINKDEF STRecoLinkDef.h)
+Set(LIBRARY_NAME STReco)
 Set(DEPENDENCIES
     Base
     Stack
+    STFormat
+    STPar
 )
 
 GENERATE_LIBRARY()
