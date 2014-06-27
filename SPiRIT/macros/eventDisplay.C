@@ -2,15 +2,14 @@ eventDisplay()
 {
   // -----   Reconstruction run   -------------------------------------------
   FairRunAna *fRun= new FairRunAna();
-  fRun->SetInputFile("data/test.mc.root");
-  
+  fRun->SetInputFile("data/test.mc_youngstest.root"); 
   fRun->SetOutputFile("data/test.root");
 
   // -----  Parameter database   --------------------------------------------
   FairRuntimeDb* rtdb = fRun->GetRuntimeDb();
 
   FairParRootFileIo* parIo1 = new FairParRootFileIo();
-  parIo1->open("data/params.root");
+  parIo1->open("data/params_youngstest.root");
   rtdb->setFirstInput(parIo1);
   // ------------------------------------------------------------------------
 
