@@ -9,7 +9,10 @@ ${BASE_INCLUDE_DIRECTORIES}
 ${CMAKE_SOURCE_DIR}/fairtools
 ${CMAKE_SOURCE_DIR}/parbase
 ${CMAKE_SOURCE_DIR}/geobase
+${CMAKE_SOURCE_DIR}/SPiRIT/mc
+${CMAKE_SOURCE_DIR}/SPiRIT/par
 ${CMAKE_SOURCE_DIR}/SPiRIT/digi
+${CMAKE_SOURCE_DIR}/SPiRIT/format
 )
 
 include_directories( ${INCLUDE_DIRECTORIES})
@@ -23,9 +26,16 @@ link_directories( ${LINK_DIRECTORIES})
 set(SRCS
 )
 
+CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
+
 Set(LINKDEF STDiGiLinkDef.h)
-Set(LIBRARY_NAME SPiRIT)
+Set(LIBRARY_NAME STDigi)
 Set(DEPENDENCIES
+  Base
+  Stack
+  STMC
+  STPar
+  STFormat
 )
 
 GENERATE_LIBRARY()
