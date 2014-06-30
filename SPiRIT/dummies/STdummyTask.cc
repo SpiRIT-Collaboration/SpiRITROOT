@@ -1,8 +1,6 @@
 //---------------------------------------------------------------------
-// File and Version Information:
-// $Id$
-//
 // Description:
+//      Dummy task class
 //
 // Author List:
 //      Genie Jhang     Korea Univ.       (original author)
@@ -23,6 +21,11 @@ STdummyTask()::~STdummyTask()
 
 InitStatus
 STdummyTask::Init()
+{
+}
+
+void
+STDecoderTask::SetParContainers()
 {
 }
 

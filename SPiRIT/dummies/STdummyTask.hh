@@ -1,12 +1,9 @@
 //---------------------------------------------------------------------
-// File and Version Information:
-// $Id$
-//
 // Description:
+//      Dummy task class
 //
 // Author List:
 //      Genie Jhang     Korea Univ.       (original author)
-//
 //----------------------------------------------------------------------
 
 #ifndef _STDUMMYTASK_H_
@@ -25,6 +22,7 @@ class STdummyTask : public FairTask
     
     // Main methods
     virtual InitStatus Init();
+    virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
 
   private:

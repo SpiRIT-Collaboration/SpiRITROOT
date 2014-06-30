@@ -1,14 +1,12 @@
-# Create a library called "libSPiRIT" which includes the source files given in
-# the array .
-# The extension is already found.  Any number of sources could be listed here.
+# Create a library called "libSTReco" which includes the source files given in the array .
 
 set(INCLUDE_DIRECTORIES
 ${ROOT_INCLUDE_DIR} 
 ${BASE_INCLUDE_DIRECTORIES}
-#put here all directories where header files are located
 ${CMAKE_SOURCE_DIR}/fairtools
 ${CMAKE_SOURCE_DIR}/parbase
 ${CMAKE_SOURCE_DIR}/geobase
+# Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/SPiRIT/mc
 ${CMAKE_SOURCE_DIR}/SPiRIT/stack
 ${CMAKE_SOURCE_DIR}/SPiRIT/par
@@ -24,9 +22,10 @@ set(LINK_DIRECTORIES
 ${ROOT_LIBRARY_DIR}
 ) 
 
-link_directories( ${LINK_DIRECTORIES})
+link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
+# Add all the source files below this line. Those must have cc for their extension.
 GETDecoder/GETDecoder.cc
 GETDecoder/GETFrame.cc
 GETDecoder/GETMath.cc
@@ -47,6 +46,8 @@ Set(LIBRARY_NAME STReco)
 Set(DEPENDENCIES
     Base
     Stack
+# Add all library names your code depending on.
+# Basically those are the libraries in the header files' directory.
     STFormat
     STPar
 )
