@@ -23,11 +23,11 @@ STRawEvent::STRawEvent()
   fPadArray.reserve(108*112);
 }
 
-STRawEvent::STRawEvent(STRawEvent *instance)
+STRawEvent::STRawEvent(STRawEvent *object)
 :TNamed("STRawEvent", "Raw event container")
 {
-  fEventID = instance -> GetEventID();
-  fPadArray = instance -> GetPads();
+  fEventID = object -> GetEventID();
+  fPadArray = object -> GetPads();
 }
 
 STRawEvent::~STRawEvent()
@@ -73,12 +73,12 @@ std::vector<STPad> STRawEvent::GetPads()
 
 STPad *STRawEvent::GetPad(Int_t padNo)
 {
-  return (padNo < fPadArray.size() ? &fPadArray[padNo] : 0);
+  return (padNo < GetNumPads() ? &fPadArray[padNo] : NULL);
 }
 
 STPad *STRawEvent::GetPad(Int_t row, Int_t layer)
 {
-  for (Int_t iPad = 0; iPad < fPadArray.size(); iPad++) {
+  for (Int_t iPad = 0; iPad < GetNumPads(); iPad++) {
     Int_t padRow = fPadArray[iPad].GetRow();
     Int_t padLayer = fPadArray[iPad].GetLayer();
 

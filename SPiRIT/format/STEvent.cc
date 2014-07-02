@@ -23,13 +23,21 @@ STEvent::STEvent()
 
   fIsClustered = 0;
   fIsTracked = 0;
+}
 
-  fHitsArray = new TClonesArray("STHit", 100);
+STEvent::STEvent(STEvent *object)
+:TNamed("STEvent", "Event container")
+{
+  fEventID = object -> GetEventID();
+
+  fIsClustered = object -> IsClustered();
+  fIsTracked = object -> IsTracked();
+
+  fHitArray = object -> GetHitArray();
 }
 
 STEvent::~STEvent()
 {
-  delete fHitsArray;
 }
 
 // setters
@@ -40,7 +48,7 @@ void STEvent::SetEventID(Int_t evtid)
 
 void STEvent::AddHit(STHit *hit)
 {
-  fHitsArray -> AddLast(hit);
+  fHitArray.push_back(*hit);
 }
 
 // getters
@@ -51,12 +59,12 @@ Int_t STEvent::GetEventID()
 
 Int_t STEvent::GetNumHits()
 {
-  return fHitsArray -> GetEntriesFast();
+  return fHitArray.size();
 }
 
 STHit *STEvent::GetHit(Int_t hitNo)
 {
-  return (hitNo < GetNumHits() ? (STHit *) fHitsArray -> At(hitNo) : 0);
+  return (hitNo < GetNumHits() ? &fHitArray[hitNo] : NULL);
 }
 
 STHit *STEvent::RemoveHit(Int_t hitNo)
@@ -64,8 +72,8 @@ STHit *STEvent::RemoveHit(Int_t hitNo)
   if (!(hitNo < GetNumHits()))
     return 0;
 
-  STHit *removedHit = (STHit *) fHitsArray -> At(hitNo);
-  fHitsArray -> RemoveAt(hitNo);
+  STHit *removedHit = new STHit(fHitArray[hitNo]);
+  fHitArray.erase(fHitArray.begin() + hitNo);
 
   return removedHit;
 }

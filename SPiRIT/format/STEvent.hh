@@ -13,7 +13,6 @@
 
 #include "TROOT.h"
 #include "TObject.h"
-#include "TClonesArray.h"
 
 #include <vector>
 
@@ -24,6 +23,7 @@
 class STEvent : public TNamed {
   public:
     STEvent();
+    STEvent(STEvent *object);
     ~STEvent();
 
     // setters
@@ -38,6 +38,8 @@ class STEvent : public TNamed {
     Int_t GetNumHits();
 //    Int_t GetNumTracks();
 
+    std::vector<STHit> GetHitArray();
+//    std::vector<STTrack> GetTrackArray();
     STHit *GetHit(Int_t hitNo);
     STHit *RemoveHit(Int_t hitNo);
 
@@ -50,8 +52,8 @@ class STEvent : public TNamed {
 
     Int_t fEventID;
 
-    TClonesArray *fHitsArray;
-//    TClonesArray *fTrackArray;
+    std::vector<STHit> fHitArray;
+//    std::vector<STTrack> fTrackArray;
 
   ClassDef(STEvent, 1);
 };

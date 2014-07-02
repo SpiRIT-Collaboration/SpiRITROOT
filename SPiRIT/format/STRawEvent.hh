@@ -21,7 +21,7 @@
 class STRawEvent : public TNamed {
   public:
     STRawEvent();
-    STRawEvent(STRawEvent *instance);
+    STRawEvent(STRawEvent *object);
     ~STRawEvent();
 
     void PrintPads();
