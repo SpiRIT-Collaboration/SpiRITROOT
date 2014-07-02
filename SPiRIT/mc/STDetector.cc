@@ -192,4 +192,14 @@ STMCPoint* STDetector::AddHit(Int_t trackID, Int_t detID,
          time, length, eLoss);
 }
 
+Bool_t STDetector::CheckIfSensitive(std::string name)
+{
+  TString nameStr(name);
+
+  if (nameStr.EqualTo("Active"))
+    return kTRUE;
+
+  return kFALSE;
+}
+
 ClassImp(STDetector)

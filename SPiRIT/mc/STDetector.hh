@@ -57,6 +57,9 @@ class STDetector: public FairDetector
                              Double_t time, Double_t length,
                              Double_t eLoss);
 
+    /** Check the volume is sensitive or not **/
+    virtual bool   CheckIfSensitive(std::string name);
+
     /** The following methods can be implemented if you need to make
      *  any optional action in your detector during the transport.
     */
