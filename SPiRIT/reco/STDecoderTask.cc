@@ -61,7 +61,7 @@ STDecoderTask::Init()
     return kERROR;
   }
 
-  ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, 1);
+  ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, kTRUE);
 
   fDecoder = new STCore(fGrawFile, fNumTbs);
   fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
@@ -96,6 +96,8 @@ STDecoderTask::SetParContainers()
 void
 STDecoderTask::Exec(Option_t *opt)
 {
+  fRawEventArray -> Delete();
+
   STRawEvent *rawEvent = fDecoder -> GetRawEvent();
   
   Int_t lastIdx = fRawEventArray -> GetEntriesFast();
