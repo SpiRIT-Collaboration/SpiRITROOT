@@ -16,9 +16,12 @@
 
 #include "STPad.hh"
 
+#include <vector>
+
 class STRawEvent : public TNamed {
   public:
     STRawEvent();
+    STRawEvent(STRawEvent *instance);
     ~STRawEvent();
 
     void PrintPads();
@@ -30,13 +33,15 @@ class STRawEvent : public TNamed {
     // getters
     Int_t GetEventID();
     Int_t GetNumPads();
+
+    std::vector<STPad> GetPads();
+
     STPad *GetPad(Int_t padNo);
     STPad *GetPad(Int_t row, Int_t layer); 
 
   private:
     Int_t fEventID;
-    Int_t fNumPads;
-    STPad *fPadsArray[12096];
+    std::vector<STPad> fPadArray;
 
   ClassDef(STRawEvent, 1);
 };
