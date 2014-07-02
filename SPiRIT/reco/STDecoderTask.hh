@@ -25,6 +25,7 @@
 #include "STDigiPar.hh"
 
 // ROOT classes
+#include "TClonesArray.h"
 
 class STDecoderTask : public FairTask {
   public:
@@ -47,7 +48,7 @@ class STDecoderTask : public FairTask {
     Int_t fNumTbs;
 
     STDigiPar *fPar;
-    STRawEvent *fRawEvent;
+    TClonesArray *fRawEventArray;
 
   ClassDef(STDecoderTask, 1);
 };

@@ -28,7 +28,7 @@ STDecoderTask::STDecoderTask()
   fNumTbs = 512;
 
   fPar = NULL;
-  fRawEvent = NULL;
+  fRawEventArray = new TClonesArray("STRawEvent");
 }
 
 STDecoderTask::~STDecoderTask()
@@ -60,6 +60,8 @@ STDecoderTask::Init()
     Error("STDecoderTask::Init()", "RootManager not instantiated!");
     return kERROR;
   }
+
+  ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, 1);
 
   fDecoder = new STCore(fGrawFile, fNumTbs);
   fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
@@ -94,11 +96,8 @@ STDecoderTask::SetParContainers()
 void
 STDecoderTask::Exec(Option_t *opt)
 {
-  if (!fRawEvent)
-    delete fRawEvent;
-
-  fRawEvent = fDecoder -> GetRawEvent();
-
-  FairRootManager *ioMan = FairRootManager::Instance();
-  ioMan -> Register("STRawEvent", "SPiRIT", fRawEvent, 1);
+  STRawEvent *rawEvent = fDecoder -> GetRawEvent();
+  
+  Int_t lastIdx = fRawEventArray -> GetEntriesFast();
+  new ((*fRawEventArray)[lastIdx]) STRawEvent(rawEvent);
 }

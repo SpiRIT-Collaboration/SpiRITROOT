@@ -20,6 +20,7 @@
 #include "STDigiPar.hh"
 
 // ROOT classes
+#include "TClonesArray.h" 
 
 class STPSATask : public FairTask {
   public:
@@ -32,6 +33,7 @@ class STPSATask : public FairTask {
 
   private:
     STDigiPar *fPar;
+    TClonesArray *fRawEventArray;
 
   ClassDef(STPSATask, 1);
 };

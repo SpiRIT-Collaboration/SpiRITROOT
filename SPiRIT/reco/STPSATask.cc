@@ -38,6 +38,12 @@ STPSATask::Init()
     return kERROR;
   }
 
+  fRawEventArray = (TClonesArray *) ioMan -> GetObject("STRawEvent");
+  if (fRawEventArray == 0) {
+    Error("STPSATask::Init()", "Couldn't find STRawEvent array!");
+    return kERROR;
+  }
+
   return kSUCCESS;
 }
 
@@ -61,8 +67,8 @@ STPSATask::SetParContainers()
 void
 STPSATask::Exec(Option_t *opt)
 {
-  FairRootManager *ioMan = FairRootManager::Instance();
-  STRawEvent *test = (STRawEvent *) ioMan -> GetObject("STRawEvent");
+  Int_t lastIdx = fRawEventArray -> GetEntriesFast() - 1;
 
+  STRawEvent *test = (STRawEvent *) fRawEventArray -> At(lastIdx);
   std::cout << test -> GetEventID() << " " << test -> GetNumPads() << std::endl;  
 }
