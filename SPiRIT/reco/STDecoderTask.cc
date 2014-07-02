@@ -27,12 +27,20 @@ STDecoderTask::STDecoderTask()
   fPedestalFile = NULL;
   fNumTbs = 512;
 
+  fIsPersistence = kFALSE;
+
   fPar = NULL;
   fRawEventArray = new TClonesArray("STRawEvent");
 }
 
 STDecoderTask::~STDecoderTask()
 {
+}
+
+void
+STDecoderTask::SetPersistence(Bool_t value)
+{
+  fIsPersistence = value;
 }
 
 void
@@ -61,7 +69,7 @@ STDecoderTask::Init()
     return kERROR;
   }
 
-  ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, kTRUE);
+  ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
 
   fDecoder = new STCore(fGrawFile, fNumTbs);
   fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
@@ -90,7 +98,6 @@ STDecoderTask::SetParContainers()
   fPar = (STDigiPar *) db -> getContainer("STDigiPar");
   if (!fPar)
     Fatal("STDecoderTask::SetParContainers()", "STDigiPar not found!!");
-
 }
 
 void
@@ -100,6 +107,5 @@ STDecoderTask::Exec(Option_t *opt)
 
   STRawEvent *rawEvent = fDecoder -> GetRawEvent();
   
-  Int_t lastIdx = fRawEventArray -> GetEntriesFast();
-  new ((*fRawEventArray)[lastIdx]) STRawEvent(rawEvent);
+  new ((*fRawEventArray)[0]) STRawEvent(rawEvent);
 }

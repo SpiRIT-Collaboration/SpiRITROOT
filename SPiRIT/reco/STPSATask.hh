@@ -27,6 +27,8 @@ class STPSATask : public FairTask {
     STPSATask();
     ~STPSATask();
 
+    void SetPersistence(Bool_t value = kTRUE);
+
     virtual InitStatus Init();
     virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
@@ -34,6 +36,9 @@ class STPSATask : public FairTask {
   private:
     STDigiPar *fPar;
     TClonesArray *fRawEventArray;
+    TClonesArray *fEventArray;
+
+    Bool_t fIsPersistence;
 
   ClassDef(STPSATask, 1);
 };

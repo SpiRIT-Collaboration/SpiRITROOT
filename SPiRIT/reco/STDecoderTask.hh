@@ -36,6 +36,8 @@ class STDecoderTask : public FairTask {
     void SetGraw(Char_t *filename);
     void SetPedestal(Char_t *filename);
 
+    void SetPersistence(Bool_t value = kTRUE);
+
     virtual InitStatus Init();
     virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
@@ -46,6 +48,8 @@ class STDecoderTask : public FairTask {
     Char_t *fGrawFile;
     Char_t *fPedestalFile;
     Int_t fNumTbs;
+
+    Bool_t fIsPersistence;
 
     STDigiPar *fPar;
     TClonesArray *fRawEventArray;
