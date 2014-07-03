@@ -7,20 +7,20 @@
 //
 //----------------------------------------------------------------------
 
-#include "STdummyTask.hh"
+#include "STDummyTask.hh"
 
-ClassImp(STdummyTask)
+ClassImp(STDummyTask)
 
-STdummyTask()::STdummyTask()
+STDummyTask()::STDummyTask()
 {
 }
 
-STdummyTask()::~STdummyTask()
+STDummyTask()::~STDummyTask()
 {
 }
 
 InitStatus
-STdummyTask::Init()
+STDummyTask::Init()
 {
 }
 
@@ -30,6 +30,6 @@ STDecoderTask::SetParContainers()
 }
 
 void
-STdummyTask::Exec(Option_t *opt)
+STDummyTask::Exec(Option_t *opt)
 {
 }

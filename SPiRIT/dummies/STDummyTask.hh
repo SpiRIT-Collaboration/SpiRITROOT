@@ -9,12 +9,12 @@
 #ifndef _STDUMMYTASK_H_
 #define _STDUMMYTASK_H_
 
-class STdummyTask : public FairTask
+class STDummyTask : public FairTask
 {
   public:
     // Constructor and Destructor
-    STdummyTask();
-    ~STdummyTask();
+    STDummyTask();
+    ~STDummyTask();
     
     // Operators
     // Getters
@@ -27,7 +27,7 @@ class STdummyTask : public FairTask
 
   private:
 
-  ClassDef(STdummyTask, 1);
+  ClassDef(STDummyTask, 1);
 };
 
 #endif
