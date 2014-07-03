@@ -7,6 +7,7 @@
 //
 // Author List:
 //      Genie Jhang     Korea Univ.            (original author)
+//      JungWoo Lee     Korea Univ.
 //
 //----------------------------------------------------------------------
 
@@ -22,7 +23,17 @@ class STGas
     STGas();
     ~STGas();
 
+    // Getter
+    double GetEIonize()                  { return fEIonize };
+    double GetFirstIonizationPotential() { return fFirstIonizationPotential };
+    double GetRandomCS(double val);
+
+    // Setter
+
   private:
+    
+    double fEIonize;                  //!< effective ionization energy [eV]
+    double fFirstIonizationPotential; //!< effective ionization energy [eV]
 
   ClassDef(STGas, 1)
 };
