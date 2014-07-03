@@ -12,6 +12,7 @@ ${CMAKE_SOURCE_DIR}/SPiRIT/stack
 ${CMAKE_SOURCE_DIR}/SPiRIT/par
 ${CMAKE_SOURCE_DIR}/SPiRIT/format
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco
+${CMAKE_SOURCE_DIR}/SPiRIT/reco/PulseShapeAnalyzer
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/STConverter
 )
@@ -34,6 +35,8 @@ GETDecoder/GETPlot.cc
 STConverter/STCore.cc
 STConverter/STPedestal.cc
 STConverter/STMap.cc
+
+PulseShapeAnalyzer/STPSASimple.cc
 
 STDecoderTask.cc
 STPSATask.cc

@@ -9,7 +9,9 @@
 //   Genie Jhang     Korea University     (original author)
 //-----------------------------------------------------------
 
+// SPiRITROOT classes
 #include "STPSATask.hh"
+#include "STPSASimple.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -48,13 +50,13 @@ STPSATask::Init()
     return kERROR;
   }
 
-  fRawEventArray = (TClonesArray *) ioMan -> GetObject("STRawEvent");
+  fRawEventArray = (TClonesArray *) ioMan -> GetObject("RawEventCollection");
   if (fRawEventArray == 0) {
     Error("STPSATask::Init()", "Couldn't find STRawEvent array!");
     return kERROR;
   }
 
-  ioMan -> Register("STEvent", "SPiRIT", fEventArray, fIsPersistence);
+  ioMan -> Register("EventCollection", "SPiRIT", fEventArray, fIsPersistence);
 
   return kSUCCESS;
 }
@@ -80,6 +82,12 @@ STPSATask::Exec(Option_t *opt)
 {
   fEventArray -> Delete();
 
-  STRawEvent *test = (STRawEvent *) fRawEventArray -> At(0);
-  std::cout << test -> GetEventID() << " " << test -> GetNumPads() << std::endl;  
+  STRawEvent *rawEvent = (STRawEvent *) fRawEventArray -> At(0);
+  std::cout << rawEvent -> GetEventID() << " " << rawEvent -> GetNumPads() << std::endl;  
+
+  STEvent *event = (STEvent *) new ((*fEventArray)[0]) STEvent();
+  event -> SetEventID(rawEvent -> GetEventID());
+
+  STPSASimple *psaSimple = new STPSASimple();
+  psaSimple -> Analyze(rawEvent, event);
 }

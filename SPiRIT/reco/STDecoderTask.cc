@@ -69,7 +69,7 @@ STDecoderTask::Init()
     return kERROR;
   }
 
-  ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
+  ioMan -> Register("RawEventCollection", "SPiRIT", fRawEventArray, fIsPersistence);
 
   fDecoder = new STCore(fGrawFile, fNumTbs);
   fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
