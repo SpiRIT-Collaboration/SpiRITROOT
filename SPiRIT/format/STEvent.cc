@@ -19,7 +19,7 @@ ClassImp(STEvent);
 STEvent::STEvent()
 :TNamed("STEvent", "Event container")
 {
-  fEventID = -4;
+  fEventID = -1;
 
   fIsClustered = 0;
   fIsTracked = 0;
@@ -33,7 +33,7 @@ STEvent::STEvent(STEvent *object)
   fIsClustered = object -> IsClustered();
   fIsTracked = object -> IsTracked();
 
-  fHitArray = object -> GetHitArray();
+  fHitArray = *(object -> GetHitArray());
 }
 
 STEvent::~STEvent()
@@ -49,6 +49,8 @@ void STEvent::SetEventID(Int_t evtid)
 void STEvent::AddHit(STHit *hit)
 {
   fHitArray.push_back(*hit);
+
+  delete hit;
 }
 
 // getters
@@ -60,6 +62,11 @@ Int_t STEvent::GetEventID()
 Int_t STEvent::GetNumHits()
 {
   return fHitArray.size();
+}
+
+std::vector<STHit> *STEvent::GetHitArray()
+{
+  return &fHitArray;
 }
 
 STHit *STEvent::GetHit(Int_t hitNo)

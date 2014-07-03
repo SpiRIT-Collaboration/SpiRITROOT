@@ -23,6 +23,8 @@
 class STHit : public TObject {
   public:
     STHit();
+    STHit(TVector3 vec, Double_t charge);
+    STHit(Double_t x, Double_t y, Double_t z, Double_t charge);
     ~STHit();
 
     //!< Track ID setter

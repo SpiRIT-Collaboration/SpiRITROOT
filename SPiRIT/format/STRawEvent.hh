@@ -34,7 +34,7 @@ class STRawEvent : public TNamed {
     Int_t GetEventID();
     Int_t GetNumPads();
 
-    std::vector<STPad> GetPads();
+    std::vector<STPad> *GetPads();
 
     STPad *GetPad(Int_t padNo);
     STPad *GetPad(Int_t row, Int_t layer); 

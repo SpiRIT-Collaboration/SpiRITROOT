@@ -38,8 +38,8 @@ class STEvent : public TNamed {
     Int_t GetNumHits();
 //    Int_t GetNumTracks();
 
-    std::vector<STHit> GetHitArray();
-//    std::vector<STTrack> GetTrackArray();
+    std::vector<STHit> *GetHitArray();
+//    std::vector<STTrack> *GetTrackArray();
     STHit *GetHit(Int_t hitNo);
     STHit *RemoveHit(Int_t hitNo);
 

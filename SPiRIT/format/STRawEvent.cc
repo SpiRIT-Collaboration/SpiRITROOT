@@ -27,7 +27,7 @@ STRawEvent::STRawEvent(STRawEvent *object)
 :TNamed("STRawEvent", "Raw event container")
 {
   fEventID = object -> GetEventID();
-  fPadArray = object -> GetPads();
+  fPadArray = *(object -> GetPads());
 }
 
 STRawEvent::~STRawEvent()
@@ -66,9 +66,9 @@ Int_t STRawEvent::GetNumPads()
   return fPadArray.size();
 }
 
-std::vector<STPad> STRawEvent::GetPads()
+std::vector<STPad> *STRawEvent::GetPads()
 {
-  return fPadArray;
+  return &fPadArray;
 }
 
 STPad *STRawEvent::GetPad(Int_t padNo)

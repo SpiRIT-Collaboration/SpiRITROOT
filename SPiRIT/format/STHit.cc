@@ -12,8 +12,21 @@
 
 STHit::STHit()
 {
-  fPosition = -4;
-  fCharge = -4;
+  fTrackID = -1;
+  fPosition.SetXYZ(0, 0, -1000);
+  fCharge = -1;
+}
+
+STHit::STHit(TVector3 vec, Double_t charge)
+{
+  fTrackID = -1;
+  SetHit(vec, charge);
+}
+
+STHit::STHit(Double_t x, Double_t y, Double_t z, Double_t charge)
+{
+  fTrackID = -1;
+  SetHit(x, y, z, charge);
 }
 
 STHit::~STHit()
