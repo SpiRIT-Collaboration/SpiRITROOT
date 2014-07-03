@@ -31,7 +31,14 @@ class STDigiPar : public FairParGenericSet
     // Operators
     
     // Getters
+    Int_t GetPadSizeX();
+    Int_t GetPadSizeZ();
     STGas *GetGas();
+    Int_t GetNumTbs();
+    //!< returns the time duration of a time bucket in given sampling time in ns.
+    Int_t GetTBTime();
+    //!< returns the drift velocity in cm/ns.
+    Double_t GetDriftVelocity();
     virtual Bool_t getParams(FairParamList *paramList);
 
     TString GetFile(Int_t fileNum);
@@ -48,8 +55,13 @@ class STDigiPar : public FairParGenericSet
 
     Bool_t fInitialized;
 
+    Int_t fPadSizeX;
+    Int_t fPadSizeZ;
     Int_t fGasFile;
     Double_t fEField;
+    Int_t fNumTbs;
+    Int_t fSamplingRate;
+    Double_t fDriftVelocity;
     Int_t fPadPlaneFile;
     Int_t fPadShapeFile;
 

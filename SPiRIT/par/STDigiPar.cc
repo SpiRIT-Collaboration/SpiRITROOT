@@ -22,9 +22,44 @@ STDigiPar::~STDigiPar()
 {
 }
 
+// Getters
+Int_t STDigiPar::GetPadSizeX()
+{
+  return fPadSizeX;
+}
+
+Int_t STDigiPar::GetPadSizeZ()
+{
+  return fPadSizeZ;
+}
+
 STGas *STDigiPar::GetGas()
 {
   return fGas;
+}
+
+Int_t STDigiPar::GetNumTbs()
+{
+  return fNumTbs;
+}
+
+Int_t STDigiPar::GetTBTime()
+{
+  switch (fSamplingRate) {
+    case 25:
+      return 40;
+    case 50:
+      return 20;
+    case 100:
+      return 10;
+    default:
+      return -1;
+  }
+}
+
+Double_t STDigiPar::GetDriftVelocity()
+{
+  return fDriftVelocity;
 }
 
 Bool_t STDigiPar::getParams(FairParamList *paramList)
@@ -35,12 +70,32 @@ Bool_t STDigiPar::getParams(FairParamList *paramList)
   }
 
   if (!fInitialized) {
-    if (!(paramList -> fill("STGasFile", &fGasFile))) {
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find STGasFile parameter!");
+    if (!(paramList -> fill("PadSizeX", &fPadSizeX))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadSizeX parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("PadSizeZ", &fPadSizeZ))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadSizeZ parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("GasFile", &fGasFile))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GasFile parameter!");
       return kFALSE;
     }
     if (!(paramList -> fill("EField", &fEField))) {
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find EField parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("NumTbs", &fNumTbs))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find NumTbs parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("SamplingRate", &fSamplingRate))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find SamplingRate parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("DriftVelocity", &fDriftVelocity))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find DriftVelocity parameter!");
       return kFALSE;
     }
     if (!(paramList -> fill("PadPlaneFile", &fPadPlaneFile))) {
@@ -63,8 +118,13 @@ void STDigiPar::putParams(FairParamList *paramList)
     return;
   }
 
-  paramList -> add("STGasFile", fGasFile);
+  paramList -> add("PadSizeX", fPadSizeX);
+  paramList -> add("PadSizeZ", fPadSizeZ);
+  paramList -> add("GasFile", fGasFile);
   paramList -> add("EField", fEField);
+  paramList -> add("NumTbs", fNumTbs);
+  paramList -> add("SamplingRate", fSamplingRate);
+  paramList -> add("DriftVelocity", fDriftVelocity);
   paramList -> add("PadPlaneFile", fPadPlaneFile);
   paramList -> add("PadShapeFile", fPadShapeFile);
 }

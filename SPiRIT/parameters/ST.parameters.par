@@ -6,8 +6,13 @@
 # Description of parameters
 ################################################################################
 [STDigiPar]
-STGasFile:Int_t 1
-EField:Double_t 0
-PadPlaneFile:Int_t 2
-PadShapeFile:Int_t 3 // might not be needed because the shape is simply rectangle
+PadSizeX:Int_t            8   # mm
+PadSizeZ:Int_t           12   # mm
+GasFile:Int_t             1
+EField:Double_t           0
+NumTbs:Int_t            512
+SamplingRate:Int_t       50   # MHz
+DriftVelocity:Double_t    5   # cm/ns
+PadPlaneFile:Int_t        2
+PadShapeFile:Int_t        3   # might not be needed because the shape is simply rectangle
 ################################################################################
