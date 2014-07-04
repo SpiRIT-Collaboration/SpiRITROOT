@@ -3,6 +3,7 @@
 # add_subdirectory(DIRECTORY_NAME)
 
 add_subdirectory(mc)
+add_subdirectory(eventdisplay)
 add_subdirectory(stack)
 add_subdirectory(format)
 add_subdirectory(par)
