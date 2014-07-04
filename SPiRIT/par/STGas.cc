@@ -21,3 +21,20 @@ STGas::STGas()
 STGas::~STGas()
 {
 }
+
+Double_t
+STGas::GetEIonize()
+{ 
+  return fEIonize;
+}
+
+Double_t
+STGas::GetFirstIonizationPotential()
+{
+  return fFirstIonizationPotential;
+}
+
+Double_t
+STGas::GetRandomCS(Double_t val)
+{
+}

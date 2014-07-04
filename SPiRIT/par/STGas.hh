@@ -14,7 +14,7 @@
 #ifndef _STGAS_H_
 #define _STGAS_H_
 
-#include "TObject.h"
+#include "Rtypes.h"
 
 class STGas
 {
@@ -24,16 +24,15 @@ class STGas
     ~STGas();
 
     // Getter
-    double GetEIonize()                  { return fEIonize };
-    double GetFirstIonizationPotential() { return fFirstIonizationPotential };
-    double GetRandomCS(double val);
+    Double_t GetEIonize();
+    Double_t GetFirstIonizationPotential();
+    Double_t GetRandomCS(Double_t val);
 
     // Setter
 
   private:
-    
-    double fEIonize;                  //!< effective ionization energy [eV]
-    double fFirstIonizationPotential; //!< effective ionization energy [eV]
+    Double_t fEIonize;                  //!< effective ionization energy [eV]
+    Double_t fFirstIonizationPotential; //!< first ionization energy [eV]
 
   ClassDef(STGas, 1)
 };
