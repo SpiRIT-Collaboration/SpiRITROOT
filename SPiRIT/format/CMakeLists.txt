@@ -25,6 +25,7 @@ STRawEvent.cc
 STPad.cc
 STEvent.cc
 STHit.cc
+STPrimaryCluster.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

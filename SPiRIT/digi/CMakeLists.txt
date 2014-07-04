@@ -23,11 +23,12 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
+STClusterizerTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
 
-Set(LINKDEF STDiGiLinkDef.h)
+Set(LINKDEF STDigiLinkDef.h)
 Set(LIBRARY_NAME STDigi)
 Set(DEPENDENCIES
   Base

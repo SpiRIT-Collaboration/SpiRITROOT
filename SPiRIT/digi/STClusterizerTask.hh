@@ -1,21 +1,21 @@
 //---------------------------------------------------------------------
-// File and Version Information:
-// $Id$
-//
 // Description:
-//      STClusterizer reads in MCPoints and produces primary electrons
+//      Clusterizer task class header
+//
+//      STClusterizer reads in MCPoints and produces primary clusters
+//      Input  : STMC
+//      Output : STPrimaryCluster
 //
 // Author List:
-//      Sebastian Neubert    TUM            (original author)
-//
-// Rewritten for SPiRIT-TPC:
-//      Genie Jhang     Korea Univ.
-//      JungWoo Lee     Korea Univ.
+//      JungWoo Lee     Korea Univ.       (original author)
 //
 //----------------------------------------------------------------------
 
 #ifndef _STCLUSTERIZERTASK_H_
 #define _STCLUSTERIZERTASK_H_
+
+// Fair & Collaborating class headers
+#include "FairTask.h"
 
 // ROOT headers
 #include "TString.h"
@@ -35,8 +35,7 @@ class STClusterizerTask : public FairTask
     // Operators
     // Getters
     // Setters
-    void SetPersistant(Bool_t val)             { fIsPersistant = val }
-    void SetSimpleChargeConversion(Bool_t val) { fIsSimpleChargeConversion = val }
+    void SetPersistant(Bool_t val) { fIsPersistent = val; };
     
     // Main methods
     virtual InitStatus Init();
@@ -46,18 +45,14 @@ class STClusterizerTask : public FairTask
   private:
     // variables
     TString fMCPointBranchName;        //!< Name of MC data branch
-    TCloneArray *fMCPointArray;        //!< Point array for MC data
-    TCloneArray *fPrimaryClusterArray; //!< Primary cluster array
+    TClonesArray *fMCPointArray;        //!< Point array for MC data
+    TClonesArray *fPrimaryClusterArray; //!< Primary cluster array
 
-    const STGas *fGas;                 //!< STGas pointer
+    //const STGas *fGas;
+    STGas *fGas;                       //!< STGas pointer
     STDigiPar *fPar;                   //!< STDigiPar pointer
-    Float_t fFirstIonizationPotential; //!< First ionization potential
 
-    Bool_t fIsPersistant;              //!< If true, save container
-    Bool_t fIsSimpleChargeConversion;  //!< If true, do simple charge conversion
-
-    // methods
-    void ChargeConversion();
+    Bool_t fIsPersistent;              //!< If true, save container
 
   ClassDef(STClusterizerTask, 1);
 };

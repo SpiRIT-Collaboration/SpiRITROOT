@@ -1,30 +1,27 @@
 //---------------------------------------------------------------------
-// File and Version Information:
-// $Id$
-//
 // Description:
-//      STClusterizer reads in MCPoints and produces primary electrons
+//      Clusterizer task class source
+//
+//      STClusterizer reads in MCPoints and produces primary clusters
+//      Input  : STMC
+//      Output : STPrimaryCluster
 //
 // Author List:
-//      Sebastian Neubert    TUM            (original author)
-//
-// Rewritten for SPiRIT-TPC:
-//      Genie Jhang     Korea Univ.
-//      JungWoo Lee     Korea Univ.
+//      JungWoo Lee     Korea Univ.       (original author)
 //
 //----------------------------------------------------------------------
 
+// This class header
+#include "STClusterizerTask.hh"
+
 // Fair & Collaborating class headers
-#include "FairTask.h"
 #include "FairRootManager.h"
 #include "FairRun.h"
 #include "FairRuntimeDb.h"
-#include "LinearInterpolPolicy.h"
 
 // SPiRIT-TPC headers
-#include "STClusterizerTask.hh"
 #include "STPrimaryCluster.hh"
-#include "STPoint.hh"
+#include "STMCPoint.hh"
 
 // ROOT headers
 #include "TRandom.h"
@@ -40,15 +37,14 @@ using std::fabs;
 
 ClassImp(STClusterizerTask)
 
-STClusterizerTask()::STClusterizerTask()
+STClusterizerTask::STClusterizerTask()
 : FairTask("SPiRIT Clusterizer"),
-  fIsPersistant(kFalse)
-  fIsSimpleChargeConversion(kFalse)
+  fIsPersistent(kFALSE)
 {
-  fMCPointBranchName = "STPoint";
+  fMCPointBranchName = "STMCPoint";
 }
 
-STClusterizerTask()::~STClusterizerTask()
+STClusterizerTask::~STClusterizerTask()
 {
 }
 
@@ -88,145 +84,69 @@ void STClusterizerTask::SetParContainers()
   if(!run) Fatal("SetParContainers","No analysis run");
 
   FairRuntimeDb* db = run -> GetRuntimeDb();
-  if(!db) Faltal("SetParContainers", "no runtime database");
+  if(!db) Fatal("SetParContainers", "no runtime database");
 
-  fPar = (STDigiPar*) db -> GetContainer("STDigiPar");
-  if(!fPar) Faltal("SetParContainers", "STDigiPar not found");
+  fPar = (STDigiPar*) db -> getContainer("STDigiPar");
+  if(!fPar) Fatal("SetParContainers", "STDigiPar not found");
 }
 
 void
 STClusterizerTask::Exec(Option_t *opt)
 {
-  // Reset output array
   if(fPrimaryClusterArray == 0)
     Fatal("STClusterizerCluster::Exec)","No Primary Cluster Array");
-
   fPrimaryClusterArray -> Delete();
 
-  Int_t numPoints = fMCPointArray -> GetEntries();
-  if (numPoints < 2){
-    Int_t entryNum = (FairRun::Instance()) -> GetEventHeader() -> GetMCEntryNumber();
-    TString warning = Form("STClusterizerTask::Exec entryNum:%i ", entryNum);
+  Int_t nPoints = fMCPointArray -> GetEntries();
+  if (nPoints < 2){
+    TString warning = Form("STClusterizerTask::Exec");
     Warning(warning, "Not enough Hits in Tpc for Digitization (<2)");
     return;
   }
   
-  if(fIsSimpleChargeConversion)	{
-  	ChargeConversion();
-  	return;
-  }
+  Int_t    iCluster = 0;        // cluster counting index
+  Double_t displacementCut = 1; // [mm]
 
-  //!IsSimpleChargeConversion >>>
+  STMCPoint* point; // STMCPoint
 
-  STPoint* crntPoint; // current point
-  STPoint* lastPoint; // last    point
-           lastPoint = (STPoint*) fMCPointArray -> At(0);
-
-  Int_t    iCluster = 0;        // counting index
-  Double_t displacementCut = 1; // mm
-
-  for(Int_t iPoint=1; iPoint<numPoints; iPoint++)
+  for(Int_t iPoint=1; iPoint<nPoints; iPoint++)
   {
-    crntPoint = (STPoint*) fMCPointArray -> At(iPoint);
+    point = (STMCPoint*) fMCPointArray -> At(iPoint);
 
-    TVector3 pointPosition;     
-    TVector3 lastPointPosition; 
-
-    crntPoint -> Position(pointPosition);
-    lastPoint -> Position(lastPointPosition);
-
-    TVector3 displacement = pointPosition - lastPointPosition;
-
-    // check if two hits are close
-    if(displacement.Mag()>displacementCut) 
-    {
-      lastPoint = crntPoint;
+    Double_t energyLoss = point -> GetEnergyLoss()*1E9; //convert from GeV to eV
+    if(energyLoss<0){
+      Error("STClusterizerTask::Exec","Note: particle:: negative energy loss!");
       continue;
     }
 
-    // check if two hits lie on the same track
-    if(crntPoint->GetTrackID()==lastPoint->GetTrackID()) 
+    UInt_t qTotal   = (UInt_t) floor(fabs( energyLoss/fGas->GetEIonize() )); // total charge [eV]
+    UInt_t qCluster = 0; // cluster charge
+    UInt_t nCluster = 0; // number of clusters in this point
+
+    // Make random size clusters with total charge
+    while(qTotal>0) 
     {
-      Double_t energyLoss = crntPoint -> GetEnergyLoss()*1E9; //convert from GeV to eV
-      
-      // ***
-      // Step 0: calculate the overall ammount of charge, produced
-      if(energyLoss<0) 
-      {
-        Error("STClusterizerTask::Exec","Note: particle:: negative energy loss!");
-        lastPoint=crntPoint;
-        continue;
-      }
-      unsigned int qTotal = (unsigned int) floor(fabs( energyLoss/fGas->GetEIonize() )); // total charge
-      unsigned int qCluster = 0; // cluster charge
-      unsigned int numbCluster = 0; // number of clusters
+      qCluster = fGas -> GetRandomCS(gRandom->Uniform()); // get random cluster size
+      if(qCluster > qTotal) qCluster = qTotal; 
+      qTotal -= qCluster;
 
-      // ***
-      // Step 1: Create Clusters
-      while(qTotal>0) 
-      {
-        qCluster = fGas -> GetRandomCS(gRandom->Uniform()); // get random cluster size
-        if(qCluster>qTotal) qCluster = qTotal; 
-        qTotal -= qCluster;
-
-        // create cluster
-        Int_t size = fMCPointArray -> GetEntriesFast();
-        STPrimaryCluster* primCluster 
-          = new ((*fMCPointArray)[size]) STPrimaryCluster(crntPoint -> GetTime(),    // time
-                                                          qCluster,                  // charge
-                                                          TVector(0,0,0),            // primary position
-                                                          crntPoint -> GetTrackID(), // trackID
-                                                          iPoint,                    // point count number
-                                                          crnt -> GetSecID());       // section ID
-        primCluster -> setIndex(size);  
-        numbCluster++;
-      } // end of cluster creation
-
-      // ***
-      // Step 2: Distribute Clusters along track segment
-
-      LinearInterpolPolicy().Interpolate(theLastPoint, point, fMCPointArray, icluster, ncluster); 
-      // <- where does this come from?
-      iCluster += numbCluster;
-    } // end of checking same track
-    lastPoint = crntPoint;
+      // create cluster
+      Int_t size = fMCPointArray -> GetEntriesFast();
+      STPrimaryCluster* primaryCluster 
+        = new ((*fMCPointArray)[size]) STPrimaryCluster(qCluster,                  // charge
+                                                        TVector3(point -> GetX(),  // primary cluster position
+                                                                 point -> GetY(),
+                                                                 point -> GetZ()),
+                                                        point -> GetTime(),        // time
+                                                        point -> GetTrackID(),     // trackID
+                                                        iPoint);                   // point count number
+      primaryCluster -> SetIndex(size);
+      nCluster++;
+    }
+    iCluster += nCluster;
   }
 
   cout << "STClusterizerTask:: " << fMCPointArray -> GetEntriesFast() << " clusters created" << endl;
 
   return;
-}
-
-void
-STClusterizerTask::ChargeConversion()
-{
-  // Mean energy to create ion-electron pair
-  Float_t eIonize;
-          eIonize = fGas -> GetEionize()*1.e-9; // ionization energy in [GeV]
-  
-  Int_t numPoints = fMCPointArray -> GetEntries();
-  for(Int_t iPoint = 1; iPoint < numPont; iPoint++)
-  {
-  	STPoint *point = (STPoint *) fMCPointArray -> At(iPoint);
-    //Do no clustering just convert energy deposition to ionisation
-	
-    //is this assuming some actual, valid process done by GEANT 
-    //(e.g. vibration mode, ...) or do we lose something here (F.B.)??
-
-  	if (point -> GetEnergyLoss() < fFirstIonizationPotential)
-      continue;
-       
-    Int_t numElectrons = Int_t(floor(((point -> GetEnergyLoss()) - fFirstIonizationPotential)/w_ion)) + 1;
-	  
-    Int_t size = fPrimaryClusterArray -> GetEntries();
-    STPrimaryCluster *cluster = new((*fPrimaryClusterArray)[size]) STPrimaryCluster(point -> GetTime(),
-                                                                                    numElectron,
-                                                                                    TVector3(point -> GetX(),
-                                                                                             point -> GetY(),
-                                                                                             point -> GetZ()),
-                                                                                    point -> GetTrackID(),
-                                                                                    iPoint,
-                                                                                    point -> GetSecID());
-    cluster -> setIndex(size);
-  }
 }
