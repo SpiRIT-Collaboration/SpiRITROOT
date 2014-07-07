@@ -22,16 +22,15 @@ STGas::~STGas()
 {
 }
 
+void STGas::operator=(const STGas& GasToCopy)
+{
+  fEIonize = GasToCopy.fEIonize;
+}
+
 Double_t
 STGas::GetEIonize()
 { 
   return fEIonize;
-}
-
-Double_t
-STGas::GetFirstIonizationPotential()
-{
-  return fFirstIonizationPotential;
 }
 
 Double_t

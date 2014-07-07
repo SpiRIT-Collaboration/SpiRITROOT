@@ -23,16 +23,16 @@ class STGas
     STGas();
     ~STGas();
 
+    void operator=(const STGas& GasToCopy);
+
     // Getter
     Double_t GetEIonize();
-    Double_t GetFirstIonizationPotential();
     Double_t GetRandomCS(Double_t val);
 
     // Setter
 
   private:
     Double_t fEIonize;                  //!< effective ionization energy [eV]
-    Double_t fFirstIonizationPotential; //!< first ionization energy [eV]
 
   ClassDef(STGas, 1)
 };
