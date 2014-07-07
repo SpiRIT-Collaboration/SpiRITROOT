@@ -28,6 +28,7 @@ class STPSATask : public FairTask {
     ~STPSATask();
 
     void SetPersistence(Bool_t value = kTRUE);
+    void SetThreshold(Double_t threshold);
 
     virtual InitStatus Init();
     virtual void SetParContainers();
@@ -39,6 +40,8 @@ class STPSATask : public FairTask {
     TClonesArray *fEventArray;
 
     Bool_t fIsPersistence;
+    
+    Double_t fThreshold;
 
   ClassDef(STPSATask, 1);
 };

@@ -35,18 +35,24 @@ class STPSASimple
     STPSASimple();
     ~STPSASimple();
 
+    //! Setting threshold
+    void SetThreshold(Int_t threshold);
+
     void Analyze(STRawEvent *rawEvent, STEvent *event);
 
   private:
     FairLogger *fLogger;     //!< logger pointer
     STDigiPar *fPar;         //!< parameter container
 
+    Int_t fPadPlaneX;        //!< pad plane size x in mm
     Int_t fPadSizeX;         //!< pad size x in mm
     Int_t fPadSizeZ;         //!< pad size y in mm
 
     Int_t fNumTbs;           //!< the number of time buckets used in taking data
     Int_t fTBTime;           //!< time duration of a time bucket in ns
-    Double_t fDriftVelocity; //!< drift velocity of electron in cm/ns
+    Double_t fDriftVelocity; //!< drift velocity of electron in cm/us
+
+    Int_t fThreshold;        //!< threshold of ADC value
 
     //!< Calculate x position in mm. This returns the center position of given pad row.
     Double_t CalculateX(Int_t row);

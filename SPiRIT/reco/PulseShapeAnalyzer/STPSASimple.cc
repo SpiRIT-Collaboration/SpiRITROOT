@@ -41,16 +41,25 @@ STPSASimple::STPSASimple()
   if (!fPar)
     fLogger -> Fatal(MESSAGE_ORIGIN, "STDigiPar not found!!");
 
+  fPadPlaneX = fPar -> GetPadPlaneX();
   fPadSizeX = fPar -> GetPadSizeX();
   fPadSizeZ = fPar -> GetPadSizeZ();
 
   fNumTbs = fPar -> GetNumTbs();
   fTBTime = fPar -> GetTBTime();
   fDriftVelocity = fPar -> GetDriftVelocity();
+
+  fThreshold = -1;
 }
 
 STPSASimple::~STPSASimple()
 {
+}
+
+void
+STPSASimple::SetThreshold(Int_t threshold)
+{
+  fThreshold = threshold;
 }
 
 void
@@ -70,6 +79,9 @@ STPSASimple::Analyze(STRawEvent *rawEvent, STEvent *event)
     Double_t yPos = CalculateY(rawAdc, minAdcIdx);
     Double_t charge = rawAdc[minAdcIdx];
 
+    if (fThreshold > 0 && charge > fThreshold)
+      continue;
+
     event -> AddHit(new STHit(xPos, yPos, zPos, charge));
   }
 }
@@ -77,13 +89,13 @@ STPSASimple::Analyze(STRawEvent *rawEvent, STEvent *event)
 Double_t
 STPSASimple::CalculateX(Int_t row)
 {
-  return (row + 0.5)*fPadSizeX;
+  return (row + 0.5)*fPadSizeX - 432.;
 }
 
 Double_t
 STPSASimple::CalculateY(Int_t *adc, Int_t peakIdx)
 {
-  return -peakIdx*fTBTime*fDriftVelocity*10.;
+  return -peakIdx*fTBTime*fDriftVelocity/100.;
 }
 
 Double_t

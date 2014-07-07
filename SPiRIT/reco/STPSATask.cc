@@ -41,6 +41,12 @@ STPSATask::SetPersistence(Bool_t value)
   fIsPersistence = value;
 }
 
+void
+STPSATask::SetThreshold(Double_t threshold)
+{
+  fThreshold = threshold;
+}
+
 InitStatus
 STPSATask::Init()
 {
@@ -89,5 +95,6 @@ STPSATask::Exec(Option_t *opt)
   event -> SetEventID(rawEvent -> GetEventID());
 
   STPSASimple *psaSimple = new STPSASimple();
+  psaSimple -> SetThreshold((Int_t)fThreshold);
   psaSimple -> Analyze(rawEvent, event);
 }
