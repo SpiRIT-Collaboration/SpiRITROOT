@@ -23,6 +23,16 @@ STDigiPar::~STDigiPar()
 }
 
 // Getters
+Int_t STDigiPar::GetPadPlaneX()
+{
+  return fPadPlaneX;
+}
+
+Int_t STDigiPar::GetPadPlaneZ()
+{
+  return fPadPlaneZ;
+}
+
 Int_t STDigiPar::GetPadSizeX()
 {
   return fPadSizeX;
@@ -70,6 +80,14 @@ Bool_t STDigiPar::getParams(FairParamList *paramList)
   }
 
   if (!fInitialized) {
+    if (!(paramList -> fill("PadPlaneX", &fPadPlaneX))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadPlaneX parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("PadPlaneZ", &fPadPlaneZ))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadPlaneZ parameter!");
+      return kFALSE;
+    }
     if (!(paramList -> fill("PadSizeX", &fPadSizeX))) {
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadSizeX parameter!");
       return kFALSE;
@@ -118,6 +136,8 @@ void STDigiPar::putParams(FairParamList *paramList)
     return;
   }
 
+  paramList -> add("PadPlaneX", fPadPlaneX);
+  paramList -> add("PadPlaneZ", fPadPlaneZ);
   paramList -> add("PadSizeX", fPadSizeX);
   paramList -> add("PadSizeZ", fPadSizeZ);
   paramList -> add("GasFile", fGasFile);

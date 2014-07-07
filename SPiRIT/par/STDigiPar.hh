@@ -31,6 +31,8 @@ class STDigiPar : public FairParGenericSet
     // Operators
     
     // Getters
+    Int_t GetPadPlaneX();
+    Int_t GetPadPlaneZ();
     Int_t GetPadSizeX();
     Int_t GetPadSizeZ();
     STGas *GetGas();
@@ -55,6 +57,8 @@ class STDigiPar : public FairParGenericSet
 
     Bool_t fInitialized;
 
+    Int_t fPadPlaneX;
+    Int_t fPadPlaneZ;
     Int_t fPadSizeX;
     Int_t fPadSizeZ;
     Int_t fGasFile;
