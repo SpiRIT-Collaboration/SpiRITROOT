@@ -101,7 +101,7 @@ void STEventDraw::Exec(Option_t* option)
     for (Int_t iPoint = 0; iPoint < numPoints; iPoint++) {
       STHit aPoint = pointArray -> at(iPoint);
       TVector3 vec(GetVector(aPoint));
-      pointSet -> SetNextPoint(vec.X(), vec.Y(), vec.Z());
+      pointSet -> SetNextPoint(vec.X()/10., vec.Y()/10., vec.Z()/10.); // mm -> cm
       pointSet -> SetPointId(GetValue(aPoint, iPoint));
     }
 
