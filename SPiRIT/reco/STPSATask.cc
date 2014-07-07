@@ -50,13 +50,13 @@ STPSATask::Init()
     return kERROR;
   }
 
-  fRawEventArray = (TClonesArray *) ioMan -> GetObject("RawEventCollection");
+  fRawEventArray = (TClonesArray *) ioMan -> GetObject("STRawEvent");
   if (fRawEventArray == 0) {
     Error("STPSATask::Init()", "Couldn't find STRawEvent array!");
     return kERROR;
   }
 
-  ioMan -> Register("EventCollection", "SPiRIT", fEventArray, fIsPersistence);
+  ioMan -> Register("STEvent", "SPiRIT", fEventArray, fIsPersistence);
 
   return kSUCCESS;
 }
