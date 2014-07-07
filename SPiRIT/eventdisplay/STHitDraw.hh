@@ -13,31 +13,25 @@
 #ifndef STHITDRAW_H
 #define STHITDRAW_H
 
-// FairRoot classes
-#include "FairBoxSetDraw.h"
+// SpiRITROOT classes
+#include "STEventDraw.hh"
+#include "STHit.hh"
 
 // ROOT classes
 #include "Rtypes.h"
 #include "TVector3.h"
 
-class TObject;
-
-class STHitDraw: public FairBoxSetDraw
+class STHitDraw: public STEventDraw
 {
   public:
     STHitDraw();
 
-    /** Standard constructor
-      *@param name        Name of task
-      *@param iVerbose    Verbosity level
-      **/
-    STHitDraw(const char* name, Int_t iVerbose = 1);
+    STHitDraw(const Char_t *name, Color_t color, Style_t style, Int_t verbose = 1);
 
   protected:
+    TVector3 GetVector(STHit &hit);
 
-    TVector3 GetVector(TObject* object);
-
-    ClassDef(STHitDraw, 1);
+  ClassDef(STHitDraw, 1);
 };
 
 #endif

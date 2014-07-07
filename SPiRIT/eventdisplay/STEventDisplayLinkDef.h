@@ -4,7 +4,7 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-// Add the class names you created
+#pragma link C++ class STEventDraw+;
 #pragma link C++ class STHitDraw+;
 
 #endif

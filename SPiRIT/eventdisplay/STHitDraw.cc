@@ -12,22 +12,19 @@
 
 // SpiRITROOT classes
 #include "STHitDraw.hh"
-#include "STHit.hh"
 
 ClassImp(STHitDraw)
-
-class TObject;
 
 STHitDraw::STHitDraw()
 {
 }
 
-STHitDraw::STHitDraw(const char* name, Int_t iVerbose)
-:FairBoxSetDraw(name, iVerbose)
+STHitDraw::STHitDraw(const Char_t *name, Color_t color, Style_t style, Int_t verbose)
+:STEventDraw(name, color, style, verbose)
 {
 }
 
-TVector3 STHitDraw::GetVector(TObject* object)
+TVector3 STHitDraw::GetVector(STHit &hit)
 {
-  return ((STHit *) object) -> GetPosition();
+  return hit.GetPosition();
 }
