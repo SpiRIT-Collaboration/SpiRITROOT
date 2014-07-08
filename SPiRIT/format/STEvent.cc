@@ -16,13 +16,13 @@
 
 ClassImp(STEvent);
 
-STEvent::STEvent()
+STEvent::STEvent(Bool_t isClustered, Bool_t isTracked)
 :TNamed("STEvent", "Event container")
 {
   fEventID = -1;
 
-  fIsClustered = 0;
-  fIsTracked = 0;
+  fIsClustered = isClustered;
+  fIsTracked = isTracked;
 }
 
 STEvent::STEvent(STEvent *object)

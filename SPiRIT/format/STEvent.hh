@@ -22,7 +22,7 @@
 
 class STEvent : public TNamed {
   public:
-    STEvent();
+    STEvent(Bool_t isClustered = kFALSE, Bool_t isTracked= kFALSE);
     STEvent(STEvent *object);
     ~STEvent();
 
