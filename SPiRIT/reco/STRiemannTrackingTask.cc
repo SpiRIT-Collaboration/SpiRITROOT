@@ -15,22 +15,8 @@
 //      Genie Jhang          Korea University
 //-----------------------------------------------------------
 
-// This Class' Header ------------------
+// SpiRITROOT classes
 #include "STRiemannTrackingTask.hh"
-
-// C/C++ Headers ----------------------
-#include <map>
-#include <cmath>
-
-// FairROOT Headers
-#include "FairRootManager.h"
-#include "FairRuntimeDb.h"
-#include "FairField.h"
-#include "FairMCPoint.h"
-#include "FairRunAna.h"
-#include "McIdCollection.h"
-
-// SPiRIT Headers --------
 #include "STCluster.hh"
 #include "STRiemannTrackFinder.hh"
 #include "STRiemannHit.hh"
@@ -41,6 +27,25 @@
 #include "STRiemannTTCorrelator.hh"
 #include "STDigiPar.hh"
 #include "STDigiMapper.hh"
+
+// FairROOT classes
+#include "FairRootManager.h"
+#include "FairRuntimeDb.h"
+#include "FairField.h"
+#include "FairMCPoint.h"
+#include "FairRunAna.h"
+#include "McIdCollection.h"
+
+// STL
+#include <map>
+#include <cmath>
+
+// ROOT classes
+#include "TFile.h"
+#include "TMath.h"
+#include "TVector3.h"
+#include "TClonesArray.h"
+#include "TDatabasePDG.h"
 
 /*
 #include "GFTrackCand.h"
@@ -58,13 +63,6 @@
 #include "PndMCTrack.h"
 */
 
-// ROOT Headers
-#include "TFile.h"
-#include "TMath.h"
-#include "TVector3.h"
-#include "TClonesArray.h"
-#include "TDatabasePDG.h"
-
 // Class Member definitions -----------
 
 #define MINHITS 4
@@ -73,9 +71,11 @@
 ClassImp(STRiemannTrackingTask)
 
 STRiemannTrackingTask::STRiemannTrackingTask()
-: FairTask("ST Pattern Reconstruction")
+:FairTask("ST Pattern Reconstruction")
 {
-  fPersistence = kFALSE;
+  fLogger = FairLogger::GetLogger();
+
+  fIsPersistence = kFALSE;
   fNSectors = 1;
   fMaxRadius = 100;
 
@@ -154,6 +154,18 @@ STRiemannTrackingTask::~STRiemannTrackingTask()
 {
 }
 
+void
+STRiemannTrackingTAsk::SetVerbose(Bool_t value)
+{
+  fVerbose = value;
+}
+
+void
+STRiemannTrackingTask::SetPersistence(Bool_t value)
+{
+  fIsPersistence = value;
+}
+
 void 
 STRiemannTrackingTask::SetSortingParameters(Bool_t sortingMode,
                                             Int_t sorting,
@@ -200,19 +212,50 @@ STRiemannTrackingTask::SetTrkMergerParameters(Double_t TTproxcut,
   fTTPlaneCut = TTplanecut;
 }
 
+void
+STRiemannTrackingTask::SetMaxRMS(Double_t value)
+{
+  fMaxRMS = value;
+}
+
+void
+STRiemannTrackingTask::SetMergeTracks(Bool_t mergeTracks)
+{
+  fMergeTracks = mergeTracks;
+}
+
+void
+STRiemannTrackingTask::SetMergeCurlers(Bool_t mergeCurlers, Double_t blowUp)
+{
+  fMergeCurlers = mergeCurlers;
+  fBlowUp = blowUp;
+}
+
+void
+STRiemannTrackingTask::SetRiemannScale(Double_t riemannScale)
+{
+  fRiemannScale = riemannScale;
+}
+    
+void
+STRiemannTrackingTask::SkipCrossingAreas(Bool_t value)
+{
+  fSkipCrossingAreas = value;
+}
+
 InitStatus
 STRiemannTrackingTask::Init()
 {
   //Get ROOT Manager
-  FairRootManager *ioman = FairRootManager::Instance();
+  FairRootManager *ioMan = FairRootManager::Instance();
 
-  if(ioman == 0){
+  if(ioMan == 0){
     Error("STRiemannTrackingTask::Init", "RootManager not instantiated!");
     return kERROR;
   }
 
   // Get input collection
-  fClusterArray = (TClonesArray *) ioman -> GetObject(fClusterBranchName);
+  fClusterArray = (TClonesArray *) ioMan -> GetObject(fClusterBranchName);
   if(fClusterArray == 0){
     Error("STRiemannTrackingTask::Init", "Cluster-array not found!");
     return kERROR;
@@ -225,10 +268,10 @@ STRiemannTrackingTask::Init()
   */
 
   friemannTrackArray = new TClonesArray("STRiemannTrack");
-  ioman -> Register(fRiemannTrackBranchName, "ST", fRiemannTrackArray, fPersistence);
+  ioMan -> Register(fRiemannTrackBranchName, "ST", fRiemannTrackArray, fIsPersistence);
 
   friemannHitArray = new TClonesArray("STRiemannHit");
-  ioman -> Register(fRiemannHitBranchName, "ST", fRiemannHitArray, fPersistence);
+  ioMan -> Register(fRiemannHitBranchName, "ST", fRiemannHitArray, fIsPersistence);
 
 
 
@@ -289,33 +332,28 @@ STRiemannTrackingTask::Init()
 
 
 void
-STRiemannTrackingTask::SetParContainers() {
-
-  std::cout << "STClusterFinderTask::SetParContainers" << std::endl;
-  std::cout.flush();
-
-  // Get run and runtime database
+STRiemannTrackingTask::SetParContainers()
+{
   FairRun *run = FairRun::Instance();
   if (!run)
-    Fatal("SetParContainers", "No analysis run");
+    fLogger -> Fatal(MESSAGE_ORIGIN, "No analysis run!");
 
   FairRuntimeDb *db = run -> GetRuntimeDb();
   if (!db)
-    Fatal("SetParContainers", "No runtime database");
+    fLogger -> Fatal(MESSAGE_ORIGIN, "No runtime database!");
 
-  // Get ST digitisation parameter container
   fPar = (STDigiPar *) db -> GetContainer("STDigiPar");
   if (!fPar)
-    Fatal("SetParContainers", "STDigiPar not found");
+    fLogger -> Fatal(MESSAGE_ORIGIN, "STDigiPar not found!");
 }
 
 
 
-  void
+void
 STRiemannTrackingTask::Exec(Option_t *opt)
 {
   if (fVerbose)
-    std::cout << "STRiemannTrackingTask::Exec; Event Number: " << counter++ << std::endl;
+    fLogger -> Info(MESSAGE_ORIGIN, "Event Number?");
 
   // Reset output Arrays
   if (fRiemannTrackArray == 0)
