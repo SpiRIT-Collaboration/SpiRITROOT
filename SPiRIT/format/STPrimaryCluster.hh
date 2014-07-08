@@ -28,14 +28,6 @@ class STPrimaryCluster : public TObject
     /** Default constructor **/
     STPrimaryCluster();
 
-    /** 
-     * Constructor with arguments
-     * @param charge     charge [eV]
-     * @param position   position [cm]
-     * @param time       time from MC [ns]
-     * @param trackID    original MC trackID
-     * @param mcHitID    original MC hitID
-     **/
     STPrimaryCluster(UInt_t   charge,
                      TVector3 position,
                      Double_t time,

@@ -3,6 +3,7 @@
 //      Clusterizer task class header
 //
 //      STClusterizer reads in MCPoints and produces primary clusters
+//
 //      Input  : STMC
 //      Output : STPrimaryCluster
 //
@@ -35,7 +36,7 @@ class STClusterizerTask : public FairTask
     // Operators
     // Getters
     // Setters
-    void SetPersistant(Bool_t val) { fIsPersistent = val; };
+    void SetPersistence(Bool_t val) { fIsPersistent = val; };
     
     // Main methods
     virtual InitStatus Init();
@@ -44,15 +45,14 @@ class STClusterizerTask : public FairTask
 
   private:
     // variables
-    TString fMCPointBranchName;        //!< Name of MC data branch
+    TString fMCPointBranchName;         //!< Name of MC data branch
     TClonesArray *fMCPointArray;        //!< Point array for MC data
     TClonesArray *fPrimaryClusterArray; //!< Primary cluster array
 
-    //const STGas *fGas;
-    STGas *fGas;                       //!< STGas pointer
-    STDigiPar *fPar;                   //!< STDigiPar pointer
+    STDigiPar* fPar;                    //!< STDigiPar pointer
+    STGas*     fGas;                    //!< STGas pointer
 
-    Bool_t fIsPersistent;              //!< If true, save container
+    Bool_t fIsPersistent;               //!< If true, save container
 
   ClassDef(STClusterizerTask, 1);
 };

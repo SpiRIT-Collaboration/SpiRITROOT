@@ -27,12 +27,19 @@ class STGas
 
     // Getter
     Double_t GetEIonize();
-    Double_t GetRandomCS(Double_t val);
+    UInt_t   GetRandomCS();
+
+    Double_t GetDriftVelocity();
+    Double_t GetCoefAttachment();
+    Double_t GetCoefDiffusion();
 
     // Setter
 
   private:
     Double_t fEIonize;                  //!< effective ionization energy [eV]
+    Double_t fDriftVelocity;            //!< drift velocity [cm/ns]
+    Double_t fCoefAttachment;           //!< attachment coefficient
+    Double_t fCoefDiffusion;            //!< diffusion coefficient
 
   ClassDef(STGas, 1)
 };

@@ -3,6 +3,7 @@
 //      Clusterizer task class source
 //
 //      STClusterizer reads in MCPoints and produces primary clusters
+//
 //      Input  : STMC
 //      Output : STPrimaryCluster
 //
@@ -103,6 +104,8 @@ STClusterizerTask::Exec(Option_t *opt)
     Warning(warning, "Not enough Hits in Tpc for Digitization (<2)");
     return;
   }
+
+  Double_t EIonize = fGas->GetEIonize();
   
   Int_t    iCluster = 0;        // cluster counting index
   Double_t displacementCut = 1; // [mm]
@@ -119,14 +122,14 @@ STClusterizerTask::Exec(Option_t *opt)
       continue;
     }
 
-    UInt_t qTotal   = (UInt_t) floor(fabs( energyLoss/fGas->GetEIonize() )); // total charge [eV]
+    UInt_t qTotal   = (UInt_t) floor(fabs( energyLoss/EIonize )); // total charge [eV]
     UInt_t qCluster = 0; // cluster charge
     UInt_t nCluster = 0; // number of clusters in this point
 
     // Make random size clusters with total charge
     while(qTotal>0) 
     {
-      qCluster = fGas -> GetRandomCS(gRandom->Uniform()); // get random cluster size
+      qCluster = fGas -> GetRandomCS(); // get random cluster size
       if(qCluster > qTotal) qCluster = qTotal; 
       qTotal -= qCluster;
 
@@ -146,7 +149,7 @@ STClusterizerTask::Exec(Option_t *opt)
     iCluster += nCluster;
   }
 
-  cout << "STClusterizerTask:: " << fMCPointArray -> GetEntriesFast() << " clusters created" << endl;
+  cout << "STClusterizerTask:: " << fPrimaryClusterArray -> GetEntriesFast() << " clusters created" << endl;
 
   return;
 }
