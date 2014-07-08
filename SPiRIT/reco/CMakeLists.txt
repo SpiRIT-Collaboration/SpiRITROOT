@@ -12,9 +12,10 @@ ${CMAKE_SOURCE_DIR}/SPiRIT/stack
 ${CMAKE_SOURCE_DIR}/SPiRIT/par
 ${CMAKE_SOURCE_DIR}/SPiRIT/format
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco
-${CMAKE_SOURCE_DIR}/SPiRIT/reco/PulseShapeAnalyzer
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/STConverter
+${CMAKE_SOURCE_DIR}/SPiRIT/reco/PulseShapeAnalyzer
+${CMAKE_SOURCE_DIR}/SPiRIT/reco/RiemannTracking
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -38,8 +39,11 @@ STConverter/STMap.cc
 
 PulseShapeAnalyzer/STPSASimple.cc
 
+#RiemannTracking/
+
 STDecoderTask.cc
 STPSATask.cc
+#STRiemannTrackingTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
