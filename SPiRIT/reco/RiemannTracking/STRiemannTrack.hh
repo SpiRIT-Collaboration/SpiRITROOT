@@ -35,7 +35,7 @@ class STRiemannTrack : public TObject
   public:
     STRiemannTrack();
     STRiemannTrack(Double_t scale);
-    ~STRiemannTrack() // does NOT delete Riemann Hits
+    ~STRiemannTrack(); // does NOT delete Riemann Hits
 
     void  SetVerbose(Bool_t value = kTRUE);
     void  SetSort(Bool_t value = kTRUE);
@@ -79,7 +79,7 @@ class STRiemannTrack : public TObject
     // these functions can be used to calculate seed values for the fitter
               void  GetPosDirOnHelix(UInt_t i, TVector3 &pos, TVector3 &dir)        const; // get position (3D) of point i on the fitted helix
           Double_t  GetMom(Double_t Bz)      const; // get the magnitude of the momentum, Bz is the z component in kGauss
-             Int_t  IsWinding()              const; // +- 1; winding sense along z axis
+             Int_t  GetWinding()              const; // +- 1; winding sense along z axis
 
           TVector3  pocaToZ()                const; // calc POCA to Z-Axis
           TVector3  pocaToIP(Double_t z = 0) const; // calc POCA to (0,0,z)
@@ -109,11 +109,11 @@ class STRiemannTrack : public TObject
           Double_t  DistHelix(STRiemannHit *hit,
                                     Bool_t  calcPos = kTRUE,
                                     Bool_t  TwoPiCheck = kFALSE,
-                                   Vector3 *POCA = NULL)          const; // distance to helix
+                                  TVector3 *POCA = NULL)          const; // distance to helix
              void   Plot(Bool_t standalone = kTRUE);
 
   private:
-    // Operations ----------------------
+    void InitVariables(); //! initialize the variables
     void Refit(); // refit the plane and dip; set angles of hits; calc rms
     void CenterR(); // calculate center and radius
     Double_t calcRMS(TVector3 n1, Double_t c1) const;
