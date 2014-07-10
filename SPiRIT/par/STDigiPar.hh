@@ -35,7 +35,9 @@ class STDigiPar : public FairParGenericSet
     Int_t GetPadPlaneZ();
     Int_t GetPadSizeX();
     Int_t GetPadSizeZ();
-    Double_t GetWirePlaneY();
+    Double_t GetAnodeWirePlaneY();
+    Double_t GetGroundWirePlaneY();
+    Double_t GetGatingWirePlaneY();
     STGas *GetGas();
     Int_t GetNumTbs();
     //!< returns the time duration of a time bucket in given sampling time in ns.
@@ -62,7 +64,9 @@ class STDigiPar : public FairParGenericSet
     Int_t fPadPlaneZ;
     Int_t fPadSizeX;
     Int_t fPadSizeZ;
-    Double_t fWirePlaneY;
+    Double_t fAnodeWirePlaneY;
+    Double_t fGroundWirePlaneY;
+    Double_t fGatingWirePlaneY;
     Int_t fGasFile;
     Double_t fEField;
     Int_t fNumTbs;

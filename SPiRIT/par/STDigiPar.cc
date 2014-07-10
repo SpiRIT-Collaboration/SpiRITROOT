@@ -43,9 +43,19 @@ Int_t STDigiPar::GetPadSizeZ()
   return fPadSizeZ;
 }
 
-Double_t STDigiPar::GetWirePlaneY()
+Double_t STDigiPar::GetAnodeWirePlaneY()
 {
-  return fWirePlaneY;
+  return fAnodeWirePlaneY;
+}
+
+Double_t STDigiPar::GetGroundWirePlaneY()
+{
+  return fGroundWirePlaneY;
+}
+
+Double_t STDigiPar::GetGatingWirePlaneY()
+{
+  return fGatingWirePlaneY;
 }
 
 STGas *STDigiPar::GetGas()
@@ -101,8 +111,16 @@ Bool_t STDigiPar::getParams(FairParamList *paramList)
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadSizeZ parameter!");
       return kFALSE;
     }
-    if (!(paramList -> fill("WirePlaneY", &fWirePlaneY))) {
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find WirePlaneY parameter!");
+    if (!(paramList -> fill("AnodeWirePlaneY", &fAnodeWirePlaneY))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find AnodeWirePlaneY parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("GroundWirePlaneY", &fGroundWirePlaneY))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GroundWirePlaneY parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("GatingWirePlaneY", &fGatingWirePlaneY))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GatingWirePlaneY parameter!");
       return kFALSE;
     }
     if (!(paramList -> fill("GasFile", &fGasFile))) {
@@ -149,7 +167,9 @@ void STDigiPar::putParams(FairParamList *paramList)
   paramList -> add("PadPlaneZ", fPadPlaneZ);
   paramList -> add("PadSizeX", fPadSizeX);
   paramList -> add("PadSizeZ", fPadSizeZ);
-  paramList -> add("WirePlaneY", fWirePlaneY);
+  paramList -> add("AnodeWirePlaneY", fAnodeWirePlaneY);
+  paramList -> add("GroundWirePlaneY", fGroundWirePlaneY);
+  paramList -> add("GatingWirePlaneY", fGatingWirePlaneY);
   paramList -> add("GasFile", fGasFile);
   paramList -> add("EField", fEField);
   paramList -> add("NumTbs", fNumTbs);

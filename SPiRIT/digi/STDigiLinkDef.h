@@ -5,5 +5,6 @@
 #pragma link off all functions;
 
 #pragma link C++ class STClusterizerTask+;
+#pragma link C++ class STDriftTask+;
 
 #endif
