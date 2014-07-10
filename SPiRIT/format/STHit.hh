@@ -35,6 +35,9 @@ class STHit : public TObject {
     //!< Position setter
     void SetPosition(TVector3 vec);
     void SetPosition(Double_t x, Double_t y, Double_t z);
+    //!< Position sigma setter
+    void SetPosSigma(TVector3 vec);
+    void SetPosSigma(Double_t dx, Double_t dy, Double_t dz);
     //!< Charge setter
     void SetCharge(Double_t charge);
 
@@ -42,6 +45,8 @@ class STHit : public TObject {
     Int_t GetTrackID();
     //!< Position getter
     TVector3 GetPosition();
+    //!< Position sigma getter
+    TVector3 GetPosSigma();
     //!< Charge getter
     Double_t GetCharge();
 
@@ -50,6 +55,8 @@ class STHit : public TObject {
     Int_t fTrackID;
     //!< Position
     TVector3 fPosition;
+    //!< Position error
+    TVector3 fPositionSigma;
     //!< Charge
     Double_t fCharge;
 
