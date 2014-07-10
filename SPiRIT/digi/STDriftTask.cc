@@ -102,7 +102,8 @@ STDriftTask::Exec(Option_t *opt)
   Double_t driftVelocity  = fGas -> GetDriftVelocity();  // make it [cm/ns]
   Double_t coefAttachment = fGas -> GetCoefAttachment();
   Double_t coefDiffusion  = fGas -> GetCoefDiffusion();
-  Double_t yWirePlane     = fPar -> GetWirePlaneY();     // where should i get this from??? [cm]
+  Double_t yWirePlane     = fPar -> GetGroundWirePlaneY();  // [mm]
+           yWirePlane    *= 10; // to [cm]
 
   Int_t    charge;
   Double_t xElectron;
