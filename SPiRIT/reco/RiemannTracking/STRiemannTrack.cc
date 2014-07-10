@@ -71,6 +71,13 @@ const TVector3 &STRiemannTrack::GetCenter()          const { return fCenter; }
   const std::vector<STRiemannHit *> *STRiemannTrack::GetHits() const { return &fHits; }
 // -------------------------------------------------------------------------------------------------------------------
 
+// Comparator --------------------------------------------------------------------------------------------------------
+Bool_t STRiemannTrack::SortByZ(STRiemannHit *hit1, STRiemannHit *hit2)        { return (hit1 -> GetZ() < hit2 -> GetZ()); }
+Bool_t STRiemannTrack::SortByZInv(STRiemannHit *hit1, STRiemannHit *hit2)     { return (hit1 -> GetZ() > hit2 -> GetZ()); }
+Bool_t STRiemannTrack::SortByAngle(STRiemannHit *hit1, STRiemannHit *hit2)    { return (hit1 -> GetAngleOnHelix() < hit2 -> GetAngleOnHelix()); }
+Bool_t STRiemannTrack::SortByAngleInv(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetAngleOnHelix() > hit2 -> GetAngleOnHelix()); }
+// -------------------------------------------------------------------------------------------------------------------
+
 STRiemannTrack::STRiemannTrack()
 {
   InitVariables();
@@ -79,6 +86,7 @@ STRiemannTrack::STRiemannTrack()
 STRiemannTrack::STRiemannTrack(Double_t scale)
 {
   InitVariables();
+
   fRiemannScale = scale;
 }
 
@@ -113,79 +121,16 @@ STRiemannTrack::DeleteHits()
   fHits.clear();
 }
 
-void
-STRiemannTrack::InitTargetTrack(Double_t dip, Double_t curvature)
-{
-  if (GetNumHits() != 1) return;
-
-  fIsInitialized = kTRUE;
-  fIsFitted = kTRUE;
-
-  TVector3 hit0 = fHits[0] -> cluster() -> pos();
-
-  // hit1 is the "origin" or vertex of the track to be initialized
-  Double_t z1 = hit0.Z() - hit0.Perp()/TMath::Tan(TMath::PiOver2() - dip);
-  TVector3 hit1(0, 0, z1);
-
-  // init plane parameters
-  fN.SetXYZ(hit0.X(), hit0.Y(), curvature);
-  fN.RotateZ(TMath::PiOver2()); // rotate 90 deg
-  fN.SetMag(1.);
-  fC = TVector3(0., 0., 0.); // track coming from origin
-
-  // calc fCenter and fRadius
-  centerR();
-
-  fRadius = (hit0 - fCenter).Perp();
-
-  // get angle of hit0
-  hit0 -= fCenter;
-  Double_t angle0 = hit0.Phi(); // [-pi, pi]
-  fHits[0] -> setAngleOnHelix(angle0); // set angle of first hit relative to x axis
-
-  // get angle of hit1
-  hit1 -= fCenter;
-  Double_t angle1 = hit1.Phi(); // [-pi, pi]
-
-  fM = (z1 - hit0.Z()) / (angle1 - angle0) * -1.;
-  fT = hit0.Z() - fM*angle0;
-
-  fDip = TMath::ATan(-1.* fM/fRadius) + TMath::PiOver2();
-  fSinDip = sin(fDip);
-
-  //std::cout << "dip " << fDip << " angle 0 " << angle0 << "  angle1 " << angle1 << "\n";
-}
-
-void
-STRiemannTrack::InitCircle(Double_t phi) {
-  if (getNumHits() != 1) return;
-
-  fIsInitialized = kTRUE;
-  fIsFitted = kTRUE;
-
-  TVector3 hit0 = fHits[0] -> cluster() -> pos();
-
-  fCenter.SetXYZ(0,0,0);
-  fRadius = hit0.Perp();
-
-  fM = 0;
-  fT = hit0.Z();
-
-  fDip = TMath::PiOver2();
-  fSinDip = sin(fDip);
-}
-
 Bool_t 
 STRiemannTrack::CheckScale(STRiemannHit *hit) const
 {
-  Bool_t result = hit -> GetRiemannScale() == this -> GetRiemannScale();
-  if(!result) {
-    std::cerr << "RiemannScale not matching!" << std::endl;
-    std::cerr << "Hit   : "<< hit -> GetRiemannScale() << std::endl
-	      << "Track : "<< this -> GetRiemannScale() << std::endl;
+  if (!(hit -> GetRiemannScale() == this -> GetRiemannScale())) {
+    fLogger -> Warning(MESSAGE_ORIGIN, Form("Riemann scale not matching! Hit: %f, Track: %f", hit -> GetRiemannScale(), this -> GetRiemannScale()));
+
+    return kFALSE;
   }
 
-  return result;
+  return kTRUE;
 }
 
 Int_t
@@ -193,85 +138,73 @@ STRiemannTrack::GetClosestHit(STRiemannHit *hit,
                                   Double_t &dist, 
                                   TVector3 &outdir) const
 {
-  Int_t it2 = getClosestHit(hit,dist);
-  if(fHits.size() > 1){
-    // catch the case where we are at boundary
-    Int_t it1 = it2;
-    if(it1 > 0) --it1;
+  Int_t iHit2 = GetClosestHit(iHit, dist);
 
-    Int_t it3 = it2;
-    if(it3 < fHits.size()-1) ++it3;
+  if (fHits.size() > 1) {
+    // catch the case where we are at boundary
+    Int_t iHit1 = iHit2;
+    if(iHit1 > 0) iHit1--;
+
+    Int_t iHit3 = iHit2;
+    if(iHit3 < fHits.size() - 1) iHit3++;
     
-    TVector3 pos1 = fHits[it1] -> cluster() -> pos(); //next point
-    TVector3 pos3 = fHits[it3] -> cluster() -> pos();
+    TVector3 pos1 = fHits[iHit1] -> GetPosition(); //next point
+    TVector3 pos3 = fHits[iHit3] -> GetPosition();
 
     // construct general direction of track from these three
-    outdir = (pos3-pos1);
-    outdir.SetMag(1);
+    outdir = pos3 - pos1;
   } else {
-    TVector3 pos = hit -> cluster() -> pos(); //next point
-    TVector3 pos2 = fHits[it2] -> cluster() -> pos();
+    TVector3 pos = hit -> GetPosition(); //next point
+    TVector3 pos2 = fHits[iHit2] -> GetPosition();
     outdir = (pos2 - pos);
-    outdir.SetMag(1);
   }
 
-  return it2;
+  outdir.SetMag(1);
+
+  return iHit2;
 }
 
 
 Int_t
 STRiemannTrack::GetClosestHit(STRiemannHit *hit, Double_t &dist, Int_t from, Int_t to) const
 {
-  TVector3 posX = hit -> cluster() -> pos();
+  TVector3 pos1 = hit -> GetPosition();
   TVector3 pos2;
 
   dist = 9.E99;
 
-  Int_t found;
-  Double_t dis;
+  Int_t closestHit;
+  Double_t tempDist;
 
-  if(from < 0) from = 0;
-  if (to < from) to = from + 1;
-  if(to > fHits.size()) to = fHits.size();
+  if (from < 0)
+    from = 0;
 
-  for(Int_t it = from; it < to; ++it){
-    pos2 = fHits[it] -> cluster() -> pos(); 
-    dis = (pos2 - posX).Mag();
-    if(dis < dist){
-      found = it;
-      dist = dis;
+  if (to < from)
+    to = from + 1;
+
+  if (to > fHits.size())
+    to = fHits.size();
+
+  for(Int_t iHit = from; iHit < to; iHit++){
+    pos2 = fHits[it] -> GetPosition(); 
+    tempDist = (pos2 - pos1).Mag();
+
+    if (tempDist < dist) {
+      closestHit = iHit;
+      dist = tempDist;
     }
   }
-  return found;
+
+  return closestHit;
 }
 
 
-Int_t
-STRiemannTrack::GetClosestRiemannHit(STRiemannHit *hit, Double_t &dist) const {
-  TVector3 posX = hit -> x();
-  TVector3 pos2;
-
-  Int_t found;
-  Double_t mindis = 9.E99;
-  Double_t dis;
-
-  for(Int_t it = 0; it < fHits.size(); ++it){
-    pos2 = fHits[it] -> x(); 
-    dis = (pos2 - posX).Mag();
-    if(dis < mindis){
-      found = it;
-      mindis = dis;
-    }
-  }
-  dist = mindis;
-  return found;
-}
-
-
-void
+void // Not Yet
 STRiemannTrack::AddHit(STRiemannHit *hit){
-  if(!CheckScale(hit)) throw; // check if Riemannscale of hits matches that of the track!
-  Int_t nbefore = fHits.size();
+  if (!CheckScale(hit))
+    throw; // check if Riemannscale of hits matches that of the track!
+
+  Int_t numHits = fHits.size();
 
   // update average
   Double_t weightFactor = hit -> cluster() -> sig().Perp();
@@ -288,26 +221,26 @@ STRiemannTrack::AddHit(STRiemannHit *hit){
 
 
 void
-STRiemannTrack::RemoveHit(UInt_t ihit){
-  delete fHits[ihit];
+STRiemannTrack::RemoveHit(UInt_t iHit){
+  delete fHits[iHit];
 
-  // todo: update average & MCID Collection!!!
-
-  fHits.erase(fHits.begin() + ihit);
+  fHits.erase(fHits.begin() + iHit);
 }
 
 
 Int_t
 STRiemannTrack::GetWinding() const { // returns winding sense along z-axis
-  if(!fIsFitted && !fIsInitialized) return 1;
-  Double_t angle0 = fHits.front() -> getAngleOnHelix();
+  if (!fIsFitted && !fIsInitialized)
+    return 1;
+
+  Double_t angle0 = fHits.front() -> GetAngleOnHelix();
   Double_t angle1;
   if(fIsInitialized) {
     TVector3 hit1(0,0,0);
     hit1 -= fCenter;
     angle1 = hit1.Phi(); // [-pi, pi]
   } else {
-    angle1 = fHits.back() -> getAngleOnHelix();
+    angle1 = fHits.back() -> GetAngleOnHelix();
   }
   if (angle1 > angle0) return 1;
 
@@ -315,22 +248,25 @@ STRiemannTrack::GetWinding() const { // returns winding sense along z-axis
 }
 
 
-Double_t
-STRiemannTrack::Dist(STRiemannHit *hit, TVector3 n2, Double_t c2, Bool_t useArguments) const {
+Double_t // Not Yet
+STRiemannTrack::Dist(STRiemannHit *hit, TVector3 n, Double_t c, Bool_t useArguments) const {
   if(!useArguments) {
-    if(!fIsFitted) return 0.;
-    n2 = fN;
-    c2 = fC; 
+    if(!fIsFitted)
+      return 0.;
+
+    n = fN;
+    c = fC; 
   }
+
   // distance plane - center of sphere
-  TVector3 cent3(0,0,0.5); // center of sphere
-  Double_t l = c2 + n2*cent3; // distance plane to center
+  TVector3 center(0, 0, 0.5); // center of sphere
+  Double_t l = c + n*center; // distance plane to center
   Double_t thetaPlane = TMath::ACos(2.*l); // angle 
       
   // construct vector of hit relative to center of sphere
-	TVector3 vh = hit -> x()-cent3;
+	TVector3 vh = hit -> GetX() - center;
 	vh.SetMag(1);
-	Double_t cos1 = (-1.*n2)*vh;
+	Double_t cos1 = (-1.*n)*vh;
 	Double_t thetaHit = TMath::ACos(cos1);
 	return (thetaHit - thetaPlane); // positive when hit is outside of the helix, negative when hit is inside helix
 }
@@ -338,11 +274,12 @@ STRiemannTrack::Dist(STRiemannHit *hit, TVector3 n2, Double_t c2, Bool_t useArgu
 
 void
 STRiemannTrack::Refit(){ // helix fit
-  Bool_t hasBeenFitted(fIsFitted);
+  Bool_t hasBeenFitted = fIsFitted;
   fIsFitted = kFALSE;
 
-  UInt_t nhits = fHits.size();
-  if(nhits < 3) return; // need at least 3 points to make a planefit
+  UInt_t numHits = fHits.size();
+  if(numHits < 3)
+    return; // need at least 3 points to make a planefit
 
   TMatrixT<Double_t> Av(3,1);
   Av[0][0] = fAv[0];
@@ -353,16 +290,16 @@ STRiemannTrack::Refit(){ // helix fit
   
   Double_t nh = 0;
   Double_t weightFactor;
-  for(Int_t it = 0; it < nhits; ++it){
+  for(Int_t iHit = 0; iHit < numHits; ++iHit){
     TMatrixD h(3,1);
     // weigh hits with 1/cluster error
-    weightFactor = fHits[it] -> cluster() -> sig().Perp();
+    weightFactor = fHits[iHit] -> cluster() -> sig().Perp();
     if (weightFactor>1.E-3) weightFactor = 1./weightFactor;
     else weightFactor = 1.E3;
     nh += weightFactor;
-    h[0][0] = fHits[it] -> x().X();
-    h[1][0] = fHits[it] -> x().Y();
-    h[2][0] = fHits[it] -> x().Z();
+    h[0][0] = fHits[iHit] -> GetX().X();
+    h[1][0] = fHits[iHit] -> GetX().Y();
+    h[2][0] = fHits[iHit] -> GetX().Z();
     TMatrixD d(3,1);
     d = h - Av;
     TMatrixD dt(TMatrixD::kTransposed,d);
@@ -399,7 +336,7 @@ STRiemannTrack::Refit(){ // helix fit
   UInt_t iVec(1);
 
   // no plane switching for long tracks needed! If track long enough (on riemann sphere)  ->  calc rms only for smallest eigenvec!
-  if (nhits > 10 && (getFirstHit() -> x() - getLastHit() -> x()).Mag() > 0.2) {
+  if (numHits > 10 && (GetFirstHit() -> x() - GetLastHit() -> x()).Mag() > 0.2) {
     iVec = 2;
   }
 
@@ -432,7 +369,7 @@ STRiemannTrack::Refit(){ // helix fit
   //
 
   // calc angles on helix (hits must be sorted at least roughly!)
-  centerR(); // fIsFitted must be kTRUE for this to work!! Calculate center and radius
+  CenterR(); // fIsFitted must be kTRUE for this to work!! Calculate center and radius
 
   TVector3 hit0 = fHits[0] -> cluster() -> pos() - fCenter;
 
@@ -445,9 +382,9 @@ STRiemannTrack::Refit(){ // helix fit
 
   // phi goes counterclockwise and can be > 2Pi for curlers
   Double_t meanAngle, twoPi(TMath::TwoPi()), nTurns(1), dZ, dZnull, dZminus, dZplus;
-  Bool_t twoPiCheck(hasBeenFitted && fRadius < 50. && nhits > 10 && TMath::Abs(fM*twoPi) > 1. && TMath::Abs(fM*twoPi) < 300.);
+  Bool_t twoPiCheck(hasBeenFitted && fRadius < 50. && numHits > 10 && TMath::Abs(fM*twoPi) > 1. && TMath::Abs(fM*twoPi) < 300.);
 
-  for(Int_t i = 1; i < nhits; ++i){
+  for(Int_t i = 1; i < numHits; ++i){
     hiti = fHits[i] -> cluster() -> pos() - fCenter;
 
     Double_t angle = hiti.DeltaPhi(hit0);
@@ -491,7 +428,7 @@ STRiemannTrack::Refit(){ // helix fit
   // get phis and zs
   TGraph g(nhits);
   for(UInt_t it = 0; it < nhits; ++it){
-    g.SetPoint(it,fHits[it] -> getAngleOnHelix(),fHits[it] -> z());
+    g.SetPoint(it,fHits[it] -> GetAngleOnHelix(),fHits[it] -> z());
   }
   Int_t errorcode;
   g.LeastSquareLinearFit(nhits,_t,fM,errorcode,-999,999);
@@ -569,7 +506,7 @@ STRiemannTrack::DistRMS() const
 
   Double_t d2s(0), dis;
 
-  UInt_t nHits(getNumHits());
+  UInt_t nHits(GetNumHits());
 
   for(Int_t it = 0; it < nHits; ++it){
     dis = distHelix(fHits[it], kFALSE);
@@ -586,7 +523,8 @@ STRiemannTrack::DistRMS() const
 void
 STRiemannTrack::CenterR()
 {
-  if(!fIsFitted && !fIsInitialized) return;
+  if(!fIsFitted && !fIsInitialized)
+    return;
 
   // look at sphere from side, perpendicular to plane, so that plane becomes a line
   // line:   x = -fC*nx + a*nz;  z = -fC*nz - a*nx
@@ -645,7 +583,6 @@ STRiemannTrack::CenterR()
   fCenter.SetMag(0.5*(r1 + r2));
 
   //fCenter.Print();
-
 }
 
 
@@ -654,7 +591,7 @@ STRiemannTrack::DistHelix(STRiemannHit *hit, Bool_t calcPos, Bool_t TwoPiCheck, 
 {
   if(!fIsFitted && !fIsInitialized) return 0.;
 
-  Double_t hit_angle = hit -> getAngleOnHelix();
+  Double_t hit_angle = hit -> GetAngleOnHelix();
   TVector3 pos = hit -> cluster() -> pos();
   Double_t hitZ = hit -> z();
 
@@ -666,12 +603,12 @@ STRiemannTrack::DistHelix(STRiemannHit *hit, Bool_t calcPos, Bool_t TwoPiCheck, 
     Double_t d;
     Int_t ahit(0);
     if(!fIsInitialized){ // when track is initialized, only hit0 has a meaningful angle!
-      ahit = getClosestHit(hit, d);
-      if (ahit == getNumHits()) --ahit;
+      ahit = GetClosestHit(hit, d);
+      if (ahit == GetNumHits()) --ahit;
     }
 
     TVector3 hit1 = fHits[ahit] -> cluster() -> pos() - fCenter;
-    Double_t phi1 = fHits[ahit] -> getAngleOnHelix();
+    Double_t phi1 = fHits[ahit] -> GetAngleOnHelix();
 
     hit_angleR = hitX.DeltaPhi(hit1) + phi1;
 
@@ -764,17 +701,17 @@ STRiemannTrack::DistHelix(STRiemannHit *hit, Bool_t calcPos, Bool_t TwoPiCheck, 
 }
 
 void
-STRiemannTrack::getPosDirOnHelix(UInt_t i, TVector3& pos, TVector3& dir) const
+STRiemannTrack::GetPosDirOnHelix(UInt_t i, TVector3& pos, TVector3& dir) const
 {
   if (!fIsFitted && !fIsInitialized) return;
 
   Double_t hit_angle;
 
   if(fIsInitialized) {
-    hit_angle = fHits[0] -> getAngleOnHelix();
+    hit_angle = fHits[0] -> GetAngleOnHelix();
   }
   else {
-    Double_t hit_angleR = fHits[i] -> getAngleOnHelix();
+    Double_t hit_angleR = fHits[i] -> GetAngleOnHelix();
     Double_t hit_angleZ = 0;
     if (TMath::Abs(fM) > 1.E-3) hit_angleZ = (fHits[i] -> z() - fT)/fM;
 
@@ -806,39 +743,6 @@ STRiemannTrack::GetMom(Double_t Bz) const
   return TMath::Abs(fRadius/fSinDip * 0.0003 * Bz);
 }
 
-
-TVector3
-STRiemannTrack::PocaToZ() const
-{
-  TVector3 POCA(0,0,0);
-  if (!fIsFitted) return POCA;
-
-  Double_t closestAngle; // angle on track of hit with smallest distance to z axis
-  TVector3 ctrToClHit; // vector from center to hit with smallest distance to z axis
-  if (fHits.front() -> cluster() -> pos().Perp() < fHits.back() -> cluster() -> pos().Perp()){
-    closestAngle = fHits.front() -> getAngleOnHelix();
-    ctrToClHit = fHits.front() -> cluster() -> pos() - fCenter;
-  }
-  else {
-    closestAngle = fHits.back() -> getAngleOnHelix();
-    ctrToClHit = fHits.back() -> cluster() -> pos() - fCenter;
-  }
-
-  Double_t angle = closestAngle - ctrToClHit.DeltaPhi(-1.*fCenter); // angle on helix of POCA
-  //Double_t angle = (-1.*fCenter).Phi();
-
-  POCA.SetX(1.);
-  POCA.SetPhi(angle);
-  POCA.SetMag(fRadius);
-  POCA += fCenter;
-  POCA.SetZ(fM*angle + fT);
-
-  //std::cout<<"POCA "; POCA.Print();
-
-  return POCA;
-}
-
-
 TVector3
 STRiemannTrack::PocaToIP(Double_t z) const
 {
@@ -855,7 +759,6 @@ STRiemannTrack::PocaToIP(Double_t z) const
   return POCA;
 }
 
-
 Double_t
 STRiemannTrack::Resolution() const
 {
@@ -865,13 +768,12 @@ STRiemannTrack::Resolution() const
   Double_t rms(minrms);
   if (fRms > minrms) rms = fRms;
 
-  Double_t projLength(TMath::Abs((getFirstHit() -> getAngleOnHelix() - getLastHit() -> getAngleOnHelix()) * fRadius));
+  Double_t projLength(TMath::Abs((GetFirstHit() -> GetAngleOnHelix() - GetLastHit() -> GetAngleOnHelix()) * fRadius));
   if (projLength < 0.1) projLength = 0.1;
 
   // estimate the resolution
-  return rms*fRiemannScale/(projLength*projLength) * sqrt(720/(getNumHits() + 4)); // from pdg book, rms instead of epsilon (spacial resolution)
+  return rms*fRiemannScale/(projLength*projLength) * sqrt(720/(GetNumHits() + 4)); // from pdg book, rms instead of epsilon (spacial resolution)
 }
-
 
 Double_t
 STRiemannTrack::Quality() const
@@ -879,7 +781,7 @@ STRiemannTrack::Quality() const
   if (fIsInitialized || !fIsFitted) return 0;
 
   // todo: this is a test
-  Double_t q(getNumHits());
+  Double_t q(GetNumHits());
   q /= 40;
   if (q > 1) return 1.;
   return q;
@@ -917,7 +819,125 @@ STRiemannTrack::Plot(Bool_t standalone)
   }
 }
 
-Bool_t STRiemannTrack::SortByZ(STRiemannHit *hit1, STRiemannHit *hit2)        { return (hit1 -> GetZ() < hit2 -> GetZ()); }
-Bool_t STRiemannTrack::SortByZInv(STRiemannHit *hit1, STRiemannHit *hit2)     { return (hit1 -> GetZ() > hit2 -> GetZ()); }
-Bool_t STRiemannTrack::SortByAngle(STRiemannHit *hit1, STRiemannHit *hit2)    { return (hit1 -> GetAngleOnHelix() < hit2 -> GetAngleOnHelix()); }
-Bool_t STRiemannTrack::SortByAngleInv(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetAngleOnHelix() > hit2 -> GetAngleOnHelix()); }
+
+/*
+void
+STRiemannTrack::InitTargetTrack(Double_t dip, Double_t curvature)
+{
+  if (GetNumHits() != 1) return;
+
+  fIsInitialized = kTRUE;
+  fIsFitted = kTRUE;
+
+  TVector3 hit0 = fHits[0] -> cluster() -> pos();
+
+  // hit1 is the "origin" or vertex of the track to be initialized
+  Double_t z1 = hit0.Z() - hit0.Perp()/TMath::Tan(TMath::PiOver2() - dip);
+  TVector3 hit1(0, 0, z1);
+
+  // init plane parameters
+  fN.SetXYZ(hit0.X(), hit0.Y(), curvature);
+  fN.RotateZ(TMath::PiOver2()); // rotate 90 deg
+  fN.SetMag(1.);
+  fC = TVector3(0., 0., 0.); // track coming from origin
+
+  // calc fCenter and fRadius
+  centerR();
+
+  fRadius = (hit0 - fCenter).Perp();
+
+  // get angle of hit0
+  hit0 -= fCenter;
+  Double_t angle0 = hit0.Phi(); // [-pi, pi]
+  fHits[0] -> setAngleOnHelix(angle0); // set angle of first hit relative to x axis
+
+  // get angle of hit1
+  hit1 -= fCenter;
+  Double_t angle1 = hit1.Phi(); // [-pi, pi]
+
+  fM = (z1 - hit0.Z()) / (angle1 - angle0) * -1.;
+  fT = hit0.Z() - fM*angle0;
+
+  fDip = TMath::ATan(-1.* fM/fRadius) + TMath::PiOver2();
+  fSinDip = sin(fDip);
+
+  //std::cout << "dip " << fDip << " angle 0 " << angle0 << "  angle1 " << angle1 << "\n";
+}
+*/
+
+/*
+void
+STRiemannTrack::InitCircle(Double_t phi) {
+  if (getNumHits() != 1) return;
+
+  fIsInitialized = kTRUE;
+  fIsFitted = kTRUE;
+
+  TVector3 hit0 = fHits[0] -> cluster() -> pos();
+
+  fCenter.SetXYZ(0,0,0);
+  fRadius = hit0.Perp();
+
+  fM = 0;
+  fT = hit0.Z();
+
+  fDip = TMath::PiOver2();
+  fSinDip = sin(fDip);
+}
+*/
+
+/*
+Int_t
+STRiemannTrack::GetClosestRiemannHit(STRiemannHit *hit, Double_t &dist) const {
+  TVector3 posX = hit -> x();
+  TVector3 pos2;
+
+  Int_t found;
+  Double_t mindis = 9.E99;
+  Double_t dis;
+
+  for(Int_t it = 0; it < fHits.size(); ++it){
+    pos2 = fHits[it] -> x(); 
+    dis = (pos2 - posX).Mag();
+    if(dis < mindis){
+      found = it;
+      mindis = dis;
+    }
+  }
+  dist = mindis;
+  return found;
+}
+*/
+
+/*
+TVector3
+STRiemannTrack::PocaToZ() const
+{
+  TVector3 POCA(0,0,0);
+  if (!fIsFitted) return POCA;
+
+  Double_t closestAngle; // angle on track of hit with smallest distance to z axis
+  TVector3 ctrToClHit; // vector from center to hit with smallest distance to z axis
+  if (fHits.front() -> cluster() -> pos().Perp() < fHits.back() -> cluster() -> pos().Perp()){
+    closestAngle = fHits.front() -> getAngleOnHelix();
+    ctrToClHit = fHits.front() -> cluster() -> pos() - fCenter;
+  }
+  else {
+    closestAngle = fHits.back() -> getAngleOnHelix();
+    ctrToClHit = fHits.back() -> cluster() -> pos() - fCenter;
+  }
+
+  Double_t angle = closestAngle - ctrToClHit.DeltaPhi(-1.*fCenter); // angle on helix of POCA
+  //Double_t angle = (-1.*fCenter).Phi();
+
+  POCA.SetX(1.);
+  POCA.SetPhi(angle);
+  POCA.SetMag(fRadius);
+  POCA += fCenter;
+  POCA.SetZ(fM*angle + fT);
+
+  //std::cout<<"POCA "; POCA.Print();
+
+  return POCA;
+}
+*/

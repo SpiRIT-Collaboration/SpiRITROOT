@@ -72,24 +72,26 @@ class STRiemannTrack : public TObject
       STRiemannHit *GetFirstHit()                  const;
       const std::vector<STRiemannHit *> *GetHits() const;
 
+             //! Returns the hit number closest to **hit** and sets the distance between them as **Dist**. This sets direction vector from
+             //! after to before the given **hit**.
              Int_t  GetClosestHit(STRiemannHit *hit, Double_t &Dist, TVector3 &dir) const;
-             Int_t  GetClosestHit(STRiemannHit *hit, Double_t &Dist, Int_t from = 0, Int_t to = 10000000) const; // optional: range where to search for closest hit
-             Int_t  GetClosestRiemannHit(STRiemannHit *hit, Double_t &Dist)         const;
+             //! Returns the hit number closest to **hit** and sets the distance between them as **Dist** in the hit number range in **from** and **to**.
+             Int_t  GetClosestHit(STRiemannHit *hit, Double_t &Dist, Int_t from = 0, Int_t to = 10000000) const; 
+//             Int_t  GetClosestRiemannHit(STRiemannHit *hit, Double_t &Dist)         const;
 
     // these functions can be used to calculate seed values for the fitter
               void  GetPosDirOnHelix(UInt_t i, TVector3 &pos, TVector3 &dir)        const; // get position (3D) of point i on the fitted helix
           Double_t  GetMom(Double_t Bz)      const; // get the magnitude of the momentum, Bz is the z component in kGauss
              Int_t  GetWinding()              const; // +- 1; winding sense along z axis
 
-          TVector3  pocaToZ()                const; // calc POCA to Z-Axis
-          TVector3  pocaToIP(Double_t z = 0) const; // calc POCA to (0,0,z)
+//          TVector3  pocaToZ()                const; // calc POCA to Z-Axis
+          TVector3  PocaToIP(Double_t z = 0) const; // calc POCA to (0,0,z)
 
               void  AddHit(STRiemannHit *hit);
               void  RemoveHit(UInt_t ihit);
 
-
-              void  InitTargetTrack(Double_t Dip, Double_t curvature = 0); // init as straight track from Origin for single hit track
-              void  InitCircle(Double_t phi); // init as a circle
+//              void  InitTargetTrack(Double_t Dip, Double_t curvature = 0); // init as straight track from Origin for single hit track
+//              void  InitCircle(Double_t phi); // init as a circle
 
           
     // Operations ----------------------
