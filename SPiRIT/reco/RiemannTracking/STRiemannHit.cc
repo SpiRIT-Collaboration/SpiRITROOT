@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------
 // Description:
-//      Conformal Mapping of a cluster
+//      Conformal Mapping of a hit
 //      (x,y) -> (r,phi)-> riemann sphere
 //
 // Environment:
@@ -37,15 +37,19 @@ STRiemannHit::STRiemannHit(Double_t riemannScale)
 
 STRiemannHit::STRiemannHit(Double_t r, Double_t phi, Double_t riemannScale)
 {
-  fCluster = NULL;
-  fRiemannScale = riemannScale;
-
   InitVariables(r, phi, riemannScale);
+
+//  fCluster = NULL;
+  fEvent = NULL;
+  fRiemannScale = riemannScale;
 }
 
-STRiemannHit::STRiemannHit(STCluster* cluster, Double_t riemannScale)
+STRiemannHit::STRiemannHit(STevent* event, Double_t riemannScale)
 {
-  fCluster = cluster;
+  InitVariables(0, 0, riemannScale);
+
+//  fCluster = cluster;
+  fEvent = event;
   fRiemannScale = riemannScale;
 
 /*
@@ -56,7 +60,6 @@ STRiemannHit::STRiemannHit(STCluster* cluster, Double_t riemannScale)
 
   InitVariables(r, phi, riemannScale);
   */
-  InitVariables(0, 0, riemannScale);
 }
 
 
@@ -82,7 +85,8 @@ void STRiemannHit::InitVariables(Double_t r, Double_t phi, Double_t riemannScale
 
 // Simple getter and setter methods -----------------------------------------------------------
 const TVector3 &STRiemannHit::GetX()             const        { return fX; }
-     STCluster *STRiemannHit::GetCluster()       const        { return fCluster; }
+//     STCluster *STRiemannHit::GetCluster()       const        { return fCluster; }
+       STEvent *STRiemannHit::GetEvent()         const        { return fEvent; }
       Double_t  STRiemannHit::GetS()             const        { return fS; }
       Double_t  STRiemannHit::GetAngleOnHelix()  const        { return fAngleOnHelix; }
       Double_t  STRiemannHit::GetRiemannScale()  const        { return fRiemannScale; }
@@ -94,11 +98,13 @@ const TVector3 &STRiemannHit::GetX()             const        { return fX; }
 Double_t
 STRiemannHit::GetZ() const
 {
+  /*
   if(fCluster == NULL){
     fLogger -> Warning(MESSAGE_ORIGIN, "No cluster available!");
 
     return 0;
   }
+  */
 
   return 0; //fCluster -> pos().Z(); <<-- to be modified
 }
