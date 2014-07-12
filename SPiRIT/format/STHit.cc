@@ -38,7 +38,7 @@ void STHit::SetHit(Double_t x, Double_t y, Double_t z, Double_t charge) { fPosit
 void STHit::SetPosition(TVector3 vec)                                   { fPosition = vec; }
 void STHit::SetPosition(Double_t x, Double_t y, Double_t z)             { fPosition = TVector3(x, y, z); }
 void STHit::SetPosSigma(TVector3 vec)                                   { fPositionSigma = vec; }
-void STHit::SetPosSigma(Double_t dx, Double_t dy, Double_t dz)          { fPositionSigma = TVector3(x, y, z); }
+void STHit::SetPosSigma(Double_t dx, Double_t dy, Double_t dz)          { fPositionSigma = TVector3(dx, dy, dz); }
 void STHit::SetCharge(Double_t charge)                                  { fCharge = charge; }
 
 Int_t STHit::GetTrackID()                                               { return fTrackID; }
