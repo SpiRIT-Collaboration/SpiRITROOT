@@ -6,6 +6,8 @@
 # Description of parameters
 ################################################################################
 [STDigiPar]
+PadPlaneX:Int_t                864   # mm
+PadPlaneZ:Int_t               1344   # mm
 PadSizeX:Int_t                   8   # mm
 PadSizeZ:Int_t                  12   # mm
 AnodeWirePlaneY:Double_t     -4.05   # mm

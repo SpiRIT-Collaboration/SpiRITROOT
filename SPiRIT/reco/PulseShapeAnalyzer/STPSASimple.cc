@@ -89,7 +89,7 @@ STPSASimple::Analyze(STRawEvent *rawEvent, STEvent *event)
 Double_t
 STPSASimple::CalculateX(Int_t row)
 {
-  return (row + 0.5)*fPadSizeX - 432.;
+  return (row + 0.5)*fPadSizeX - fPadPlaneX/2.;
 }
 
 Double_t
