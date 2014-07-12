@@ -57,20 +57,20 @@ STDriftTask::Init()
   FairRootManager* ioman = FairRootManager::Instance();
 
   if(!ioman) {
-    Error("STClusterizerTask::Init", "RootManager not instantiated!");
+    Error("STDriftedTask::Init", "RootManager not instantiated!");
     return kERROR;
   }
 
   // Get input collection
   fPrimaryClusterArray = (TClonesArray *) ioman -> GetObject(fPrimaryClusterBranchName);
   if(!fPrimaryClusterArray) {
-    Error("STClusterizerTask::Init", "Point-array not found!");
+    Error("STDriftedTask::Init", "Point-array not found!");
     return kERROR;
   }
 
   // Create and register output array
-  fDriftedElectronArray = new TClonesArray("STPrimaryCluster");
-  ioman -> Register("STPrimaryCluster", "ST", fDriftedElectronArray, fIsPersistent);
+  fDriftedElectronArray = new TClonesArray("STDriftedElectron");
+  ioman -> Register("STDriftedElectron", "ST", fDriftedElectronArray, fIsPersistent);
 
   fGas = fPar -> GetGas();
 
@@ -96,7 +96,7 @@ STDriftTask::SetParContainers()
 void
 STDriftTask::Exec(Option_t *opt)
 {
-  if(fDriftedElectronArray==0) Fatal("STPrimaryCluster::Exec)","No Drfted Electron Array");
+  if(fDriftedElectronArray==0) Fatal("STDriftedElectron::Exec)","No Drifted Electron Array");
   fDriftedElectronArray -> Delete();
 
   Double_t driftVelocity  = fGas -> GetDriftVelocity();  // make it [cm/ns]
