@@ -4,7 +4,7 @@
 //
 //      Make avalanch electrons drifted through wire plane.
 //
-//      Input  : STDritedElectron
+//      Input  : STDriftedElectron
 //      Output : STAvalanche
 //
 // Author List:
@@ -22,7 +22,7 @@
 
 
 // SPiRIT-TPC headers
-#include "STDritedElectron.hh"
+#include "STDriftedElectron.hh"
 #include "STAvalanche.hh"
 
 // ROOT headers
@@ -42,7 +42,7 @@ STAvalancheTask::STAvalancheTask()
 : FairTask("SPiRIT Avalanche"),
   fIsPersistent(kFALSE)
 {
-  fDriftedElectronBranchName = "STDritedElectron";
+  fDriftedElectronBranchName = "STDriftedElectron";
 }
 
 STAvalancheTask::~STAvalancheTask()
@@ -61,15 +61,15 @@ STAvalancheTask::Init()
   }
 
   // Get input collection
-  fPrimaryClusterArray = (TClonesArray *) ioman -> GetObject(fDriftedElectronBranchName);
-  if(!fPrimaryClusterArray) {
-    Error("STClusterizerTask::Init", "Point-array not found!");
+  fDriftedElectronArray = (TClonesArray *) ioman -> GetObject(fDriftedElectronBranchName);
+  if(!fDriftedElectronArray) {
+    Error("STAvalancheTask::Init", "Point-array not found!");
     return kERROR;
   }
 
   // Create and register output array
-  fDriftedElectronArray = new TClonesArray("STDritedElectron");
-  ioman -> Register("STDritedElectron", "ST", fDriftedElectronArray, fIsPersistent);
+  fDriftedElectronArray = new TClonesArray("STDriftedElectron");
+  ioman -> Register("STAvalanche", "ST", fAvalancheArray, fIsPersistent);
 
   fGas = fPar -> GetGas();
 
@@ -94,9 +94,26 @@ STAvalancheTask::SetParContainers()
 void
 STAvalancheTask::Exec(Option_t *opt)
 {
-  if(fDriftedElectronArray==0) Fatal("STDritedElectron::Exec)","No Avalanche Array");
-  fDriftedElectronArray -> Delete();
+  if(fAvalancheArray==0) Fatal("STAvalanche::Exec)","No Avalanche Array");
+  fAvalancheArray -> Delete();
 
+  Double_t gain = fGas -> GetGain();
+
+  Int_t nElectron = fDriftedElectronArray -> GetEntriesFast();
+  for(Int_t iElectron=0; iElectron<nElectron; iElectron++)
+  {
+    STDriftedElectron* electron = (STDriftedElectron*) fDriftedElectronArray -> At(iElectron);
+    Int_t nAvalanche = fAvalancheArray -> GetEntries();
+
+    gain = gain; // this should be fixed once we get the garfield data.
+    
+    STAvalanche* avalanche 
+      = new ((*fAvalancheArray)[nAvalanche]) STAvalanche(electron -> GetX(),
+                                                    electron -> GetZ(),
+                                                    electron -> GetTime(),
+                                                    gain);
+    avalanche -> SetIndex(nAvalanche);
+  }
 
   cout << "STAvalancheTask:: " << fDriftedElectronArray -> GetEntriesFast() 
        << " avalanche created" << endl; 

@@ -6,5 +6,6 @@
 
 #pragma link C++ class STClusterizerTask+;
 #pragma link C++ class STDriftTask+;
+#pragma link C++ class STAvalancheTask+;
 
 #endif

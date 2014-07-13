@@ -25,6 +25,7 @@ set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
 STClusterizerTask.cc
 STDriftTask.cc
+STAvalancheTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

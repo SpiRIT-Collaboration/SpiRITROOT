@@ -45,7 +45,7 @@ class STAvalancheTask : public FairTask
   private:
     TString fDriftedElectronBranchName;  //!< Name of primary cluster branch name (input)
     TClonesArray* fDriftedElectronArray; //!< drifted electron array (input)
-    TClonesArray* fAvalanche;            //!< avalanche electron array (output)
+    TClonesArray* fAvalancheArray;            //!< avalanche electron array (output)
 
     STDigiPar* fPar;                     //!< STDigiPar pointer
     STGas*     fGas;                     //!< STGas pointer
