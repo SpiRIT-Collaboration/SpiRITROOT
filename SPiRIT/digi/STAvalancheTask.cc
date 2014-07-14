@@ -68,7 +68,7 @@ STAvalancheTask::Init()
   }
 
   // Create and register output array
-  fDriftedElectronArray = new TClonesArray("STDriftedElectron");
+  fAvalancheArray = new TClonesArray("STAvalanche");
   ioman -> Register("STAvalanche", "ST", fAvalancheArray, fIsPersistent);
 
   fGas = fPar -> GetGas();
@@ -115,7 +115,7 @@ STAvalancheTask::Exec(Option_t *opt)
     avalanche -> SetIndex(nAvalanche);
   }
 
-  cout << "STAvalancheTask:: " << fDriftedElectronArray -> GetEntriesFast() 
+  cout << "STAvalancheTask:: " << fAvalancheArray -> GetEntriesFast() 
        << " avalanche created" << endl; 
 
   return;
