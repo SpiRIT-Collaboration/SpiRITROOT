@@ -40,6 +40,10 @@ class STHit : public TObject {
     void SetPosSigma(Double_t dx, Double_t dy, Double_t dz);
     //!< Charge setter
     void SetCharge(Double_t charge);
+    //!< Clustered flag setter
+    void SetIsClustered(Bool_t value = kTRUE);
+    //!< Cluster stter
+    void SetClusterID(Int_t clusterID);
 
     //!< Track ID getter
     Int_t GetTrackID();
@@ -49,9 +53,13 @@ class STHit : public TObject {
     TVector3 GetPosSigma();
     //!< Charge getter
     Double_t GetCharge();
+    //!< Clustered flag getter
+    Bool_t GetIsClustered();
+    //!< Cluster ID getter
+    Int_t GetClusterID();
 
   private:
-    //!< Track ID
+    //!< Track ID having this hit
     Int_t fTrackID;
     //!< Position
     TVector3 fPosition;
@@ -59,6 +67,10 @@ class STHit : public TObject {
     TVector3 fPositionSigma;
     //!< Charge
     Double_t fCharge;
+    //!< Clustered flag
+    Bool_t fIsClustered;
+    //!< Cluster ID having this hit
+    Int_t fClusterID;
 
   ClassDef(STHit, 1);
 };
