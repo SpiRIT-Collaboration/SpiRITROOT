@@ -12,7 +12,6 @@
 #include <iomanip>
 
 #include "STEvent.hh"
-#include "STHit.hh"
 
 ClassImp(STEvent);
 
@@ -34,6 +33,9 @@ STEvent::STEvent(STEvent *object)
   fIsTracked = object -> IsTracked();
 
   fHitArray = *(object -> GetHitArray());
+
+  if (IsClustered())
+    fClusterArray = *(object -> GetClusterArray());
 }
 
 STEvent::~STEvent()
@@ -53,21 +55,17 @@ void STEvent::AddHit(STHit *hit)
   delete hit;
 }
 
+void STEvent::AddCluster(STCluster *cluster)
+{
+  fClusterArray.push_back(*cluster);
+
+  delete cluster;
+}
+
 // getters
-Int_t STEvent::GetEventID()
-{
-  return fEventID;
-}
+Int_t STEvent::GetEventID() { return fEventID; }
 
-Int_t STEvent::GetNumHits()
-{
-  return fHitArray.size();
-}
-
-std::vector<STHit> *STEvent::GetHitArray()
-{
-  return &fHitArray;
-}
+Int_t STEvent::GetNumHits() { return fHitArray.size(); }
 
 STHit *STEvent::GetHit(Int_t hitNo)
 {
@@ -77,10 +75,39 @@ STHit *STEvent::GetHit(Int_t hitNo)
 STHit *STEvent::RemoveHit(Int_t hitNo)
 {
   if (!(hitNo < GetNumHits()))
-    return 0;
+    return NULL;
 
   STHit *removedHit = new STHit(fHitArray[hitNo]);
   fHitArray.erase(fHitArray.begin() + hitNo);
 
   return removedHit;
+}
+
+std::vector<STHit> *STEvent::GetHitArray()
+{
+  return &fHitArray;
+}
+
+STCluster *STEvent::GetCluster(Int_t clusterNo)
+{
+  if (!(clusterNo < GetNumClusters()) || !IsClustered())
+    return NULL;
+
+  return &fClusterArray[clusterNo];
+}
+
+STCluster *STEvent::RemoveCluster(Int_t clusterNo)
+{
+  if (!(clusterNo < GetNumClusters()) || !IsClustered())
+    return NULL;
+
+  STCluster *removedCluster = new STCluster(fClusterArray[clusterNo]);
+  fClusterArray.erase(fClusterArray.begin() + clusterNo);
+
+  return removedCluster;
+}
+
+std::vector<STCluster> *STEvent::GetClusterArray()
+{
+  return &fClusterArray;
 }
