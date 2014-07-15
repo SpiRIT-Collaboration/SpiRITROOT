@@ -15,7 +15,7 @@ ClassImp(STCluster)
 STCluster::STCluster()
 {
   fPosition = TVector3(0, 0, -1000);
-  fPosError = TVector3(0., 0., 0.);
+  fPosSigma = TVector3(0., 0., 0.);
 
   fCovariant = TMatrix(3, 3);
   for (Int_t iElem = 0; iElem < 9; iElem++)
@@ -25,7 +25,7 @@ STCluster::STCluster()
 STCluster::STCluster(STCluster *cluster)
 {
   fPosition = cluster -> GetPosition();
-  fPosError = cluster -> GetPosError();
+  fPosSigma = cluster -> GetPosSigma();
 
   fCovariant = TMatrix(3, 3);
   fCovariant = cluster -> GetCovMatrix();
@@ -38,7 +38,7 @@ STCluster::~STCluster()
 }
 
 TVector3 STCluster::GetPosition()  { return fPosition; }
-TVector3 STCluster::GetPosError()  { return fPosError; }
+TVector3 STCluster::GetPosSigma()  { return fPosSigma; }
 TMatrixD STCluster::GetCovMatrix() { return fCovariant; }
 
 Int_t STCluster::GetNumHits()                  { return fHitNoArray.size(); }
