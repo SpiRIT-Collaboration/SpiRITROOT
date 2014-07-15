@@ -30,6 +30,10 @@ STCluster::STCluster(STCluster *cluster)
   fHitNoArray = *(cluster -> GetHitNumbers());
 }
 
+STCluster::~STCluster()
+{
+}
+
 TVector3 STCluster::GetPosition()  { return fPosition; }
 TVector3 STCluster::GetPosError()  { return fPosError; }
 TMatrixD STCluster::GetCovMatrix() { return fCovariant; }

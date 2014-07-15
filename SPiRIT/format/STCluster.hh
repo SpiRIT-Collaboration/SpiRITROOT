@@ -24,6 +24,7 @@ class STCluster : public TObject
   public:
     STCluster();
     STCluster(STCluster *cluster);
+    ~STCluster();
 
     TVector3 GetPosition();
     TVector3 GetPosError();
@@ -37,11 +38,11 @@ class STCluster : public TObject
   private:
     TVector3 fPosition;
     TVector3 fPosError;
-    TMatrixD fCovariant(3, 3);
+    TMatrixD fCovariant;
 
     std::vector<Int_t> fHitNoArray;
 
   ClassDef(STCluster, 1)
-}
+};
 
 #endif
