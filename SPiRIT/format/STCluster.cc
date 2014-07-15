@@ -17,6 +17,7 @@ STCluster::STCluster()
   fPosition = TVector3(0, 0, -1000);
   fPosError = TVector3(0., 0., 0.);
 
+  fCovariant = TMatrix(3, 3);
   for (Int_t iElem = 0; iElem < 9; iElem++)
     fCovariant(iElem/3, iElem%3) = 0;
 }
@@ -25,6 +26,8 @@ STCluster::STCluster(STCluster *cluster)
 {
   fPosition = cluster -> GetPosition();
   fPosError = cluster -> GetPosError();
+
+  fCovariant = TMatrix(3, 3);
   fCovariant = cluster -> GetCovMatrix();
 
   fHitNoArray = *(cluster -> GetHitNumbers());
