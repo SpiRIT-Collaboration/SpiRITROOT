@@ -25,7 +25,7 @@ STRawEvent.cc
 STPad.cc
 STEvent.cc
 STHit.cc
-STCluster.cc
+STHitCluster.cc
 STPrimaryCluster.cc
 STDriftedElectron.cc
 STAvalanche.cc

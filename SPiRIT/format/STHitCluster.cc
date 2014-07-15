@@ -1,18 +1,18 @@
 // =================================================
-//  STCluster Class                          
+//  STHitCluster Class                          
 //                                                  
 //  Description:                                    
-//    Container for a cluster data
+//    Container for a cluster of hits
 //                                                  
 //  Genie Jhang ( geniejhang@majimak.com )          
 //  2014. 07. 15                                    
 // =================================================
 
-#include "STCluster.hh"
+#include "STHitCluster.hh"
 
-ClassImp(STCluster)
+ClassImp(STHitCluster)
 
-STCluster::STCluster()
+STHitCluster::STHitCluster()
 {
   fPosition = TVector3(0, 0, -1000);
   fPosSigma = TVector3(0., 0., 0.);
@@ -22,7 +22,7 @@ STCluster::STCluster()
     fCovariant(iElem/3, iElem%3) = 0;
 }
 
-STCluster::STCluster(STCluster *cluster)
+STHitCluster::STHitCluster(STHitCluster *cluster)
 {
   fPosition = cluster -> GetPosition();
   fPosSigma = cluster -> GetPosSigma();
@@ -33,18 +33,18 @@ STCluster::STCluster(STCluster *cluster)
   fHitNoArray = *(cluster -> GetHitNumbers());
 }
 
-STCluster::~STCluster()
+STHitCluster::~STHitCluster()
 {
 }
 
-TVector3 STCluster::GetPosition()  { return fPosition; }
-TVector3 STCluster::GetPosSigma()  { return fPosSigma; }
-TMatrixD STCluster::GetCovMatrix() { return fCovariant; }
+TVector3 STHitCluster::GetPosition()  { return fPosition; }
+TVector3 STHitCluster::GetPosSigma()  { return fPosSigma; }
+TMatrixD STHitCluster::GetCovMatrix() { return fCovariant; }
 
-Int_t STCluster::GetNumHits()                  { return fHitNoArray.size(); }
-std::vector<Int_t> *STCluster::GetHitNumbers() { return &fHitNoArray; }
+Int_t STHitCluster::GetNumHits()                  { return fHitNoArray.size(); }
+std::vector<Int_t> *STHitCluster::GetHitNumbers() { return &fHitNoArray; }
 
-void STCluster::AddHit(STHit *hit)
+void STHitCluster::AddHit(STHit *hit)
 {
   // Calculating cluster position, error and covariant matrix
 }

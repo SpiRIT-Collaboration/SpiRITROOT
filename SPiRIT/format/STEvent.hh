@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "STHit.hh"
-#include "STCluster.hh"
+#include "STHitCluster.hh"
 //#include "STTrack.hh"
 
 class STEvent : public TNamed {
@@ -29,7 +29,7 @@ class STEvent : public TNamed {
     // setters
     void SetEventID(Int_t evtid);
     void AddHit(STHit *hit);
-    void AddCluster(STCluster *cluster);
+    void AddCluster(STHitCluster *cluster);
 //    void AddTrack(STTrack *track);
 
     void SetIsClustered(Bool_t value);
@@ -44,9 +44,9 @@ class STEvent : public TNamed {
     std::vector<STHit> *GetHitArray();
 
     Int_t GetNumClusters();
-    STCluster *GetCluster(Int_t clusterNo);
-    STCluster *RemoveCluster(Int_t clusterNo);
-    std::vector<STCluster> *GetClusterArray();
+    STHitCluster *GetCluster(Int_t clusterNo);
+    STHitCluster *RemoveCluster(Int_t clusterNo);
+    std::vector<STHitCluster> *GetClusterArray();
 
 //    Int_t GetNumTracks();
 //    STTrack *GetTrack(Int_t trackNo);
@@ -63,7 +63,7 @@ class STEvent : public TNamed {
     Int_t fEventID;
 
     std::vector<STHit> fHitArray;
-    std::vector<STCluster> fClusterArray;
+    std::vector<STHitCluster> fClusterArray;
 //    std::vector<STTrack> fTrackArray;
 
   ClassDef(STEvent, 1);

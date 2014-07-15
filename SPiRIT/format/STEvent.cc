@@ -55,7 +55,7 @@ void STEvent::AddHit(STHit *hit)
   delete hit;
 }
 
-void STEvent::AddCluster(STCluster *cluster)
+void STEvent::AddCluster(STHitCluster *cluster)
 {
   fClusterArray.push_back(*cluster);
 
@@ -88,7 +88,7 @@ std::vector<STHit> *STEvent::GetHitArray()
   return &fHitArray;
 }
 
-STCluster *STEvent::GetCluster(Int_t clusterNo)
+STHitCluster *STEvent::GetCluster(Int_t clusterNo)
 {
   if (!(clusterNo < GetNumClusters()) || !IsClustered())
     return NULL;
@@ -96,18 +96,18 @@ STCluster *STEvent::GetCluster(Int_t clusterNo)
   return &fClusterArray[clusterNo];
 }
 
-STCluster *STEvent::RemoveCluster(Int_t clusterNo)
+STHitCluster *STEvent::RemoveCluster(Int_t clusterNo)
 {
   if (!(clusterNo < GetNumClusters()) || !IsClustered())
     return NULL;
 
-  STCluster *removedCluster = new STCluster(fClusterArray[clusterNo]);
+  STHitCluster *removedCluster = new STHitCluster(fClusterArray[clusterNo]);
   fClusterArray.erase(fClusterArray.begin() + clusterNo);
 
   return removedCluster;
 }
 
-std::vector<STCluster> *STEvent::GetClusterArray()
+std::vector<STHitCluster> *STEvent::GetClusterArray()
 {
   return &fClusterArray;
 }

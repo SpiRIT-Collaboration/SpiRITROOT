@@ -9,7 +9,7 @@
 #pragma link C++ class STPad+;
 #pragma link C++ class STEvent+;
 #pragma link C++ class STHit+;
-#pragma link C++ class STCluster+;
+#pragma link C++ class STHitCluster+;
 #pragma link C++ class STPrimaryCluster+;
 #pragma link C++ class STDriftedElectron+;
 #pragma link C++ class STAvalanche+;
