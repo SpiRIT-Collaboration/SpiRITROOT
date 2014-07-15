@@ -51,6 +51,11 @@ Double_t STGas::GetCoefDiffusion()
   return fCoefDiffusion;
 }
 
+Double_t STGas::GetGain()
+{ 
+  return fGain;
+}
+
 UInt_t STGas::GetRandomCS()
 {
   UInt_t CS = (UInt_t)(gRandom -> Gaus(50,20));
