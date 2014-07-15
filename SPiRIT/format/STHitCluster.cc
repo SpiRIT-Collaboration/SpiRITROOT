@@ -17,7 +17,7 @@ STHitCluster::STHitCluster()
   fPosition = TVector3(0, 0, -1000);
   fPosSigma = TVector3(0., 0., 0.);
 
-  fCovariant = TMatrix(3, 3);
+  fCovariant.ResizeTo(3, 3);
   for (Int_t iElem = 0; iElem < 9; iElem++)
     fCovariant(iElem/3, iElem%3) = 0;
 }
@@ -27,7 +27,7 @@ STHitCluster::STHitCluster(STHitCluster *cluster)
   fPosition = cluster -> GetPosition();
   fPosSigma = cluster -> GetPosSigma();
 
-  fCovariant = TMatrix(3, 3);
+  fCovariant.ResizeTo(3, 3);
   fCovariant = cluster -> GetCovMatrix();
 
   fHitNoArray = *(cluster -> GetHitNumbers());
