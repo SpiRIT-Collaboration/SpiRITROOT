@@ -32,6 +32,7 @@ class STGas
     Double_t GetDriftVelocity();
     Double_t GetCoefAttachment();
     Double_t GetCoefDiffusion();
+    Double_t GetGain();
 
     // Setter
 
@@ -40,6 +41,7 @@ class STGas
     Double_t fDriftVelocity;            //!< drift velocity [cm/ns]
     Double_t fCoefAttachment;           //!< attachment coefficient
     Double_t fCoefDiffusion;            //!< diffusion coefficient
+    Double_t fGain;                     //!< gain factor from wire plane
 
   ClassDef(STGas, 1)
 };
