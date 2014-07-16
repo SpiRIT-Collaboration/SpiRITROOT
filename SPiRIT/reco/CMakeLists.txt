@@ -39,10 +39,14 @@ STConverter/STMap.cc
 
 PulseShapeAnalyzer/STPSASimple.cc
 
+#Clusterizer/STClusteringSimple.cc
+
+#RiemannTracking/STRiemannHit.cc
 #RiemannTracking/STRiemannTrack.cc
 
 STDecoderTask.cc
 STPSATask.cc
+#STClusteringTask.cc
 #STRiemannTrackingTask.cc
 )
 
