@@ -24,11 +24,12 @@ ClassImp(STPSATask);
 
 STPSATask::STPSATask()
 {
+  fLogger = FairLogger::GetLogger();
   fPar = NULL;
 
-  fEventArray = new TClonesArray("STEvent");
-
   fIsPersistence = kFALSE;
+  
+  fEventHArray = new TClonesArray("STEvent");
 }
 
 STPSATask::~STPSATask()
@@ -52,17 +53,17 @@ STPSATask::Init()
 {
   FairRootManager *ioMan = FairRootManager::Instance();
   if (ioMan == 0) {
-    Error("STPSATask::Init()", "RootManager not instantiated!");
+    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");
     return kERROR;
   }
 
   fRawEventArray = (TClonesArray *) ioMan -> GetObject("STRawEvent");
   if (fRawEventArray == 0) {
-    Error("STPSATask::Init()", "Couldn't find STRawEvent array!");
+    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STRawEvent array!");
     return kERROR;
   }
 
-  ioMan -> Register("STEvent", "SPiRIT", fEventArray, fIsPersistence);
+  ioMan -> Register("STEventH", "SPiRIT", fEventHArray, fIsPersistence);
 
   return kSUCCESS;
 }
@@ -72,26 +73,26 @@ STPSATask::SetParContainers()
 {
   FairRun *run = FairRun::Instance();
   if (!run)
-    Fatal("STPSATask::SetParContainers()", "No analysis run!");
+    fLogger -> Fatal(MESSAGE_ORIGIN, "No analysis run!");
 
   FairRuntimeDb *db = run -> GetRuntimeDb();
   if (!db)
-    Fatal("STPSATask::SetParContainers()", "No runtime database!");
+    fLogger -> Fatal(MESSAGE_ORIGIN, "No runtime database!");
 
   fPar = (STDigiPar *) db -> getContainer("STDigiPar");
   if (!fPar)
-    Fatal("STPSATask::SetParContainers()", "STDigiPar not found!!");
+    fLogger -> Fatal(MESSAGE_ORIGIN, "STDigiPar not found!!");
 }
 
 void
 STPSATask::Exec(Option_t *opt)
 {
-  fEventArray -> Delete();
+  fEventHArray -> Delete();
 
   STRawEvent *rawEvent = (STRawEvent *) fRawEventArray -> At(0);
   std::cout << rawEvent -> GetEventID() << " " << rawEvent -> GetNumPads() << std::endl;  
 
-  STEvent *event = (STEvent *) new ((*fEventArray)[0]) STEvent();
+  STEvent *event = (STEvent *) new ((*fEventHArray)[0]) STEvent();
   event -> SetEventID(rawEvent -> GetEventID());
 
   STPSASimple *psaSimple = new STPSASimple();

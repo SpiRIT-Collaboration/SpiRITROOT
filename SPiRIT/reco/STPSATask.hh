@@ -14,6 +14,7 @@
 
 // FAIRROOT classes
 #include "FairTask.h"
+#include "FairLogger.h"
 
 // SPiRITROOT classes
 #include "STRawEvent.hh"
@@ -35,9 +36,11 @@ class STPSATask : public FairTask {
     virtual void Exec(Option_t *opt);
 
   private:
+    FairLogger *fLogger;
+    
     STDigiPar *fPar;
     TClonesArray *fRawEventArray;
-    TClonesArray *fEventArray;
+    TClonesArray *fEventHArray;
 
     Bool_t fIsPersistence;
     
