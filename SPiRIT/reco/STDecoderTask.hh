@@ -15,6 +15,7 @@
 
 // FAIRROOT classes
 #include "FairTask.h"
+#include "FairLogger.h"
 
 // SPiRITROOT classes
 #include "STCore.hh"
@@ -58,6 +59,8 @@ class STDecoderTask : public FairTask {
     virtual void Exec(Option_t *opt);
 
   private:
+    FairLogger *fLogger;          //!< FairLogger singleton
+
     STCore *fDecoder;             //!< STConverter pointer
 
     Char_t *fGrawFile;            //!< Raw data file name

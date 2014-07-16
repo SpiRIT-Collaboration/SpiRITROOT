@@ -21,6 +21,8 @@ ClassImp(STDecoderTask);
 
 STDecoderTask::STDecoderTask()
 {
+  fLogger = FairLogger::GetLogger();
+
   fDecoder = NULL;
 
   fGrawFile = NULL;
@@ -65,7 +67,8 @@ STDecoderTask::Init()
 {
   FairRootManager *ioMan = FairRootManager::Instance();
   if (ioMan == 0) {
-    Error("STDecoderTask::Init()", "RootManager not instantiated!");
+    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");
+
     return kERROR;
   }
 
@@ -75,10 +78,12 @@ STDecoderTask::Init()
   fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
   fDecoder -> SetAGETMap((fPar -> GetFile(1)).Data());
   if (!fPedestalFile) {
-    Info("STDecoderTask::Init()", "Use internal pedestal!");
+    fLogger -> Info(MESSAGE_ORIGIN, "Use internal pedestal!");
 
     fDecoder -> SetInternalPedestal();
   } else
+    fLogger -> Info(MESSAGE_ORIGIN, "Pedestal data is set!");
+
     fDecoder -> SetPedestalData(fPedestalFile);
 
   return kSUCCESS;
@@ -89,15 +94,15 @@ STDecoderTask::SetParContainers()
 {
   FairRun *run = FairRun::Instance();
   if (!run)
-    Fatal("STDecoderTask::SetParContainers()", "No analysis run!");
+    fLogger -> Fatal(MESSAGE_ORIGIN, "No analysis run!");
 
   FairRuntimeDb *db = run -> GetRuntimeDb();
   if (!db)
-    Fatal("STDecoderTask::SetParContainers()", "No runtime database!");
+    fLogger -> Fatal(MESSAGE_ORIGIN, "No runtime database!");
 
   fPar = (STDigiPar *) db -> getContainer("STDigiPar");
   if (!fPar)
-    Fatal("STDecoderTask::SetParContainers()", "STDigiPar not found!!");
+    fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find STDigiPar!");
 }
 
 void
