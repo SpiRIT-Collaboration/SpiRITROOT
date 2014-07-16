@@ -19,11 +19,11 @@
 // ROOT classes
 #include "TClonesArray.h"
 
-class STClusteringTask : public FairTask
+class STHitClusteringTask : public FairTask
 {
   public:
-    STClusteringTask();
-    ~STClusteringTask();
+    STHitClusteringTask();
+    ~STHitClusteringTask();
 
     void SetPersistence(Bool_t value = kTRUE);
     
@@ -39,7 +39,7 @@ class STClusteringTask : public FairTask
     TClonesArray *fEventHArray;
     TClonesArray *fEventHCArray;
 
-  ClassDef(STClusteringTask, 1);
+  ClassDef(STHitClusteringTask, 1);
 };
 
 #endif

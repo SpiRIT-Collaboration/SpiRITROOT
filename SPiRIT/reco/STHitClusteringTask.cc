@@ -10,11 +10,11 @@
 //-----------------------------------------------------------
 
 // SpiRITROOT classes
-#include "STClusteringTask.hh"
+#include "STHitClusteringTask.hh"
 
-ClassImp(STClusteringTask)
+ClassImp(STHitClusteringTask)
 
-STClusteringTask()::STClusteringTask()
+STHitClusteringTask()::STHitClusteringTask()
 {
   fLogger = FairLogger::GetLogger();
 
@@ -23,14 +23,14 @@ STClusteringTask()::STClusteringTask()
   fEventC_Array = new TClonesArray("STEvent");
 }
 
-STClusteringTask()::~STClusteringTask()
+STHitClusteringTask()::~STHitClusteringTask()
 {
 }
 
-void STClusteringTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
+void STHitClusteringTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
 
 InitStatus
-STClusteringTask::Init()
+STHitClusteringTask::Init()
 {
   FairRootManager *ioMan = FairRootManager::Instance();
   if (ioMan == 0) {
@@ -52,7 +52,7 @@ STClusteringTask::Init()
 }
 
 void
-STClusteringTask::SetParContainers()
+STHitClusteringTask::SetParContainers()
 {
   FairRun *run = FairRun::Instance();
   if (!run)
@@ -68,6 +68,6 @@ STClusteringTask::SetParContainers()
 }
 
 void
-STClusteringTask::Exec(Option_t *opt)
+STHitClusteringTask::Exec(Option_t *opt)
 {
 }
