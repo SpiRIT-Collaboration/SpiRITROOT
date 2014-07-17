@@ -23,15 +23,17 @@
 class STHit : public TObject {
   public:
     STHit();
-    STHit(TVector3 vec, Double_t charge);
-    STHit(Double_t x, Double_t y, Double_t z, Double_t charge);
+    STHit(Int_t hitID, TVector3 vec, Double_t charge);
+    STHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge);
     ~STHit();
 
     //!< Track ID setter
     void SetTrackID(Int_t trackID);
+    //!< Hit ID setter
+    void SetHitID(Int_t hitID);
     //!< Hit setter
-    void SetHit(TVector3 vec, Double_t charge);
-    void SetHit(Double_t x, Double_t y, Double_t z, Double_t charge);
+    void SetHit(Int_t hitID, TVector3 vec, Double_t charge);
+    void SetHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge);
     //!< Position setter
     void SetPosition(TVector3 vec);
     void SetPosition(Double_t x, Double_t y, Double_t z);
@@ -47,6 +49,8 @@ class STHit : public TObject {
 
     //!< Track ID getter
     Int_t GetTrackID();
+    //!< Hit ID getter
+    Int_t GetHitID();
     //!< Position getter
     TVector3 GetPosition();
     //!< Position sigma getter
@@ -61,6 +65,8 @@ class STHit : public TObject {
   private:
     //!< Track ID having this hit
     Int_t fTrackID;
+    //!< Hit ID
+    Int_t fHitID;
     //!< Position
     TVector3 fPosition;
     //!< Position error

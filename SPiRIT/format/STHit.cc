@@ -13,25 +13,25 @@
 STHit::STHit()
 {
   fTrackID = -1;
-  SetHit(0, 0, -1000, -1);
+  SetHit(-1, 0, 0, -1000, -1);
 
   fIsClustered = kFALSE;
   fClusterID = -1;
 }
 
-STHit::STHit(TVector3 vec, Double_t charge)
+STHit::STHit(Int_t hitID, TVector3 vec, Double_t charge)
 {
   fTrackID = -1;
-  SetHit(vec, charge);
+  SetHit(hitID, vec, charge);
 
   fIsClustered = kFALSE;
   fClusterID = -1;
 }
 
-STHit::STHit(Double_t x, Double_t y, Double_t z, Double_t charge)
+STHit::STHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge)
 {
   fTrackID = -1;
-  SetHit(x, y, z, charge);
+  SetHit(hitID, x, y, z, charge);
 
   fIsClustered = kFALSE;
   fClusterID = -1;
@@ -41,8 +41,9 @@ STHit::~STHit()
 {}
 
 void STHit::SetTrackID(Int_t trackID)                                   { fTrackID = trackID; }
-void STHit::SetHit(TVector3 vec, Double_t charge)                       { fPosition = vec; fCharge = charge; }
-void STHit::SetHit(Double_t x, Double_t y, Double_t z, Double_t charge) { fPosition = TVector3(x, y, z); fCharge = charge; }
+void STHit::SetHitID(Int_t hitID)                                       { fHitID = hitID; }
+void STHit::SetHit(Int_t hitID, TVector3 vec, Double_t charge)                       { fPosition = vec; fCharge = charge; }
+void STHit::SetHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge) { fPosition = TVector3(x, y, z); fCharge = charge; }
 
 void STHit::SetPosition(TVector3 vec)                                   { fPosition = vec; }
 void STHit::SetPosition(Double_t x, Double_t y, Double_t z)             { fPosition = TVector3(x, y, z); }
@@ -54,6 +55,7 @@ void STHit::SetIsClustered(Bool_t value)                                { fIsClu
 void STHit::SetClusterID(Int_t clusterID)                               { fClusterID = clusterID; fIsClustered = kTRUE; }
 
 Int_t STHit::GetTrackID()                                               { return fTrackID; }
+Int_t STHit::GetHitID()                                                 { return fHitID; }
 TVector3 STHit::GetPosition()                                           { return fPosition; }
 TVector3 STHit::GetPosSigma()                                           { return fPositionSigma; }
 Double_t STHit::GetCharge()                                             { return fCharge; }
