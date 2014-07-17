@@ -66,6 +66,7 @@ void
 STPSASimple::Analyze(STRawEvent *rawEvent, STEvent *event)
 {
   Int_t numPads = rawEvent -> GetNumPads();
+  Int_t hitNum = 0;
 
   for (Int_t iPad = 0; iPad < numPads; iPad++) {
     STPad *pad = rawEvent -> GetPad(iPad);
@@ -82,7 +83,8 @@ STPSASimple::Analyze(STRawEvent *rawEvent, STEvent *event)
     if (fThreshold > 0 && charge > fThreshold)
       continue;
 
-    event -> AddHit(new STHit(xPos, yPos, zPos, charge));
+    event -> AddHit(new STHit(hitNum, xPos, yPos, zPos, charge));
+    hitNum++;
   }
 }
 
