@@ -95,7 +95,9 @@ STPSATask::Exec(Option_t *opt)
   STEvent *event = (STEvent *) new ((*fEventHArray)[0]) STEvent();
   event -> SetEventID(rawEvent -> GetEventID());
 
+  // This is a very inefficient way. This should be modified later after the PSA method is fixed.
   STPSASimple *psaSimple = new STPSASimple();
   psaSimple -> SetThreshold((Int_t)fThreshold);
   psaSimple -> Analyze(rawEvent, event);
+  delete psaSimple;
 }
