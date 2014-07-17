@@ -12,6 +12,7 @@ ${CMAKE_SOURCE_DIR}/SPiRIT/stack
 ${CMAKE_SOURCE_DIR}/SPiRIT/par
 ${CMAKE_SOURCE_DIR}/SPiRIT/format
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco
+${CMAKE_SOURCE_DIR}/SPiRIT/reco/Misc
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/STConverter
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/PulseShapeAnalyzer
@@ -44,9 +45,11 @@ PulseShapeAnalyzer/STPSASimple.cc
 #RiemannTracking/STRiemannHit.cc
 #RiemannTracking/STRiemannTrack.cc
 
+Misc/STHitSortY.cc
+
 STDecoderTask.cc
 STPSATask.cc
-#STHitClusteringTask.cc
+STHitClusteringTask.cc
 #STRiemannTrackingTask.cc
 )
 

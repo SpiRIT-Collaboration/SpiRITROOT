@@ -11,10 +11,23 @@
 
 // SpiRITROOT classes
 #include "STHitClusteringTask.hh"
+#include "STEvent.hh"
+#include "STHitSortY.hh"
+
+// FairROOT classes
+#include "FairRun.h"
+#include "FairRuntimeDb.h"
+
+// ROOT classes
+#include "TVector3.h"
+
+// STL
+#include <vector>
+#include <algorithm>
 
 ClassImp(STHitClusteringTask)
 
-STHitClusteringTask()::STHitClusteringTask()
+STHitClusteringTask::STHitClusteringTask()
 {
   fLogger = FairLogger::GetLogger();
 
@@ -23,7 +36,7 @@ STHitClusteringTask()::STHitClusteringTask()
   fEventHCArray = new TClonesArray("STEvent");
 }
 
-STHitClusteringTask()::~STHitClusteringTask()
+STHitClusteringTask::~STHitClusteringTask()
 {
 }
 
@@ -40,13 +53,16 @@ STHitClusteringTask::Init()
   }
 
   fEventHArray = (TClonesArray *) ioMan -> GetObject("STEventH");
-  if (fEvent__Array == 0) {
+  if (fEventHArray == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEventH array!");
 
     return kERROR;
   }
 
   ioMan -> Register("STEventHC", "SPiRIT", fEventHCArray, fIsPersistence);
+
+  fDriftLength = fPar -> GetDriftLength();
+  fYDivider = fPar -> GetYDivider();
 
   return kSUCCESS;
 }
@@ -70,4 +86,36 @@ STHitClusteringTask::SetParContainers()
 void
 STHitClusteringTask::Exec(Option_t *opt)
 {
+  fEventHCArray -> Delete();
+
+  STEvent *eventH = (STEvent *) fEventHArray -> At(0);
+  STEvent *eventHC = new ((*fEventHCArray)[0]) STEvent();
+
+  Double_t sliceY = fDriftLength/fYDivider;
+
+  std::vector<STHit> *hitArray = eventH -> GetHitArray();
+  std::sort(hitArray -> begin(), hitArray -> end(), STHitSortY());
+
+  std::vector<STHit> slicedSpace;
+  for (Int_t iSlice = 0, currentPosInVector = 0; iSlice < fYDivider; iSlice++) {
+    Double_t bottomY = -fDriftLength + iSlice*sliceY;
+    Double_t topY = bottomY + sliceY;
+
+    slicedSpace.clear();
+    while (currentPosInVector < hitArray -> size()) {
+      Double_t yPos = (hitArray -> at(currentPosInVector)).GetPosition().Y();
+
+      if (yPos >= bottomY && yPos < topY) {
+        slicedSpace.push_back(hitArray -> at(currentPosInVector));
+
+        currentPosInVector++;
+      } else
+        break;
+    }
+
+    if (slicedSpace.empty())
+      continue;
+
+    // Now I'll write cluster finding part.
+  }
 }

@@ -13,9 +13,10 @@
 #pragma link C++ class STPedestal+;
 #pragma link C++ class STMap+;
 
-#pragma link C++ class STPSASimple+;
-
 #pragma link C++ class STDecoderTask+;
 #pragma link C++ class STPSATask+;
+
+#pragma link C++ class STPSASimple+;
+#pragma link C++ class STHitClusteringTask+;
 
 #endif

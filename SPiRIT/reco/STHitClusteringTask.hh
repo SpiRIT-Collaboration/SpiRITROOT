@@ -12,6 +12,10 @@
 #ifndef _STCLUSTERINGTASK_H_
 #define _STCLUSTERINGTASK_H_
 
+// SpiRITROOT classes
+#include "STHit.hh"
+#include "STDigiPar.hh"
+
 // FairROOT classes
 #include "FairTask.h"
 #include "FairLogger.h"
@@ -34,10 +38,16 @@ class STHitClusteringTask : public FairTask
   private:
     FairLogger *fLogger;
 
+    STDigiPar *fPar;
+
     Bool_t fIsPersistence;
+
+    Double_t fDriftLength;
+    Int_t fYDivider;
 
     TClonesArray *fEventHArray;
     TClonesArray *fEventHCArray;
+
 
   ClassDef(STHitClusteringTask, 1);
 };
