@@ -42,8 +42,12 @@ class STDigiPar : public FairParGenericSet
     Int_t GetNumTbs();
     //!< returns the time duration of a time bucket in given sampling time in ns.
     Int_t GetTBTime();
-    //!< returns the drift velocity in cm/ns.
+    //!< returns the drift velocity in cm/us.
     Double_t GetDriftVelocity();
+    //!< returns the drift length in mm
+    Double_t GetDriftLength();
+    //!< returns the slice divider
+    Int_t GetYDivider();
     virtual Bool_t getParams(FairParamList *paramList);
 
     TString GetFile(Int_t fileNum);
@@ -67,11 +71,13 @@ class STDigiPar : public FairParGenericSet
     Double_t fAnodeWirePlaneY;
     Double_t fGroundWirePlaneY;
     Double_t fGatingWirePlaneY;
-    Int_t fGasFile;
     Double_t fEField;
     Int_t fNumTbs;
     Int_t fSamplingRate;
     Double_t fDriftVelocity;
+    Double_t fDriftLength;
+    Int_t fYDivider;
+    Int_t fGasFile;
     Int_t fPadPlaneFile;
     Int_t fPadShapeFile;
 

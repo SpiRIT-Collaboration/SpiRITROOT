@@ -23,53 +23,20 @@ STDigiPar::~STDigiPar()
 }
 
 // Getters
-Int_t STDigiPar::GetPadPlaneX()
-{
-  return fPadPlaneX;
-}
+   Int_t  STDigiPar::GetPadPlaneX()        { return fPadPlaneX; }
+   Int_t  STDigiPar::GetPadPlaneZ()        { return fPadPlaneZ; }
+   Int_t  STDigiPar::GetPadSizeX()         { return fPadSizeX; }
+   Int_t  STDigiPar::GetPadSizeZ()         { return fPadSizeZ; }
+Double_t  STDigiPar::GetAnodeWirePlaneY()  { return fAnodeWirePlaneY; }
+Double_t  STDigiPar::GetGroundWirePlaneY() { return fGroundWirePlaneY; }
+Double_t  STDigiPar::GetGatingWirePlaneY() { return fGatingWirePlaneY; }
+   STGas *STDigiPar::GetGas()              { return fGas; }
+   Int_t  STDigiPar::GetNumTbs()           { return fNumTbs; }
+Double_t  STDigiPar::GetDriftVelocity()    { return fDriftVelocity; }
+Double_t  STDigiPar::GetDriftLength()      { return fDriftLength; }
+   Int_t  STDigiPar::GetYDivider()         { return fYDivider; }
 
-Int_t STDigiPar::GetPadPlaneZ()
-{
-  return fPadPlaneZ;
-}
-
-Int_t STDigiPar::GetPadSizeX()
-{
-  return fPadSizeX;
-}
-
-Int_t STDigiPar::GetPadSizeZ()
-{
-  return fPadSizeZ;
-}
-
-Double_t STDigiPar::GetAnodeWirePlaneY()
-{
-  return fAnodeWirePlaneY;
-}
-
-Double_t STDigiPar::GetGroundWirePlaneY()
-{
-  return fGroundWirePlaneY;
-}
-
-Double_t STDigiPar::GetGatingWirePlaneY()
-{
-  return fGatingWirePlaneY;
-}
-
-STGas *STDigiPar::GetGas()
-{
-  return fGas;
-}
-
-Int_t STDigiPar::GetNumTbs()
-{
-  return fNumTbs;
-}
-
-Int_t STDigiPar::GetTBTime()
-{
+Int_t STDigiPar::GetTBTime() {
   switch (fSamplingRate) {
     case 25:
       return 40;
@@ -80,11 +47,6 @@ Int_t STDigiPar::GetTBTime()
     default:
       return -1;
   }
-}
-
-Double_t STDigiPar::GetDriftVelocity()
-{
-  return fDriftVelocity;
 }
 
 Bool_t STDigiPar::getParams(FairParamList *paramList)
@@ -123,10 +85,6 @@ Bool_t STDigiPar::getParams(FairParamList *paramList)
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GatingWirePlaneY parameter!");
       return kFALSE;
     }
-    if (!(paramList -> fill("GasFile", &fGasFile))) {
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GasFile parameter!");
-      return kFALSE;
-    }
     if (!(paramList -> fill("EField", &fEField))) {
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find EField parameter!");
       return kFALSE;
@@ -141,6 +99,18 @@ Bool_t STDigiPar::getParams(FairParamList *paramList)
     }
     if (!(paramList -> fill("DriftVelocity", &fDriftVelocity))) {
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find DriftVelocity parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("DriftLength", &fDriftLength))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find DriftLength parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("YDivider", &fYDivider))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find YDivider parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("GasFile", &fGasFile))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GasFile parameter!");
       return kFALSE;
     }
     if (!(paramList -> fill("PadPlaneFile", &fPadPlaneFile))) {
@@ -170,11 +140,13 @@ void STDigiPar::putParams(FairParamList *paramList)
   paramList -> add("AnodeWirePlaneY", fAnodeWirePlaneY);
   paramList -> add("GroundWirePlaneY", fGroundWirePlaneY);
   paramList -> add("GatingWirePlaneY", fGatingWirePlaneY);
-  paramList -> add("GasFile", fGasFile);
   paramList -> add("EField", fEField);
   paramList -> add("NumTbs", fNumTbs);
   paramList -> add("SamplingRate", fSamplingRate);
   paramList -> add("DriftVelocity", fDriftVelocity);
+  paramList -> add("DriftLength", fDriftLength);
+  paramList -> add("YDivider", fYDivider);
+  paramList -> add("GasFile", fGasFile);
   paramList -> add("PadPlaneFile", fPadPlaneFile);
   paramList -> add("PadShapeFile", fPadShapeFile);
 }

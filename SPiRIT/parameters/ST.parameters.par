@@ -13,11 +13,13 @@ PadSizeZ:Int_t                  12   # mm
 AnodeWirePlaneY:Double_t     -4.05   # mm
 GroundWirePlaneY:Double_t     -8.1   # mm
 GatingWirePlaneY:Double_t      -14   # mm
-GasFile:Int_t                    1
 EField:Double_t                  0
 NumTbs:Int_t                   512
 SamplingRate:Int_t              50   # MHz
 DriftVelocity:Double_t           5   # cm/ns
+DriftLength:Double_t           496   # mm
+YDivider:Int_t                 496   # Full drift length will be divided by this number when finding cluster
+GasFile:Int_t                    1
 PadPlaneFile:Int_t               2
 PadShapeFile:Int_t               3   # might not be needed because the shape is simply rectangle
 ################################################################################
