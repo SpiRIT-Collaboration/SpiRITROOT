@@ -20,7 +20,7 @@ STHitClusteringTask()::STHitClusteringTask()
 
   fIsPersistence = kFALSE;
 
-  fEventC_Array = new TClonesArray("STEvent");
+  fEventHCArray = new TClonesArray("STEvent");
 }
 
 STHitClusteringTask()::~STHitClusteringTask()
