@@ -19,6 +19,8 @@
 
 #include <vector>
 
+using std::vector;
+
 class STHitCluster : public TObject 
 {
   public:
@@ -26,21 +28,25 @@ class STHitCluster : public TObject
     STHitCluster(STHitCluster *cluster);
     ~STHitCluster();
 
+    void SetClusterID(Int_t clusterID);
+    Int_t GetClusterID();
+
     TVector3 GetPosition();
     TVector3 GetPosSigma();
     TMatrixD GetCovMatrix();
 
     Int_t GetNumHits();
-    std::vector<Int_t> *GetHitNumbers();
+    vector<Int_t> *GetHitIDs();
 
     void AddHit(STHit *hit);
 
   private:
+    Int_t fClusterID;
     TVector3 fPosition;
     TVector3 fPosSigma;
     TMatrixD fCovariant;
 
-    std::vector<Int_t> fHitNoArray;
+    vector<Int_t> fHitIDArray;
 
   ClassDef(STHitCluster, 1)
 };
