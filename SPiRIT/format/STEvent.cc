@@ -51,15 +51,21 @@ void STEvent::SetEventID(Int_t evtid)
 void STEvent::AddHit(STHit *hit)
 {
   fHitArray.push_back(*hit);
+}
 
-  delete hit;
+void STEvent::SetHitArray(vector<STHit> *hitArray)
+{
+  fHitArray = *hitArray;
 }
 
 void STEvent::AddCluster(STHitCluster *cluster)
 {
   fClusterArray.push_back(*cluster);
+}
 
-  delete cluster;
+void STEvent::SetClusterArray(vector<STHitCluster> *clusterArray)
+{
+  fClusterArray = *clusterArray;
 }
 
 // getters
@@ -83,7 +89,7 @@ STHit *STEvent::RemoveHit(Int_t hitNo)
   return removedHit;
 }
 
-std::vector<STHit> *STEvent::GetHitArray()
+vector<STHit> *STEvent::GetHitArray()
 {
   return &fHitArray;
 }
@@ -107,7 +113,7 @@ STHitCluster *STEvent::RemoveCluster(Int_t clusterNo)
   return removedCluster;
 }
 
-std::vector<STHitCluster> *STEvent::GetClusterArray()
+vector<STHitCluster> *STEvent::GetClusterArray()
 {
   return &fClusterArray;
 }

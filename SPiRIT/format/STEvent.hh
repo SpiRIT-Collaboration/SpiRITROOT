@@ -20,6 +20,8 @@
 #include "STHitCluster.hh"
 //#include "STTrack.hh"
 
+using std::vector;
+
 class STEvent : public TNamed {
   public:
     STEvent(Bool_t isClustered = kFALSE, Bool_t isTracked = kFALSE);
@@ -29,8 +31,11 @@ class STEvent : public TNamed {
     // setters
     void SetEventID(Int_t evtid);
     void AddHit(STHit *hit);
+    void SetHitArray(vector<STHit> *hitArray);
     void AddCluster(STHitCluster *cluster);
+    void SetClusterArray(vector<STHitCluster> *clusterArray);
 //    void AddTrack(STTrack *track);
+//    void SetTrackArray(vector<STTrack> &trackArray);
 
     void SetIsClustered(Bool_t value);
     void SetIsTracked(Bool_t value);
@@ -41,17 +46,17 @@ class STEvent : public TNamed {
     Int_t GetNumHits();
     STHit *GetHit(Int_t hitNo);
     STHit *RemoveHit(Int_t hitNo);
-    std::vector<STHit> *GetHitArray();
+    vector<STHit> *GetHitArray();
 
     Int_t GetNumClusters();
     STHitCluster *GetCluster(Int_t clusterNo);
     STHitCluster *RemoveCluster(Int_t clusterNo);
-    std::vector<STHitCluster> *GetClusterArray();
+    vector<STHitCluster> *GetClusterArray();
 
 //    Int_t GetNumTracks();
 //    STTrack *GetTrack(Int_t trackNo);
 //    STTrack *RemoveTrack(Int_t trackNo);
-//    std::vector<STTrack> *GetTrackArray();
+//    vector<STTrack> *GetTrackArray();
 
     Bool_t IsClustered();
     Bool_t IsTracked();
@@ -62,9 +67,9 @@ class STEvent : public TNamed {
 
     Int_t fEventID;
 
-    std::vector<STHit> fHitArray;
-    std::vector<STHitCluster> fClusterArray;
-//    std::vector<STTrack> fTrackArray;
+    vector<STHit> fHitArray;
+    vector<STHitCluster> fClusterArray;
+//    vector<STTrack> fTrackArray;
 
   ClassDef(STEvent, 1);
 };
