@@ -22,8 +22,9 @@
 #include "TVector3.h"
 
 // STL
-#include <vector>
 #include <algorithm>
+
+using std::vector;
 
 ClassImp(STHitClusteringTask)
 
@@ -93,10 +94,10 @@ STHitClusteringTask::Exec(Option_t *opt)
 
   Double_t sliceY = fDriftLength/fYDivider;
 
-  std::vector<STHit> *hitArray = eventH -> GetHitArray();
+  vector<STHit> *hitArray = eventH -> GetHitArray();
   std::sort(hitArray -> begin(), hitArray -> end(), STHitSortY());
 
-  std::vector<STHit> slicedSpace;
+  vector<STHit> slicedSpace;
   for (Int_t iSlice = 0, currentPosInVector = 0; iSlice < fYDivider; iSlice++) {
     Double_t bottomY = -fDriftLength + iSlice*sliceY;
     Double_t topY = bottomY + sliceY;
@@ -115,7 +116,82 @@ STHitClusteringTask::Exec(Option_t *opt)
 
     if (slicedSpace.empty())
       continue;
-
-    // Now I'll write cluster finding part.
+    
+    FindCluster(slicedSpace, eventHC); 
   }
+
+  eventHC -> SetIsClustered(kTRUE);
+}
+
+void
+STHitClusteringTask::FindCluster(vector<STHit> &slicedSpace, STEvent *event)
+{
+  for (Int_t iHit = 0; iHit < slicedSpace.size(); iHit++) {
+    STHit *centerHit = &(slicedSpace.at(iHit));
+
+    if (centerHit -> GetIsClustered())
+      continue;
+
+    vector<Int_t> closeHits;
+    centerHit = FindLargestHitAndCloseHits(slicedSpace, centerHit, closeHits);
+
+    STHitCluster *cluster = new STHitCluster();
+    for (Int_t iNum = 0; iNum < closeHits.size(); iNum++) {
+      STHit *hit = &(slicedSpace.at(iNum));
+      hit -> SetIsClustered(kTRUE);
+      hit -> SetClusterID(event -> GetNumClusters());
+
+      cluster -> AddHit(hit);
+      event -> AddHit(hit);
+    }
+
+    event -> AddCluster(cluster);
+    delete cluster;
+    iHit = 0;
+  }
+}
+
+STHit *
+STHitClusteringTask::FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHit *centerHit, vector<Int_t> &closeHits)
+{
+  Int_t padSizeX = fPar -> GetPadSizeX();
+  Int_t padSizeZ = fPar -> GetPadSizeZ();
+  Int_t padPlaneX = fPar -> GetPadPlaneX();
+  Int_t padPlaneZ = fPar -> GetPadPlaneZ();
+
+  Double_t minX = (centerHit -> GetPosition()).X() - 1.5*padSizeX;
+  Double_t maxX = (centerHit -> GetPosition()).X() + 1.5*padSizeX;
+  Double_t minZ = (centerHit -> GetPosition()).Z() - 1.5*padSizeZ;
+  Double_t maxZ = (centerHit -> GetPosition()).Z() + 1.5*padSizeZ;
+
+  if (minX < -padPlaneX) minX = -padPlaneX;
+  if (maxX >  padPlaneX) maxX =  padPlaneX;
+  if (minZ <  0)         minZ = 0;
+  if (maxZ >  padPlaneZ) maxZ = padPlaneZ;
+
+  closeHits.clear();
+  for (Int_t iHit = 0; iHit < slicedSpace.size(); iHit++) {
+    STHit *hit = &(slicedSpace.at(iHit));
+
+    if (hit -> GetHitID() == centerHit -> GetHitID() || hit -> GetIsClustered())
+      continue;
+
+    Double_t xPos = (hit -> GetPosition()).X();
+    Double_t zPos = (hit -> GetPosition()).Z();
+
+    if (minX < xPos && xPos < maxX && minZ < zPos && zPos < maxZ)
+      closeHits.push_back(iHit);
+  }
+
+  if (closeHits.size() == 0)
+    return centerHit;
+    
+  for (Int_t iHit = 0; iHit < closeHits.size(); iHit++) {
+    Int_t hitNumber = closeHits.at(iHit);
+    STHit *hit = &(slicedSpace.at(hitNumber));
+    if (centerHit -> GetCharge() < hit -> GetCharge())
+      return FindLargestHitAndCloseHits(slicedSpace, hit, closeHits);
+  }
+
+  return centerHit;
 }

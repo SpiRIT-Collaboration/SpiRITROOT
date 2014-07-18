@@ -13,7 +13,9 @@
 #define _STCLUSTERINGTASK_H_
 
 // SpiRITROOT classes
+#include "STEvent.hh"
 #include "STHit.hh"
+#include "STHitCluster.hh"
 #include "STDigiPar.hh"
 
 // FairROOT classes
@@ -22,6 +24,11 @@
 
 // ROOT classes
 #include "TClonesArray.h"
+
+// STL
+#include <vector>
+
+using std::vector;
 
 class STHitClusteringTask : public FairTask
 {
@@ -47,6 +54,9 @@ class STHitClusteringTask : public FairTask
 
     TClonesArray *fEventHArray;
     TClonesArray *fEventHCArray;
+
+    void FindCluster(vector<STHit> &slicedSpace, STEvent *event);
+    STHit *FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHit *centerHit, vector<Int_t> &closeHits);
 
 
   ClassDef(STHitClusteringTask, 1);
