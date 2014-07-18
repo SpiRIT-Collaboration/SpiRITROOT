@@ -83,7 +83,10 @@ STPSASimple::Analyze(STRawEvent *rawEvent, STEvent *event)
     if (fThreshold > 0 && charge > fThreshold)
       continue;
 
-    event -> AddHit(new STHit(hitNum, xPos, yPos, zPos, charge));
+    STHit *hit = new STHit(hitNum, xPos, yPos, zPos, charge);
+    event -> AddHit(hit);
+    delete hit;
+
     hitNum++;
   }
 }
