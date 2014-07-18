@@ -81,10 +81,11 @@ STDecoderTask::Init()
     fLogger -> Info(MESSAGE_ORIGIN, "Use internal pedestal!");
 
     fDecoder -> SetInternalPedestal();
-  } else
+  } else {
     fLogger -> Info(MESSAGE_ORIGIN, "Pedestal data is set!");
 
     fDecoder -> SetPedestalData(fPedestalFile);
+  }
 
   return kSUCCESS;
 }
