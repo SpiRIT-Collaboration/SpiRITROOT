@@ -42,8 +42,8 @@ STHit::~STHit()
 
 void STHit::SetTrackID(Int_t trackID)                                   { fTrackID = trackID; }
 void STHit::SetHitID(Int_t hitID)                                       { fHitID = hitID; }
-void STHit::SetHit(Int_t hitID, TVector3 vec, Double_t charge)                       { fPosition = vec; fCharge = charge; }
-void STHit::SetHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge) { fPosition = TVector3(x, y, z); fCharge = charge; }
+void STHit::SetHit(Int_t hitID, TVector3 vec, Double_t charge)                       { fHitID = hitID; fPosition = vec; fCharge = charge; }
+void STHit::SetHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge) { fHitID = hitID; fPosition = TVector3(x, y, z); fCharge = charge; }
 
 void STHit::SetPosition(TVector3 vec)                                   { fPosition = vec; }
 void STHit::SetPosition(Double_t x, Double_t y, Double_t z)             { fPosition = TVector3(x, y, z); }
