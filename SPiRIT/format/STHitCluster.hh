@@ -34,6 +34,7 @@ class STHitCluster : public TObject
     TVector3 GetPosition();
     TVector3 GetPosSigma();
     TMatrixD GetCovMatrix();
+    Double_t GetCharge();
 
     Int_t GetNumHits();
     vector<Int_t> *GetHitIDs();
@@ -44,9 +45,13 @@ class STHitCluster : public TObject
     Int_t fClusterID;
     TVector3 fPosition;
     TVector3 fPosSigma;
-    TMatrixD fCovariant;
+    TMatrixD fCovMatrix;
+    Double_t fCharge;
 
     vector<Int_t> fHitIDArray;
+
+    void CalculatePosition(TVector3 hitPos, Double_t charge);
+    void CalculateCovMatrix(TVector3 hitPos, Double_t charge);
 
   ClassDef(STHitCluster, 1)
 };
