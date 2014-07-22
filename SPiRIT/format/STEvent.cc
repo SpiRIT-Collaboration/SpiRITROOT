@@ -42,6 +42,14 @@ STEvent::~STEvent()
 {
 }
 
+void STEvent::SetIsClustered(Bool_t value) { fIsClustered = value; }
+void STEvent::SetIsTracked(Bool_t value)   { fIsClustered = value; }
+
+Bool_t STEvent::IsClustered()              { return fIsClustered; }
+Bool_t STEvent::IsTracked()                { return fIsTracked; }
+
+Int_t STEvent::GetNumClusters()            { return fClusterArray.size(); }
+
 // setters
 void STEvent::SetEventID(Int_t evtid)
 {
@@ -70,7 +78,6 @@ void STEvent::SetClusterArray(vector<STHitCluster> *clusterArray)
 
 // getters
 Int_t STEvent::GetEventID() { return fEventID; }
-
 Int_t STEvent::GetNumHits() { return fHitArray.size(); }
 
 STHit *STEvent::GetHit(Int_t hitNo)
