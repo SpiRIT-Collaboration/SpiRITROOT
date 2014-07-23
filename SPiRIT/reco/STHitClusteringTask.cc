@@ -29,6 +29,7 @@ using std::vector;
 ClassImp(STHitClusteringTask)
 
 STHitClusteringTask::STHitClusteringTask()
+:FairTask("SpiRIT Hit Clusterint Task")
 {
   fLogger = FairLogger::GetLogger();
 
@@ -42,6 +43,7 @@ STHitClusteringTask::~STHitClusteringTask()
 }
 
 void STHitClusteringTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
+void STHitClusteringTask::SetVerbose(Int_t value)      { fVerbose = value; }
 
 InitStatus
 STHitClusteringTask::Init()
@@ -126,18 +128,22 @@ STHitClusteringTask::Exec(Option_t *opt)
 void
 STHitClusteringTask::FindCluster(vector<STHit> &slicedSpace, STEvent *event)
 {
+  if (fVerbose == 1)
+    fLogger -> Info(MESSAGE_ORIGIN, "Start cluster finding!");
+
   for (Int_t iHit = 0; iHit < slicedSpace.size(); iHit++) {
     STHit *centerHit = &(slicedSpace.at(iHit));
 
     if (centerHit -> GetIsClustered())
       continue;
 
-    vector<Int_t> closeHits;
-    centerHit = FindLargestHitAndCloseHits(slicedSpace, centerHit, closeHits);
+    vector<Int_t> clusteredHits;
+    centerHit = FindLargestHitAndCloseHits(slicedSpace, centerHit, clusteredHits);
 
     STHitCluster *cluster = new STHitCluster();
-    for (Int_t iNum = 0; iNum < closeHits.size(); iNum++) {
-      STHit *hit = &(slicedSpace.at(iNum));
+    for (Int_t iNum = 0; iNum < clusteredHits.size(); iNum++) {
+      Int_t hitNum = clusteredHits.at(iNum);
+      STHit *hit = &(slicedSpace.at(hitNum));
       hit -> SetIsClustered(kTRUE);
       hit -> SetClusterID(event -> GetNumClusters());
 
@@ -152,8 +158,11 @@ STHitClusteringTask::FindCluster(vector<STHit> &slicedSpace, STEvent *event)
 }
 
 STHit *
-STHitClusteringTask::FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHit *centerHit, vector<Int_t> &closeHits)
+STHitClusteringTask::FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHit *centerHit, vector<Int_t> &clusteredHits)
 {
+  if (fVerbose > 0)
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Start to find the largest hit and close hits with center Hit:%d in slicedSpace:%d", centerHit -> GetHitID(), slicedSpace.size()));
+
   Int_t padSizeX = fPar -> GetPadSizeX();
   Int_t padSizeZ = fPar -> GetPadSizeZ();
   Int_t padPlaneX = fPar -> GetPadPlaneX();
@@ -169,28 +178,34 @@ STHitClusteringTask::FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHi
   if (minZ <  0)         minZ = 0;
   if (maxZ >  padPlaneZ) maxZ = padPlaneZ;
 
-  closeHits.clear();
+  clusteredHits.clear();
   for (Int_t iHit = 0; iHit < slicedSpace.size(); iHit++) {
     STHit *hit = &(slicedSpace.at(iHit));
 
-    if (hit -> GetHitID() == centerHit -> GetHitID() || hit -> GetIsClustered())
+    if (fVerbose > 1)
+      fLogger -> Info(MESSAGE_ORIGIN, Form("HitID: %d", hit -> GetHitID()));
+
+    if (hit -> GetIsClustered())
       continue;
 
     Double_t xPos = (hit -> GetPosition()).X();
     Double_t zPos = (hit -> GetPosition()).Z();
 
     if (minX < xPos && xPos < maxX && minZ < zPos && zPos < maxZ)
-      closeHits.push_back(iHit);
+      clusteredHits.push_back(iHit);
   }
 
-  if (closeHits.size() == 0)
+  if (fVerbose > 1)
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Found clusteredHits %d", clusteredHits.size()));
+
+  if (clusteredHits.size() == 1)
     return centerHit;
-    
-  for (Int_t iHit = 0; iHit < closeHits.size(); iHit++) {
-    Int_t hitNumber = closeHits.at(iHit);
+
+  for (Int_t iHit = 0; iHit < clusteredHits.size(); iHit++) {
+    Int_t hitNumber = clusteredHits.at(iHit);
     STHit *hit = &(slicedSpace.at(hitNumber));
     if (centerHit -> GetCharge() < hit -> GetCharge())
-      return FindLargestHitAndCloseHits(slicedSpace, hit, closeHits);
+      return FindLargestHitAndCloseHits(slicedSpace, hit, clusteredHits);
   }
 
   return centerHit;

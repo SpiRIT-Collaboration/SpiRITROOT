@@ -37,6 +37,7 @@ class STHitClusteringTask : public FairTask
     ~STHitClusteringTask();
 
     void SetPersistence(Bool_t value = kTRUE);
+    void SetVerbose(Int_t value = 1);
     
     virtual InitStatus Init();
     virtual void SetParContainers();
@@ -44,6 +45,8 @@ class STHitClusteringTask : public FairTask
 
   private:
     FairLogger *fLogger;
+
+    Int_t fVerbose;
 
     STDigiPar *fPar;
 
@@ -56,7 +59,7 @@ class STHitClusteringTask : public FairTask
     TClonesArray *fEventHCArray;
 
     void FindCluster(vector<STHit> &slicedSpace, STEvent *event);
-    STHit *FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHit *centerHit, vector<Int_t> &closeHits);
+    STHit *FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHit *centerHit, vector<Int_t> &clusteredHits);
 
 
   ClassDef(STHitClusteringTask, 1);
