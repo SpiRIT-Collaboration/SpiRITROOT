@@ -38,6 +38,8 @@ STEventDraw::STEventDraw()
   fStyle = 0;
 
   fIs2DPlot = kFALSE;
+  fIs2DPlotRange = kFALSE;
+  fIs2DPlotExternal = kFALSE;
   fPadPlaneCvs = NULL;
   fPadPlane = NULL;
   fMinZ = 0;
@@ -59,6 +61,8 @@ STEventDraw::STEventDraw(const Char_t *name, Color_t color, Style_t style, Int_t
   fStyle = style;
 
   fIs2DPlot = kFALSE;
+  fIs2DPlotRange = kFALSE;
+  fIs2DPlotExternal = kFALSE;
   fPadPlaneCvs = NULL;
   fPadPlane = NULL;
   fMinZ = 0;
@@ -73,16 +77,25 @@ STEventDraw::~STEventDraw()
 {
 }
 
-void STEventDraw::SetVerbose(Int_t verbose) { fVerbose = verbose; }
-void STEventDraw::Set2DPlot(Bool_t value)   { fIs2DPlot = value; }
+void STEventDraw::SetVerbose(Int_t verbose)       { fVerbose = verbose; }
+void STEventDraw::Set2DPlot(Bool_t value)         { fIs2DPlot = value; }
+void STEventDraw::Set2DPlotExternal(Bool_t value) { fIs2DPlotExternal = value; }
 
 void
 STEventDraw::Set2DPlotRange(Int_t uaIdx)
 {
+  if (uaIdx < 0 || uaIdx > 47) {
+    fLogger -> Error(MESSAGE_ORIGIN, "2DPlotRange should be [0, 47]!");
+
+    return;
+  }
+
   fMinZ = (uaIdx%4)*12*7*4;
   fMaxZ = (uaIdx%4 + 1)*12*7*4;
   fMinX = (uaIdx/4)*8*9 - 432;
   fMaxX = (uaIdx/4 + 1)*8*9 - 432;
+
+  fIs2DPlotRange = kTRUE;
 }
 
 InitStatus STEventDraw::Init()
@@ -110,7 +123,16 @@ InitStatus STEventDraw::Init()
 
   if (fIs2DPlot) {
     gStyle -> SetPalette(55);
-    fPadPlaneCvs = gEve -> AddCanvasTab("Pad Plane View");
+    if (fIs2DPlotExternal) {
+      if (fIs2DPlotRange) {
+        fPadPlaneCvs = new TCanvas("padplane", "Pad Plane View", 1300, 270);
+        fPadPlaneCvs -> SetLeftMargin(0.06);
+        fPadPlaneCvs -> SetRightMargin(0.065);
+      } else
+        fPadPlaneCvs = new TCanvas("padplane", "Pad Plane View", 1300, 800);
+      fPadPlaneCvs -> SetFixedAspectRatio();
+    } else
+      fPadPlaneCvs = gEve -> AddCanvasTab("Pad Plane View");
     DrawPadPlane();
   }
 
@@ -151,8 +173,15 @@ void STEventDraw::Exec(Option_t* option)
 
       TPaletteAxis *paxis = (TPaletteAxis *) fPadPlane -> GetListOfFunctions() -> FindObject("palette");
       if (paxis) {
-        paxis -> SetX1NDC(0.905);
-        paxis -> SetX2NDC(0.94);
+        if (fIs2DPlotExternal && fIs2DPlotRange) {
+          paxis -> SetX1NDC(0.940);
+          paxis -> SetX2NDC(0.955);
+          paxis -> SetLabelSize(0.08);
+          paxis -> GetAxis() -> SetTickSize(0.01);
+        } else {
+          paxis -> SetX1NDC(0.905);
+          paxis -> SetX2NDC(0.94);
+        }
 
         fPadPlaneCvs -> Modified();
         fPadPlaneCvs -> Update();
@@ -198,8 +227,16 @@ STEventDraw::DrawPadPlane()
   fPadPlane -> GetYaxis() -> CenterTitle();
   fPadPlane -> SetMinimum(0);
   fPadPlane -> SetMaximum(4095);
-  fPadPlane -> GetXaxis() -> SetRangeUser(fMinZ, fMaxZ);
-  fPadPlane -> GetYaxis() -> SetRangeUser(fMinX, fMaxX);
+  if (fIs2DPlotExternal && fIs2DPlotRange) {
+    fPadPlane -> GetYaxis() -> SetTitleOffset(0.35);
+    fPadPlane -> GetYaxis() -> SetTitleSize(0.08);
+    fPadPlane -> GetXaxis() -> SetTitleOffset(0.40);
+    fPadPlane -> GetXaxis() -> SetTitleSize(0.08);
+    fPadPlane -> SetLabelSize(0.08, "X");
+    fPadPlane -> SetLabelSize(0.08, "Y");
+    fPadPlane -> GetXaxis() -> SetRangeUser(fMinZ, fMaxZ);
+    fPadPlane -> GetYaxis() -> SetRangeUser(fMinX, fMaxX);
+  }
   fPadPlane -> SetStats(0);
   fPadPlane -> Draw("colz");
 

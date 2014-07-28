@@ -43,6 +43,7 @@ class STEventDraw : public FairTask
     void SetVerbose(Int_t verbose);
     //! 
     void Set2DPlot(Bool_t value = kTRUE);
+    void Set2DPlotExternal(Bool_t value = kTRUE);
     //!
     void Set2DPlotRange(Int_t uaIdx);
 
@@ -64,6 +65,8 @@ class STEventDraw : public FairTask
     Style_t fStyle;                   //!<
 
     Bool_t fIs2DPlot;                 //!<
+    Bool_t fIs2DPlotExternal;         //!<
+    Bool_t fIs2DPlotRange;            //!<
     TCanvas *fPadPlaneCvs;            //!<
     TH2D *fPadPlane;                  //!<
     Int_t fMinZ;                      //!<
