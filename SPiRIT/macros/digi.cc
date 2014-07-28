@@ -1,18 +1,7 @@
-/*
-
-// ROOT class headers
-#include "TFile.h"
-
-// Fair class headers
-#include "FairRunSim.h"
-#include "FairRuntimeDb.h"
-#include "FairParRootFileIo.h"
-
-*/
-
-void digi(TString mcFile  = "data/test.mc_youngstest.root",
-          TString mcParFile   = "data/params_youngstest.root",
-          TString digiParFile = "ST.parameters.par")
+void digi
+(TString mcFile      = "data/test.mc_youngstest.root",
+ TString mcParFile   = "data/params_youngstest.root",
+ TString digiParFile = "ST.parameters.par")
 {
   // __ Set Enviroment _________________________________
 
@@ -59,8 +48,16 @@ void digi(TString mcFile  = "data/test.mc_youngstest.root",
 
   STClusterizerTask* clusterizer = new STClusterizerTask();
                      clusterizer -> SetPersistence(kTRUE);
-  fRun -> AddTask(clusterizer);
 
+  STDriftTask* drifter = new STDriftTask();
+               drifter -> SetPersistence(kTRUE);
+
+  STAvalancheTask* avalanche = new STAvalancheTask();
+                   avalanche -> SetPersistence(kTRUE);
+
+  fRun -> AddTask(clusterizer);
+  fRun -> AddTask(drifter);
+  fRun -> AddTask(avalanche);
 
   // __ Init and run ___________________________________
 
