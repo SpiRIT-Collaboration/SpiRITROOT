@@ -24,6 +24,8 @@
 #include "TCanvas.h"
 #include "TPaletteAxis.h"
 #include "TStyle.h"
+#include "TVirtualX.h"
+#include "TGWindow.h"
 
 ClassImp(STEventDraw);
 
@@ -124,12 +126,39 @@ InitStatus STEventDraw::Init()
   if (fIs2DPlot) {
     gStyle -> SetPalette(55);
     if (fIs2DPlotExternal) {
+      UInt_t width = 0, height = 0;
+      Int_t dummy = 0;
+      gVirtualX -> GetWindowSize(gClient -> GetRoot() -> GetId(), dummy, dummy, width, height);
+
       if (fIs2DPlotRange) {
-        fPadPlaneCvs = new TCanvas("padplane", "Pad Plane View", 1300, 270);
+        Double_t ratio = 270./1300.;
+        if (width < 1300) {
+          width = 0.9*width;
+          height = ratio*width;
+        } else {
+          width = 1300;
+          height = 270;
+        }
+
+        fPadPlaneCvs = new TCanvas("padplane", "Pad Plane View", width, height);
         fPadPlaneCvs -> SetLeftMargin(0.06);
         fPadPlaneCvs -> SetRightMargin(0.065);
-      } else
-        fPadPlaneCvs = new TCanvas("padplane", "Pad Plane View", 1300, 800);
+      } else {
+        Double_t ratio = 800./1300.;
+      
+        if (width < 1300) {
+          width = 0.9*width;
+          height = width*ratio;
+        } else if (height < 800) {
+          height = 0.8*height;
+          width = height/ratio;
+        } else {
+          width = 1300;
+          height = 800;
+        }
+
+        fPadPlaneCvs = new TCanvas("padplane", "Pad Plane View", width, height);
+      }
       fPadPlaneCvs -> SetFixedAspectRatio();
     } else
       fPadPlaneCvs = gEve -> AddCanvasTab("Pad Plane View");
