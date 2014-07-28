@@ -36,6 +36,7 @@ class STAvalancheTask : public FairTask
     // Operators
     // Getters
     // Setters
+    void SetPersistence(Bool_t val) { fIsPersistent = val; };
     
     // Main methods
     virtual InitStatus Init();
