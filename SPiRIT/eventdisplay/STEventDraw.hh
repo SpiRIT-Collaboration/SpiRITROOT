@@ -24,6 +24,7 @@
 #include "TClonesArray.h"
 #include "TVector3.h"
 #include "Rtypes.h"
+#include "TH2D.h"
 
 class TObject;
 
@@ -40,6 +41,10 @@ class STEventDraw : public FairTask
 
     //! Set verbosity level. For this task and all of the subtasks.
     void SetVerbose(Int_t verbose);
+    //! 
+    void Set2DPlot(Bool_t value = kTRUE);
+    //!
+    void Set2DPlotRange(Int_t uaIdx);
 
     virtual InitStatus Init();
     virtual void Exec(Option_t* option);
@@ -58,9 +63,19 @@ class STEventDraw : public FairTask
     Color_t fColor;                   //!<
     Style_t fStyle;                   //!<
 
+    Bool_t fIs2DPlot;                 //!<
+    TCanvas *fPadPlaneCvs;            //!<
+    TH2D *fPadPlane;                  //!<
+    Int_t fMinZ;                      //!<
+    Int_t fMaxZ;                      //!<
+    Int_t fMinX;                      //!<
+    Int_t fMaxX;                      //!<
+
   private:
     STEventDraw(const STEventDraw&);
     STEventDraw& operator=(const STEventDraw&);
+
+    void DrawPadPlane();
 
     ClassDef(STEventDraw,1);
 };
