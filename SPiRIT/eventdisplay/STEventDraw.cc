@@ -20,6 +20,10 @@
 #include "TEveTreeTools.h"
 #include "TNamed.h"
 #include "TString.h"
+#include "TGraph.h"
+#include "TCanvas.h"
+#include "TPaletteAxis.h"
+#include "TStyle.h"
 
 ClassImp(STEventDraw);
 
@@ -32,6 +36,15 @@ STEventDraw::STEventDraw()
   fPointSet = NULL;
   fColor = 0;
   fStyle = 0;
+
+  fIs2DPlot = kFALSE;
+  fPadPlaneCvs = NULL;
+  fPadPlane = NULL;
+  fMinZ = 0;
+  fMaxZ = 1344;
+  fMinX = 432;
+  fMaxX = -432;
+
   fLogger = FairLogger::GetLogger();
 }
 
@@ -44,6 +57,15 @@ STEventDraw::STEventDraw(const Char_t *name, Color_t color, Style_t style, Int_t
   fPointSet = NULL;
   fColor = color;
   fStyle = style;
+
+  fIs2DPlot = kFALSE;
+  fPadPlaneCvs = NULL;
+  fPadPlane = NULL;
+  fMinZ = 0;
+  fMaxZ = 1344;
+  fMinX = 432;
+  fMaxX = -432;
+
   fLogger = FairLogger::GetLogger();
 }
 
@@ -51,10 +73,16 @@ STEventDraw::~STEventDraw()
 {
 }
 
+void STEventDraw::SetVerbose(Int_t verbose) { fVerbose = verbose; }
+void STEventDraw::Set2DPlot(Bool_t value)   { fIs2DPlot = value; }
+
 void
-STEventDraw::SetVerbose(Int_t verbose)
+STEventDraw::Set2DPlotRange(Int_t uaIdx)
 {
-  fVerbose = verbose;
+  fMinZ = (uaIdx%4)*12*7*4;
+  fMaxZ = (uaIdx%4 + 1)*12*7*4;
+  fMinX = (uaIdx/4)*8*9 - 432;
+  fMaxX = (uaIdx/4 + 1)*8*9 - 432;
 }
 
 InitStatus STEventDraw::Init()
@@ -80,6 +108,12 @@ InitStatus STEventDraw::Init()
 
   fPointSet = 0;
 
+  if (fIs2DPlot) {
+    gStyle -> SetPalette(55);
+    fPadPlaneCvs = gEve -> AddCanvasTab("Pad Plane View");
+    DrawPadPlane();
+  }
+
   // gEve->AddElement(fPointSet, fEventManager );
   return kSUCCESS;
 }
@@ -103,10 +137,27 @@ void STEventDraw::Exec(Option_t* option)
       TVector3 vec(GetVector(aPoint));
       pointSet -> SetNextPoint(vec.X()/10., vec.Y()/10., vec.Z()/10.); // mm -> cm
       pointSet -> SetPointId(GetValue(aPoint, iPoint));
+
+      if (fIs2DPlot)
+        fPadPlane -> Fill(vec.Z(), vec.X(), aPoint.GetCharge());
     }
 
     gEve -> AddElement(pointSet);
     gEve -> Redraw3D(kFALSE);
+
+    if (fIs2DPlot) {
+      fPadPlaneCvs -> Modified();
+      fPadPlaneCvs -> Update();
+
+      TPaletteAxis *paxis = (TPaletteAxis *) fPadPlane -> GetListOfFunctions() -> FindObject("palette");
+      if (paxis) {
+        paxis -> SetX1NDC(0.905);
+        paxis -> SetX2NDC(0.94);
+
+        fPadPlaneCvs -> Modified();
+        fPadPlaneCvs -> Update();
+      }
+    }
 
     fPointSet = pointSet;
   }
@@ -117,12 +168,62 @@ TObject* STEventDraw::GetValue(STHit &hit, Int_t iHit)
   return new TNamed(Form("Hit %d", iHit), "");
 }
 
-
 void
 STEventDraw::Reset()
 {
   if(fPointSet != 0) {
     fPointSet -> Reset();
     gEve -> RemoveElement(fPointSet, fEventManager);
+  }
+
+  fPadPlane -> Reset();
+}
+
+void
+STEventDraw::DrawPadPlane()
+{
+  if (fPadPlane != NULL) {
+    fPadPlane -> Reset();
+
+    return;
+  }
+
+  fPadPlaneCvs -> cd();
+  fPadPlane = new TH2D("padplane", "SpiRIT Pad Plane", 112, 0, 1344, 108, -432, 432);
+  fPadPlane -> GetXaxis() -> SetTickLength(0.01);
+  fPadPlane -> GetXaxis() -> SetTitle("z (mm)");
+  fPadPlane -> GetXaxis() -> CenterTitle();
+  fPadPlane -> GetYaxis() -> SetTickLength(0.01);
+  fPadPlane -> GetYaxis() -> SetTitle("x (mm)");
+  fPadPlane -> GetYaxis() -> CenterTitle();
+  fPadPlane -> SetMinimum(0);
+  fPadPlane -> SetMaximum(4095);
+  fPadPlane -> GetXaxis() -> SetRangeUser(fMinZ, fMaxZ);
+  fPadPlane -> GetYaxis() -> SetRangeUser(fMinX, fMaxX);
+  fPadPlane -> SetStats(0);
+  fPadPlane -> Draw("colz");
+
+  for (Int_t i = 0; i < 107; i++) {
+    Int_t x[2] = {-432 + (i + 1)*8, -432 + (i + 1)*8};
+    Int_t z[2] = {0, 1344};
+    TGraph *line = new TGraph(2, z, x);
+    line -> SetMarkerStyle(1);
+    if ((i + 1)%9 == 0)
+        line -> SetLineStyle(1);
+    else
+        line -> SetLineStyle(3);
+    line -> Draw("same");
+  }
+
+  for (Int_t i = 0; i < 111; i++) {
+    Int_t x[2] = {-432, 432};
+    Int_t z[2] = {(i + 1)*12, (i + 1)*12};
+    TGraph *line = new TGraph(2, z, x);
+    line -> SetMarkerStyle(1);
+    if ((i + 1)%7 == 0)
+        line -> SetLineStyle(1);
+    else
+        line -> SetLineStyle(3);
+    line -> Draw("same");
   }
 }
