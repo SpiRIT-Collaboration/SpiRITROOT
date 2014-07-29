@@ -17,6 +17,7 @@
 #include "TLatex.h"
 #include "TList.h"
 #include "TLine.h"
+#include "TString.h"
 
 ClassImp(STMapTest);
 
@@ -75,7 +76,7 @@ void STMapTest::ShowAGETMap(Int_t UAIdx)
 
   gStyle -> SetOptStat(0);
   agetCvs = new TCanvas("agetCvs", "", 600, 500);
-  agetHist = new TH2D("agetHist", "AGET Map Test (Top View)", 7, -0.5, 6.5, 9, -0.5, 8.5);
+  agetHist = new TH2D("agetHist", Form("AGET Map Test (Top View) - UA%2d", UAIdx), 7, -0.5, 6.5, 9, -0.5, 8.5);
   agetHist -> GetXaxis() -> SetTitle("Local Layer Number");
   agetHist -> GetXaxis() -> CenterTitle();
   agetHist -> GetYaxis() -> SetTitle("Local Row Number");
