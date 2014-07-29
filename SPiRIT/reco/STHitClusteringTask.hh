@@ -24,6 +24,7 @@
 
 // ROOT classes
 #include "TClonesArray.h"
+#include "TVector3.h"
 
 // STL
 #include <vector>
@@ -63,6 +64,13 @@ class STHitClusteringTask : public FairTask
 
 
   ClassDef(STHitClusteringTask, 1);
+};
+
+class STHitSortY
+{
+  public:
+    STHitSortY() {}
+    Bool_t operator()(STHit hitA, STHit hitB) { return (hitA.GetPosition().Y() < hitB.GetPosition().Y()); }
 };
 
 #endif

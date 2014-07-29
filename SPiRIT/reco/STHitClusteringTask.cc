@@ -12,7 +12,6 @@
 // SpiRITROOT classes
 #include "STHitClusteringTask.hh"
 #include "STEvent.hh"
-#include "STHitSortY.hh"
 
 // FairROOT classes
 #include "FairRun.h"
