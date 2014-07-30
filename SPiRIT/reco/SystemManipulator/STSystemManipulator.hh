@@ -33,6 +33,8 @@ class STSystemManipulator {
     TVector3 fTrans;   //!< default translation vector - [mm]
     Int_t fAxis;       //!< default rotation axis - 0: x, 1: y, 2: z
     Double_t fAngle;   //!< default rotation angle about the default axis - [Rad]
+
+  ClassDef(STSystemManipulator, 1)
 };
 
 #endif

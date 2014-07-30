@@ -13,6 +13,8 @@
 // SpiRITROOT classes
 #include "STSystemManipulator.hh"
 
+ClassImp(STSystemManipulator)
+
 STSystemManipulator::STSystemManipulator()
 {
   fTrans = TVector3(0., 248., 0.);
