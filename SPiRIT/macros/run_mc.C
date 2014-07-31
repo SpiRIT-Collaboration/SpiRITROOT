@@ -1,4 +1,4 @@
-//#include "../../fairtools/FairLogger.h"
+#include "../../fairtools/FairLogger.h"
 //#include "FairRunSim.h"
 #include <Riostream.h>
 #include <TVector3.h>
@@ -76,15 +76,12 @@ void run_mc(const Int_t nEvents = 10)
   Double_t totalC, totalL;
   Int_t pdg;
 
-  cout << "testhere1" << endl;
-
-  for (Int_t i=1; i<=5; i++) {
+  for (Int_t i=1; i<=10; i++) {
     urqmd >> evtnum >> evtmult;
-    cout << evtnum << "\t" << evtmult << endl;
+    //cout << evtnum << "\t" << evtmult << endl;
     for (Int_t j=1; j<=evtmult; j++) {
       urqmd >> urA >> urZ >> px >> py >> pz;
       if (urA<=maxa && urZ<=maxz) {
-	//cout << urA << "\t" << urZ << "\t" << px << "\t" << py << "\t" << pz << endl;
 	partz[i-1].push_back(urZ);
 	parta[i-1].push_back(urA);
 	pxc[i-1].push_back(px);
@@ -93,6 +90,7 @@ void run_mc(const Int_t nEvents = 10)
 	if (urA==-1) {
 	  if (urZ==0) tempmass=masspi[0];
 	  else tempmass=masspi[1];
+	  cout << evtnum << "\t" << urZ << endl;
 	}
 	else {
 	  tempmass=mass[urZ][urA];
@@ -117,17 +115,8 @@ void run_mc(const Int_t nEvents = 10)
 	if (urA==4 && urZ==2) pdg=1000020040;
 	pid[i-1].push_back(pdg);
       }
-      //if (i==events && j==evtmult) urqmd.close();
     }
-    
-    // if (i==events) {
-    //   for (Int_t k=0; k<pid[i].size(); k++) {
-    // 	cout << k+1 << "\t" << pid[i][k] << endl;
-    //   }
-    // }
   }
-
-  cout << "testhere2" << endl;
 
   // In general, the following parts need not be touched
   // ========================================================================
@@ -174,10 +163,10 @@ void run_mc(const Int_t nEvents = 10)
     target->SetGeometryFileName("target.geo"); 
     run->AddModule(target);
     
-    FairDetector* spirit = new SPiRIT("SPiRITDetector", kTRUE);
+    FairDetector* spirit = new STDetector("STDetector", kTRUE);
     //spirit->SetGeometryFileName("spirit.geo"); 
     //spirit->SetGeometryFileName("tpc_prototype_ArCo2.root"); 
-    spirit->SetGeometryFileName("testingsave.root");
+    spirit->SetGeometryFileName("testingsave_geom.root");
     run->AddModule(spirit);
     
     // ------------------------------------------------------------------------
@@ -192,20 +181,18 @@ void run_mc(const Int_t nEvents = 10)
     // ------------------------------------------------------------------------
     
     // -----   Create PrimaryGenerator   --------------------------------------
-  cout << "testhere3" << endl;
   FairPrimaryGenerator *primGen = new FairPrimaryGenerator();
   run->SetGenerator(primGen);  
-  Int_t dnum=2;
+  Int_t dnum=7;
   const int gennum=pid[dnum].size();
   cout << gennum << endl;
   FairParticleGenerator *fIongen[gennum];
   
   for (Int_t i=0; i<gennum; i++) {
     fIongen[i] = new FairParticleGenerator(pid[dnum][i],1,pxl[dnum][i],pyl[dnum][i],pzl[dnum][i],0.0,-21.33,-3.52);
-    cout << pid[dnum][i] << "\t" << pxl[dnum][i] << "\t" << pyl[dnum][i] << "\t" << pzl[dnum][i] << "\t" << kinl[dnum][i] << endl;
+    //cout << pid[dnum][i] << "\t" << pxl[dnum][i] << "\t" << pyl[dnum][i] << "\t" << pzl[dnum][i] << "\t" << kinl[dnum][i] << endl;
     primGen->AddGenerator(fIongen[i]);
   }
-  cout << "testhere4" << endl;
 
 
     //primGen->AddTrack(pdg,pionpC[0][i],pionpC[1][i],pionpC[2][i],pionrC[0][i]*1.0E-13,pionrC[1][i]*1.0E-13-21.33,pionrC[2][i]*1.0E-13-3.52);
@@ -286,6 +273,3 @@ void run_mc(const Int_t nEvents = 10)
   cout << mBeta << endl;
 
 }
-
-
-//}
