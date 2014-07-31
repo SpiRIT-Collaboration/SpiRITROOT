@@ -218,31 +218,31 @@ void smartgeometry()() {
   Double_t trfhalfstripsyup=trstripiny1-1.0*12+halfstripy/2.;
   Double_t trfhalfstripsydown=trstripiny1-1.0*29-halfstripy/2.;
   for (Int_t i=0; i<49; i++) {
-    whole->AddNode(strip,i+1,new TGeoTranslation(trstripoutx,trstripouty1-1.0*i,0.0));
-    whole->AddNode(strip,i+1+49,new TGeoTranslation(trstripinx,trstripiny1-1.0*i,0.0));
-    whole->AddNode(strip,i+1+2*49,new TGeoTranslation(-trstripoutx,trstripouty1-1.0*i,0.0));
-    whole->AddNode(strip,i+1+3*49,new TGeoTranslation(-trstripinx,trstripiny1-1.0*i,0.0));
+    allstrips->AddNode(strip,i+1,new TGeoTranslation(trstripoutx,trstripouty1-1.0*i,0.0));
+    allstrips->AddNode(strip,i+1+49,new TGeoTranslation(trstripinx,trstripiny1-1.0*i,0.0));
+    allstrips->AddNode(strip,i+1+2*49,new TGeoTranslation(-trstripoutx,trstripouty1-1.0*i,0.0));
+    allstrips->AddNode(strip,i+1+3*49,new TGeoTranslation(-trstripinx,trstripiny1-1.0*i,0.0));
   }
-  whole->AddNode(halfstrip,1,new TGeoTranslation(trstripinx,trhalfstripy,0.0));
-  whole->AddNode(halfstrip,2,new TGeoTranslation(-trstripinx,trhalfstripy,0.0));
+  allstrips->AddNode(halfstrip,1,new TGeoTranslation(trstripinx,trhalfstripy,0.0));
+  allstrips->AddNode(halfstrip,2,new TGeoTranslation(-trstripinx,trhalfstripy,0.0));
   for (Int_t i=0; i<49; i++) {
-    if (i<13) whole->AddNode(fstripl,i+1,new TGeoTranslation(0.0,trstripouty1-1.0*i,trfoutstripz));
+    if (i<13) allstrips->AddNode(fstripl,i+1,new TGeoTranslation(0.0,trstripouty1-1.0*i,trfoutstripz));
     if (i>=13 && i<30) {
-      whole->AddNode(fstrips,i+1-13,new TGeoTranslation(trfstripsx,trstripouty1-1.0*i,trfoutstripz));
-      whole->AddNode(fstrips,i+1+4,new TGeoTranslation(-trfstripsx,trstripouty1-1.0*i,trfoutstripz));
+      allstrips->AddNode(fstrips,i+1-13,new TGeoTranslation(trfstripsx,trstripouty1-1.0*i,trfoutstripz));
+      allstrips->AddNode(fstrips,i+1+4,new TGeoTranslation(-trfstripsx,trstripouty1-1.0*i,trfoutstripz));
     }
-    if (i>=30) whole->AddNode(fstripl,i+1-17,new TGeoTranslation(0.0,trstripouty1-1.0*i,trfoutstripz));
+    if (i>=30) allstrips->AddNode(fstripl,i+1-17,new TGeoTranslation(0.0,trstripouty1-1.0*i,trfoutstripz));
 
-    if (i<12) whole->AddNode(fstripl,33+i+1,new TGeoTranslation(0.0,trstripiny1-1.0*i,trfinstripz));
+    if (i<12) allstrips->AddNode(fstripl,33+i+1,new TGeoTranslation(0.0,trstripiny1-1.0*i,trfinstripz));
     if (i>=12 && i<30) {
-      whole->AddNode(fstrips,35+i-12,new TGeoTranslation(trfstripsx,trstripiny1-1.0*i,trfinstripz));
-      whole->AddNode(fstrips,35+i+6,new TGeoTranslation(-trfstripsx,trstripiny1-1.0*i,trfinstripz));
+      allstrips->AddNode(fstrips,35+i-12,new TGeoTranslation(trfstripsx,trstripiny1-1.0*i,trfinstripz));
+      allstrips->AddNode(fstrips,35+i+6,new TGeoTranslation(-trfstripsx,trstripiny1-1.0*i,trfinstripz));
 	}
-    if (i>=30) whole->AddNode(fstripl,33+i+1-18,new TGeoTranslation(0.0,trstripiny1-1.0*i,trfinstripz));
+    if (i>=30) allstrips->AddNode(fstripl,33+i+1-18,new TGeoTranslation(0.0,trstripiny1-1.0*i,trfinstripz));
   }
-  whole->AddNode(fhalfstripl,1,new TGeoTranslation(0.0,trhalfstripy,trfinstripz));
-  whole->AddNode(fhalfstrips,1,new TGeoTranslation(0.0,trfhalfstripsyup,trfinstripz));
-  whole->AddNode(fhalfstrips,2,new TGeoTranslation(0.0,trfhalfstripsydown,trfinstripz));  
+  allstrips->AddNode(fhalfstripl,1,new TGeoTranslation(0.0,trhalfstripy,trfinstripz));
+  allstrips->AddNode(fhalfstrips,1,new TGeoTranslation(0.0,trfhalfstripsyup,trfinstripz));
+  allstrips->AddNode(fhalfstrips,2,new TGeoTranslation(0.0,trfhalfstripsydown,trfinstripz));  
 
   //Make the front window "cradle"
   TGeoVolume *fwincradle = geom->MakeBox("fwincradle",vacuum,200.0,200.0,200.0);
@@ -311,60 +311,111 @@ void smartgeometry()() {
   bottomplate->AddNode(bpcorner3,1,cobpcorner3);
   bottomplate->AddNode(bpcorner4,1,cobpcorner4);
   
-  //Squeak is down to here
   //Make back window frame
+  Double_t backwindowtopx=89.6584;
+  Double_t backwindowtopy=3.15;
+  Double_t backwindowtopz=1.27;
   TGeoVolume *backwindowframe = geom->MakeBox("backwindowframe",vacuum,200.,200.,200.);
-  TGeoVolume *backwindowtop = geom->MakeBox("backwindowtop",Aluminum,89.6584/2.0,3.15/2.0,1.27/2.0);
-  TGeoTranslation *trbackwindowtop = new TGeoTranslation(0.0,23.225,0.0);
+  TGeoVolume *backwindowtop = geom->MakeBox("backwindowtop",Aluminum,backwindowtopx/2.0,backwindowtopy/2.0,backwindowtopz/2.0);
+  Double_t trbackwindowtopy=actcentery/2.0-backwindowtopy/2.0;
+  TGeoTranslation *trbackwindowtop = new TGeoTranslation(0.0,trbackwindowtopy,0.0);
   backwindowframe->AddNode(backwindowtop,1,trbackwindowtop);
-  TGeoVolume *backwindowbottom = geom->MakeBox("backwindowbottom",Aluminum,89.6584/2.0,3.55/2.0,1.27/2.0);
-  TGeoTranslation *trbackwindowbottom = new TGeoTranslation(0.0,-23.025,0.0);
+  Double_t backwindowbottomx=89.6584;
+  Double_t backwindowbottomy=3.55;
+  Double_t backwindowbottomz=1.27;
+  TGeoVolume *backwindowbottom = geom->MakeBox("backwindowbottom",Aluminum,backwindowbottomx/2.0,backwindowbottomy/2.0,backwindowbottomz/2.0);
+  Double_t trbackwindowbottomy=-actcentery/2.0+backwindowbottomy/2.0;
+  TGeoTranslation *trbackwindowbottom = new TGeoTranslation(0.0,trbackwindowbottomy,0.0);
   backwindowframe->AddNode(backwindowbottom,1,trbackwindowbottom);
-  TGeoVolume *backwindowside = geom->MakeBox("backwindowside",Aluminum,2.4492/2.0,42.9/2.0,1.27/2.0);
-  TGeoTranslation *trbackwindowleft = new TGeoTranslation(43.6046,0.2,0.0);
-  TGeoTranslation *trbackwindowright = new TGeoTranslation(-43.6046,0.2,0.0);
+  Double_t backwindowsidex=2.4492;
+  Double_t backwindowsidey=42.9;
+  Double_t backwindowsidez=1.27;
+  TGeoVolume *backwindowside = geom->MakeBox("backwindowside",Aluminum,backwindowsidex/2.0,backwindowsidey/2.0,backwindowsidez/2.0);
+  Double_t trbackwindowsidex=backwindowtopx/2.0-backwindowsidex/2.0;
+  Double_t trbackwindowsidey=(backwindowbottomy-backwindowtopy)/2.0;
+  TGeoTranslation *trbackwindowleft = new TGeoTranslation(trbackwindowsidex,trbackwindowsidey,0.0);
+  TGeoTranslation *trbackwindowright = new TGeoTranslation(-trbackwindowsidex,trbackwindowsidey,0.0);
   backwindowframe->AddNode(backwindowside,1,trbackwindowleft);
   backwindowframe->AddNode(backwindowside,1,trbackwindowright);
-  TGeoTranslation *trbackwindowframe = new TGeoTranslation(0.0,0.0,-72.9647);
+  Double_t trbackwindowframez=actcenterz/2.0+actradius+backwindowtopz/2.0;
+  TGeoTranslation *trbackwindowframe = new TGeoTranslation(0.0,0.0,-trbackwindowframez);
   
-  TGeoVolume *backwindowtop2 = geom->MakeBox("backwindowtop2",Aluminum,89.76/2.0,4.5/2.0,0.635/2.0);
-  TGeoTranslation *trbackwindowtop2 = new TGeoTranslation(0.0,21.87375,-0.9525);
+  Double_t backwindowtop2x=89.76;
+  Double_t backwindowtop2y=4.5;
+  Double_t backwindowtop2z=0.635;
+  Double_t backwindowside2x=4.5;
+  Double_t backwindowside2y=38.9;
+  Double_t backwindowside2z=0.635;
+  Double_t backwindowbottom2x=89.76;
+  Double_t backwindowbottom2y=4.8475;
+  Double_t backwindowbottom2z=0.635;
+  TGeoVolume *backwindowtop2 = geom->MakeBox("backwindowtop2",Aluminum,backwindowtop2x/2.0,backwindowtop2y/2.0,backwindowtop2z/2.0);
+  Double_t trbackwindowtop2y=backwindowbottom2y/2.0+backwindowside2y/2.0;
+  Double_t trbackwindowtop2z=-backwindowtop2z/2.0-backwindowtopz/2.0;
+  TGeoTranslation *trbackwindowtop2 = new TGeoTranslation(0.0,trbackwindowtop2y,trbackwindowtop2z);
   backwindowframe->AddNode(backwindowtop2,1,trbackwindowtop2);
-  TGeoVolume *backwindowbottom2 = geom->MakeBox("backwindowbottom2",Aluminum,89.76/2.0,4.8475/2.0,0.635/2.0);
-  TGeoTranslation *trbackwindowbottom2 = new TGeoTranslation(0.0,-21.7,-0.9525);
+
+  TGeoVolume *backwindowbottom2 = geom->MakeBox("backwindowbottom2",Aluminum,backwindowbottom2x/2.0,backwindowbottom2y/2.0,backwindowbottom2z/2.0);
+  Double_t trbackwindowbottom2y=-backwindowside2y/2.0-backwindowtop2y/2.0;
+  Double_t trbackwindowbottom2z=trbackwindowtop2z;
+  TGeoTranslation *trbackwindowbottom2 = new TGeoTranslation(0.0,trbackwindowbottom2y,trbackwindowbottom2z);
   backwindowframe->AddNode(backwindowbottom2,1,trbackwindowbottom2);
-  TGeoVolume *backwindowside2 = geom->MakeBox("backwindowside2",Aluminum,4.5/2.0,38.9/2.0,0.635/2.0);
-  TGeoTranslation *trbackwindowleft2 = new TGeoTranslation(42.63,0.17375,-0.9525);
-  TGeoTranslation *trbackwindowright2 = new TGeoTranslation(-42.63,0.17375,-0.9525);
+
+  TGeoVolume *backwindowside2 = geom->MakeBox("backwindowside2",Aluminum,backwindowside2x/2.0,backwindowside2y/2.0,backwindowside2z/2.0);
+  Double_t trbackwindowside2x=backwindowtop2x/2.0-backwindowside2x/2.0;
+  Double_t trbackwindowside2z=trbackwindowtop2z;
+  Double_t trbackwindowside2y=(backwindowbottom2y-backwindowtop2y)/2.0;
+  TGeoTranslation *trbackwindowleft2 = new TGeoTranslation(trbackwindowside2x,trbackwindowside2y,trbackwindowside2z);
+  TGeoTranslation *trbackwindowright2 = new TGeoTranslation(-trbackwindowside2x,trbackwindowside2y,trbackwindowside2z);
   backwindowframe->AddNode(backwindowside2,1,trbackwindowleft2);
   backwindowframe->AddNode(backwindowside2,2,trbackwindowright2);
 
-
   //Making back window
-  TGeoVolume *backwindow = geom->MakeBox("backwindow",kapton,89.76/2.0,48.2475/2.0,0.0125/2);
-  TGeoTranslation *trbackwindow = new TGeoTranslation(0.0,0.0,-74.24095);
-
+  Double_t backwindowx=89.76;
+  Double_t backwindowy=48.2475;
+  Double_t backwindowz=0.0125;
+  TGeoVolume *backwindow = geom->MakeBox("backwindow",kapton,backwindowx/2.0,backwindowy/2.0,backwindowz/2.0);
+  Double_t trbackwindowz=-actcenterz/2.0-actradius-backwindowtopz-backwindowtop2z-backwindowz/2.0;
+  TGeoTranslation *trbackwindow = new TGeoTranslation(0.0,0.0,trbackwindowz);
   
   //Making top frame
   TGeoVolume *topframe = geom->MakeBox("topframe",vacuum,200.,200.,200.);
   topframe->SetVisibility(kFALSE);
-  TGeoVolume *topframeside = geom->MakeBox("topframeside",Aluminum,17.5326/2.0,0.8763/2.0,160.0175/2.0);
-  TGeoVolume *topframefb = geom->MakeBox("topframefb",Aluminum,95.8523/2.0,0.8763/2.0,8.0594/2.0);
-  TGeoTranslation *trtopframeleft = new TGeoTranslation(56.6925,25.23815,0.0);
-  TGeoTranslation *trtopframeright = new TGeoTranslation(-56.6925,25.23815,0.0);
-  TGeoTranslation *trtopframefront = new TGeoTranslation(0.0,25.23815,75.97905);
-  TGeoTranslation *trtopframeback = new TGeoTranslation(0.0,25.23815,-75.97905);
+  Double_t topframesidex=17.5326;
+  Double_t topframesidey=0.8763;
+  Double_t topframesidez=160.0175;
+  TGeoVolume *topframeside = geom->MakeBox("topframeside",Aluminum,topframesidex/2.0,topframesidey/2.0,topframesidez/2.0);
+  Double_t topframefbx=95.8523;
+  Double_t topframefby=0.8763;
+  Double_t topframefbz=8.0594;
+  TGeoVolume *topframefb = geom->MakeBox("topframefb",Aluminum,topframefbx/2.0,topframefby/2.0,topframefbz/2.0);
+  Double_t trtopframesidex=topframefbx/2.0+topframesidex/2.0;
+  Double_t trtopframesidey=topframefby/2.0+actcentery/2.0;
+  TGeoTranslation *trtopframeleft = new TGeoTranslation(trtopframesidex,trtopframesidey,0.0);
+  TGeoTranslation *trtopframeright = new TGeoTranslation(-trtopframesidex,trtopframesidey,0.0);
+  Double_t trtopframefbz=topframesidez/2.0-topframefbz/2.0;
+  TGeoTranslation *trtopframefront = new TGeoTranslation(0.0,trtopframesidey,trtopframefbz);
+  TGeoTranslation *trtopframeback = new TGeoTranslation(0.0,trtopframesidey,-trtopframefbz);
   topframe->AddNode(topframeside,1,trtopframeleft);
   topframe->AddNode(topframeside,2,trtopframeright);
   topframe->AddNode(topframefb,1,trtopframefront);
   topframe->AddNode(topframefb,2,trtopframeback);
   //Making Lexan part (currently called Aluminum)
-  TGeoVolume *topframefblexan = geom->MakeBox("topframefblexan",Aluminum,126.6/2.0,1.905/2.0,2.0/2.0);
-  TGeoVolume *topframesidelexan = geom->MakeBox("topframesidelexan",Aluminum,2.0/2.0,1.905/2.0,159.7/2.0);
-  TGeoTranslation *trtopframeleftlexan = new TGeoTranslation(64.3,26.6288,0.0);
-  TGeoTranslation *trtopframerightlexan = new TGeoTranslation(-64.3,26.6288,0.0);
-  TGeoTranslation *trtopframefrontlexan = new TGeoTranslation(0.0,26.6288,78.85);
-  TGeoTranslation *trtopframebacklexan = new TGeoTranslation(0.0,26.6288,-78.85);
+  Double_t topframefblexanx=126.6;
+  Double_t topframefblexany=1.905;
+  Double_t topframefblexanz=2.0;
+  Double_t topframesidelexanx=2.0;
+  Double_t topframesidelexany=1.905;
+  Double_t topframesidelexanz=159.7;
+  TGeoVolume *topframefblexan = geom->MakeBox("topframefblexan",Aluminum,topframefblexanx/2.0,topframefblexany/2.0,topframefblexanz/2.0);
+  TGeoVolume *topframesidelexan = geom->MakeBox("topframesidelexan",Aluminum,topframesidelexanx/2.0,topframesidelexany/2.0,topframesidelexanz/2.0);
+  Double_t trtopframesidelexanx=topframefblexanx/2.0+topframesidelexanx/2.0;
+  Double_t trtopframesidelexany=actcentery/2.0+topframesidelexany/2.0+0.8763; //where does the last part come from???
+  TGeoTranslation *trtopframeleftlexan = new TGeoTranslation(trtopframesidelexanx,trtopframesidelexany,0.0);
+  TGeoTranslation *trtopframerightlexan = new TGeoTranslation(-trtopframesidelexanx,trtopframesidelexany,0.0);
+  Double_t trtopframefblexanz=topframesidelexanz/2.0-topframefblexanz/2.0;
+  TGeoTranslation *trtopframefrontlexan = new TGeoTranslation(0.0,trtopframesidelexany,trtopframefblexanz);
+  TGeoTranslation *trtopframebacklexan = new TGeoTranslation(0.0,trtopframesidelexany,-trtopframefblexanz);
   topframe->AddNode(topframesidelexan,1,trtopframeleftlexan);
   topframe->AddNode(topframesidelexan,2,trtopframerightlexan);
   topframe->AddNode(topframefblexan,1,trtopframefrontlexan);
@@ -373,9 +424,17 @@ void smartgeometry()() {
   //Making basic rib assembly
   TGeoVolume *ribmain = geom->MakeBox("ribmain",vacuum,200.,200.,200.);
   ribmain->SetVisibility(kFALSE);
-  TGeoVolume *rib = geom->MakeBox("rib",Aluminum,152.4/2.0,10.9042/2.0,206.06/2.0);
+  Double_t ribx=152.4;
+  Double_t riby=10.9042;
+  Double_t ribz=206.06;
+  TGeoVolume *rib = geom->MakeBox("rib",Aluminum,ribx/2.0,riby/2.0,ribz/2.0);
   //Adding some lips to close area
-  TGeoVolume *riblipside = geom->MakeBox("riblipside",Aluminum,10.74125/2.0,3.01498/2.0,206.06/2.0);
+  Double_t riblipsidex=10.74125;
+  Double_t riblipsidey=3.01498;
+  Double_t riblipsidez=206.06;
+  TGeoVolume *riblipside = geom->MakeBox("riblipside",Aluminum,riblipsidex/2.0,riblipsidey/2.0,riblipsidez/2.0);
+
+  //Squeak still needs to finish the rib assembly
   TGeoTranslation *trriblipsideleft = new TGeoTranslation(70.829375,-6.95959,0.0);
   TGeoTranslation *trriblipsideright = new TGeoTranslation(-70.829375,-6.95959,0.0);
   TGeoVolume *riblipfb = geom->MakeBox("riblipfb",Aluminum,130.9175/2.0,3.01498/2.0,23.02125/2.0);
@@ -392,27 +451,46 @@ void smartgeometry()() {
   TGeoVolume *wireplane = geom->MakeBox("wireplane",vacuum,200.,200.,200.);
   wireplane->SetVisibility(kFALSE);
   //Outer Bars
-  TGeoVolume *wpoutbar = geom->MakeBox("wpoutbar",Aluminum,2.0/2.0,1.4/2.0,145.6/2.0);
-  TGeoTranslation *trwpoutbarleft = new TGeoTranslation(60.16,0.0,0.0);
-  TGeoTranslation *trwpoutbarright = new TGeoTranslation(-60.16,0.0,0.0);
+  Double_t wpoutbarx=2.0;
+  Double_t wpoutbary=1.4;
+  Double_t wpoutbarz=145.6;
+  TGeoVolume *wpoutbar = geom->MakeBox("wpoutbar",Aluminum,wpoutbarx/2.0,wpoutbary/2.0,wpoutbarz/2.0);
+  //The spacing variables are measured from inside edge to inside edge
+  Double_t wpoutspacing=118.32;
+  Double_t wpmidspacing=113.52;
+  Double_t wpinspacing=103.17;
+  Double_t trwpoutbarx=wpoutspacing/2.0+wpoutbarx/2.0;
+  TGeoTranslation *trwpoutbarleft = new TGeoTranslation(trwpoutbarx,0.0,0.0);
+  TGeoTranslation *trwpoutbarright = new TGeoTranslation(-trwpoutbarx,0.0,0.0);
   wireplane->AddNode(wpoutbar,1,trwpoutbarleft);
   wireplane->AddNode(wpoutbar,1,trwpoutbarright);
   wpoutbar->SetLineColor(kBlue);
   //Middle Bars
-  TGeoVolume *wpmidbar = geom->MakeBox("wpmidbar",Aluminum,2.0/2.0,0.8/2.0,145.6/2.0);
-  TGeoTranslation *trwpmidbarleft = new TGeoTranslation(57.76,0.3,0.0);
-  TGeoTranslation *trwpmidbarright = new TGeoTranslation(-57.76,0.3,0.0);
+  Double_t wpmidbarx=2.0;
+  Double_t wpmidbary=0.8;
+  Double_t wpmidbarz=145.6;
+  TGeoVolume *wpmidbar = geom->MakeBox("wpmidbar",Aluminum,wpmidbarx/2.0,wpmidbary/2.0,wpmidbarz/2.0);
+  Double_t trwpmidbarx=wpmidspacing/2.0+wpmidbarx/2.0;
+  Double_t trwpmidbary=wpoutbary/2.0-wpmidbary/2.0;
+  TGeoTranslation *trwpmidbarleft = new TGeoTranslation(trwpmidbarx,trwpmidbary,0.0);
+  TGeoTranslation *trwpmidbarright = new TGeoTranslation(-trwpmidbarx,trwpmidbary,0.0);
   wireplane->AddNode(wpmidbar,1,trwpmidbarleft);
   wireplane->AddNode(wpmidbar,1,trwpmidbarright);
   wpmidbar->SetLineColor(kBlue);
   //Inner Bars
-  TGeoVolume *wpinbar = geom->MakeBox("wpinbar",Aluminum,2.0/2.0,0.4/2.0,145.6/2.0);
-  TGeoTranslation *trwpinbarleft = new TGeoTranslation(52.585,0.5,0.0);
-  TGeoTranslation *trwpinbarright = new TGeoTranslation(-52.585,0.5,0.0);
+  Double_t wpinbarx=2.0;
+  Double_t wpinbary=0.4;
+  Double_t wpinbarz=145.6;
+  TGeoVolume *wpinbar = geom->MakeBox("wpinbar",Aluminum,wpinbarx/2.0,wpinbary/2.0,wpinbarz/2.0);
+  Double_t trwpinbarx=wpinspacing/2.0+wpinbarx/2.0;
+  Double_t trwpinbary=wpoutbary/2.0-wpinbary/2.0;
+  TGeoTranslation *trwpinbarleft = new TGeoTranslation(trwpinbarx,trwpinbary,0.0);
+  TGeoTranslation *trwpinbarright = new TGeoTranslation(-trwpinbarx,trwpinbary,0.0);
   wireplane->AddNode(wpinbar,1,trwpinbarleft);
   wireplane->AddNode(wpinbar,1,trwpinbarright);
   wpinbar->SetLineColor(kBlue);
   //Wires
+  //Squeak is down to here
   TGeoRotation *rowire = new TGeoRotation("rocorner",90.0,90.0,0.0);
   TGeoVolume *wpoutwire = geom->MakeTube("wpoutwire",copper,0.0,0.00375,122.32/2.0);
   TGeoVolume *wpmidwire = geom->MakeTube("wpmidwire",copper,0.0,0.00375,117.52/2.0);
@@ -439,8 +517,19 @@ void smartgeometry()() {
   //Make Pad Plane (Setting to be .062 inches (.15748 cm) thick
   TGeoVolume *padplane = geom->MakeBox("padplane",vacuum,200.,200.,200.);
   padplane->SetVisibility(kFALSE);
-  TGeoVolume *padplaneplane = geom->MakeBox("padplaneplane",pcbmvd,86.4/2.0,0.254/2.0,134.4/2.0);
+  Double_t padplanepcbx=86.6;
+  Double_t padplanepcby=0.254;
+  Double_t padplanepcbz=134.4;
+  TGeoVolume *padplaneplane = geom->MakeBox("padplaneplane",pcbmvd,padplanepcbx/2.0,padplanepcby/2.0,padplanepcbz/2.0);
   padplane->AddNode(padplaneplane,1);
+  Double_t padx=86.6;
+  Double_t pady=0.01;
+  Double_t padz=134.4;
+  TGeoVolume *pad = geom->MakeBox("pad",copper,padx/2.0,pady/2.0,padz/2.0);
+  Double_t trpady=padplanepcby/2.0+pady/2.0;
+  TGeoTranslation *trpad = new TGeoTranslation(0.0,trpady,0.0);
+  padplane->AddNode(pad,1,trpad);
+
   /* TGeoVolume *pad = geom->MakeBox("pad",copper,0.8/2.0,0.01/2.0,1.2/2.0); */
   /* pad->SetLineColor(kBlue); */
   /* padplaneplane->SetLineColor(kMagenta); */
@@ -518,22 +607,22 @@ void smartgeometry()() {
   whole->AddNode(active,1);
   whole->AddNode(cage,1);
   whole->AddNode(corners,1);
-  //whole->AddNode(allstrips,1);
+  whole->AddNode(allstrips,1);
   whole->AddNode(bottomplate,1);
-  /* whole->AddNode(fwinframe,1,trfwinframe); */
+  whole->AddNode(fwinframe,1,trfwinframe);
   whole->AddNode(fwindow,1,trfwindow);
   whole->AddNode(fwincradle,1);
-  /* whole->AddNode(backwindowframe,1,trbackwindowframe); */
-  /* whole->AddNode(backwindow,1,trbackwindow); */
-  //  whole->AddNode(topframe,1);
-  //whole->AddNode(wireplane,1,trwireplane);
-  //whole->AddNode(ribmain,1,trrib);
+   whole->AddNode(backwindowframe,1,trbackwindowframe); 
+   whole->AddNode(backwindow,1,trbackwindow); 
+    whole->AddNode(topframe,1);
+  whole->AddNode(wireplane,1,trwireplane);
+  whole->AddNode(ribmain,1,trrib);
 
   //TGeoTranslation *trpadplane = new TGeoTranslation(0.0,27.5305,5.08548); //need to verify z shift
   TGeoRotation *rowhole = new TGeoRotation("rowhole",180.0,180.0,0.0);
   TGeoCombiTrans *cowhole = new TGeoCombiTrans("cowhole",0.0,-27.5305,5.08548+134.4/2.0,rowhole);
-  //top->AddNode(whole,1,cowhole);
-  top->AddNode(whole,1);
+  top->AddNode(whole,1,cowhole);
+  //top->AddNode(whole,1);
 
   //Set Visibility
   //Big Nodes
@@ -564,8 +653,9 @@ void smartgeometry()() {
 
   //top->CheckGeometry();
 
-  /* TFile *outfile = new TFile("testingsave.root","recreate"); */
-  /* top->Write(); */
-  /* outfile->Close(); */
+   TFile *outfile = new TFile("testingsave_geom.root","recreate"); 
+   //geom->Write();
+   top->Write(); 
+   outfile->Close(); 
 
 }
