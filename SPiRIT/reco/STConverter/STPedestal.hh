@@ -31,17 +31,19 @@ class STPedestal : public TObject {
     Bool_t SetPedestalData(TString pedestalData);
 
     // Look up pedestal value(0) and sigma(1) array from pedestal run data
-    void GetPedestal(Int_t *samples, Double_t *pedestal, Int_t startBuckIdx = 10, Int_t numSamples = 20);
+//    void GetPedestal(Int_t *samples, Double_t *pedestal, Int_t startBuckIdx = 10, Int_t numSamples = 20);
 
     // Calculate pedestal value(0) and sigma(1) array from first 20 buckets
-    void GetPedestal(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx, Double_t *pedestal);
+    void GetPedestal(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Double_t *pedestalSigma);
 
   private:
-    TFile *openFile;
-    TTree *pedestalTree;
+    TFile *fOpenFile;
+    TTree *fPedestalTree;
 
-    Double_t pedestal;
-    Double_t pedestalSigma;
+    Int_t fNumTbs;
+
+    Double_t fPedestal[512];
+    Double_t fPedestalSigma[512];
 
   ClassDef(STPedestal, 1);
 };

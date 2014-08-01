@@ -29,22 +29,23 @@ STPedestal::STPedestal(TString pedestalData) {
   SetPedestalData(pedestalData);
 }
 
-void STPedestal::Initialize() {
-  openFile = NULL;
-  pedestalTree = NULL;
+void STPedestal::Initialize()
+{
+  fOpenFile = NULL;
+  fPedestalTree = NULL;
 
-  pedestal = 0;
-  pedestalSigma = 0;
+  memset(fPedestal, 0, sizeof(Double_t)*512);;
+  memset(fPedestalSigma, 0, sizeof(Double_t)*512);;
 }
 
 Bool_t STPedestal::SetPedestalData(TString pedestalData) {
-  if (openFile != NULL)
-    delete openFile;
+  if (fOpenFile != NULL)
+    delete fOpenFile;
 
-  if ((openFile = new TFile(pedestalData))) {
-    pedestalTree = (TTree *) openFile -> Get("pedestal");
-    pedestalTree -> SetBranchAddress("pedestal", &pedestal);
-    pedestalTree -> SetBranchAddress("pedestalSigma", &pedestalSigma);
+  if ((fOpenFile = new TFile(pedestalData))) {
+    fPedestalTree = (TTree *) fOpenFile -> Get("pedestal");
+    fPedestalTree -> SetBranchAddress("pedestal", fPedestal);
+    fPedestalTree -> SetBranchAddress("pedestalSigma", fPedestalSigma);
 
     return 1;
   }
@@ -52,6 +53,7 @@ Bool_t STPedestal::SetPedestalData(TString pedestalData) {
   return 0;
 }
 
+/*
 void STPedestal::GetPedestal(Int_t *samples, Double_t *pedestalArray, Int_t startIdx, Int_t numPedestalSamples) {
   Initialize();
 
@@ -80,9 +82,10 @@ void STPedestal::GetPedestal(Int_t *samples, Double_t *pedestalArray, Int_t star
 
   return;
 }
+*/
 
-void STPedestal::GetPedestal(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx, Double_t *pedestalArray) {
-  if (openFile == NULL) {
+void STPedestal::GetPedestal(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Double_t *pedestalSigma) {
+  if (fOpenFile == NULL) {
     cerr << "Pedestal data file is not set!" << endl;
 
     return;
@@ -90,10 +93,10 @@ void STPedestal::GetPedestal(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t 
   // To one CoBo, connected are 4 AsAds, one of which has 4 AGETs composed of 68 channels
   Int_t pedestalIndex = coboIdx*(68*4*4) + asadIdx*(68*4) + agetIdx*68 + chIdx;
 
-  pedestalTree -> GetEntry(pedestalIndex);
-  
-  pedestalArray[0] = pedestal;
-  pedestalArray[1] = pedestalSigma;
+  fPedestalTree -> GetEntry(pedestalIndex);
+
+  memcpy(pedestal, fPedestal, sizeof(fPedestal));
+  memcpy(pedestalSigma, fPedestalSigma, sizeof(fPedestalSigma));
 
   return;
 }
