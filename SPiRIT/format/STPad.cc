@@ -33,7 +33,7 @@ STPad::~STPad()
 
 void STPad::Initialize()
 {
- fPedestalSubtracted = 0;
+ fIsPedestalSubtracted = 0;
  fMaxAdcIdx = 0;
 
  memset(fRawAdc, 0, sizeof(fRawAdc));
@@ -66,7 +66,7 @@ void STPad::SetRawADC(Int_t idx, Int_t val)
 
 void STPad::SetPedestalSubtracted(Bool_t val)
 {
-  fPedestalSubtracted = val;
+  fIsPedestalSubtracted = val;
 }
 
 void STPad::SetMaxADCIdx(Int_t val)
@@ -110,9 +110,14 @@ Int_t STPad::GetMaxADCIdx()
   return fMaxAdcIdx;
 }
 
+Bool_t STPad::IsPedestalSubtracted()
+{
+  return fIsPedestalSubtracted;
+}
+
 Double_t *STPad::GetADC()
 {
-  if (!fPedestalSubtracted) {
+  if (!fIsPedestalSubtracted) {
     std::cout << "== Pedestal subtraction is not done!" << std::endl;
 
     return 0;
@@ -123,7 +128,7 @@ Double_t *STPad::GetADC()
 
 Double_t STPad::GetADC(Int_t idx)
 {
-  if (!fPedestalSubtracted) {
+  if (!fIsPedestalSubtracted) {
     std::cout << "== Pedestal subtraction is not done!" << std::endl;
 
     return -4;

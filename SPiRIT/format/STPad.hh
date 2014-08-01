@@ -39,6 +39,8 @@ class STPad : public TObject
     Int_t GetLayer();
     Int_t GetRow();
 
+    Bool_t IsPedestalSubtracted();
+
     Int_t *GetRawADC();
     Int_t GetRawADC(Int_t idx);
     Int_t GetMaxADCIdx();
@@ -53,7 +55,7 @@ class STPad : public TObject
     Int_t fRawAdc[512];
     Int_t fMaxAdcIdx;
 
-    Bool_t fPedestalSubtracted;
+    Bool_t fIsPedestalSubtracted;
     Double_t fAdc[512];
 
   ClassDef(STPad, 1);
