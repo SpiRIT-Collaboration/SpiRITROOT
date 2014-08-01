@@ -27,6 +27,7 @@
 
 // ROOT classes
 #include "TClonesArray.h"
+#include "TString.h"
 
 /**
   * This class loads RAW data file from GET electronics and
@@ -44,9 +45,9 @@ class STDecoderTask : public FairTask {
     //! Setting the number of time buckets used when taking data
     void SetNumTbs(Int_t numTbs);
     //! Setting raw data file
-    void SetGraw(Char_t *filename);
+    void SetGraw(TString filename);
     //! Setting pedestal data file. If not set, internal pedestal calculation method will be used.
-    void SetPedestal(Char_t *filename);
+    void SetPedestal(TString filename);
 
     //! If set, decoded raw data is written in ROOT file with STRawEvent class.
     void SetPersistence(Bool_t value = kTRUE);
@@ -63,8 +64,8 @@ class STDecoderTask : public FairTask {
 
     STCore *fDecoder;             //!< STConverter pointer
 
-    Char_t *fGrawFile;            //!< Raw data file name
-    Char_t *fPedestalFile;        //!< Pedestal data file name
+    TString fGrawFile;            //!< Raw data file name
+    TString fPedestalFile;        //!< Pedestal data file name
     Int_t fNumTbs;                //!< The number of time buckets
 
     Bool_t fIsPersistence;        //!< Persistence check variable

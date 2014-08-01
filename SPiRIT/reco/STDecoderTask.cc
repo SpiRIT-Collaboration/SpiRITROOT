@@ -25,8 +25,8 @@ STDecoderTask::STDecoderTask()
 
   fDecoder = NULL;
 
-  fGrawFile = NULL;
-  fPedestalFile = NULL;
+  fGrawFile = "";
+  fPedestalFile = "";
   fNumTbs = 512;
 
   fIsPersistence = kFALSE;
@@ -52,14 +52,15 @@ STDecoderTask::SetNumTbs(Int_t numTbs)
 }
 
 void
-STDecoderTask::SetGraw(Char_t *filename)
+STDecoderTask::SetGraw(TString filename)
 {
   fGrawFile = filename;
 }
 
 void
-STDecoderTask::SetPedestal(Char_t *filename)
+STDecoderTask::SetPedestal(TString filename)
 {
+  fPedestalFile = filename;
 }
 
 InitStatus
@@ -77,7 +78,7 @@ STDecoderTask::Init()
   fDecoder = new STCore(fGrawFile, fNumTbs);
   fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
   fDecoder -> SetAGETMap((fPar -> GetFile(1)).Data());
-  if (!fPedestalFile) {
+  if (fPedestalFile.EqualTo("")) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use internal pedestal!");
 
     fDecoder -> SetInternalPedestal();
