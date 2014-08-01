@@ -56,8 +56,8 @@ class STPSASimple
 
     //!< Calculate x position in mm. This returns the center position of given pad row.
     Double_t CalculateX(Int_t row);
-    //!< Calculate y position in mm using the peak index in adc array.
-    Double_t CalculateY(Int_t *adc, Int_t peakIdx);
+    //!< Calculate y position in mm using the peak index.
+    Double_t CalculateY(Int_t peakIdx);
     //!< Calculate z position in mm. This returns the center position of given pad layer.
     Double_t CalculateZ(Int_t layer);
 

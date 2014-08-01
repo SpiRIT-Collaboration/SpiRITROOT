@@ -73,15 +73,29 @@ STPSASimple::Analyze(STRawEvent *rawEvent, STEvent *event)
     
     Double_t xPos = CalculateX(pad -> GetRow());
     Double_t zPos = CalculateZ(pad -> GetLayer());
+    Double_t yPos = 0;
+    Double_t charge = 0;
 
-    Int_t *rawAdc = pad -> GetRawADC();
-    Int_t minAdcIdx = distance(rawAdc, min_element(rawAdc + 4, rawAdc + fNumTbs - 5));
+    if (pad -> IsPedestalSubtracted()) {
+      Double_t *adc = pad -> GetADC();
+      Int_t maxAdcIdx = distance(adc, max_element(adc + 4, adc + fNumTbs - 5));
 
-    Double_t yPos = CalculateY(rawAdc, minAdcIdx);
-    Double_t charge = rawAdc[minAdcIdx];
+      yPos = CalculateY(maxAdcIdx);
+      charge = adc[maxAdcIdx];
 
-    if (fThreshold > 0 && charge > fThreshold)
-      continue;
+      if (fThreshold > 0 && charge < fThreshold)
+        continue;
+    } else {
+      Int_t *rawAdc = pad -> GetRawADC();
+      Int_t minAdcIdx = distance(rawAdc, min_element(rawAdc + 4, rawAdc + fNumTbs - 5));
+
+      yPos = CalculateY(minAdcIdx);
+      charge = rawAdc[minAdcIdx];
+
+      if (fThreshold > 0 && charge > fThreshold)
+        continue;
+    }
+
 
     STHit *hit = new STHit(hitNum, xPos, yPos, zPos, charge);
     event -> AddHit(hit);
@@ -98,7 +112,7 @@ STPSASimple::CalculateX(Int_t row)
 }
 
 Double_t
-STPSASimple::CalculateY(Int_t *adc, Int_t peakIdx)
+STPSASimple::CalculateY(Int_t peakIdx)
 {
   return -peakIdx*fTBTime*fDriftVelocity/100.;
 }
