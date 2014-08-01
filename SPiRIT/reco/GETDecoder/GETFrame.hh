@@ -57,6 +57,10 @@ class GETFrame : public TObject
     void CalcPedestal(Int_t startTb = 10, //!< Starting time bucket index
                       Int_t numTbs = 20 //!< The number of time buckets from startTb in order to calculate pedestal value
                       );
+    //! Set pedestal from calculation done outside this class.
+    void SetPedestal(Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Double_t *pedestalSigma);
+    //! Find the maximum point in signal and store it in fMaxAdcIdx[] array
+    void FindMaxIdx(Int_t agetIdx, Int_t chIdx);
     //! Return the time bucket index of the maximum ADC value.
     Int_t GetMaxADCIdx(Int_t agetIdx, Int_t chIdx);
     //! Return the pedestal-subtracted ADC values array with the number of time buckets specified in GETConfig of the channel, **chIdx**, in the AGET, **agetIdx**.
@@ -76,7 +80,8 @@ class GETFrame : public TObject
     Int_t fFrameIdx;               //!< frame index
     Int_t fRawAdc[4*68*512]; //!< An array containing raw ADC values
 
-    Bool_t fPedestalSubtracted;    //!< Boolean for checking if pedestal is subtracted
+    Bool_t fIsPedestalSubtracted;  //!< Boolean for checking if pedestal is subtracted
+    Bool_t fIsSetPedestalUsed;     //!< Boolean for checking if SetPedestal() is used or not
     Int_t fMaxAdcIdx[4*68];        //!< An array containing indices of maximum ADC value in each channel
     Double_t fAdc[4*68*512]; //!< An array containing pedestal-subtracted ADC values
     Double_t fPedestal[4*68];      //!< An array containing pedestal value of corresponding channel

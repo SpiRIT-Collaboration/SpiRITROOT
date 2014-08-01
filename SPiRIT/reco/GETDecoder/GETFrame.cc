@@ -23,7 +23,8 @@ GETFrame::GETFrame()
   fCoboIdx = 0;
   fAsadIdx = 0;
 
-  fPedestalSubtracted = 0;
+  fIsPedestalSubtracted = 0;
+  fIsSetPedestalUsed = 0;
 
   for (Int_t i = 0; i < 4*68*512; i++) {
     fRawAdc[i] = 0;
@@ -119,27 +120,53 @@ void GETFrame::CalcPedestal(Int_t startTb, Int_t numTbs)
 
       for (Int_t iTb = 0; iTb < 512; iTb++) {
         Double_t adc = (math -> GetMean()) - fRawAdc[index + iTb];
-        fAdc[index + iTb] = (adc < 0 || fRawAdc[index + iTb] == 0 ? 0 : adc);
+        fAdc[index + iTb] = (adc < 0 || fRawAdc[index + iTb] == 0 ? 0 : adc); }
 
-        // Discard the first and the last bins
-        if (iTb > 0 && iTb < 512 - 1) {
-          if (fAdc[index + iTb] > fAdc[index + fMaxAdcIdx[index/512]])
-            fMaxAdcIdx[index/512] = iTb;
-        }
-      }
+      FindMaxIdx(iAget, iCh);
     }
   }
   delete math;
 
-  fPedestalSubtracted = 1;
+  fIsPedestalSubtracted = 1;
+}
+
+void GETFrame::SetPedestal(Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Double_t *pedestalSigma) {
+  /*!
+    * Using the calculated pedestal input, subtract it from the signal.
+    * This method has different way to treat pedestal from using internal pedestal calculation.
+    * Internal case only gives one pedestal value and sigma value for a channel.
+    * This method calculates pedestal and sigma value for each time bin.
+    * Therefore, after using this method GetPedestal() methoid is disabled.
+  **/
+  Int_t index = GetIndex(agetIdx, chIdx, 0);
+
+  for (Int_t iTb = 0; iTb < 512; iTb++) {
+    Double_t adc = pedestal[iTb] - 2*pedestalSigma[iTb] - fRawAdc[index + iTb];
+    fAdc[index + iTb] = (adc < 0 || fRawAdc[index + iTb] == 0 ? 0 : adc);
+  }
+
+  FindMaxIdx(agetIdx, chIdx);
+
+  fIsPedestalSubtracted = 1;
+  fIsSetPedestalUsed = 1;
+}
+
+void GETFrame::FindMaxIdx(Int_t agetIdx, Int_t chIdx) {
+  Int_t index = GetIndex(agetIdx, chIdx, 0);
+
+  // Discard the first and the last bins
+  for (Int_t iTb = 1; iTb < 511; iTb++) {
+    if (fAdc[index + iTb] > fAdc[index + fMaxAdcIdx[index/512]])
+      fMaxAdcIdx[index/512] = iTb;
+  }
 }
 
 Int_t GETFrame::GetMaxADCIdx(Int_t agetIdx, Int_t chIdx)
 {
   //! \note This method is enabled after CalcPedestal() method.
 
-  if (!fPedestalSubtracted) {
-    std::cout << "== Run CalcPedstal(Int_t start, Int_t numBins) first!" << std::endl;
+  if (!fIsPedestalSubtracted) {
+    std::cout << "== Run CalcPedestal() or SetPedestal() first!" << std::endl;
 
     return -1;
   }
@@ -153,8 +180,8 @@ Double_t *GETFrame::GetADC(Int_t agetIdx, Int_t chIdx)
 {
   //! \note This method is enabled after CalcPedestal() method.
 
-  if (!fPedestalSubtracted) {
-    std::cout << "== Run CalcPedstal(Int_t startTb, Int_t numTbs) first!" << std::endl;
+  if (!fIsPedestalSubtracted) {
+    std::cout << "== Run CalcPedestal() or SetPedestal() first!" << std::endl;
 
     return NULL;
   }
@@ -168,8 +195,8 @@ Double_t GETFrame::GetADC(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
 {
   //! \note This method is enabled after CalcPedestal() method.
 
-  if (!fPedestalSubtracted) {
-    std::cout << "== Run CalcPedstal(Int_t start, Int_t numBins) first!" << std::endl;
+  if (!fIsPedestalSubtracted) {
+    std::cout << "== Run CalcPedestal() or SetPedestal() first!" << std::endl;
 
     return -1;
   }
@@ -181,8 +208,12 @@ Double_t GETFrame::GetADC(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
 
 Double_t GETFrame::GetPedestal(Int_t agetIdx, Int_t chIdx)
 {
-  if (!fPedestalSubtracted) {
-    std::cout << "== Run CalcPedstal(Int_t start, Int_t numBins) first!" << std::endl;
+  if (!fIsPedestalSubtracted) {
+    std::cout << "== Run CalcPedstal()  first!" << std::endl;
+
+    return -1;
+  } else if (fIsSetPedestalUsed) {
+    std::cout << "== GetPedestal() is disabled by SetPedestal()!" << std::endl;
 
     return -1;
   }
