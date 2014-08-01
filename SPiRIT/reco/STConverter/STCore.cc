@@ -176,7 +176,17 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           pad -> SetMaxADCIdx(frame -> GetMaxADCIdx(iAget, iCh));
           pad -> SetPedestalSubtracted(1);
         } else if (fIsPedestalData) {
-          // Code using pedestal data file will be set here.
+          Double_t pedestal[512];
+          Double_t pedestalSigma[512];
+
+          fPedestalPtr -> GetPedestal(coboID, asadID, iAget, iCh, pedestal, pedestalSigma);
+          frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
+          Double_t *adc = frame -> GetADC(iAget, iCh);
+          for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++)
+            pad -> SetADC(iTb, adc[iTb]);
+
+          pad -> SetMaxADCIdx(frame -> GetMaxADCIdx(iAget, iCh));
+          pad -> SetPedestalSubtracted(1);
         }
 
         fRawEventPtr -> SetPad(pad);
