@@ -124,9 +124,15 @@ STHitClusteringTask::Exec(Option_t *opt)
   eventHC -> SetIsClustered(kTRUE);
 }
 
+
 void
 STHitClusteringTask::FindCluster(vector<STHit> &slicedSpace, STEvent *event)
 {
+  /**
+    * In the passed sliced space, **slicedSpace**, find hit clusters and store it and clustered hits into passed STEvent object, **event**.
+    * When adding hits to STHitCluster iobject, weighted average calculation is done to determine the cluster position.
+   **/
+
   if (fVerbose == 1)
     fLogger -> Info(MESSAGE_ORIGIN, "Start cluster finding!");
 
@@ -159,6 +165,12 @@ STHitClusteringTask::FindCluster(vector<STHit> &slicedSpace, STEvent *event)
 STHit *
 STHitClusteringTask::FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHit *centerHit, vector<Int_t> &clusteredHits)
 {
+  /**
+    * In the passed sliced space, **slicedSpace**, find the hit having the largest charge in surrounding 8 pads with center, **centerHit**.
+    * If there is larger charged hit in neighbor, move the center to it and start over.
+    * Finally, found hits are stored in **clusteredHits**.
+   **/
+
   if (fVerbose > 0)
     fLogger -> Info(MESSAGE_ORIGIN, Form("Start to find the largest hit and close hits with center Hit:%d in slicedSpace:%d", centerHit -> GetHitID(), slicedSpace.size()));
 

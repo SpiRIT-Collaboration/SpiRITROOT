@@ -45,27 +45,27 @@ class STHitClusteringTask : public FairTask
     virtual void Exec(Option_t *opt);
 
   private:
-    FairLogger *fLogger;
+    FairLogger *fLogger;           //!< FairLogger singleton
 
-    Int_t fVerbose;
+    Int_t fVerbose;                //!< Verbosity level
 
-    STDigiPar *fPar;
+    STDigiPar *fPar;               //!< STDigiPar singleton
 
-    Bool_t fIsPersistence;
+    Bool_t fIsPersistence;         //!< Persistancy setter
 
-    Double_t fDriftLength;
-    Int_t fYDivider;
+    Double_t fDriftLength;         //!< DriftLength parameter defined in ST.parameters.par [cm/ns]
+    Int_t fYDivider;               //!< Space divider along y direction
 
-    TClonesArray *fEventHArray;
-    TClonesArray *fEventHCArray;
+    TClonesArray *fEventHArray;    //!< Array that is containing events having only hits
+    TClonesArray *fEventHCArray;   //!< Array that will contain events having hits and hit clusters
 
     void FindCluster(vector<STHit> &slicedSpace, STEvent *event);
     STHit *FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHit *centerHit, vector<Int_t> &clusteredHits);
 
-
   ClassDef(STHitClusteringTask, 1);
 };
 
+//! Class only for providing the sort criterion to vector used in STHitClusteringTask class
 class STHitSortY
 {
   public:
