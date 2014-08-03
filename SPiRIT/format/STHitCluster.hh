@@ -42,11 +42,11 @@ class STHitCluster : public TObject
     void AddHit(STHit *hit);
 
   private:
-    Int_t fClusterID;
-    TVector3 fPosition;
-    TVector3 fPosSigma;
-    TMatrixD fCovMatrix;
-    Double_t fCharge;
+    Int_t fClusterID;     //!< Cluster ID
+    TVector3 fPosition;   //!< Cluster position
+    TVector3 fPosSigma;   //!< Cluster position uncertainty
+    TMatrixD fCovMatrix;  //!< Cluster covariance matrix
+    Double_t fCharge;     //!< Cluster Charge
 
     vector<Int_t> fHitIDArray;
 

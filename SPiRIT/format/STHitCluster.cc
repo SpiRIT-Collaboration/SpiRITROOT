@@ -73,12 +73,23 @@ void STHitCluster::AddHit(STHit *hit)
 
 void STHitCluster::CalculatePosition(TVector3 hitPos, Double_t charge)
 {
+  /**
+    * Calculate weighted mean for cluster position. (Weight = charge) <br>
+    * Weighted mean: \f$ \mu_{n+1} = \mu_n + \displaystyle\frac{a_{n+1} - \mu_n}{W_n+w_{n+1}},\quad(n\geq0). \f$
+   **/
+
   for (Int_t iPos = 0; iPos < 3; iPos++)
     fPosition[iPos] += charge*(hitPos[iPos] - fPosition[iPos])/(fCharge + charge);
 }
 
 void STHitCluster::CalculateCovMatrix(TVector3 hitPos, Double_t charge)
 {
+  /**
+    * Calculate weighted covariance matrix for each variable. (Weight = charge) <br>
+    * Cluster position uncertainty is also calculated here by taking the square root of diagonal components. <br>
+    * Weighted covariance matrix: \f$\sigma(a,b)_{n+1}=\displaystyle\frac{W_n}{W_n+w_{n+1}}\sigma(a,b)_{n}+\displaystyle\frac{(\mu_{n+1}-a_{n+1})(\nu_{n+1}-b_{n+1})}{W_n},\quad(n\geq1).\f$
+   **/
+
   for (Int_t iFirst = 0; iFirst < 3; iFirst++) {
     for (Int_t iSecond = 0; iSecond < iFirst + 1; iSecond++) {
       fCovMatrix(iFirst, iSecond) = fCharge*fCovMatrix(iFirst, iSecond)/(fCharge + charge);
