@@ -85,7 +85,12 @@ STDecoderTask::Init()
   } else {
     fLogger -> Info(MESSAGE_ORIGIN, "Pedestal data is set!");
 
-    fDecoder -> SetPedestalData(fPedestalFile);
+    Bool_t isSetPedestalData = fDecoder -> SetPedestalData(fPedestalFile);
+    if (!isSetPedestalData) {
+      fLogger -> Error(MESSAGE_ORIGIN, "Cannot find pedestal data file!");
+      
+      return kERROR;
+    }
   }
 
   return kSUCCESS;
