@@ -90,7 +90,7 @@ void STCore::SetInternalPedestal(Int_t startTb, Int_t numTbs)
   fNumTbs = numTbs;
 }
 
-void STCore::SetPedestalData(TString filename)
+Bool_t STCore::SetPedestalData(TString filename)
 {
   fIsPedestalData = fPedestalPtr -> SetPedestalData(filename);
 
@@ -98,6 +98,8 @@ void STCore::SetPedestalData(TString filename)
     fIsInternalPedestal = 0;
   else
     std::cout << "== Pedestal data is not set! Check it exists!" << std::endl;
+
+  return fIsPedestalData;
 }
 
 void STCore::SetUAMap(TString filename)

@@ -33,7 +33,7 @@ class STCore : public TObject {
     void AddGraw(TString filename);
     void SetNumTbs(Int_t value);
     void SetInternalPedestal(Int_t startTb = 10, Int_t numTbs = 20);
-    void SetPedestalData(TString filename);
+    Bool_t SetPedestalData(TString filename);
 
     void SetUAMap(TString filename);
     void SetAGETMap(TString filename);
