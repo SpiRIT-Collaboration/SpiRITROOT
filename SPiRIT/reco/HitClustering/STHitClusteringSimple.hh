@@ -32,6 +32,8 @@ class STHitClusteringSimple
   private:
     FairLogger *fLogger;
 
+    Int_t fYSliceDivider;
+
   ClassDef(STHitClusteringSimple, 1)
 };
 

@@ -25,7 +25,7 @@
 
 using std::vector;
 
-ClassImp(STHitClusteringTask)
+ClassImp(STHitClusteringTask);
 
 STHitClusteringTask::STHitClusteringTask()
 :FairTask("SpiRIT Hit Clusterint Task")
