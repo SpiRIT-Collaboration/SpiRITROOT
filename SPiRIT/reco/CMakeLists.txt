@@ -39,8 +39,6 @@ STConverter/STMap.cc
 
 PulseShapeAnalyzer/STPSASimple.cc
 
-SystemManipulator/STSystemManipulator.cc
-
 #HitClusterizer/STHitClusteringSimple.cc
 
 #RiemannTracking/STRiemannHit.cc
