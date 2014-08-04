@@ -13,11 +13,17 @@
 // SpiRITROOT classes
 #include "STSystemManipulator.hh"
 
-ClassImp(STSystemManipulator)
+ClassImp(STSystemManipulator);
 
 STSystemManipulator::STSystemManipulator()
 {
-  fTrans = TVector3(0., 248., 0.);
+  /**
+    * Default **fTrans** is moving the hits to our origin from collision point. <br>
+    * Default **fAxis** and **fAngle** is rotating the system so that the helix draws circle on xy plane <br>
+    * and advances along z direction. That is, parameterize the helix with \f$[ \rho\cos(\phi+\phi_0), \rho\sin(\phi-\phi_0), m(\phi-\phi_0) ] \f$
+   **/
+
+  fTrans = TVector3(0., 213.3, 35.2);
   fAxis = 0;
   fAngle = 90./180.*TMath::Pi();
 }
@@ -35,7 +41,7 @@ STSystemManipulator::Change(TVector3 &vector)
 void
 STSystemManipulator::Restore(TVector3 &vector)
 {
-  Rotate(vector, -fAxis, fAngle);
+  Rotate(vector, fAxis, -fAngle);
   Translate(vector, -fTrans);
 }
 
