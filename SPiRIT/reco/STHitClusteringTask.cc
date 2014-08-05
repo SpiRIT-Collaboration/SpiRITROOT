@@ -124,7 +124,6 @@ STHitClusteringTask::Exec(Option_t *opt)
   eventHC -> SetIsClustered(kTRUE);
 }
 
-
 void
 STHitClusteringTask::FindCluster(vector<STHit> &slicedSpace, STEvent *event)
 {
@@ -139,7 +138,7 @@ STHitClusteringTask::FindCluster(vector<STHit> &slicedSpace, STEvent *event)
   for (Int_t iHit = 0; iHit < slicedSpace.size(); iHit++) {
     STHit *centerHit = &(slicedSpace.at(iHit));
 
-    if (centerHit -> GetIsClustered())
+    if (centerHit -> IsClustered())
       continue;
 
     vector<Int_t> clusteredHits;
@@ -196,7 +195,7 @@ STHitClusteringTask::FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHi
     if (fVerbose > 1)
       fLogger -> Info(MESSAGE_ORIGIN, Form("HitID: %d", hit -> GetHitID()));
 
-    if (hit -> GetIsClustered())
+    if (hit -> IsClustered())
       continue;
 
     Double_t xPos = (hit -> GetPosition()).X();
