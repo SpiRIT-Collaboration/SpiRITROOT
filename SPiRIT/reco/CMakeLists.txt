@@ -16,6 +16,7 @@ ${CMAKE_SOURCE_DIR}/SPiRIT/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/STConverter
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/PulseShapeAnalyzer
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/RiemannTracking
+${CMAKE_SOURCE_DIR}/SPiRIT/reco/SystemManipulator
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -40,6 +41,8 @@ STConverter/STMap.cc
 PulseShapeAnalyzer/STPSASimple.cc
 
 #HitClusterizer/STHitClusteringSimple.cc
+
+SystemManipulator/STSystemManipulator.cc
 
 #RiemannTracking/STRiemannHit.cc
 #RiemannTracking/STRiemannTrack.cc

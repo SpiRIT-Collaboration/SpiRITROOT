@@ -31,6 +31,11 @@ class STHitCluster : public TObject
     void SetClusterID(Int_t clusterID);
     Int_t GetClusterID();
 
+    void SetPosition(TVector3 vector);
+    void SetPosSigma(TVector3 vector);
+    void SetCovMatrix(TMatrixD matrix);
+    void SetCharge(Double_t charge);
+
     TVector3 GetPosition();
     TVector3 GetPosSigma();
     TMatrixD GetCovMatrix();

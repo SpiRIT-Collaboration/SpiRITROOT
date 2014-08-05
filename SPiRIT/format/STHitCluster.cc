@@ -50,6 +50,11 @@ STHitCluster::~STHitCluster()
 void STHitCluster::SetClusterID(Int_t clusterID) { fClusterID = clusterID; }
 Int_t STHitCluster::GetClusterID()               { return fClusterID; }
 
+void STHitCluster::SetPosition(TVector3 vector)  { fPosition = vector; }
+void STHitCluster::SetPosSigma(TVector3 vector)  { fPosSigma = vector; } 
+void STHitCluster::SetCovMatrix(TMatrixD matrix) { fCovMatrix = matrix; } 
+void STHitCluster::SetCharge(Double_t charge)    { fCharge = charge; } 
+
 TVector3 STHitCluster::GetPosition()             { return fPosition; }
 TVector3 STHitCluster::GetPosSigma()             { return fPosSigma; }
 TMatrixD STHitCluster::GetCovMatrix()            { return fCovMatrix; }

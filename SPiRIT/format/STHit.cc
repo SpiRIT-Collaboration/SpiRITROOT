@@ -37,6 +37,15 @@ STHit::STHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge)
   fClusterID = -1;
 }
 
+STHit::STHit(STHit *hit)
+{
+  fTrackID = hit -> GetTrackID();
+  SetHit(hit -> GetHitID(), hit -> GetPosition(), hit -> GetCharge());
+
+  fIsClustered = hit -> IsClustered();
+  fClusterID = hit -> GetClusterID();
+}
+
 STHit::~STHit()
 {}
 
@@ -59,5 +68,5 @@ Int_t STHit::GetHitID()                                                 { return
 TVector3 STHit::GetPosition()                                           { return fPosition; }
 TVector3 STHit::GetPosSigma()                                           { return fPositionSigma; }
 Double_t STHit::GetCharge()                                             { return fCharge; }
-Bool_t STHit::GetIsClustered()                                          { return fIsClustered; }
+Bool_t STHit::IsClustered()                                             { return fIsClustered; }
 Int_t STHit::GetClusterID()                                             { return (fIsClustered ? fClusterID : -1); }

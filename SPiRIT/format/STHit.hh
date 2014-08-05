@@ -23,6 +23,7 @@
 class STHit : public TObject {
   public:
     STHit();
+    STHit(STHit *hit);
     STHit(Int_t hitID, TVector3 vec, Double_t charge);
     STHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge);
     ~STHit();
@@ -58,7 +59,7 @@ class STHit : public TObject {
     //!< Charge getter
     Double_t GetCharge();
     //!< Clustered flag getter
-    Bool_t GetIsClustered();
+    Bool_t IsClustered();
     //!< Cluster ID getter
     Int_t GetClusterID();
 
