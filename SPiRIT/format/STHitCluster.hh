@@ -8,8 +8,8 @@
 //  2014. 07. 15                                    
 // =================================================
 
-#ifndef STCLUSTER_H
-#define STCLUSTER_H
+#ifndef STHITCLUSTER_H
+#define STHITCLUSTER_H
 
 #include "STHit.hh"
 
@@ -47,18 +47,18 @@ class STHitCluster : public TObject
     void AddHit(STHit *hit);
 
   private:
-    Int_t fClusterID;     //!< Cluster ID
-    TVector3 fPosition;   //!< Cluster position
-    TVector3 fPosSigma;   //!< Cluster position uncertainty
-    TMatrixD fCovMatrix;  //!< Cluster covariance matrix
-    Double_t fCharge;     //!< Cluster Charge
+    Int_t fClusterID;     /// Cluster ID
+    TVector3 fPosition;   /// Cluster position
+    TVector3 fPosSigma;   /// Cluster position uncertainty
+    TMatrixD fCovMatrix;  /// Cluster covariance matrix
+    Double_t fCharge;     /// Cluster Charge
 
     vector<Int_t> fHitIDArray;
 
     void CalculatePosition(TVector3 hitPos, Double_t charge);
     void CalculateCovMatrix(TVector3 hitPos, Double_t charge);
 
-  ClassDef(STHitCluster, 1)
+  ClassDef(STHitCluster, 1);
 };
 
 #endif

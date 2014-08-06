@@ -12,7 +12,7 @@
 
 #include "TMath.h"
 
-ClassImp(STHitCluster)
+ClassImp(STHitCluster);
 
 STHitCluster::STHitCluster()
 {
