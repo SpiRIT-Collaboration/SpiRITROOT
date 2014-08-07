@@ -91,7 +91,7 @@ STHitClusteringTask::Exec(Option_t *opt)
   fEventHCArray -> Delete();
 
   STEvent *eventH = (STEvent *) fEventHArray -> At(0);
-  STEvent *eventHC = new ((*fEventHCArray)[0]) STEvent();
+  STEvent *eventHC = (STEvent *) new ((*fEventHCArray)[0]) STEvent();
 
   Double_t sliceY = fDriftLength/fYDivider;
 
@@ -154,7 +154,8 @@ STHitClusteringTask::FindCluster(vector<STHit> &slicedSpace, STEvent *event)
       cluster -> AddHit(hit);
       event -> AddHit(hit);
     }
-
+    
+    cluster -> SetClusterID(event -> GetNumClusters());
     event -> AddCluster(cluster);
     delete cluster;
     iHit = 0;
