@@ -36,7 +36,7 @@ class STRiemannTrack : public TObject
   public:
     STRiemannTrack();
     STRiemannTrack(Double_t scale);
-    ~STRiemannTrack(); // does NOT delete Riemann Hits
+    ~STRiemannTrack() {} // does NOT delete Riemann Hits
 
     void  SetVerbose(Bool_t value = kTRUE);
     void  SetSort(Bool_t value = kTRUE);
