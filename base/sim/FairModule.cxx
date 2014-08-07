@@ -428,12 +428,29 @@ void FairModule::AssignMediumAtImport(TGeoVolume* v)
       /**The Material is not defined in the TGeoManager, we try to create one if we have enough information about it*/
       FairGeoMedium* FairMedium=Media->getMedium(mat1->GetName());
       if (!FairMedium) {
-        LOG(FATAL)<<"Material "<< mat1->GetName() << "is not defined in ASCII file nor in Root file." << FairLogger::endl;
-        //     FairMedium=new FairGeoMedium(mat1->GetName());
-        //      Media->addMedium(FairMedium);
+	//MDYoungs Adding some stuff here
+	FairGeoMedium* medium=new FairGeoMedium(mat1->GetName());
+	medium->setNComponents(mat1->GetNelements());
+	Double_t compa, compz, compw;
+	for (Int_t ncomp=0; ncomp<mat1->GetNelements(); ncomp++) {
+	  mat1->GetElementProp(compa,compz,compw,ncomp);
+	  medium->setComponent(ncomp,compa,compz,compw);
+	}
+	medium->setDensity(mat1->GetDensity());
+	medium->calcRadiationLength();
+	medium->setMediumPar(1,1,30.,.001,-1,-1,-1,-1);
+	medium->setNpckov(0);
+	medium->print();
+	Media->addMedium(medium);
+        //LOG(FATAL)<<"Material "<< mat1->GetName() << "is not defined in ASCII file nor in Root file." << FairLogger::endl;
+	//FairMedium=new FairGeoMedium(mat1->GetName());
+	//Media->addMedium(FairMedium);
       }
-
-      Int_t nmed=geobuild->createMedium(FairMedium);
+      FairGeoMedium* FairMedium2=Media->getMedium(mat1->GetName());
+      Int_t nmed;
+      if (!FairMedium) {nmed=geobuild->createMedium(FairMedium2);}
+      else {nmed=geobuild->createMedium(FairMedium2);}
+      //MDYoungs Done adding/modifying
       v->SetMedium(gGeoManager->GetMedium(nmed));
       gGeoManager->SetAllIndex();
     } else {

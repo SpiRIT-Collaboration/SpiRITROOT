@@ -150,7 +150,7 @@ void run_mc(const Int_t nEvents = 10)
     run->SetWriteRunInfoFile(kFALSE);  
     // -----   Create media   -------------------------------------------------
     //  run->SetMaterials("media.geo");       // Materials
-    run->SetMaterials("media_pnd.geo");       // Materials
+    //run->SetMaterials("media_pnd.geo");       // Materials
     // ------------------------------------------------------------------------
     
     // -----   Create geometry   ----------------------------------------------
@@ -176,7 +176,7 @@ void run_mc(const Int_t nEvents = 10)
     FairConstField *fMagField = new FairConstField();
     fMagField -> SetField(0., 5., 0.); // in kG
     // SetFieldRegion(xmin, xmax, ymin, ymax, zmin, zmax)
-    fMagField -> SetFieldRegion(-50, 50, -50, 50, -50, 400);
+    fMagField -> SetFieldRegion(-147.74/2, 147.74/2, -53.93/2, 53.93/2, 0, 200.98);
     run -> SetField(fMagField);
     // ------------------------------------------------------------------------
     
