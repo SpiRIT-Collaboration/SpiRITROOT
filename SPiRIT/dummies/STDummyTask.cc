@@ -11,11 +11,11 @@
 
 ClassImp(STDummyTask)
 
-STDummyTask()::STDummyTask()
+STDummyTask::STDummyTask()
 {
 }
 
-STDummyTask()::~STDummyTask()
+STDummyTask::~STDummyTask()
 {
 }
 
@@ -25,7 +25,7 @@ STDummyTask::Init()
 }
 
 void
-STDecoderTask::SetParContainers()
+STDummyTask::SetParContainers()
 {
 }
 
