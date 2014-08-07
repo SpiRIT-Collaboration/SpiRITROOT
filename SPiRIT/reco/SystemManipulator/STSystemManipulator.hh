@@ -19,7 +19,7 @@
 // ROOT classes
 #include "Rtypes.h"
 #include "TVector3.h"
-#include "TMatrix.h"
+#include "TMatrixD.h"
 
 class STSystemManipulator {
   public:
