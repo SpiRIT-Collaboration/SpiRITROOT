@@ -15,8 +15,8 @@ ${CMAKE_SOURCE_DIR}/SPiRIT/reco
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/STConverter
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/PulseShapeAnalyzer
-${CMAKE_SOURCE_DIR}/SPiRIT/reco/RiemannTracking
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/SystemManipulator
+${CMAKE_SOURCE_DIR}/SPiRIT/reco/RiemannTracking
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -44,13 +44,14 @@ PulseShapeAnalyzer/STPSASimple.cc
 
 SystemManipulator/STSystemManipulator.cc
 
-#RiemannTracking/STRiemannHit.cc
-#RiemannTracking/STRiemannTrack.cc
+RiemannTracking/STRiemannHit.cc
+RiemannTracking/STRiemannTrack.cc
 
 STDecoderTask.cc
 STPSATask.cc
 STHitClusteringTask.cc
 #STRiemannTrackingTask.cc
+STUnitTestTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

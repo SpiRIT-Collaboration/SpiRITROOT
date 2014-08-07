@@ -14,11 +14,17 @@
 #pragma link C++ class STMap+;
 
 #pragma link C++ class STDecoderTask+;
+
 #pragma link C++ class STPSATask+;
+#pragma link C++ class STPSASimple+;
+
+#pragma link C++ class STHitClusteringTask+;
 
 #pragma link C++ class STSystemManipulator+;
 
-#pragma link C++ class STPSASimple+;
-#pragma link C++ class STHitClusteringTask+;
+#pragma link C++ class STRiemannHit+;
+#pragma link C++ class STRiemannTrack+;
+
+#pragma link C++ class STUnitTestTask+;
 
 #endif
