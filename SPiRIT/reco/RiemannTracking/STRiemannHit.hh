@@ -6,9 +6,6 @@
 // Environment:
 //      Software developed for the SpiRIT-TPC at RIBF-RIKEN
 //
-// Original Author:
-//      Sebastian Neubert    TUM
-//
 // Author List:
 //      Genie Jhang          Korea University
 //-----------------------------------------------------------------
@@ -16,10 +13,8 @@
 #ifndef STRIEMANNHIT_HH
 #define STRIEMANNHIT_HH
 
-// SpiRITROOT
-class STRiemannTrack;
-// class STCluster;
-class STEvent;
+// SpiRITROOT classes
+#include "STHitCluster.hh"
 
 // ROOT classes
 #include "TObject.h"
@@ -34,13 +29,11 @@ class STRiemannHit : public TObject
     STRiemannHit();
     STRiemannHit(Double_t riemannScale);
     STRiemannHit(Double_t r, Double_t phi, Double_t riemannScale = 24.6);
-//    STRiemannHit(STCluster *cluster, Double_t riemannScale = 24.6);
-    STRiemannHit(STEvent *event, Double_t riemannScale = 24.6);
+    STRiemannHit(STHitCluster *cluster, Double_t riemannScale = 24.6);
     ~STRiemannHit();
 
     const TVector3 &GetX() const;
-//    STCluster *GetCluster() const;
-    STEvent *GetEvent() const;
+    STHitCluster *GetCluster() const;
     Double_t GetS() const;
     Double_t GetAngleOnHelix() const;
     Double_t GetRiemannScale() const;
@@ -52,16 +45,15 @@ class STRiemannHit : public TObject
   private:
     void InitVariables(Double_t r, Double_t phi, Double_t riemannScale = 24.6);
 
-    TVector3 fX;            //!< Position on Riemann sphere in cartesian coordinates
-//    STCluster *fCluster;    //!< STCluster pointer, no ownership over this pointer!
-    STEvent *fEvent;        //!< STEvent pointer
-    Double_t fS;            //!< pathlength along track
-    Double_t fAngleOnHelix; //!< angle on helix
-    Double_t fRiemannScale; //!< scaling in xy plane: 8.7 for prototype, 24.6 for panda. What about our case?
+    TVector3 fX;            /// Position on Riemann sphere in cartesian coordinates
+    STHitCluster *fCluster; /// STHitCluster pointer, no ownership over this pointer!
+    Double_t fS;            /// Pathlength along track
+    Double_t fAngleOnHelix; /// Angle on helix
+    Double_t fRiemannScale; /// Scaling in xy plane: 8.7 for prototype, 24.6 for panda. What about our case?
 
     FairLogger *fLogger;
 
-  ClassDef(STRiemannHit, 1)
+  ClassDef(STRiemannHit, 1);
 };
 
 #endif

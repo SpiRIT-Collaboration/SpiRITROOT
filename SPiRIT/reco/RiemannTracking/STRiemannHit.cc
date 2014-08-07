@@ -23,7 +23,7 @@
 // ROOT classes
 #include "TMath.h"
 
-ClassImp(STRiemannHit)
+ClassImp(STRiemannHit);
 
 STRiemannHit::STRiemannHit()
 {
@@ -39,27 +39,18 @@ STRiemannHit::STRiemannHit(Double_t r, Double_t phi, Double_t riemannScale)
 {
   InitVariables(r, phi, riemannScale);
 
-//  fCluster = NULL;
-  fEvent = NULL;
   fRiemannScale = riemannScale;
 }
 
-STRiemannHit::STRiemannHit(STevent* event, Double_t riemannScale)
+STRiemannHit::STRiemannHit(STHitCluster *cluster, Double_t riemannScale)
 {
-  InitVariables(0, 0, riemannScale);
-
-//  fCluster = cluster;
-  fEvent = event;
-  fRiemannScale = riemannScale;
-
-/*
-  TVector2 proj(cluster -> pos().X(), cluster -> pos().Y());
-  Double_t r = proj.Mod()/fRiemannScale;
+  TVector2 proj(cluster -> GetPosition().X(), cluster -> GetPosition().Y());
+  Double_t r = proj.Mod()/riemannScale;
   Double_t phi = proj.Phi();
   
-
   InitVariables(r, phi, riemannScale);
-  */
+
+  fCluster = cluster;
 }
 
 
@@ -69,9 +60,7 @@ STRiemannHit::~STRiemannHit()
 
 void STRiemannHit::InitVariables(Double_t r, Double_t phi, Double_t riemannScale)
 {
-  fS = 0;
-  fAngleOnHelix = 0;
-  fRiemannScale = riemannScale;
+  fCluster = NULL;
 
   Double_t r2 = r*r;
   Double_t d = 1 + r2;
@@ -80,13 +69,16 @@ void STRiemannHit::InitVariables(Double_t r, Double_t phi, Double_t riemannScale
   fX.SetY(r*sin(phi)/d);
   fX.SetZ(r2/d);
 
+  fS = 0;
+  fAngleOnHelix = 0;
+  fRiemannScale = riemannScale;
+
   fLogger = FairLogger::GetLogger();
 }
 
 // Simple getter and setter methods -----------------------------------------------------------
 const TVector3 &STRiemannHit::GetX()             const        { return fX; }
-//     STCluster *STRiemannHit::GetCluster()       const        { return fCluster; }
-       STEvent *STRiemannHit::GetEvent()         const        { return fEvent; }
+  STHitCluster *STRiemannHit::GetCluster()       const        { return fCluster; }
       Double_t  STRiemannHit::GetS()             const        { return fS; }
       Double_t  STRiemannHit::GetAngleOnHelix()  const        { return fAngleOnHelix; }
       Double_t  STRiemannHit::GetRiemannScale()  const        { return fRiemannScale; }
@@ -98,14 +90,11 @@ const TVector3 &STRiemannHit::GetX()             const        { return fX; }
 Double_t
 STRiemannHit::GetZ() const
 {
-  /*
   if(fCluster == NULL){
     fLogger -> Warning(MESSAGE_ORIGIN, "No cluster available!");
 
     return 0;
   }
-  */
 
-  return 0; //fCluster -> pos().Z(); <<-- to be modified
+  return fCluster -> GetPosition().Z();
 }
-
