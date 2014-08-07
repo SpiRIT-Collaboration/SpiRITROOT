@@ -6,5 +6,6 @@
 
 #pragma link C++ class STEventDraw+;
 #pragma link C++ class STHitDraw+;
+#pragma link C++ class STHitClusterDraw+;
 
 #endif

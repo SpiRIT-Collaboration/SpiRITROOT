@@ -13,6 +13,7 @@
 
 // SpiRITROOT classes
 #include "STHit.hh"
+#include "STHitCluster.hh"
 
 // FairRoot classes
 #include "FairTask.h"
@@ -54,7 +55,9 @@ class STEventDraw : public FairTask
 
   protected:
     virtual TVector3 GetVector(STHit &hit) = 0;
+    virtual TVector3 GetVector(STHitCluster &cluster) = 0;
     TObject *GetValue(STHit &hit, Int_t iHit);
+    TObject *GetValue(STHitCluster &cluster, Int_t iCluster);
 
     FairLogger *fLogger;              //!<
     Int_t fVerbose;                   //!<  Verbosity level

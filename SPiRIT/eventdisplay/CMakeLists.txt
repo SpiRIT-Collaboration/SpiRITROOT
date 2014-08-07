@@ -24,6 +24,7 @@ set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
 STEventDraw.cc
 STHitDraw.cc
+STHitClusterDraw.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

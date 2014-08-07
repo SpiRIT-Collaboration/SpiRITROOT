@@ -1,17 +1,17 @@
 // =================================================
-//  STHit Class
+//  STHitCluster Class
 //
 //  Description:
-//    Drawing STHit data
+//    Drawing STHitCluster data
 //
 //  Original author: stockman (Apr 16, 2009)
 //
 //  Genie Jhang ( geniejhang@majimak.com )
-//  2014. 07. 04
+//  2014. 08. 07
 // ================================================= 
 
-#ifndef STHITDRAW_H
-#define STHITDRAW_H
+#ifndef STHITCLUSTERDRAW_H
+#define STHITCLUSTERDRAW_H
 
 // SpiRITROOT classes
 #include "STEventDraw.hh"
@@ -22,18 +22,18 @@
 #include "Rtypes.h"
 #include "TVector3.h"
 
-class STHitDraw: public STEventDraw
+class STHitClusterDraw: public STEventDraw
 {
   public:
-    STHitDraw();
+    STHitClusterDraw();
 
-    STHitDraw(const Char_t *name, Color_t color, Style_t style, Int_t verbose = 1);
+    STHitClusterDraw(const Char_t *name, Color_t color, Style_t style, Int_t verbose = 1);
 
   protected:
     TVector3 GetVector(STHit &hit);
     TVector3 GetVector(STHitCluster &cluster);
 
-  ClassDef(STHitDraw, 1);
+  ClassDef(STHitClusterDraw, 1);
 };
 
 #endif

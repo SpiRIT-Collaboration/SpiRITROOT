@@ -12,8 +12,9 @@
 
 // SpiRITROOT classes
 #include "STHitDraw.hh"
+#include "STHitCluster.hh"
 
-ClassImp(STHitDraw)
+ClassImp(STHitDraw);
 
 STHitDraw::STHitDraw()
 {
@@ -27,4 +28,9 @@ STHitDraw::STHitDraw(const Char_t *name, Color_t color, Style_t style, Int_t ver
 TVector3 STHitDraw::GetVector(STHit &hit)
 {
   return hit.GetPosition();
+}
+
+TVector3 STHitDraw::GetVector(STHitCluster &cluster)
+{
+  return TVector3(0., 0., 0.);
 }

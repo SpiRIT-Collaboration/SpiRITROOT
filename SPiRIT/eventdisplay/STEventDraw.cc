@@ -175,22 +175,37 @@ void STEventDraw::Exec(Option_t* option)
     Reset();
 
     STEvent *aEvent = (STEvent *) fEventArray -> At(0);
-    Int_t numPoints = aEvent -> GetNumHits();
+    Int_t numPoints = 0;
+    if (TString(GetName()).EqualTo("STEventH"))
+      numPoints = aEvent -> GetNumHits();
+    else if (TString(GetName()).EqualTo("STEventHC"))
+      numPoints = aEvent -> GetNumClusters();
+
     TEvePointSet* pointSet = new TEvePointSet(GetName(), numPoints, TEvePointSelectorConsumer::kTVT_XYZ);
     pointSet -> SetOwnIds(kTRUE);
     pointSet -> SetMarkerColor(fColor);
     pointSet -> SetMarkerSize(1.5);
+
     pointSet -> SetMarkerStyle(fStyle);
 
-    std::vector<STHit> *pointArray = aEvent -> GetHitArray();
     for (Int_t iPoint = 0; iPoint < numPoints; iPoint++) {
-      STHit aPoint = pointArray -> at(iPoint);
-      TVector3 vec(GetVector(aPoint));
-      pointSet -> SetNextPoint(vec.X()/10., vec.Y()/10., vec.Z()/10.); // mm -> cm
-      pointSet -> SetPointId(GetValue(aPoint, iPoint));
+      if (TString(GetName()).EqualTo("STEventH")) {
+        STHit aPoint = aEvent -> GetHitArray() -> at(iPoint);
+        TVector3 vec(GetVector(aPoint));
+        pointSet -> SetNextPoint(vec.X()/10., vec.Y()/10., vec.Z()/10.); // mm -> cm
+        pointSet -> SetPointId(GetValue(aPoint, iPoint));
 
-      if (fIs2DPlot)
-        fPadPlane -> Fill(vec.Z(), vec.X(), aPoint.GetCharge());
+        if (fIs2DPlot)
+          fPadPlane -> Fill(vec.Z(), vec.X(), aPoint.GetCharge());
+      } else if (TString(GetName()).EqualTo("STEventHC")) {
+        STHitCluster aPoint = aEvent -> GetClusterArray() -> at(iPoint);
+        TVector3 vec(GetVector(aPoint));
+        pointSet -> SetNextPoint(vec.X()/10., vec.Y()/10., vec.Z()/10.); // mm -> cm
+        pointSet -> SetPointId(GetValue(aPoint, iPoint));
+
+        if (fIs2DPlot)
+          fPadPlane -> Fill(vec.Z(), vec.X(), aPoint.GetCharge());
+      }
     }
 
     gEve -> AddElement(pointSet);
@@ -226,6 +241,12 @@ TObject* STEventDraw::GetValue(STHit &hit, Int_t iHit)
   return new TNamed(Form("Hit %d", iHit), "");
 }
 
+TObject* STEventDraw::GetValue(STHitCluster &cluster, Int_t iCluster)
+{
+  return new TNamed(Form("Cluster %d", iCluster), "");
+}
+
+
 void
 STEventDraw::Reset()
 {
@@ -234,7 +255,8 @@ STEventDraw::Reset()
     gEve -> RemoveElement(fPointSet, fEventManager);
   }
 
-  fPadPlane -> Reset();
+  if (fPadPlane != NULL)
+    fPadPlane -> Reset();
 }
 
 void
