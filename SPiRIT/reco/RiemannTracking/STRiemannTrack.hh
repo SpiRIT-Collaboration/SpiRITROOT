@@ -18,17 +18,18 @@
 #define STRIEMANNTRACK_HH
 
 // SpiRITROOT classes
+#include "STHitCluster.hh"
+#include "STRiemannHit.hh"
 
+// FairRoot classes
+#include "FairLogger.h"
 
 // ROOT classes
 #include "TObject.h"
 #include "TVector3.h"
 
 // STL
-#include <list>
-
-class TVector3;
-class STRiemannHit;
+#include <vector>
 
 class STRiemannTrack : public TObject
 {
@@ -72,10 +73,10 @@ class STRiemannTrack : public TObject
       STRiemannHit *GetFirstHit()                  const;
       const std::vector<STRiemannHit *> *GetHits() const;
 
-             //! Returns the hit number closest to **hit** and sets the distance between them as **Dist**. This sets direction vector from
-             //! after to before the given **hit**.
+             /// Returns the hit number closest to **hit** and sets the distance between them as **Dist**. This sets direction vector from
+             /// after to before the given **hit**.
              Int_t  GetClosestHit(STRiemannHit *hit, Double_t &Dist, TVector3 &dir) const;
-             //! Returns the hit number closest to **hit** and sets the distance between them as **Dist** in the hit number range in **from** and **to**.
+             /// Returns the hit number closest to **hit** and sets the distance between them as **Dist** in the hit number range in **from** and **to**.
              Int_t  GetClosestHit(STRiemannHit *hit, Double_t &Dist, Int_t from = 0, Int_t to = 10000000) const; 
 //             Int_t  GetClosestRiemannHit(STRiemannHit *hit, Double_t &Dist)         const;
 
@@ -115,12 +116,13 @@ class STRiemannTrack : public TObject
              void   Plot(Bool_t standalone = kTRUE);
 
   private:
-    void InitVariables(); //! initialize the variables
+    void InitVariables(); /// initialize the variables
     void Refit(); // refit the plane and dip; set angles of hits; calc rms
     void CenterR(); // calculate center and radius
-    Double_t calcRMS(TVector3 n1, Double_t c1) const;
+    Double_t CalcRMS(TVector3 n1, Double_t c1) const;
 
     // Private Data Members ------------
+    FairLogger *fLogger;        /// FairLogger singleton
     TVector3 fN;  // normal vector of plane (pointing towards origin!)
     Double_t fC;     // distance of plane to origin
 
@@ -151,16 +153,34 @@ class STRiemannTrack : public TObject
 
     Bool_t fDoSort; // flag for switching on and off sorting
 
-
     // Private Methods -----------------
     Bool_t CheckScale(STRiemannHit *) const;
 
-    Bool_t SortByZ(STRiemannHit *hit1, STRiemannHit *hit2);
-    Bool_t SortByZInv(STRiemannHit *hit1, STRiemannHit *hit2);
-    Bool_t SortByAngle(STRiemannHit *hit1, STRiemannHit *hit2);
-    Bool_t SortByAngleInv(STRiemannHit *hit1, STRiemannHit *hit2);
+  ClassDef(STRiemannTrack, 1);
+};
 
-  ClassDef(STRiemannTrack, 1)
+class SortByZ {
+  public:
+    SortByZ() {}
+    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetZ() < hit2 -> GetZ()); }
+};
+
+class SortByZInv {
+  public:
+    SortByZInv() {}
+    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetZ() > hit2 -> GetZ()); }
+};
+
+class SortByAngle {
+  public:
+    SortByAngle() {}
+    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetAngleOnHelix() < hit2 -> GetAngleOnHelix()); }
+};
+
+class SortByAngleInv {
+  public:
+    SortByAngleInv() {}
+    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetAngleOnHelix() > hit2 -> GetAngleOnHelix()); }
 };
 
 #endif
