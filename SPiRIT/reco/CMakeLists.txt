@@ -46,6 +46,11 @@ SystemManipulator/STSystemManipulator.cc
 
 RiemannTracking/STRiemannHit.cc
 RiemannTracking/STRiemannTrack.cc
+RiemannTracking/STRiemannTrackFinder.cc
+RiemannTracking/STDipTTCorrelator.cc
+RiemannTracking/STRiemannTTCorrelator.cc
+RiemannTracking/STProximityHTCorrelator.cc
+RiemannTracking/STHelixHTCorrelator.cc
 
 STDecoderTask.cc
 STPSATask.cc
