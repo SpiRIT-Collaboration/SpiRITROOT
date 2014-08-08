@@ -24,22 +24,20 @@
 // Author List:
 //      Genie Jhang          Korea University
 //-----------------------------------------------------------
-//
+
 // SpiRITROOT classes
-#include "STRiemannTrack.h"
-#include "STRiemannHit.h"
+#include "STHitCluster.hh"
+#include "STRiemannHit.hh"
+#include "STRiemannTrack.hh"
 #include "STRiemannTrackFinder.hh"
-#include "STRiemannTTCorrelator.h"
-#include "STProximityHTCorrelator.h"
+#include "STRiemannTTCorrelator.hh"
+#include "STProximityHTCorrelator.hh"
 
 // STL
 #include <algorithm>
 #include <iostream>
 
-// 
-#include "DebugLogger.h"
-#include "GFTrackCand.h"
-#include "TpcCluster.h"
+// ROOT classes 
 #include "TMath.h"
 
 using namespace std;
@@ -60,20 +58,22 @@ STRiemannTrackFinder::STRiemannTrackFinder(Double_t scale)
 
 STRiemannTrackFinder::~STRiemannTrackFinder()
 {
-  for(Int_t i=0;i<fHTCorrelators.size();++i){
-    if(fHTCorrelators[i]!=NULL){
+  for(Int_t i = 0; i < fHTCorrelators.size(); i++){
+    if(fHTCorrelators[i] != NULL){
       delete fHTCorrelators[i];
-      fHTCorrelators[i]=NULL;
+      fHTCorrelators[i] = NULL;
     }
   }
+
   fHTCorrelators.clear();
 
-  for(Int_t i=0;i<fTTCorrelators.size();++i){
-    if(fTTCorrelators[i]!=NULL){
+  for(Int_t i = 0; i < fTTCorrelators.size(); i++){
+    if(fTTCorrelators[i] != NULL){
       delete fTTCorrelators[i];
-      fTTCorrelators[i]=NULL;
+      fTTCorrelators[i] = NULL;
     }
   }
+
   fTTCorrelators.clear();
 }
 
@@ -91,12 +91,33 @@ STRiemannTrackFinder::InitVariables()
   fRiemannScale = 24.6;
   fMaxR = 0;
   fMinHits = 100;
-  fInitTrks = kFALSE;
+  fInitTracks = kFALSE;
   fSkipAndDelete = kFALSE;
   fInitDip = 0;
   fInitCurv = 0;
   fSkipCrossingAreas = kFALSE;
 }
+
+  const STAbsHitTrackCorrelator *STRiemannTrackFinder::GetHTCorrelator(UInt_t i) const       { return fHTCorrelators.at(i); }
+const STAbsTrackTrackCorrelator *STRiemannTrackFinder::GetTTCorrelator(UInt_t i) const       { return fTTCorrelators.at(i); }
+                          Int_t  STRiemannTrackFinder::GetSorting()                          { return fSorting; }
+                       Double_t  STRiemannTrackFinder::GetInteractionZ()                     { return fInteractionZ; }
+                       Double_t  STRiemannTrackFinder::GetScale() const                      { return fRiemannScale; }
+
+void STRiemannTrackFinder::SetMinHitsForFit(UInt_t numHits)                           { fMinHitsForFit = numHits; }
+void STRiemannTrackFinder::SetSorting(Int_t sorting)                                  { fSorting = sorting; }
+void STRiemannTrackFinder::SetSortingMode(Bool_t sortingMode)                         { fSortingMode = sortingMode; }
+void STRiemannTrackFinder::SetInteractionZ(Double_t z)                                { fInteractionZ = z; }
+void STRiemannTrackFinder::SetMaxNumHitsForPR(Double_t maxHits)                       { fMaxNumHitsForPR = maxHits; }
+void STRiemannTrackFinder::SkipCrossingAreas(Bool_t value)                            { fSkipCrossingAreas = value; }
+void STRiemannTrackFinder::SetTTProxcut(Double_t cut)                                 { fTTproxcut = cut; }
+void STRiemannTrackFinder::SetProxcut(Double_t cut)                                   { fProxcut = cut; }
+void STRiemannTrackFinder::SetHelixcut(Double_t cut)                                  { fHelixcut = cut; }
+void STRiemannTrackFinder::InitTracks(Bool_t initTracks, Double_t dip, Double_t curv) { fInitTracks = initTracks; fInitDip = dip; fInitCurv = curv; }
+void STRiemannTrackFinder::SetMaxR(Double_t r)                                        { fMaxR = r; }
+void STRiemannTrackFinder::SetMinHits(UInt_t minHits)                                 { fMinHits = minHits; }
+void STRiemannTrackFinder::SetSkipAndDelete(Bool_t value)                             { fSkipAndDelete = value; }
+void STRiemannTrackFinder::SetScale(Double_t scale)                                   { fRiemannScale = scale; }
 
 void
 STRiemannTrackFinder::AddHTCorrelator(STAbsHitTrackCorrelator *correlator)
@@ -115,526 +136,575 @@ STRiemannTrackFinder::AddTTCorrelator(STAbsTrackTrackCorrelator *correlator)
 
 
 UInt_t
-STRiemannTrackFinder::buildTracks(vector<TpcCluster*>& cll,
-				   vector<STRiemannTrack*>& candlist)
+STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<STRiemannTrack *> &candList)
 {
   #ifdef DEBUGHT
-    std::cout<<"STRiemannTrackFinder::buildTracks"<<std::endl;
+    std::cout << "STRiemannTrackFinder::buildTracks" << std::endl;
   #endif
 
-  UInt_t nFinishedTrks(0);
-  UInt_t nNewTracks(0);
-  UInt_t ncl(cll.size());
-  if(ncl<3) return 0;
+  UInt_t numFinishedTracks = 0;
+  UInt_t numNewTracks = 0;
+  UInt_t numClusters = clusterList.size();
+  if(numClusters < 3)
+    return 0;
 
-  sortClusters(cll);
-  const Double_t phi0(cll[0]->pos().Phi());
+  SortClusters(clusterList);
+  const Double_t phi0 = clusterList[0] -> GetPosition().Phi();
 
-  Int_t ncor = fHTCorrelators.size();
+  Int_t numCorrelators = fHTCorrelators.size();
 
   #ifdef UPTOHIT
-    if(fMaxNumHitsForPR<ncl) ncl=fMaxNumHitsForPR;
+    if (fMaxNumHitsForPR < numClusters)
+      numClusters = fMaxNumHitsForPR;
   #endif
 
-  for(UInt_t icl=0;icl<ncl;++icl){ // loop over hits
+  for (UInt_t iCluster = 0; iCluster < numClusters; iCluster++) { // loop over hits
     #ifdef DEBUGHT
-        if(icl%1000==0 && icl > 1){
-          UInt_t clInTrks(0);
-          for (UInt_t itrklt=0; itrklt<candlist.size(); ++itrklt){
-            clInTrks += candlist[itrklt]->getNumHits();
-          }
-          cout << "At cluster " << icl << endl;
-          cout << "Tracklets: "<< candlist.size() << endl;
-          cout << "Finished Tracklets: "<< nFinishedTrks << endl;
-          cout << "Mean number of hits/track: "<< (Double_t)clInTrks/(Double_t)candlist.size() << endl;
+        if (iCluster%1000 == 0 && iCluster > 1) {
+          UInt_t clusterInTracks = 0;
+
+          for (UInt_t iTracklet = 0; iTracklet < candList.size(); iTracklet++)
+            clusterInTracks += candList[iTracklet] -> GetNumHits();
+
+          cout << "At cluster " << iCluster << endl;
+          cout << "Tracklets: " << candList.size() << endl;
+          cout << "Finished Tracklets: " << numFinishedTracks << endl;
+          cout << "Mean number of hits/track: " << (Double_t)clusterInTracks/(Double_t)candList.size() << endl;
         }
     #endif
 
 
-    STRiemannHit* rhit=new STRiemannHit(cll[icl],fRiemannScale);
-    UInt_t matchTrks(0);
-    UInt_t maxlevel=0; // index of track with highest number of applicable correlators
-    Bool_t foundAtAll=kFALSE; 
-    for(Int_t i=0;i<ncor;++i) fBestMatchQuality[i] = 99999.;// reset 
+    STRiemannHit *rhit = new STRiemannHit(clusterList[iCluster], fRiemannScale);
+    UInt_t matchTracks = 0;
+    UInt_t maxlevel = 0; // index of track with highest number of applicable correlators
+    Bool_t foundAtAll = kFALSE; 
+    for(Int_t iCor = 0; iCor < numCorrelators; iCor++)
+      fBestMatchQuality[iCor] = 99999.; // reset 
 
-    for(UInt_t itrk=0;itrk<candlist.size();++itrk){ // loop over tracks
-      STRiemannTrack* trk=candlist[itrk];
-      if (trk->isFinished()) continue;
+    for (UInt_t iTrack = 0; iTrack < candList.size(); iTrack++) { // loop over tracks
+      STRiemannTrack *track = candList[iTrack];
+
+      if (track -> IsFinished())
+        continue;
 
       // check if track can be deleted
-      Double_t Perp(rhit->cluster()->pos().Perp());
-      if(fSkipAndDelete && (icl%10 == 0 || icl == ncl-1)) { // check only every 10 hits, and at last hit
-        Bool_t deleet(kTRUE), finished(kFALSE);
+      Double_t Perp = rhit -> GetCluster() -> GetPosition().Perp();
+      if (fSkipAndDelete && (iCluster%10 == 0 || iCluster == numClusters - 1)) { // check only every 10 hits, and at last hit
+        Bool_t willDelete = kTRUE;
+        Bool_t finished = kFALSE;
 
-        if (trk->getNumHits() > fMinHits || trk->isGood()){ // do not delete
-          deleet=kFALSE;
-        }
+        if (track -> GetNumHits() > fMinHits || track -> IsGood()) // do not delete
+          willDelete = kFALSE;
 
-        if (fSorting==3){
+        if (fSorting == 3) {
           Perp += 3*fProxcut;
-          if (trk->getFirstHit()->cluster()->pos().Perp() > Perp &&
-              trk->getLastHit()->cluster()->pos().Perp() > Perp)
+          if (track -> GetFirstHit() -> GetCluster() -> GetPosition().Perp() > Perp &&
+              track -> GetLastHit() -> GetCluster() -> GetPosition().Perp() > Perp)
             finished = kTRUE;
-        }
-        else if (fSorting==5){
-          Double_t Phi(rhit->cluster()->pos().Phi());
+        } else if (fSorting == 5) {
+          Double_t Phi = rhit -> GetCluster() -> GetPosition().Phi();
           Double_t dPhi = 2*fProxcut/Perp; // approx for small angles
-          if (Phi - trk->getFirstHit()->cluster()->pos().Phi() > dPhi &&
-              Phi - trk->getLastHit()->cluster()->pos().Phi() > dPhi)
+          if (Phi - track -> GetFirstHit() -> GetCluster() -> GetPosition().Phi() > dPhi &&
+              Phi - track -> GetLastHit() -> GetCluster() -> GetPosition().Phi() > dPhi)
             finished = kTRUE;
-        }
-        else if (fSorting==-5){
-          Double_t Phi(rhit->cluster()->pos().Phi());
+        } else if (fSorting == -5) {
+          Double_t Phi = rhit -> GetCluster() -> GetPosition().Phi();
           Double_t dPhi = -2*fProxcut/Perp; // approx for small angles
-          if (Phi - trk->getFirstHit()->cluster()->pos().Phi() < dPhi &&
-              Phi - trk->getLastHit()->cluster()->pos().Phi() < dPhi)
+          if (Phi - track -> GetFirstHit() -> GetCluster() -> GetPosition().Phi() < dPhi &&
+              Phi - track -> GetLastHit() -> GetCluster() -> GetPosition().Phi() < dPhi)
             finished = kTRUE;
-        }
-        else if (fSorting==2){
-          Double_t Z(rhit->cluster()->pos().Z());
+        } else if (fSorting == 2) {
+          Double_t Z = rhit -> GetCluster() -> GetPosition().Z();
           Double_t dZ = 3*fProxcut;
-          if (trk->getFirstHit()->cluster()->pos().Z() - Z > dZ &&
-              trk->getLastHit()->cluster()->pos().Z() - Z > dZ)
+          if (track -> GetFirstHit() -> GetCluster() -> GetPosition().Z() - Z > dZ &&
+              track -> GetLastHit() -> GetCluster() -> GetPosition().Z() - Z > dZ)
             finished = kTRUE;
         }
 
-
-        if(finished && deleet){
-          trk->deleteHits();
-          delete trk;
-          candlist.erase(candlist.begin()+itrk);
-          --itrk;
+        if (finished && willDelete) {
+          track -> DeleteHits();
+          delete track;
+          candList.erase(candList.begin() + iTrack);
+          iTrack--;
           continue;
         }
 
         if(finished) {
-          trk->SetFinished();
-          ++nFinishedTrks;
+          track -> SetFinished();
+          numFinishedTracks++;
           continue;
         }
       }
-
 
       // WE STEP THROUGH THE INDIVIDUAL CORRELATORS
       // IF A TRACK SURVIVES EACH CORRELATOR
       // THE HIT IS ASSIGNED TO THE BEST (smallest!) MATCH 
       
       Bool_t trksurvive = kFALSE;
-      vector<Double_t> matchQualities(ncor, 99999.); // for saving the match qualities for each correlator
+      vector<Double_t> matchQualities(numCorrelators, 99999.); // for saving the match qualities for each correlator
       Int_t level = 0; // number of survived correlators
       #ifdef DEBUGHT
-        if(icl==fMaxNumHitsForPR-1) std::cout<<"Testing hit "<<icl<<" with track "<<itrk<< "; trk quality: " << trk->quality() << std::endl;
+        if(iCluster == fMaxNumHitsForPR - 1)
+          std::cout << "Testing hit " << iCluster << " with track " << iTrack << "; trk quality: " << track -> GetQuality() << std::endl;
       #endif
 
-      for(Int_t icor=0; icor<ncor; ++icor){ // loop through correlators
+      for(Int_t iCor = 0; iCor < numCorrelators; ++iCor){ // loop through correlators
         // CORRELATE HIT WITH TRACK
         Double_t matchQuality = 99999;
-        Bool_t survive=kFALSE;
-        Bool_t applicable=fHTCorrelators[icor]->corr(trk,rhit,survive,matchQuality);
+        Bool_t survive = kFALSE;
+        Bool_t applicable = fHTCorrelators[iCor] -> Correlate(track, rhit, survive, matchQuality);
         #ifdef DEBUGHT
-          if(icl==fMaxNumHitsForPR-1){
-            if(!applicable){std::cout<<"  correlator "<<icor<<" NOT applicable"<<std::endl;}
-            else{std::cout<<"  correlator "<<icor<<"  IS applicable; survived "<<survive<<" with MatchQuality "<<matchQuality<<std::endl;}
+          if(iCluster == fMaxNumHitsForPR-1){
+            if(!applicable)
+              std::cout << "  correlator " << iCor << " NOT applicable" << std::endl;
+            else
+              std::cout << "  correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
           }
         #endif
-        if(!applicable) continue; // try the next correlator
+        if(!applicable)
+          continue; // try the next correlator
+
         if(!survive){
-          trksurvive=kFALSE;
+          trksurvive = kFALSE;
           break; // track has failed this level --> can be excluded
         }
         // track survived this correlator
-        level = icor;
+        level = iCor;
         trksurvive = kTRUE;
-        matchQualities[icor] = matchQuality;
+        matchQualities[iCor] = matchQuality;
       } // end loop over correlator
 
 
-      if(trksurvive){ // update best values
+      if (trksurvive) { // update best values
         // number matching fitted tracks that survived all corrs (for excluding clusters)
-        if(level==ncor-1 && !trk->isInitialized() &&
-           trk->getNumHits() > 3*fMinHitsForFit &&
-           matchQualities[ncor-1] < 0.5*fHelixcut) ++matchTrks;
+        if (level == numCorrelators - 1 &&
+            !track -> IsInitialized() &&
+            track -> GetNumHits() > 3*fMinHitsForFit &&
+            matchQualities[numCorrelators - 1] < 0.5*fHelixcut)
+          matchTracks++;
         
-        if(level>maxlevel) maxlevel=level;
-        for(UInt_t i=0; i<=level; ++i){
-          if(matchQualities[i]<fBestMatchQuality[i]){
-            fBestMatchQuality[i]=matchQualities[i];
-            fBestMatchIndex[i]=itrk;
+        if (level > maxlevel)
+          maxlevel = level;
+
+        for(UInt_t i = 0; i <= level; i++){
+          if(matchQualities[i] < fBestMatchQuality[i]){
+            fBestMatchQuality[i] = matchQualities[i];
+            fBestMatchIndex[i] = iTrack;
           }
         }
       }
 
       #ifdef DEBUGHT
-      if(icl==fMaxNumHitsForPR-1 && trksurvive) std::cout<<" Track "<<itrk<<" survived with level "<<level<<std::endl;
-        if(icl==fMaxNumHitsForPR-1) std::cout<<std::endl;
+      if(iCluster == fMaxNumHitsForPR - 1 && tracksurvive)
+        std::cout << " Track " << iTrack << " survived with level " << level << std::endl;
+      if(iCluster == fMaxNumHitsForPR - 1)
+        std::cout << std::endl;
       #endif
 
-      foundAtAll|=trksurvive; // foundAtAll will be kTRUE if at least one track survived
+      foundAtAll |= trksurvive; // foundAtAll will be kTRUE if at least one track survived
     } // end loop over tracks
 
 
     #ifdef DEBUGHT
-      if(icl==fMaxNumHitsForPR-1){
-        std::cout<<"maxlevel "<< maxlevel <<std::endl;
-        std::cout<<"fBestMatchIndex[maxlevel] "<<fBestMatchIndex[maxlevel] <<std::endl;
-        std::cout<<"fBestMatchQuality[maxlevel] "<<fBestMatchQuality[maxlevel] <<std::endl;
+      if(iCluster == fMaxNumHitsForPR - 1){
+        std::cout << "maxlevel " << maxlevel << std::endl;
+        std::cout << "fBestMatchIndex[maxlevel] " << fBestMatchIndex[maxlevel] << std::endl;
+        std::cout << "fBestMatchQuality[maxlevel] " << fBestMatchQuality[maxlevel] << std::endl;
       }
     #endif
 
 
-    if(!foundAtAll){ // new track if no track survived
+    if (!foundAtAll) { // new track if no track survived
       /*if(fSkipAndDelete) {
-        Double_t R(rhit->cluster()->pos().Perp());
-        if (fSorting==3 && R<fMaxR){
+        Double_t R(rhit -> GetCluster() -> GetPosition().Perp());
+        if (fSorting == 3 && R<fMaxR){
           #ifdef DEBUGHT
-            if(icl==fMaxNumHitsForPR-1) std::cout<<"-> hit perp < " << fMaxR << ", skipping hit "<<icl<<std::endl;
+            if(iCluster == fMaxNumHitsForPR-1) std::cout << "-> hit perp < " << fMaxR << ", skipping hit " << iCluster << std::endl;
           #endif
           continue;
         }
-        else if (fSorting==5 && (rhit->cluster()->pos().Phi()-phi0) * R > 1.){ // todo: hardcoded 2
+        else if (fSorting == 5 && (rhit -> GetCluster() -> GetPosition().Phi()-phi0) * R > 1.){ // todo: hardcoded 2
           #ifdef DEBUGHT
-            if(icl==fMaxNumHitsForPR-1) std::cout<<"-> hit (phi-phi0)*R > 1" << ", skipping hit "<<icl<<std::endl;
+            if(iCluster == fMaxNumHitsForPR-1) std::cout << "-> hit (phi-phi0)*R > 1" << ", skipping hit " << iCluster << std::endl;
           #endif
           continue;
         }
-        else if (fSorting==-5 && (rhit->cluster()->pos().Phi()-phi0) * R < -1.){ // todo: hardcoded 2
+        else if (fSorting == -5 && (rhit -> GetCluster() -> GetPosition().Phi()-phi0) * R < -1.){ // todo: hardcoded 2
           #ifdef DEBUGHT
-            if(icl==fMaxNumHitsForPR-1) std::cout<<"-> hit (phi-phi0)*R < -1" << ", skipping hit "<<icl<<std::endl;
+            if(iCluster == fMaxNumHitsForPR-1) std::cout << "-> hit (phi-phi0)*R < -1" << ", skipping hit " << iCluster << std::endl;
           #endif
           continue;
         }
       }*/
 
-      ++nNewTracks;
-      STRiemannTrack* trk=new STRiemannTrack(fRiemannScale);
-      trk->SetSort(fSortingMode);
-      candlist.push_back(trk);
-      //std::cout<<"Creating new track"<<std::endl;
-      trk->addHit(rhit);
+      numNewTracks++;
+      STRiemannTrack *track = new STRiemannTrack(fRiemannScale);
+      track -> SetSort(fSortingMode);
+      candList.push_back(track);
+      //std::cout << "Creating new track" << std::endl;
+      track -> AddHit(rhit);
       #ifdef DEBUGHT
-        if(icl==fMaxNumHitsForPR-1) std::cout<<"-> creating new track Nr "<<candlist.size()-1<<std::endl;
+        if (iCluster == fMaxNumHitsForPR - 1)
+          std::cout << "-> creating new track Nr " << candList.size() - 1 << std::endl;
       #endif
 
-      if(fInitTrks) {
-        if (fSorting==3) trk->initTargetTrack(fInitDip, fInitCurv);
-        if (fSorting==5 || fSorting==-5) trk->initCircle(0);
-      }
+      if (fInitTracks) {
+        if (fSorting == 3)
+          track -> InitTargetTrack(fInitDip, fInitCurv);
 
-    }
-    else {
+        if (fSorting == 5 || fSorting == -5)
+          track -> InitCircle(0);
+      }
+    } else {
       // if more than one track matches, hit lies in crossing section -> skip
-      if(fSkipCrossingAreas && matchTrks>1) {
+      if (fSkipCrossingAreas && matchTracks > 1) {
         #ifdef DEBUGHT
-          if(icl==fMaxNumHitsForPR-1){
-           std::cout<<" "<<matchTrks<<" tracks match -> hit lies in crossing area -> skip hit"<<std::endl;
-          }
+          if (iCluster == fMaxNumHitsForPR - 1)
+            std::cout << " " << matchTracks << " tracks match -> hit lies in crossing area -> skip hit" << std::endl;
         #endif        
-        resetFlags();
+        ResetFlags();
+
         delete rhit;
-        cll.erase(cll.begin() + icl);
-        --icl;
-        --ncl;
+
+        clusterList.erase(clusterList.begin() + iCluster);
+        iCluster--;
+        numClusters--;
         continue;
       }
       // add hit to best match
       // use the bestMatch from deepest level
-      STRiemannTrack* theTrk=candlist[fBestMatchIndex[maxlevel]];
+      STRiemannTrack *theTrack = candList[fBestMatchIndex[maxlevel]];
       #ifdef DEBUGHT
-        if(icl==fMaxNumHitsForPR-1) std::cout<<"-> adding hit to track"<<fBestMatchIndex[maxlevel]<<std::endl;
+        if (iCluster == fMaxNumHitsForPR - 1)
+          std::cout << "-> adding hit to track" << fBestMatchIndex[maxlevel] << std::endl;
       #endif
-      theTrk->addHit(rhit);
-      if(theTrk->getNumHits()>=fMinHitsForFit){
-        theTrk->fitAndSort();
+      theTrack -> AddHit(rhit);
+      if (theTrack -> GetNumHits() >= fMinHitsForFit) {
+        theTrack -> FitAndSort();
         #ifdef DEBUGHT
-          if(icl==fMaxNumHitsForPR-1){
-           std::cout<<" track parameters: fC="<<theTrk->c()<<"  R="<<theTrk->r()<<"  dip °="<<(theTrk->dip())*180/TMath::Pi()<<std::endl;
-           std::cout<<" center: "; theTrk->center().Print();
+          if (iCluster == fMaxNumHitsForPR - 1) {
+           std::cout << " track parameters: fC=" << theTrack -> GetC() << "  R=" << theTrack -> GetR() << "  dip °=" << (theTrack -> GetDip())*180/TMath::Pi() << std::endl;
+           std::cout << " center: ";
+           theTrack -> GetCenter().Print();
           }
         #endif
       }
     }
-    resetFlags();
+    ResetFlags();
   } // end loop over hits
   
 
   #ifdef DEBUGHT
-    std::cout<<candlist.size()<<" Riemann Tracks found."<<std::endl;
+    std::cout << candList.size() << " Riemann Tracks found." << std::endl;
   #endif
 
- return nNewTracks;
+ return numNewTracks;
 }
 
 void
-STRiemannTrackFinder::mergeTracks(vector<STRiemannTrack*>& candlist){
+STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
   #ifdef DEBUGTT
-    std::cout<<"STRiemannTrackFinder::mergeTracks"<<std::endl;
+    std::cout << "STRiemannTrackFinder::mergeTracks" << std::endl;
   #endif
 
-  UInt_t ntr=candlist.size();
+  UInt_t numTracks = candList.size();
   #ifdef DEBUGTT
-  std::cout<<"STRiemannTrackFinder::mergeTracks: "<<ntr<<" track to merge\n";
+  std::cout << "STRiemannTrackFinder::mergeTracks: " << numTracks << " track to merge\n";
   #endif
-  if (ntr<2) return; // need at least 2 trackcands to merge
+  if (numTracks < 2)
+    return; // need at least 2 trackcands to merge
 
   // sort tracklets, but use different sorting than for clusters!
-  sortTracklets(candlist);
+  SortTracklets(candList);
 
   Double_t z1max, z2min, zTemp;
 
-  for(UInt_t itrk1=0; itrk1<ntr-1; ++itrk1){ // loop over tracks
-    if(candlist[itrk1]==NULL)continue;
-    STRiemannTrack* trk1=candlist[itrk1];
+  for (UInt_t iTrack1 = 0; iTrack1 < numTracks - 1; iTrack1++) { // loop over tracks
+    if (candList[iTrack1] == NULL)
+      continue;
 
-    // find max z of trk1
-    if(fSorting==3){
-      z1max = trk1->getFirstHit()->cluster()->pos().Z();
-      zTemp = trk1->getLastHit()->cluster()->pos().Z();
-      if (zTemp>z1max) z1max=zTemp;
+    STRiemannTrack *track1 = candList[iTrack1];
+
+    // find max z of track1
+    if (fSorting == 3) {
+      z1max = track1 -> GetFirstHit() -> GetCluster() -> GetPosition().Z();
+      zTemp = track1 -> GetLastHit() -> GetCluster() -> GetPosition().Z();
+
+      if (zTemp > z1max) 
+        z1max = zTemp;
     }
 
-    for(UInt_t itrk2=itrk1+1; itrk2<ntr; ++itrk2){ // loop over the other tracks to be tested
-      if(candlist[itrk2]==NULL)continue;
+    for (UInt_t iTrack2 = iTrack1 + 1; iTrack2 < numTracks; iTrack2) { // loop over the other tracks to be tested
+      if(candList[iTrack2] == NULL)
+        continue;
 
       #ifdef DEBUGTT
-        std::cout<<"Testing track "<<itrk1<<" with track "<<itrk2<<std::endl;
+        std::cout << "Testing track " << iTrack1 << " with track " << iTrack2 << std::endl;
       #endif
 
-      STRiemannTrack* trk2=candlist[itrk2];
+      STRiemannTrack *track2 = candList[iTrack2];
 
-      // find min z of trk2
-      if(fSorting==3){
-        z2min = trk2->getFirstHit()->cluster()->pos().Z();
-        zTemp = trk2->getLastHit()->cluster()->pos().Z();
-        if (zTemp<z2min) z2min=zTemp;
-        // tracklets are sorted by z (from small to big), if the smallest z of the trk2 is bigger than the maximum z of trk1, skip all other tracks
-        if (z2min > (z1max + fTTproxcut + 0.1) ) {
+      // find min z of track2
+      if(fSorting == 3){
+        z2min = track2 -> GetFirstHit() -> GetCluster() -> GetPosition().Z();
+        zTemp = track2 -> GetLastHit() -> GetCluster() -> GetPosition().Z();
+
+        if (zTemp < z2min)
+          z2min = zTemp;
+
+        // tracklets are sorted by z (from small to big), if the smallest z of the track2 is bigger than the maximum z of track1, skip all other tracks
+        if (z2min > (z1max + fTTproxcut + 0.1)) {
           #ifdef DEBUGTT
-            std::cout<<" (z2min > (z1max + fTTproxcut + 0.1) ), skipping rest of trk2 tracklets (" << ntr-itrk2 << ")" <<std::endl;
+            std::cout << " (z2min > (z1max + fTTproxcut + 0.1) ), skipping rest of track2 tracklets (" << numTracks - iTrack2 << ")" << std::endl;
           #endif
-          break; // continue with next trk1
+          break; // continue with next track1
         }
       }
 
       // WE STEP THROUGH THE INDIVIDUAL CORRELATORS
-      // IF THE TRACK trk2 SURVIVES EACH CORRELATOR
-      // IT IS MERGED WITH THE TRACK trk1
-      Bool_t survive=kTRUE;
-      for(UInt_t icor=0; icor<fTTCorrelators.size(); ++icor){ // loop through correlators
-        // CORRELATE trk1 WITH trk2
+      // IF THE TRACK track2 SURVIVES EACH CORRELATOR
+      // IT IS MERGED WITH THE TRACK track1
+      Bool_t survive = kTRUE;
+      for(UInt_t iCor = 0; iCor < fTTCorrelators.size(); ++iCor){ // loop through correlators
+        // CORRELATE track1 WITH track2
         // all correlators must be applicable and must be survived!
         Double_t matchQuality;
         Bool_t applicable;
 
         // make sure that the first track in the correlator is the bigger one
-        if (trk1->getNumHits()>=trk2->getNumHits())
-          applicable=fTTCorrelators[icor]->corr(trk1,trk2,survive,matchQuality);
+        if (track1 -> GetNumHits() >= track2 -> GetNumHits())
+          applicable = fTTCorrelators[iCor] -> Correlate(track1, track2, survive, matchQuality);
         else
-          applicable=fTTCorrelators[icor]->corr(trk2,trk1,survive,matchQuality);
+          applicable = fTTCorrelators[iCor] -> Correlate(track2, track1, survive, matchQuality);
 
         #ifdef DEBUGTT
-          if(!applicable){std::cout<<"  correlator "<<icor<<" NOT applicable"<<std::endl;}
-          else{std::cout<<"  correlator "<<icor<<"  IS applicable; survived "<<survive<<" with MatchQuality "<<matchQuality<<std::endl;}
+          if (!applicable)
+            std::cout << "  correlator " << iCor << " NOT applicable" << std::endl;
+          else
+            std::cout << "  correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
         #endif
 
-        if(!applicable) {
+        if (!applicable) {
           survive = kFALSE;
           break;
         }
-        if(!survive) break;
+
+        if (!survive)
+          break;
       } // end loop through correlators
-      if (!survive) continue; // test next trk2
+
+      if (!survive)
+        continue; // test next track2
 
       // merge tracks if survived
       #ifdef DEBUGTT
-        std::cout<<"merge track "<<itrk1<<" with track "<<itrk2<<std::endl;
+        std::cout << "merge track " << iTrack1 << " with track " << iTrack2 << std::endl;
       #endif
 
-      UInt_t nhits1 = trk1->getNumHits();
-      UInt_t nhits2 = trk2->getNumHits();
+      UInt_t nhits1 = track1 -> GetNumHits();
+      UInt_t nhits2 = track2 -> GetNumHits();
 
-      if(!fSortingMode){ // we have to collect clusters from both tracks, sort them and build a new track
+      if (!fSortingMode) { // we have to collect clusters from both tracks, sort them and build a new track
         // collect clusters from both tracks and sort
-        vector<TpcCluster*> clusters;
-        for(UInt_t i=0; i<nhits1; ++i){
-          clusters.push_back(trk1->getHit(i)->cluster());
-        }
-        for(UInt_t i=0; i<nhits2; ++i){
-          clusters.push_back(trk2->getHit(i)->cluster());
-        }
-        sortClusters(clusters);
+        vector<STHitCluster *> clusters;
+        for(UInt_t iHit = 0; iHit < nhits1; iHit++)
+          clusters.push_back(track1 -> GetHit(iHit) -> GetCluster());
+
+        for(UInt_t iHit = 0; iHit < nhits2; iHit++)
+          clusters.push_back(track2 -> GetHit(iHit) -> GetCluster());
+        
+        SortClusters(clusters);
 
         // fill clusters into new RiemannTrack and refit
-        STRiemannTrack* mergedTrack = new STRiemannTrack(fRiemannScale);
-        mergedTrack->SetSort(kFALSE);
-        for(UInt_t i=0; i<clusters.size(); ++i){
-          STRiemannHit* rhit = new STRiemannHit(clusters[i],
-							fRiemannScale);
-          mergedTrack->addHit(rhit);
+        STRiemannTrack *mergedTrack = new STRiemannTrack(fRiemannScale);
+        mergedTrack -> SetSort(kFALSE);
+        for (UInt_t iCluster = 0; iCluster < clusters.size(); iCluster++) {
+          STRiemannHit *rhit = new STRiemannHit(clusters[iCluster], fRiemannScale);
+          mergedTrack -> AddHit(rhit);
         }
-        if(mergedTrack->getNumHits()>=fMinHitsForFit) mergedTrack->fitAndSort();
+
+        if (mergedTrack -> GetNumHits() >= fMinHitsForFit)
+          mergedTrack -> FitAndSort();
 
         // delete old trackcands and store new trackcand
-        delete candlist[itrk1];
-        trk1=mergedTrack;
-        candlist[itrk1]=mergedTrack;
-      }
-      else { // we can just add the hits from trk2 to trk1 and the sorting is done internally
-        for(UInt_t i=0; i<nhits2; ++i)
-          trk1->addHit(trk2->getHit(i));
-        trk1->SetSort(kTRUE);
+        delete candList[iTrack1];
+
+        track1 = mergedTrack;
+        candList[iTrack1] = mergedTrack;
+      } else { // we can just add the hits from track2 to track1 and the sorting is done internally
+        for (UInt_t iHit = 0; iHit < nhits2; iHit++)
+          track1 -> AddHit(track2 -> GetHit(iHit));
+
+        track1 -> SetSort(kTRUE);
 
         // refit if we have enough hits
-        if(trk1->getNumHits()>=fMinHitsForFit) trk1->fitAndSort();
+        if (track1 -> GetNumHits() >= fMinHitsForFit)
+          track1 -> FitAndSort();
       }
 
-      // update max z of trk1
-      if(fSorting==3){
-        z1max = trk1->getFirstHit()->cluster()->pos().Z();
-        zTemp = trk1->getLastHit()->cluster()->pos().Z();
-        if (zTemp>z1max) z1max=zTemp;
+      // update max z of track1
+      if (fSorting == 3) {
+        z1max = track1 -> GetFirstHit() -> GetCluster() -> GetPosition().Z();
+        zTemp = track1 -> GetLastHit() -> GetCluster() -> GetPosition().Z();
+        if (zTemp>z1max) z1max = zTemp;
       }
 
-      // delete trk2
-      delete candlist[itrk2];
-      candlist[itrk2]=NULL;
+      // delete track2
+      delete candList[iTrack2];
+      candList[iTrack2] = NULL;
 
     } // end loop over the other tracks to be tested
   } // end loop over tracks
 
-  // clean up candlist
-  for(Int_t i=0; i<candlist.size(); ++i){
-    if (candlist[i]==NULL) {
-      candlist.erase(candlist.begin()+i);
-      --i; // go one step back because "erase" shifts back the rest
+  // clean up candList
+  for (Int_t iCand = 0; iCand < candList.size(); iCand++) {
+    if (candList[iCand] == NULL) {
+      candList.erase(candList.begin() + iCand);
+      iCand++; // go one step back because "erase" shifts back the rest
     }
   }
 
   #ifdef DEBUGTT
-    std::cout<<candlist.size()<<" Merged Riemann Tracks"<<std::endl;
+    std::cout << candList.size() << " Merged Riemann Tracks" << std::endl;
   #endif
 }
 
 
 void
-STRiemannTrackFinder::cleanTracks(vector<STRiemannTrack*>& candlist,
-                                      Double_t szcut, Double_t planecut){
+STRiemannTrackFinder::CleanTracks(vector<STRiemannTrack *> &candList, Double_t szcut, Double_t planecut)
+{
+  std::cout << "WARNING: STRiemannTrackFinder::cleanTracks - no functionality!" << std::endl;
+  /*STRiemannHit *hit;
 
-  std::cout<<"WARNING: STRiemannTrackFinder::cleanTracks - no functionality!"<<std::endl;
-  /*STRiemannHit* hit;
+  for(UInt_t i = 0; i<candList.size(); ++i){ // loop over trackcands
+    if(!candList[i] -> IsFitted() || !candList[i] -> IsFitted()) continue; // skip track
 
-  for(UInt_t i=0; i<candlist.size(); ++i){ // loop over trackcands
-    if(!candlist[i]->isFitted() || !candlist[i]->isFitted()) continue; // skip track
-
-    for(UInt_t j=0; j<candlist[i]->getNumHits(); ++j){ // loop over hits
-      hit = candlist[i]->getHit(j);
-      if (TMath::Abs(candlist[i]->dist(hit)) > planecut || TMath::Abs(candlist[i]->szDist(hit)) > szcut){
-        candlist[i]->removeHit(j);
-        candlist[i]->refit();
+    for(UInt_t j = 0; j<candList[i] -> GetNumHits(); ++j){ // loop over hits
+      hit = candList[i] -> GetHit(j);
+      if (TMath::Abs(candList[i] -> dist(hit)) > planecut || TMath::Abs(candList[i] -> szDist(hit)) > szcut){
+        candList[i] -> removeHit(j);
+        candList[i] -> refit();
         --j;
       }
-      if(!candlist[i]->isFitted() || !candlist[i]->isFitted()) break; // skip track
+      if(!candList[i] -> IsFitted() || !candList[i] -> IsFitted()) break; // skip track
     } // end loop over hits
 
   } // end loop over trackcands*/
-
 }
 
 
 void
-STRiemannTrackFinder::sortClusters(vector<TpcCluster*>& cll){
-  if(fSorting==-1) return;
-  sortClusterClass sortCluster;
+STRiemannTrackFinder::SortClusters(vector<STHitCluster *> &clusterList)
+{
+  if(fSorting == -1)
+    return;
+
+  SortClusterClass sortCluster;
   sortCluster.SetSorting(fSorting);
   sortCluster.SetInteractionZ(fInteractionZ);
-  std::sort(cll.begin(),cll.end(),sortCluster);
+  std::sort(clusterList.begin(), clusterList.end(), sortCluster);
 }
 
 void
-STRiemannTrackFinder::sortTracklets(vector<STRiemannTrack*>& tracklets){
-  if(fSorting==-1) return;
-  sortTrackletsClass sortTracklet;
+STRiemannTrackFinder::SortTracklets(vector<STRiemannTrack *> &tracklets){
+  if(fSorting == -1)
+    return;
+
+  SortTrackletsClass sortTracklet;
   sortTracklet.SetSorting(fSorting);
-  std::sort(tracklets.begin(),tracklets.end(),sortTracklet);
+  std::sort(tracklets.begin(), tracklets.end(), sortTracklet);
 }
 
 
 void
-STRiemannTrackFinder::resetFlags(){
-// reset all flags
-  for(Int_t k=0;k<fHTCorrelators.size();++k){
-    fFound[k]=kFALSE;
-    fBestMatchQuality[k]=99999;
-    fBestMatchIndex[k]=0;
+STRiemannTrackFinder::ResetFlags()
+{
+  // reset all flags
+  for(Int_t k = 0; k < fHTCorrelators.size(); k++) {
+    fFound[k] = kFALSE;
+    fBestMatchQuality[k] = 99999;
+    fBestMatchIndex[k] = 0;
   }
 }
 
 
 Bool_t
-sortClusterClass::operator() (TpcCluster* s1, TpcCluster* s2){
+SortClusterClass::operator() (STHitCluster *s1, STHitCluster *s2)
+{
   Double_t a1;
   Double_t a2;
   TVector3 d1;
   TVector3 d2;
-  switch (sorting){
+
+  switch (fSorting) {
     case -1: //no sorting
       return kFALSE;
       break;
+
     case 0:
-      a1=s1->pos().X();
-      a2=s2->pos().X();
-      return a1>a2;
+      a1 = s1 -> GetPosition().X();
+      a2 = s2 -> GetPosition().X();
+      return a1 > a2;
       break;
+
     case 1:
-      a1=s1->pos().Y();
-      a2=s2->pos().Y();
-      return a1>a2;
+      a1 = s1 -> GetPosition().Y();
+      a2 = s2 -> GetPosition().Y();
+      return a1 > a2;
       break;
+
     case 2:
-      a1=s1->pos().Z();
-      a2=s2->pos().Z();
-      return a1>a2;
+      a1 = s1 -> GetPosition().Z();
+      a2 = s2 -> GetPosition().Z();
+      return a1 > a2;
       break;
+
     case 4:
-      d1 = s1->pos();
-      d1(2) -= interactionZ;
-      d2 = s2->pos();
-      d2(2) -= interactionZ;
-      a1=d1.Mag();
-      a2=d2.Mag();
-      return a1>a2;
+      d1 = s1 -> GetPosition();
+      d1(2) -= fInteractionZ;
+      d2 = s2 -> GetPosition();
+      d2(2) -= fInteractionZ;
+      a1 = d1.Mag();
+      a2 = d2.Mag();
+      return a1 > a2;
       break;
+
     case 5:
-      a1=s1->pos().Phi();
-      a2=s2->pos().Phi();
+      a1 = s1 -> GetPosition().Phi();
+      a2 = s2 -> GetPosition().Phi();
       if (a1 < -1.*TMath::PiOver2()) a1 += TMath::TwoPi();
       if (a2 < -1.*TMath::PiOver2()) a2 += TMath::TwoPi();
-      return a1<a2;
+      return a1 < a2;
       break;
+       
     case -5:
-      a1=s1->pos().Phi();
-      a2=s2->pos().Phi();
+      a1 = s1 -> GetPosition().Phi();
+      a2 = s2 -> GetPosition().Phi();
       if (a1 < -1.*TMath::PiOver2()) a1 += TMath::TwoPi();
       if (a2 < -1.*TMath::PiOver2()) a2 += TMath::TwoPi();
-      return a1>a2;
+      return a1 > a2;
       break;
+
     case 3:
     default:
-      a1=s1->pos().Perp();
-      a2=s2->pos().Perp();
-      return a1>a2;
+      a1 = s1 -> GetPosition().Perp();
+      a2 = s2 -> GetPosition().Perp();
+      return a1 > a2;
   }
 }
 
 
 Bool_t
-sortTrackletsClass::operator() (STRiemannTrack* t1, STRiemannTrack* t2){
+SortTrackletsClass::operator() (STRiemannTrack *t1, STRiemannTrack *t2)
+{
   Double_t a1;
   Double_t a12;
   Double_t a2;
   Double_t a22;
   TVector3 d1;
   TVector3 d2;
-  switch (sorting){
+
+  switch (fSorting) {
     case -1: //no sorting
       return kFALSE;
 
@@ -643,30 +713,27 @@ sortTrackletsClass::operator() (STRiemannTrack* t1, STRiemannTrack* t2){
     case 1:
     case 2:
     case 4:
-      a1=t1->getFirstHit()->cluster()->pos().Perp();
-      a12=t1->getLastHit()->cluster()->pos().Perp();
-      if (a12<a1) a1=a12;
+      a1 = t1 -> GetFirstHit() -> GetCluster() -> GetPosition().Perp();
+      a12 = t1 -> GetLastHit() -> GetCluster() -> GetPosition().Perp();
+      if (a12 < a1) a1 = a12;
 
-      a2=t2->getFirstHit()->cluster()->pos().Perp();
-      a22=t2->getLastHit()->cluster()->pos().Perp();
-      if (a22<a2) a2=a22;
+      a2 = t2 -> GetFirstHit() -> GetCluster() -> GetPosition().Perp();
+      a22 = t2 -> GetLastHit() -> GetCluster() -> GetPosition().Perp();
+      if (a22 < a2) a2 = a22;
 
-      return a1<a2;
+      return a1 < a2;
 
     // if clusters are sorted by R, sort tracklets by Z
     case 3:
     default:
-      a1=t1->getFirstHit()->cluster()->pos().Z();
-      a12=t1->getLastHit()->cluster()->pos().Z();
-      if (a12<a1) a1=a12;
+      a1 = t1 -> GetFirstHit() -> GetCluster() -> GetPosition().Z();
+      a12 = t1 -> GetLastHit() -> GetCluster() -> GetPosition().Z();
+      if (a12 < a1) a1 = a12;
 
-      a2=t2->getFirstHit()->cluster()->pos().Z();
-      a22=t2->getLastHit()->cluster()->pos().Z();
-      if (a22<a2) a2=a22;
+      a2 = t2 -> GetFirstHit() -> GetCluster() -> GetPosition().Z();
+      a22 = t2 -> GetLastHit() -> GetCluster() -> GetPosition().Z();
+      if (a22 < a2) a2 = a22;
 
-      return a1<a2;
+      return a1 < a2;
   }
 }
-
-
-

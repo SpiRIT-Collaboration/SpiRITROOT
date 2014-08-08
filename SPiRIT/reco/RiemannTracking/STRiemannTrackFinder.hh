@@ -33,8 +33,7 @@
 
 using std::vector;
 
-class STCluster;
-class GFTrackCand;
+class STHitCluster;
 class STAbsHitTrackCorrelator;
 class STAbsTrackTrackCorrelator;
 class STRiemannTrack;
@@ -47,47 +46,44 @@ class STRiemannTrackFinder {
 
 
     // Accessors -----------------------
-    const STAbsHitTrackCorrelator* GetHTCorrelator(UInt_t i) const
-    {return fHTCorrelators.at(i);}
-    const STAbsTrackTrackCorrelator* GetTTCorrelator(UInt_t i) const
-    {return fTTcorrelators.at(i);}
+    const STAbsHitTrackCorrelator *GetHTCorrelator(UInt_t i) const;
+    const STAbsTrackTrackCorrelator *GetTTCorrelator(UInt_t i) const;
 
-    Int_t getSorting(){return fSorting;}
-    Double_t getInteractionZ(){return fInteractionZ;}
+    Int_t GetSorting();
+    Double_t GetInteractionZ();
+    Double_t GetScale() const;
 
     // Modifiers -----------------------
-    void SetMinHitsForFit(UInt_t n){fMinHitsForFit=n;}
+    void SetMinHitsForFit(UInt_t numHits);
 
-    void SetSorting(Int_t s){fSorting=s;} // -1: no sorting, 0: sort Clusters by X, 1: Y, 2: Z, 3: R, 4: Distance to interaction point, 5: Phi
-    void SetSortingMode(Bool_t sortingMode){fSortingMode=sortingMode;} // false: sort only according to fSorting; kTRUE: use internal sorting when adding hits to trackcands
-    void SetInteractionZ(Double_t z){fInteractionZ=z;}
-    void SetMaxNumHitsForPR(Double_t MaxNumHitsForPR){fMaxNumHitsForPR=MaxNumHitsForPR;} // for debugging
+    void SetSorting(Int_t sorting);  /// -1: no sorting, 0: sort Clusters by X, 1: Y, 2: Z, 3: R, 4: Distance to interaction point, 5: Phi
+    void SetSortingMode(Bool_t sortingMode); /// false: sort only according to fSorting; kTRUE: use internal sorting when adding hits to trackcands
+    void SetInteractionZ(Double_t z);
+    void SetMaxNumHitsForPR(Double_t maxHits); /// for debugging
 
-    void SkipCrossingAreas(Bool_t opt=kTRUE) {fSkipCrossingAreas=opt;}
-    void SetTTProxcut(Double_t cut){fTTproxcut=cut;} // needed for speeding up the merging
-    void SetProxcut(Double_t cut){fProxcut=cut;} // needed for speeding up the initialized trackbuilding
-    void SetHelixcut(Double_t cut){fHelixcut=cut;} // needed for excluding hits in crossing areas
+    void SkipCrossingAreas(Bool_t value = kTRUE);
+    void SetTTProxcut(Double_t cut); /// needed for speeding up the merging
+    void SetProxcut(Double_t cut); /// needed for speeding up the initialized trackbuilding
+    void SetHelixcut(Double_t cut); /// needed for excluding hits in crossing areas
 
-    void initTracks(Bool_t initTrks=kTRUE, Double_t dip=0, Double_t curv=0) {fInitTrks=initTrks; fInitDip=dip; fInitCurv=curv;}
-    void SetMaxR(Double_t R){fMaxR=R;}
-    void SetMinHits(UInt_t i){fMinHits=i;}
-    void SetSkipAndDelete(Bool_t opt=kTRUE) {fSkipAndDelete=opt;}
+    void InitTracks(Bool_t initTracks = kTRUE, Double_t dip = 0, Double_t curv = 0);
+    void SetMaxR(Double_t r);
+    void SetMinHits(UInt_t minHits);
+    void SetSkipAndDelete(Bool_t value = kTRUE);
 
-    void SetScale(Double_t scale){fRiemannScale=scale;}
-    Double_t GetScale()const {return fRiemannScale;}
+    void SetScale(Double_t scale);
 
     // Operations ----------------------
-    UInt_t buildTracks(vector<TpcCluster*>& clusters,
-        vector<STRiemannTrack*>& candlist);
+    UInt_t BuildTracks(vector<STHitCluster *> &clusters, vector<STRiemannTrack *> &candlist);
 
-    void mergeTracks(vector<STRiemannTrack*>& candlist);
-    void cleanTracks(vector<STRiemannTrack*>& candlist, Double_t szcut, Double_t planecut);
+    void MergeTracks(vector<STRiemannTrack *> &candlist);
+    void CleanTracks(vector<STRiemannTrack *> &candlist, Double_t szcut, Double_t planecut);
 
-    void addCorrelator(STAbsHitTrackCorrelator* c);
-    void addTTCorrelator(STAbsTrackTrackCorrelator* c);
+    void AddHTCorrelator(STAbsHitTrackCorrelator *c);
+    void AddTTCorrelator(STAbsTrackTrackCorrelator *c);
 
-    void sortClusters(vector<TpcCluster*>& cll);
-    void sortTracklets(vector<STRiemannTrack*>& tracklets);
+    void SortClusters(vector<STHitCluster *> &cll);
+    void SortTracklets(vector<STRiemannTrack *> &tracklets);
 
   private:
     // Private Data Members ------------
@@ -105,7 +101,7 @@ class STRiemannTrackFinder {
 
     Bool_t fSkipCrossingAreas;
 
-    Bool_t fInitTrks;
+    Bool_t fInitTracks;
     Bool_t fSkipAndDelete; // skip hits far away from boundary and delete incomplete tracks!
     Double_t fInitDip;
     Double_t fInitCurv;
@@ -121,28 +117,34 @@ class STRiemannTrackFinder {
 
     // Private Methods -----------------
     void InitVariables();
-    void resetFlags();
+    void ResetFlags();
 
 };
 
 // sorting algorithm for clusters
-class sortClusterClass{
+class SortClusterClass
+{
   public:
-    Bool_t operator() (TpcCluster* s1, TpcCluster* s2);
-    void SetSorting(Int_t s){sorting=s;}
-    void SetInteractionZ(Double_t z){interactionZ=z;}
+    Bool_t operator() (STHitCluster *cluster1, STHitCluster *cluster2);
+
+    void SetSorting(Int_t sorting) { fSorting = sorting; }
+    void SetInteractionZ(Double_t z) { fInteractionZ = z; }
+
   private:
-    Int_t sorting;
-    Double_t interactionZ;
+    Int_t fSorting;
+    Double_t fInteractionZ;
 };
 
 // sorting algorithm for tracklets
-class sortTrackletsClass{
+class SortTrackletsClass
+{
   public:
-    Bool_t operator() (STRiemannTrack* t1, STRiemannTrack* t2);
-    void SetSorting(Int_t s){sorting=s;}
+    Bool_t operator() (STRiemannTrack *t1, STRiemannTrack *t2);
+
+    void SetSorting(Int_t sorting) { fSorting = sorting; }
+
   private:
-    Int_t sorting;
+    Int_t fSorting;
 };
 
 #endif
