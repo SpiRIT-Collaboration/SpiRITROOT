@@ -435,7 +435,7 @@ STRiemannTrack::Refit(){ // helix fit
   
   // calc dip
   fDip = TMath::ATan(fM/fRadius) + TMath::PiOver2();
-  fSinDip = sin(fDip);
+  fSinDip = TMath::Sin(fDip);
 }
 
 void
@@ -647,7 +647,7 @@ STRiemannTrack::DistHelix(STRiemannHit *hit, Bool_t calcPos, Bool_t TwoPiCheck, 
     hit_angleZ = 0;
     if (TMath::Abs(fM) > 1.E-3) hit_angleZ = (hitZ - fT)/fM;
 
-    Double_t zWeigh = 0.5*(cos(2.*fDip) + 1.);
+    Double_t zWeigh = 0.5*(TMath::Cos(2.*fDip) + 1.);
     hit_angle = hit_angleR*(1 - zWeigh) + hit_angleZ*zWeigh;
 
     hit_angle = 0;
@@ -661,8 +661,8 @@ STRiemannTrack::DistHelix(STRiemannHit *hit, Bool_t calcPos, Bool_t TwoPiCheck, 
 
   // newtons method for finding POCA
   while (kTRUE){
-    sinphi = sin(hit_angle);
-    cosphi = cos(hit_angle);
+    sinphi = TMath::Sin(hit_angle);
+    cosphi = TMath::Cos(hit_angle);
 
     xHelix = fCenter.X() + cosphi * fRadius - pos.X();
     yHelix = fCenter.Y() + sinphi * fRadius - pos.Y();
@@ -714,7 +714,7 @@ STRiemannTrack::GetPosDirOnHelix(UInt_t i, TVector3& pos, TVector3& dir) const
     Double_t hit_angleZ = 0;
     if (TMath::Abs(fM) > 1.E-3) hit_angleZ = (fHits[i] -> GetZ() - fT)/fM;
 
-    Double_t zWeigh = 0.5*(cos(2.*fDip) + 1.);
+    Double_t zWeigh = 0.5*(TMath::Cos(2.*fDip) + 1.);
     hit_angle = hit_angleR*(1 - zWeigh) + hit_angleZ*zWeigh;
   }
 
@@ -817,11 +817,11 @@ STRiemannTrack::Plot(Bool_t standalone)
   }
 }
 
-/*
 void
 STRiemannTrack::InitTargetTrack(Double_t dip, Double_t curvature)
 {
-  if (GetNumHits() != 1) return;
+  if (GetNumHits() != 1)
+    return;
 
   fIsInitialized = kTRUE;
   fIsFitted = kTRUE;
@@ -836,17 +836,17 @@ STRiemannTrack::InitTargetTrack(Double_t dip, Double_t curvature)
   fN.SetXYZ(hit0.X(), hit0.Y(), curvature);
   fN.RotateZ(TMath::PiOver2()); // rotate 90 deg
   fN.SetMag(1.);
-  fC = TVector3(0., 0., 0.); // track coming from origin
+  fC = 0.; // track coming from origin
 
   // calc fCenter and fRadius
-  centerR();
+  CenterR();
 
   fRadius = (hit0 - fCenter).Perp();
 
   // get angle of hit0
   hit0 -= fCenter;
   Double_t angle0 = hit0.Phi(); // [-pi, pi]
-  fHits[0] -> setAngleOnHelix(angle0); // set angle of first hit relative to x axis
+  fHits[0] -> SetAngleOnHelix(angle0); // set angle of first hit relative to x axis
 
   // get angle of hit1
   hit1 -= fCenter;
@@ -856,32 +856,30 @@ STRiemannTrack::InitTargetTrack(Double_t dip, Double_t curvature)
   fT = hit0.Z() - fM*angle0;
 
   fDip = TMath::ATan(-1.* fM/fRadius) + TMath::PiOver2();
-  fSinDip = sin(fDip);
+  fSinDip = TMath::Sin(fDip);
 
   //std::cout << "dip " << fDip << " angle 0 " << angle0 << "  angle1 " << angle1 << "\n";
 }
-*/
 
-/*
 void
 STRiemannTrack::InitCircle(Double_t phi) {
-  if (getNumHits() != 1) return;
+  if (GetNumHits() != 1)
+    return;
 
   fIsInitialized = kTRUE;
   fIsFitted = kTRUE;
 
   TVector3 hit0 = fHits[0] -> GetCluster() -> GetPosition();
 
-  fCenter.SetXYZ(0,0,0);
+  fCenter.SetXYZ(0, 0, 0);
   fRadius = hit0.Perp();
 
   fM = 0;
   fT = hit0.Z();
 
   fDip = TMath::PiOver2();
-  fSinDip = sin(fDip);
+  fSinDip = TMath::Sin(fDip);
 }
-*/
 
 /*
 Int_t

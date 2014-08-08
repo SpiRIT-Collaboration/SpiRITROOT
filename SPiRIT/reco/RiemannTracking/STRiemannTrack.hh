@@ -91,8 +91,8 @@ class STRiemannTrack : public TObject
               void  AddHit(STRiemannHit *hit);
               void  RemoveHit(UInt_t ihit);
 
-//              void  InitTargetTrack(Double_t Dip, Double_t curvature = 0); // init as straight track from Origin for single hit track
-//              void  InitCircle(Double_t phi); // init as a circle
+              void  InitTargetTrack(Double_t Dip, Double_t curvature = 0); // init as straight track from Origin for single hit track
+              void  InitCircle(Double_t phi); // init as a circle
 
           
     // Operations ----------------------
