@@ -221,19 +221,15 @@ else(NOT FAIRROOT_MINIMAL)
   WRITE_MINIMAL_CONFIG_FILE(config.sh)
 endif(NOT FAIRROOT_MINIMAL)
 
-ADD_CUSTOM_COMMAND(OUTPUT post_build_message
-                   COMMAND ${CMAKE_COMMAND} -E echo "" > post_build_message
-                   COMMAND ${CMAKE_COMMAND} -E echo "======================================================" >> post_build_message
-                   COMMAND ${CMAKE_COMMAND} -E echo "=                                                    =" >> post_build_message
-                   COMMAND ${CMAKE_COMMAND} -E echo "=  Make sure to add the line below in .bashrc file.  =" >> post_build_message
-                   COMMAND ${CMAKE_COMMAND} -E echo "=                                                    =" >> post_build_message
-                   COMMAND ${CMAKE_COMMAND} -E echo "=              alias sroot=\\'. sroot.sh\\'              =" >> post_build_message
-                   COMMAND ${CMAKE_COMMAND} -E echo "=                                                    =" >> post_build_message
-                   COMMAND ${CMAKE_COMMAND} -E echo "======================================================" >> post_build_message
-                   COMMAND ${CMAKE_COMMAND} -E echo "" >> post_build_message
-                  )
-
 ADD_CUSTOM_TARGET(BUILD_SUCCESSFUL ALL
-                  DEPENDS post_build_message ${ALL_TARGETS}
-                  COMMAND cat post_build_message
+                  DEPENDS ${ALL_TARGETS}
+                  COMMAND ${CMAKE_COMMAND} -E echo ""
+                  COMMAND ${CMAKE_COMMAND} -E echo "======================================================"
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=  Make sure to add the line below in .bashrc file.  ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=              alias sroot=\\'. sroot.sh\\'              ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "======================================================"
+                  COMMAND ${CMAKE_COMMAND} -E echo ""
                  )
