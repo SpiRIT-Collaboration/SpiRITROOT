@@ -209,6 +209,7 @@ if(NOT FAIRROOT_MINIMAL)
 
   WRITE_CONFIG_FILE(config.sh)
   WRITE_CONFIG_FILE(config.csh)
+  WRITE_CONFIG_FILE(sroot.sh)
 
   SET(VMCWORKDIR ${CMAKE_INSTALL_PREFIX}/share/fairbase)
   WRITE_CONFIG_FILE(config.sh_install)

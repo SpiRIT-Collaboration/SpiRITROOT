@@ -39,7 +39,4 @@ if [ "$same_system" == "1" ]; then
   setenv PATH "@MY_PATH@"
   setenv PYTHIA8DATA "@PYTHIA8DATA@"
   setenv CLASSPATH "@MY_CLASSPATH@"
-
-
-
 fi
