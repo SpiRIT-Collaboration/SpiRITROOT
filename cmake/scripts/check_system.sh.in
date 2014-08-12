@@ -4,12 +4,10 @@ linux_flavour=$(sed '/^$/d' /etc/issue | head -n 1 | tr  '\\' ' '|awk '{gsub("\"
 system=$(uname -m)
 same_system=1
 
-echo "System during compilation: $Linux_Flavour_"
-echo "                           $System_"
-echo "System now               : $linux_flavour"
-echo "                           $system"
-
 if [ ! "$linux_flavour" = "$Linux_Flavour_" ]; then
+  echo "Linux during compilation: $Linux_Flavour_"
+  echo "Linux now               : $linux_flavour"
+  echo ""
   echo "You try to run the software on a different"
   echo "linux flavour than it was compuiled on."
   echo "This is normaly a serious error, so we stop"
@@ -19,6 +17,9 @@ if [ ! "$linux_flavour" = "$Linux_Flavour_" ]; then
   same_system=0
 fi
 if [ ! "$system" = "$System_" ]; then
+  echo "System during compilation: $System_"
+  echo "System now               : $system"
+  echo ""
   echo "You try to run the software on a different"
   echo "linux flavour than it was compuiled on."
   echo "This is normaly a serious error, so we stop"

@@ -1,4 +1,4 @@
-void digi
+void run_digi
 (TString mcFile      = "data/test.mc_youngstest.root",
  TString mcParFile   = "data/params_youngstest.root",
  TString digiParFile = "ST.parameters.par")
@@ -62,5 +62,5 @@ void digi
   // __ Init and run ___________________________________
 
   fRun -> Init();
-  //fRun -> Run(0,10);
+  fRun -> Run(0,10);
 }
