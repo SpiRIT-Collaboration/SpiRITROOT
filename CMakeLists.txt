@@ -230,7 +230,7 @@ ADD_CUSTOM_TARGET(BUILD_SUCCESSFUL ALL
                   COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
                   COMMAND ${CMAKE_COMMAND} -E echo "=              alias sroot=\\'. sroot.sh\\'              ="
                   COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=  After that, type \\'. ~/.bashrc\\' and finally    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=  After that, type \\'. ~/.bashrc\\' and finally        ="
                   COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
                   COMMAND ${CMAKE_COMMAND} -E echo "=                sroot YOURUSERNAME                  ="
                   COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
