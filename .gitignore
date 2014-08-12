@@ -1,0 +1,8 @@
+*.swp
+*.o
+*.root
+*.log
+gphysi.dat
+core_dump*
+build
+!*/build

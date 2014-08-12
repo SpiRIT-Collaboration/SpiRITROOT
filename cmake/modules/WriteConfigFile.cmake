@@ -177,6 +177,16 @@ MACRO (WRITE_CONFIG_FILE filename)
                   )
   ENDIF(${filename} MATCHES "[.]csh.*$")
 
+  IF(${filename} MATCHES "sroot.sh")
+    configure_file(${PROJECT_SOURCE_DIR}/cmake/scripts/sroot.sh.in
+	           ${CMAKE_CURRENT_BINARY_DIR}/${filename}
+                  )
+    file(COPY ${CMAKE_CURRENT_BINARY_DIR}/${filename}
+         DESTINATION ${SIMPATH}/bin
+         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+        )
+  ENDIF(${filename} MATCHES "sroot.sh")
+
 
 ENDMACRO (WRITE_CONFIG_FILE)
 

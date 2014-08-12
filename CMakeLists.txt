@@ -8,16 +8,19 @@
 # Check if cmake has the required version
 CMAKE_MINIMUM_REQUIRED(VERSION  2.8.2 FATAL_ERROR)
 
-# Set name of our project to "FAIRROOT". Has to be done
+Set(ALL_TARGETS "" CACHE INTERNAL "")
+
+# Set name of our project to "SPiRITROOT". Has to be done
 # after check of cmake version                        
-project(FAIRROOT)
+project(SPiRITROOT)
 
 # where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ 
 # is checked
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/cuda" ${CMAKE_MODULE_PATH})
 
-SET(VMCWORKDIR ${CMAKE_SOURCE_DIR}/example)
+SET(VMCWORKDIR ${CMAKE_SOURCE_DIR}/example) # This will be deleted after completing the development
+SET(SPIRITDIR ${CMAKE_SOURCE_DIR}/SPiRIT)
 
 # Check if the compiler support specific C++11 features
 # Up to now this is only a check since the code does not use
@@ -141,6 +144,7 @@ add_subdirectory (eventdisplay)
 add_subdirectory (example)
 add_subdirectory (MbsAPI)
 add_subdirectory (datamatch)
+add_subdirectory (SPiRIT)
 If (Boost_FOUND)
   add_subdirectory (fairmq)
 Else (Boost_FOUND)
@@ -207,6 +211,7 @@ if(NOT FAIRROOT_MINIMAL)
 
   WRITE_CONFIG_FILE(config.sh)
   WRITE_CONFIG_FILE(config.csh)
+  WRITE_CONFIG_FILE(sroot.sh)
 
   SET(VMCWORKDIR ${CMAKE_INSTALL_PREFIX}/share/fairbase)
   WRITE_CONFIG_FILE(config.sh_install)
@@ -215,3 +220,26 @@ if(NOT FAIRROOT_MINIMAL)
 else(NOT FAIRROOT_MINIMAL)
   WRITE_MINIMAL_CONFIG_FILE(config.sh)
 endif(NOT FAIRROOT_MINIMAL)
+
+ADD_CUSTOM_TARGET(BUILD_SUCCESSFUL ALL
+                  DEPENDS ${ALL_TARGETS}
+                  COMMAND ${CMAKE_COMMAND} -E echo ""
+                  COMMAND ${CMAKE_COMMAND} -E echo "======================================================"
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=  Make sure to add the line below in .bashrc file.  ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=              alias sroot=\\'. sroot.sh\\'              ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=  After that, type \\'. ~/.bashrc\\' and finally        ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                sroot YOURUSERNAME                  ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=  will set the environment variables and basic      ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=  macros for running SpiRITROOT!                    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                                     Enjoy!         ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=          - SpiRITROOT development team -           ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
+                  COMMAND ${CMAKE_COMMAND} -E echo "======================================================"
+                  COMMAND ${CMAKE_COMMAND} -E echo ""
+                 )
