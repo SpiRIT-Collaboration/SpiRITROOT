@@ -43,6 +43,7 @@
 using namespace std;
 
 #define UPTOHIT
+#define DEBUGHT 1
 
 // Class Member definitions -----------
 STRiemannTrackFinder::STRiemannTrackFinder()
@@ -88,7 +89,7 @@ STRiemannTrackFinder::InitVariables()
   fTTProxCut = 500;
   fProxCut = 5;
   fHelixCut = 0.2;
-  fRiemannScale = 24.6;
+  fRiemannScale = 86.1;
   fMaxR = 0;
   fMinHits = 100;
   fInitTracks = kFALSE;
@@ -240,7 +241,7 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
       // IF A TRACK SURVIVES EACH CORRELATOR
       // THE HIT IS ASSIGNED TO THE BEST (smallest!) MATCH 
       
-      Bool_t trksurvive = kFALSE;
+      Bool_t trackSurvive = kFALSE;
       vector<Double_t> matchQualities(numCorrelators, 99999.); // for saving the match qualities for each correlator
       Int_t level = 0; // number of survived correlators
       #ifdef DEBUGHT
@@ -265,17 +266,17 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
           continue; // try the next correlator
 
         if(!survive){
-          trksurvive = kFALSE;
+          trackSurvive = kFALSE;
           break; // track has failed this level --> can be excluded
         }
         // track survived this correlator
         level = iCor;
-        trksurvive = kTRUE;
+        trackSurvive = kTRUE;
         matchQualities[iCor] = matchQuality;
       } // end loop over correlator
 
 
-      if (trksurvive) { // update best values
+      if (trackSurvive) { // update best values
         // number matching fitted tracks that survived all corrs (for excluding clusters)
         if (level == numCorrelators - 1 &&
             !track -> IsInitialized() &&
@@ -295,13 +296,13 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
       }
 
       #ifdef DEBUGHT
-      if(iCluster == fMaxNumHitsForPR - 1 && tracksurvive)
+      if(iCluster == fMaxNumHitsForPR - 1 && trackSurvive)
         std::cout << " Track " << iTrack << " survived with level " << level << std::endl;
       if(iCluster == fMaxNumHitsForPR - 1)
         std::cout << std::endl;
       #endif
 
-      foundAtAll |= trksurvive; // foundAtAll will be kTRUE if at least one track survived
+      foundAtAll |= trackSurvive; // foundAtAll will be kTRUE if at least one track survived
     } // end loop over tracks
 
 

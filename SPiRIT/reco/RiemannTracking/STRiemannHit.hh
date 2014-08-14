@@ -28,8 +28,8 @@ class STRiemannHit : public TObject
   public:
     STRiemannHit();
     STRiemannHit(Double_t riemannScale);
-    STRiemannHit(Double_t r, Double_t phi, Double_t riemannScale = 24.6);
-    STRiemannHit(STHitCluster *cluster, Double_t riemannScale = 24.6);
+    STRiemannHit(Double_t r, Double_t phi, Double_t riemannScale = 86.1);
+    STRiemannHit(STHitCluster *cluster, Double_t riemannScale = 86.1);
     ~STRiemannHit();
 
     const TVector3 &GetX() const;
@@ -43,7 +43,7 @@ class STRiemannHit : public TObject
     Double_t SetAngleOnHelix(Double_t value);
 
   private:
-    void InitVariables(Double_t r, Double_t phi, Double_t riemannScale = 24.6);
+    void InitVariables(Double_t r, Double_t phi, Double_t riemannScale = 86.1);
 
     TVector3 fX;            /// Position on Riemann sphere in cartesian coordinates
     STHitCluster *fCluster; /// STHitCluster pointer, no ownership over this pointer!
