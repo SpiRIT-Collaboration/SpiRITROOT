@@ -44,6 +44,7 @@ using namespace std;
 
 #define UPTOHIT
 #define DEBUGHT 1
+#define DEBUGTT 1
 
 // Class Member definitions -----------
 STRiemannTrackFinder::STRiemannTrackFinder()
@@ -257,9 +258,9 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
         #ifdef DEBUGHT
           if(iCluster == fMaxNumHitsForPR-1){
             if(!applicable)
-              std::cout << "  correlator " << iCor << " NOT applicable" << std::endl;
+              std::cout << " HT correlator " << iCor << " NOT applicable" << std::endl;
             else
-              std::cout << "  correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
+              std::cout << " HT correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
           }
         #endif
         if(!applicable)
@@ -435,7 +436,7 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
         z1max = zTemp;
     }
 
-    for (UInt_t iTrack2 = iTrack1 + 1; iTrack2 < numTracks; iTrack2) { // loop over the other tracks to be tested
+    for (UInt_t iTrack2 = iTrack1 + 1; iTrack2 < numTracks; iTrack2++) { // loop over the other tracks to be tested
       if(candList[iTrack2] == NULL)
         continue;
 
@@ -480,9 +481,9 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
 
         #ifdef DEBUGTT
           if (!applicable)
-            std::cout << "  correlator " << iCor << " NOT applicable" << std::endl;
+            std::cout << " TT correlator " << iCor << " NOT applicable" << std::endl;
           else
-            std::cout << "  correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
+            std::cout << " TT correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
         #endif
 
         if (!applicable) {
