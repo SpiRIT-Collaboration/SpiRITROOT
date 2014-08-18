@@ -158,8 +158,7 @@ TString STDigiPar::GetFile(Int_t fileNum)
   TString parFile = sysFile + "/parameters/ST.files.par";
   fileList.open(parFile.Data());
 
-  if(!fileList) {
-    fLogger -> Fatal(MESSAGE_ORIGIN, Form("File %s not found!", parFile.Data()));
+  if(!fileList) { fLogger -> Fatal(MESSAGE_ORIGIN, Form("File %s not found!", parFile.Data()));
 
     throw;
   }
