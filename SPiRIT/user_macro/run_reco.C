@@ -7,7 +7,7 @@ void run_reco()
   logger -> SetLogVerbosityLevel("MEDIUM");
 
   FairRunAna* run = new FairRunAna();
-  run -> SetInputFile("data/test.mc_youngstest.root");
+  run -> SetInputFile("test.mc_youngstest.root");
   run -> SetOutputFile("ha.root");
 
   TString file = "parameters/ST.parameters.par";

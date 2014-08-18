@@ -191,7 +191,6 @@ Macro(ROOT_GENERATE_ROOTMAP)
 EndMacro(ROOT_GENERATE_ROOTMAP)
 
 Macro(GENERATE_LIBRARY)
-
   set(Int_LIB ${LIBRARY_NAME})
 
   Set(RuleName "${Int_LIB}_RULES")
@@ -247,6 +246,9 @@ Macro(GENERATE_LIBRARY)
   ############### install the library ###################
   install(TARGETS ${Int_LIB} DESTINATION lib)
 
+  Set(ALL_TARGETS ${ALL_TARGETS} "${LIBRARY_NAME}" CACHE INTERNAL "ALL_TARGETS")
+  Set(ALL_TARGETS ${ALL_TARGETS} "lib${LIBRARY_NAME}.rootmap" CACHE INTERNAL "ALL_TARGETS")
+
   Set(LIBRARY_NAME)
   Set(DICTIONARY)
   Set(LINKDEF)
@@ -254,7 +256,6 @@ Macro(GENERATE_LIBRARY)
   Set(HEADERS)
   Set(NO_DICT_SRCS)
   Set(DEPENDENCIES)  
-
 EndMacro(GENERATE_LIBRARY)
 
 
@@ -271,6 +272,8 @@ Macro(GENERATE_EXECUTABLE)
 
   ############### install the library ###################
   install(TARGETS ${EXE_NAME} DESTINATION bin)
+
+  Set(ALL_TARGETS ${ALL_TARGETS} "${EXE_NAME}" CACHE INTERNAL "ALL_TARGETS")
 
   Set(EXE_NAME)
   Set(SRCS)

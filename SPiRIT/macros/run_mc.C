@@ -142,14 +142,13 @@ void run_mc(const Int_t nEvents = 10)
 
     // -----   Create simulation run   ----------------------------------------
     FairRunSim* run = new FairRunSim();
-    run->SetName("TGeant3");              // Transport engine
+    run->SetName("TGeant4");              // Transport engine
     run->SetOutputFile(outFile);          // Output file
     FairRuntimeDb* rtdb = run->GetRuntimeDb();
     // ------------------------------------------------------------------------
     
     run->SetWriteRunInfoFile(kFALSE);  
     // -----   Create media   -------------------------------------------------
-    //  run->SetMaterials("media.geo");       // Materials
     //run->SetMaterials("media_pnd.geo");       // Materials
     // ------------------------------------------------------------------------
     
@@ -164,8 +163,6 @@ void run_mc(const Int_t nEvents = 10)
     run->AddModule(target);
     
     FairDetector* spirit = new STDetector("STDetector", kTRUE);
-    //spirit->SetGeometryFileName("spirit.geo"); 
-    //spirit->SetGeometryFileName("tpc_prototype_ArCo2.root"); 
     spirit->SetGeometryFileName("testingsave_geom.root");
     run->AddModule(spirit);
     
@@ -224,7 +221,6 @@ void run_mc(const Int_t nEvents = 10)
   run->SetStoreTraj(kTRUE);
     
   // -----   Run initialisation   -------------------------------------------
-  //if (i==0) run->Init();
   run->Init();
   // ------------------------------------------------------------------------
     
@@ -232,32 +228,25 @@ void run_mc(const Int_t nEvents = 10)
   // Switch this on only if trajectories are stored.
   // Choose this cuts according to your needs, but be aware
   // that the file size of the output file depends on these cuts
-    
-  //FairTrajFilter* trajFilter = FairTrajFilter::Instance();
-  //trajFilter->SetStepSizeCut(0.01); // 1 cm
-  //trajFilter->SetStorePrimaries(kTRUE);
-  //trajFilter->SetStoreSecondaries(kTRUE);
+  
+  // Ok so if we see the line four lines above this it says Switch this on only if trajectories are stored. What that means is that there actually must be a FairTrajFilter in order to store them. 
+  // It does not appear to need the SetStorePrimaries or SetStoreSecondaries to NEED to be true but I'm leaving those lines uncommented so as to make sure.
+  FairTrajFilter* trajFilter = FairTrajFilter::Instance();
+  trajFilter->SetStorePrimaries(kTRUE);
+  trajFilter->SetStoreSecondaries(kTRUE);
   // ------------------------------------------------------------------------
     
   // -----   Runtime database   ---------------------------------------------
-  //if (i==0) {
   Bool_t kParameterMerged = kTRUE;
   FairParRootFileIo* parOut = new FairParRootFileIo(kParameterMerged);
   parOut->open(parFile.Data());
   rtdb->setOutput(parOut);
-  //}
   rtdb->saveOutput();
   rtdb->print();
-  
   // ------------------------------------------------------------------------
     
   // -----   Start run   ----------------------------------------------------
   run->Run(nEvents);
-  //}
-
-  // ------------------------------------------------------------------------
-  //  run->CreateGeometryFile("data/geofile_full.root");
-  
   // -----   Finish   -------------------------------------------------------
   timer.Stop();
   Double_t rtime = timer.RealTime();
@@ -269,7 +258,4 @@ void run_mc(const Int_t nEvents = 10)
   cout << "Real time " << rtime << " s, CPU time " << ctime 
        << "s" << endl << endl;
   // ------------------------------------------------------------------------
-
-  cout << mBeta << endl;
-
 }

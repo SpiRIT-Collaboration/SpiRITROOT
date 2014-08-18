@@ -62,9 +62,9 @@ class STRiemannTrackFinder {
     void SetMaxNumHitsForPR(Double_t maxHits); /// for debugging
 
     void SkipCrossingAreas(Bool_t value = kTRUE);
-    void SetTTProxcut(Double_t cut); /// needed for speeding up the merging
-    void SetProxcut(Double_t cut); /// needed for speeding up the initialized trackbuilding
-    void SetHelixcut(Double_t cut); /// needed for excluding hits in crossing areas
+    void SetTTProxCut(Double_t cut); /// needed for speeding up the merging
+    void SetProxCut(Double_t cut); /// needed for speeding up the initialized trackbuilding
+    void SetHelixCut(Double_t cut); /// needed for excluding hits in crossing areas
 
     void InitTracks(Bool_t initTracks = kTRUE, Double_t dip = 0, Double_t curv = 0);
     void SetMaxR(Double_t r);
@@ -110,9 +110,9 @@ class STRiemannTrackFinder {
 
     UInt_t fMinHitsForFit;
 
-    Double_t fProxcut;
-    Double_t fHelixcut;
-    Double_t fTTproxcut;
+    Double_t fProxCut;
+    Double_t fHelixCut;
+    Double_t fTTProxCut;
     Double_t fRiemannScale;
 
     // Private Methods -----------------

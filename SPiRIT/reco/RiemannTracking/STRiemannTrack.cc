@@ -97,7 +97,7 @@ STRiemannTrack::InitVariables()
   fDip = 0;
   fSinDip = 0;
   fRms = 0;
-  fRiemannScale = 24.6;
+  fRiemannScale = 86.1;
   fIsFitted = kFALSE;
   fIsInitialized = kFALSE;
   fIsFinished = kFALSE;
