@@ -29,7 +29,7 @@ void run_digi
 
   FairRunAna* fRun = new FairRunAna();
               fRun -> SetInputFile(mcFile);
-              fRun -> SetOutputFile(digiFile);
+              fRun -> SetOutputFile(digiFile.Data());
 
 
   // __ Parameter ______________________________________
@@ -38,7 +38,7 @@ void run_digi
   FairParRootFileIo*  mcParInput = new FairParRootFileIo();
                       mcParInput -> open(mcParFile);
   FairParAsciiFileIo* digiParInput = new FairParAsciiFileIo();
-                      digiParInput -> open(digiParFile);
+                      digiParInput -> open(digiParFile.Data());
   
   FairRuntimeDb* fDb = fRun -> GetRuntimeDb();
                  fDb -> setFirstInput(mcParInput);
@@ -62,5 +62,5 @@ void run_digi
   // __ Init and run ___________________________________
 
   fRun -> Init();
-  fRun -> Run(0,10);
+  fRun -> Run(0,1);
 }
