@@ -14,22 +14,17 @@
 #ifndef _STGAS_H_
 #define _STGAS_H_
 
-// FAIRROOT classes
-#include "FairParGenericSet.h"
-#include "FairParamList.h"
-#include "FairLogger.h"
-
 // ROOT classes
 #include "TString.h"
 #include "TSystem.h"
 
 //#include "Rtypes.h"
 
-class STGas : public FairParGenericSet
+class STGas
 {
   public:
     // Constructor and Destructor
-    STGas();
+    STGas(TString);
     ~STGas();
 
     void operator=(const STGas& GasToCopy);
@@ -43,16 +38,11 @@ class STGas : public FairParGenericSet
     Int_t    GetGain();
     UInt_t   GetRandomCS();
 
-    virtual Bool_t getParams(FairParamList *paramList);
-    TString GetFile(Int_t fileNum);
-
     // Setter
-    virtual void putParams(FairParamList *paramList);
 
   private:
-    FairLogger *fLogger;
-
-    Bool_t fInitialized;
+    TString fGasFileName;
+    void InitializeParameters();
 
     Double_t fEIonize;                  //!< effective ionization energy [eV]
     Double_t fDriftVelocity;            //!< drift velocity [cm/ns]

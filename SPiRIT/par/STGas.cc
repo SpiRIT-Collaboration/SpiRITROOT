@@ -7,6 +7,7 @@
 //
 // Author List:
 //      Genie Jhang     Korea Univ.            (original author)
+//      JungWoo Lee     Korea Univ.
 //
 //----------------------------------------------------------------------
 
@@ -16,107 +17,76 @@
 // ROOT class headers
 #include "TRandom.h"
 
+// C/C++ class headers
+#include <stdio.h>
+#include <string.h>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+
+using namespace std;
+
 ClassImp(STGas)
 
-STGas::STGas()
+STGas::STGas(TString GasFileName)
+: fGasFileName(GasFileName)
 {
-  fInitialized = kFALSE;
+  InitializeParameters();
+}
 
-  fLogger = FairLogger::GetLogger();
+void STGas::InitializeParameters()
+{
+  cout << "Initializing gas parameters..." << endl;
+  ifstream gasFile(fGasFileName.Data(), std::fstream::in);
+  if(gasFile==NULL) cerr << "Gas file " << fGasFileName.Data() << " not found!!" << endl;
+
+  string line;
+  string data;
+  string name;
+  string format;
+  string val;
+
+  while(getline(gasFile,line)) {
+    istringstream ss_line(line);
+    if(ss_line >> data >> val && data[0]!='#' && data[0]!='[') {
+      name   = data.substr(0,data.find(":"));
+      //name   = strtok(data.c_str(),":");
+      //format = strtok(NULL,":");
+      if(name=="EIonizeP10")         fEIonize            = atof(val.c_str());
+      if(name=="DriftVelocity")      fDriftVelocity      = atof(val.c_str());
+      if(name=="CoefAttachment")     fCoefAttachment     = atof(val.c_str());
+      if(name=="CoefDiffusionLong")  fCoefDiffusionLong  = atof(val.c_str());
+      if(name=="CoefDiffusionTrans") fCoefDiffusionTrans = atof(val.c_str());
+      if(name=="Gain")               fDriftVelocity      = atoi(val.c_str());
+    }
+  }
 }
 
 STGas::~STGas()
 {
 }
 
-void STGas::operator=(const STGas& GasToCopy) { fEIonize = GasToCopy.fEIonize; }
+void STGas::operator=(const STGas& GasToCopy) 
+{ 
+  fEIonize            = GasToCopy.fEIonize; 
+  fDriftVelocity      = GasToCopy.fDriftVelocity; 
+  fCoefAttachment     = GasToCopy.fCoefAttachment; 
+  fCoefDiffusionLong  = GasToCopy.fCoefDiffusionLong; 
+  fCoefDiffusionTrans = GasToCopy.fCoefDiffusionTrans; 
+  fGain               = GasToCopy.fGain; 
+}
 
 Double_t STGas::GetEIonize()            { return fEIonize; }
 Double_t STGas::GetDriftVelocity()      { return fDriftVelocity; }
 Double_t STGas::GetCoefAttachment()     { return fCoefAttachment; }
 Double_t STGas::GetCoefDiffusionLong()  { return fCoefDiffusionLong; }
 Double_t STGas::GetCoefDiffusionTrans() { return fCoefDiffusionTrans; }
-Int_t    STGas::GetGain()               { return fGain; }
-UInt_t   STGas::GetRandomCS()           {
+   Int_t STGas::GetGain()               { return fGain; }
+  UInt_t STGas::GetRandomCS()           
+{
   UInt_t CS = (UInt_t)(gRandom -> Gaus(50,20));
   if(CS==0) CS=1;
   return CS;
-}
-
-Bool_t STGas::getParams(FairParamList *paramList)
-{
-  if(!paramList){
-    fLogger -> Fatal(MESSAGE_ORIGIN, "Parameter list doesn't exist!");
-    return kFALSE;
-  }
-
-  if (!fInitialized){
-    if(!(paramList -> fill("EIonizeP10", &fEIonize))){
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find EIonize parameter!");
-      return kFALSE;
-    }
-    if(!(paramList -> fill("DriftVelocity", &fDriftVelocity))){
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find DriftVelocity parameter!");
-      return kFALSE;
-    }
-    if(!(paramList -> fill("CoefAttachment", &fCoefAttachment))){
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find CoefAttachment parameter!");
-      return kFALSE;
-    }
-    if(!(paramList -> fill("CoefDiffusionLong", &fCoefDiffusionLong))){
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find CoefDiffusionLong parameter!");
-      return kFALSE;
-    }
-    if(!(paramList -> fill("CoefDiffusionTrans", &fCoefDiffusionTrans))){
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find CoefDiffusionTrans parameter!");
-      return kFALSE;
-    }
-    if(!(paramList -> fill("Gain", &fGain))){
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find Gain parameter!");
-      return kFALSE;
-    }
-  }
-
-}
-
-void STGas::putParams(FairParamList *paramList)
-{
-  if(!paramList){
-    fLogger -> Fatal(MESSAGE_ORIGIN,"Parameter list doesn't exist!");
-    return;
-  }
-  paramList -> add("EIonize", fEIonize);
-  paramList -> add("DriftVelocity", fDriftVelocity);
-  paramList -> add("CoefAttachment", fCoefAttachment);
-  paramList -> add("CoefDiffusionLong", fCoefDiffusionLong);
-  paramList -> add("CoefDiffusionTrans", fCoefDiffusionTrans);
-  paramList -> add("Gain", fGain);
-}
-
-TString STGas::GetFile(Int_t fileNum)
-{
-  ifstream fileList;
-  TString sysFile = gSystem -> Getenv("SPIRITDIR");
-  TString parFile = sysFile + "/parameters/ST.gas.par";
-  fileList.open(parFile.Data());
-
-  if(!fileList) { fLogger -> Fatal(MESSAGE_ORIGIN, Form("File %s not found!", parFile.Data()));
-
-    throw;
-  }
-
-  Char_t buffer[256];
-  for(Int_t iFileNum = 0; iFileNum < fileNum + 1; ++iFileNum){
-    if(fileList.eof()) {
-      fLogger -> Fatal(MESSAGE_ORIGIN, Form("Did not find string #%d in file %s.", fileNum, parFile.Data()));
-
-      throw;
-    }
-
-    fileList.getline(buffer, 256);
-  }
-
-  fileList.close();
-
-  return TString(sysFile + "/" + buffer);
 }
