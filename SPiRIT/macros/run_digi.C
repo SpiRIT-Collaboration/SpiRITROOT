@@ -1,5 +1,6 @@
 void run_digi
 (TString mcFile      = "data/test.mc_youngstest.root",
+//(TString mcFile      = "data/test.root",
  TString mcParFile   = "data/params_youngstest.root",
  TString digiParFile = "ST.parameters.par")
 {
@@ -48,6 +49,7 @@ void run_digi
 
   STClusterizerTask* clusterizer = new STClusterizerTask();
                      clusterizer -> SetPersistence(kTRUE);
+                     clusterizer -> SetTestMode();
 
   STDriftTask* drifter = new STDriftTask();
                drifter -> SetPersistence(kTRUE);
