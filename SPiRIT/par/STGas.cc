@@ -59,7 +59,7 @@ void STGas::InitializeParameters()
       if(name=="CoefAttachment")     fCoefAttachment     = atof(val.c_str());
       if(name=="CoefDiffusionLong")  fCoefDiffusionLong  = atof(val.c_str());
       if(name=="CoefDiffusionTrans") fCoefDiffusionTrans = atof(val.c_str());
-      if(name=="Gain")               fDriftVelocity      = atoi(val.c_str());
+      if(name=="Gain")               fGain               = atoi(val.c_str());
     }
   }
 }
