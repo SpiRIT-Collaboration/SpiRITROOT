@@ -57,6 +57,7 @@ void run_digi
 
   STAvalancheTask* avalanche = new STAvalancheTask();
                    avalanche -> SetPersistence(kTRUE);
+                   avalanche -> SetTestMode();
 
   fRun -> AddTask(clusterizer);
   fRun -> AddTask(drifter);
