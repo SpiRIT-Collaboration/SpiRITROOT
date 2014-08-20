@@ -87,6 +87,6 @@ Double_t STGas::GetCoefDiffusionTrans() { return fCoefDiffusionTrans; }
   UInt_t STGas::GetRandomCS()           
 {
   UInt_t CS = (UInt_t)(gRandom -> Gaus(50,20));
-  if(CS==0) CS=1;
+  if(CS<=0) CS=1;
   return CS;
 }
