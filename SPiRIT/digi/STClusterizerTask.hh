@@ -54,7 +54,7 @@ class STClusterizerTask : public FairTask
     STGas*     fGas;                    //!< STGas pointer
 
     Bool_t fIsPersistent;               //!< If true, save container
-    Bool_t fTestMode    ;               //!< If true, test mode!
+    Bool_t fTestMode;                   //!< If true, test mode!
 
   ClassDef(STClusterizerTask, 1);
 };

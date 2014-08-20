@@ -41,7 +41,8 @@ ClassImp(STDriftTask)
 
 STDriftTask::STDriftTask()
 : FairTask("SPiRIT Drift"),
-  fIsPersistent(kFALSE)
+  fIsPersistent(kFALSE),
+  fTestMode(kFALSE)
 {
   fPrimaryClusterBranchName = "STPrimaryCluster";
 }
@@ -103,7 +104,7 @@ STDriftTask::Exec(Option_t *opt)
   Double_t coefAttachment = fGas -> GetCoefAttachment();
   Double_t coefDiffusion  = fGas -> GetCoefDiffusionLong();
   Double_t yWirePlane     = fPar -> GetGroundWirePlaneY();  // [mm]
-           yWirePlane    *= 10; // to [cm]
+           yWirePlane    /= 10; // [mm] to [cm]
 
   Int_t    charge;
   Double_t xElectron;
@@ -117,6 +118,7 @@ STDriftTask::Exec(Option_t *opt)
   STPrimaryCluster* cluster;
 
   Int_t nCluster = fPrimaryClusterArray -> GetEntriesFast();
+  if(fTestMode) cout << "no. of clusters   : " << nCluster << endl;
   for(Int_t iCluster=0; iCluster<nCluster; iCluster++)
   {
     cluster        = (STPrimaryCluster*) fPrimaryClusterArray -> At(iCluster);
@@ -129,10 +131,21 @@ STDriftTask::Exec(Option_t *opt)
     timeCluster    = driftTime + cluster -> GetTime(); // [ns]
     sigmaDiffusion = coefDiffusion * sqrt(driftLength);
 
-    for(Int_t iElectron; iElectron<charge; iElectron++)
+    if(fTestMode) cout << "y - Cluster      : " << yCluster << endl;
+    if(fTestMode) cout << "y - WirePlane    : " << yWirePlane << endl;
+    if(fTestMode) cout << "Drift time       : " << driftTime << endl;
+    if(fTestMode) cout << "Drift length     : " << driftLength << endl;
+    if(fTestMode) cout << "Diffusion coef.  : " << coefDiffusion << endl;
+    if(fTestMode) cout << "x/z position     : " << xElectron << " / " << zElectron << endl;
+    if(fTestMode) cout << "no. of electrons : " << charge << endl;
+
+    if(driftLength<=0) continue;
+    for(Int_t iElectron=0; iElectron<charge; iElectron++)
     {
       xElectron += gRandom -> Gaus(0,sigmaDiffusion);
       zElectron += gRandom -> Gaus(0,sigmaDiffusion);
+
+      if(fTestMode) cout << "x/z - diffusion  : " << xElectron << " / " << zElectron << endl;
 
       Int_t size = fDriftedElectronArray -> GetEntriesFast();
       STDriftedElectron* electron 

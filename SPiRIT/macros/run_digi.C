@@ -53,6 +53,7 @@ void run_digi
 
   STDriftTask* drifter = new STDriftTask();
                drifter -> SetPersistence(kTRUE);
+               drifter -> SetTestMode();
 
   STAvalancheTask* avalanche = new STAvalancheTask();
                    avalanche -> SetPersistence(kTRUE);

@@ -40,7 +40,8 @@ ClassImp(STClusterizerTask)
 
 STClusterizerTask::STClusterizerTask()
 : FairTask("SPiRIT Clusterizer"),
-  fIsPersistent(kFALSE)
+  fIsPersistent(kFALSE),
+  fTestMode(kFALSE)
 {
   fMCPointBranchName = "STMCPoint";
 }
@@ -114,6 +115,7 @@ STClusterizerTask::Exec(Option_t *opt)
 
   STMCPoint* point; // STMCPoint
 
+  if(fTestMode) cout << "no. of MC pooints : " << nPoints << endl;
   for(Int_t iPoint=1; iPoint<nPoints; iPoint++)
   {
     point = (STMCPoint*) fMCPointArray -> At(iPoint);
