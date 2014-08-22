@@ -86,16 +86,16 @@ void STEventDraw::Set2DPlotExternal(Bool_t value) { fIs2DPlotExternal = value; }
 void
 STEventDraw::Set2DPlotRange(Int_t uaIdx)
 {
-  if (uaIdx < 0 || uaIdx > 47) {
-    fLogger -> Error(MESSAGE_ORIGIN, "2DPlotRange should be [0, 47]!");
+  if (uaIdx%100 < 0 || uaIdx%100 > 11 || uaIdx/100 < 0 || uaIdx/100 < 3) {
+    fLogger -> Error(MESSAGE_ORIGIN, "2DPlotRange should be ABB ( A = [0, 3], BB = [00, 11] )!");
 
     return;
   }
 
-  fMinZ = (uaIdx%4)*12*7*4;
-  fMaxZ = (uaIdx%4 + 1)*12*7*4;
-  fMinX = (uaIdx/4)*8*9 - 432;
-  fMaxX = (uaIdx/4 + 1)*8*9 - 432;
+  fMinZ = (uaIdx/100)*12*7*4;
+  fMaxZ = (uaIdx/100 + 1)*12*7*4;
+  fMinX = (uaIdx%100)*8*9 - 432;
+  fMaxX = (uaIdx%100 + 1)*8*9 - 432;
 
   fIs2DPlotRange = kTRUE;
 }
@@ -178,7 +178,7 @@ void STEventDraw::Exec(Option_t* option)
     Int_t numPoints = 0;
     if (TString(GetName()).EqualTo("STEventH"))
       numPoints = aEvent -> GetNumHits();
-    else if (TString(GetName()).EqualTo("STEventHC"))
+    else //if (TString(GetName()).EqualTo("STEventHC"))
       numPoints = aEvent -> GetNumClusters();
 
     TEvePointSet* pointSet = new TEvePointSet(GetName(), numPoints, TEvePointSelectorConsumer::kTVT_XYZ);
@@ -197,7 +197,7 @@ void STEventDraw::Exec(Option_t* option)
 
         if (fIs2DPlot)
           fPadPlane -> Fill(vec.Z(), vec.X(), aPoint.GetCharge());
-      } else if (TString(GetName()).EqualTo("STEventHC")) {
+      } else { //if (TString(GetName()).EqualTo("STEventHC")) {
         STHitCluster aPoint = aEvent -> GetClusterArray() -> at(iPoint);
         TVector3 vec(GetVector(aPoint));
         pointSet -> SetNextPoint(vec.X()/10., vec.Y()/10., vec.Z()/10.); // mm -> cm
