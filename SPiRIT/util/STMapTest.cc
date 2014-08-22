@@ -78,6 +78,7 @@ void STMapTest::ShowAGETMap(Int_t UAIdx)
   agetCvs = new TCanvas("agetCvs", "", 600, 500);
   agetHist = new TH2D("agetHist", Form("AGET Map Test (Top View) - UA%03d", UAIdx), 7, -0.5, 6.5, 9, -0.5, 8.5);
   agetHist -> GetXaxis() -> SetTitle("Local Layer Number");
+  agetHist -> SetTitleOffset(1.35, "X");
   agetHist -> GetXaxis() -> CenterTitle();
   agetHist -> GetYaxis() -> SetTitle("Local Row Number");
   agetHist -> GetYaxis() -> CenterTitle();
@@ -201,7 +202,7 @@ void STMapTest::PrintMap(Int_t padRow, Int_t padLayer)
   cout << "   row: " << setw(3) << padRow << endl;
   cout << " layer: " << setw(3) << padLayer << endl;
   cout << endl;
-  cout << "    UA: " << setw(3) << uaIdx << endl;
+  cout << "    UA: " << setw(3) << Form("%03d", uaIdx) << endl;
   cout << "  CoBo: " << setw(3) << coboIdx << endl;
   cout << "  AsAd: " << setw(3) << asadIdx << endl;
   cout << "  AGET: " << setw(3) << agetIdx << endl;
