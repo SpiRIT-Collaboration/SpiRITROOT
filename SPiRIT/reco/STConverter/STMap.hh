@@ -17,6 +17,10 @@
 #include "TObject.h"
 #include "TString.h"
 
+#include <map>
+
+using std::map;
+
 class STMap : public TObject {
   public:
     STMap();
@@ -41,12 +45,10 @@ class STMap : public TObject {
     Bool_t fIsSetUAMap;
     Bool_t fIsSetAGETMap;
 
-    Int_t padRowOfCh[68];
-    Int_t padLayerOfCh[68];
+    Int_t fPadRowOfCh[68];
+    Int_t fPadLayerOfCh[68];
 
-    Int_t ua[48];
-    Int_t cobo[48];
-    Int_t asad[48];
+    Int_t fUAMap[12][4];
 
   ClassDef(STMap, 1);
 };
