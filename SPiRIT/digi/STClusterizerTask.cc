@@ -40,7 +40,8 @@ ClassImp(STClusterizerTask)
 
 STClusterizerTask::STClusterizerTask()
 : FairTask("SPiRIT Clusterizer"),
-  fIsPersistent(kFALSE)
+  fIsPersistent(kFALSE),
+  fTestMode(kFALSE)
 {
   fMCPointBranchName = "STMCPoint";
 }
@@ -106,17 +107,22 @@ STClusterizerTask::Exec(Option_t *opt)
   }
 
   Double_t EIonize = fGas->GetEIonize();
+           EIonize*= 1E-6;
+  if(fTestMode) cout << "ionization energy : " << EIonize << endl;
   
   Int_t    iCluster = 0;        // cluster counting index
   Double_t displacementCut = 1; // [mm]
 
   STMCPoint* point; // STMCPoint
 
+  if(fTestMode) cout << "no. of MC pooints : " << nPoints << endl;
   for(Int_t iPoint=1; iPoint<nPoints; iPoint++)
   {
     point = (STMCPoint*) fMCPointArray -> At(iPoint);
 
-    Double_t energyLoss = point -> GetEnergyLoss()*1E9; //convert from GeV to eV
+    Double_t energyLoss = point -> GetEnergyLoss();
+             energyLoss*= 1E9; //convert from GeV to eV
+    if(fTestMode) cout << "energy loss    : " << energyLoss << " eV" << endl;
     if(energyLoss<0){
       Error("STClusterizerTask::Exec","Note: particle:: negative energy loss!");
       continue;
@@ -127,22 +133,24 @@ STClusterizerTask::Exec(Option_t *opt)
     UInt_t nCluster = 0; // number of clusters in this point
 
     // Make random size clusters with total charge
+    if(fTestMode) cout << "total charge   : " << qTotal << endl;
     while(qTotal>0) 
     {
       qCluster = fGas -> GetRandomCS(); // get random cluster size
       if(qCluster > qTotal) qCluster = qTotal; 
+      if(fTestMode) cout << "cluster charge : " << qCluster << endl;
       qTotal -= qCluster;
 
       // create cluster
-      Int_t size = fMCPointArray -> GetEntriesFast();
+      Int_t size = fPrimaryClusterArray -> GetEntriesFast();
       STPrimaryCluster* primaryCluster 
-        = new ((*fMCPointArray)[size]) STPrimaryCluster(qCluster,                  // charge
-                                                        TVector3(point -> GetX(),  // primary cluster position
-                                                                 point -> GetY(),
-                                                                 point -> GetZ()),
-                                                        point -> GetTime(),        // time
-                                                        point -> GetTrackID(),     // trackID
-                                                        iPoint);                   // point count number
+        = new ((*fPrimaryClusterArray)[size]) STPrimaryCluster(qCluster,                  // charge
+                                                               TVector3(point -> GetX(),  // primary cluster position
+                                                                        point -> GetY(),
+                                                                        point -> GetZ()),
+                                                               point -> GetTime(),        // time
+                                                               point -> GetTrackID(),     // trackID
+                                                               iPoint);                   // point count number
       primaryCluster -> SetIndex(size);
       nCluster++;
     }

@@ -22,8 +22,6 @@
 #include "TVector3.h"
 #include "TMath.h"
 
-//#include "DebugLogger.h"
-
 #define SPEEDUP 5
 
 STProximityHTCorrelator::STProximityHTCorrelator(Double_t cut, Double_t zStretch, Double_t helixcut)
@@ -37,11 +35,17 @@ STProximityHTCorrelator::STProximityHTCorrelator(Double_t cut, Double_t zStretch
 Bool_t
 STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bool_t &survive, Double_t &matchQuality)
 {
+  // Get the position of the cluster of the given Riemann hit, rhit.
+  // That is the position of the hit in TPC.
+  // Riemann hit is the hit on Riemann sphere.
   TVector3 posX = rhit -> GetCluster() -> GetPosition();
 
-  // fast estimation: distance to circle in 2D
+  // When the track is already fitted, just check if the difference between the helical radius and
+  // the distance from the helical center to hit position is bigger than fHelixCut.
+  // In this case, matchQuality is the difference and the hit doesn't survive.
   if (track -> IsFitted()) {
     Double_t circDist = TMath::Abs((posX - track -> GetCenter()).Perp() - track -> GetR());
+
     if (circDist > fHelixCut) {
       matchQuality = circDist;
       survive = kFALSE;
@@ -51,19 +55,19 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
 
   UInt_t numHits = track -> GetNumHits();
 
-  //scale proxcut with track quality (makes it looser for better defined tracks)
+  // Scale proxcut with track quality. This makes it looser for better defined tracks.
   Double_t proxcut = fProxCut;
-  Double_t quality = track -> GetQuality();
-  proxcut *= 1 + (3 * quality);
+  Double_t quality = track -> GetQuality(); // (0, 1]
+  proxcut *= 1 + (3 * quality); // proxcut *= [1, 4]
 
   TVector3 pos, dis3;
   Double_t dis;
     
-  // check last and first hit for match
-  for (UInt_t iHit = numHits - 1; kTRUE; iHit -= iHit){
+  // Check last and first hit for match
+  for (UInt_t iHit = numHits - 1; iHit < 0; iHit--) {
     pos = track -> GetHit(iHit) -> GetCluster() -> GetPosition();
     dis3 = posX - pos;
-    dis3.SetZ(dis3.Z()/fZStretch);
+    dis3.SetZ(dis3.Z()/fZStretch); // What's this fZStretch for?
     dis = dis3.Mag();
 
     if (dis < proxcut) {
@@ -71,12 +75,10 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
       survive = kTRUE;
       return kTRUE;
     }
-
-    if (iHit == 0)
-      break;
   }
-  
-  if (numHits < 3) { // the hit (numHits = 1), resp. both hits  (numHits = 2) have been checked and did not survive
+
+  // The hit (numHits = 1), resp. both hits  (numHits = 2) have been checked and did not survive
+  if (numHits < 3) {
     matchQuality = dis;
     survive = kFALSE;
     return kTRUE;
@@ -84,7 +86,7 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
 
   Int_t closest = -1;
 
-  // now check every SPEEDUP hit    
+  // Now check every SPEEDUP hit    
   Double_t largecut = 0.6*SPEEDUP*fMeanDist + proxcut*fZStretch;
   Double_t mindis = 1.E10;
   
@@ -104,7 +106,8 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
     }
   }
 
-  if (closest == -1) { // no hit closer than largecut has been found
+  // No hit closer than largecut has been found
+  if (closest == -1) {
     matchQuality = mindis;
     survive = kFALSE;
     return kTRUE;
@@ -118,13 +121,11 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
   dist.SetZ(dist.Z()/fZStretch);
   l = dist.Mag();
 
-//  DebugLogger::Instance() -> Histo("HT_prox_l",l,0,5,100);
   if (l > proxcut) {
-//    DebugLogger::Instance() -> Histo("HT_riemanncuts",1,0,20,20);
     survive = kFALSE;
     return kTRUE;
   }
+
   survive = kTRUE;
-  //std::cout<<"passed\n";
   return kTRUE;
 }

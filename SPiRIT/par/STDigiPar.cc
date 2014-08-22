@@ -4,6 +4,7 @@
 //
 // Author List:
 //      Genie Jhang     Korea Univ.            (original author)
+//      JungWoo Lee     Korea Univ.
 //----------------------------------------------------------------------
 
 #include "STDigiPar.hh"
@@ -11,7 +12,8 @@
 ClassImp(STDigiPar)
 
 STDigiPar::STDigiPar(const Char_t *name, const Char_t *title, const Char_t *context)
-:FairParGenericSet("STDigiPar", "SPiRIT Parameter Container", "")
+:FairParGenericSet("STDigiPar", "SPiRIT Parameter Container", ""),
+ fGas(NULL)
 {
   fInitialized = kFALSE;
 
@@ -30,11 +32,20 @@ STDigiPar::~STDigiPar()
 Double_t  STDigiPar::GetAnodeWirePlaneY()  { return fAnodeWirePlaneY; }
 Double_t  STDigiPar::GetGroundWirePlaneY() { return fGroundWirePlaneY; }
 Double_t  STDigiPar::GetGatingWirePlaneY() { return fGatingWirePlaneY; }
-   STGas *STDigiPar::GetGas()              { return fGas; }
    Int_t  STDigiPar::GetNumTbs()           { return fNumTbs; }
 Double_t  STDigiPar::GetDriftVelocity()    { return fDriftVelocity; }
 Double_t  STDigiPar::GetDriftLength()      { return fDriftLength; }
    Int_t  STDigiPar::GetYDivider()         { return fYDivider; }
+
+STGas *STDigiPar::GetGas()
+{ 
+  if(fGas==NULL){
+    std::cerr << "Initializing gas file with " << fGasFileName.Data() << std::endl;
+    fGas = new STGas(fGasFileName.Data());
+  }
+  return fGas;
+  //return new STGas(*fGas); 
+}
 
 Int_t STDigiPar::GetTBTime() {
   switch (fSamplingRate) {
@@ -121,6 +132,8 @@ Bool_t STDigiPar::getParams(FairParamList *paramList)
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadShapeFile parameter!");
       return kFALSE;
     }
+
+    fGasFileName = GetFile(fGasFile);
   }
 
   return kTRUE;
@@ -158,8 +171,7 @@ TString STDigiPar::GetFile(Int_t fileNum)
   TString parFile = sysFile + "/parameters/ST.files.par";
   fileList.open(parFile.Data());
 
-  if(!fileList) {
-    fLogger -> Fatal(MESSAGE_ORIGIN, Form("File %s not found!", parFile.Data()));
+  if(!fileList) { fLogger -> Fatal(MESSAGE_ORIGIN, Form("File %s not found!", parFile.Data()));
 
     throw;
   }

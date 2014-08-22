@@ -43,6 +43,8 @@
 using namespace std;
 
 #define UPTOHIT
+#define DEBUGHT 1
+#define DEBUGTT 1
 
 // Class Member definitions -----------
 STRiemannTrackFinder::STRiemannTrackFinder()
@@ -85,10 +87,10 @@ STRiemannTrackFinder::InitVariables()
   fSorting = 3;
   fInteractionZ = 0.;
   fMaxNumHitsForPR = 2147483646;
-  fTTproxcut = 500;
-  fProxcut = 5;
-  fHelixcut = 0.2;
-  fRiemannScale = 24.6;
+  fTTProxCut = 500;
+  fProxCut = 5;
+  fHelixCut = 0.2;
+  fRiemannScale = 86.1;
   fMaxR = 0;
   fMinHits = 100;
   fInitTracks = kFALSE;
@@ -110,9 +112,9 @@ void STRiemannTrackFinder::SetSortingMode(Bool_t sortingMode)                   
 void STRiemannTrackFinder::SetInteractionZ(Double_t z)                                { fInteractionZ = z; }
 void STRiemannTrackFinder::SetMaxNumHitsForPR(Double_t maxHits)                       { fMaxNumHitsForPR = maxHits; }
 void STRiemannTrackFinder::SkipCrossingAreas(Bool_t value)                            { fSkipCrossingAreas = value; }
-void STRiemannTrackFinder::SetTTProxcut(Double_t cut)                                 { fTTproxcut = cut; }
-void STRiemannTrackFinder::SetProxcut(Double_t cut)                                   { fProxcut = cut; }
-void STRiemannTrackFinder::SetHelixcut(Double_t cut)                                  { fHelixcut = cut; }
+void STRiemannTrackFinder::SetTTProxCut(Double_t cut)                                 { fTTProxCut = cut; }
+void STRiemannTrackFinder::SetProxCut(Double_t cut)                                   { fProxCut = cut; }
+void STRiemannTrackFinder::SetHelixCut(Double_t cut)                                  { fHelixCut = cut; }
 void STRiemannTrackFinder::InitTracks(Bool_t initTracks, Double_t dip, Double_t curv) { fInitTracks = initTracks; fInitDip = dip; fInitCurv = curv; }
 void STRiemannTrackFinder::SetMaxR(Double_t r)                                        { fMaxR = r; }
 void STRiemannTrackFinder::SetMinHits(UInt_t minHits)                                 { fMinHits = minHits; }
@@ -197,25 +199,25 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
           willDelete = kFALSE;
 
         if (fSorting == 3) {
-          Perp += 3*fProxcut;
+          Perp += 3*fProxCut;
           if (track -> GetFirstHit() -> GetCluster() -> GetPosition().Perp() > Perp &&
               track -> GetLastHit() -> GetCluster() -> GetPosition().Perp() > Perp)
             finished = kTRUE;
         } else if (fSorting == 5) {
           Double_t Phi = rhit -> GetCluster() -> GetPosition().Phi();
-          Double_t dPhi = 2*fProxcut/Perp; // approx for small angles
+          Double_t dPhi = 2*fProxCut/Perp; // approx for small angles
           if (Phi - track -> GetFirstHit() -> GetCluster() -> GetPosition().Phi() > dPhi &&
               Phi - track -> GetLastHit() -> GetCluster() -> GetPosition().Phi() > dPhi)
             finished = kTRUE;
         } else if (fSorting == -5) {
           Double_t Phi = rhit -> GetCluster() -> GetPosition().Phi();
-          Double_t dPhi = -2*fProxcut/Perp; // approx for small angles
+          Double_t dPhi = -2*fProxCut/Perp; // approx for small angles
           if (Phi - track -> GetFirstHit() -> GetCluster() -> GetPosition().Phi() < dPhi &&
               Phi - track -> GetLastHit() -> GetCluster() -> GetPosition().Phi() < dPhi)
             finished = kTRUE;
         } else if (fSorting == 2) {
           Double_t Z = rhit -> GetCluster() -> GetPosition().Z();
-          Double_t dZ = 3*fProxcut;
+          Double_t dZ = 3*fProxCut;
           if (track -> GetFirstHit() -> GetCluster() -> GetPosition().Z() - Z > dZ &&
               track -> GetLastHit() -> GetCluster() -> GetPosition().Z() - Z > dZ)
             finished = kTRUE;
@@ -240,7 +242,7 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
       // IF A TRACK SURVIVES EACH CORRELATOR
       // THE HIT IS ASSIGNED TO THE BEST (smallest!) MATCH 
       
-      Bool_t trksurvive = kFALSE;
+      Bool_t trackSurvive = kFALSE;
       vector<Double_t> matchQualities(numCorrelators, 99999.); // for saving the match qualities for each correlator
       Int_t level = 0; // number of survived correlators
       #ifdef DEBUGHT
@@ -256,31 +258,31 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
         #ifdef DEBUGHT
           if(iCluster == fMaxNumHitsForPR-1){
             if(!applicable)
-              std::cout << "  correlator " << iCor << " NOT applicable" << std::endl;
+              std::cout << " HT correlator " << iCor << " NOT applicable" << std::endl;
             else
-              std::cout << "  correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
+              std::cout << " HT correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
           }
         #endif
         if(!applicable)
           continue; // try the next correlator
 
         if(!survive){
-          trksurvive = kFALSE;
+          trackSurvive = kFALSE;
           break; // track has failed this level --> can be excluded
         }
         // track survived this correlator
         level = iCor;
-        trksurvive = kTRUE;
+        trackSurvive = kTRUE;
         matchQualities[iCor] = matchQuality;
       } // end loop over correlator
 
 
-      if (trksurvive) { // update best values
+      if (trackSurvive) { // update best values
         // number matching fitted tracks that survived all corrs (for excluding clusters)
         if (level == numCorrelators - 1 &&
             !track -> IsInitialized() &&
             track -> GetNumHits() > 3*fMinHitsForFit &&
-            matchQualities[numCorrelators - 1] < 0.5*fHelixcut)
+            matchQualities[numCorrelators - 1] < 0.5*fHelixCut)
           matchTracks++;
         
         if (level > maxlevel)
@@ -295,13 +297,13 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
       }
 
       #ifdef DEBUGHT
-      if(iCluster == fMaxNumHitsForPR - 1 && tracksurvive)
+      if(iCluster == fMaxNumHitsForPR - 1 && trackSurvive)
         std::cout << " Track " << iTrack << " survived with level " << level << std::endl;
       if(iCluster == fMaxNumHitsForPR - 1)
         std::cout << std::endl;
       #endif
 
-      foundAtAll |= trksurvive; // foundAtAll will be kTRUE if at least one track survived
+      foundAtAll |= trackSurvive; // foundAtAll will be kTRUE if at least one track survived
     } // end loop over tracks
 
 
@@ -434,7 +436,7 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
         z1max = zTemp;
     }
 
-    for (UInt_t iTrack2 = iTrack1 + 1; iTrack2 < numTracks; iTrack2) { // loop over the other tracks to be tested
+    for (UInt_t iTrack2 = iTrack1 + 1; iTrack2 < numTracks; iTrack2++) { // loop over the other tracks to be tested
       if(candList[iTrack2] == NULL)
         continue;
 
@@ -453,9 +455,9 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
           z2min = zTemp;
 
         // tracklets are sorted by z (from small to big), if the smallest z of the track2 is bigger than the maximum z of track1, skip all other tracks
-        if (z2min > (z1max + fTTproxcut + 0.1)) {
+        if (z2min > (z1max + fTTProxCut + 0.1)) {
           #ifdef DEBUGTT
-            std::cout << " (z2min > (z1max + fTTproxcut + 0.1) ), skipping rest of track2 tracklets (" << numTracks - iTrack2 << ")" << std::endl;
+            std::cout << " (z2min > (z1max + fTTProxCut + 0.1) ), skipping rest of track2 tracklets (" << numTracks - iTrack2 << ")" << std::endl;
           #endif
           break; // continue with next track1
         }
@@ -479,9 +481,9 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
 
         #ifdef DEBUGTT
           if (!applicable)
-            std::cout << "  correlator " << iCor << " NOT applicable" << std::endl;
+            std::cout << " TT correlator " << iCor << " NOT applicable" << std::endl;
           else
-            std::cout << "  correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
+            std::cout << " TT correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
         #endif
 
         if (!applicable) {

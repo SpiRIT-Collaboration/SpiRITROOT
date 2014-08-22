@@ -4,6 +4,7 @@
 //
 // Author List:
 //      Genie Jhang     Korea Univ.            (original author)
+//      JungWoo Lee     Korea Univ.
 //----------------------------------------------------------------------
 
 #ifndef _STDIGIPAR_H_
@@ -61,6 +62,7 @@ class STDigiPar : public FairParGenericSet
     FairLogger *fLogger;
 
     STGas *fGas;
+    TString fGasFileName;
 
     Bool_t fInitialized;
 

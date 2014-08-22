@@ -211,7 +211,7 @@ if(NOT FAIRROOT_MINIMAL)
 
   WRITE_CONFIG_FILE(config.sh)
   WRITE_CONFIG_FILE(config.csh)
-  WRITE_CONFIG_FILE(sroot.sh)
+#  WRITE_CONFIG_FILE(sroot.sh)
 
   SET(VMCWORKDIR ${CMAKE_INSTALL_PREFIX}/share/fairbase)
   WRITE_CONFIG_FILE(config.sh_install)
@@ -221,7 +221,8 @@ else(NOT FAIRROOT_MINIMAL)
   WRITE_MINIMAL_CONFIG_FILE(config.sh)
 endif(NOT FAIRROOT_MINIMAL)
 
-ADD_CUSTOM_TARGET(BUILD_SUCCESSFUL ALL
+#ADD_CUSTOM_TARGET(BUILD_SUCCESSFUL ALL
+ADD_CUSTOM_TARGET(BUILD_SUCCESSFUL
                   DEPENDS ${ALL_TARGETS}
                   COMMAND ${CMAKE_COMMAND} -E echo ""
                   COMMAND ${CMAKE_COMMAND} -E echo "======================================================"

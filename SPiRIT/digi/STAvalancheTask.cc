@@ -40,7 +40,8 @@ ClassImp(STAvalancheTask)
 
 STAvalancheTask::STAvalancheTask()
 : FairTask("SPiRIT Avalanche"),
-  fIsPersistent(kFALSE)
+  fIsPersistent(kFALSE),
+  fTestMode(kFALSE)
 {
   fDriftedElectronBranchName = "STDriftedElectron";
 }
@@ -97,7 +98,8 @@ STAvalancheTask::Exec(Option_t *opt)
   if(fAvalancheArray==0) Fatal("STAvalanche::Exec)","No Avalanche Array");
   fAvalancheArray -> Delete();
 
-  Double_t gain = fGas -> GetGain();
+  Int_t gain = fGas -> GetGain();
+  if(fTestMode) cout << "gain : " << gain << endl;
 
   Int_t nElectron = fDriftedElectronArray -> GetEntriesFast();
   for(Int_t iElectron=0; iElectron<nElectron; iElectron++)
@@ -105,13 +107,11 @@ STAvalancheTask::Exec(Option_t *opt)
     STDriftedElectron* electron = (STDriftedElectron*) fDriftedElectronArray -> At(iElectron);
     Int_t nAvalanche = fAvalancheArray -> GetEntries();
 
-    gain = gain; // this should be fixed once we get the garfield data.
-    
     STAvalanche* avalanche 
       = new ((*fAvalancheArray)[nAvalanche]) STAvalanche(electron -> GetX(),
-                                                    electron -> GetZ(),
-                                                    electron -> GetTime(),
-                                                    gain);
+                                                         electron -> GetZ(),
+                                                         electron -> GetTime(),
+                                                         gain);
     avalanche -> SetIndex(nAvalanche);
   }
 

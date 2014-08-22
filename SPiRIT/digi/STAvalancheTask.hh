@@ -37,6 +37,7 @@ class STAvalancheTask : public FairTask
     // Getters
     // Setters
     void SetPersistence(Bool_t val) { fIsPersistent = val; };
+    void SetTestMode()              { fTestMode = kTRUE; };
     
     // Main methods
     virtual InitStatus Init();
@@ -52,6 +53,7 @@ class STAvalancheTask : public FairTask
     STGas*     fGas;                     //!< STGas pointer
  
     Bool_t fIsPersistent;                //!< If true, save container
+    Bool_t fTestMode;                    //!< If true, test mode!
 
   ClassDef(STAvalancheTask, 1);
 };
