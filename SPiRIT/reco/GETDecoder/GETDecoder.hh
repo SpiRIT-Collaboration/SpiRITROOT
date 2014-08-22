@@ -64,6 +64,13 @@ class GETDecoder : public TObject
     //! Return specific frame of the given frame number. If **frameIdx** is -1, this method returns next frame.
     GETFrame *GetFrame(Int_t frameIdx = -1);
     GETFrame *GetFrame(Int_t frameIdx, Int_t innerFrameIdx);
+    //! Return the number of merged frames. Note that this number only valid after the first frame of merged frame is loaded by GetFrame() method.
+    Int_t GetNumMergedFrames();
+
+    //! Frame type enumerator
+    enum EFrameType { kNormal, kMergedID, kMergedTime };
+    //! Endianness enumerator
+    enum EEndianness { kBig, kLittle };
 
   private:
     //! Initialize variables used in the class.
@@ -88,6 +95,7 @@ class GETDecoder : public TObject
 
     Int_t fNumTbs; //!< the number of time buckets. It's determined when taking data and should be changed manually by user. (Default: 512)
 
+    Bool_t fEndianness; //!< Endianness of the data. 0: Big-endian, 1: Little-endian
     Int_t fFrameType;  //!< frame type. 0: normal frame, 1: event number merged, 2: event time merged
     Int_t fMergedHeaderSize; //!< header size of merged frame. For additional skip bytes when finding frame by frame number.
     Int_t fNumMergedFrames; //!< the number of merged frames. For additional skip bytes when finding frame by frame number.

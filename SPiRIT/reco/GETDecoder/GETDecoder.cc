@@ -170,24 +170,27 @@ Bool_t GETDecoder::SetData(Int_t index)
     fGraw.seekg(8);
     fGraw.read(reinterpret_cast<Char_t *>(&headerSize), 2);
     fGraw.seekg(0);
+
     /*
       Note:
         In the merged frame data file, merged frame header appears only once
         in front of merged frames.
     */
 
-    if (!((metaType&0x80) >> 7)) // First bit of the first byte determines endianness. 0:Big, 1:Little
+    fEndianness = ((metaType&0x80) >> 7);
+    if (fEndianness == kBig) // First bit of the first byte determines endianness. 0:Big, 1:Little
       headerSize = htons(headerSize);
 
     if (headerSize == 20) { // Merged frame by event number
-      fFrameType = 1;
+      fFrameType = kMergedID;
       fMergedHeaderSize = headerSize;
     } else if (headerSize == 24) { // Merged frame by event time
-      fFrameType = 2;
+      fFrameType = kMergedTime;
       fMergedHeaderSize = headerSize;
     } else { // Normal frame by CoBo
-      fFrameType = 0;
+      fFrameType = kNormal;
       fMergedHeaderSize = 0;
+      fNumMergedFrames = 0;
     }
 
     std::cout << "== Frame Type: ";
@@ -547,6 +550,11 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
   return fFrame;
 }
 
+Int_t GETDecoder::GetNumMergedFrames()
+{
+  return fNumMergedFrames;
+}
+
 void GETDecoder::PrintFrameInfo(Int_t frameNo, Int_t eventID, Int_t coboID, Int_t asadID)
 {
   std::cout << "== Frame Info -";
@@ -574,6 +582,11 @@ void GETDecoder::ReadMergedFrameInfo()
   fGraw.ignore(8);
   fGraw.read(reinterpret_cast<Char_t *>(&fNumMergedFrames), 4);
   fGraw.seekg((Int_t)fGraw.tellg() - 16);
+
+  if (fEndianness == kBig) {
+    fCurrentMergedFrameSize = htonl(fCurrentMergedFrameSize) >> 8;
+    fNumMergedFrames = htonl(fNumMergedFrames);
+  }
 }
 
 void GETDecoder::ReadInnerFrameInfo()
