@@ -163,8 +163,10 @@ Bool_t GETDecoder::SetData(Int_t index)
     std::cout << "== " << filename << " is opened!" << std::endl;
     fGraw.seekg(0);
 
+    UShort_t metaType = 0;
     UShort_t headerSize = 0;
     UInt_t numMergedFrames = 0;
+    fGraw.read(reinterpret_cast<Char_t *>(&metaType), 1);
     fGraw.seekg(8);
     fGraw.read(reinterpret_cast<Char_t *>(&headerSize), 2);
     fGraw.seekg(0);
@@ -173,6 +175,9 @@ Bool_t GETDecoder::SetData(Int_t index)
         In the merged frame data file, merged frame header appears only once
         in front of merged frames.
     */
+
+    if (!((metaType&0x80) >> 7)) // First bit of the first byte determines endianness. 0:Big, 1:Little
+      headerSize = htons(headerSize);
 
     if (headerSize == 20) { // Merged frame by event number
       fFrameType = 1;
