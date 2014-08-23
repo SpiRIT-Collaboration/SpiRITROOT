@@ -78,6 +78,7 @@ void GETDecoder::Initialize()
   fCurrentInnerFrameID = -1;
 
   fGETPlot = 0;
+  fEOF = 0;
 }
 
 void GETDecoder::SetNumTbs(Int_t value)
