@@ -194,9 +194,9 @@ Bool_t GETDecoder::SetData(Int_t index)
     }
 
     std::cout << "== Frame Type: ";
-    if (fFrameType == 0) std::cout << "Normal CoBo frame";
-    else if (fFrameType == 1) std::cout << "Event number merged frame";
-    else if (fFrameType == 2) std::cout << "Event time merged frame";
+    if (fFrameType == kNormal) std::cout << "Normal CoBo frame";
+    else if (fFrameType == kMergedID) std::cout << "Event number merged frame";
+    else if (fFrameType == kMergedTime) std::cout << "Event time merged frame";
     std::cout << std::endl;
 
     fCurrentGrawID = index;
@@ -261,7 +261,7 @@ Int_t GETDecoder::GetCurrentInnerFrameID()
 
 GETFrame *GETDecoder::GetFrame(Int_t frameNo)
 {
-  if (fFrameType != 0)
+  if (fFrameType != kNormal)
     return GetFrame(frameNo, -1);
 
   if (frameNo == -1)
@@ -375,7 +375,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
 
 GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
 {
-  if (fFrameType == 0)
+  if (fFrameType == kNormal)
     return GetFrame(frameNo);
 
   ReadMergedFrameInfo();
