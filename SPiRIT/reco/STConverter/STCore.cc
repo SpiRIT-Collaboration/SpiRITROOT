@@ -151,7 +151,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
 
     fRawEventPtr -> SetEventID(fCurrEventNo);
 
-    Int_t coboID = frame -> GetCoboID();
+    Int_t coboID = fDecoderPtr -> GetCurrentInnerFrameID();
     Int_t asadID = frame -> GetAsadID();
 
     if (fIsInternalPedestal)
