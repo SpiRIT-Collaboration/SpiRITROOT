@@ -195,7 +195,18 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
       }
     }
 
-    fCurrFrameNo++;
+    Int_t frameType = fDecoderPtr -> GetFrameType();
+    if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime) {
+      Int_t currentInnerFrameID = fDecoderPtr -> GetCurrentInnerFrameID();
+      Int_t numInnerFrames = fDecoderPtr -> GetNumMergedFrames();
+
+      if (currentInnerFrameID + 1 == numInnerFrames) {
+        fCurrFrameNo++;
+        fPrevEventNo = fCurrEventNo;
+        return fRawEventPtr;
+      }
+    } else
+      fCurrFrameNo++;
   }
 
   return NULL;
