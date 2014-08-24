@@ -109,6 +109,8 @@ class FairRunAna : public FairRun
     }
     void        CompressData();
 
+    void BreakRun();
+
     /** Set the min and max limit for event time in ns */
     void SetEventTimeInterval(Double_t min, Double_t max);
 
@@ -174,6 +176,8 @@ class FairRunAna : public FairRun
     TF1*                                    fTimeProb;      //!
     /** Flag for proccessing lmd-files*/
     Bool_t                                   fFinishProcessingLMDFile;  //!
+    /** Flag for breaking run */
+    Bool_t                                  fBreakRun;
 
     ClassDef(FairRunAna ,5)
 

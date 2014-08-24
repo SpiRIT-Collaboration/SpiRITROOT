@@ -15,6 +15,7 @@
 // FAIRROOT classes
 #include "FairRootManager.h"
 #include "FairRun.h"
+#include "FairRunAna.h"
 #include "FairRuntimeDb.h"
 
 ClassImp(STDecoderTask);
@@ -157,6 +158,15 @@ STDecoderTask::Exec(Option_t *opt)
   fRawEventArray -> Delete();
 
   STRawEvent *rawEvent = fDecoder -> GetRawEvent();
+
+  if (rawEvent == NULL) {
+    fLogger -> Info(MESSAGE_ORIGIN, "Last event reached!");
+
+    FairRunAna *run = FairRunAna::Instance();
+    run -> BreakRun();
+
+    return;
+  }
   
   new ((*fRawEventArray)[0]) STRawEvent(rawEvent);
 }

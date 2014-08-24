@@ -75,7 +75,8 @@ FairRunAna::FairRunAna()
    fEventTime(0),
    fEventMeanTime(0),
    fTimeProb(0),
-   fFinishProcessingLMDFile(kFALSE)
+   fFinishProcessingLMDFile(kFALSE),
+   fBreakRun(kFALSE)
 {
 
   fgRinstance=this;
@@ -486,6 +487,8 @@ void FairRunAna::Run(Int_t Ev_start, Int_t Ev_end)
         FairTrajFilter::Instance()->Reset();
       }
 
+      if (fBreakRun == kTRUE)
+        break;
     }
 
     fRootManager->StoreAllWriteoutBufferData();
@@ -771,6 +774,10 @@ void  FairRunAna::BGWindowWidthTime(Double_t background, UInt_t Signalid)
   fRootManager->BGWindowWidthTime(background, Signalid);
 }
 //_____________________________________________________________________________
+void  FairRunAna::BreakRun() 
+{
+  fBreakRun = kTRUE;
+}
 
 ClassImp(FairRunAna)
 
