@@ -65,6 +65,8 @@ STPSATask::Init()
 
   ioMan -> Register("STEventH", "SPiRIT", fEventHArray, fIsPersistence);
 
+  fRunNo = 0;
+
   return kSUCCESS;
 }
 
@@ -89,11 +91,14 @@ STPSATask::Exec(Option_t *opt)
 {
   fEventHArray -> Delete();
 
+  if (fRawEventArray -> GetEntriesFast() == 0)
+    return;
+
   STRawEvent *rawEvent = (STRawEvent *) fRawEventArray -> At(0);
   std::cout << rawEvent -> GetEventID() << " " << rawEvent -> GetNumPads() << std::endl;  
 
   STEvent *event = (STEvent *) new ((*fEventHArray)[0]) STEvent();
-  event -> SetEventID(rawEvent -> GetEventID());
+  event -> SetEventID(fRunNo++);
 
   // This is a very inefficient way. This should be modified later after the PSA method is fixed.
   STPSASimple *psaSimple = new STPSASimple();

@@ -45,6 +45,7 @@ class STPSATask : public FairTask {
     Bool_t fIsPersistence;
     
     Double_t fThreshold;
+    Int_t fRunNo; /// Only for forcing run number
 
   ClassDef(STPSATask, 1);
 };
