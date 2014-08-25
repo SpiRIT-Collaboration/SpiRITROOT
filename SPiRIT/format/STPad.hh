@@ -33,6 +33,8 @@ class STPad : public TObject
     
     void SetPedestalSubtracted(Bool_t val = kTRUE);
     void SetGainCalibrated(Bool_t val = kTRUE);
+    void SetDelay(Int_t val);
+
     void SetADC(Double_t *val);
     void SetADC(Int_t idx, Double_t val);
 
@@ -40,14 +42,15 @@ class STPad : public TObject
     Int_t GetLayer();
     Int_t GetRow();
 
-    Bool_t IsPedestalSubtracted();
-    Bool_t IsGainCalibrated();
-
     Int_t *GetRawADC();
     Int_t GetRawADC(Int_t idx);
     Int_t GetMaxADCIdx();
 
-    Double_t *GetADC();
+    Bool_t IsPedestalSubtracted();
+    Bool_t IsGainCalibrated();
+    Int_t GetDelay();
+
+    Double_t *GetADC(); /// Full ADC signal on the pad. This will allocate memory space. User should be delete the return the array.
     Double_t GetADC(Int_t idx);
 
   private:
@@ -57,6 +60,7 @@ class STPad : public TObject
     Int_t fRawAdc[512];
     Int_t fMaxAdcIdx;
 
+    Int_t fDelay;
     Bool_t fIsPedestalSubtracted;
     Bool_t fIsGainCalibrated;
     Double_t fAdc[512];
