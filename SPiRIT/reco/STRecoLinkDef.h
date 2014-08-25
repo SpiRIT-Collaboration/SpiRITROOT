@@ -11,6 +11,7 @@
 
 #pragma link C++ class STCore+;
 #pragma link C++ class STPedestal+;
+#pragma link C++ class STGainCalibration+;
 #pragma link C++ class STMap+;
 
 #pragma link C++ class STDecoderTask+;

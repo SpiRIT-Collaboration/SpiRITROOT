@@ -36,6 +36,7 @@ GETDecoder/GETPlot.cc
 
 STConverter/STCore.cc
 STConverter/STPedestal.cc
+STConverter/STGainCalibration.cc
 STConverter/STMap.cc
 
 PulseShapeAnalyzer/STPSASimple.cc
