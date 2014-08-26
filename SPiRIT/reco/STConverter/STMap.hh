@@ -27,8 +27,8 @@ class STMap : public TObject {
     ~STMap() {}
 
     // Setter
-    void SetUAMap(TString filename);
-    void SetAGETMap(TString filename);
+    Bool_t SetUAMap(TString filename);
+    Bool_t SetAGETMap(TString filename);
 
     // Getter
     Bool_t IsSetUAMap();

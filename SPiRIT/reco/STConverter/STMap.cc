@@ -98,7 +98,7 @@ Bool_t STMap::IsSetAGETMap()
   return fIsSetAGETMap;
 }
 
-void STMap::SetUAMap(TString filename)
+Bool_t STMap::SetUAMap(TString filename)
 {
   char dummy[25];
   std::ifstream uaMap(filename.Data());
@@ -107,9 +107,9 @@ void STMap::SetUAMap(TString filename)
   if (!uaMap.is_open()) {
     std::cout << filename << " is not loaded! Check the existance of the file!" << std::endl;
 
-    fIsSetUAMap = 0;
+    fIsSetUAMap = kFALSE;
 
-    return;
+    return kFALSE;
   }
 
   Int_t idx = -1, cobo = -1, asad = -1;
@@ -118,10 +118,11 @@ void STMap::SetUAMap(TString filename)
     fUAMap[cobo][asad] = idx;
   }
 
-  fIsSetUAMap = 1;
+  fIsSetUAMap = kTRUE;
+  return kTRUE;
 }
 
-void STMap::SetAGETMap(TString filename)
+Bool_t STMap::SetAGETMap(TString filename)
 {
   char dummy[25];
   std::ifstream chToPadMap(filename.Data());
@@ -130,9 +131,9 @@ void STMap::SetAGETMap(TString filename)
   if (!chToPadMap.is_open()) {
     std::cout << filename << " is not loaded! Check the existance of the file!" << std::endl;
 
-    fIsSetAGETMap = 0;
+    fIsSetAGETMap = kFALSE;
 
-    return;
+    return kFALSE;
   }
 
   Int_t ch = -1;
@@ -141,7 +142,8 @@ void STMap::SetAGETMap(TString filename)
     chToPadMap >> fPadLayerOfCh[ch] >> fPadRowOfCh[ch];
   }
 
-  fIsSetAGETMap = 1;
+  fIsSetAGETMap = kTRUE;
+  return kTRUE;
 }
 
 Int_t STMap::GetUAIdx(Int_t coboIdx, Int_t asadIdx)
