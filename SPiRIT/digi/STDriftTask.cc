@@ -131,21 +131,27 @@ STDriftTask::Exec(Option_t *opt)
     timeCluster    = driftTime + cluster -> GetTime(); // [ns]
     sigmaDiffusion = coefDiffusion * sqrt(driftLength);
 
-    if(fTestMode) cout << "y - Cluster      : " << yCluster << endl;
-    if(fTestMode) cout << "y - WirePlane    : " << yWirePlane << endl;
-    if(fTestMode) cout << "Drift time       : " << driftTime << endl;
-    if(fTestMode) cout << "Drift length     : " << driftLength << endl;
-    if(fTestMode) cout << "Diffusion coef.  : " << coefDiffusion << endl;
-    if(fTestMode) cout << "x/z position     : " << xElectron << " / " << zElectron << endl;
-    if(fTestMode) cout << "no. of electrons : " << charge << endl;
+    if(fTestMode){
+      cout << "-*-" << endl;
+      cout << "y - WirePlane     : " << yWirePlane << endl;
+      cout << "y - Cluster       : " << yCluster << endl;
+      cout << "x/z position      : " << xElectron << " / " << zElectron << endl;
+      cout << "Drift length [cm] : " << driftLength << endl;
+      cout << "Drift time   [ns] : " << driftTime << endl;
+      cout << "no. of electrons  : " << charge << endl;
+      cout << "diffusion coef.   : " << coefDiffusion << endl;
+      cout << "attachment coef.  : " << coefAttachment << endl;
+      cout << "exp(-drftL*attC)  : " << exp(-driftLength*coefAttachment) << endl;
+    }
 
     if(driftLength<=0) continue;
     for(Int_t iElectron=0; iElectron<charge; iElectron++)
     {
+      if(exp(-driftLength*coefAttachment) < gRandom -> Uniform()) continue;
       xElectron += gRandom -> Gaus(0,sigmaDiffusion);
       zElectron += gRandom -> Gaus(0,sigmaDiffusion);
 
-      if(fTestMode) cout << "x/z - diffusion  : " << xElectron << " / " << zElectron << endl;
+      if(fTestMode) cout << ">>> x/z - diffusion position : " << xElectron << " / " << zElectron << endl;
 
       Int_t size = fDriftedElectronArray -> GetEntriesFast();
       STDriftedElectron* electron 

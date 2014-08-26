@@ -1,11 +1,11 @@
 ################################################################################
 #STGas
-#P10 gas
+#Test gas
 ################################################################################
 EIonizeP10:Double_t          0.00000000000262   # MeV              
 DriftVelocity:Double_t                   5.43   # cm/us
 CoefDiffusionLong:Double_t              0.034   # cm^{-1/2} (?)
 CoefDiffusionTrans:Double_t             0.024   # cm^{-1/2} (?)
-CoefAttachment:Double_t                   0.2   # cm^{-1/2} (?)
+CoefAttachment:Double_t                   0.1   # cm^{-1} (?)
 Gain:Int_t                               2015   # multiplicity
 ################################################################################
