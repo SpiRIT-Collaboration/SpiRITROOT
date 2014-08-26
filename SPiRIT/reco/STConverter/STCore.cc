@@ -58,12 +58,12 @@ void STCore::Initialize()
   fDecoderPtr = new GETDecoder();
 //  fDecoderPtr -> SetDebugMode(1);
 
-  fIsGraw = 0;
-  fIsPedestalData = 0;
-  fIsInternalPedestal = 0;
+  fIsGraw = kFALSE;
+  fIsPedestalData = kFALSE;
+  fIsInternalPedestal = kFALSE;
 
-  fStartTb = 0;
-  fNumTbs = 0;
+  fStartTb = 3;
+  fNumTbs = 20;
 
   fPrevEventNo = -1;
   fCurrEventNo = -1;
@@ -83,20 +83,23 @@ void STCore::SetNumTbs(Int_t value)
 
 void STCore::SetInternalPedestal(Int_t startTb, Int_t numTbs)
 {
-  fIsInternalPedestal = 1;
-  fIsPedestalData = 0;
+  fIsInternalPedestal = kTRUE;
+  fIsPedestalData = kFALSE;
 
   fStartTb = startTb;
   fNumTbs = numTbs;
 }
 
-Bool_t STCore::SetPedestalData(TString filename)
+Bool_t STCore::SetPedestalData(TString filename, Int_t startTb, Int_t numTbs)
 {
   fIsPedestalData = fPedestalPtr -> SetPedestalData(filename);
 
-  if (fIsPedestalData)
-    fIsInternalPedestal = 0;
-  else
+  if (fIsPedestalData) {
+    fIsInternalPedestal = kFALSE;
+
+    fStartTb = startTb;
+    fNumTbs = numTbs;
+  } else
     std::cout << "== Pedestal data is not set! Check it exists!" << std::endl;
 
   return fIsPedestalData;
@@ -154,9 +157,6 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
     Int_t coboID = frame -> GetCoboID();
     Int_t asadID = frame -> GetAsadID();
 
-    if (fIsInternalPedestal)
-      frame -> CalcPedestal(fStartTb, fNumTbs);
-
     for (Int_t iAget = 0; iAget < 4; iAget++) {
       for (Int_t iCh = 0; iCh < 68; iCh++) {
         Int_t row, layer;
@@ -171,7 +171,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           pad -> SetRawADC(iTb, rawadc[iTb]);
 
         if (fIsInternalPedestal) {
-          frame -> CalcPedestal(iAget, iCh, 3, 20);
+          frame -> CalcPedestal(iAget, iCh, fStartTb, fNumTbs);
           frame -> SubtractPedestal(iAget, iCh);
 
           Double_t *adc = frame -> GetADC(iAget, iCh);
@@ -181,7 +181,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           pad -> SetMaxADCIdx(frame -> GetMaxADCIdx(iAget, iCh));
           pad -> SetPedestalSubtracted(1);
         } else if (fIsPedestalData) {
-          frame -> CalcPedestal(iAget, iCh, 3, 20);
+          frame -> CalcPedestal(iAget, iCh, fStartTb, fNumTbs);
 
           Double_t pedestal[512];
           Double_t pedestalSigma[512];
