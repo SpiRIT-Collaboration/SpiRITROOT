@@ -4,7 +4,7 @@
 //  Description:
 //    This class is used for calculating or finding
 //    pedestal value and sigma corresponding to
-//    user-input coboIdx, asadIdx, agetIdx & chIdx.
+//    user-input padRow and padLayer.
 // 
 //  Genie Jhang ( geniejhang@majimak.com )
 //  2013. 08. 14
