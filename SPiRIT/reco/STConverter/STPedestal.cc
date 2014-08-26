@@ -4,7 +4,7 @@
 //  Description:
 //    This class is used for calculating or finding
 //    pedestal value and sigma corresponding to
-//    user-input coboIdx, asadIdx, agetIdx & chIdx.
+//    user-input padRow and padLayer.
 // 
 //  Genie Jhang ( geniejhang@majimak.com )
 //  2013. 08. 14
@@ -118,6 +118,7 @@ void STPedestal::GetPedestal(Int_t padRow, Int_t padLayer, Double_t *pedestal, D
     memset(pedestalSigma, 4096, sizeof(fPedestalSigma[padRow][padLayer]));
     return;
   }
+
   memcpy(pedestal, fPedestal[padRow][padLayer], sizeof(fPedestal[padRow][padLayer]));
   memcpy(pedestalSigma, fPedestalSigma[padRow][padLayer], sizeof(fPedestalSigma[padRow][padLayer]));
 }
