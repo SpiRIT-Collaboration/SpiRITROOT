@@ -76,36 +76,6 @@ Bool_t STPedestal::SetPedestalData(TString pedestalData) {
   return kFALSE;
 }
 
-/*
-void STPedestal::GetPedestal(Int_t *samples, Double_t *pedestalArray, Int_t startIdx, Int_t numPedestalSamples) {
-  Initialize();
-
-  Int_t numSkips = 0;
-  
-  for (Int_t i = startIdx; i < startIdx + numPedestalSamples; i++) {
-    if (samples[i] == 0) {
-      numSkips++;
-      continue;
-    }
-
-    pedestal += samples[i];
-  }
-
-  pedestal /= (Double_t) numPedestalSamples;
-
-  for (Int_t i = startIdx; i < startIdx + numPedestalSamples + numSkips; i++) {
-    if (samples[i] == 0)
-      continue;
-
-    pedestalSigma += TMath::Power(pedestal - (Double_t) samples[i], 2);
-  }
-
-  pedestalArray[0] = pedestal;
-  pedestalArray[1] = TMath::Sqrt(pedestalSigma/(Double_t)numPedestalSamples);
-
-  return;
-}
-*/
 Bool_t STPedestal::IsSetPedestalData() {
   return fIsSetPedestalData;
 }
