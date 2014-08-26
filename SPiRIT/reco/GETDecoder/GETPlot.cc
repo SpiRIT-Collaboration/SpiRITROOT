@@ -122,10 +122,11 @@ TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs)
 
   Int_t iFrame = 0;
   while ((fFrame = fDecoder -> GetFrame(iFrame))) {
-    fFrame -> CalcPedestal(startTb, numTbs);
-
     for (Int_t iAget = 0; iAget < 4; iAget++) {
       for (Int_t iCh = 0; iCh < 68; iCh++) {
+        fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
+        fFrame -> SubtractPedestal(iAget, iCh);
+
         Int_t maxADCIdx = fFrame -> GetMaxADCIdx(iAget, iCh);
         fAsad -> Fill(iAget*68 + iCh, fFrame -> GetADC(iAget, iCh, maxADCIdx));
       }
@@ -286,8 +287,6 @@ TCanvas *GETPlot::ShowFrame(Int_t frameNo, Int_t startTb, Int_t numTbs, Int_t nu
   if (!fFrame)
     return NULL;
 
-  fFrame -> CalcPedestal(startTb, numTbs);
-
   std::cout << "== Drawing frame " << fDecoder -> GetCurrentFrameID() << std::endl;
 
   TCanvas *cvs = (TCanvas *) gROOT -> FindObject("cvsType2");
@@ -320,6 +319,9 @@ TCanvas *GETPlot::ShowFrame(Int_t frameNo, Int_t startTb, Int_t numTbs, Int_t nu
 
       if (isSkip)
         continue;
+
+      fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
+      fFrame -> SubtractPedestal(iAget, iCh);
 
       Double_t *adc = NULL;
       adc = fFrame -> GetADC(iAget, iCh);
@@ -460,19 +462,20 @@ TCanvas *GETPlot::PrintMax(Int_t eventNo, Int_t startTb, Int_t numTbs)
   fFrame = fDecoder -> GetFrame(eventNo);
   fAsad -> SetTitle(Form("CoBo %d - AsAd %d - Event %d", fFrame -> GetCoboID(), fFrame -> GetAsadID(), eventNo));
 
-  fFrame -> CalcPedestal(startTb, numTbs);
-
   std::cout << "== " << std::setw(10) << "AGET No." << std::setw(10) << "Ch No.";
   std::cout << std::setw(10) << "Base" << std::setw(10) << "Max ADC";
   std::cout << std::setw(10) << "Diff." << std::endl;
   for (Int_t iAget = 0; iAget < 4; iAget++) {
     for (Int_t iCh = 0; iCh < 68; iCh++) {
+      fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
+      fFrame -> SubtractPedestal(iAget, iCh);
+
       Int_t maxADCIdx = fFrame -> GetMaxADCIdx(iAget, iCh);
       fAsad -> Fill(iAget*68 + iCh, fFrame -> GetRawADC(iAget, iCh, maxADCIdx));
       std::cout << "   " << std::setw(10) << iAget << std::setw(10) << iCh;
-      std::cout << std::setw(10) << fFrame -> GetPedestal(iAget, iCh);
+      std::cout << std::setw(10) << fFrame -> GetPedestal(iAget, iCh, 0);
       std::cout << std::setw(10) << fFrame -> GetRawADC(iAget, iCh, maxADCIdx);
-      std::cout << std::setw(10) << fFrame -> GetPedestal(iAget, iCh) - fFrame -> GetRawADC(iAget, iCh, maxADCIdx) << std::endl;
+      std::cout << std::setw(10) << fFrame -> GetPedestal(iAget, iCh, 0) - fFrame -> GetRawADC(iAget, iCh, maxADCIdx) << std::endl;
     }
   }
 
