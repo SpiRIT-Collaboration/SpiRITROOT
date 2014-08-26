@@ -28,14 +28,14 @@ class STGainCalibration : public TObject {
     void Initialize();
     Bool_t SetGainCalibrationData(TString gainCalibrationData);
 
-    Bool_t IsSetCalibrationData();
+    Bool_t IsSetGainCalibrationData();
     Double_t GetScaleFactor(Int_t padRow, Int_t padLayer);
 
   private:
     TFile *fOpenFile;
     TTree *fGainCalibrationTree;
 
-    Bool_t fIsSetCalibrationData;
+    Bool_t fIsSetGainCalibrationData;
     Double_t fScaleFactor[108][112];
 
   ClassDef(STGainCalibration, 1);
