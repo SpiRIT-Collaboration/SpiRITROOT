@@ -171,6 +171,9 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           pad -> SetRawADC(iTb, rawadc[iTb]);
 
         if (fIsInternalPedestal) {
+          frame -> CalcPedestal(iAget, iCh, 3, 20);
+          frame -> SubtractPedestal(iAget, iCh);
+
           Double_t *adc = frame -> GetADC(iAget, iCh);
           for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++)
             pad -> SetADC(iTb, adc[iTb]);
@@ -178,11 +181,15 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           pad -> SetMaxADCIdx(frame -> GetMaxADCIdx(iAget, iCh));
           pad -> SetPedestalSubtracted(1);
         } else if (fIsPedestalData) {
+          frame -> CalcPedestal(iAget, iCh, 3, 20);
+
           Double_t pedestal[512];
           Double_t pedestalSigma[512];
 
-          fPedestalPtr -> GetPedestal(coboID, asadID, iAget, iCh, pedestal, pedestalSigma);
+          fPedestalPtr -> GetPedestal(row, layer, pedestal, pedestalSigma);
           frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
+          frame -> SubtractPedestal(iAget, iCh);
+
           Double_t *adc = frame -> GetADC(iAget, iCh);
           for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++)
             pad -> SetADC(iTb, adc[iTb]);
