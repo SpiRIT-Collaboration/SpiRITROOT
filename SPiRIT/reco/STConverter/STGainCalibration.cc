@@ -32,7 +32,7 @@ void STGainCalibration::Initialize()
 {
   fOpenFile = NULL;
   fGainCalibrationTree = NULL;
-  fIsSetCalibrationData = kFALSE;
+  fIsSetGainCalibrationData = kFALSE;
 
   memset(fScaleFactor, 0, sizeof(Double_t)*108*112);;
 }
@@ -61,7 +61,7 @@ Bool_t STGainCalibration::SetGainCalibrationData(TString gainCalibrationData) {
     fGainCalibrationTree = NULL;
     fOpenFile = NULL;
 
-    fIsSetCalibrationData = kTRUE;
+    fIsSetGainCalibrationData = kTRUE;
     return kTRUE;
   }
 
@@ -74,7 +74,7 @@ Bool_t STGainCalibration::IsSetGainCalibrationData()
 }
 
 Double_t STGainCalibration::GetScaleFactor(Int_t padRow, Int_t padLayer) {
-  if (fIsSetCalibrationData == kFALSE) {
+  if (fIsSetGainCalibrationData == kFALSE) {
     std::cerr << "[STGainCalibration::GetScaleFactor()] Gain calibration data is not set!" << std::endl;
 
     return -1;
