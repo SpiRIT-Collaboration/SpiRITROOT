@@ -1,46 +1,100 @@
+//////////////////////////////////
+//                              //
+//        EDIT FROM HERE!       //
+//                              //
+//////////////////////////////////
+
+TString fInputFile = "~/Common/data/pulser_20140821/pedestal.graw";
+TString fOutputFile = "pedestal.root";
+TString parameterDir = "../parameters";
+
+Int_t fEventList[] = {0, 1, 2, 3, 7, 8, 11, 13, 14, 15, 18, 19, 20, 22, 23};
+
+// if fNumEvents is 0, all events in the fInputFile are processed to obtain pedestal data.
+//const Int_t fNumEvents = 0;
+const Int_t fNumEvents = sizeof(fEventList)/sizeof(Int_t);
+
+//////////////////////////////////
+//                              //
+//       EDIT UNTIL HERE!       //
+//                              //
+// DON'T TOUCH BELOW THIS LINE! //
+//                              //
+//////////////////////////////////
+
+
+const Int_t fRows = 108;
+const Int_t fLayers = 112;
+
 void makePedestal() {
-  TString filename;
+  CreatePedestal(fNumEvents, fEventList);
+}
 
-  const Int_t numEvents = 16;
-  filename = "CoBo_AsAd0-2014-07-11T18-56-57.670_0000.graw";
-  Int_t eventList[numEvents] = {0, 1, 2, 3, 7, 8, 11, 13, 14, 15, 18, 19, 20, 22, 23};
-//  filename = "CoBo_AsAd0_2014-07-11T19-34-57.035_0000.graw";
-//  Int_t eventList[numEvents] = {0, 7, 10, 11, 13, 14, 16, 17, 19, 20, 21, 24, 25, 26, 29, 30};
+void CreatePedestal(Int_t numEvents, Int_t *eventList) {
+  gSystem -> Load("libSTReco");
+  gSystem -> Load("libSTFormat");
 
-  GETDecoder *decoder = new GETDecoder(filename);
+  Int_t fNumTbs = GetNumTbs();
+  Int_t fPadRow, fPadLayer;
 
-  TFile *file = new TFile(filename.Append(".root"), "RECREATE");
+  STCore *core = new STCore(fInputFile, fNumTbs);
+  TString uaMapFile = parameterDir;
+  uaMapFile.Append("/UnitAsAd.map");
+  TString agetMapFile = parameterDir;
+  agetMapFile.Append("/AGET.map");
+
+  core -> SetUAMap(uaMapFile);
+  core -> SetAGETMap(agetMapFile);
+
+  TFile *file = new TFile(fOutputFile, "RECREATE");
   
-  Double_t pedestal[2][512] = {{0}};
-  TTree *tree = new TTree("pedestal", "");
-  tree -> Branch("pedestal", &pedestal[0], "pedestal[512]/D");
-  tree -> Branch("pedestalSigma", &pedestal[1], "pedestalSigma[512]/D");
+  Double_t fPedestal[2][512] = {{0}};
+  TTree *tree = new TTree("PedestalData", "Pedestal Data Tree");
+  tree -> Branch("padRow", &fPadRow, "padRow/I");
+  tree -> Branch("padLayer", &fPadLayer, "padLayer/I");
+  tree -> Branch("pedestal", &fPedestal[0], Form("pedestal[%d]/D", fNumTbs));
+  tree -> Branch("pedestalSigma", &fPedestal[1], Form("pedestalSigma[%d]/D", fNumTbs));
 
-  GETMath *math[4*68*512];
-  for (Int_t i = 0; i < 4*68*512; i++)
-    math[i] = new GETMath();
+  GETMath *math[fRows][fLayers][512];
+  for (Int_t fPadRow = 0; fPadRow < fRows; fPadRow++)
+    for (Int_t fPadLayer = 0; fPadLayer < fLayers; fPadLayer++)
+      for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+        math[fPadRow][fPadLayer][iTb] = new GETMath();
 
-  for (Int_t iEvent = 0; iEvent < numEvents; iEvent++) {
-    cout << "Start event: " << iEvent << endl;
-    GETFrame *frame = decoder -> GetFrame(eventList[iEvent]);
+  STRawEvent *event = NULL;
+  Int_t eventID = 0;
+  while ((event = core -> GetRawEvent())) {
+    if (numEvents == 0) {}
+    else if (eventID == numEvents)
+      break;
+    else if (eventList[eventID] != event -> GetEventID())
+      continue;
 
-    for (Int_t iAget = 0; iAget < 4; iAget++) {
-      for (Int_t iCh = 0; iCh < 68; iCh++) {
-        Int_t *adc = frame -> GetRawADC(iAget, iCh);
+    cout << "Start event: " << event -> GetEventID() << endl;
 
-        for (Int_t iTb = 0; iTb < 512; iTb++) {
-          math[iAget*68*512 + iCh*512 + iTb] -> Add(adc[iTb]);
-        }
-      }
+    Int_t numPads = event -> GetNumPads();
+    for (Int_t iPad = 0; iPad < numPads; iPad++) {
+      STPad *pad = event -> GetPad(iPad);
+      Int_t *adc = pad -> GetRawADC();
+
+      Int_t row = pad -> GetRow();
+      Int_t layer = pad -> GetLayer();
+
+      for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+        math[row][layer][iTb] -> Add(adc[iTb]);
     }
-    cout << "Done event: " << iEvent << endl;
-  } 
 
-  for (Int_t iAget = 0; iAget < 4; iAget++) {
-    for (Int_t iCh = 0; iCh < 68; iCh++) {
-      for (Int_t iTb = 0; iTb < 512; iTb++) {
-        pedestal[0][iTb] = math[iAget*68*512 + iCh*512 + iTb] -> GetMean();
-        pedestal[1][iTb] = math[iAget*68*512 + iCh*512 + iTb] -> GetRMS();
+    cout << "Done event: " << event -> GetEventID() << endl;
+
+    eventID++;
+  }
+
+  cout << "== Creating Pedestal data: " << fOutputFile << endl;
+  for (Int_t fPadRow = 0; fPadRow < fRows; fPadRow++) {
+    for (Int_t fPadLayer = 0; fPadLayer < fLayers; fPadLayer++) {
+      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+        fPedestal[0][iTb] = math[fPadRow][fPadLayer][iTb] -> GetMean();
+        fPedestal[1][iTb] = math[fPadRow][fPadLayer][iTb] -> GetRMS();
       }
 
       tree -> Fill();
@@ -48,4 +102,21 @@ void makePedestal() {
   }
 
   file -> Write();
+  cout << "== Pedestal data " << fOutputFile << " Created!" << endl;
 }
+
+Int_t GetNumTbs() {
+  TString parameterFile = parameterDir;
+  parameterFile.Append("/ST.parameters.par");
+  ifstream parameters(parameterFile);
+  while (kTRUE) {
+    TString numTbs;
+    numTbs.ReadToken(parameters);
+    if (numTbs.EqualTo("NumTbs:Int_t")) {
+      numTbs.ReadToken(parameters);
+      parameters.close();
+      return numTbs.Atoi();
+    }
+  }
+}
+
