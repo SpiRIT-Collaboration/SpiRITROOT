@@ -45,7 +45,7 @@ Bool_t STGainCalibration::SetGainCalibrationData(TString gainCalibrationData) {
     Int_t padRow = -2; 
     Int_t padLayer = -2; 
     Double_t scaleFactor = 1; 
-    fGainCalibrationTree = (TTree *) fOpenFile -> Get("GainCalibration");
+    fGainCalibrationTree = (TTree *) fOpenFile -> Get("GainCalibrationData");
     fGainCalibrationTree -> SetBranchAddress("padRow", &padRow);
     fGainCalibrationTree -> SetBranchAddress("padLayer", &padLayer);
     fGainCalibrationTree -> SetBranchAddress("scaleFactor", &scaleFactor);
