@@ -30,6 +30,8 @@ STDecoderTask::STDecoderTask()
   fPedestalFile = "";
   fNumTbs = 512;
 
+  fGainCalibrationFile = "";
+
   fIsPersistence = kFALSE;
 
   fPar = NULL;
@@ -64,6 +66,12 @@ STDecoderTask::SetPedestal(TString filename)
   fPedestalFile = filename;
 }
 
+void
+STDecoderTask::SetGainCalibration(TString filename)
+{
+  fGainCalibrationFile = filename;
+}
+
 InitStatus
 STDecoderTask::Init()
 {
@@ -84,14 +92,27 @@ STDecoderTask::Init()
 
     fDecoder -> SetInternalPedestal();
   } else {
-    fLogger -> Info(MESSAGE_ORIGIN, "Pedestal data is set!");
-
     Bool_t isSetPedestalData = fDecoder -> SetPedestalData(fPedestalFile);
     if (!isSetPedestalData) {
       fLogger -> Error(MESSAGE_ORIGIN, "Cannot find pedestal data file!");
       
       return kERROR;
     }
+
+    fLogger -> Info(MESSAGE_ORIGIN, "Pedestal data is set!");
+  }
+
+  if (fGainCalibrationFile.EqualTo(""))
+    fLogger -> Info(MESSAGE_ORIGIN, "Gain not calibrated!");
+  else {
+    Bool_t isSetGainCalibrationData = fDecoder -> SetGainCalibrationData(fGainCalibrationFile);
+    if (!isSetGainCalibrationData) {
+      fLogger -> Error(MESSAGE_ORIGIN, "Cannot find gain calibration data file!");
+      
+      return kERROR;
+    }
+
+    fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set!");
   }
 
   return kSUCCESS;
