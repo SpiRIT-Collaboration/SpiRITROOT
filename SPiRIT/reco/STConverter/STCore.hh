@@ -17,6 +17,7 @@
 #include "STRawEvent.hh"
 #include "STMap.hh"
 #include "STPedestal.hh"
+#include "STGainCalibration.hh"
 #include "GETDecoder.hh"
 #include "GETFrame.hh"
 
@@ -34,6 +35,8 @@ class STCore : public TObject {
     void SetNumTbs(Int_t value);
     void SetInternalPedestal(Int_t startTb = 10, Int_t numTbs = 20);
     Bool_t SetPedestalData(TString filename, Int_t startTb = 3, Int_t numTbs = 20);
+
+    Bool_t SetGainCalibrationData(TString filename);
 
     void SetUAMap(TString filename);
     void SetAGETMap(TString filename);
@@ -53,6 +56,9 @@ class STCore : public TObject {
     Bool_t fIsPedestalData;
     Int_t fStartTb;
     Int_t fNumTbs;
+
+    STGainCalibration *fGainCalibrationPtr;
+    Bool_t fIsGainCalibrationData;
 
     STRawEvent *fRawEventPtr;
 
