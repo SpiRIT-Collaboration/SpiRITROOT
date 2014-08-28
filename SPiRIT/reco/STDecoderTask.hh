@@ -48,6 +48,8 @@ class STDecoderTask : public FairTask {
     void SetGraw(TString filename);
     //! Setting pedestal data file. If not set, internal pedestal calculation method will be used.
     void SetPedestal(TString filename);
+    //! Setting gain calibration data file. If not set, gain is not calibrated.
+    void SetGainCalibration(TString filename);
 
     //! If set, decoded raw data is written in ROOT file with STRawEvent class.
     void SetPersistence(Bool_t value = kTRUE);
@@ -66,6 +68,7 @@ class STDecoderTask : public FairTask {
 
     TString fGrawFile;            //!< Raw data file name
     TString fPedestalFile;        //!< Pedestal data file name
+    TString fGainCalibrationFile; //!< Gain calibration data file name
     Int_t fNumTbs;                //!< The number of time buckets
 
     Bool_t fIsPersistence;        //!< Persistence check variable
