@@ -9,7 +9,7 @@
 // =================================================
 
 #ifndef STGAINCALIBRAITON_H
-#define STGAINCALIBRATION_H
+#define STGAINCALIBRAITON_H
 
 #include "TROOT.h"
 #include "TObject.h"
