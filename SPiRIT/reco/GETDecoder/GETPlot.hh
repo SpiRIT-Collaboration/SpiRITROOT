@@ -42,17 +42,18 @@ class GETPlot : public TObject
     void SetAgetRange(Int_t type, Int_t agetIdx, Double_t minx, Double_t maxx, Double_t miny, Double_t maxy);
 
     //! Draw the summary spectra of the file set to the decoder, and return the canvas.
-    TCanvas *ShowSummarySpectra(Int_t startTb = 10, //!< Starting time bucket index
-                                Int_t numTbs = 20 //!< The number of time buckets from startTb in order to calculate pedestal value
+    TCanvas *ShowSummarySpectra(Int_t startTb = 10,  /// Starting time bucket index
+                                Int_t numTbs = 20,   /// The number of time buckets from startTb in order to calculate pedestal value
+                                Int_t innerFrame = 0 /// The number of inner frame when the frame is merged frame
                                );
     //! Draw raw signals in the frame whose number is frameNo.
-    TCanvas *ShowRawFrame(Int_t frameNo = -1, Int_t numChannels = 0, Int_t *chList = NULL);
+    TCanvas *ShowRawFrame(Int_t frameNo = -1, Int_t innerFrameNo = -1, Int_t numChannels = 0, Int_t *chList = NULL);
     //! Draw pedestal-subtracted signals in the frame whose number is frameNo.
-    TCanvas *ShowFrame(Int_t frameNo = -1, Int_t startTb = 10, Int_t numTbs = 20, Int_t numChannels = 0, Int_t *chList = NULL);
+    TCanvas *ShowFrame(Int_t frameNo = -1, Int_t innerFrameNo = -1, Int_t startTb = 10, Int_t numTbs = 20, Int_t numChannels = 0, Int_t *chList = NULL);
     //! Draw averaged-raw signals in the frame whose number is frameNo.
-    TCanvas *ShowAverage(Int_t numChannels, Int_t *chList, Int_t frameNo = -1);
+    TCanvas *ShowAverage(Int_t numChannels, Int_t *chList, Int_t frameNo = -1, Int_t innerFrameNo = 0);
     //! Print Maximum values
-    TCanvas *PrintMax(Int_t eventNo, Int_t startTb, Int_t numTbs);
+    TCanvas *PrintMax(Int_t eventNo, Int_t innerFrameNo, Int_t startTb, Int_t numTbs);
 
   private:
     //! Initialize variables.
