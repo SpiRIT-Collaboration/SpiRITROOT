@@ -16,7 +16,7 @@
 //                              //
 //////////////////////////////////
 
-TString fInputFile = "~/Common/data/pulser_20140821/pulser_5.0V.graw";
+TString fInputFile = "~/Common/data/pulser_20140821/pulser_3.0V.graw";
 TString fPedestalFile = "pedestal.root";
 TString fOutputFile = "gainCalibration.root";
 TString parameterDir = "../parameters";
@@ -86,7 +86,7 @@ void makeGainCalibration() {
       Int_t row = pad -> GetRow();
       Int_t layer = pad -> GetLayer();
 
-      Int_t numPeaks = peakFinder -> SearchHighRes(adcTemp + peakRange[0], dummy, peakRange[1] - peakRange[2], 10, 90, kFALSE, 3, kTRUE, 3);
+      Int_t numPeaks = peakFinder -> SearchHighRes(adcTemp + peakRange[0], dummy, peakRange[1] - peakRange[2], 4.7, 90, kFALSE, 3, kTRUE, 3);
 
       if (numPeaks != 1)
         cout << row << " " << layer << " " << numPeaks << " " << (Int_t)ceil((peakFinder -> GetPositionX())[0] + peakRange[0]) << " " << adc[(Int_t)ceil((peakFinder -> GetPositionX())[0] + peakRange[0])] << endl;
