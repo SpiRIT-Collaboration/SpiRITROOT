@@ -62,6 +62,9 @@ void STCore::Initialize()
   fIsPedestalData = kFALSE;
   fIsInternalPedestal = kFALSE;
 
+  fGainCalibrationPtr = new STGainCalibration();
+  fIsGainCalibrationData = kFALSE;
+
   fStartTb = 3;
   fNumTbs = 20;
 
@@ -103,6 +106,13 @@ Bool_t STCore::SetPedestalData(TString filename, Int_t startTb, Int_t numTbs)
     std::cout << "== Pedestal data is not set! Check it exists!" << std::endl;
 
   return fIsPedestalData;
+}
+
+Bool_t STCore::SetGainCalibrationData(TString filename)
+{
+  fIsGainCalibrationData = fGainCalibrationPtr -> SetGainCalibrationData(filename);
+
+  return fIsGainCalibrationData;
 }
 
 void STCore::SetUAMap(TString filename)
@@ -179,7 +189,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
             pad -> SetADC(iTb, adc[iTb]);
 
           pad -> SetMaxADCIdx(frame -> GetMaxADCIdx(iAget, iCh));
-          pad -> SetPedestalSubtracted(1);
+          pad -> SetPedestalSubtracted(kTRUE);
         } else if (fIsPedestalData) {
           frame -> CalcPedestal(iAget, iCh, fStartTb, fNumTbs);
 
@@ -190,12 +200,18 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
           frame -> SubtractPedestal(iAget, iCh);
 
+          Double_t scaleFactor = 1;
+          if (fIsGainCalibrationData) {
+            scaleFactor = fGainCalibrationPtr -> GetScaleFactor(row, layer);
+            pad -> SetGainCalibrated(kTRUE);
+          }
+
           Double_t *adc = frame -> GetADC(iAget, iCh);
           for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++)
-            pad -> SetADC(iTb, adc[iTb]);
+            pad -> SetADC(iTb, adc[iTb]*scaleFactor);
 
           pad -> SetMaxADCIdx(frame -> GetMaxADCIdx(iAget, iCh));
-          pad -> SetPedestalSubtracted(1);
+          pad -> SetPedestalSubtracted(kTRUE);
         }
 
         fRawEventPtr -> SetPad(pad);
