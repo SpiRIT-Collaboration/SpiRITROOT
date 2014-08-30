@@ -71,36 +71,6 @@ Bool_t STSignalDelay::SetSignalDelayData(TString signalDelayData) {
   return kFALSE;
 }
 
-/*
-void STSignalDelay::GetSignalDelay(Int_t *samples, Double_t *signalDelayArray, Int_t startIdx, Int_t numSignalDelaySamples) {
-  Initialize();
-
-  Int_t numSkips = 0;
-  
-  for (Int_t i = startIdx; i < startIdx + numSignalDelaySamples; i++) {
-    if (samples[i] == 0) {
-      numSkips++;
-      continue;
-    }
-
-    signalDelay += samples[i];
-  }
-
-  signalDelay /= (Double_t) numSignalDelaySamples;
-
-  for (Int_t i = startIdx; i < startIdx + numSignalDelaySamples + numSkips; i++) {
-    if (samples[i] == 0)
-      continue;
-
-    signalDelaySigma += TMath::Power(signalDelay - (Double_t) samples[i], 2);
-  }
-
-  signalDelayArray[0] = signalDelay;
-  signalDelayArray[1] = TMath::Sqrt(signalDelaySigma/(Double_t)numSignalDelaySamples);
-
-  return;
-}
-*/
 Bool_t STSignalDelay::IsSetSignalDelayData() {
   return fIsSetSignalDelayData;
 }
