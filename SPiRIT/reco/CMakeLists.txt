@@ -41,6 +41,7 @@ STConverter/STSignalDelay.cc
 STConverter/STMap.cc
 
 PulseShapeAnalyzer/STPSASimple.cc
+PulseShapeAnalyzer/STPSASimple2.cc
 
 #HitClusterizer/STHitClusteringSimple.cc
 
@@ -72,6 +73,7 @@ Set(DEPENDENCIES
 # Basically those are the libraries in the header files' directory.
     STFormat
     STPar
+    Spectrum
 )
 
 GENERATE_LIBRARY()
