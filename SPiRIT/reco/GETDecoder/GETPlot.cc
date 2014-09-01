@@ -143,7 +143,7 @@ TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs, Int_t notConne
   axis -> SetLabelSize(0.045);
   axis -> SetLabelOffset(-0.005);
 
-  Double_t maskChannel[5] = {11, 22, 45, 56, notConnected};
+  Int_t maskChannel[5] = {11, 22, 45, 56, notConnected};
   for (Int_t iAget = 0; iAget < 4; iAget++) {
     for (Int_t iMask = 0; iMask < 5; iMask++) {
       Double_t pointX1[2] = {iAget*68 + maskChannel[iMask] - 0.5, iAget*68 + maskChannel[iMask] - 0.5};
