@@ -18,6 +18,7 @@
 
 // STL
 #include <algorithm>
+#include <cmath>
 
 ClassImp(STPSASimple2)
 
