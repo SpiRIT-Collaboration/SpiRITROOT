@@ -65,6 +65,9 @@ void STCore::Initialize()
   fGainCalibrationPtr = new STGainCalibration();
   fIsGainCalibrationData = kFALSE;
 
+  fSignalDelayPtr = new STSignalDelay();
+  fIsSignalDelayData = kFALSE;
+
   fStartTb = 3;
   fNumTbs = 20;
 
@@ -114,6 +117,14 @@ Bool_t STCore::SetGainCalibrationData(TString filename)
 
   return fIsGainCalibrationData;
 }
+
+Bool_t STCore::SetSignalDelayData(TString filename)
+{
+  fIsSignalDelayData = fSignalDelayPtr -> SetSignalDelayData(filename);
+
+  return fIsSignalDelayData;
+}
+
 
 void STCore::SetUAMap(TString filename)
 {
@@ -180,15 +191,33 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
         for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++)
           pad -> SetRawADC(iTb, rawadc[iTb]);
 
+        Int_t signalDelay = 0;
+        if (fIsSignalDelayData) {
+          Int_t uaIdx = fMapPtr -> GetUAIdx(coboID, asadID);
+          signalDelay = ceil(fSignalDelayPtr -> GetSignalDelay(uaIdx));
+        }
+
         if (fIsInternalPedestal) {
           frame -> CalcPedestal(iAget, iCh, fStartTb, fNumTbs);
           frame -> SubtractPedestal(iAget, iCh);
 
           Double_t *adc = frame -> GetADC(iAget, iCh);
-          for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++)
-            pad -> SetADC(iTb, adc[iTb]);
+          for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++) {
+            Int_t delayedTb = iTb - signalDelay;
+            Double_t delayedADC = 0;
+            if (delayedTb < 0 || delayedTb >= fDecoderPtr -> GetNumTbs())
+              delayedADC = 0;
+            else
+              delayedADC = adc[delayedTb];
 
-          pad -> SetMaxADCIdx(frame -> GetMaxADCIdx(iAget, iCh));
+            pad -> SetADC(iTb, delayedADC);
+          }
+
+          Int_t maxADCIdx = frame -> GetMaxADCIdx(iAget, iCh) + signalDelay;
+          if (maxADCIdx < 0 || maxADCIdx >= fDecoderPtr -> GetNumTbs())
+            maxADCIdx = 0;
+
+          pad -> SetMaxADCIdx(maxADCIdx);
           pad -> SetPedestalSubtracted(kTRUE);
         } else if (fIsPedestalData) {
           frame -> CalcPedestal(iAget, iCh, fStartTb, fNumTbs);
@@ -207,10 +236,22 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           }
 
           Double_t *adc = frame -> GetADC(iAget, iCh);
-          for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++)
-            pad -> SetADC(iTb, adc[iTb]*scaleFactor);
+          for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++) {
+            Int_t delayedTb = iTb - signalDelay;
+            Double_t delayedADC = 0;
+            if (delayedTb < 0 || delayedTb >= fDecoderPtr -> GetNumTbs())
+              delayedADC = 0;
+            else
+              delayedADC = adc[delayedTb]*scaleFactor;
 
-          pad -> SetMaxADCIdx(frame -> GetMaxADCIdx(iAget, iCh));
+            pad -> SetADC(iTb, delayedADC);
+          }
+
+          Int_t maxADCIdx = frame -> GetMaxADCIdx(iAget, iCh) + signalDelay;
+          if (maxADCIdx < 0 || maxADCIdx >= fDecoderPtr -> GetNumTbs())
+            maxADCIdx = 0;
+
+          pad -> SetMaxADCIdx(maxADCIdx);
           pad -> SetPedestalSubtracted(kTRUE);
         }
 

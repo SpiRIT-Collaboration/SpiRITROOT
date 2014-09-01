@@ -18,6 +18,7 @@
 #include "STMap.hh"
 #include "STPedestal.hh"
 #include "STGainCalibration.hh"
+#include "STSignalDelay.hh"
 #include "GETDecoder.hh"
 #include "GETFrame.hh"
 
@@ -37,6 +38,8 @@ class STCore : public TObject {
     Bool_t SetPedestalData(TString filename, Int_t startTb = 3, Int_t numTbs = 20);
 
     Bool_t SetGainCalibrationData(TString filename);
+
+    Bool_t SetSignalDelayData(TString filename);
 
     void SetUAMap(TString filename);
     void SetAGETMap(TString filename);
@@ -59,6 +62,9 @@ class STCore : public TObject {
 
     STGainCalibration *fGainCalibrationPtr;
     Bool_t fIsGainCalibrationData;
+
+    STSignalDelay *fSignalDelayPtr;
+    Bool_t fIsSignalDelayData;
 
     STRawEvent *fRawEventPtr;
 
