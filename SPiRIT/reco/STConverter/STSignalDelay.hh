@@ -34,7 +34,7 @@ class STSignalDelay : public TObject {
 //    void GetSignalDelay(Int_t *samples, Double_t *signalDelay, Int_t startBuckIdx = 10, Int_t numSamples = 20);
 
     Bool_t IsSetSignalDelayData();
-    Int_t GetSignalDelay(Int_t padRow, Int_t padLayer);
+    Int_t GetSignalDelay(Int_t UAIdx);
 
   private:
     TFile *fOpenFile;
@@ -42,7 +42,7 @@ class STSignalDelay : public TObject {
 
     Bool_t fIsSetSignalDelayData;
 
-    Int_t fSignalDelay[108][112];
+    Int_t fSignalDelay[4][12];
 
   ClassDef(STSignalDelay, 1);
 };

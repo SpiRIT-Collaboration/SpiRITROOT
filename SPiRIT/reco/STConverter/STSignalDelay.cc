@@ -36,7 +36,7 @@ void STSignalDelay::Initialize()
   fSignalDelayTree = NULL;
 
   fIsSetSignalDelayData = kFALSE;
-  memset(fSignalDelay, 511, sizeof(Int_t)*108*112);
+  memset(fSignalDelay, 511, sizeof(Int_t)*4*12);
 }
 
 Bool_t STSignalDelay::SetSignalDelayData(TString signalDelayData) {
@@ -44,20 +44,18 @@ Bool_t STSignalDelay::SetSignalDelayData(TString signalDelayData) {
     delete fOpenFile;
 
   if ((fOpenFile = new TFile(signalDelayData))) {
-    Int_t padRow = -2;
-    Int_t padLayer = -2;
+    Int_t UAIdx = -2;
     Int_t signalDelay = 511;;
 
     fSignalDelayTree = (TTree *) fOpenFile -> Get("SignalDelayData");
-    fSignalDelayTree -> SetBranchAddress("padRow", &padRow);
-    fSignalDelayTree -> SetBranchAddress("padLayer", &padLayer);
+    fSignalDelayTree -> SetBranchAddress("UAIdx", &UAIdx);
     fSignalDelayTree -> SetBranchAddress("signalDelay", &signalDelay);
 
     Int_t numEntries = fSignalDelayTree -> GetEntries();
     for (Int_t iEntry = 0; iEntry < numEntries; iEntry++) {
       fSignalDelayTree -> GetEntry(iEntry);
 
-      fSignalDelay[padRow][padLayer] = signalDelay;
+      fSignalDelay[UAIdx/100][UAIdx%100] = signalDelay;
     }
 
     delete fOpenFile;
@@ -75,12 +73,12 @@ Bool_t STSignalDelay::IsSetSignalDelayData() {
   return fIsSetSignalDelayData;
 }
 
-Int_t STSignalDelay::GetSignalDelay(Int_t padRow, Int_t padLayer) {
+Int_t STSignalDelay::GetSignalDelay(Int_t UAIdx) {
   if (fIsSetSignalDelayData == kFALSE) {
     std::cerr << "SignalDelay data file is not set!" << std::endl;
 
     return 511;
   }
 
-  return fSignalDelay[padRow][padLayer];
+  return fSignalDelay[UAIdx/100][UAIdx%100];
 }
