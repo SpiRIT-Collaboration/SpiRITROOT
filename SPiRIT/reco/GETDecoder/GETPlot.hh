@@ -44,6 +44,7 @@ class GETPlot : public TObject
     //! Draw the summary spectra of the file set to the decoder, and return the canvas.
     TCanvas *ShowSummarySpectra(Int_t startTb = 10,  /// Starting time bucket index
                                 Int_t numTbs = 20,   /// The number of time buckets from startTb in order to calculate pedestal value
+                                Int_t notConnected = 35, /// The number of not-connected channel
                                 Int_t innerFrame = 0 /// The number of inner frame when the frame is merged frame
                                );
     //! Draw raw signals in the frame whose number is frameNo.

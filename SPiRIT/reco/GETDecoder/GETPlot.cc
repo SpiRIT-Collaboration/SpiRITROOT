@@ -103,7 +103,7 @@ void GETPlot::SetAgetRange(Int_t type, Int_t agetIdx, Double_t minx, Double_t ma
   }
 }
 
-TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs, Int_t innerFrame)
+TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs, Int_t notConnected, Int_t innerFrame)
 {
   if (fDecoder == NULL) {
     std::cout << "== GETDecoder is not set!" << std::endl;
@@ -143,7 +143,7 @@ TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs, Int_t innerFra
   axis -> SetLabelSize(0.045);
   axis -> SetLabelOffset(-0.005);
 
-  Double_t maskChannel[5] = {11, 22, 45, 56, 67};
+  Double_t maskChannel[5] = {11, 22, 45, 56, notConnected};
   for (Int_t iAget = 0; iAget < 4; iAget++) {
     for (Int_t iMask = 0; iMask < 5; iMask++) {
       Double_t pointX1[2] = {iAget*68 + maskChannel[iMask] - 0.5, iAget*68 + maskChannel[iMask] - 0.5};
