@@ -50,6 +50,8 @@ class STDecoderTask : public FairTask {
     void SetPedestal(TString filename);
     //! Setting gain calibration data file. If not set, gain is not calibrated.
     void SetGainCalibration(TString filename);
+    //! Setting signal delay data file. If not set, signal is not delayed.
+    void SetSignalDelay(TString filename);
 
     //! If set, decoded raw data is written in ROOT file with STRawEvent class.
     void SetPersistence(Bool_t value = kTRUE);
@@ -62,19 +64,20 @@ class STDecoderTask : public FairTask {
     virtual void Exec(Option_t *opt);
 
   private:
-    FairLogger *fLogger;          //!< FairLogger singleton
+    FairLogger *fLogger;          /// FairLogger singleton
 
-    STCore *fDecoder;             //!< STConverter pointer
+    STCore *fDecoder;             /// STConverter pointer
 
-    TString fGrawFile;            //!< Raw data file name
-    TString fPedestalFile;        //!< Pedestal data file name
-    TString fGainCalibrationFile; //!< Gain calibration data file name
-    Int_t fNumTbs;                //!< The number of time buckets
+    TString fGrawFile;            /// Raw data file name
+    TString fPedestalFile;        /// Pedestal data file name
+    TString fGainCalibrationFile; /// Gain calibration data file name
+    TString fSignalDelayFile;     /// Signal Delay data file name
+    Int_t fNumTbs;                /// The number of time buckets
 
-    Bool_t fIsPersistence;        //!< Persistence check variable
+    Bool_t fIsPersistence;        /// Persistence check variable
 
-    STDigiPar *fPar;              //!< Parameter read-out class pointer
-    TClonesArray *fRawEventArray; //!< STRawEvent container
+    STDigiPar *fPar;              /// Parameter read-out class pointer
+    TClonesArray *fRawEventArray; /// STRawEvent container
 
   ClassDef(STDecoderTask, 1);
 };

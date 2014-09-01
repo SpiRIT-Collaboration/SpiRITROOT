@@ -32,6 +32,8 @@ STDecoderTask::STDecoderTask()
 
   fGainCalibrationFile = "";
 
+  fSignalDelayFile = "";
+
   fIsPersistence = kFALSE;
 
   fPar = NULL;
@@ -70,6 +72,12 @@ void
 STDecoderTask::SetGainCalibration(TString filename)
 {
   fGainCalibrationFile = filename;
+}
+
+void
+STDecoderTask::SetSignalDelay(TString filename)
+{
+  fSignalDelayFile = filename;
 }
 
 InitStatus
@@ -113,6 +121,19 @@ STDecoderTask::Init()
     }
 
     fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set!");
+  }
+
+  if (fSignalDelayFile.EqualTo(""))
+    fLogger -> Info(MESSAGE_ORIGIN, "Signal not delayed!");
+  else {
+    Bool_t isSetSignalDelayData = fDecoder -> SetSignalDelayData(fSignalDelayFile);
+    if (!isSetSignalDelayData) {
+      fLogger -> Error(MESSAGE_ORIGIN, "Cannot find signal delay data file!");
+      
+      return kERROR;
+    }
+
+    fLogger -> Info(MESSAGE_ORIGIN, "Signal delay data is set!");
   }
 
   return kSUCCESS;
