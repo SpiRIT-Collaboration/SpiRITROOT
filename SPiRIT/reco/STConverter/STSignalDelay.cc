@@ -45,7 +45,7 @@ Bool_t STSignalDelay::SetSignalDelayData(TString signalDelayData) {
 
   if ((fOpenFile = new TFile(signalDelayData))) {
     Int_t UAIdx = -2;
-    Int_t signalDelay = 511;;
+    Double_t signalDelay = 511;
 
     fSignalDelayTree = (TTree *) fOpenFile -> Get("SignalDelayData");
     fSignalDelayTree -> SetBranchAddress("UAIdx", &UAIdx);

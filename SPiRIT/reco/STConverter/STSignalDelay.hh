@@ -42,7 +42,7 @@ class STSignalDelay : public TObject {
 
     Bool_t fIsSetSignalDelayData;
 
-    Int_t fSignalDelay[4][12];
+    Double_t fSignalDelay[4][12];
 
   ClassDef(STSignalDelay, 1);
 };
