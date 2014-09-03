@@ -43,12 +43,12 @@ class STAvalanche : public TObject
     void SetIndex(Int_t index);
     
   private :
-    Double_t fX;     //  x position [cm]
-    Double_t fZ;     //  z position [cm]
-    Double_t fTime;  //  arrival time on wire plane from primary collision time[ns]
-    Double_t fGain;  //  amplification factor of electron
+    Double_t fX;     ///  x position [cm]
+    Double_t fZ;     ///  z position [cm]
+    Double_t fTime;  ///  arrival time on wire plane from primary collision time[ns]
+    Double_t fGain;  ///  amplification factor of electron
 
-    Int_t    fIndex; //  position of STAvalanche in "TClonesArray"
+    Int_t    fIndex; ///  position of STAvalanche in "TClonesArray"
 
   ClassDef(STAvalanche,1)
 };
