@@ -43,11 +43,11 @@ class STDriftedElectron : public TObject
     void SetIndex(Int_t index);
     
   private :
-    Double_t fX;     //!<  x position [cm]
-    Double_t fZ;     //!<  z position [cm]
-    Double_t fTime;  //!<  arrival time on wire plane from primary collision time[ns]
+    Double_t fX;     //  x position [cm]
+    Double_t fZ;     //  z position [cm]
+    Double_t fTime;  //  arrival time on wire plane from primary collision time[ns]
 
-    Int_t    fIndex; //!<  position of STDriftedElectron in "TClonesArray"
+    Int_t    fIndex; //  position of STDriftedElectron in "TClonesArray"
 
   ClassDef(STDriftedElectron,1)
 };
