@@ -275,6 +275,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
         }
 
         fRawEventPtr -> SetPad(pad);
+        delete pad;
       }
     }
 
