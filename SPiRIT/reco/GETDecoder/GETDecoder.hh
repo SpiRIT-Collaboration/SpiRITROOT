@@ -45,6 +45,8 @@ class GETDecoder : public TObject
     Bool_t SetData(Int_t index);
     //! Search the next file and set it if exists. Returns 1 if successful.
     Bool_t SetNextFile();
+    /// Set the flag for auto reload continuing file in the list
+    void SetNoAutoReload(Bool_t kFALSE);
     //! Print rawdata file list on the screen.
     void ShowList();
     //! Return the number of data added in the list.
@@ -108,6 +110,7 @@ class GETDecoder : public TObject
     UInt_t fCurrentInnerFrameSize; /// size of an inner frame.
 
     Bool_t fDebugMode; /// flag for debug mode
+    Bool_t fIsAutoReload; /// Flag for auto reloading continuing data file in the list.
 
     std::ifstream fGraw;            /// rawdata filestream
     UInt_t fFileSize; /// file size
