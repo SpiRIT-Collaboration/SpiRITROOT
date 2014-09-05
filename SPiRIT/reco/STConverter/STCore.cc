@@ -142,14 +142,14 @@ Bool_t STCore::SetSignalDelayData(TString filename)
 }
 
 
-void STCore::SetUAMap(TString filename)
+Bool_t STCore::SetUAMap(TString filename)
 {
-  Bool_t check = fMapPtr -> SetUAMap(filename);
+  return fMapPtr -> SetUAMap(filename);
 }
 
-void STCore::SetAGETMap(TString filename)
+Bool_t STCore::SetAGETMap(TString filename)
 {
-  Bool_t check = fMapPtr -> SetAGETMap(filename);
+  return fMapPtr -> SetAGETMap(filename);
 }
 
 STRawEvent *STCore::GetRawEvent(Int_t eventID)
