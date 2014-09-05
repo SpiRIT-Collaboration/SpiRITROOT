@@ -30,6 +30,7 @@ class STGenerator : public TObject {
     void SetMode(TString mode);
     void SetOutputFile(TString filename);
     Bool_t SetParameterDir(TString dir);
+    Bool_t SetPedestalData(TString filename, Int_t startTb = 3, Int_t numTbs = 20);
 
     Bool_t AddData(TString filename);
     Bool_t AddData(Double_t voltage, TString filename);
