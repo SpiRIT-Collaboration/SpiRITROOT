@@ -77,10 +77,25 @@ void STCore::Initialize()
   fCurrFrameNo = 0;
 }
 
-void STCore::AddGraw(TString filename)
+Bool_t STCore::AddGraw(TString filename)
 {
-  fDecoderPtr -> AddGraw(filename);
-  fIsGraw = fDecoderPtr -> SetData(0);
+  return fDecoderPtr -> AddGraw(filename);
+}
+
+Bool_t STCore::SetData(Int_t value)
+{
+  fIsGraw = fDecoderPtr -> SetData(value);
+
+  return fIsGraw;
+}
+
+Int_t STCore::GetNumData()
+{
+  return fDecoderPtr -> GetNumData();
+}
+
+TString STCore::GetDataName(Int_t index) {
+  return fDecoderPtr -> GetDataName(index);
 }
 
 void STCore::SetNumTbs(Int_t value)
@@ -107,7 +122,7 @@ Bool_t STCore::SetPedestalData(TString filename, Int_t startTb, Int_t numTbs)
     fStartTb = startTb;
     fNumTbs = numTbs;
   } else
-    std::cout << "== Pedestal data is not set! Check it exists!" << std::endl;
+    std::cout << "== [STCore] Pedestal data is not set! Check it exists!" << std::endl;
 
   return fIsPedestalData;
 }
@@ -129,24 +144,24 @@ Bool_t STCore::SetSignalDelayData(TString filename)
 
 void STCore::SetUAMap(TString filename)
 {
-  fMapPtr -> SetUAMap(filename);
+  Bool_t check = fMapPtr -> SetUAMap(filename);
 }
 
 void STCore::SetAGETMap(TString filename)
 {
-  fMapPtr -> SetAGETMap(filename);
+  Bool_t check = fMapPtr -> SetAGETMap(filename);
 }
 
 STRawEvent *STCore::GetRawEvent(Int_t eventID)
 {
   if (!fIsGraw) {
-    std::cout << "== Graw file is not set!" << std::endl;
+    std::cout << "== [STCore] Graw file is not set!" << std::endl;
 
     return NULL;
   }
 
   if (!fIsPedestalData && !fIsInternalPedestal) {
-    std::cout << "== Pedestal data file is not set!" << std::endl;
+    std::cout << "== [STCore] Pedestal data file is not set!" << std::endl;
   }
 
   fPrevEventNo = eventID;
@@ -176,7 +191,10 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
 
     fRawEventPtr -> SetEventID(fCurrEventNo);
 
-    Int_t coboID = fDecoderPtr -> GetCurrentInnerFrameID();
+    Int_t coboID = frame -> GetCoboID();
+    Int_t frameType = fDecoderPtr -> GetFrameType();
+    if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime)
+      coboID = fDecoderPtr -> GetCurrentInnerFrameID();
     Int_t asadID = frame -> GetAsadID();
 
     for (Int_t iAget = 0; iAget < 4; iAget++) {
@@ -260,7 +278,6 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
       }
     }
 
-    Int_t frameType = fDecoderPtr -> GetFrameType();
     if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime) {
       Int_t currentInnerFrameID = fDecoderPtr -> GetCurrentInnerFrameID();
       Int_t numInnerFrames = fDecoderPtr -> GetNumMergedFrames();
