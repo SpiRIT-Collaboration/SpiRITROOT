@@ -82,6 +82,11 @@ Bool_t STCore::AddGraw(TString filename)
   return fDecoderPtr -> AddGraw(filename);
 }
 
+void STCore::SetNoAutoReload(Bool_t value)
+{
+  fDecoderPtr -> SetNoAutoReload(value);
+}
+
 Bool_t STCore::SetData(Int_t value)
 {
   fIsGraw = fDecoderPtr -> SetData(value);
