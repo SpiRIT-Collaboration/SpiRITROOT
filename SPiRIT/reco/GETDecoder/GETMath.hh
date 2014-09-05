@@ -40,6 +40,9 @@ class GETMath : public TObject
     Double_t GetMean();
     //! Return the calculated **RMS** value.
     Double_t GetRMS();
+
+    /// Set the values manually.
+    void Set(Int_t numValues, Double_t mean, Double_t rms);
     
     //! Temporary
     Double_t **GetAverage(Int_t numChannels, Int_t *chList, Int_t frameNo = -1);
