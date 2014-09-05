@@ -84,11 +84,11 @@ void STPedestal::GetPedestal(Int_t padRow, Int_t padLayer, Double_t *pedestal, D
   if (fIsSetPedestalData == kFALSE) {
     std::cerr << "Pedestal data file is not set!" << std::endl;
 
-    memset(pedestal, 4096, sizeof(fPedestal[padRow][padLayer]));
-    memset(pedestalSigma, 4096, sizeof(fPedestalSigma[padRow][padLayer]));
+    memset(pedestal, 4096, sizeof(Double_t)*512);
+    memset(pedestalSigma, 4096, sizeof(Double_t)*512);
     return;
   }
 
-  memcpy(pedestal, fPedestal[padRow][padLayer], sizeof(fPedestal[padRow][padLayer]));
-  memcpy(pedestalSigma, fPedestalSigma[padRow][padLayer], sizeof(fPedestalSigma[padRow][padLayer]));
+  memcpy(pedestal, fPedestal[padRow][padLayer], sizeof(Double_t)*512);
+  memcpy(pedestalSigma, fPedestalSigma[padRow][padLayer], sizeof(Double_t)*512);
 }

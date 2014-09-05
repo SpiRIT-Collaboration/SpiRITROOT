@@ -18,6 +18,7 @@
 #include "TString.h"
 
 #include <map>
+#include <fstream>
 
 using std::map;
 
@@ -49,6 +50,8 @@ class STMap : public TObject {
     Int_t fPadLayerOfCh[68];
 
     Int_t fUAMap[12][4];
+
+    std::fstream fStream;
 
   ClassDef(STMap, 1);
 };
