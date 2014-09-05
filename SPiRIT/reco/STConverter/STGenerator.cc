@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 using std::cout;
 using std::cerr;
@@ -243,21 +244,21 @@ STGenerator::GeneratePedestal()
 
   Int_t ***numValues = new Int_t**[fRows];
   Double_t ***mean = new Double_t**[fRows];
-  Double_t ***rms = new Double_t**[fRows];
+  Double_t ***rms2 = new Double_t**[fRows];
 
   for (iRow = 0; iRow < fRows; iRow++) {
     numValues[iRow] = new Int_t*[fLayers];
     mean[iRow] = new Double_t*[fLayers];
-    rms[iRow] = new Double_t*[fLayers];
+    rms2[iRow] = new Double_t*[fLayers];
     for (iLayer = 0; iLayer < fLayers; iLayer++) {
       numValues[iRow][iLayer] = new Int_t[fNumTbs];
       mean[iRow][iLayer] = new Double_t[fNumTbs];
-      rms[iRow][iLayer] = new Double_t[fNumTbs];
+      rms2[iRow][iLayer] = new Double_t[fNumTbs];
 
       for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
         numValues[iRow][iLayer][iTb] = 0;
         mean[iRow][iLayer][iTb] = 0;
-        rms[iRow][iLayer][iTb] = 0;
+        rms2[iRow][iLayer][iTb] = 0;
       }
     }
   }
@@ -305,10 +306,10 @@ STGenerator::GeneratePedestal()
 
       for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
         math -> Reset();
-        math -> Set(numValues[row][layer][iTb]++, mean[row][layer][iTb], rms[row][layer][iTb]);
+        math -> Set(numValues[row][layer][iTb]++, mean[row][layer][iTb], rms2[row][layer][iTb]);
         math -> Add(adc[iTb]);
         mean[row][layer][iTb] = math -> GetMean();
-        rms[row][layer][iTb] = math -> GetRMS();
+        rms2[row][layer][iTb] = math -> GetRMS2();
         /*
         math[row][layer][iTb] -> Add(adc[iTb]);
         */
@@ -331,7 +332,7 @@ STGenerator::GeneratePedestal()
     for (iLayer = 0; iLayer < fLayers; iLayer++) {
       for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
         pedestal[0][iTb] = mean[iRow][iLayer][iTb];
-        pedestal[1][iTb] = rms[iRow][iLayer][iTb];
+        pedestal[1][iTb] = sqrt(rms2[iRow][iLayer][iTb]);
         /*
         pedestal[0][iTb] = math[iRow][iLayer][iTb] -> GetMean();
         pedestal[1][iTb] = math[iRow][iLayer][iTb] -> GetRMS();
