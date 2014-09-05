@@ -35,6 +35,7 @@ class STGenerator : public TObject {
     Bool_t AddData(Double_t voltage, TString filename);
     Bool_t SetData(Int_t index);
 
+    void SelectEvents(Int_t numEvents = 0, Int_t *eventList = NULL);
     void StartProcess();
 
     void Print();
@@ -54,6 +55,9 @@ class STGenerator : public TObject {
     STCore *fCore;
     TString fParameterFile;
     TString fOutputFile;
+
+    Int_t fNumEvents;
+    Int_t *fEventList;
 
     Int_t fNumTbs;
     Int_t fRows;

@@ -10,9 +10,15 @@
 //  2014. 09. 05
 // =================================================
 
-#include "TSystem.h"
-
 #include "STGenerator.hh"
+#include "STRawEvent.hh"
+#include "STPad.hh"
+
+#include "GETMath.hh"
+
+#include "TSystem.h"
+#include "TFile.h"
+#include "TTree.h"
 
 #include <iostream>
 #include <fstream>
@@ -56,9 +62,10 @@ STGenerator::SetMode(TString mode)
   }
 
   mode.ToLower();
-  if (mode.EqualTo("pedestal"))
+  if (mode.EqualTo("pedestal")) {
     fMode = kPedestal;
-  else if (mode.EqualTo("gain"))
+    fNumEvents = 0;
+  } else if (mode.EqualTo("gain"))
     fMode = kGain;
   else {
     fMode = kError;
@@ -192,10 +199,31 @@ STGenerator::SetData(Int_t index)
 }
 
 void
+STGenerator::SelectEvents(Int_t numEvents, Int_t *eventList)
+{
+  fNumEvents = numEvents;
+
+  if (fNumEvents < 0)
+    cout << "== [STGenerator] Events in passed event list will be excluded!" << endl;
+  else if (fNumEvents > 0)
+    cout << "== [STGenerator] Events in passed event are processed!" << endl;
+  else {
+    cout << "== [STGenerator] All events are processed!" << endl;
+
+    return;
+  }
+
+  fEventList = eventList;
+}
+
+void
 STGenerator::StartProcess()
 {
   if (fOutputFile.EqualTo("")) {
     cout << "== [STGenerator] Output file is not set!" << endl;
+
+    return;
+  }
 
   if (fMode == kPedestal)
     GeneratePedestal();
@@ -208,6 +236,116 @@ STGenerator::StartProcess()
 void
 STGenerator::GeneratePedestal()
 {
+  TFile *outFile = new TFile(fOutputFile, "recreate");
+
+  Int_t iRow, iLayer;
+  Double_t pedestal[2][512] = {{0}};
+
+  Int_t ***numValues = new Int_t**[fRows];
+  Double_t ***mean = new Double_t**[fRows];
+  Double_t ***rms = new Double_t**[fRows];
+
+  for (iRow = 0; iRow < fRows; iRow++) {
+    numValues[iRow] = new Int_t*[fLayers];
+    mean[iRow] = new Double_t*[fLayers];
+    rms[iRow] = new Double_t*[fLayers];
+    for (iLayer = 0; iLayer < fLayers; iLayer++) {
+      numValues[iRow][iLayer] = new Int_t[fNumTbs];
+      mean[iRow][iLayer] = new Double_t[fNumTbs];
+      rms[iRow][iLayer] = new Double_t[fNumTbs];
+
+      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+        numValues[iRow][iLayer][iTb] = 0;
+        mean[iRow][iLayer][iTb] = 0;
+        rms[iRow][iLayer][iTb] = 0;
+      }
+    }
+  }
+  
+  GETMath *math = new GETMath();
+
+  /*
+  GETMath ****math = new GETMath***[fRows];
+  for (iRow = 0; iRow < fRows; iRow++) {
+    math[iRow] = new GETMath**[fLayers];
+    for (iLayer = 0; iLayer < fLayers; iLayer++) {
+      math[iRow][iLayer] = new GETMath*[fNumTbs];
+      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+        math[iRow][iLayer][iTb] = new GETMath();
+      }
+    }
+  }
+  */
+
+  STRawEvent *event = NULL;
+  Int_t eventID = 0;
+  while ((event = fCore -> GetRawEvent())) {
+    if (fNumEvents == 0) {}
+    else if (fNumEvents > 0) {
+      if (eventID == fNumEvents)
+        break;
+      else if (fEventList[eventID] != event -> GetEventID())
+        continue;
+    } else if (fNumEvents < 0) {
+      if (eventID == -fNumEvents)
+        break;
+      else if (fEventList[eventID] == event -> GetEventID())
+        continue;
+    }
+
+    cout << "[STGenerator] Start processing event: " << event -> GetEventID() << endl;
+
+    Int_t numPads = event -> GetNumPads();
+    for (Int_t iPad = 0; iPad < numPads; iPad++) {
+      STPad *pad = event -> GetPad(iPad);
+      Int_t *adc = pad -> GetRawADC();
+
+      Int_t row = pad -> GetRow();
+      Int_t layer = pad -> GetLayer();
+
+      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+        math -> Reset();
+        math -> Set(numValues[row][layer][iTb]++, mean[row][layer][iTb], rms[row][layer][iTb]);
+        math -> Add(adc[iTb]);
+        mean[row][layer][iTb] = math -> GetMean();
+        rms[row][layer][iTb] = math -> GetRMS();
+        /*
+        math[row][layer][iTb] -> Add(adc[iTb]);
+        */
+      }
+    }
+
+    cout << "[STGenerator] Done processing event: " << event -> GetEventID() << endl;
+
+    eventID++;
+  }
+
+  cout << "== [STGenerator] Creating pedestal data: " << fOutputFile << endl;
+  TTree *tree = new TTree("PedestalData", "Pedestal Data Tree");
+  tree -> Branch("padRow", &iRow, "padRow/I");
+  tree -> Branch("padLayer", &iLayer, "padLayer/I");
+  tree -> Branch("pedestal", &pedestal[0], Form("pedestal[%d]/D", fNumTbs));
+  tree -> Branch("pedestalSigma", &pedestal[1], Form("pedestalSigma[%d]/D", fNumTbs));
+
+  for (iRow = 0; iRow < fRows; iRow++) {
+    for (iLayer = 0; iLayer < fLayers; iLayer++) {
+      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+        pedestal[0][iTb] = mean[iRow][iLayer][iTb];
+        pedestal[1][iTb] = rms[iRow][iLayer][iTb];
+        /*
+        pedestal[0][iTb] = math[iRow][iLayer][iTb] -> GetMean();
+        pedestal[1][iTb] = math[iRow][iLayer][iTb] -> GetRMS();
+        */
+      }
+
+      tree -> Fill();
+    }
+  }
+
+  outFile -> Write();
+  delete outFile;
+
+  cout << "== [STGenerator] Pedestal data " << fOutputFile << " Created!" << endl;
 }
 
 void
@@ -270,11 +408,13 @@ STGenerator::Print()
   cout << " Mode: ";
   if (fMode == kPedestal) {
     cout << "Pedestal data generator mode" << endl;
+    cout << " Output File: " << fOutputFile << endl;
     cout << " Data list:" << endl;
     for (Int_t iData = 0; iData < numData; iData++)
       cout << "   " << fCore -> GetDataName(iData) << endl;
   } else if (fMode == kGain) {
     cout << "Gain calibration data generator mode" << endl;
+    cout << " Output File: " << fOutputFile << endl;
     cout << " Data list:" << endl;
     for (Int_t iData = 0; iData < numData; iData++)
       cout << "   " << Form("%.1f V  ", fVoltageArray.at(iData)) << fCore -> GetDataName(iData) << endl;
