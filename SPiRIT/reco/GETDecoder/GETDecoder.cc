@@ -71,16 +71,17 @@ void GETDecoder::Initialize()
   fNumMergedFrames = 0;
   fCurrentMergedFrameSize = 0;
 
-  fDebugMode = 0;
+  fDebugMode = kFALSE;
 
   fCurrentGrawID = -1;
+  fIsAutoReload = kTRUE;
 
   fFrame = 0;
   fCurrentFrameID = -1;
   fCurrentInnerFrameID = -1;
 
   fGETPlot = 0;
-  fEOF = 0;
+  fEOF = kFALSE;
 }
 
 void GETDecoder::SetNumTbs(Int_t value)
@@ -145,14 +146,16 @@ Bool_t GETDecoder::AddGraw(TString filename)
 
 Bool_t GETDecoder::SetData(Int_t index)
 {
-  if (fGrawList.size() <= index) {
+  if (index >= fGrawList.size()) {
     std::cout << "== [GETDecoder] End of list!" << std::endl;
 
-    return 0;
+    return kFALSE;
   }
 
   if (fGraw.is_open())
     fGraw.close();
+
+  fEOF = kFALSE;
 
   TString filename = fGrawList.at(index);
 
@@ -213,6 +216,11 @@ Bool_t GETDecoder::SetData(Int_t index)
 Bool_t GETDecoder::SetNextFile()
 {
   return SetData(fCurrentGrawID + 1);
+}
+
+void GETDecoder::SetNoAutoReload(Bool_t value)
+{
+  fIsAutoReload = value;
 }
 
 void GETDecoder::ShowList()
@@ -319,6 +327,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
       if (fGraw.eof()) {
         std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
 
+        if (SetNextFile() && fIsAutoReload)
+          return GetFrame(0);
+
         return 0;
       }
 
@@ -348,6 +359,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
 
     if (fGraw.eof()) {
       std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
+
+      if (SetNextFile() && fIsAutoReload)
+        return GetFrame(0);
 
       return 0;
     }
@@ -402,8 +416,11 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
   ReadMergedFrameInfo();
 
   if (frameNo == -1 && innerFrameNo == -1) {
-    if (fEOF == 1) {
+    if (fEOF) {
       std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
+
+      if (SetNextFile() && fIsAutoReload)
+        return GetFrame(0, 0);
 
       return 0;
     } else if (fCurrentFrameID == -1 && fCurrentInnerFrameID == -1) {
@@ -478,6 +495,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
       std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
       fCurrentInnerFrameID = fNumMergedFrames - 1;
 
+      if (SetNextFile() && fIsAutoReload)
+        return GetFrame(0, 0);
+
       return 0;
     }
 
@@ -486,6 +506,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
 
   if (fEOF) {
     std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
+
+    if (SetNextFile() && fIsAutoReload)
+      return GetFrame(0, 0);
 
     return 0;
   }
