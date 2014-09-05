@@ -60,11 +60,16 @@ Double_t GETMath::GetRMS()
   return sqrt(fRms);
 }
 
-void GETMath::Set(Int_t numValues, Double_t mean, Double_t rms)
+Double_t GETMath::GetRMS2()
+{
+  return fRms;
+}
+
+void GETMath::Set(Int_t numValues, Double_t mean, Double_t rms2)
 {
   fNumValues = numValues;
   fMean = mean;
-  fRms = rms;
+  fRms = rms2;
 }
 
 Double_t **GETMath::GetAverage(Int_t numChannels, Int_t *chList, Int_t frameNo)

@@ -40,9 +40,11 @@ class GETMath : public TObject
     Double_t GetMean();
     //! Return the calculated **RMS** value.
     Double_t GetRMS();
+    //! Return the calculated **RMS squared** value.
+    Double_t GetRMS2();
 
-    /// Set the values manually.
-    void Set(Int_t numValues, Double_t mean, Double_t rms);
+    /// Set the values manually. Note that the last argument is rms squared, that is variance.
+    void Set(Int_t numValues, Double_t mean, Double_t rms2);
     
     //! Temporary
     Double_t **GetAverage(Int_t numChannels, Int_t *chList, Int_t frameNo = -1);
