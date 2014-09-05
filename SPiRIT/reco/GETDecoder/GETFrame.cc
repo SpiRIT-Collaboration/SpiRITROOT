@@ -118,7 +118,7 @@ void GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx)
   Int_t index = GetIndex(agetIdx, chIdx, 0);
 
   if (!fIsCalcPedestalUsed[index/512] && !fIsSetPedestalUsed[index/512]) {
-    std::cout << "== Run CalcPedestal() or SetPedestal() first!" << std::endl;
+    std::cout << "== [GETFrame] Run CalcPedestal() or SetPedestal() first!" << std::endl;
     
     return;
   }
@@ -152,7 +152,7 @@ Int_t GETFrame::GetMaxADCIdx(Int_t agetIdx, Int_t chIdx)
   Int_t index = GetIndex(agetIdx, chIdx, 0)/512;
 
   if (!fIsPedestalSubtracted[index]) {
-    std::cout << "== Run SubtractPedestal() first!" << std::endl;
+    std::cout << "== [GETFrame] Run SubtractPedestal() first!" << std::endl;
 
     return -1;
   }
@@ -167,7 +167,7 @@ Double_t *GETFrame::GetADC(Int_t agetIdx, Int_t chIdx)
   Int_t index = GetIndex(agetIdx, chIdx, 0);
 
   if (!fIsPedestalSubtracted[index/512]) {
-    std::cout << "== Run SubtractPedestal() first!" << std::endl;
+    std::cout << "== [GETFrame] Run SubtractPedestal() first!" << std::endl;
 
     return NULL;
   }
@@ -182,7 +182,7 @@ Double_t GETFrame::GetADC(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
   Int_t index = GetIndex(agetIdx, chIdx, buckIdx);
 
   if (!fIsPedestalSubtracted[index/512]) {
-    std::cout << "== Run SubtractPedestal() first!" << std::endl;
+    std::cout << "== [GETFrame] Run SubtractPedestal() first!" << std::endl;
 
     return -1;
   }
@@ -195,7 +195,7 @@ Double_t GETFrame::GetPedestal(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
   Int_t index = GetIndex(agetIdx, chIdx, 0);
 
   if (!fIsCalcPedestalUsed[index/512] && !fIsSetPedestalUsed[index/512]) {
-    std::cout << "== Run CalcPedstal() or SetPedestal() first!" << std::endl;
+    std::cout << "== [GETFrame] Run CalcPedstal() or SetPedestal() first!" << std::endl;
 
     return -1;
   }
@@ -206,15 +206,15 @@ Double_t GETFrame::GetPedestal(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
 Int_t GETFrame::GetIndex(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
 {
   if (agetIdx > 3) {
-    std::cout << "== AGET number should be in [0,3]!" << std::endl;
+    std::cout << "== [GETFrame] AGET number should be in [0,3]!" << std::endl;
 
     return -1;
   } else if (chIdx > 67) {
-    std::cout << "== Channel number should be in [0,67]!" << std::endl;
+    std::cout << "== [GETFrame] Channel number should be in [0,67]!" << std::endl;
 
     return -1;
   } else if (buckIdx > fNumTbs - 1) {
-    std::cout << "== Channel number should be in [0," << fNumTbs - 1 << "]!" << std::endl;
+    std::cout << "== [GETFrame] Channel number should be in [0," << fNumTbs - 1 << "]!" << std::endl;
 
     return -1;
   }
