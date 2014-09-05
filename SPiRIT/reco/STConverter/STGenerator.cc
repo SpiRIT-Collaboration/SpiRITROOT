@@ -19,6 +19,10 @@
 #include "TSystem.h"
 #include "TFile.h"
 #include "TTree.h"
+#include "TSpectrum.h"
+#include "TH1D.h"
+#include "TGraphErrors.h"
+#include "TF1.h"
 
 #include <iostream>
 #include <fstream>
@@ -160,6 +164,12 @@ STGenerator::SetParameterDir(TString dir)
 
     return kFALSE;
   }
+}
+
+Bool_t
+STGenerator::SetPedestalData(TString filename, Int_t startTb, Int_t numTbs)
+{
+  return fCore -> SetPedestalData(filename, startTb, numTbs);
 }
 
 Bool_t
@@ -352,6 +362,149 @@ STGenerator::GeneratePedestal()
 void
 STGenerator::GenerateGainCalibrationData()
 {
+  Int_t numVoltages = fVoltageArray.size();
+
+  Int_t iRow, iLayer;
+  TH1D ****padHist = new TH1D***[fRows];
+  for (iRow = 0; iRow < fRows; iRow++) {
+    padHist[iRow] = new TH1D**[fLayers];
+    for (iLayer = 0; iLayer < fLayers; iLayer++) {
+      padHist[iRow][iLayer] = new TH1D*[numVoltages];
+      for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++) {
+        padHist[iRow][iLayer][iVoltage] = new TH1D(Form("hist_%d_%d_%d", iRow, iLayer, iVoltage), "", 4096, 0, 4096);
+      }
+    }
+  }
+
+  TSpectrum *peakFinder = new TSpectrum(5);
+  Float_t *adcTemp = new Float_t[fNumTbs];
+  Float_t *dummy = new Float_t[fNumTbs];
+
+  fCore -> SetNoAutoReload();
+
+  for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++) {
+    fCore -> SetData(iVoltage);
+  //  STRawEvent *event = NULL;
+  //  while ((event = core -> GetRawEvent())) {
+    for (Int_t iEvent = 0; iEvent < 100; iEvent++) {
+      STRawEvent *event = fCore -> GetRawEvent();
+
+      cout << "Start voltage: " << fVoltageArray.at(iVoltage) << " event: " << event -> GetEventID() << endl;
+
+      Int_t numPads = event -> GetNumPads();
+      for (Int_t iPad = 0; iPad < numPads; iPad++) {
+        STPad *pad = event -> GetPad(iPad);
+        Double_t *adc = pad -> GetADC();
+
+        for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+          adcTemp[iTb] = adc[iTb];
+
+        Int_t row = pad -> GetRow();
+        Int_t layer = pad -> GetLayer();
+
+        Int_t numPeaks = peakFinder -> SearchHighRes(adcTemp, dummy, fNumTbs, 4.7, 90, kFALSE, 3, kTRUE, 3);
+
+        if (numPeaks != 1)
+          cout << row << " " << layer << " " << numPeaks << " " << (Int_t)ceil((peakFinder -> GetPositionX())[0]) << " " << adc[(Int_t)ceil((peakFinder -> GetPositionX())[0])] << endl;
+        Double_t max = adc[(Int_t)ceil((peakFinder -> GetPositionX())[0])];
+
+        padHist[row][layer][iVoltage] -> Fill(max);
+      }
+
+      cout << "Done voltage: " << fVoltageArray.at(iVoltage) << " event: " << event -> GetEventID() << endl;
+    }
+  }
+
+  // C: Constant(0), S: Slope(1) 
+  Double_t ***fCS = new Double_t**[fRows];
+  for (iRow = 0; iRow < fRows; iRow++) {
+    fCS[iRow] = new Double_t*[fLayers];
+    for (iLayer = 0; iLayer < fLayers; iLayer++) {
+      fCS[iRow][iLayer] = new Double_t[2];
+
+      fCS[iRow][iLayer][0] = 0;
+      fCS[iRow][iLayer][1] = 0;
+    }
+  }
+
+  Double_t *voltages = new Double_t[numVoltages];
+  for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++)
+    voltages[iVoltage] = fVoltageArray.at(iVoltage);
+
+  Double_t *means = new Double_t[numVoltages];
+  Double_t *sigmas = new Double_t[numVoltages];
+
+  for (iRow = 0; iRow < fRows; iRow++) {
+    for (iLayer = 0; iLayer < fLayers; iLayer++) {
+      Bool_t empty = kFALSE;
+
+      for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++) {
+        means[iVoltage] = 0;
+        sigmas[iVoltage] = 0;
+
+        TH1D *thisHist = padHist[iRow][iLayer][iVoltage];
+        if (thisHist -> GetEntries() == 0) {
+          empty |= kTRUE;
+          break;
+        }
+
+        thisHist -> Fit("gaus", "0");
+        if (!(thisHist -> GetFunction("gaus")))
+          continue;
+
+        means[iVoltage] = ((TF1 *) thisHist -> GetFunction("gaus")) -> GetParameter(1);
+        sigmas[iVoltage] = ((TF1 *) thisHist -> GetFunction("gaus")) -> GetParameter(2);
+      }
+
+      if (empty)
+        continue;
+
+      Int_t isFail = kTRUE;
+
+      TGraphErrors aPad(numVoltages, voltages, means, 0, sigmas);
+      aPad.LeastSquareLinearFit(numVoltages, fCS[iRow][iLayer][0], fCS[iRow][iLayer][1], isFail);
+
+      if (isFail) {
+        cerr << "Error when fit!" << endl;
+
+        return;
+      }
+    }
+  }
+
+  delete means;
+  delete sigmas;
+
+  for (iRow = 0; iRow < fRows; iRow++) {
+    for (iLayer = 0; iLayer < fLayers; iLayer++) {
+      if (fCS[iRow][iLayer][0] != 0 || fCS[iRow][iLayer][1] != 0)
+        cout << iRow << " " << iLayer << " " << fCS[iRow][iLayer][0] << " " << fCS[iRow][iLayer][1] << endl;
+    }
+  } 
+
+  cout << "== Creating gain calibration data: " << fOutputFile << endl;
+  TFile *outFile = new TFile(fOutputFile, "recreate");
+
+  Double_t constant, slope;
+  
+  TTree *outTree = new TTree("GainCalibrationData", "Gain Calibration Data Tree");
+  outTree -> Branch("padRow", &iRow, "padRow/I");
+  outTree -> Branch("padLayer", &iLayer, "padLayer/I");
+  outTree -> Branch("constant", &constant, "constant/D");
+  outTree -> Branch("slope", &slope, "slope/D");
+
+  for (iRow = 0; iRow < fRows; iRow++) {
+    for (iLayer = 0; iLayer < fLayers; iLayer++) {
+      constant = fCS[iRow][iLayer][0];
+      slope = fCS[iRow][iLayer][1];
+
+      outTree -> Fill();
+    }
+  }
+
+  delete padHist;
+  outFile -> Write();
+  cout << "== Gain calibration data " << fOutputFile << " Created!" << endl;
 }
 
 Int_t
