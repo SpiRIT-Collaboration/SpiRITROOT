@@ -32,7 +32,10 @@ class STCore : public TObject {
     void Initialize();
 
     // setters
-    void AddGraw(TString filename);
+    Bool_t AddGraw(TString filename);
+    Bool_t SetData(Int_t value);
+    Int_t GetNumData();
+    TString GetDataName(Int_t index);
     void SetNumTbs(Int_t value);
     void SetInternalPedestal(Int_t startTb = 10, Int_t numTbs = 20);
     Bool_t SetPedestalData(TString filename, Int_t startTb = 3, Int_t numTbs = 20);
