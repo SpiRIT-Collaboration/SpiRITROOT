@@ -44,8 +44,8 @@ class STCore : public TObject {
 
     Bool_t SetSignalDelayData(TString filename);
 
-    void SetUAMap(TString filename);
-    void SetAGETMap(TString filename);
+    Bool_t SetUAMap(TString filename);
+    Bool_t SetAGETMap(TString filename);
 
     // getters
     STRawEvent *GetRawEvent(Int_t eventID = -1);
