@@ -60,11 +60,11 @@ class GETPlot : public TObject
     //! Initialize variables.
     void Initialize();
 
-    Int_t fMinTb; //!< minimum time bucket index for drawing
-    Int_t fMaxTb; //!< maximum time bucket index for drawing
+    Int_t fMinTb; /// minimum time bucket index for drawing
+    Int_t fMaxTb; /// maximum time bucket index for drawing
 
-    GETDecoder *fDecoder; //!< decoder pointer
-    GETFrame *fFrame;     //!< frame container pointer
+    GETDecoder *fDecoder; /// decoder pointer
+    GETFrame *fFrame;     /// frame container pointer
 
     //! Internal method to prepare canvases
     TCanvas *PrepareCanvas(Int_t type);
@@ -73,16 +73,16 @@ class GETPlot : public TObject
     //! Internal method to print information on canvas
     void PrintInfo(Int_t type, TPad *namePad, Int_t coboIdx, Int_t asadIdx, Int_t frameNo, Int_t eventNo);
 
-    TH2D *fAsad;      //!< histogram for summary spectra of an AsAd
-    TGraph *fGraph;   //!< graph for various purpose for drawing data
-    TGraph *fAget[4]; //!< graph for each AGET
+    TH2D *fAsad;      /// histogram for summary spectra of an AsAd
+    TGraph *fGraph;   /// graph for various purpose for drawing data
+    TGraph *fAget[4]; /// graph for each AGET
 
-    Double_t fAgetMinX[4][4]; //!< minimum x value for drawing
-    Double_t fAgetMaxX[4][4]; //!< maximum x value for drawing
-    Double_t fAgetMinY[4][4]; //!< minimum y value for drawing
-    Double_t fAgetMaxY[4][4]; //!< maximum y value for drawing
+    Double_t fAgetMinX[4][4]; /// minimum x value for drawing
+    Double_t fAgetMaxX[4][4]; /// maximum x value for drawing
+    Double_t fAgetMinY[4][4]; /// minimum y value for drawing
+    Double_t fAgetMaxY[4][4]; /// maximum y value for drawing
 
-  ClassDef(GETPlot, 1); //!< added for making dictionary by ROOT
+  ClassDef(GETPlot, 1); /// added for making dictionary by ROOT
 };
 
 #endif

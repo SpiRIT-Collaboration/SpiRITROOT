@@ -48,14 +48,14 @@ class GETMath : public TObject
     void Reset();
 
   private:
-    GETDecoder *fDecoder; //!< GETDecoder class pointer
-    GETFrame *fFrame; //!< GETFrame class pointer
+    GETDecoder *fDecoder; /// GETDecoder class pointer
+    GETFrame *fFrame; /// GETFrame class pointer
 
-    Int_t fNumValues; //!< Number of values added
-    Double_t fMean; //!< mean value
-    Double_t fRms; //!< RMS value
+    Int_t fNumValues; /// Number of values added
+    Double_t fMean; /// mean value
+    Double_t fRms; /// RMS value
 
-    Double_t *fAdc[4]; //!< Average value storage for GetAverage() method
+    Double_t *fAdc[4]; /// Average value storage for GetAverage() method
     
   //! Added for dictionary making by ROOT
   ClassDef(GETMath, 1); 
