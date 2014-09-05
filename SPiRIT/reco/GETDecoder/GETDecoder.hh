@@ -40,13 +40,17 @@ class GETDecoder : public TObject
     //! Setting the number of time buckets.
     void SetNumTbs(Int_t value = 512);
     //! Add the data file to the list of rawdata.
-    void AddGraw(TString filename);
+    Bool_t AddGraw(TString filename);
     //! Set the data file to the class.
     Bool_t SetData(Int_t index);
     //! Search the next file and set it if exists. Returns 1 if successful.
     Bool_t SetNextFile();
     //! Print rawdata file list on the screen.
     void ShowList();
+    //! Return the number of data added in the list.
+    Int_t GetNumData();
+    //! Return the filename of data at index
+    TString GetDataName(Int_t index);
 
     //! Return the number of time buckets.
     Int_t GetNumTbs();
@@ -93,32 +97,32 @@ class GETDecoder : public TObject
     //! Check if the file is end
     void CheckEOF();
 
-    Int_t fNumTbs; //!< the number of time buckets. It's determined when taking data and should be changed manually by user. (Default: 512)
+    Int_t fNumTbs; /// the number of time buckets. It's determined when taking data and should be changed manually by user. (Default: 512)
 
-    Bool_t fEndianness; //!< Endianness of the data. 0: Big-endian, 1: Little-endian
-    Int_t fFrameType;  //!< frame type. 0: normal frame, 1: event number merged, 2: event time merged
-    Int_t fMergedHeaderSize; //!< header size of merged frame. For additional skip bytes when finding frame by frame number.
-    Int_t fNumMergedFrames; //!< the number of merged frames. For additional skip bytes when finding frame by frame number.
-    UInt_t fMergedFrameStartPoint; //!< byte number of the merged frame start point. For navigational feature in a merged frame.
-    UInt_t fCurrentMergedFrameSize; //!< size of a merged frame of the frame ID **fCurrentFrameID**. For additional skip bytes when finding frame by frame number.
-    UInt_t fCurrentInnerFrameSize; //!< size of an inner frame.
+    Bool_t fEndianness; /// Endianness of the data. 0: Big-endian, 1: Little-endian
+    Int_t fFrameType;  /// frame type. 0: normal frame, 1: event number merged, 2: event time merged
+    Int_t fMergedHeaderSize; /// header size of merged frame. For additional skip bytes when finding frame by frame number.
+    Int_t fNumMergedFrames; /// the number of merged frames. For additional skip bytes when finding frame by frame number.
+    UInt_t fMergedFrameStartPoint; /// byte number of the merged frame start point. For navigational feature in a merged frame.
+    UInt_t fCurrentMergedFrameSize; /// size of a merged frame of the frame ID **fCurrentFrameID**. For additional skip bytes when finding frame by frame number.
+    UInt_t fCurrentInnerFrameSize; /// size of an inner frame.
 
-    Bool_t fDebugMode; //!< flag for debug mode
+    Bool_t fDebugMode; /// flag for debug mode
 
-    std::ifstream fGraw;            //!< rawdata filestream
-    UInt_t fFileSize; //!< file size
-    std::vector<TString> fGrawList; //!< rawdata file list
-    Int_t fCurrentGrawID;        //!< current file index in list
+    std::ifstream fGraw;            /// rawdata filestream
+    UInt_t fFileSize; /// file size
+    std::vector<TString> fGrawList; /// rawdata file list
+    Int_t fCurrentGrawID;        /// current file index in list
 
-    GETFrame *fFrame;      //!< frame container
-    Int_t fCurrentFrameID; //!< current frame index
-    Int_t fCurrentInnerFrameID; //!< current inner frame index
-    Bool_t fEOF; //!< check if end of file
+    GETFrame *fFrame;      /// frame container
+    Int_t fCurrentFrameID; /// current frame index
+    Int_t fCurrentInnerFrameID; /// current inner frame index
+    Bool_t fEOF; /// check if end of file
 
-    GETPlot *fGETPlot;     //!< GETPlot pointer
-    GETMath *fGETMath;     //!< GETMath pointer
+    GETPlot *fGETPlot;     /// GETPlot pointer
+    GETMath *fGETMath;     /// GETMath pointer
 
-  ClassDef(GETDecoder, 1); //!< added for making dictionary by ROOT
+  ClassDef(GETDecoder, 1); /// added for making dictionary by ROOT
 };
 
 #endif
