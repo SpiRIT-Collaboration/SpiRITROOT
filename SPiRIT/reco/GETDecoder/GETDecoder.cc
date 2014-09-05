@@ -50,6 +50,7 @@ GETDecoder::GETDecoder(TString filename)
 
 GETDecoder::~GETDecoder()
 {
+  /*
   if (fFrame != 0)
     delete fFrame;
 
@@ -58,6 +59,7 @@ GETDecoder::~GETDecoder()
 
   if (fGETMath != 0)
     delete fGETMath;
+    */
 }
 
 void GETDecoder::Initialize()
@@ -91,7 +93,7 @@ void GETDecoder::SetDebugMode(Bool_t value)
   fDebugMode = value;
 }
 
-void GETDecoder::AddGraw(TString filename)
+Bool_t GETDecoder::AddGraw(TString filename)
 {
   /**
     * Check if there is a file named `filename`. If exists, add it to the list.
@@ -118,30 +120,33 @@ void GETDecoder::AddGraw(TString filename)
 
   nextGraw = gSystem -> Which(path, tempGrawFile);
   if (!nextGraw.EqualTo("")) {
-    std::cout << "== Data file found: " << filename << std::endl;
+    std::cout << "== [GETDecoder] Data file found: " << filename << std::endl;
 
     Bool_t isExist = 0;
     for (Int_t iIdx = 0; iIdx < fGrawList.size(); iIdx++) {
       if (fGrawList.at(0) == nextGraw) {
-        std::cout << "== The file already exists in the list!" << std::endl;
+        std::cout << "== [GETDecoder] The file already exists in the list!" << std::endl;
         isExist = 1;
       }
     }
 
     if (!isExist)
       fGrawList.push_back(nextGraw);
-  } else
-    std::cout << "== Data file not found: " << filename << std::endl;
+  } else {
+    std::cout << "== [GETDecoder] Data file not found: " << filename << std::endl;
+
+    return kFALSE;
+  }
 
   delete pathElements;
 
-  return;
+  return kTRUE;
 }
 
 Bool_t GETDecoder::SetData(Int_t index)
 {
   if (fGrawList.size() <= index) {
-    std::cout << "== End of list!" << std::endl;
+    std::cout << "== [GETDecoder] End of list!" << std::endl;
 
     return 0;
   }
@@ -151,17 +156,16 @@ Bool_t GETDecoder::SetData(Int_t index)
 
   TString filename = fGrawList.at(index);
 
-  fGraw.open(filename.Data(), std::ios::in|std::ios::binary);
+  fGraw.open(filename.Data(), std::ios::in|std::ios::ate|std::ios::binary);
 
   if (!(fGraw.is_open())) {
-    std::cout << "== GRAW file open error! Check it exists!" << std::endl;
+    std::cout << "== [GETDecoder] GRAW file open error! Check it exists!" << std::endl;
 
-    return 0;
+    return kFALSE;
   } else {
-    std::ifstream forFileSize(filename.Data(), std::ios::ate|std::ios::binary);
-    fFileSize = forFileSize.tellg();
+    fFileSize = fGraw.tellg();
 
-    std::cout << "== " << filename << " is opened!" << std::endl;
+    std::cout << "== [GETDecoder] " << filename << " is opened!" << std::endl;
     fGraw.seekg(0);
 
     UShort_t metaType = 0;
@@ -194,7 +198,7 @@ Bool_t GETDecoder::SetData(Int_t index)
       fNumMergedFrames = 0;
     }
 
-    std::cout << "== Frame Type: ";
+    std::cout << "== [GETDecoder] Frame Type: ";
     if (fFrameType == kNormal) std::cout << "Normal CoBo frame";
     else if (fFrameType == kMergedID) std::cout << "Event number merged frame";
     else if (fFrameType == kMergedTime) std::cout << "Event time merged frame";
@@ -202,7 +206,7 @@ Bool_t GETDecoder::SetData(Int_t index)
 
     fCurrentGrawID = index;
 
-    return 1;
+    return kTRUE;
   }
 }
 
@@ -213,7 +217,7 @@ Bool_t GETDecoder::SetNextFile()
 
 void GETDecoder::ShowList()
 {
-  std::cout << "== Index GRAW file" << std::endl;
+  std::cout << "== [GETDecoder] Index GRAW file" << std::endl;
   for (Int_t iItem = 0; iItem < fGrawList.size(); iItem++) {
     if (iItem == fCurrentGrawID)
       std::cout << " *" << std::setw(6);
@@ -222,6 +226,22 @@ void GETDecoder::ShowList()
 
     std::cout << iItem << "  " << fGrawList.at(iItem) << std::endl;
   }
+}
+
+Int_t GETDecoder::GetNumData()
+{
+  return fGrawList.size();
+}
+
+TString GETDecoder::GetDataName(Int_t index)
+{
+  if (index >= fGrawList.size()) {
+    std::cout << "== [GETDecoder] Size of the list is " << fGrawList.size() << "!" << std::endl;
+
+    return TString("No data!");
+  }
+
+  return fGrawList.at(index);
 }
 
 Int_t GETDecoder::GetNumTbs()
@@ -274,7 +294,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
 
     return fFrame;
   } else if (frameNo < -1) {
-    std::cout << "== Frame number should be a positive integer!" << std::endl;
+    std::cout << "== [GETDecoder] Frame number should be a positive integer!" << std::endl;
 
     return 0;
   }
@@ -290,14 +310,14 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     // Skip the frames until it reaches the given frame number, frameNo.
     while (frameNo > fCurrentFrameID + 1) {
       if (fDebugMode)
-        std::cout << "== Skipping Frame No. " << fCurrentFrameID + 1 << std::endl;
+        std::cout << "== [GETDecoder] Skipping Frame No. " << fCurrentFrameID + 1 << std::endl;
 
       fGraw.ignore(1);
 
       fGraw.read(reinterpret_cast<Char_t *>(&frameSize), 3);
 
       if (fGraw.eof()) {
-        std::cout << "== End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
+        std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
 
         return 0;
       }
@@ -327,7 +347,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     fGraw.read(reinterpret_cast<Char_t *>(&asadIdx), 1);
 
     if (fGraw.eof()) {
-      std::cout << "== End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
+      std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
 
       return 0;
     }
@@ -383,7 +403,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
 
   if (frameNo == -1 && innerFrameNo == -1) {
     if (fEOF == 1) {
-      std::cout << "== End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
+      std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
 
       return 0;
     } else if (fCurrentFrameID == -1 && fCurrentInnerFrameID == -1) {
@@ -403,7 +423,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
     innerFrameNo = fCurrentInnerFrameID + 1;
 
     if (frameNo == fCurrentFrameID && fCurrentInnerFrameID + 1 == fNumMergedFrames) {
-      std::cout << "== Reached the end of the merged frame!" << std::endl;
+      std::cout << "== [GETDecoder] Reached the end of the merged frame!" << std::endl;
       
       return 0;
     } else if (frameNo != fCurrentFrameID) {
@@ -418,11 +438,11 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
 
     return fFrame;
   } else if (frameNo < -1 || innerFrameNo < -1) {
-    std::cout << "== Frame number or inner frame number should be a positive integer!" << std::endl;
+    std::cout << "== [GETDecoder] Frame number or inner frame number should be a positive integer!" << std::endl;
 
     return 0;
   } else if (innerFrameNo >= fNumMergedFrames) {
-    std::cout << "== Inner frame number should be smaller than " << fNumMergedFrames << std::endl;
+    std::cout << "== [GETDecoder] Inner frame number should be smaller than " << fNumMergedFrames << std::endl;
 
     return 0;
   }
@@ -448,14 +468,14 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
     fGraw.clear();
 
     if (fDebugMode)
-      std::cout << "== Skipping Frame No. " << fCurrentFrameID << std::endl;
+      std::cout << "== [GETDecoder] Skipping Frame No. " << fCurrentFrameID << std::endl;
 
     SkipMergedFrame();
     CheckEOF();
     ReadMergedFrameInfo();
 
     if (fEOF) {
-      std::cout << "== End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
+      std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
       fCurrentInnerFrameID = fNumMergedFrames - 1;
 
       return 0;
@@ -465,7 +485,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
   }
 
   if (fEOF) {
-    std::cout << "== End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
+    std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
 
     return 0;
   }
