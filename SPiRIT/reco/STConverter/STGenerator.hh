@@ -31,6 +31,7 @@ class STGenerator : public TObject {
     void SetOutputFile(TString filename);
     Bool_t SetParameterDir(TString dir);
     Bool_t SetPedestalData(TString filename, Int_t startTb = 3, Int_t numTbs = 20);
+    void SetPersistence(Bool_t value = kTRUE);
 
     Bool_t AddData(TString filename);
     Bool_t AddData(Double_t voltage, TString filename);
@@ -56,6 +57,8 @@ class STGenerator : public TObject {
     STCore *fCore;
     TString fParameterFile;
     TString fOutputFile;
+
+    Bool_t fIsPersistence;
 
     Int_t fNumEvents;
     Int_t *fEventList;
