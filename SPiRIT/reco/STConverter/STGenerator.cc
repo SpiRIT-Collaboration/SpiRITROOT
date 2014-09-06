@@ -38,10 +38,12 @@ ClassImp(STGenerator)
 STGenerator::STGenerator()
 {
   fMode = kError;
+  fIsPersistence = kFALSE;
 }
 
 STGenerator::STGenerator(TString mode)
 {
+  fIsPersistence = kFALSE;
   SetMode(mode);
 }
 
@@ -170,6 +172,12 @@ Bool_t
 STGenerator::SetPedestalData(TString filename, Int_t startTb, Int_t numTbs)
 {
   return fCore -> SetPedestalData(filename, startTb, numTbs);
+}
+
+void
+STGenerator::SetPersistence(Bool_t value)
+{
+  fIsPersistence = value;
 }
 
 Bool_t
@@ -365,6 +373,16 @@ STGenerator::GenerateGainCalibrationData()
   Int_t numVoltages = fVoltageArray.size();
 
   Int_t iRow, iLayer;
+  Double_t constant, slope;
+  
+  TFile *outFile = new TFile(fOutputFile, "recreate");
+  
+  TTree *outTree = new TTree("GainCalibrationData", "Gain Calibration Data Tree");
+  outTree -> Branch("padRow", &iRow, "padRow/I");
+  outTree -> Branch("padLayer", &iLayer, "padLayer/I");
+  outTree -> Branch("constant", &constant, "constant/D");
+  outTree -> Branch("slope", &slope, "slope/D");
+
   TH1D ****padHist = new TH1D***[fRows];
   for (iRow = 0; iRow < fRows; iRow++) {
     padHist[iRow] = new TH1D**[fLayers];
@@ -384,10 +402,10 @@ STGenerator::GenerateGainCalibrationData()
 
   for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++) {
     fCore -> SetData(iVoltage);
-  //  STRawEvent *event = NULL;
-  //  while ((event = core -> GetRawEvent())) {
-    for (Int_t iEvent = 0; iEvent < 100; iEvent++) {
-      STRawEvent *event = fCore -> GetRawEvent();
+    STRawEvent *event = NULL;
+    while ((event = fCore -> GetRawEvent())) {
+//    for (Int_t iEvent = 0; iEvent < 400; iEvent++) {
+//      STRawEvent *event = fCore -> GetRawEvent();
 
       cout << "Start voltage: " << fVoltageArray.at(iVoltage) << " event: " << event -> GetEventID() << endl;
 
@@ -448,7 +466,12 @@ STGenerator::GenerateGainCalibrationData()
           break;
         }
 
-        thisHist -> Fit("gaus", "0");
+        TSpectrum spectrum;
+        spectrum.Search(thisHist, 30, "goff", 0.7);
+        Double_t min = (spectrum.GetPositionX())[0] - 80; 
+        Double_t max = (spectrum.GetPositionX())[0] + 80; 
+
+        thisHist -> Fit("gaus", "0", "", min, max);
         if (!(thisHist -> GetFunction("gaus")))
           continue;
 
@@ -461,8 +484,20 @@ STGenerator::GenerateGainCalibrationData()
 
       Int_t isFail = kTRUE;
 
-      TGraphErrors aPad(numVoltages, voltages, means, 0, sigmas);
-      aPad.LeastSquareLinearFit(numVoltages, fCS[iRow][iLayer][0], fCS[iRow][iLayer][1], isFail);
+      if (fIsPersistence) {
+        TGraphErrors *aPad = new TGraphErrors(numVoltages, voltages, means, 0, sigmas);
+        aPad -> SetName(Form("pad_%d_%d", iRow, iLayer));
+        aPad -> Fit("pol1", "0");
+
+        fCS[iRow][iLayer][0] = ((TF1 *) aPad -> GetFunction("pol1")) -> GetParameter(0);
+        fCS[iRow][iLayer][1] = ((TF1 *) aPad -> GetFunction("pol1")) -> GetParameter(1);
+
+        isFail = kFALSE;
+        aPad -> Write();
+      } else {
+        TGraphErrors aPad(numVoltages, voltages, means, 0, sigmas);
+        aPad.LeastSquareLinearFit(numVoltages, fCS[iRow][iLayer][0], fCS[iRow][iLayer][1], isFail);
+      }
 
       if (isFail) {
         cerr << "Error when fit!" << endl;
@@ -475,23 +510,7 @@ STGenerator::GenerateGainCalibrationData()
   delete means;
   delete sigmas;
 
-  for (iRow = 0; iRow < fRows; iRow++) {
-    for (iLayer = 0; iLayer < fLayers; iLayer++) {
-      if (fCS[iRow][iLayer][0] != 0 || fCS[iRow][iLayer][1] != 0)
-        cout << iRow << " " << iLayer << " " << fCS[iRow][iLayer][0] << " " << fCS[iRow][iLayer][1] << endl;
-    }
-  } 
-
   cout << "== Creating gain calibration data: " << fOutputFile << endl;
-  TFile *outFile = new TFile(fOutputFile, "recreate");
-
-  Double_t constant, slope;
-  
-  TTree *outTree = new TTree("GainCalibrationData", "Gain Calibration Data Tree");
-  outTree -> Branch("padRow", &iRow, "padRow/I");
-  outTree -> Branch("padLayer", &iLayer, "padLayer/I");
-  outTree -> Branch("constant", &constant, "constant/D");
-  outTree -> Branch("slope", &slope, "slope/D");
 
   for (iRow = 0; iRow < fRows; iRow++) {
     for (iLayer = 0; iLayer < fLayers; iLayer++) {
@@ -502,7 +521,9 @@ STGenerator::GenerateGainCalibrationData()
     }
   }
 
-  delete padHist;
+  if (!fIsPersistence)
+    delete padHist;
+
   outFile -> Write();
   cout << "== Gain calibration data " << fOutputFile << " Created!" << endl;
 }
