@@ -38,10 +38,11 @@ class STCore : public TObject {
     Int_t GetNumData();
     TString GetDataName(Int_t index);
     void SetNumTbs(Int_t value);
-    void SetInternalPedestal(Int_t startTb = 10, Int_t numTbs = 20);
-    Bool_t SetPedestalData(TString filename, Int_t startTb = 3, Int_t numTbs = 20);
+    void SetInternalPedestal(Int_t startTb = 10, Int_t averageTbs = 20);
+    Bool_t SetPedestalData(TString filename, Int_t startTb = 3, Int_t averageTbs = 20);
 
     Bool_t SetGainCalibrationData(TString filename);
+    void SetGainBase(Double_t constant, Double_t slope);
 
     Bool_t SetSignalDelayData(TString filename);
 
@@ -55,6 +56,8 @@ class STCore : public TObject {
   private:
     STMap *fMapPtr;
 
+    Int_t fNumTbs;
+
     GETDecoder *fDecoderPtr;
     Bool_t fIsGraw;
 
@@ -62,7 +65,7 @@ class STCore : public TObject {
     Bool_t fIsInternalPedestal;
     Bool_t fIsPedestalData;
     Int_t fStartTb;
-    Int_t fNumTbs;
+    Int_t fAverageTbs;
 
     STGainCalibration *fGainCalibrationPtr;
     Bool_t fIsGainCalibrationData;
