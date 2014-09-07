@@ -70,7 +70,7 @@ void STCore::Initialize()
   fIsSignalDelayData = kFALSE;
 
   fStartTb = 3;
-  fNumTbs = 20;
+  fAverageTbs = 20;
 
   fPrevEventNo = -1;
   fCurrEventNo = -1;
@@ -105,19 +105,20 @@ TString STCore::GetDataName(Int_t index) {
 
 void STCore::SetNumTbs(Int_t value)
 {
+  fNumTbs = value;
   fDecoderPtr -> SetNumTbs(value);
 }
 
-void STCore::SetInternalPedestal(Int_t startTb, Int_t numTbs)
+void STCore::SetInternalPedestal(Int_t startTb, Int_t averageTbs)
 {
   fIsInternalPedestal = kTRUE;
   fIsPedestalData = kFALSE;
 
   fStartTb = startTb;
-  fNumTbs = numTbs;
+  fAverageTbs = averageTbs;
 }
 
-Bool_t STCore::SetPedestalData(TString filename, Int_t startTb, Int_t numTbs)
+Bool_t STCore::SetPedestalData(TString filename, Int_t startTb, Int_t averageTbs)
 {
   fIsPedestalData = fPedestalPtr -> SetPedestalData(filename);
 
@@ -125,7 +126,7 @@ Bool_t STCore::SetPedestalData(TString filename, Int_t startTb, Int_t numTbs)
     fIsInternalPedestal = kFALSE;
 
     fStartTb = startTb;
-    fNumTbs = numTbs;
+    fAverageTbs = averageTbs;
   } else
     std::cout << "== [STCore] Pedestal data is not set! Check it exists!" << std::endl;
 
@@ -137,6 +138,17 @@ Bool_t STCore::SetGainCalibrationData(TString filename)
   fIsGainCalibrationData = fGainCalibrationPtr -> SetGainCalibrationData(filename);
 
   return fIsGainCalibrationData;
+}
+
+void STCore::SetGainBase(Double_t constant, Double_t slope)
+{
+  if (!fIsGainCalibrationData) {
+    std::cout << "== [STCore] Set gain calibration data first!" << std::endl;
+
+    return;
+  }
+
+  fGainCalibrationPtr -> SetGainBase(constant, slope);
 }
 
 Bool_t STCore::SetSignalDelayData(TString filename)
@@ -222,7 +234,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
         }
 
         if (fIsInternalPedestal) {
-          frame -> CalcPedestal(iAget, iCh, fStartTb, fNumTbs);
+          frame -> CalcPedestal(iAget, iCh, fStartTb, fAverageTbs);
           frame -> SubtractPedestal(iAget, iCh);
 
           Double_t *adc = frame -> GetADC(iAget, iCh);
@@ -244,7 +256,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           pad -> SetMaxADCIdx(maxADCIdx);
           pad -> SetPedestalSubtracted(kTRUE);
         } else if (fIsPedestalData) {
-          frame -> CalcPedestal(iAget, iCh, fStartTb, fNumTbs);
+          frame -> CalcPedestal(iAget, iCh, fStartTb, fAverageTbs);
 
           Double_t pedestal[512];
           Double_t pedestalSigma[512];
@@ -253,20 +265,18 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
           frame -> SubtractPedestal(iAget, iCh);
 
-          Double_t scaleFactor = 1;
-          if (fIsGainCalibrationData) {
-            scaleFactor = fGainCalibrationPtr -> GetScaleFactor(row, layer);
-            pad -> SetGainCalibrated(kTRUE);
-          }
-
           Double_t *adc = frame -> GetADC(iAget, iCh);
+
+          if (fIsGainCalibrationData)
+            fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
+
           for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++) {
             Int_t delayedTb = iTb - signalDelay;
             Double_t delayedADC = 0;
             if (delayedTb < 0 || delayedTb >= fDecoderPtr -> GetNumTbs())
               delayedADC = 0;
             else
-              delayedADC = adc[delayedTb]*scaleFactor;
+              delayedADC = adc[delayedTb];
 
             pad -> SetADC(iTb, delayedADC);
           }
