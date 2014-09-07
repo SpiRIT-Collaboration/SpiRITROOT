@@ -18,7 +18,7 @@ ${CMAKE_SOURCE_DIR}/dbase/dbValidation
 ${CMAKE_SOURCE_DIR}/dbase/dbUtils
 ${CMAKE_SOURCE_DIR}/input/db
 ${CMAKE_SOURCE_DIR}/dbase/dbInput
-${CMAKE_SOURCE_DIR}/MbsAPI
+#${CMAKE_SOURCE_DIR}/MbsAPI
 
 )
 
@@ -48,7 +48,7 @@ steer/FairTSBufferFunctional.cxx
 steer/FairTask.cxx
 steer/FairTrajFilter.cxx
 steer/FairWriteoutBuffer.cxx
-steer/FairRunOnline.cxx
+#steer/FairRunOnline.cxx
 
 sim/FairBaseContFact.cxx
 sim/FairBaseParSet.cxx
@@ -85,17 +85,17 @@ field/FairField.cxx
 field/FairFieldFactory.cxx
 field/FairRKPropagator.cxx
 
-source/FairLmdSource.cxx
-source/FairRemoteSource.cxx
-source/FairSource.cxx
-source/FairUnpack.cxx
-source/MRevBuffer.cxx
+#source/FairLmdSource.cxx
+#source/FairRemoteSource.cxx
+#source/FairSource.cxx
+#source/FairUnpack.cxx
+#source/MRevBuffer.cxx
 )
 
 Set(NO_DICT_SRCS 
-source/exitCli.c
-source/rclose.c
-source/swaplw.c
+  #source/exitCli.c
+  #source/rclose.c
+  #source/swaplw.c
 
 )
 
@@ -103,7 +103,7 @@ source/swaplw.c
 Set(LINKDEF FairLinkDef.h)
 Set(LIBRARY_NAME Base)
 Set(DEPENDENCIES 
-    ParBase GeoBase FairTools MbsAPI
+    ParBase GeoBase FairTools #MbsAPI
     Proof GeomPainter Geom VMC EG MathCore Physics 
     Matrix Tree Hist RIO Cint Core
 )
