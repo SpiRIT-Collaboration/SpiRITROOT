@@ -57,13 +57,13 @@
 #pragma link C++ class FairRingSorterTask;
 #pragma link C++ class FairAnaSelector+;
 
-#pragma link C++ class FairRunOnline;
-#pragma link C++ class FairSource;
-#pragma link C++ class FairRemoteSource;
-#pragma link C++ class FairLmdSource;
-#pragma link C++ class FairUnpack;
-#pragma link C++ class MRevBuffer;
-#pragma link C++ class REvent;
+//#pragma link C++ class FairRunOnline;
+//#pragma link C++ class FairSource;
+//#pragma link C++ class FairRemoteSource;
+//#pragma link C++ class FairLmdSource;
+//#pragma link C++ class FairUnpack;
+//#pragma link C++ class MRevBuffer;
+//#pragma link C++ class REvent;
 
 #if ROOT_VERSION_CODE < 333824
 #pragma link C++ class TVirtualMagField+;
