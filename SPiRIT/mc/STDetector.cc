@@ -67,24 +67,33 @@ Bool_t  STDetector::ProcessHits(FairVolume* vol)
   /** This method is called from the MC stepping */
 
   //Set parameters at entrance of volume. Reset ELoss.
-  if ( gMC->IsTrackEntering() ) {
-    fELoss  = 0.;
+//  if ( gMC->IsTrackEntering() ) {
+
+    if (!(gMC -> IsTrackInside()))
+      return kFALSE;
+
+    fELoss  = gMC -> Edep();
+
+    if (fELoss == 0)
+      return kFALSE;
+
+//    fELoss  = 0;
     fTime   = gMC->TrackTime() * 1.0e09;
     fLength = gMC->TrackLength();
     gMC->TrackPosition(fPos);
     gMC->TrackMomentum(fMom);
-  }
+//  }
 
   // Sum energy loss for all steps in the active volume
-  fELoss += gMC->Edep();
+//  fELoss += gMC->Edep();
 
   // Create STMCPoint at exit of active volume
-  if ( gMC->IsTrackExiting()    ||
-       gMC->IsTrackStop()       ||
-       gMC->IsTrackDisappeared()   ) {
+//  if ( gMC->IsTrackExiting()    ||
+//       gMC->IsTrackStop()       ||
+//       gMC->IsTrackDisappeared()   ) {
     fTrackID  = gMC->GetStack()->GetCurrentTrackNumber();
     fVolumeID = vol->getMCid();
-    if (fELoss == 0. ) { return kFALSE; }
+//    if (fELoss == 0. ) { return kFALSE; }
     AddHit(fTrackID, fVolumeID, TVector3(fPos.X(),  fPos.Y(),  fPos.Z()),
            TVector3(fMom.Px(), fMom.Py(), fMom.Pz()), fTime, fLength,
            fELoss);
@@ -92,7 +101,7 @@ Bool_t  STDetector::ProcessHits(FairVolume* vol)
     // Increment number of SPiRIT det points in TParticle
     STStack* stack = (STStack*) gMC->GetStack();
     stack->AddPoint(kSPiRIT);
-  }
+//  }
 
   return kTRUE;
 }
@@ -196,7 +205,7 @@ Bool_t STDetector::CheckIfSensitive(std::string name)
 {
   TString nameStr(name);
 
-  if (nameStr.EqualTo("Active"))
+  if (nameStr.EqualTo("field_cage_in"))
     return kTRUE;
 
   return kFALSE;
