@@ -5,5 +5,6 @@
 #pragma link off all functions;
 
 #pragma link C++ class STMapTest+;
+#pragma link C++ class STGainCheck+;
 
 #endif
