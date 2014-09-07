@@ -32,9 +32,12 @@ void STGainCalibration::Initialize()
 {
   fOpenFile = NULL;
   fGainCalibrationTree = NULL;
+  fBaseConstant = -9999;
+  fBaseSlope = -9999;
   fIsSetGainCalibrationData = kFALSE;
 
-  memset(fScaleFactor, 0, sizeof(Double_t)*108*112);;
+  memset(fConstant, 0, sizeof(Double_t)*108*112);;
+  memset(fSlope, 0, sizeof(Double_t)*108*112);;
 }
 
 Bool_t STGainCalibration::SetGainCalibrationData(TString gainCalibrationData) {
@@ -44,17 +47,20 @@ Bool_t STGainCalibration::SetGainCalibrationData(TString gainCalibrationData) {
   if ((fOpenFile = new TFile(gainCalibrationData))) {
     Int_t padRow = -2; 
     Int_t padLayer = -2; 
-    Double_t scaleFactor = 1; 
+    Double_t constant = -9999; 
+    Double_t slope = -9999;
     fGainCalibrationTree = (TTree *) fOpenFile -> Get("GainCalibrationData");
     fGainCalibrationTree -> SetBranchAddress("padRow", &padRow);
     fGainCalibrationTree -> SetBranchAddress("padLayer", &padLayer);
-    fGainCalibrationTree -> SetBranchAddress("scaleFactor", &scaleFactor);
+    fGainCalibrationTree -> SetBranchAddress("constant", &constant);
+    fGainCalibrationTree -> SetBranchAddress("slope", &slope);
 
     Int_t numEntries = fGainCalibrationTree -> GetEntries();
     for (Int_t iEntry = 0; iEntry < numEntries; iEntry++) {
       fGainCalibrationTree -> GetEntry(iEntry);
       
-      fScaleFactor[padRow][padLayer] = scaleFactor;
+      fConstant[padRow][padLayer] = constant;
+      fSlope[padRow][padLayer] = slope;
     }
 
     delete fOpenFile;
@@ -68,17 +74,32 @@ Bool_t STGainCalibration::SetGainCalibrationData(TString gainCalibrationData) {
   return kFALSE;
 }
 
+Bool_t STGainCalibration::SetGainBase(Double_t constant, Double_t slope)
+{
+  fBaseConstant = constant;
+  fBaseSlope = slope;
+}
+
 Bool_t STGainCalibration::IsSetGainCalibrationData()
 {
   return fIsSetGainCalibrationData;
 }
 
-Double_t STGainCalibration::GetScaleFactor(Int_t padRow, Int_t padLayer) {
+Bool_t STGainCalibration::CalibrateADC(Int_t padRow, Int_t padLayer, Int_t numTbs, Double_t *adc) {
   if (fIsSetGainCalibrationData == kFALSE) {
-    std::cerr << "[STGainCalibration::GetScaleFactor()] Gain calibration data is not set!" << std::endl;
+    std::cerr << "[STGainCalibration] Gain calibration data is not set!" << std::endl;
 
-    return -1;
+    return kFALSE;
+  } else if (fBaseConstant == -9999 || fBaseSlope == -9999) {
+    std::cerr << "[STGainCalibration] Gain calibration base is not set!" << std::endl;
+
+    return kFALSE;
   }
 
-  return fScaleFactor[padRow][padLayer];
+  for (Int_t iTb = 0; iTb < numTbs; iTb++) {
+    Double_t newAdc = ((adc[iTb] - fConstant[padRow][padLayer])/fSlope[padRow][padLayer])*fBaseSlope + fBaseConstant;
+    adc[iTb] = (newAdc > 0 ? newAdc : 0);
+  }
+
+  return kTRUE;
 }
