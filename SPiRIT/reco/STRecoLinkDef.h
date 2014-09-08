@@ -21,6 +21,7 @@
 #pragma link C++ class STDecoderTask+;
 
 #pragma link C++ class STPSATask+;
+#pragma link C++ class STPSA+;
 #pragma link C++ class STPSASimple+;
 #pragma link C++ class STPSASimple2+;
 

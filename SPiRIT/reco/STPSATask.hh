@@ -19,6 +19,7 @@
 // SPiRITROOT classes
 #include "STRawEvent.hh"
 #include "STDigiPar.hh"
+#include "STPSA.hh"
 
 // ROOT classes
 #include "TClonesArray.h" 
@@ -28,6 +29,7 @@ class STPSATask : public FairTask {
     STPSATask();
     ~STPSATask();
 
+    void SetPSAMode(Int_t value = 0);
     void SetPersistence(Bool_t value = kTRUE);
     void SetThreshold(Double_t threshold);
 
@@ -41,6 +43,9 @@ class STPSATask : public FairTask {
     STDigiPar *fPar;
     TClonesArray *fRawEventArray;
     TClonesArray *fEventHArray;
+
+    STPSA *fPSA;
+    Int_t fPSAMode;
 
     Bool_t fIsPersistence;
     
