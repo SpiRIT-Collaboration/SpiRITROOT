@@ -24,12 +24,14 @@ STDecoderTask::STDecoderTask()
   fLogger = FairLogger::GetLogger();
 
   fDecoder = NULL;
+  fDataNum = 0;
 
-  fGrawFile = "";
   fPedestalFile = "";
   fNumTbs = 512;
 
   fGainCalibrationFile = "";
+  fGainConstant = -9999;
+  fGainSlope = -9999;
 
   fSignalDelayFile = "";
 
@@ -43,41 +45,14 @@ STDecoderTask::~STDecoderTask()
 {
 }
 
-void
-STDecoderTask::SetPersistence(Bool_t value)
-{
-  fIsPersistence = value;
-}
-
-void
-STDecoderTask::SetNumTbs(Int_t numTbs)
-{
-  fNumTbs = numTbs;
-}
-
-void
-STDecoderTask::SetGraw(TString filename)
-{
-  fGrawFile = filename;
-}
-
-void
-STDecoderTask::SetPedestal(TString filename)
-{
-  fPedestalFile = filename;
-}
-
-void
-STDecoderTask::SetGainCalibration(TString filename)
-{
-  fGainCalibrationFile = filename;
-}
-
-void
-STDecoderTask::SetSignalDelay(TString filename)
-{
-  fSignalDelayFile = filename;
-}
+void STDecoderTask::SetPersistence(Bool_t value)                   { fIsPersistence = value; }
+void STDecoderTask::SetNumTbs(Int_t numTbs)                        { fNumTbs = numTbs; }
+void STDecoderTask::AddData(TString filename)                      { fDataList.push_back(filename); }
+void STDecoderTask::SetData(Int_t value)                           { fDataNum = value; }
+void STDecoderTask::SetPedestalData(TString filename)              { fPedestalFile = filename; }
+void STDecoderTask::SetGainCalibrationData(TString filename)       { fGainCalibrationFile = filename; }
+void STDecoderTask::SetGainBase(Double_t constant, Double_t slope) { fGainConstant = constant; fGainSlope = slope; }
+void STDecoderTask::SetSignalDelayData(TString filename)           { fSignalDelayFile = filename; }
 
 InitStatus
 STDecoderTask::Init()
@@ -91,7 +66,11 @@ STDecoderTask::Init()
 
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
 
-  fDecoder = new STCore(fGrawFile, fNumTbs);
+  fDecoder = new STCore();
+  for (Int_t iFile = 0; iFile < fDataList.size(); iFile++)
+    fDecoder -> AddData(fDataList.at(iFile));
+  fDecoder -> SetData(fDataNum);
+  fDecoder -> SetNumTbs(fNumTbs);
   fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
   fDecoder -> SetAGETMap((fPar -> GetFile(1)).Data());
   if (fPedestalFile.EqualTo("")) {
@@ -119,6 +98,13 @@ STDecoderTask::Init()
       return kERROR;
     }
 
+    if (fGainConstant == -9999 || fGainSlope == -9999) {
+      fLogger -> Error(MESSAGE_ORIGIN, "Cannot find gain calibration data file!");
+
+      return kERROR;
+    }
+
+    fDecoder -> SetGainBase(fGainConstant, fGainSlope);
     fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set!");
   }
 
