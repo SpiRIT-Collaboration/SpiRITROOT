@@ -77,7 +77,7 @@ STGainCheck::SetPedestalData(TString filename, Int_t startTb, Int_t numTbs)
 Bool_t
 STGainCheck::AddPulserData(TString filename)
 {
-  return fCore -> AddGraw(filename);
+  return fCore -> AddData(filename);
 }
 
 void

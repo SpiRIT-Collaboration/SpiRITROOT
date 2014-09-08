@@ -189,7 +189,7 @@ STGenerator::AddData(TString filename)
     return kFALSE;
   }
 
-  Bool_t okay = fCore -> AddGraw(filename);
+  Bool_t okay = fCore -> AddData(filename);
 
   return okay;
 }
@@ -203,7 +203,7 @@ STGenerator::AddData(Double_t voltage, TString filename)
     return kFALSE;
   }
 
-  Bool_t okay = fCore -> AddGraw(filename);
+  Bool_t okay = fCore -> AddData(filename);
 
   if (okay)
     fVoltageArray.push_back(voltage);

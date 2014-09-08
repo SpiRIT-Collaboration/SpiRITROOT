@@ -40,7 +40,7 @@ class GETDecoder : public TObject
     //! Setting the number of time buckets.
     void SetNumTbs(Int_t value = 512);
     //! Add the data file to the list of rawdata.
-    Bool_t AddGraw(TString filename);
+    Bool_t AddData(TString filename);
     //! Set the data file to the class.
     Bool_t SetData(Int_t index);
     //! Search the next file and set it if exists. Returns 1 if successful.
@@ -112,10 +112,10 @@ class GETDecoder : public TObject
     Bool_t fDebugMode; /// flag for debug mode
     Bool_t fIsAutoReload; /// Flag for auto reloading continuing data file in the list.
 
-    std::ifstream fGraw;            /// rawdata filestream
+    std::ifstream fData;            /// rawdata filestream
     UInt_t fFileSize; /// file size
-    std::vector<TString> fGrawList; /// rawdata file list
-    Int_t fCurrentGrawID;        /// current file index in list
+    std::vector<TString> fDataList; /// rawdata file list
+    Int_t fCurrentDataID;        /// current file index in list
 
     GETFrame *fFrame;      /// frame container
     Int_t fCurrentFrameID; /// current frame index
