@@ -32,7 +32,7 @@ class STCore : public TObject {
     void Initialize();
 
     // setters
-    Bool_t AddGraw(TString filename);
+    Bool_t AddData(TString filename);
     void SetNoAutoReload(Bool_t value = kFALSE);
     Bool_t SetData(Int_t value);
     Int_t GetNumData();
@@ -59,7 +59,7 @@ class STCore : public TObject {
     Int_t fNumTbs;
 
     GETDecoder *fDecoderPtr;
-    Bool_t fIsGraw;
+    Bool_t fIsData;
 
     STPedestal *fPedestalPtr;
     Bool_t fIsInternalPedestal;

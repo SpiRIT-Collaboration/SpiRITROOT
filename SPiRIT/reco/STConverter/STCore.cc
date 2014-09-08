@@ -31,13 +31,13 @@ STCore::STCore()
 STCore::STCore(TString filename)
 {
   Initialize();
-  AddGraw(filename);
+  AddData(filename);
 }
 
 STCore::STCore(TString filename, Int_t numTbs)
 {
   Initialize();
-  AddGraw(filename);
+  AddData(filename);
   SetNumTbs(numTbs);
 }
 
@@ -59,7 +59,7 @@ void STCore::Initialize()
   fDecoderPtr = new GETDecoder();
 //  fDecoderPtr -> SetDebugMode(1);
 
-  fIsGraw = kFALSE;
+  fIsData = kFALSE;
   fIsPedestalData = kFALSE;
   fIsInternalPedestal = kFALSE;
 
@@ -77,9 +77,9 @@ void STCore::Initialize()
   fCurrFrameNo = 0;
 }
 
-Bool_t STCore::AddGraw(TString filename)
+Bool_t STCore::AddData(TString filename)
 {
-  return fDecoderPtr -> AddGraw(filename);
+  return fDecoderPtr -> AddData(filename);
 }
 
 void STCore::SetNoAutoReload(Bool_t value)
@@ -89,9 +89,9 @@ void STCore::SetNoAutoReload(Bool_t value)
 
 Bool_t STCore::SetData(Int_t value)
 {
-  fIsGraw = fDecoderPtr -> SetData(value);
+  fIsData = fDecoderPtr -> SetData(value);
 
-  return fIsGraw;
+  return fIsData;
 }
 
 Int_t STCore::GetNumData()
@@ -171,8 +171,8 @@ Bool_t STCore::SetAGETMap(TString filename)
 
 STRawEvent *STCore::GetRawEvent(Int_t eventID)
 {
-  if (!fIsGraw) {
-    std::cout << "== [STCore] Graw file is not set!" << std::endl;
+  if (!fIsData) {
+    std::cout << "== [STCore] Data file is not set!" << std::endl;
 
     return NULL;
   }
