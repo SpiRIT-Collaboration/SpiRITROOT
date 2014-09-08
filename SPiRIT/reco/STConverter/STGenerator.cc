@@ -227,9 +227,9 @@ STGenerator::SelectEvents(Int_t numEvents, Int_t *eventList)
   fNumEvents = numEvents;
 
   if (fNumEvents < 0)
-    cout << "== [STGenerator] Events in passed event list will be excluded!" << endl;
+    cout << "== [STGenerator] Events in passed event list will be excluded until event ID " << -fNumEvents << "!" << endl;
   else if (fNumEvents > 0)
-    cout << "== [STGenerator] Events in passed event are processed!" << endl;
+    cout << "== [STGenerator] Events in passed event list are processed!" << endl;
   else {
     cout << "== [STGenerator] All events are processed!" << endl;
 
@@ -304,6 +304,7 @@ STGenerator::GeneratePedestalData()
 
   STRawEvent *event = NULL;
   Int_t eventID = 0;
+  Int_t numExcluded = 0;
   while ((event = fCore -> GetRawEvent())) {
     if (fNumEvents == 0) {}
     else if (fNumEvents > 0) {
@@ -312,10 +313,10 @@ STGenerator::GeneratePedestalData()
       else if (fEventList[eventID] != event -> GetEventID())
         continue;
     } else if (fNumEvents < 0) {
-      if (eventID == -fNumEvents)
-        break;
-      else if (fEventList[eventID] == event -> GetEventID())
+      if (numExcluded < -fNumEvents && fEventList[numExcluded] == event -> GetEventID()) {
+        numExcluded++;
         continue;
+      }
     }
 
     cout << "[STGenerator] Start processing event: " << event -> GetEventID() << endl;
