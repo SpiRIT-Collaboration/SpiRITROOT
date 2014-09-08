@@ -11,7 +11,9 @@
 
 // SPiRITROOT classes
 #include "STPSATask.hh"
+#include "STPSA.hh"
 #include "STPSASimple.hh"
+#include "STPSASimple2.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -30,23 +32,17 @@ STPSATask::STPSATask()
   fIsPersistence = kFALSE;
   
   fEventHArray = new TClonesArray("STEvent");
+
+  fPSAMode = 0;
 }
 
 STPSATask::~STPSATask()
 {
 }
 
-void
-STPSATask::SetPersistence(Bool_t value)
-{
-  fIsPersistence = value;
-}
-
-void
-STPSATask::SetThreshold(Double_t threshold)
-{
-  fThreshold = threshold;
-}
+void STPSATask::SetPSAMode(Int_t value)          { fPSAMode = value; }
+void STPSATask::SetPersistence(Bool_t value)     { fIsPersistence = value; }
+void STPSATask::SetThreshold(Double_t threshold) { fThreshold = threshold; }
 
 InitStatus
 STPSATask::Init()
@@ -62,6 +58,18 @@ STPSATask::Init()
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STRawEvent array!");
     return kERROR;
   }
+
+  if (fPSAMode == 0) {
+    fLogger -> Info(MESSAGE_ORIGIN, "Use STPSASimple!");
+
+    fPSA = new STPSASimple();
+  } else if (fPSAMode == 1) {
+    fLogger -> Info(MESSAGE_ORIGIN, "Use STPSASimple2!");
+
+    fPSA = new STPSASimple2();
+  }
+
+  fPSA -> SetThreshold((Int_t)fThreshold);
 
   ioMan -> Register("STEventH", "SPiRIT", fEventHArray, fIsPersistence);
 
@@ -95,9 +103,5 @@ STPSATask::Exec(Option_t *opt)
   STEvent *event = (STEvent *) new ((*fEventHArray)[0]) STEvent();
   event -> SetEventID(rawEvent -> GetEventID());
 
-  // This is a very inefficient way. This should be modified later after the PSA method is fixed.
-  STPSASimple *psaSimple = new STPSASimple();
-  psaSimple -> SetThreshold((Int_t)fThreshold);
-  psaSimple -> Analyze(rawEvent, event);
-  delete psaSimple;
+  fPSA -> Analyze(rawEvent, event);
 }

@@ -41,6 +41,7 @@ STConverter/STSignalDelay.cc
 STConverter/STMap.cc
 STConverter/STGenerator.cc
 
+PulseShapeAnalyzer/STPSA.cc
 PulseShapeAnalyzer/STPSASimple.cc
 PulseShapeAnalyzer/STPSASimple2.cc
 
