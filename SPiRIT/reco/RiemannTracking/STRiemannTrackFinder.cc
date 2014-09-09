@@ -32,6 +32,7 @@
 #include "STRiemannTrackFinder.hh"
 #include "STRiemannTTCorrelator.hh"
 #include "STProximityHTCorrelator.hh"
+#include "STRiemannSort.hh"
 
 // STL
 #include <algorithm>
@@ -84,7 +85,7 @@ STRiemannTrackFinder::InitVariables()
 {
   fMinHitsForFit = 5;
   fSortingMode = kTRUE;
-  fSorting = 3;
+  fSorting = STRiemannSort::kSortR;
   fInteractionZ = 0.;
   fMaxNumHitsForPR = 2147483646;
   fTTProxCut = 500;
@@ -198,24 +199,27 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
         if (track -> GetNumHits() > fMinHits || track -> IsGood()) // do not delete
           willDelete = kFALSE;
 
-        if (fSorting == 3) {
+        // Since the clusters are sorted with the sorting criteria,
+        // check if the track needed to be compared with the current cluster.
+        // If the track is far out of the current cluster range, make it finish or delete by the condition.
+        if (fSorting == STRiemannSort::kSortR) {
           Perp += 3*fProxCut;
           if (track -> GetFirstHit() -> GetCluster() -> GetPosition().Perp() > Perp &&
               track -> GetLastHit() -> GetCluster() -> GetPosition().Perp() > Perp)
             finished = kTRUE;
-        } else if (fSorting == 5) {
+        } else if (fSorting == STRiemannSort::kSortPhi) {
           Double_t Phi = rhit -> GetCluster() -> GetPosition().Phi();
           Double_t dPhi = 2*fProxCut/Perp; // approx for small angles
           if (Phi - track -> GetFirstHit() -> GetCluster() -> GetPosition().Phi() > dPhi &&
               Phi - track -> GetLastHit() -> GetCluster() -> GetPosition().Phi() > dPhi)
             finished = kTRUE;
-        } else if (fSorting == -5) {
+        } else if (fSorting == STRiemannSort::kSortReversePhi) {
           Double_t Phi = rhit -> GetCluster() -> GetPosition().Phi();
           Double_t dPhi = -2*fProxCut/Perp; // approx for small angles
           if (Phi - track -> GetFirstHit() -> GetCluster() -> GetPosition().Phi() < dPhi &&
               Phi - track -> GetLastHit() -> GetCluster() -> GetPosition().Phi() < dPhi)
             finished = kTRUE;
-        } else if (fSorting == 2) {
+        } else if (fSorting == STRiemannSort::kSortZ) {
           Double_t Z = rhit -> GetCluster() -> GetPosition().Z();
           Double_t dZ = 3*fProxCut;
           if (track -> GetFirstHit() -> GetCluster() -> GetPosition().Z() - Z > dZ &&
@@ -246,27 +250,27 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
       vector<Double_t> matchQualities(numCorrelators, 99999.); // for saving the match qualities for each correlator
       Int_t level = 0; // number of survived correlators
       #ifdef DEBUGHT
-        if(iCluster == fMaxNumHitsForPR - 1)
+        if (iCluster == fMaxNumHitsForPR - 1)
           std::cout << "Testing hit " << iCluster << " with track " << iTrack << "; trk quality: " << track -> GetQuality() << std::endl;
       #endif
 
-      for(Int_t iCor = 0; iCor < numCorrelators; ++iCor){ // loop through correlators
+      for (Int_t iCor = 0; iCor < numCorrelators; iCor++) { // loop through correlators
         // CORRELATE HIT WITH TRACK
         Double_t matchQuality = 99999;
         Bool_t survive = kFALSE;
         Bool_t applicable = fHTCorrelators[iCor] -> Correlate(track, rhit, survive, matchQuality);
         #ifdef DEBUGHT
-          if(iCluster == fMaxNumHitsForPR-1){
-            if(!applicable)
+          if (iCluster == fMaxNumHitsForPR-1){
+            if (!applicable)
               std::cout << " HT correlator " << iCor << " NOT applicable" << std::endl;
             else
               std::cout << " HT correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
           }
         #endif
-        if(!applicable)
+        if (!applicable)
           continue; // try the next correlator
 
-        if(!survive){
+        if (!survive){
           trackSurvive = kFALSE;
           break; // track has failed this level --> can be excluded
         }
@@ -288,8 +292,8 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
         if (level > maxlevel)
           maxlevel = level;
 
-        for(UInt_t i = 0; i <= level; i++){
-          if(matchQualities[i] < fBestMatchQuality[i]){
+        for (UInt_t i = 0; i <= level; i++) {
+          if (matchQualities[i] < fBestMatchQuality[i]) {
             fBestMatchQuality[i] = matchQualities[i];
             fBestMatchIndex[i] = iTrack;
           }
@@ -297,9 +301,9 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
       }
 
       #ifdef DEBUGHT
-      if(iCluster == fMaxNumHitsForPR - 1 && trackSurvive)
+      if (iCluster == fMaxNumHitsForPR - 1 && trackSurvive)
         std::cout << " Track " << iTrack << " survived with level " << level << std::endl;
-      if(iCluster == fMaxNumHitsForPR - 1)
+      if (iCluster == fMaxNumHitsForPR - 1)
         std::cout << std::endl;
       #endif
 
@@ -308,7 +312,7 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
 
 
     #ifdef DEBUGHT
-      if(iCluster == fMaxNumHitsForPR - 1){
+      if (iCluster == fMaxNumHitsForPR - 1) {
         std::cout << "maxlevel " << maxlevel << std::endl;
         std::cout << "fBestMatchIndex[maxlevel] " << fBestMatchIndex[maxlevel] << std::endl;
         std::cout << "fBestMatchQuality[maxlevel] " << fBestMatchQuality[maxlevel] << std::endl;
@@ -351,10 +355,10 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
       #endif
 
       if (fInitTracks) {
-        if (fSorting == 3)
+        if (fSorting == STRiemannSort::kSortR)
           track -> InitTargetTrack(fInitDip, fInitCurv);
 
-        if (fSorting == 5 || fSorting == -5)
+        if (fSorting == STRiemannSort::kSortPhi || fSorting == STRiemannSort::kSortReversePhi)
           track -> InitCircle(0);
       }
     } else {
@@ -428,7 +432,7 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
     STRiemannTrack *track1 = candList[iTrack1];
 
     // find max z of track1
-    if (fSorting == 3) {
+    if (fSorting == STRiemannSort::kSortR) {
       z1max = track1 -> GetFirstHit() -> GetCluster() -> GetPosition().Z();
       zTemp = track1 -> GetLastHit() -> GetCluster() -> GetPosition().Z();
 
@@ -447,7 +451,7 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
       STRiemannTrack *track2 = candList[iTrack2];
 
       // find min z of track2
-      if(fSorting == 3){
+      if(fSorting == STRiemannSort::kSortR){
         z2min = track2 -> GetFirstHit() -> GetCluster() -> GetPosition().Z();
         zTemp = track2 -> GetLastHit() -> GetCluster() -> GetPosition().Z();
 
@@ -545,7 +549,7 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
       }
 
       // update max z of track1
-      if (fSorting == 3) {
+      if (fSorting == STRiemannSort::kSortR) {
         z1max = track1 -> GetFirstHit() -> GetCluster() -> GetPosition().Z();
         zTemp = track1 -> GetLastHit() -> GetCluster() -> GetPosition().Z();
         if (zTemp>z1max) z1max = zTemp;
@@ -598,7 +602,7 @@ STRiemannTrackFinder::CleanTracks(vector<STRiemannTrack *> &candList, Double_t s
 void
 STRiemannTrackFinder::SortClusters(vector<STHitCluster *> &clusterList)
 {
-  if(fSorting == -1)
+  if(fSorting == STRiemannSort::kNoSort)
     return;
 
   SortClusterClass sortCluster;
@@ -609,7 +613,7 @@ STRiemannTrackFinder::SortClusters(vector<STHitCluster *> &clusterList)
 
 void
 STRiemannTrackFinder::SortTracklets(vector<STRiemannTrack *> &tracklets){
-  if(fSorting == -1)
+  if(fSorting == STRiemannSort::kNoSort)
     return;
 
   SortTrackletsClass sortTracklet;
@@ -707,14 +711,14 @@ SortTrackletsClass::operator() (STRiemannTrack *t1, STRiemannTrack *t2)
   TVector3 d2;
 
   switch (fSorting) {
-    case -1: //no sorting
+    case STRiemannSort::kNoSort: //no sorting
       return kFALSE;
 
     // if clusters are NOT sorted by R, sort tracklets by R
-    case 0:
-    case 1:
-    case 2:
-    case 4:
+    case STRiemannSort::kSortX:
+    case STRiemannSort::kSortY:
+    case STRiemannSort::kSortZ:
+    case STRiemannSort::kSortDistance:
       a1 = t1 -> GetFirstHit() -> GetCluster() -> GetPosition().Perp();
       a12 = t1 -> GetLastHit() -> GetCluster() -> GetPosition().Perp();
       if (a12 < a1) a1 = a12;
@@ -726,7 +730,7 @@ SortTrackletsClass::operator() (STRiemannTrack *t1, STRiemannTrack *t2)
       return a1 < a2;
 
     // if clusters are sorted by R, sort tracklets by Z
-    case 3:
+    case STRiemannSort::kSortR:
     default:
       a1 = t1 -> GetFirstHit() -> GetCluster() -> GetPosition().Z();
       a12 = t1 -> GetLastHit() -> GetCluster() -> GetPosition().Z();
