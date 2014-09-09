@@ -76,7 +76,7 @@ STGenerator::SetMode(TString mode)
     fNumEvents = 0;
   } else if (mode.EqualTo("gain"))
     fMode = kGain;
-  } else if (mode.EqualTo("signaldelay"))
+  else if (mode.EqualTo("signaldelay"))
     fMode = kSignalDelay;
   else {
     fMode = kError;
@@ -249,7 +249,7 @@ STGenerator::StartProcess()
   }
 
   if (fMode == kPedestal)
-    GeneratePedestal();
+    GeneratePedestalData();
   else if (fMode == kGain)
     GenerateGainCalibrationData();
   else if (fMode == kSignalDelay)
