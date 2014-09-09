@@ -43,13 +43,14 @@ class STGenerator : public TObject {
     void Print();
 
   private:
-    void GeneratePedestal();
+    void GeneratePedestalData();
     void GenerateGainCalibrationData();
+    void GenerateSignalDelayData();
 
     Int_t GetIntParameter(TString parameter);
     TString GetFileParameter(Int_t index);
 
-    enum EMode { kError, kPedestal, kGain };
+    enum EMode { kError, kPedestal, kGain, kSignalDelay };
     Int_t fMode;
 
     vector<Double_t> fVoltageArray;
