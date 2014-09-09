@@ -29,12 +29,11 @@ STHelixHTCorrelator::STHelixHTCorrelator(Double_t hdistcut)
   fHDistCut = hdistcut;
 }
 
-
 Bool_t
 STHelixHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bool_t &survive, Double_t &matchQuality)
 {
   // check if we have a fit:
-  if(!(track -> IsFitted()))
+  if (!(track -> IsFitted()))
     return kFALSE;
 
   Double_t d = track -> DistHelix(rhit);
@@ -45,7 +44,7 @@ STHelixHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bool_t
 
   Double_t stat = 2. - track -> GetQuality(); // tighten cut for better defined tracks
 
-  if ( d > fHDistCut*stat) {
+  if (d > fHDistCut*stat) { // for best track: fHDistCut < d, for worst track: 2*fHDistCut < d, then die
 //    DebugLogger::Instance() -> Histo("HT_riemanncuts",8,0,20,20);
     survive = kFALSE;
     return kTRUE;
