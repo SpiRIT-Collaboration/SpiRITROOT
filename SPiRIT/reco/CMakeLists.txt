@@ -38,8 +38,10 @@ STConverter/STCore.cc
 STConverter/STPedestal.cc
 STConverter/STGainCalibration.cc
 STConverter/STSignalDelay.cc
-STConverter/STMap.cc
 STConverter/STGenerator.cc
+STConverter/STGainCheck.cc
+STConverter/STMap.cc
+STConverter/STMapTest.cc
 
 PulseShapeAnalyzer/STPSA.cc
 PulseShapeAnalyzer/STPSASimple.cc
