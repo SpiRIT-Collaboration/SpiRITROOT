@@ -87,7 +87,7 @@ void makeGeom_spirit()
    Double_t drift_y=51.29;
    Double_t beam_z=134.40;
    
-// Field cage made up of copper, prepared from the composite structure
+// Field cage made up of copper, prepared from the composite structure, origin of the detector volumes starts from the upstream center of pad plane.
 
    TGeoVolume *field_cage_out = gGeoManager->MakeBox("field_cage_out", copp, (pad_x+10.30)/2, (drift_y+0.18)/2, (beam_z+5)/2);
    field_cage_out->SetLineColor(kBlue);
@@ -112,8 +112,9 @@ void makeGeom_spirit()
    TGeoCompositeShape *cs1 = new TGeoCompositeShape("cs1","(field_cage_out)-(field_cage_in)");     
 //   TGeoCompositeShape *cs1 = new TGeoCompositeShape("cs1","(field_cage_out)-(field_cage_in:t1)");     
    TGeoVolume *comp1 = new TGeoVolume("comp1",cs1,copp);
+   TGeoVolume *comp1 = new TGeoVolume("comp1",cs1,copp);
    comp1->SetLineColor(kBlue);
-   top->AddNode(comp1, 1, gGeoIdentity);       
+   top->AddNode(comp1, 1, new TGeoTranslation(0,-drift_y/2,(beam_z+5)/2));       
 //	top->Raytrace();
 
 
@@ -143,13 +144,13 @@ void makeGeom_spirit()
 
    TGeoVolume *pad_plane = gGeoManager->MakeBox("pad_plane", copp, (pad_x)/2, 2/2, (beam_z+4)/2);
    pad_plane->SetLineColor(kRed);
-   top->AddNode(pad_plane, 1, new TGeoTranslation(0,25,0));
+   top->AddNode(pad_plane, 1, new TGeoTranslation(0,-(drift_y-49)/2,(beam_z+4)/2));
 
 // Thin Ground wire plane made up of copper which is 8 mm thick
 
    TGeoVolume *wire_plane_ground = gGeoManager->MakeBox("wire_plane_ground", copp, (pad_x)/2, 0.8/2, (beam_z+4)/2);
    wire_plane_ground->SetLineColor(kBlack);
-   top->AddNode(wire_plane_ground, 1, new TGeoTranslation(0,23,0));
+   top->AddNode(wire_plane_ground, 1, new TGeoTranslation(0,-(drift_y-45.5)/2,(beam_z+4)/2));
 
 
    //--- close the geometry
