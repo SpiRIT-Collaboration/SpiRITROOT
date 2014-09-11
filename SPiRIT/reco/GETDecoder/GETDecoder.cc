@@ -80,6 +80,8 @@ void GETDecoder::Initialize()
   fCurrentFrameID = -1;
   fCurrentInnerFrameID = -1;
 
+  fGETMath = 0;
+
   fGETPlot = 0;
   fEOF = kFALSE;
 }
