@@ -37,7 +37,7 @@ using std::cout;
 using std::endl;
 
 
-ClassImp(STDriftTask)
+ClassImp(STDriftTask);
 
 STDriftTask::STDriftTask()
 : FairTask("SPiRIT Drift"),

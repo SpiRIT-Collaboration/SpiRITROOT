@@ -36,7 +36,7 @@ using std::cout;
 using std::endl;
 
 
-ClassImp(STAvalancheTask)
+ClassImp(STAvalancheTask);
 
 STAvalancheTask::STAvalancheTask()
 : FairTask("SPiRIT Avalanche"),

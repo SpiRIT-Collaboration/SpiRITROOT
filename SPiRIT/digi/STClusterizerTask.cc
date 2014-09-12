@@ -36,7 +36,7 @@ using std::endl;
 using std::floor;
 using std::fabs;
 
-ClassImp(STClusterizerTask)
+ClassImp(STClusterizerTask);
 
 STClusterizerTask::STClusterizerTask()
 : FairTask("SPiRIT Clusterizer"),
