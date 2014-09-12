@@ -41,10 +41,10 @@ void STPadResponse::SetPad(STPad* pad, Double_t x, Double_t z, Int_t charge)
 
 void STPadResponse::WriteHistogram()
 {
-  TFile* file=FairRootManager::Instance()->GetOutFile();
+  TFile* file = FairRootManager::Instance() -> GetOutFile();
 
-  file->mkdir("TpcDriftTask");
-  file->cd("TpcDriftTask");
+  file -> mkdir("STDriftTask");
+  file -> cd("STDriftTask");
 
   fPadPlane -> Write();
   delete fPadPlane;

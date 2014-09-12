@@ -41,7 +41,8 @@ ClassImp(STAvalancheTask);
 STAvalancheTask::STAvalancheTask()
 : FairTask("SPiRIT Avalanche"),
   fIsPersistent(kFALSE),
-  fTestMode(kFALSE)
+  fTestMode(kFALSE),
+  fWriteHistogram(kFALSE)
 {
   fDriftedElectronBranchName = "STDriftedElectron";
 }
@@ -74,6 +75,14 @@ STAvalancheTask::Init()
 
   fGas = fPar -> GetGas();
 
+  if(fWriteHistogram)
+  {
+    fPadPlaneX = fPar -> GetPadPlaneX();
+    fPadPlaneZ = fPar -> GetPadPlaneZ();
+    fElectronDistXZ = new TH2D("ElDistXZ","",1000,-fPadPlaneX/2,fPadPlaneX/2,
+                                             1000,0,fPadPlaneZ);
+  }
+
   return kSUCCESS;
 }
 
@@ -105,18 +114,37 @@ STAvalancheTask::Exec(Option_t *opt)
   for(Int_t iElectron=0; iElectron<nElectron; iElectron++)
   {
     STDriftedElectron* electron = (STDriftedElectron*) fDriftedElectronArray -> At(iElectron);
+
+    Double_t x = electron -> GetX();
+    Double_t z = electron -> GetZ();
+
     Int_t nAvalanche = fAvalancheArray -> GetEntries();
 
     STAvalanche* avalanche 
-      = new ((*fAvalancheArray)[nAvalanche]) STAvalanche(electron -> GetX(),
-                                                         electron -> GetZ(),
+      = new ((*fAvalancheArray)[nAvalanche]) STAvalanche(x,
+                                                         z,
                                                          electron -> GetTime(),
                                                          gain);
     avalanche -> SetIndex(nAvalanche);
+
+    if(fWriteHistogram) fElectronDistXZ -> Fill(x, z, gain);
   }
 
   cout << "STAvalancheTask:: " << fAvalancheArray -> GetEntriesFast() 
        << " avalanche created" << endl; 
 
+  if(fWriteHistogram) WriteHistogram();
+
   return;
+}
+
+void
+STAvalancheTask::WriteHistogram()
+{
+  TFile* file = FairRootManager::Instance() -> GetOutFile();
+
+  file -> mkdir("STAvalancheTask");
+  file -> cd("STAvalancheTask");
+
+  fElectronDistXZ -> Write();
 }
