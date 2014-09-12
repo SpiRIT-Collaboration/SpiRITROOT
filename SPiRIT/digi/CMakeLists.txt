@@ -9,8 +9,9 @@ ${CMAKE_SOURCE_DIR}/geobase
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/SPiRIT/mc
 ${CMAKE_SOURCE_DIR}/SPiRIT/par
-${CMAKE_SOURCE_DIR}/SPiRIT/digi
 ${CMAKE_SOURCE_DIR}/SPiRIT/format
+${CMAKE_SOURCE_DIR}/SPiRIT/digi
+${CMAKE_SOURCE_DIR}/SPiRIT/digi/PadResponse
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -23,9 +24,12 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
+PadResponse/STPadResponse.cc
+
 STClusterizerTask.cc
 STDriftTask.cc
 STAvalancheTask.cc
+STPadResponseTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
