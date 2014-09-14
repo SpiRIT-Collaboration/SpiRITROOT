@@ -77,10 +77,12 @@ STAvalancheTask::Init()
 
   if(fWriteHistogram)
   {
-    fPadPlaneX = fPar -> GetPadPlaneX();
-    fPadPlaneZ = fPar -> GetPadPlaneZ();
-    fElectronDistXZ = new TH2D("ElDistXZ","",1000,-fPadPlaneX/2,fPadPlaneX/2,
-                                             1000,0,fPadPlaneZ);
+    //fPadPlaneX = fPar -> GetPadPlaneX();
+    //fPadPlaneZ = fPar -> GetPadPlaneZ();
+    fPadPlaneX = 96.61;
+    fPadPlaneZ = 144.64;
+    fElectronDistXZ = new TH2D("ElDistXZ","", 112,0,fPadPlaneZ,
+                                              108,-fPadPlaneX/2,fPadPlaneX/2);
   }
 
   return kSUCCESS;
@@ -127,7 +129,7 @@ STAvalancheTask::Exec(Option_t *opt)
                                                          gain);
     avalanche -> SetIndex(nAvalanche);
 
-    if(fWriteHistogram) fElectronDistXZ -> Fill(x, z, gain);
+    if(fWriteHistogram) fElectronDistXZ -> Fill(z, x, gain);
   }
 
   cout << "STAvalancheTask:: " << fAvalancheArray -> GetEntriesFast() 

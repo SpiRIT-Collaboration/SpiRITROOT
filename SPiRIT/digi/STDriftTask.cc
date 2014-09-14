@@ -75,6 +75,18 @@ STDriftTask::Init()
 
   fGas = fPar -> GetGas();
 
+  if(fWriteHistogram)
+  {
+    //fPadPlaneX = fPar -> GetPadPlaneX();
+    //fPadPlaneZ = fPar -> GetPadPlaneZ();
+    fPadPlaneX = 96.61;
+    fPadPlaneZ = 144.64;
+    fElectronDistXZ = new TH2D("ElDistXZ","", 500,0,fPadPlaneZ,
+                                              500,-fPadPlaneX/2,fPadPlaneX/2);
+    fElectronDistXZRaw = new TH2D("ElDistXZRaw","", 500,0,fPadPlaneZ,
+                                                    500,-fPadPlaneX/2,fPadPlaneX/2);
+  }
+
   return kSUCCESS;
 
 }
@@ -143,15 +155,17 @@ STDriftTask::Exec(Option_t *opt)
       cout << "attachment coef.  : " << coefAttachment << endl;
       cout << "exp(-drftL*attC)  : " << exp(-driftLength*coefAttachment) << endl;
     }
+    if(fTestMode) cout << endl << iCluster << " / " << nCluster << endl;
 
     if(driftLength<=0) continue;
+    if(fWriteHistogram) fElectronDistXZRaw -> Fill(zElectron, xElectron);
     for(Int_t iElectron=0; iElectron<charge; iElectron++)
     {
       if(exp(-driftLength*coefAttachment) < gRandom -> Uniform()) continue;
       xElectron += gRandom -> Gaus(0,sigmaDiffusion);
       zElectron += gRandom -> Gaus(0,sigmaDiffusion);
 
-      if(fTestMode) cout << ">>> x/z - diffusion position : " << xElectron << " / " << zElectron << endl;
+      //if(fTestMode) cout << ">>> x/z - diffusion position : " << xElectron << " / " << zElectron << endl;
 
       Int_t size = fDriftedElectronArray -> GetEntriesFast();
       STDriftedElectron* electron 
@@ -159,10 +173,27 @@ STDriftTask::Exec(Option_t *opt)
                                                                 zElectron,
                                                                 timeCluster);
       electron -> SetIndex(size);
+
+      if(fWriteHistogram) fElectronDistXZ -> Fill(zElectron, xElectron);
     }
   }
+
+  if(fWriteHistogram) WriteHistogram();
 
   cout << "STDriftTask:: " << fDriftedElectronArray -> GetEntriesFast() << " drifted electron created" << endl; 
 
   return;
+}
+
+void
+STDriftTask::WriteHistogram()
+{
+  cout << "[STDriftTask] Writing histogram..." << endl;
+  TFile* file = FairRootManager::Instance() -> GetOutFile();
+
+  file -> mkdir("STDriftTask");
+  file -> cd("STDriftTask");
+
+  fElectronDistXZRaw -> Write();
+  fElectronDistXZ -> Write();
 }
