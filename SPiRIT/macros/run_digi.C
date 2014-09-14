@@ -48,14 +48,16 @@ void run_digi
 
   STClusterizerTask* clusterizer = new STClusterizerTask();
                      clusterizer -> SetPersistence(kTRUE);
-                     //clusterizer -> SetTestMode();
+                     clusterizer -> SetTestMode();
 
   STDriftTask* drifter = new STDriftTask();
                drifter -> SetPersistence(kTRUE);
-               //drifter -> SetTestMode();
+               drifter -> SetTestMode();
+               drifter -> SetWriteHistogram();
 
   STAvalancheTask* avalanche = new STAvalancheTask();
                    avalanche -> SetPersistence(kTRUE);
+                   avalanche -> SetWriteHistogram();
                    //avalanche -> SetTestMode();
 
   fRun -> AddTask(clusterizer);
@@ -67,6 +69,6 @@ void run_digi
   fRun -> Init();
   fRun -> Run(0,1);
 
-  fDb -> saveOutput();
-  fDb -> print();
+  //fDb -> saveOutput();
+  //fDb -> print();
 }
