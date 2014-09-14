@@ -2,7 +2,9 @@
 #STGas
 #Test gas
 ################################################################################
-EIonizeP10:Double_t          0.00000000000262   # MeV              
+#EIonizeP10:Double_t          0.00000000000262   # MeV              
+#EIonizeP10:Double_t                    0.0003   # MeV              
+EIonizeP10:Double_t                 0.0000262   # MeV              
 DriftVelocity:Double_t                   5.43   # cm/us
 CoefDiffusionLong:Double_t              0.034   # cm^{-1/2} (?)
 CoefDiffusionTrans:Double_t             0.024   # cm^{-1/2} (?)
