@@ -37,7 +37,7 @@ using std::cout;
 using std::endl;
 
 
-ClassImp(STDriftTask)
+ClassImp(STDriftTask);
 
 STDriftTask::STDriftTask()
 : FairTask("SPiRIT Drift"),
@@ -74,6 +74,18 @@ STDriftTask::Init()
   ioman -> Register("STDriftedElectron", "ST", fDriftedElectronArray, fIsPersistent);
 
   fGas = fPar -> GetGas();
+
+  if(fWriteHistogram)
+  {
+    //fPadPlaneX = fPar -> GetPadPlaneX();
+    //fPadPlaneZ = fPar -> GetPadPlaneZ();
+    fPadPlaneX = 96.61;
+    fPadPlaneZ = 144.64;
+    fElectronDistXZ = new TH2D("ElDistXZ","", 500,0,fPadPlaneZ,
+                                              500,-fPadPlaneX/2,fPadPlaneX/2);
+    fElectronDistXZRaw = new TH2D("ElDistXZRaw","", 500,0,fPadPlaneZ,
+                                                    500,-fPadPlaneX/2,fPadPlaneX/2);
+  }
 
   return kSUCCESS;
 
@@ -131,21 +143,29 @@ STDriftTask::Exec(Option_t *opt)
     timeCluster    = driftTime + cluster -> GetTime(); // [ns]
     sigmaDiffusion = coefDiffusion * sqrt(driftLength);
 
-    if(fTestMode) cout << "y - Cluster      : " << yCluster << endl;
-    if(fTestMode) cout << "y - WirePlane    : " << yWirePlane << endl;
-    if(fTestMode) cout << "Drift time       : " << driftTime << endl;
-    if(fTestMode) cout << "Drift length     : " << driftLength << endl;
-    if(fTestMode) cout << "Diffusion coef.  : " << coefDiffusion << endl;
-    if(fTestMode) cout << "x/z position     : " << xElectron << " / " << zElectron << endl;
-    if(fTestMode) cout << "no. of electrons : " << charge << endl;
+    if(fTestMode){
+      cout << "-*-" << endl;
+      cout << "y - WirePlane     : " << yWirePlane << endl;
+      cout << "y - Cluster       : " << yCluster << endl;
+      cout << "x/z position      : " << xElectron << " / " << zElectron << endl;
+      cout << "Drift length [cm] : " << driftLength << endl;
+      cout << "Drift time   [ns] : " << driftTime << endl;
+      cout << "no. of electrons  : " << charge << endl;
+      cout << "diffusion coef.   : " << coefDiffusion << endl;
+      cout << "attachment coef.  : " << coefAttachment << endl;
+      cout << "exp(-drftL*attC)  : " << exp(-driftLength*coefAttachment) << endl;
+    }
+    if(fTestMode) cout << endl << iCluster << " / " << nCluster << endl;
 
     if(driftLength<=0) continue;
+    if(fWriteHistogram) fElectronDistXZRaw -> Fill(zElectron, xElectron);
     for(Int_t iElectron=0; iElectron<charge; iElectron++)
     {
+      if(exp(-driftLength*coefAttachment) < gRandom -> Uniform()) continue;
       xElectron += gRandom -> Gaus(0,sigmaDiffusion);
       zElectron += gRandom -> Gaus(0,sigmaDiffusion);
 
-      if(fTestMode) cout << "x/z - diffusion  : " << xElectron << " / " << zElectron << endl;
+      //if(fTestMode) cout << ">>> x/z - diffusion position : " << xElectron << " / " << zElectron << endl;
 
       Int_t size = fDriftedElectronArray -> GetEntriesFast();
       STDriftedElectron* electron 
@@ -153,10 +173,27 @@ STDriftTask::Exec(Option_t *opt)
                                                                 zElectron,
                                                                 timeCluster);
       electron -> SetIndex(size);
+
+      if(fWriteHistogram) fElectronDistXZ -> Fill(zElectron, xElectron);
     }
   }
+
+  if(fWriteHistogram) WriteHistogram();
 
   cout << "STDriftTask:: " << fDriftedElectronArray -> GetEntriesFast() << " drifted electron created" << endl; 
 
   return;
+}
+
+void
+STDriftTask::WriteHistogram()
+{
+  cout << "[STDriftTask] Writing histogram..." << endl;
+  TFile* file = FairRootManager::Instance() -> GetOutFile();
+
+  file -> mkdir("STDriftTask");
+  file -> cd("STDriftTask");
+
+  fElectronDistXZRaw -> Write();
+  fElectronDistXZ -> Write();
 }

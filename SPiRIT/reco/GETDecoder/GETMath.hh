@@ -40,6 +40,11 @@ class GETMath : public TObject
     Double_t GetMean();
     //! Return the calculated **RMS** value.
     Double_t GetRMS();
+    //! Return the calculated **RMS squared** value.
+    Double_t GetRMS2();
+
+    /// Set the values manually. Note that the last argument is rms squared, that is variance.
+    void Set(Int_t numValues, Double_t mean, Double_t rms2);
     
     //! Temporary
     Double_t **GetAverage(Int_t numChannels, Int_t *chList, Int_t frameNo = -1);
@@ -48,14 +53,14 @@ class GETMath : public TObject
     void Reset();
 
   private:
-    GETDecoder *fDecoder; //!< GETDecoder class pointer
-    GETFrame *fFrame; //!< GETFrame class pointer
+    GETDecoder *fDecoder; /// GETDecoder class pointer
+    GETFrame *fFrame; /// GETFrame class pointer
 
-    Int_t fNumValues; //!< Number of values added
-    Double_t fMean; //!< mean value
-    Double_t fRms; //!< RMS value
+    Int_t fNumValues; /// Number of values added
+    Double_t fMean; /// mean value
+    Double_t fRms; /// RMS value
 
-    Double_t *fAdc[4]; //!< Average value storage for GetAverage() method
+    Double_t *fAdc[4]; /// Average value storage for GetAverage() method
     
   //! Added for dictionary making by ROOT
   ClassDef(GETMath, 1); 

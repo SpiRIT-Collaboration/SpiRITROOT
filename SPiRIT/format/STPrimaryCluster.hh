@@ -51,16 +51,15 @@ class STPrimaryCluster : public TObject
     void SetIndex(Int_t index);
     
   private :
-    UInt_t   fCharge;    //!<  charge [eV]
-    TVector3 fPosition;  //!<  position [cm]
-    Double_t fTime;      //!<  time from MC [ns]
-    UInt_t   fTrackID;   //!<  original MC trackID
-    Int_t    fHitID;     //!<  original MC hitID
+    UInt_t   fCharge;    ///  charge [eV]
+    TVector3 fPosition;  ///  position [cm]
+    Double_t fTime;      ///  time from MC [ns]
+    UInt_t   fTrackID;   /// original MC trackID
+    Int_t    fHitID;     ///  original MC hitID
 
-    Int_t    fIndex;     //!<  position of STPrimaryCluster in "TClonesArray"
+    Int_t    fIndex;     ///  position of STPrimaryCluster in "TClonesArray"
 
-//  ClassDef(STPrimaryCluster,3)
-  ClassDef(STPrimaryCluster,1)
+    ClassDef(STPrimaryCluster,1)
 };
 
 #endif

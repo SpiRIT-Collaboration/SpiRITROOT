@@ -18,6 +18,7 @@
 #include "TString.h"
 
 #include <map>
+#include <fstream>
 
 using std::map;
 
@@ -27,8 +28,8 @@ class STMap : public TObject {
     ~STMap() {}
 
     // Setter
-    void SetUAMap(TString filename);
-    void SetAGETMap(TString filename);
+    Bool_t SetUAMap(TString filename);
+    Bool_t SetAGETMap(TString filename);
 
     // Getter
     Bool_t IsSetUAMap();
@@ -49,6 +50,8 @@ class STMap : public TObject {
     Int_t fPadLayerOfCh[68];
 
     Int_t fUAMap[12][4];
+
+    std::fstream fStream;
 
   ClassDef(STMap, 1);
 };

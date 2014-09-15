@@ -95,7 +95,7 @@ Bool_t  STDetector::ProcessHits(FairVolume* vol)
   STStack* stack = (STStack*) gMC->GetStack();
   stack->AddPoint(kSPiRIT);
   //}
-  
+
   return kTRUE;
 }
 
@@ -198,7 +198,7 @@ Bool_t STDetector::CheckIfSensitive(std::string name)
 {
   TString nameStr(name);
 
-  if (nameStr.EqualTo("Active"))
+  if (nameStr.EqualTo("field_cage_in"))
     return kTRUE;
 
   return kFALSE;

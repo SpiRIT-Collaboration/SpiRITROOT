@@ -12,8 +12,8 @@
 //
 //----------------------------------------------------------------------
 
-#ifndef _STAVALANCHETASK_H_
-#define _STAVALANCHETASK_H_
+#ifndef _STPADRESPONSETASK_H_
+#define _STPADRESPONSETASK_H_
 
 // Fair & Collaborating class headers 
 #include "FairTask.h"                 
@@ -26,12 +26,12 @@
 #include "STGas.hh"
 #include "STDigiPar.hh"
 
-class STPadResponse : public FairTask
+class STPadResponseTask : public FairTask
 {
   public:
     // Constructor and Destructor
-    STPadResponse();
-    ~STPadResponse();
+    STPadResponseTask();
+    ~STPadResponseTask();
     
     // Operators
     // Getters
@@ -46,14 +46,14 @@ class STPadResponse : public FairTask
   private:
     TString fAvalancheBranchName;        //!< Name of primary cluster branch name (input)
     TClonesArray* fAvalancheArray;       //!< avalanche electron array (input)
-    TClonesArray* fPadSignalArray;       //!< drifted electron array (output)
+    TClonesArray* fRawEvent;             //!< (output)
 
     STDigiPar* fPar;                     //!< STDigiPar pointer
     STGas*     fGas;                     //!< STGas pointer
  
     Bool_t fIsPersistent;                //!< If true, save container
 
-  ClassDef(STPadResponse, 1);
+  ClassDef(STPadResponseTask, 1);
 };
 
 #endif

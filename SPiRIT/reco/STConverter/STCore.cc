@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 #include "STCore.hh"
 
@@ -30,13 +31,13 @@ STCore::STCore()
 STCore::STCore(TString filename)
 {
   Initialize();
-  AddGraw(filename);
+  AddData(filename);
 }
 
 STCore::STCore(TString filename, Int_t numTbs)
 {
   Initialize();
-  AddGraw(filename);
+  AddData(filename);
   SetNumTbs(numTbs);
 }
 
@@ -58,70 +59,126 @@ void STCore::Initialize()
   fDecoderPtr = new GETDecoder();
 //  fDecoderPtr -> SetDebugMode(1);
 
-  fIsGraw = 0;
-  fIsPedestalData = 0;
-  fIsInternalPedestal = 0;
+  fIsData = kFALSE;
+  fIsPedestalData = kFALSE;
+  fIsInternalPedestal = kFALSE;
 
-  fStartTb = 0;
-  fNumTbs = 0;
+  fGainCalibrationPtr = new STGainCalibration();
+  fIsGainCalibrationData = kFALSE;
+
+  fSignalDelayPtr = new STSignalDelay();
+  fIsSignalDelayData = kFALSE;
+
+  fStartTb = 3;
+  fAverageTbs = 20;
 
   fPrevEventNo = -1;
   fCurrEventNo = -1;
   fCurrFrameNo = 0;
 }
 
-void STCore::AddGraw(TString filename)
+Bool_t STCore::AddData(TString filename)
 {
-  fDecoderPtr -> AddGraw(filename);
-  fIsGraw = fDecoderPtr -> SetData(0);
+  return fDecoderPtr -> AddData(filename);
+}
+
+void STCore::SetNoAutoReload(Bool_t value)
+{
+  fDecoderPtr -> SetNoAutoReload(value);
+}
+
+Bool_t STCore::SetData(Int_t value)
+{
+  fIsData = fDecoderPtr -> SetData(value);
+
+  return fIsData;
+}
+
+Int_t STCore::GetNumData()
+{
+  return fDecoderPtr -> GetNumData();
+}
+
+TString STCore::GetDataName(Int_t index) {
+  return fDecoderPtr -> GetDataName(index);
 }
 
 void STCore::SetNumTbs(Int_t value)
 {
+  fNumTbs = value;
   fDecoderPtr -> SetNumTbs(value);
 }
 
-void STCore::SetInternalPedestal(Int_t startTb, Int_t numTbs)
+void STCore::SetInternalPedestal(Int_t startTb, Int_t averageTbs)
 {
-  fIsInternalPedestal = 1;
-  fIsPedestalData = 0;
+  fIsInternalPedestal = kTRUE;
+  fIsPedestalData = kFALSE;
 
   fStartTb = startTb;
-  fNumTbs = numTbs;
+  fAverageTbs = averageTbs;
 }
 
-Bool_t STCore::SetPedestalData(TString filename)
+Bool_t STCore::SetPedestalData(TString filename, Int_t startTb, Int_t averageTbs)
 {
   fIsPedestalData = fPedestalPtr -> SetPedestalData(filename);
 
-  if (fIsPedestalData)
-    fIsInternalPedestal = 0;
-  else
-    std::cout << "== Pedestal data is not set! Check it exists!" << std::endl;
+  if (fIsPedestalData) {
+    fIsInternalPedestal = kFALSE;
+
+    fStartTb = startTb;
+    fAverageTbs = averageTbs;
+  } else
+    std::cout << "== [STCore] Pedestal data is not set! Check it exists!" << std::endl;
 
   return fIsPedestalData;
 }
 
-void STCore::SetUAMap(TString filename)
+Bool_t STCore::SetGainCalibrationData(TString filename)
 {
-  fMapPtr -> SetUAMap(filename);
+  fIsGainCalibrationData = fGainCalibrationPtr -> SetGainCalibrationData(filename);
+
+  return fIsGainCalibrationData;
 }
 
-void STCore::SetAGETMap(TString filename)
+void STCore::SetGainBase(Double_t constant, Double_t slope)
 {
-  fMapPtr -> SetAGETMap(filename);
+  if (!fIsGainCalibrationData) {
+    std::cout << "== [STCore] Set gain calibration data first!" << std::endl;
+
+    return;
+  }
+
+  fGainCalibrationPtr -> SetGainBase(constant, slope);
+}
+
+Bool_t STCore::SetSignalDelayData(TString filename)
+{
+  fIsSignalDelayData = fSignalDelayPtr -> SetSignalDelayData(filename);
+
+  return fIsSignalDelayData;
+}
+
+
+Bool_t STCore::SetUAMap(TString filename)
+{
+  return fMapPtr -> SetUAMap(filename);
+}
+
+Bool_t STCore::SetAGETMap(TString filename)
+{
+  return fMapPtr -> SetAGETMap(filename);
 }
 
 STRawEvent *STCore::GetRawEvent(Int_t eventID)
 {
-  if (!fIsGraw) {
-    std::cout << "== Graw file is not set!" << std::endl;
+  if (!fIsData) {
+    std::cout << "== [STCore] Data file is not set!" << std::endl;
 
     return NULL;
   }
 
   if (!fIsPedestalData && !fIsInternalPedestal) {
-    std::cout << "== Pedestal data file is not set!" << std::endl;
+    std::cout << "== [STCore] Pedestal data file is not set!" << std::endl;
   }
 
   fPrevEventNo = eventID;
@@ -152,10 +209,10 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
     fRawEventPtr -> SetEventID(fCurrEventNo);
 
     Int_t coboID = frame -> GetCoboID();
+    Int_t frameType = fDecoderPtr -> GetFrameType();
+    if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime)
+      coboID = fDecoderPtr -> GetCurrentInnerFrameID();
     Int_t asadID = frame -> GetAsadID();
-
-    if (fIsInternalPedestal)
-      frame -> CalcPedestal(fStartTb, fNumTbs);
 
     for (Int_t iAget = 0; iAget < 4; iAget++) {
       for (Int_t iCh = 0; iCh < 68; iCh++) {
@@ -170,32 +227,73 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
         for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++)
           pad -> SetRawADC(iTb, rawadc[iTb]);
 
-        if (fIsInternalPedestal) {
-          Double_t *adc = frame -> GetADC(iAget, iCh);
-          for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++)
-            pad -> SetADC(iTb, adc[iTb]);
+        Int_t signalDelay = 0;
+        if (fIsSignalDelayData) {
+          Int_t uaIdx = fMapPtr -> GetUAIdx(coboID, asadID);
+          signalDelay = ceil(fSignalDelayPtr -> GetSignalDelay(uaIdx));
+        }
 
-          pad -> SetMaxADCIdx(frame -> GetMaxADCIdx(iAget, iCh));
-          pad -> SetPedestalSubtracted(1);
+        if (fIsInternalPedestal) {
+          frame -> CalcPedestal(iAget, iCh, fStartTb, fAverageTbs);
+          frame -> SubtractPedestal(iAget, iCh);
+
+          Double_t *adc = frame -> GetADC(iAget, iCh);
+          for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++) {
+            Int_t delayedTb = iTb - signalDelay;
+            Double_t delayedADC = 0;
+            if (delayedTb < 0 || delayedTb >= fDecoderPtr -> GetNumTbs())
+              delayedADC = 0;
+            else
+              delayedADC = adc[delayedTb];
+
+            pad -> SetADC(iTb, delayedADC);
+          }
+
+          Int_t maxADCIdx = frame -> GetMaxADCIdx(iAget, iCh) + signalDelay;
+          if (maxADCIdx < 0 || maxADCIdx >= fDecoderPtr -> GetNumTbs())
+            maxADCIdx = 0;
+
+          pad -> SetMaxADCIdx(maxADCIdx);
+          pad -> SetPedestalSubtracted(kTRUE);
         } else if (fIsPedestalData) {
+          frame -> CalcPedestal(iAget, iCh, fStartTb, fAverageTbs);
+
           Double_t pedestal[512];
           Double_t pedestalSigma[512];
 
-          fPedestalPtr -> GetPedestal(coboID, asadID, iAget, iCh, pedestal, pedestalSigma);
+          fPedestalPtr -> GetPedestal(row, layer, pedestal, pedestalSigma);
           frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
-          Double_t *adc = frame -> GetADC(iAget, iCh);
-          for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++)
-            pad -> SetADC(iTb, adc[iTb]);
+          frame -> SubtractPedestal(iAget, iCh);
 
-          pad -> SetMaxADCIdx(frame -> GetMaxADCIdx(iAget, iCh));
-          pad -> SetPedestalSubtracted(1);
+          Double_t *adc = frame -> GetADC(iAget, iCh);
+
+          if (fIsGainCalibrationData)
+            fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
+
+          for (Int_t iTb = 0; iTb < fDecoderPtr -> GetNumTbs(); iTb++) {
+            Int_t delayedTb = iTb - signalDelay;
+            Double_t delayedADC = 0;
+            if (delayedTb < 0 || delayedTb >= fDecoderPtr -> GetNumTbs())
+              delayedADC = 0;
+            else
+              delayedADC = adc[delayedTb];
+
+            pad -> SetADC(iTb, delayedADC);
+          }
+
+          Int_t maxADCIdx = frame -> GetMaxADCIdx(iAget, iCh) + signalDelay;
+          if (maxADCIdx < 0 || maxADCIdx >= fDecoderPtr -> GetNumTbs())
+            maxADCIdx = 0;
+
+          pad -> SetMaxADCIdx(maxADCIdx);
+          pad -> SetPedestalSubtracted(kTRUE);
         }
 
         fRawEventPtr -> SetPad(pad);
+        delete pad;
       }
     }
 
-    Int_t frameType = fDecoderPtr -> GetFrameType();
     if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime) {
       Int_t currentInnerFrameID = fDecoderPtr -> GetCurrentInnerFrameID();
       Int_t numInnerFrames = fDecoderPtr -> GetNumMergedFrames();

@@ -23,6 +23,7 @@
 // SpiRITROOT classes 
 #include "STRiemannTrack.hh"
 #include "STHitCluster.hh"
+#include "STRiemannSort.hh"
 
 class TClonesArray;
 class STRiemannTrackFinder;
@@ -38,7 +39,7 @@ class STRiemannTrackingTask : public FairTask
     void SetPersistence(Bool_t value = kTRUE); /// store processed data into output ROOT file
 
     void SetSortingParameters(Bool_t sortingMode = kTRUE,  /// false: sort only according to _sorting; true: use internal sorting when adding hits to trackcands
-                               Int_t sorting = 1,          /// -1: no sorting, 0: sort Clusters by X, 1: Y, 2: Z, 3: R, 4: distance to interaction point, 5: Phi, -5: -Phi
+                               Int_t sorting = STRiemannSort::kSortY, /// -1: no sorting, 0: sort Clusters by X, 1: Y, 2: Z, 3: R, 4: distance to interaction point, 5: Phi, -5: -Phi
                             Double_t interactionZ = 0);    /// set if you use sorting = 4
 
     void SetMultistepParameters(Bool_t doMultistep,      /// do a multistep approach:
@@ -138,9 +139,6 @@ class STRiemannTrackingTask : public FairTask
     UInt_t fMinHitsPhi;
 
     Double_t fMaxRMS;
-
-    TString fRiemannTrackBranchName;
-    TString fRiemannHitBranchName;
 
   ClassDef(STRiemannTrackingTask, 1);
 };

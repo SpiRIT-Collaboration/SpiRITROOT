@@ -21,6 +21,7 @@
 // ROOT headers
 #include "TString.h"
 #include "TClonesArray.h"
+#include "TH2D.h"
 
 // SPiRIT-TPC headers
 #include "STGas.hh"
@@ -38,6 +39,7 @@ class STAvalancheTask : public FairTask
     // Setters
     void SetPersistence(Bool_t val) { fIsPersistent = val; };
     void SetTestMode()              { fTestMode = kTRUE; };
+    void SetWriteHistogram()        { fWriteHistogram = kTRUE; };
     
     // Main methods
     virtual InitStatus Init();
@@ -54,6 +56,13 @@ class STAvalancheTask : public FairTask
  
     Bool_t fIsPersistent;                //!< If true, save container
     Bool_t fTestMode;                    //!< If true, test mode!
+    Bool_t fWriteHistogram;              //!< If true, create histogram electron distribution 
+
+    Int_t fPadPlaneX;
+    Int_t fPadPlaneZ;
+
+    void WriteHistogram();
+    TH2D *fElectronDistXZ;
 
   ClassDef(STAvalancheTask, 1);
 };

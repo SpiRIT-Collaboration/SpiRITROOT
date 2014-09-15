@@ -79,14 +79,14 @@ STRiemannTrackingTask::STRiemannTrackingTask()
   fMaxRadius = 1446.;
 
   fSortingMode = kTRUE;
-  fSorting = 3;
+  fSorting = STRiemannSort::kSortR;
   fInteractionZ = 42.78;
 
   // SPiRIT Settings
   fMinPoints = 3;
-  fProxCut = 1.9;
-  fProxZStretch = 1.6;
-  fHelixCut = 0.2;
+  fProxCut = 2.0;
+  fProxZStretch = 1.0; // 1.6;
+  fHelixCut = 2.0;
   fMaxRMS = 0.15;
 
   fMergeTracks = kTRUE;
@@ -141,8 +141,6 @@ STRiemannTrackingTask::STRiemannTrackingTask()
   fMinHitsR = 2;
   fMinHitsPhi = 2;
 
-  fRiemannTrackBranchName = "STRiemannTrack";
-  fRiemannHitBranchName = "STRiemannHit";
   fCounter = 0;
 
   fVerbose = kFALSE;
@@ -223,10 +221,10 @@ STRiemannTrackingTask::Init()
   }
 
   fRiemannTrackArray = new TClonesArray("STRiemannTrack");
-  ioMan -> Register(fRiemannTrackBranchName, "SPiRIT", fRiemannTrackArray, fIsPersistence);
+  ioMan -> Register("STRiemannTrack", "SPiRIT", fRiemannTrackArray, fIsPersistence);
 
   fRiemannHitArray = new TClonesArray("STRiemannHit");
-  ioMan -> Register(fRiemannHitBranchName, "SPiRIT", fRiemannHitArray, fIsPersistence);
+  ioMan -> Register("STRiemannHit", "SPiRIT", fRiemannHitArray, fIsPersistence);
 
   fEventHCMArray = new TClonesArray("STEvent");
   ioMan -> Register("STEventHCM", "SPiRIT", fEventHCMArray, fIsPersistence);
@@ -338,7 +336,7 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   if (fVerbose)
     std::cout << "Starting Pattern Reco..." << std::endl;
 
-  std::vector<STRiemannTrack *> riemannTempSec; // temporary storage, reused for every sector
+  std::vector<STRiemannTrack *> riemannTemp; // temporary storage, reused for every sector
 
   // first loop over sectors
   if (fClusterBuffer -> size() == 0)
@@ -347,10 +345,10 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   if (fVerbose)
     std::cout << "\n... building tracks from " << fClusterBuffer -> size() << " clusters" << std::endl;
 
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTempSec, 2, fMinHitsZ, 0.7*fMaxRMS);
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTempSec, 3, fMinHitsR, fMaxRMS);
+  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinHitsZ, 0.7*fMaxRMS);
+  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortR, fMinHitsR, fMaxRMS);
 
-  riemannTempSec.clear();
+  riemannTemp.clear();
 
   if(fMergeTracks) {
     if (fVerbose)
@@ -367,14 +365,14 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   if (fVerbose)
     std::cerr << "\n... building tracks from " << fClusterBuffer -> size() << " clusters" << std::endl;
 
-  // fill riemannTempSec with tracks lying in the sector
+  // fill riemannTemp with tracks lying in the sector
   for (UInt_t iTrack = 0; iTrack < fRiemannList.size(); iTrack++)
-    riemannTempSec.push_back(fRiemannList[iTrack]);
+    riemannTemp.push_back(fRiemannList[iTrack]);
 
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTempSec, 5, fMinHitsPhi, fMaxRMS);
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTempSec, -5, fMinHitsPhi, fMaxRMS);
+  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortPhi, fMinHitsPhi, fMaxRMS);
+  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortReversePhi, fMinHitsPhi, fMaxRMS);
 
-  riemannTempSec.clear();
+  riemannTemp.clear();
 
   if(fMergeTracks) {
     if (fVerbose)
@@ -393,14 +391,14 @@ STRiemannTrackingTask::Exec(Option_t *opt)
     std::cerr << "\n... building tracks from " << fClusterBuffer -> size() << " clusters" << std::endl;
 
   for (UInt_t iTrack = 0; iTrack < fRiemannList.size(); iTrack++)
-    riemannTempSec.push_back(fRiemannList[iTrack]);
+    riemannTemp.push_back(fRiemannList[iTrack]);
 
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTempSec, 2, fMinPoints+1, fMaxRMS*1.5);
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTempSec, 3, fMinPoints+3, fMaxRMS);
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTempSec, 5, fMinPoints+1, fMaxRMS*1.5);
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTempSec, -5, fMinPoints+1, fMaxRMS*1.5);
+  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinPoints+1, fMaxRMS*1.5);
+  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortR, fMinPoints+3, fMaxRMS);
+  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortPhi, fMinPoints+1, fMaxRMS*1.5);
+  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortReversePhi, fMinPoints+1, fMaxRMS*1.5);
 
-  riemannTempSec.clear();
+  riemannTemp.clear();
 
   if(fMergeTracks) {
     if (fVerbose)
@@ -471,7 +469,7 @@ STRiemannTrackingTask::Exec(Option_t *opt)
 
 void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
                                         std::vector<STHitCluster *> *clusterBuffer,
-                                        std::vector<STRiemannTrack *> *TrackletList,
+                                        std::vector<STRiemannTrack *> *trackletList,
                                         Int_t sorting,
                                         UInt_t minHits,
                                         Double_t maxRMS,
@@ -484,23 +482,23 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
   trackfinder -> SkipCrossingAreas(skipCrossingAreas);
   trackfinder -> SetSkipAndDelete(skipAndDelete);
 
-  std::vector<STRiemannTrack *> TrackletListCopy = *TrackletList;
+  std::vector<STRiemannTrack *> trackletListCopy = *trackletList;
 
-  Int_t nTracksIn = TrackletList -> size();
+  Int_t nTracksIn = trackletList -> size();
   Int_t nClIn = clusterBuffer -> size();
 
 
   STRiemannTrack *LastTrackIn;
   if(nTracksIn > 0)
-    LastTrackIn = TrackletList -> back();
+    LastTrackIn = trackletList -> back();
 
-  trackfinder -> BuildTracks(*clusterBuffer, *TrackletList);
+  trackfinder -> BuildTracks(*clusterBuffer, *trackletList);
 
   UInt_t nGoodTrks = 0, nErasedCl = 0, nHits;
   STRiemannTrack *trk;
 
-  for(UInt_t i = 0; i < TrackletList -> size(); ++i){
-    trk = (*TrackletList)[i];
+  for (UInt_t i = 0; i < trackletList -> size(); i++) {
+    trk = (*trackletList)[i];
 
     nHits = trk -> GetNumHits();
     std::cout << "   " << nHits << " hits in tracklet." << std::endl;
@@ -508,27 +506,26 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
     if (trk -> DistRMS() < maxRMS && (nHits >= minHits || trk -> IsGood())) {
       trk -> SetFinished(kFALSE);
       trk -> SetGood();
+
       // clear clusters from good tracklets
-      for(UInt_t iCl = 0; iCl < nHits; ++iCl){
-        clusterBuffer -> erase(remove(clusterBuffer -> begin(), clusterBuffer -> end(), trk -> GetHit(iCl) -> GetCluster()),
-        clusterBuffer -> end() );
-      }
-      ++nGoodTrks;
+      for (UInt_t iCl = 0; iCl < nHits; iCl++)
+        clusterBuffer -> erase(remove(clusterBuffer -> begin(), clusterBuffer -> end(), trk -> GetHit(iCl) -> GetCluster()), clusterBuffer -> end());
+     
+      nGoodTrks++;
 
       //push back unique track to riemannlist
-      if (std::find(TrackletListCopy.begin(), TrackletListCopy.end(), trk) == TrackletListCopy.end()){
+      if (std::find(trackletListCopy.begin(), trackletListCopy.end(), trk) == trackletListCopy.end()) 
         fRiemannList.push_back(trk);
-      }
+
     } else { // delete bad tracklets
-      if (trk -> IsGood()) { // track has been found before ( -> clusters were taken out) but does not pass quality criteria anymore  ->  fill clusters back into buffer
-        for (UInt_t iCl = 0; iCl < nHits; ++iCl) {
+      if (trk -> IsGood()) // track has been found before ( -> clusters were taken out) but does not pass quality criteria anymore  ->  fill clusters back into buffer
+        for (UInt_t iCl = 0; iCl < nHits; iCl++)
           clusterBuffer -> push_back(trk -> GetHit(iCl) -> GetCluster());
-        }
-      }
+
       // delete hits and track
       trk -> DeleteHits();
       delete trk;
-      TrackletList -> erase(TrackletList -> begin() + i);
+      trackletList -> erase(trackletList -> begin() + i);
 
       // also has to be removed from fRiemannList
       fRiemannList.erase(remove(fRiemannList.begin(), fRiemannList.end(), trk), fRiemannList.end());

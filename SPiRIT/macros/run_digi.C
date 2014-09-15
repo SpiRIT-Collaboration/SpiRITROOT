@@ -1,6 +1,5 @@
 void run_digi
 (TString mcFile      = "data/test.mc_youngstest.root",
-//(TString mcFile      = "data/test.root",
  TString mcParFile   = "data/params_youngstest.root",
  TString digiParFile = "ST.parameters.par")
 {
@@ -29,7 +28,7 @@ void run_digi
   // __ Run ____________________________________________
 
   FairRunAna* fRun = new FairRunAna();
-              fRun -> SetInputFile(mcFile);
+              fRun -> SetInputFile(mcFile.Data());
               fRun -> SetOutputFile(digiFile.Data());
 
 
@@ -54,10 +53,12 @@ void run_digi
   STDriftTask* drifter = new STDriftTask();
                drifter -> SetPersistence(kTRUE);
                drifter -> SetTestMode();
+               drifter -> SetWriteHistogram();
 
   STAvalancheTask* avalanche = new STAvalancheTask();
                    avalanche -> SetPersistence(kTRUE);
-                   avalanche -> SetTestMode();
+                   avalanche -> SetWriteHistogram();
+                   //avalanche -> SetTestMode();
 
   fRun -> AddTask(clusterizer);
   fRun -> AddTask(drifter);
@@ -67,4 +68,7 @@ void run_digi
 
   fRun -> Init();
   fRun -> Run(0,1);
+
+  //fDb -> saveOutput();
+  //fDb -> print();
 }

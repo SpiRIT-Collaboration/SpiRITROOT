@@ -86,7 +86,7 @@ void STEventDraw::Set2DPlotExternal(Bool_t value) { fIs2DPlotExternal = value; }
 void
 STEventDraw::Set2DPlotRange(Int_t uaIdx)
 {
-  if (uaIdx%100 < 0 || uaIdx%100 > 11 || uaIdx/100 < 0 || uaIdx/100 < 3) {
+  if (uaIdx%100 < 0 || uaIdx%100 > 11 || uaIdx/100 < 0 || uaIdx/100 > 3) {
     fLogger -> Error(MESSAGE_ORIGIN, "2DPlotRange should be ABB ( A = [0, 3], BB = [00, 11] )!");
 
     return;

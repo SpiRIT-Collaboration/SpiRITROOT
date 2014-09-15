@@ -4,7 +4,7 @@
 //  Description:
 //    This class is used for calculating or finding
 //    pedestal value and sigma corresponding to
-//    user-input coboIdx, asadIdx, agetIdx & chIdx.
+//    user-input padRow and padLayer.
 // 
 //  Genie Jhang ( geniejhang@majimak.com )
 //  2013. 08. 14
@@ -12,10 +12,11 @@
 
 #include "STPedestal.hh"
 
-#include "Riostream.h"
 #include "TMath.h"
 #include "TFile.h"
 #include "TTree.h"
+
+#include <iostream>
 
 ClassImp(STPedestal);
 
@@ -34,8 +35,10 @@ void STPedestal::Initialize()
   fOpenFile = NULL;
   fPedestalTree = NULL;
 
-  memset(fPedestal, 0, sizeof(Double_t)*512);;
-  memset(fPedestalSigma, 0, sizeof(Double_t)*512);;
+  fIsSetPedestalData = kFALSE;
+
+  memset(fPedestal, 0, sizeof(Double_t)*108*112*512);;
+  memset(fPedestalSigma, 0, sizeof(Double_t)*108*112*512);;
 }
 
 Bool_t STPedestal::SetPedestalData(TString pedestalData) {
@@ -43,60 +46,49 @@ Bool_t STPedestal::SetPedestalData(TString pedestalData) {
     delete fOpenFile;
 
   if ((fOpenFile = new TFile(pedestalData))) {
-    fPedestalTree = (TTree *) fOpenFile -> Get("pedestal");
-    fPedestalTree -> SetBranchAddress("pedestal", fPedestal);
-    fPedestalTree -> SetBranchAddress("pedestalSigma", fPedestalSigma);
+    Int_t padRow = -2;
+    Int_t padLayer = -2;
+    Double_t pedestal[512] = {0};
+    Double_t pedestalSigma[512] = {0};
 
-    return 1;
-  }
+    fPedestalTree = (TTree *) fOpenFile -> Get("PedestalData");
+    fPedestalTree -> SetBranchAddress("padRow", &padRow);
+    fPedestalTree -> SetBranchAddress("padLayer", &padLayer);
+    fPedestalTree -> SetBranchAddress("pedestal", pedestal);
+    fPedestalTree -> SetBranchAddress("pedestalSigma", pedestalSigma);
 
-  return 0;
-}
+    Int_t numEntries = fPedestalTree -> GetEntries();
+    for (Int_t iEntry = 0; iEntry < numEntries; iEntry++) {
+      fPedestalTree -> GetEntry(iEntry);
 
-/*
-void STPedestal::GetPedestal(Int_t *samples, Double_t *pedestalArray, Int_t startIdx, Int_t numPedestalSamples) {
-  Initialize();
-
-  Int_t numSkips = 0;
-  
-  for (Int_t i = startIdx; i < startIdx + numPedestalSamples; i++) {
-    if (samples[i] == 0) {
-      numSkips++;
-      continue;
+      memcpy(pedestal, fPedestal[padRow][padLayer], sizeof(pedestal));
+      memcpy(pedestalSigma, fPedestalSigma[padRow][padLayer], sizeof(pedestalSigma));
     }
 
-    pedestal += samples[i];
+    delete fOpenFile;
+    fPedestalTree = NULL;
+    fOpenFile = NULL;
+
+    fIsSetPedestalData = kTRUE;
+    return kTRUE;
   }
 
-  pedestal /= (Double_t) numPedestalSamples;
-
-  for (Int_t i = startIdx; i < startIdx + numPedestalSamples + numSkips; i++) {
-    if (samples[i] == 0)
-      continue;
-
-    pedestalSigma += TMath::Power(pedestal - (Double_t) samples[i], 2);
-  }
-
-  pedestalArray[0] = pedestal;
-  pedestalArray[1] = TMath::Sqrt(pedestalSigma/(Double_t)numPedestalSamples);
-
-  return;
+  return kFALSE;
 }
-*/
 
-void STPedestal::GetPedestal(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Double_t *pedestalSigma) {
-  if (fOpenFile == NULL) {
-    cerr << "Pedestal data file is not set!" << endl;
+Bool_t STPedestal::IsSetPedestalData() {
+  return fIsSetPedestalData;
+}
 
+void STPedestal::GetPedestal(Int_t padRow, Int_t padLayer, Double_t *pedestal, Double_t *pedestalSigma) {
+  if (fIsSetPedestalData == kFALSE) {
+    std::cerr << "Pedestal data file is not set!" << std::endl;
+
+    memset(pedestal, 4096, sizeof(Double_t)*512);
+    memset(pedestalSigma, 4096, sizeof(Double_t)*512);
     return;
   }
-  // To one CoBo, connected are 4 AsAds, one of which has 4 AGETs composed of 68 channels
-  Int_t pedestalIndex = coboIdx*(68*4*4) + asadIdx*(68*4) + agetIdx*68 + chIdx;
 
-  fPedestalTree -> GetEntry(pedestalIndex);
-
-  memcpy(pedestal, fPedestal, sizeof(fPedestal));
-  memcpy(pedestalSigma, fPedestalSigma, sizeof(fPedestalSigma));
-
-  return;
+  memcpy(pedestal, fPedestal[padRow][padLayer], sizeof(Double_t)*512);
+  memcpy(pedestalSigma, fPedestalSigma[padRow][padLayer], sizeof(Double_t)*512);
 }

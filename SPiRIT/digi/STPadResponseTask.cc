@@ -23,7 +23,7 @@
 
 // SPiRIT-TPC headers
 #include "STAvalanche.hh"
-#include "STPadResponse.hh"
+#include "STRawEvent.hh"
 
 // ROOT headers
 
@@ -35,7 +35,7 @@ using std::cout;
 using std::endl;
 
 
-ClassImp(STPadResponseTask)
+ClassImp(STPadResponseTask);
 
 STPadResponseTask::STPadResponseTask()
 : FairTask("SPiRIT PadResponse"),
@@ -67,12 +67,10 @@ STPadResponseTask::Init()
   }
 
   // Create and register output array
-  fPadSignal = new TClonesArray("STPadSignal");
-  ioman -> Register("STPadResponse", "ST", fPadSignal, fIsPersistent);
+  fRawEvent = new TClonesArray("STRawEvent");
+  ioman -> Register("STPadResponse", "ST", fRawEvent, fIsPersistent);
 
   fGas = fPar -> GetGas();
-
-  fPadPlane = fPar -> GetPadPlane();
 
   return kSUCCESS;
 }
@@ -95,24 +93,18 @@ STPadResponseTask::SetParContainers()
 void
 STPadResponseTask::Exec(Option_t *opt)
 {
-  if(fPadSignalArray==0) Fatal("STPadResponse::Exec)","No Pad Signal Array");
-  PadSignalArray -> Delete();
+  if(fRawEvent==0) Fatal("STPadResponse::Exec)","No Raw Event");
+  fRawEvent -> Delete();
 
   Int_t nAvalanche = fAvalancheArray -> GetEntriesFast();
-  for(Int_t iAvalanche=0; iAvalanche<nElectron; iAvalanche++)
+  for(Int_t iAvalanche=0; iAvalanche<nAvalanche; iAvalanche++)
   {
     STAvalanche* avalanche = (STAvalanche*) fAvalancheArray -> At(iAvalanche);
-    Int_t nSignal = fPadSignalArray -> GetEntries();
 
-    gain = gain; // this should be fixed once we get the garfield data.
-    
-    STPadSignal* signal 
-      = new ((*fPadSignalArray)[nSignal]) STPadSignal();
-    avalanche -> SetIndex(nSignal);
+    Int_t gain = avalanche -> GetGain(); 
   }
 
-  cout << "STPadResponseTask:: " << fPadSignalArray -> GetEntriesFast() 
-       << " avalanche created" << endl; 
+  //STRawEvent* signal = new (*fRawEvent) STRawEvent();
 
   return;
 }

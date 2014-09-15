@@ -36,9 +36,16 @@ GETDecoder/GETPlot.cc
 
 STConverter/STCore.cc
 STConverter/STPedestal.cc
+STConverter/STGainCalibration.cc
+STConverter/STSignalDelay.cc
+STConverter/STGenerator.cc
+STConverter/STGainCheck.cc
 STConverter/STMap.cc
+STConverter/STMapTest.cc
 
+PulseShapeAnalyzer/STPSA.cc
 PulseShapeAnalyzer/STPSASimple.cc
+PulseShapeAnalyzer/STPSASimple2.cc
 
 #HitClusterizer/STHitClusteringSimple.cc
 
@@ -70,6 +77,7 @@ Set(DEPENDENCIES
 # Basically those are the libraries in the header files' directory.
     STFormat
     STPar
+    Spectrum
 )
 
 GENERATE_LIBRARY()

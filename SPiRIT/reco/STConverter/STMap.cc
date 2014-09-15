@@ -98,50 +98,58 @@ Bool_t STMap::IsSetAGETMap()
   return fIsSetAGETMap;
 }
 
-void STMap::SetUAMap(TString filename)
+Bool_t STMap::SetUAMap(TString filename)
 {
-  char dummy[25];
-  std::ifstream uaMap(filename.Data());
-  uaMap.getline(dummy, 200);
+  fStream.open(filename.Data());
 
-  if (!uaMap.is_open()) {
+  Char_t dummy[200];
+  fStream.getline(dummy, 200);
+
+  if (!fStream.is_open()) {
     std::cout << filename << " is not loaded! Check the existance of the file!" << std::endl;
 
-    fIsSetUAMap = 0;
+    fIsSetUAMap = kFALSE;
 
-    return;
+    return kFALSE;
   }
 
   Int_t idx = -1, cobo = -1, asad = -1;
-  while (!(uaMap.eof())) {
-    uaMap >> idx >> cobo >> asad;
+  while (!(fStream.eof())) {
+    fStream >> idx >> cobo >> asad;
     fUAMap[cobo][asad] = idx;
   }
 
-  fIsSetUAMap = 1;
+  fStream.close();
+
+  fIsSetUAMap = kTRUE;
+  return kTRUE;
 }
 
-void STMap::SetAGETMap(TString filename)
+Bool_t STMap::SetAGETMap(TString filename)
 {
-  char dummy[25];
-  std::ifstream chToPadMap(filename.Data());
-  chToPadMap.getline(dummy, 200);
+  fStream.open(filename.Data());
+  
+  Char_t dummy[200];
+  fStream.getline(dummy, 200);
 
-  if (!chToPadMap.is_open()) {
+  if (!fStream.is_open()) {
     std::cout << filename << " is not loaded! Check the existance of the file!" << std::endl;
 
-    fIsSetAGETMap = 0;
+    fIsSetAGETMap = kFALSE;
 
-    return;
+    return kFALSE;
   }
 
   Int_t ch = -1;
-  while (!(chToPadMap.eof())) {
-    chToPadMap >> ch;
-    chToPadMap >> fPadLayerOfCh[ch] >> fPadRowOfCh[ch];
+  while (!(fStream.eof())) {
+    fStream >> ch;
+    fStream >> fPadLayerOfCh[ch] >> fPadRowOfCh[ch];
   }
 
-  fIsSetAGETMap = 1;
+  fStream.close();
+
+  fIsSetAGETMap = kTRUE;
+  return kTRUE;
 }
 
 Int_t STMap::GetUAIdx(Int_t coboIdx, Int_t asadIdx)

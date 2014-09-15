@@ -10,13 +10,20 @@
 #pragma link C++ class GETPlot+;
 
 #pragma link C++ class STCore+;
-#pragma link C++ class STPedestal+;
 #pragma link C++ class STMap+;
+#pragma link C++ class STMapTest+;
+#pragma link C++ class STPedestal+;
+#pragma link C++ class STGainCalibration+;
+#pragma link C++ class STSignalDelay+;
+#pragma link C++ class STGenerator+;
+#pragma link C++ class STGainCheck+;
 
 #pragma link C++ class STDecoderTask+;
 
 #pragma link C++ class STPSATask+;
+#pragma link C++ class STPSA+;
 #pragma link C++ class STPSASimple+;
+#pragma link C++ class STPSASimple2+;
 
 #pragma link C++ class STHitClusteringTask+;
 

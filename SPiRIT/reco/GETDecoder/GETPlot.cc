@@ -103,7 +103,7 @@ void GETPlot::SetAgetRange(Int_t type, Int_t agetIdx, Double_t minx, Double_t ma
   }
 }
 
-TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs)
+TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs, Int_t notConnected, Int_t innerFrame)
 {
   if (fDecoder == NULL) {
     std::cout << "== GETDecoder is not set!" << std::endl;
@@ -117,15 +117,16 @@ TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs)
   else
     fAsad -> Reset();
 
-  fFrame = fDecoder -> GetFrame(0);
+  fFrame = fDecoder -> GetFrame(0, innerFrame);
   fAsad -> SetTitle(Form("CoBo %d - AsAd %d", fFrame -> GetCoboID(), fFrame -> GetAsadID()));
 
   Int_t iFrame = 0;
-  while ((fFrame = fDecoder -> GetFrame(iFrame))) {
-    fFrame -> CalcPedestal(startTb, numTbs);
-
+  while ((fFrame = fDecoder -> GetFrame(iFrame, innerFrame))) {
     for (Int_t iAget = 0; iAget < 4; iAget++) {
       for (Int_t iCh = 0; iCh < 68; iCh++) {
+        fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
+        fFrame -> SubtractPedestal(iAget, iCh);
+
         Int_t maxADCIdx = fFrame -> GetMaxADCIdx(iAget, iCh);
         fAsad -> Fill(iAget*68 + iCh, fFrame -> GetADC(iAget, iCh, maxADCIdx));
       }
@@ -142,7 +143,7 @@ TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs)
   axis -> SetLabelSize(0.045);
   axis -> SetLabelOffset(-0.005);
 
-  Double_t maskChannel[5] = {11, 22, 45, 56, 67};
+  Int_t maskChannel[5] = {11, 22, 45, 56, notConnected};
   for (Int_t iAget = 0; iAget < 4; iAget++) {
     for (Int_t iMask = 0; iMask < 5; iMask++) {
       Double_t pointX1[2] = {iAget*68 + maskChannel[iMask] - 0.5, iAget*68 + maskChannel[iMask] - 0.5};
@@ -159,7 +160,7 @@ TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs)
   return cvs;
 }
 
-TCanvas *GETPlot::ShowRawFrame(Int_t frameNo, Int_t numChannels, Int_t *chList)
+TCanvas *GETPlot::ShowRawFrame(Int_t frameNo, Int_t innerFrameNo, Int_t numChannels, Int_t *chList)
 {
   /**
     * \par Usage
@@ -171,6 +172,9 @@ TCanvas *GETPlot::ShowRawFrame(Int_t frameNo, Int_t numChannels, Int_t *chList)
     *
     * \param frameNo frame number that will be drawn.
     *                If -1, the method automatically load the next frame.
+    * \param innerFrameNo inner frame number that will be drawn.
+    *                     If -1, the method automatically load the next inner frame.
+    *                     This is valid only when the frame type is merged frame.
     * \param numChannels the number of channels which will be drawn (positive number)
     *                    or will be masked (negative number).
     * \param chList an array having the channel numbers
@@ -183,10 +187,18 @@ TCanvas *GETPlot::ShowRawFrame(Int_t frameNo, Int_t numChannels, Int_t *chList)
     return NULL;
   }
 
-  if (frameNo == -1)
-    fFrame = fDecoder -> GetFrame();
-  else
-    fFrame = fDecoder -> GetFrame(frameNo);
+  Int_t frameType = fDecoder -> GetFrameType();
+  if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime) {
+    if (frameNo == -1 && innerFrameNo == -1)
+      fFrame = fDecoder -> GetFrame();
+    else
+      fFrame = fDecoder -> GetFrame(frameNo, innerFrameNo);
+  } else {
+    if (frameNo == -1)
+      fFrame = fDecoder -> GetFrame();
+    else
+      fFrame = fDecoder -> GetFrame(frameNo);
+  }
 
   if (!fFrame)
     return NULL;
@@ -256,7 +268,7 @@ TCanvas *GETPlot::ShowRawFrame(Int_t frameNo, Int_t numChannels, Int_t *chList)
   return cvs;
 }
 
-TCanvas *GETPlot::ShowFrame(Int_t frameNo, Int_t startTb, Int_t numTbs, Int_t numChannels, Int_t *chList)
+TCanvas *GETPlot::ShowFrame(Int_t frameNo, Int_t innerFrameNo, Int_t startTb, Int_t numTbs, Int_t numChannels, Int_t *chList)
 {
   /**
     * \par Usage
@@ -264,6 +276,9 @@ TCanvas *GETPlot::ShowFrame(Int_t frameNo, Int_t startTb, Int_t numTbs, Int_t nu
     *
     * \param frameNo frame number that will be drawn.
     *                If -1, the method automatically load the next frame.
+    * \param innerFrameNo inner frame number that will be drawn.
+    *                     If -1, the method automatically load the next inner frame.
+    *                     This is valid only when the frame type is merged frame.
     * \param startTb time bucket index from which the pedestal calculation starts
     * \param numTbs the number of time buckets to use in the pedestal calculation
     * \param numChannels the number of channels which will be drawn (positive number)
@@ -278,15 +293,21 @@ TCanvas *GETPlot::ShowFrame(Int_t frameNo, Int_t startTb, Int_t numTbs, Int_t nu
     return NULL;
   }
 
-  if (frameNo == -1)
-    fFrame = fDecoder -> GetFrame();
-  else
-    fFrame = fDecoder -> GetFrame(frameNo);
+  Int_t frameType = fDecoder -> GetFrameType();
+  if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime) {
+    if (frameNo == -1 && innerFrameNo == -1)
+      fFrame = fDecoder -> GetFrame();
+    else
+      fFrame = fDecoder -> GetFrame(frameNo, innerFrameNo);
+  } else {
+    if (frameNo == -1)
+      fFrame = fDecoder -> GetFrame();
+    else
+      fFrame = fDecoder -> GetFrame(frameNo);
+  }
 
   if (!fFrame)
     return NULL;
-
-  fFrame -> CalcPedestal(startTb, numTbs);
 
   std::cout << "== Drawing frame " << fDecoder -> GetCurrentFrameID() << std::endl;
 
@@ -321,6 +342,9 @@ TCanvas *GETPlot::ShowFrame(Int_t frameNo, Int_t startTb, Int_t numTbs, Int_t nu
       if (isSkip)
         continue;
 
+      fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
+      fFrame -> SubtractPedestal(iAget, iCh);
+
       Double_t *adc = NULL;
       adc = fFrame -> GetADC(iAget, iCh);
       
@@ -354,7 +378,7 @@ TCanvas *GETPlot::ShowFrame(Int_t frameNo, Int_t startTb, Int_t numTbs, Int_t nu
   return cvs;
 }
 
-TCanvas *GETPlot::ShowAverage(Int_t numChannels, Int_t *chList, Int_t frameNo)
+TCanvas *GETPlot::ShowAverage(Int_t numChannels, Int_t *chList, Int_t frameNo, Int_t innerFrameNo)
 {
   /**
     * \par Usage
@@ -366,6 +390,10 @@ TCanvas *GETPlot::ShowAverage(Int_t numChannels, Int_t *chList, Int_t frameNo)
     *               array size should be bigger than the absolute value of numChannels
     * \param frameNo frame number that will be drawn.
     *                If -1, the method automatically load the next frame.
+    * \param innerFrameNo inner frame number of each event for averaging.
+    *                     If -1, it averages for all the inner frames. (Default: 0)
+    *                     This parameter is only valid when the frame is merged frame.
+    *                     
    **/
 
   if (fDecoder == NULL) {
@@ -374,10 +402,18 @@ TCanvas *GETPlot::ShowAverage(Int_t numChannels, Int_t *chList, Int_t frameNo)
     return NULL;
   }
 
-  if (frameNo == -1)
-    fFrame = fDecoder -> GetFrame();
-  else
-    fFrame = fDecoder -> GetFrame(frameNo);
+  Int_t frameType = fDecoder -> GetFrameType();
+  if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime) {
+    if (frameNo == -1 && innerFrameNo == -1)
+      fFrame = fDecoder -> GetFrame();
+    else
+      fFrame = fDecoder -> GetFrame(frameNo, innerFrameNo);
+  } else {
+    if (frameNo == -1)
+      fFrame = fDecoder -> GetFrame();
+    else
+      fFrame = fDecoder -> GetFrame(frameNo);
+  }
 
   if (!fFrame)
     return NULL;
@@ -443,7 +479,7 @@ TCanvas *GETPlot::ShowAverage(Int_t numChannels, Int_t *chList, Int_t frameNo)
   return cvs;
 }
 
-TCanvas *GETPlot::PrintMax(Int_t eventNo, Int_t startTb, Int_t numTbs)
+TCanvas *GETPlot::PrintMax(Int_t eventNo, Int_t innerFrameNo, Int_t startTb, Int_t numTbs)
 {
   if (fDecoder == NULL) {
     std::cout << "== GETDecoder is not set!" << std::endl;
@@ -457,22 +493,23 @@ TCanvas *GETPlot::PrintMax(Int_t eventNo, Int_t startTb, Int_t numTbs)
   else
     fAsad -> Reset();
 
-  fFrame = fDecoder -> GetFrame(eventNo);
+  fFrame = fDecoder -> GetFrame(eventNo, innerFrameNo);
   fAsad -> SetTitle(Form("CoBo %d - AsAd %d - Event %d", fFrame -> GetCoboID(), fFrame -> GetAsadID(), eventNo));
-
-  fFrame -> CalcPedestal(startTb, numTbs);
 
   std::cout << "== " << std::setw(10) << "AGET No." << std::setw(10) << "Ch No.";
   std::cout << std::setw(10) << "Base" << std::setw(10) << "Max ADC";
   std::cout << std::setw(10) << "Diff." << std::endl;
   for (Int_t iAget = 0; iAget < 4; iAget++) {
     for (Int_t iCh = 0; iCh < 68; iCh++) {
+      fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
+      fFrame -> SubtractPedestal(iAget, iCh);
+
       Int_t maxADCIdx = fFrame -> GetMaxADCIdx(iAget, iCh);
       fAsad -> Fill(iAget*68 + iCh, fFrame -> GetRawADC(iAget, iCh, maxADCIdx));
       std::cout << "   " << std::setw(10) << iAget << std::setw(10) << iCh;
-      std::cout << std::setw(10) << fFrame -> GetPedestal(iAget, iCh);
+      std::cout << std::setw(10) << fFrame -> GetPedestal(iAget, iCh, 0);
       std::cout << std::setw(10) << fFrame -> GetRawADC(iAget, iCh, maxADCIdx);
-      std::cout << std::setw(10) << fFrame -> GetPedestal(iAget, iCh) - fFrame -> GetRawADC(iAget, iCh, maxADCIdx) << std::endl;
+      std::cout << std::setw(10) << fFrame -> GetPedestal(iAget, iCh, 0) - fFrame -> GetRawADC(iAget, iCh, maxADCIdx) << std::endl;
     }
   }
 

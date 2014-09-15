@@ -28,7 +28,7 @@ STProximityHTCorrelator::STProximityHTCorrelator(Double_t cut, Double_t zStretch
 {
   fProxCut = cut;
   fZStretch = zStretch;
-  fMeanDist = 0.7;
+  fMeanDist = 2.0;
   fHelixCut = 2.*helixcut;
 }
 

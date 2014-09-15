@@ -36,7 +36,7 @@ using std::endl;
 using std::floor;
 using std::fabs;
 
-ClassImp(STClusterizerTask)
+ClassImp(STClusterizerTask);
 
 STClusterizerTask::STClusterizerTask()
 : FairTask("SPiRIT Clusterizer"),
@@ -107,7 +107,7 @@ STClusterizerTask::Exec(Option_t *opt)
   }
 
   Double_t EIonize = fGas->GetEIonize();
-           EIonize*= 1E-6;
+           EIonize*= 1E6; //convert from MeV to eV
   if(fTestMode) cout << "ionization energy : " << EIonize << endl;
   
   Int_t    iCluster = 0;        // cluster counting index
@@ -122,7 +122,11 @@ STClusterizerTask::Exec(Option_t *opt)
 
     Double_t energyLoss = point -> GetEnergyLoss();
              energyLoss*= 1E9; //convert from GeV to eV
-    if(fTestMode) cout << "energy loss    : " << energyLoss << " eV" << endl;
+    if(fTestMode)
+    {
+      cout << "energy loss    : " << energyLoss << " eV" << endl;
+      cout << "ionization e   : " << EIonize << " eV" << endl;
+    }
     if(energyLoss<0){
       Error("STClusterizerTask::Exec","Note: particle:: negative energy loss!");
       continue;
