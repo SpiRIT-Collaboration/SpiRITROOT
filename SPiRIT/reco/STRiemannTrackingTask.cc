@@ -84,9 +84,9 @@ STRiemannTrackingTask::STRiemannTrackingTask()
 
   // SPiRIT Settings
   fMinPoints = 3;
-  fProxCut = 1.9;
-  fProxZStretch = 1.6;
-  fHelixCut = 0.2;
+  fProxCut = 2.0;
+  fProxZStretch = 1.0; // 1.6;
+  fHelixCut = 2.0;
   fMaxRMS = 0.15;
 
   fMergeTracks = kTRUE;
@@ -497,7 +497,7 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
   UInt_t nGoodTrks = 0, nErasedCl = 0, nHits;
   STRiemannTrack *trk;
 
-  for(UInt_t i = 0; i < trackletList -> size(); ++i){
+  for (UInt_t i = 0; i < trackletList -> size(); i++) {
     trk = (*trackletList)[i];
 
     nHits = trk -> GetNumHits();
@@ -506,23 +506,22 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
     if (trk -> DistRMS() < maxRMS && (nHits >= minHits || trk -> IsGood())) {
       trk -> SetFinished(kFALSE);
       trk -> SetGood();
+
       // clear clusters from good tracklets
-      for(UInt_t iCl = 0; iCl < nHits; ++iCl){
-        clusterBuffer -> erase(remove(clusterBuffer -> begin(), clusterBuffer -> end(), trk -> GetHit(iCl) -> GetCluster()),
-        clusterBuffer -> end() );
-      }
-      ++nGoodTrks;
+      for (UInt_t iCl = 0; iCl < nHits; iCl++)
+        clusterBuffer -> erase(remove(clusterBuffer -> begin(), clusterBuffer -> end(), trk -> GetHit(iCl) -> GetCluster()), clusterBuffer -> end());
+     
+      nGoodTrks++;
 
       //push back unique track to riemannlist
-      if (std::find(trackletListCopy.begin(), trackletListCopy.end(), trk) == trackletListCopy.end()){
+      if (std::find(trackletListCopy.begin(), trackletListCopy.end(), trk) == trackletListCopy.end()) 
         fRiemannList.push_back(trk);
-      }
+
     } else { // delete bad tracklets
-      if (trk -> IsGood()) { // track has been found before ( -> clusters were taken out) but does not pass quality criteria anymore  ->  fill clusters back into buffer
-        for (UInt_t iCl = 0; iCl < nHits; ++iCl) {
+      if (trk -> IsGood()) // track has been found before ( -> clusters were taken out) but does not pass quality criteria anymore  ->  fill clusters back into buffer
+        for (UInt_t iCl = 0; iCl < nHits; iCl++)
           clusterBuffer -> push_back(trk -> GetHit(iCl) -> GetCluster());
-        }
-      }
+
       // delete hits and track
       trk -> DeleteHits();
       delete trk;

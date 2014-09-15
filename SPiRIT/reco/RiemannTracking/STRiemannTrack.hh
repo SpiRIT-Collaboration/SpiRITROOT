@@ -73,8 +73,8 @@ class STRiemannTrack : public TObject
       STRiemannHit *GetFirstHit()                  const;
       const std::vector<STRiemannHit *> *GetHits() const;
 
-             /// Returns the hit number closest to **hit** and sets the distance between them as **Dist**. This sets direction vector from
-             /// after to before the given **hit**.
+             /// Returns the hit number closest to **hit** and sets the distance between them as **Dist**.
+             /// This sets direction vector from after to before the given **hit**.
              Int_t  GetClosestHit(STRiemannHit *hit, Double_t &Dist, TVector3 &dir) const;
              /// Returns the hit number closest to **hit** and sets the distance between them as **Dist** in the hit number range in **from** and **to**.
              Int_t  GetClosestHit(STRiemannHit *hit, Double_t &Dist, Int_t from = 0, Int_t to = 10000000) const; 
