@@ -1,9 +1,8 @@
 #include <TMath.h>
 
 //Currently replaced methane with Air
-//Currently replaced Kapton with Copper
 
-void smartgeometry()() {
+void smartgeometry() {
   gStyle->SetCanvasPreferGL(true);
   gSystem->Load("libGeom");
   TGeoManager *geom = new TGeoManager("SPiRIT1","SPiRIT1");
@@ -16,12 +15,17 @@ void smartgeometry()() {
   TGeoElement *N = eletable->GetElement(7);
   TGeoElement *O = eletable->GetElement(8);
   TGeoElement *Si = eletable->GetElement(14);
+  TGeoElement *Cl = eletable->GetElement(17);
+  TGeoElement *Ar = eletable->GetElement(18);
   TGeoElement *Br = eletable->GetElement(35);
-  TGeoMaterial *matvacuum = new TGeoMaterial("vacuum",0,0,0);
-  TGeoMedium *vacuum = new TGeoMedium("vacuum",1,matvacuum);
-  TGeoMixture *mixp10 = new TGeoMixture("p10",2,0.00066);
-  mixp10->DefineElement(0,6,1);
-  mixp10->DefineElement(1,1,4);
+  TGeoMaterial *matvacuum = new TGeoMaterial("Vacuum",0,0,0);
+  TGeoMedium *vacuum = new TGeoMedium("Vacuum",1,matvacuum);
+  //TGeoMixture *mixp10 = new TGeoMixture("p10",3,0.00066);
+  TGeoMixture *mixp10 = new TGeoMixture("p10",3,0.00002); //0.975 Torr and 293.15 K (from LISE)
+  //TGeoMixture *mixp10 = new TGeoMixture("p10",2,0.05);
+  mixp10->DefineElement(0,6,1); //Defined P10 using 90% of the gas molecules being Ar and 
+  mixp10->DefineElement(1,1,4); //10% of the gas molecules being methane leading to a 
+  mixp10->DefineElement(2,18,9); //mixture of 9 Ar atoms, 4 H atoms and 1 C atom
   TGeoMedium *p10 = new TGeoMedium("p10",1,mixp10);
   TGeoMixture *mixkapton = new TGeoMixture("kapton",4,1.42);
   mixkapton->DefineElement(0,H,0.026362);
@@ -29,6 +33,13 @@ void smartgeometry()() {
   mixkapton->DefineElement(2,N,0.073270);
   mixkapton->DefineElement(3,O,0.209235);
   TGeoMedium *kapton = new TGeoMedium("kapton",1,mixkapton);
+  TGeoMixture *mixppta = new TGeoMixture("mixppta",5,1.4);
+  mixppta->DefineElement(0,N,0.09);
+  mixppta->DefineElement(1,C,0.56);
+  mixppta->DefineElement(2,H,0.03);
+  mixppta->DefineElement(3,O,0.11);
+  mixppta->DefineElement(4,Cl,0.21);
+  TGeoMedium *ppta = new TGeoMedium("ppta",1,mixppta);
   TGeoMixture *mixpcbmvd = new TGeoMixture("pcbmvd",5,1.7);
   mixpcbmvd->DefineElement(0,Si,0.180774);
   mixpcbmvd->DefineElement(1,O,0.405633);
@@ -36,6 +47,12 @@ void smartgeometry()() {
   mixpcbmvd->DefineElement(3,H,0.0684428);
   mixpcbmvd->DefineElement(4,Br,0.671091);
   TGeoMedium *pcbmvd = new TGeoMedium("pcbmvd",1,mixpcbmvd);
+  TGeoMixture *mixlexan = new TGeoMixture("lexan",3,1.2);
+  mixlexan->DefineElement(0,1,14);
+  mixlexan->DefineElement(1,6,16);
+  mixlexan->DefineElement(2,8,3);
+  TGeoMedium *lexan = new TGeoMedium("lexan",1,mixlexan);
+
   TGeoMaterial *matAluminum = new TGeoMaterial("Aluminum",26.98,13,2.7);
   TGeoMedium *Aluminum = new TGeoMedium("Aluminum",2,matAluminum);
   TGeoMaterial *matcopper = new TGeoMaterial("copper",63.546,29,8.96);
@@ -100,10 +117,10 @@ void smartgeometry()() {
   //Make the 4 corners (approximate) 2.8495
   Double_t coradius=3.007;
   TGeoVolume *corners = geom->MakeBox("corners",vacuum,200.,200.,200.);
-  TGeoVolume *corner1 = geom->MakeTubs("corner1",Aluminum,actradius,coradius,actcentery/2.0,0.0,90.0);
-  TGeoVolume *corner2 = geom->MakeTubs("corner2",Aluminum,actradius,coradius,actcentery/2.0,90.0,180.0);
-  TGeoVolume *corner3 = geom->MakeTubs("corner3",Aluminum,actradius,coradius,actcentery/2.0,180.0,270.0);
-  TGeoVolume *corner4 = geom->MakeTubs("corner4",Aluminum,actradius,coradius,actcentery/2.0,270.0,360.0);
+  TGeoVolume *corner1 = geom->MakeTubs("corner1",lexan,actradius,coradius,actcentery/2.0,0.0,90.0);
+  TGeoVolume *corner2 = geom->MakeTubs("corner2",lexan,actradius,coradius,actcentery/2.0,90.0,180.0);
+  TGeoVolume *corner3 = geom->MakeTubs("corner3",lexan,actradius,coradius,actcentery/2.0,180.0,270.0);
+  TGeoVolume *corner4 = geom->MakeTubs("corner4",lexan,actradius,coradius,actcentery/2.0,270.0,360.0);
   corners->AddNode(corner1,1,cocorner1);
   corners->AddNode(corner2,1,cocorner2);
   corners->AddNode(corner3,1,cocorner3);
@@ -151,20 +168,20 @@ void smartgeometry()() {
   Double_t fwindowy=7.0;
   Double_t fwindowx1=5.73;
   Double_t fwindowx2=7.0;
-  TGeoVolume *fwindow = geom->MakeTrd1("fwindow",kapton,fwindowx1/2.,fwindowx2/2.,fwindowy/2.0,fwindowz/2.0);
+  TGeoVolume *fwindow = geom->MakeTrd1("fwindow",ppta,fwindowx1/2.,fwindowx2/2.,fwindowy/2.0,fwindowz/2.0);
 
   TGeoVolume *fwinframe = geom->MakeBox("fwinframe",vacuum,200.,200.,200.);
 
   Double_t fwinframesidex=1.45;
   Double_t fwinframesidey=16.9;
   Double_t fwinframez=1.111;
-  TGeoVolume *fwinframeside = geom->MakeBox("fwinframeside",Aluminum,fwinframesidex/2.,fwinframesidey/2.,fwinframez/2.);
+  TGeoVolume *fwinframeside = geom->MakeBox("fwinframeside",lexan,fwinframesidex/2.,fwinframesidey/2.,fwinframez/2.);
   Double_t fwinframetopx=7.0;
   Double_t fwinframetopy=1.45;
-  TGeoVolume *fwinframet = geom->MakeBox("fwinframet",Aluminum,fwinframetopx/2.,fwinframetopy/2.,fwinframez/2.);
+  TGeoVolume *fwinframet = geom->MakeBox("fwinframet",lexan,fwinframetopx/2.,fwinframetopy/2.,fwinframez/2.);
   Double_t fwinframebotx=7.0;
   Double_t fwinframeboty=8.45;
-  TGeoVolume *fwinframeb = geom->MakeBox("fwinframeb",Aluminum,fwinframebotx/2.,fwinframeboty/2.,fwinframez/2.);
+  TGeoVolume *fwinframeb = geom->MakeBox("fwinframeb",lexan,fwinframebotx/2.,fwinframeboty/2.,fwinframez/2.);
   Double_t trfwinframesidex=fwinframesidex/2.+fwinframetopx/2.;
   Double_t trfwinframesidey=trcagefronttopy-cagefronttopy/2.0-0.05-fwinframesidey/2.;
   Double_t trfwinframetopy=trcagefronttopy-cagefronttopy/2.-0.05-fwinframetopy/2.;
@@ -178,8 +195,8 @@ void smartgeometry()() {
   TGeoTranslation *trfwinframeb = new TGeoTranslation(0.0,trfwinframeboty,0.0);
   Double_t trapbase=0.635;
   Double_t traptheta=TMath::RadToDeg()*TMath::ATan((trapbase/2.0)/fwinframez);
-  TGeoVolume *fwintrapl = geom->MakeTrap("fwintrapl",Aluminum,fwinframez/2.0,-traptheta,0.0,fwindowy/2.0,trapbase/2.0,trapbase/2.0,0.0,fwindowy/2.0,0.0,0.0,0.0);
-  TGeoVolume *fwintrapr = geom->MakeTrap("fwintrapr",Aluminum,fwinframez/2.0,traptheta,0.0,fwindowy/2.0,trapbase/2.0,trapbase/2.0,0.0,fwindowy/2.0,0.0,0.0,0.0);
+  TGeoVolume *fwintrapl = geom->MakeTrap("fwintrapl",lexan,fwinframez/2.0,-traptheta,0.0,fwindowy/2.0,trapbase/2.0,trapbase/2.0,0.0,fwindowy/2.0,0.0,0.0,0.0);
+  TGeoVolume *fwintrapr = geom->MakeTrap("fwintrapr",lexan,fwinframez/2.0,traptheta,0.0,fwindowy/2.0,trapbase/2.0,trapbase/2.0,0.0,fwindowy/2.0,0.0,0.0,0.0);
   Double_t trtrapx=0.16-3.50125;
   TGeoTranslation *trfwintrapl = new TGeoTranslation(trtrapx,trfwindowy,0.0);
   TGeoTranslation *trfwintrapr = new TGeoTranslation(-trtrapx,trfwindowy,0.0);
@@ -194,7 +211,7 @@ void smartgeometry()() {
 
   //Make copper strips
   TGeoVolume *allstrips = geom->MakeBox("allstrips",vacuum,200.,200.,200.);
-  Double_t stripx=0.004;
+  Double_t stripx=0.0035;
   Double_t stripy=0.6;
   Double_t stripz=cagesidez;
   TGeoVolume *strip = geom->MakeBox("strip",copper,stripx/2.,stripy/2.,stripz/2.);
@@ -250,23 +267,23 @@ void smartgeometry()() {
   Double_t fwincradletoptopy=9.19;
   Double_t fwincradlez=1.27;
   Double_t trfwincradlez=actcenterz/2.+actfrontz+cagefrontz+stripx+fwincradlez/2.;
-  TGeoVolume *fwincradletoptop = geom->MakeBox("fwincradletoptop",Aluminum,fwincradletoptopx/2.,fwincradletoptopy/2.,fwincradlez/2.);
+  TGeoVolume *fwincradletoptop = geom->MakeBox("fwincradletoptop",lexan,fwincradletoptopx/2.,fwincradletoptopy/2.,fwincradlez/2.);
   Double_t trfwincradletoptopy=actcentery/2.-fwincradletoptopy/2.;
   TGeoTranslation *trfwincradletoptop = new TGeoTranslation(0.0,trfwincradletoptopy,trfwincradlez);
   Double_t fwincradlebotboty=15.79;
-  TGeoVolume *fwincradlebottombottom = geom->MakeBox("fwincradlebottombottom",Aluminum,fwincradletoptopx/2.,fwincradlebotboty/2.,fwincradlez/2.);
+  TGeoVolume *fwincradlebottombottom = geom->MakeBox("fwincradlebottombottom",lexan,fwincradletoptopx/2.,fwincradlebotboty/2.,fwincradlez/2.);
   Double_t trfwincradlebotboty=-actcentery/2.+fwincradlebotboty/2.;
   TGeoTranslation *trfwincradlebottombottom = new TGeoTranslation(0.0,trfwincradlebotboty,trfwincradlez);
   Double_t fwincradlemiddlebottomx=17.62;
   Double_t fwincradlemiddlebottomy=5.31;
-  TGeoVolume *fwincradlemiddlebottom = geom->MakeBox("fwincradlemiddlebottom",Aluminum,fwincradlemiddlebottomx/2.,fwincradlemiddlebottomy/2.,fwincradlez/2.);
+  TGeoVolume *fwincradlemiddlebottom = geom->MakeBox("fwincradlemiddlebottom",lexan,fwincradlemiddlebottomx/2.,fwincradlemiddlebottomy/2.,fwincradlez/2.);
   Double_t trfwincradlemiddlebottomy=trfwincradlebotboty+fwincradlebotboty/2.+fwincradlemiddlebottomy/2.;
   TGeoTranslation *trfwincradlemiddlebottom = new TGeoTranslation(0.0,trfwincradlemiddlebottomy,trfwincradlez);
   Double_t trfwincradlemiddlebottomy=trfwincradletoptopy-fwincradletoptopy/2.-fwincradlemiddlebottomy/2.;
   TGeoTranslation *trfwincradlemiddletop = new TGeoTranslation(0.0,trfwincradlemiddlebottomy,trfwincradlez);
   Double_t fwincradlemiddlesidex=5.31;
   Double_t fwincradlemiddlesidey=14.0;
-  TGeoVolume *fwincradlemiddleside = geom->MakeBox("fwincradlemiddleside",Aluminum,fwincradlemiddlesidex/2.,fwincradlemiddlesidey/2.,fwincradlez/2.);
+  TGeoVolume *fwincradlemiddleside = geom->MakeBox("fwincradlemiddleside",lexan,fwincradlemiddlesidex/2.,fwincradlemiddlesidey/2.,fwincradlez/2.);
   Double_t trfwincradlemiddlesidex=fwincradlemiddlebottomx/2.-fwincradlemiddlesidex/2.;
   Double_t trfwincradlemiddlesidey=cagesidey/2.-fwincradletoptopy-fwincradlemiddlebottomy-fwincradlemiddlesidey/2.;
   TGeoTranslation *trfwincradlemiddleleft = new TGeoTranslation(trfwincradlemiddlesidex,trfwincradlemiddlesidey,trfwincradlez);
@@ -316,21 +333,21 @@ void smartgeometry()() {
   Double_t backwindowtopy=3.15;
   Double_t backwindowtopz=1.27;
   TGeoVolume *backwindowframe = geom->MakeBox("backwindowframe",vacuum,200.,200.,200.);
-  TGeoVolume *backwindowtop = geom->MakeBox("backwindowtop",Aluminum,backwindowtopx/2.0,backwindowtopy/2.0,backwindowtopz/2.0);
+  TGeoVolume *backwindowtop = geom->MakeBox("backwindowtop",lexan,backwindowtopx/2.0,backwindowtopy/2.0,backwindowtopz/2.0);
   Double_t trbackwindowtopy=actcentery/2.0-backwindowtopy/2.0;
   TGeoTranslation *trbackwindowtop = new TGeoTranslation(0.0,trbackwindowtopy,0.0);
   backwindowframe->AddNode(backwindowtop,1,trbackwindowtop);
   Double_t backwindowbottomx=89.6584;
   Double_t backwindowbottomy=3.55;
   Double_t backwindowbottomz=1.27;
-  TGeoVolume *backwindowbottom = geom->MakeBox("backwindowbottom",Aluminum,backwindowbottomx/2.0,backwindowbottomy/2.0,backwindowbottomz/2.0);
+  TGeoVolume *backwindowbottom = geom->MakeBox("backwindowbottom",lexan,backwindowbottomx/2.0,backwindowbottomy/2.0,backwindowbottomz/2.0);
   Double_t trbackwindowbottomy=-actcentery/2.0+backwindowbottomy/2.0;
   TGeoTranslation *trbackwindowbottom = new TGeoTranslation(0.0,trbackwindowbottomy,0.0);
   backwindowframe->AddNode(backwindowbottom,1,trbackwindowbottom);
   Double_t backwindowsidex=2.4492;
   Double_t backwindowsidey=42.9;
   Double_t backwindowsidez=1.27;
-  TGeoVolume *backwindowside = geom->MakeBox("backwindowside",Aluminum,backwindowsidex/2.0,backwindowsidey/2.0,backwindowsidez/2.0);
+  TGeoVolume *backwindowside = geom->MakeBox("backwindowside",lexan,backwindowsidex/2.0,backwindowsidey/2.0,backwindowsidez/2.0);
   Double_t trbackwindowsidex=backwindowtopx/2.0-backwindowsidex/2.0;
   Double_t trbackwindowsidey=(backwindowbottomy-backwindowtopy)/2.0;
   TGeoTranslation *trbackwindowleft = new TGeoTranslation(trbackwindowsidex,trbackwindowsidey,0.0);
@@ -349,19 +366,19 @@ void smartgeometry()() {
   Double_t backwindowbottom2x=89.76;
   Double_t backwindowbottom2y=4.8475;
   Double_t backwindowbottom2z=0.635;
-  TGeoVolume *backwindowtop2 = geom->MakeBox("backwindowtop2",Aluminum,backwindowtop2x/2.0,backwindowtop2y/2.0,backwindowtop2z/2.0);
+  TGeoVolume *backwindowtop2 = geom->MakeBox("backwindowtop2",lexan,backwindowtop2x/2.0,backwindowtop2y/2.0,backwindowtop2z/2.0);
   Double_t trbackwindowtop2y=backwindowbottom2y/2.0+backwindowside2y/2.0;
   Double_t trbackwindowtop2z=-backwindowtop2z/2.0-backwindowtopz/2.0;
   TGeoTranslation *trbackwindowtop2 = new TGeoTranslation(0.0,trbackwindowtop2y,trbackwindowtop2z);
   backwindowframe->AddNode(backwindowtop2,1,trbackwindowtop2);
 
-  TGeoVolume *backwindowbottom2 = geom->MakeBox("backwindowbottom2",Aluminum,backwindowbottom2x/2.0,backwindowbottom2y/2.0,backwindowbottom2z/2.0);
+  TGeoVolume *backwindowbottom2 = geom->MakeBox("backwindowbottom2",lexan,backwindowbottom2x/2.0,backwindowbottom2y/2.0,backwindowbottom2z/2.0);
   Double_t trbackwindowbottom2y=-backwindowside2y/2.0-backwindowtop2y/2.0;
   Double_t trbackwindowbottom2z=trbackwindowtop2z;
   TGeoTranslation *trbackwindowbottom2 = new TGeoTranslation(0.0,trbackwindowbottom2y,trbackwindowbottom2z);
   backwindowframe->AddNode(backwindowbottom2,1,trbackwindowbottom2);
 
-  TGeoVolume *backwindowside2 = geom->MakeBox("backwindowside2",Aluminum,backwindowside2x/2.0,backwindowside2y/2.0,backwindowside2z/2.0);
+  TGeoVolume *backwindowside2 = geom->MakeBox("backwindowside2",lexan,backwindowside2x/2.0,backwindowside2y/2.0,backwindowside2z/2.0);
   Double_t trbackwindowside2x=backwindowtop2x/2.0-backwindowside2x/2.0;
   Double_t trbackwindowside2z=trbackwindowtop2z;
   Double_t trbackwindowside2y=(backwindowbottom2y-backwindowtop2y)/2.0;
@@ -400,15 +417,14 @@ void smartgeometry()() {
   topframe->AddNode(topframeside,2,trtopframeright);
   topframe->AddNode(topframefb,1,trtopframefront);
   topframe->AddNode(topframefb,2,trtopframeback);
-  //Making Lexan part (currently called Aluminum)
   Double_t topframefblexanx=126.6;
   Double_t topframefblexany=1.905;
   Double_t topframefblexanz=2.0;
   Double_t topframesidelexanx=2.0;
   Double_t topframesidelexany=1.905;
   Double_t topframesidelexanz=159.7;
-  TGeoVolume *topframefblexan = geom->MakeBox("topframefblexan",Aluminum,topframefblexanx/2.0,topframefblexany/2.0,topframefblexanz/2.0);
-  TGeoVolume *topframesidelexan = geom->MakeBox("topframesidelexan",Aluminum,topframesidelexanx/2.0,topframesidelexany/2.0,topframesidelexanz/2.0);
+  TGeoVolume *topframefblexan = geom->MakeBox("topframefblexan",lexan,topframefblexanx/2.0,topframefblexany/2.0,topframefblexanz/2.0);
+  TGeoVolume *topframesidelexan = geom->MakeBox("topframesidelexan",lexan,topframesidelexanx/2.0,topframesidelexany/2.0,topframesidelexanz/2.0);
   Double_t trtopframesidelexanx=topframefblexanx/2.0+topframesidelexanx/2.0;
   Double_t trtopframesidelexany=actcentery/2.0+topframesidelexany/2.0+0.8763; //where does the last part come from???
   TGeoTranslation *trtopframeleftlexan = new TGeoTranslation(trtopframesidelexanx,trtopframesidelexany,0.0);
@@ -434,7 +450,7 @@ void smartgeometry()() {
   Double_t riblipsidez=206.06;
   TGeoVolume *riblipside = geom->MakeBox("riblipside",Aluminum,riblipsidex/2.0,riblipsidey/2.0,riblipsidez/2.0);
 
-  //Squeak still needs to finish the rib assembly
+  //Simplified version of the ribs
   TGeoTranslation *trriblipsideleft = new TGeoTranslation(70.829375,-6.95959,0.0);
   TGeoTranslation *trriblipsideright = new TGeoTranslation(-70.829375,-6.95959,0.0);
   TGeoVolume *riblipfb = geom->MakeBox("riblipfb",Aluminum,130.9175/2.0,3.01498/2.0,23.02125/2.0);
@@ -490,29 +506,32 @@ void smartgeometry()() {
   wireplane->AddNode(wpinbar,1,trwpinbarright);
   wpinbar->SetLineColor(kBlue);
   //Wires
-  //Squeak is down to here
   TGeoRotation *rowire = new TGeoRotation("rocorner",90.0,90.0,0.0);
-  TGeoVolume *wpoutwire = geom->MakeTube("wpoutwire",copper,0.0,0.00375,122.32/2.0);
-  TGeoVolume *wpmidwire = geom->MakeTube("wpmidwire",copper,0.0,0.00375,117.52/2.0);
-  TGeoVolume *wpinwire = geom->MakeTube("wpinwire",copper,0.0,0.001,107.17/2.0);
+  Double_t outmidwirerad=0.00375;
+  TGeoVolume *wpoutwire = geom->MakeTube("wpoutwire",copper,0.0,outmidwirerad,(wpoutspacing+4.0)/2.0);
+  TGeoVolume *wpmidwire = geom->MakeTube("wpmidwire",copper,0.0,outmidwirerad,(wpmidspacing+4.0)/2.0);
+  Double_t inwirerad=0.001;
+  TGeoVolume *wpinwire = geom->MakeTube("wpinwire",copper,0.0,inwirerad,(wpinspacing+4.0)/2.0);
 
   TGeoCombiTrans *cowireout[1455];
   TGeoCombiTrans *cowiremid[1455];
   TGeoCombiTrans *cowirein[363];
 
+  //Squeak is down to here (Not sure about y translation??)
+  Double_t troutwirey=-wpoutbary/2.0-outmidwirerad;
+  Double_t trmidwirey=wpoutbary/2.0-1.5*wpmidbary-outmidwirerad;
   for (Int_t i=0; i<1455; i++) {
-    cowireout[i] = new TGeoCombiTrans("cowireout",0.0,-0.7127,72.75-0.1*i,rowire);
+    cowireout[i] = new TGeoCombiTrans("cowireout",0.0,troutwirey,72.75-0.1*i,rowire);
     wireplane->AddNode(wpoutwire,i+1,cowireout[i]);
-    cowiremid[i] = new TGeoCombiTrans("cowiremid",0.0,-0.1127,72.75-0.1*i,rowire);
+    cowiremid[i] = new TGeoCombiTrans("cowiremid",0.0,trmidwirey,72.75-0.1*i,rowire);
     wireplane->AddNode(wpmidwire,i+1,cowiremid[i]);
   }
+  Double_t trinwirey=wpoutbary/2.0-1.5*wpinbary-inwirerad;
   for (Int_t i=0; i<363; i++) {
-    cowirein[i] = new TGeoCombiTrans("cowirein",0.0,0.2873,72.6-0.4*i,rowire);
+    cowirein[i] = new TGeoCombiTrans("cowirein",0.0,trinwirey,72.6-0.4*i,rowire);
     wireplane->AddNode(wpinwire,i+1,cowirein[i]);
   }
   TGeoTranslation *trwireplane = new TGeoTranslation(0.0,26.9575,4.804);
-
-
 
   //Make Pad Plane (Setting to be .062 inches (.15748 cm) thick
   TGeoVolume *padplane = geom->MakeBox("padplane",vacuum,200.,200.,200.);
@@ -529,7 +548,7 @@ void smartgeometry()() {
   Double_t trpady=padplanepcby/2.0+pady/2.0;
   TGeoTranslation *trpad = new TGeoTranslation(0.0,trpady,0.0);
   padplane->AddNode(pad,1,trpad);
-
+  TGeoTranslation *trpadplane = new TGeoTranslation(0.0,27.5305,5.08548); 
   /* TGeoVolume *pad = geom->MakeBox("pad",copper,0.8/2.0,0.01/2.0,1.2/2.0); */
   /* pad->SetLineColor(kBlue); */
   /* padplaneplane->SetLineColor(kMagenta); */
@@ -542,8 +561,8 @@ void smartgeometry()() {
   /*     padrun++; */
   /*   } */
   /* } */
-  TGeoTranslation *trpadplane = new TGeoTranslation(0.0,27.5305,5.08548); //need to verify z shift
 
+  //Additional active area in and around the wire plane
   TGeoVolume *actup1 = geom->MakeBox("actup1",p10,95.8523/2.0,0.8763/2.0,143.8987/2.0);
   TGeoTranslation *tractup1 = new TGeoTranslation(0.0,25.23815,0.0);
   TGeoVolume *actup2 = geom->MakeBox("actup2",p10,126.6/2.0,1.905/2.0,154.7/2.0);
@@ -551,17 +570,10 @@ void smartgeometry()() {
   active->AddNode(actup1,1,tractup1);
   active->AddNode(actup2,1,tractup2);
 
-  /* padplane->SetLineColor(kMagenta); */
-  /* rib->SetLineColor(kBlue); */
-  /* riblipside->SetLineColor(kBlue); */
-  /* riblipfb->SetLineColor(kMagenta); */
-  
   //Add everything to the "top" drawing
   //Strips are added in the loops up above
 
   //uhhhhhhh
-  //whole->AddNode(padplane,1,trpadplane); 
-
   //Set Object Colors
   cageside->SetLineColor(kRed);
   cagefronttop->SetLineColor(kRed);
@@ -612,17 +624,16 @@ void smartgeometry()() {
   whole->AddNode(fwinframe,1,trfwinframe);
   whole->AddNode(fwindow,1,trfwindow);
   whole->AddNode(fwincradle,1);
-   whole->AddNode(backwindowframe,1,trbackwindowframe); 
-   whole->AddNode(backwindow,1,trbackwindow); 
-    whole->AddNode(topframe,1);
+  whole->AddNode(backwindowframe,1,trbackwindowframe); 
+  whole->AddNode(backwindow,1,trbackwindow); 
+  whole->AddNode(topframe,1);
   whole->AddNode(wireplane,1,trwireplane);
   whole->AddNode(ribmain,1,trrib);
+  whole->AddNode(padplane,1,trpadplane); 
 
-  //TGeoTranslation *trpadplane = new TGeoTranslation(0.0,27.5305,5.08548); //need to verify z shift
   TGeoRotation *rowhole = new TGeoRotation("rowhole",180.0,180.0,0.0);
   TGeoCombiTrans *cowhole = new TGeoCombiTrans("cowhole",0.0,-27.5305,5.08548+134.4/2.0,rowhole);
   top->AddNode(whole,1,cowhole);
-  //top->AddNode(whole,1);
 
   //Set Visibility
   //Big Nodes
@@ -645,16 +656,11 @@ void smartgeometry()() {
   //wpmidwire->SetVisibility(kFALSE);
   //wpinwire->SetVisibility(kFALSE);
 
-
   gGeoManager->CloseGeometry();
   
   top->Draw("");
-  //top->Draw();
-
-  //top->CheckGeometry();
 
    TFile *outfile = new TFile("testingsave_geom.root","recreate"); 
-   //geom->Write();
    top->Write(); 
    outfile->Close(); 
 

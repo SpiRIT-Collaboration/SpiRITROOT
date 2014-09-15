@@ -358,6 +358,8 @@ void FairModule::ExpandNode(TGeoNode* fN)
   //FairGeoInterface* geoFace = geoLoad->getGeoInterface();
   //FairGeoMedia* Media =  geoFace->getMedia();
   //FairGeoBuilder* geobuild=geoLoad->getGeoBuilder();
+  FairGeoMedia* Media       = FairGeoLoader::Instance()->getGeoInterface()->getMedia();
+
   TGeoMatrix* Matrix =fN->GetMatrix();
   if(gGeoManager->GetListOfMatrices()->FindObject(Matrix)) { gGeoManager->GetListOfMatrices()->Remove(Matrix); }
   TGeoVolume* v1=fN->GetVolume();
@@ -370,6 +372,17 @@ void FairModule::ExpandNode(TGeoNode* fN)
     if(fNode->GetNdaughters()>0) { ExpandNode(fNode); }
     TGeoVolume* v= fNode->GetVolume();
     AssignMediumAtImport(v);
+    TGeoMedium *med1 = v->GetMedium();
+    FairGeoMedium *med = Media->getMedium(med1->GetName());
+    if (!med) printf("This medium (%s) wasn't found",med1->GetName());
+    Double_t sens[10];
+    //med->print();
+    med->getMediumPar(sens);
+    printf("%s\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n",v->GetName(),sens[0],sens[1],sens[2],sens[3],sens[4],sens[5],sens[6],sens[7]);
+    if (sens[0]==1) {
+      printf("Volume %s is sensitive\n",v->GetName());
+      AddSensitiveVolume(v);
+    }
     if (!gGeoManager->FindVolumeFast(v->GetName())) {
       LOG(DEBUG2)<<"Register Volume " << v->GetName()<<FairLogger::endl;
       v->RegisterYourself();
@@ -438,7 +451,8 @@ void FairModule::AssignMediumAtImport(TGeoVolume* v)
 	}
 	medium->setDensity(mat1->GetDensity());
 	medium->calcRadiationLength();
-	medium->setMediumPar(1,1,30.,.001,-1,-1,-1,-1);
+	if (mat1->GetName()=="Vacuum" || mat1->GetName()=="vacuum") medium->setMediumPar(0,1,30.,.001,-1,1.0,300.0,0.001);
+	else medium->setMediumPar(1,1,30.,.001,-1,1.0,300.0,0.001);
 	medium->setNpckov(0);
 	medium->print();
 	Media->addMedium(medium);

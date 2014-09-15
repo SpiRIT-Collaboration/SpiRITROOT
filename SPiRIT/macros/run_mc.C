@@ -5,7 +5,7 @@
 #include <TMath.h>
 #include <TLorentzVector.h>
 
-void run_mc(const Int_t nEvents = 10)
+void run_mc(const Int_t nEvents = 1) //This sets the amount of times to run the same parameter set
 {
 
   gRandom -> SetSeed(time(0));
@@ -46,6 +46,7 @@ void run_mc(const Int_t nEvents = 10)
     }
   }
 
+  //Reads events from the simulation data
   ifstream urqmd("132sn124sn300amev_urqmd_short.dat");
   Int_t beamA, beamZ, targA, targZ, beamEperA;
   const Int_t events;
@@ -76,9 +77,9 @@ void run_mc(const Int_t nEvents = 10)
   Double_t totalC, totalL;
   Int_t pdg;
 
-  for (Int_t i=1; i<=10; i++) {
+  //Fills vectors for each particle and each event
+  for (Int_t i=1; i<=events; i++) {
     urqmd >> evtnum >> evtmult;
-    //cout << evtnum << "\t" << evtmult << endl;
     for (Int_t j=1; j<=evtmult; j++) {
       urqmd >> urA >> urZ >> px >> py >> pz;
       if (urA<=maxa && urZ<=maxz) {
@@ -140,77 +141,70 @@ void run_mc(const Int_t nEvents = 10)
   TString outFile = outDir + "/test.mc_youngstest.root"; 
   TString parFile = outDir + "/params_youngstest.root"; 
 
-    // -----   Create simulation run   ----------------------------------------
-    FairRunSim* run = new FairRunSim();
-    run->SetName("TGeant4");              // Transport engine
-    run->SetOutputFile(outFile);          // Output file
-    FairRuntimeDb* rtdb = run->GetRuntimeDb();
-    // ------------------------------------------------------------------------
+  // -----   Create simulation run   ----------------------------------------
+  FairRunSim* run = new FairRunSim();
+  run->SetName("TGeant4");              // Transport engine
+  run->SetOutputFile(outFile);          // Output file
+  FairRuntimeDb* rtdb = run->GetRuntimeDb();
+  // ------------------------------------------------------------------------
     
-    run->SetWriteRunInfoFile(kFALSE);  
-    // -----   Create media   -------------------------------------------------
-    //run->SetMaterials("media_pnd.geo");       // Materials
-    // ------------------------------------------------------------------------
+  run->SetWriteRunInfoFile(kFALSE);  
+  // -----   Create media   -------------------------------------------------
+  //run->SetMaterials("media_pnd.geo");       // Materials
+  // ------------------------------------------------------------------------
     
-    // -----   Create geometry   ----------------------------------------------
+  // -----   Create geometry   ----------------------------------------------
     
-    FairModule* cave= new FairCave("CAVE");
-    cave->SetGeometryFileName("cave_vacuum.geo"); 
-    run->AddModule(cave);
+  FairModule* cave= new FairCave("CAVE");
+  cave->SetGeometryFileName("cave_vacuum.geo"); 
+  run->AddModule(cave);
     
-    FairModule* target= new FairTarget("SnTarget");
-    target->SetGeometryFileName("target.geo"); 
-    run->AddModule(target);
+  FairModule* target= new FairTarget("SnTarget");
+  target->SetGeometryFileName("target.geo"); 
+  run->AddModule(target);
     
-    FairDetector* spirit = new STDetector("STDetector", kTRUE);
-    spirit->SetGeometryFileName("testingsave_geom.root");
-    run->AddModule(spirit);
+  FairDetector* spirit = new STDetector("STDetector", kTRUE);
+  spirit->SetGeometryFileName("testingsave_geom.root");
+  run->AddModule(spirit);
     
-    // ------------------------------------------------------------------------
+  // ------------------------------------------------------------------------
     
-    // -----   Create and set magnetic field   --------------------------------
-    // Constant field
-    FairConstField *fMagField = new FairConstField();
-    fMagField -> SetField(0., 5., 0.); // in kG
-    // SetFieldRegion(xmin, xmax, ymin, ymax, zmin, zmax)
-    fMagField -> SetFieldRegion(-147.74/2, 147.74/2, -53.93/2, 53.93/2, 0, 200.98);
-    run -> SetField(fMagField);
-    // ------------------------------------------------------------------------
+  // -----   Create and set magnetic field   --------------------------------
+  // Constant field
+  FairConstField *fMagField = new FairConstField();
+  //fMagField -> SetField(0., 5., 0.); // in kG
+  fMagField -> SetField(0., 0., 0.); // in kG
+  // SetFieldRegion(xmin, xmax, ymin, ymax, zmin, zmax)
+  fMagField -> SetFieldRegion(-147.74/2, 147.74/2, -53.93/2, 53.93/2, 0, 200.98);
+  run -> SetField(fMagField);
+  // ------------------------------------------------------------------------
     
-    // -----   Create PrimaryGenerator   --------------------------------------
+  // -----   Create PrimaryGenerator   --------------------------------------
   FairPrimaryGenerator *primGen = new FairPrimaryGenerator();
   run->SetGenerator(primGen);  
-  Int_t dnum=7;
-  const int gennum=pid[dnum].size();
-  cout << gennum << endl;
-  FairParticleGenerator *fIongen[gennum];
-  
-  for (Int_t i=0; i<gennum; i++) {
-    fIongen[i] = new FairParticleGenerator(pid[dnum][i],1,pxl[dnum][i],pyl[dnum][i],pzl[dnum][i],0.0,-21.33,-3.52);
-    //cout << pid[dnum][i] << "\t" << pxl[dnum][i] << "\t" << pyl[dnum][i] << "\t" << pzl[dnum][i] << "\t" << kinl[dnum][i] << endl;
-    primGen->AddGenerator(fIongen[i]);
-  }
+  // Int_t dnum=0;
+  // const int gennum=pid[dnum].size();
+  // cout << gennum << endl;
+  // FairParticleGenerator *fIongen[gennum];
+  // Double_t kinl1, kinl2;
+  // Int_t runner=0;
+  // for (Int_t i=0; i<gennum; i++) {
+  //   fIongen[i] = new FairParticleGenerator(pid[dnum][i],1,pxl[dnum][i],pyl[dnum][i],pzl[dnum][i],0.0,-21.33,-3.52);
+  //   primGen->AddGenerator(fIongen[i]);
+  //   if (pid[dnum][i]==1000020040) {
+  //     if (runner==0) {kinl1=kinl[dnum][i]; runner++;}
+  //     else if (runner==1) {kinl2=kinl[dnum][i]; runner++;}
+  //   }
+  // }
 
-
-    //primGen->AddTrack(pdg,pionpC[0][i],pionpC[1][i],pionpC[2][i],pionrC[0][i]*1.0E-13,pionrC[1][i]*1.0E-13-21.33,pionrC[2][i]*1.0E-13-3.52);
-    //fIongen[i] = new FairParticleGenerator(pdg,1,pionpC[0][i],pionpC[1][i],pionpC[2][i],pionrC[0][i]*1.0E-13,pionrC[1][i]*1.0E-13-21.33,pionrC[2][i]*1.0E-13-3.52);
-  //fIongen[i] = new FairParticleGenerator(pdg,1,px,py,pz,0.0,-21.33,-3.52);
-  //primGen->AddGenerator(fIongen[i]);
-    //primGen->AddTrack(pdg,pionpC[0][i],pionpC[1][i],pionpC[2][i],pionrC[0][i]*1.0E-13,pionrC[1][i]*1.0E-13-21.33,pionrC[2][i]*1.0E-13-3.52);
-    //}
-  //}
+  //primGen->AddTrack(pdg,pionpC[0][i],pionpC[1][i],pionpC[2][i],pionrC[0][i]*1.0E-13,pionrC[1][i]*1.0E-13-21.33,pionrC[2][i]*1.0E-13-3.52);
+  FairParticleGenerator *fIongen = new FairParticleGenerator(2212,1,0.0,0.0,0.31,0.0,-21.33,-3.52); //50 MeV
+  //FairParticleGenerator *fIongen = new FairParticleGenerator(1000020040,1,0.0,0.0,0.06,0.0,-21.33,-3.52);
+  primGen->AddGenerator(fIongen);
 
   // if (partt==0) FairBoxGenerator* boxGen1 = new FairBoxGenerator(2212, 1);
   // if (partt==1) FairBoxGenerator* boxGen1 = new FairBoxGenerator(1000010020, 1);
-  // if (partt==2) FairBoxGenerator* boxGen1 = new FairBoxGenerator(1000010030, 1);
-  // if (partt==3) FairBoxGenerator* boxGen1 = new FairBoxGenerator(1000020030, 1);
-  // if (partt==4) FairBoxGenerator* boxGen1 = new FairBoxGenerator(1000020040, 1);
-  // if (partt==5) FairBoxGenerator* boxGen1 = new FairBoxGenerator(211, 1);
-  // if (partt==6) FairBoxGenerator* boxGen1 = new FairBoxGenerator(-211, 1);
-  // if (partt==7) FairBoxGenerator* boxGen1 = new FairBoxGenerator(11, 1);
-  // if (partt==8) FairBoxGenerator* boxGen1 = new FairBoxGenerator(-11, 1);
-  // //FairBoxGenerator* boxGen1 = new FairBoxGenerator(1000020040, 1);
-  // boxGen1->SetPRange(0.25,0.5); //GeV/c ??
+  // boxGen1->SetPRange(0.25,0.5); //GeV/c
   // boxGen1->SetPhiRange(0.,360.); //degrees
   // boxGen1->SetThetaRange(0.,90.); //degrees
   // boxGen1->SetXYZ(0.,-21.33, -3.52); // cm 
@@ -258,4 +252,5 @@ void run_mc(const Int_t nEvents = 10)
   cout << "Real time " << rtime << " s, CPU time " << ctime 
        << "s" << endl << endl;
   // ------------------------------------------------------------------------
+
 }
