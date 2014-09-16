@@ -49,6 +49,7 @@ STAvalancheTask::STAvalancheTask()
 
 STAvalancheTask::~STAvalancheTask()
 {
+  if(fElectronDistXZ) delete fElectronDistXZ;
 }
 
 InitStatus
@@ -81,8 +82,8 @@ STAvalancheTask::Init()
     //fPadPlaneZ = fPar -> GetPadPlaneZ();
     fPadPlaneX = 96.61;
     fPadPlaneZ = 144.64;
-    fElectronDistXZ = new TH2D("ElDistXZ","", 112,0,fPadPlaneZ,
-                                              108,-fPadPlaneX/2,fPadPlaneX/2);
+    fElectronDistXZ = new TH2D("ElDistXZAval","", 112,0,fPadPlaneZ,
+                                                  108,-fPadPlaneX/2,fPadPlaneX/2);
   }
 
   return kSUCCESS;
@@ -115,6 +116,7 @@ STAvalancheTask::Exec(Option_t *opt)
   Int_t nElectron = fDriftedElectronArray -> GetEntriesFast();
   for(Int_t iElectron=0; iElectron<nElectron; iElectron++)
   {
+    if(fTestMode) cout << iElectron << " / " << nElectron << endl;
     STDriftedElectron* electron = (STDriftedElectron*) fDriftedElectronArray -> At(iElectron);
 
     Double_t x = electron -> GetX();
