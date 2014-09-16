@@ -63,6 +63,7 @@ class STDriftTask : public FairTask
     Int_t fPadPlaneZ;
 
     void WriteHistogram();
+    TH2D *fDispersion;
     TH2D *fElectronDistXZ;
     TH2D *fElectronDistXZRaw;
 

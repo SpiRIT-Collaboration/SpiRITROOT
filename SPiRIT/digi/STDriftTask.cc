@@ -49,6 +49,9 @@ STDriftTask::STDriftTask()
 
 STDriftTask::~STDriftTask()
 {
+  if(fElectronDistXZ)    delete fElectronDistXZ;
+  if(fElectronDistXZRaw) delete fElectronDistXZRaw;
+  if(fDispersion) delete fDispersion;
 }
 
 InitStatus
@@ -85,6 +88,8 @@ STDriftTask::Init()
                                               500,-fPadPlaneX/2,fPadPlaneX/2);
     fElectronDistXZRaw = new TH2D("ElDistXZRaw","", 500,0,fPadPlaneZ,
                                                     500,-fPadPlaneX/2,fPadPlaneX/2);
+    fDispersion = new TH2D("Dispersion","", 100,-0.5,0.5,
+                                            100,-0.5,0.5);
   }
 
   return kSUCCESS;
@@ -121,6 +126,8 @@ STDriftTask::Exec(Option_t *opt)
   Int_t    charge;
   Double_t xElectron;
   Double_t zElectron;
+  Double_t dxElectron;
+  Double_t dzElectron;
   Double_t yCluster;
   Double_t timeCluster;
   Double_t driftLength;
@@ -143,6 +150,7 @@ STDriftTask::Exec(Option_t *opt)
     timeCluster    = driftTime + cluster -> GetTime(); // [ns]
     sigmaDiffusion = coefDiffusion * sqrt(driftLength);
 
+    /*
     if(fTestMode){
       cout << "-*-" << endl;
       cout << "y - WirePlane     : " << yWirePlane << endl;
@@ -155,6 +163,7 @@ STDriftTask::Exec(Option_t *opt)
       cout << "attachment coef.  : " << coefAttachment << endl;
       cout << "exp(-drftL*attC)  : " << exp(-driftLength*coefAttachment) << endl;
     }
+    */
     if(fTestMode) cout << endl << iCluster << " / " << nCluster << endl;
 
     if(driftLength<=0) continue;
@@ -162,19 +171,20 @@ STDriftTask::Exec(Option_t *opt)
     for(Int_t iElectron=0; iElectron<charge; iElectron++)
     {
       if(exp(-driftLength*coefAttachment) < gRandom -> Uniform()) continue;
-      xElectron += gRandom -> Gaus(0,sigmaDiffusion);
-      zElectron += gRandom -> Gaus(0,sigmaDiffusion);
+      dxElectron = gRandom -> Gaus(0,sigmaDiffusion);
+      dzElectron = gRandom -> Gaus(0,sigmaDiffusion);
+      fDispersion -> Fill(dzElectron,dxElectron);
 
       //if(fTestMode) cout << ">>> x/z - diffusion position : " << xElectron << " / " << zElectron << endl;
 
       Int_t size = fDriftedElectronArray -> GetEntriesFast();
       STDriftedElectron* electron 
-        = new((*fDriftedElectronArray)[size]) STDriftedElectron(xElectron,
-                                                                zElectron,
+        = new((*fDriftedElectronArray)[size]) STDriftedElectron(xElectron+dxElectron,
+                                                                zElectron+dzElectron,
                                                                 timeCluster);
       electron -> SetIndex(size);
 
-      if(fWriteHistogram) fElectronDistXZ -> Fill(zElectron, xElectron);
+      if(fWriteHistogram) fElectronDistXZ -> Fill(zElectron+dzElectron, xElectron+dxElectron);
     }
   }
 
@@ -196,4 +206,5 @@ STDriftTask::WriteHistogram()
 
   fElectronDistXZRaw -> Write();
   fElectronDistXZ -> Write();
+  fDispersion -> Write();
 }
