@@ -51,7 +51,9 @@ void Spirit_Geom_v2_1() {
   TGeoVolume* top = new TGeoVolumeAssembly("top");
   gGeoMan->SetTopVolume(top);
  
+  TGeoMedium* gas   = gGeoMan->GetMedium(TrueVolumeMedium);
   TGeoVolume* tpc = new TGeoVolumeAssembly(geoVersion);
+  tpc -> SetMedium(gas);
   top->AddNode(tpc, 1);
  
   gModules = create_detector();
