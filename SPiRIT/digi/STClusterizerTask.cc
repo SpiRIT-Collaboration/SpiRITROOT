@@ -122,11 +122,11 @@ STClusterizerTask::Exec(Option_t *opt)
 
     Double_t energyLoss = point -> GetEnergyLoss();
              energyLoss*= 1E9; //convert from GeV to eV
-    if(fTestMode)
-    {
+    if(fTestMode) {
       cout << "energy loss    : " << energyLoss << " eV" << endl;
       cout << "ionization e   : " << EIonize << " eV" << endl;
     }
+
     if(energyLoss<0){
       Error("STClusterizerTask::Exec","Note: particle:: negative energy loss!");
       continue;
@@ -134,10 +134,12 @@ STClusterizerTask::Exec(Option_t *opt)
 
     UInt_t qTotal   = (UInt_t) floor(fabs( energyLoss/EIonize )); // total charge [eV]
     UInt_t qCluster = 0; // cluster charge
-    UInt_t nCluster = 0; // number of clusters in this point
+    //UInt_t nCluster = 0; // number of clusters in this point
 
     // Make random size clusters with total charge
     if(fTestMode) cout << "total charge   : " << qTotal << endl;
+
+    /*
     while(qTotal>0) 
     {
       qCluster = fGas -> GetRandomCS(); // get random cluster size
@@ -158,7 +160,23 @@ STClusterizerTask::Exec(Option_t *opt)
       primaryCluster -> SetIndex(size);
       nCluster++;
     }
-    iCluster += nCluster;
+    */
+
+    qCluster = qTotal; 
+
+    // create cluster
+    Int_t size = fPrimaryClusterArray -> GetEntriesFast();
+    STPrimaryCluster* primaryCluster 
+      = new ((*fPrimaryClusterArray)[size]) STPrimaryCluster(qCluster,                  // charge
+                                                             TVector3(point -> GetX(),  // primary cluster position
+                                                                      point -> GetY(),
+                                                                      point -> GetZ()),
+                                                             point -> GetTime(),        // time
+                                                             point -> GetTrackID(),     // trackID
+                                                             iPoint);                   // point count number
+    primaryCluster -> SetIndex(size);
+
+    //iCluster++;
   }
 
   cout << "STClusterizerTask:: " << fPrimaryClusterArray -> GetEntriesFast() << " clusters created" << endl;
