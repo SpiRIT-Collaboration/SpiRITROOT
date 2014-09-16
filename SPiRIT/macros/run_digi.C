@@ -48,11 +48,11 @@ void run_digi
 
   STClusterizerTask* clusterizer = new STClusterizerTask();
                      clusterizer -> SetPersistence(kTRUE);
-                     clusterizer -> SetTestMode();
+                     //clusterizer -> SetTestMode();
 
   STDriftTask* drifter = new STDriftTask();
                drifter -> SetPersistence(kTRUE);
-               drifter -> SetTestMode();
+               //drifter -> SetTestMode();
                drifter -> SetWriteHistogram();
 
   STAvalancheTask* avalanche = new STAvalancheTask();
