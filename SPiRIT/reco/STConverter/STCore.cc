@@ -87,6 +87,11 @@ void STCore::SetNoAutoReload(Bool_t value)
   fDecoderPtr -> SetNoAutoReload(value);
 }
 
+void STCore::SetPositivePolarity(Bool_t value)
+{
+  fDecoderPtr -> SetPositivePolarity(value);
+}
+
 Bool_t STCore::SetData(Int_t value)
 {
   fIsData = fDecoderPtr -> SetData(value);
