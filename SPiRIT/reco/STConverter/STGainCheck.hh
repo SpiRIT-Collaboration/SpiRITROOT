@@ -30,7 +30,8 @@ class STGainCheck : public TObject
     void SetUAIndex(Int_t uaIdx);
     void SetGainBase(Double_t constant, Double_t slope);
     Bool_t AddPulserData(TString filename);
-    Bool_t SetPedestalData(TString filename, Int_t startTb = 3, Int_t numTbs = 20);
+    void SetInternalPedestal(Int_t startTb, Int_t numTbs);
+    Bool_t SetPedestalData(TString filename);
     void SetGainCalibrationData(TString filename);
 
     TCanvas *DrawSpectra();

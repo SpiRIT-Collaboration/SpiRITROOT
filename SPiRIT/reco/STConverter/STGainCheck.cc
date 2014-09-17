@@ -69,10 +69,16 @@ STGainCheck::SetGainBase(Double_t constant, Double_t slope)
   fCore -> SetGainBase(constant, slope);
 }
 
-Bool_t
-STGainCheck::SetPedestalData(TString filename, Int_t startTb, Int_t numTbs)
+void
+STGainCheck::SetInternalPedestal(Int_t startTb, Int_t numTbs)
 {
-  return fCore -> SetPedestalData(filename, startTb, numTbs);
+  fCore -> SetInternalPedestal(startTb, numTbs);
+}
+
+Bool_t
+STGainCheck::SetPedestalData(TString filename)
+{
+  return fCore -> SetPedestalData(filename);
 }
 
 Bool_t

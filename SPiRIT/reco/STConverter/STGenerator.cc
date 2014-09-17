@@ -178,10 +178,16 @@ STGenerator::SetParameterDir(TString dir)
   }
 }
 
-Bool_t
-STGenerator::SetPedestalData(TString filename, Int_t startTb, Int_t numTbs)
+void
+STGenerator::SetInternalPedestal(Int_t startTb, Int_t numTbs)
 {
-  return fCore -> SetPedestalData(filename, startTb, numTbs);
+  fCore -> SetInternalPedestal(startTb, numTbs);
+}
+
+Bool_t
+STGenerator::SetPedestalData(TString filename, Double_t rmsFactor)
+{
+  return fCore -> SetPedestalData(filename, rmsFactor);
 }
 
 void
