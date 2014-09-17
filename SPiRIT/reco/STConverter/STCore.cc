@@ -63,6 +63,8 @@ void STCore::Initialize()
   fIsPedestalGenerationMode = kFALSE;
   fIsPedestalData = kFALSE;
   fIsInternalPedestal = kFALSE;
+  fPedestalMode = kNoPedestal;
+  fPedestalRMSFactor = 0;
 
   fGainCalibrationPtr = new STGainCalibration();
   fIsGainCalibrationData = kFALSE;
@@ -110,7 +112,8 @@ Int_t STCore::GetNumData()
   return fDecoderPtr -> GetNumData();
 }
 
-TString STCore::GetDataName(Int_t index) {
+TString STCore::GetDataName(Int_t index)
+{
   return fDecoderPtr -> GetDataName(index);
 }
 
@@ -122,22 +125,32 @@ void STCore::SetNumTbs(Int_t value)
 
 void STCore::SetInternalPedestal(Int_t startTb, Int_t averageTbs)
 {
-  fIsInternalPedestal = kTRUE;
-  fIsPedestalData = kFALSE;
+  if (fIsPedestalData) {
+    fPedestalMode = kPedestalBoth;
+    std::cout << "== [STCore] Using both pedestal data is set!" << std::endl;
+  } else {
+    fPedestalMode = kPedestalInternal;
+    std::cout << "== [STCore] Internal pedestal calculation will be done!" << std::endl;
+  }
 
   fStartTb = startTb;
   fAverageTbs = averageTbs;
 }
 
-Bool_t STCore::SetPedestalData(TString filename, Int_t startTb, Int_t averageTbs)
+Bool_t STCore::SetPedestalData(TString filename, Double_t rmsFactor)
 {
   fIsPedestalData = fPedestalPtr -> SetPedestalData(filename);
 
   if (fIsPedestalData) {
-    fIsInternalPedestal = kFALSE;
+    if (fIsInternalPedestal) {
+      fPedestalMode = kPedestalBoth;
+      std::cout << "== [STCore] Using both pedestal data is set!" << std::endl;
+    } else {
+      fPedestalMode = kPedestalExternal;
+      std::cout << "== [STCore] External pedestal data is set!" << std::endl;
+    }
 
-    fStartTb = startTb;
-    fAverageTbs = averageTbs;
+    fPedestalRMSFactor = rmsFactor;
   } else
     std::cout << "== [STCore] Pedestal data is not set! Check it exists!" << std::endl;
 
@@ -188,7 +201,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
     return NULL;
   }
 
-  if (!fIsPedestalData && !fIsInternalPedestal && !fIsPedestalGenerationMode)
+  if (fPedestalMode == kNoPedestal && !fIsPedestalGenerationMode)
     std::cout << "== [STCore] Pedestal data file is not set!" << std::endl;
 
   fPrevEventNo = eventID;
@@ -243,7 +256,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           signalDelay = ceil(fSignalDelayPtr -> GetSignalDelay(uaIdx));
         }
 
-        if (fIsInternalPedestal) {
+        if (fPedestalMode == kPedestalInternal) {
           frame -> CalcPedestal(iAget, iCh, fStartTb, fAverageTbs);
           frame -> SubtractPedestal(iAget, iCh);
 
@@ -265,15 +278,16 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
 
           pad -> SetMaxADCIdx(maxADCIdx);
           pad -> SetPedestalSubtracted(kTRUE);
-        } else if (fIsPedestalData) {
-          frame -> CalcPedestal(iAget, iCh, fStartTb, fAverageTbs);
+        } else if (fPedestalMode != kNoPedestal) {
+          if (fPedestalMode == kPedestalBoth)
+            frame -> CalcPedestal(iAget, iCh, fStartTb, fAverageTbs);
 
           Double_t pedestal[512];
           Double_t pedestalSigma[512];
 
           fPedestalPtr -> GetPedestal(row, layer, pedestal, pedestalSigma);
           frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
-          frame -> SubtractPedestal(iAget, iCh);
+          frame -> SubtractPedestal(iAget, iCh, fPedestalRMSFactor);
 
           Double_t *adc = frame -> GetADC(iAget, iCh);
 

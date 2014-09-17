@@ -41,7 +41,7 @@ class STCore : public TObject {
     TString GetDataName(Int_t index);
     void SetNumTbs(Int_t value);
     void SetInternalPedestal(Int_t startTb = 10, Int_t averageTbs = 20);
-    Bool_t SetPedestalData(TString filename, Int_t startTb = 3, Int_t averageTbs = 20);
+    Bool_t SetPedestalData(TString filename, Double_t rmsFactor = 0);
 
     Bool_t SetGainCalibrationData(TString filename);
     void SetGainBase(Double_t constant, Double_t slope);
@@ -55,6 +55,8 @@ class STCore : public TObject {
     STRawEvent *GetRawEvent(Int_t eventID = -1);
     Int_t GetNumTbs();
 
+    enum EPedestalMode { kNoPedestal, kPedestalInternal, kPedestalExternal, kPedestalBoth };
+
   private:
     STMap *fMapPtr;
 
@@ -67,6 +69,8 @@ class STCore : public TObject {
     Bool_t fIsPedestalGenerationMode;
     Bool_t fIsInternalPedestal;
     Bool_t fIsPedestalData;
+    EPedestalMode fPedestalMode;
+    Double_t fPedestalRMSFactor;
     Int_t fStartTb;
     Int_t fAverageTbs;
 
