@@ -73,15 +73,15 @@ class GETFrame : public TObject
     //! Set pedestal from calculation done outside this class.
     void SetPedestal(Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Double_t *pedestalSigma);
     //! Subtract pedestal using internal, external or both.
-    void SubtractPedestal(Int_t agetIdx, Int_t chIdx);
+    void SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor = 0);
     //! Return the time bucket index of the maximum ADC value.
     Int_t GetMaxADCIdx(Int_t agetIdx, Int_t chIdx);
     //! Return the pedestal-subtracted ADC values array with the number of time buckets specified in GETConfig of the channel, **chIdx**, in the AGET, **agetIdx**.
     Double_t *GetADC(Int_t agetIdx, Int_t chIdx);
     //! Return the pedestal-subtracted ADC value of the specific time bucket, **buckIdx**, of the channel, **chIdx**, in the AGET, **agetIdx**.
     Double_t GetADC(Int_t agetIdx, Int_t chIdx, Int_t buckIdx);
-    //! Return the pedestal value of time bucket, **buckIdx**, and channel, **chIdx**, in the AGET, **agetIdx**.
-    Double_t GetPedestal(Int_t agetIdx, Int_t chIdx, Int_t buckIdx);
+    //! Return the pedestal value of time bucket, **buckIdx**, and channel, **chIdx**, in the AGET, **agetIdx**. Sigma value is multiplied by **rmsFactor** before returning.
+    Double_t GetPedestal(Int_t agetIdx, Int_t chIdx, Int_t buckIdx, Double_t rmsFactor = 0);
 
   private:
     //! Internally used method to get the index of the array

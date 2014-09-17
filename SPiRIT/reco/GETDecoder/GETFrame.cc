@@ -116,7 +116,7 @@ void GETFrame::SetPedestal(Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Doubl
   fIsSetPedestalUsed[index/512] = kTRUE;
 }
 
-void GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx)
+void GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor)
 {
   Int_t index = GetIndex(agetIdx, chIdx, 0);
 
@@ -127,7 +127,7 @@ void GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx)
   }
 
   for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
-    Double_t pedestal = GetPedestal(agetIdx, chIdx, iTb);
+    Double_t pedestal = GetPedestal(agetIdx, chIdx, iTb, rmsFactor);
     Double_t adc = 0;
     if (fPolarity < 0)
       adc = pedestal - fRawAdc[index + iTb];
@@ -197,7 +197,7 @@ Double_t GETFrame::GetADC(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
   return fAdc[index]; 
 }
 
-Double_t GETFrame::GetPedestal(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
+Double_t GETFrame::GetPedestal(Int_t agetIdx, Int_t chIdx, Int_t buckIdx, Double_t rmsFactor)
 {
   Int_t index = GetIndex(agetIdx, chIdx, 0);
 
@@ -207,7 +207,19 @@ Double_t GETFrame::GetPedestal(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
     return -1;
   }
 
-  return fPedestalData[index + buckIdx] - fPedestalSigmaData[index + buckIdx] - (fPedestalDataMean[index/512] - fInternalPedestal[index/512]);
+  if (fIsCalcPedestalUsed[index/512] && fIsSetPedestalUsed[index/512]) {
+    if (fPolarity < 0)
+      return fPedestalData[index + buckIdx] - rmsFactor*fPedestalSigmaData[index + buckIdx] - (fPedestalDataMean[index/512] - fInternalPedestal[index/512]);
+    else
+      return fPedestalData[index + buckIdx] + rmsFactor*fPedestalSigmaData[index + buckIdx] - (fPedestalDataMean[index/512] - fInternalPedestal[index/512]);
+  } else if (fIsCalcPedestalUsed[index/512]) {
+    return fInternalPedestal[index/512];
+  } else if (fIsSetPedestalUsed[index/512]) {
+    if (fPolarity < 0)
+      return fPedestalData[index + buckIdx] - rmsFactor*fPedestalSigmaData[index + buckIdx];
+    else
+      return fPedestalData[index + buckIdx] + rmsFactor*fPedestalSigmaData[index + buckIdx];
+  }
 }
 
 Int_t GETFrame::GetIndex(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
