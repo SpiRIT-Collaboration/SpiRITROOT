@@ -120,8 +120,7 @@ TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs, Int_t notConne
   fFrame = fDecoder -> GetFrame(0, innerFrame);
   fAsad -> SetTitle(Form("CoBo %d - AsAd %d", fFrame -> GetCoboID(), fFrame -> GetAsadID()));
 
-  Int_t iFrame = 0;
-  while ((fFrame = fDecoder -> GetFrame(iFrame, innerFrame))) {
+  while ((fFrame = fDecoder -> GetFrame(-1, innerFrame))) {
     for (Int_t iAget = 0; iAget < 4; iAget++) {
       for (Int_t iCh = 0; iCh < 68; iCh++) {
         fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
@@ -131,8 +130,6 @@ TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs, Int_t notConne
         fAsad -> Fill(iAget*68 + iCh, fFrame -> GetADC(iAget, iCh, maxADCIdx));
       }
     }
-
-    iFrame++;
   }
 
   cvs -> Update();
