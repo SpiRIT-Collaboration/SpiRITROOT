@@ -36,7 +36,7 @@ class GETDecoder : public TObject
     ~GETDecoder();
 
     //! Setting debug mode. If set to 1, more information is printed out on the screen.
-    void SetDebugMode(Bool_t value = 1);
+    void SetDebugMode(Bool_t value = kTRUE);
     //! Setting the number of time buckets.
     void SetNumTbs(Int_t value = 512);
     //! Add the data file to the list of rawdata.
@@ -46,7 +46,9 @@ class GETDecoder : public TObject
     //! Search the next file and set it if exists. Returns 1 if successful.
     Bool_t SetNextFile();
     /// Set the flag for auto reload continuing file in the list
-    void SetNoAutoReload(Bool_t kFALSE);
+    void SetNoAutoReload(Bool_t value = kFALSE);
+    /// Set the positive signal polarity
+    void SetPositivePolarity(Bool_t value = kTRUE);
     //! Print rawdata file list on the screen.
     void ShowList();
     //! Return the number of data added in the list.
@@ -111,6 +113,7 @@ class GETDecoder : public TObject
 
     Bool_t fDebugMode; /// flag for debug mode
     Bool_t fIsAutoReload; /// Flag for auto reloading continuing data file in the list.
+    Bool_t fIsPositivePolarity; /// Flag for the signal polarity
 
     std::ifstream fData;            /// rawdata filestream
     UInt_t fFileSize; /// file size

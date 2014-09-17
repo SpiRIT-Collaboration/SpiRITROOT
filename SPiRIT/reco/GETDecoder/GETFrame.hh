@@ -40,6 +40,8 @@ class GETFrame : public TObject
     void SetAsadID(UShort_t value);
     //! Set the frame number.
     void SetFrameID(Int_t value);
+    //! Set the signal polarity.
+    void SetPolarity(Int_t value);
 
     //! Set the raw ADC **value** of the specific bucket, **buckIdx**, of the channel, **chIdx**, in the AGET, **agetIdx**.
     void SetRawADC(UShort_t agetIdx, UShort_t chIdx, UShort_t buckIdx, UShort_t value);
@@ -54,6 +56,8 @@ class GETFrame : public TObject
     Int_t GetAsadID();
     //! Return the frame number of this frame.
     Int_t GetFrameID();
+    //! Return the signal polarity.
+    Int_t GetPolarity();
 
     //! Return the raw ADC values array with the number of time buckets specified in GETConfig of the channel, **chIdx**, in the AGET, **agetIdx**.
     Int_t *GetRawADC(Int_t agetIdx, Int_t chIdx);
@@ -93,6 +97,7 @@ class GETFrame : public TObject
     Int_t fCoboIdx;                /// CoBo index
     Int_t fAsadIdx;                /// AsAd index
     Int_t fFrameIdx;               /// frame index
+    Int_t fPolarity;               /// signal polarity
     Int_t fRawAdc[4*68*512];       /// An array containing raw ADC values
 
     Bool_t fIsPedestalSubtracted[4*68];  /// Flag for checking if pedestal is subtracted

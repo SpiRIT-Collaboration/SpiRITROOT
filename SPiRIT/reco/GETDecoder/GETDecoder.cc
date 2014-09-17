@@ -75,6 +75,7 @@ void GETDecoder::Initialize()
 
   fCurrentDataID = -1;
   fIsAutoReload = kTRUE;
+  fIsPositivePolarity = kFALSE;
 
   fFrame = 0;
   fCurrentFrameID = -1;
@@ -223,6 +224,11 @@ Bool_t GETDecoder::SetNextFile()
 void GETDecoder::SetNoAutoReload(Bool_t value)
 {
   fIsAutoReload = value;
+}
+
+void GETDecoder::SetPositivePolarity(Bool_t value)
+{
+  fIsPositivePolarity = value;
 }
 
 void GETDecoder::ShowList()
@@ -385,6 +391,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     fFrame -> SetCoboID(coboIdx);
     fFrame -> SetAsadID(asadIdx);
     fFrame -> SetFrameID(frameNo);
+    fFrame -> SetPolarity((fIsPositivePolarity ? +1 : -1));
 
     fData.seekg((Int_t) fData.tellg() - 28 + headerSize);
 
@@ -555,6 +562,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
   fFrame -> SetCoboID(coboIdx);
   fFrame -> SetAsadID(asadIdx);
   fFrame -> SetFrameID(frameNo);
+  fFrame -> SetPolarity((fIsPositivePolarity ? +1 : -1));
 
   fData.seekg((Int_t) fData.tellg() - 28 + headerSize);
 
