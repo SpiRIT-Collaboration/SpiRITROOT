@@ -32,6 +32,9 @@ class STGenerator : public TObject {
     Bool_t SetParameterDir(TString dir);
     Bool_t SetPedestalData(TString filename, Int_t startTb = 3, Int_t numTbs = 20);
     void SetPersistence(Bool_t value = kTRUE);
+    void SetStoreRMS(Bool_t value = kTRUE);
+    void SetSumRMSCut(Int_t value = 0);
+    void SetPositivePolarity(Bool_t value = kTRUE);
 
     Bool_t AddData(TString filename);
     Bool_t AddData(Double_t voltage, TString filename);
@@ -60,6 +63,9 @@ class STGenerator : public TObject {
     TString fOutputFile;
 
     Bool_t fIsPersistence;
+    Bool_t fIsPositivePolarity;
+    Bool_t fIsStoreRMS;
+    Int_t fSumRMSCut;
 
     Int_t fNumEvents;
     Int_t *fEventList;

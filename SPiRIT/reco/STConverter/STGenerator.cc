@@ -39,18 +39,29 @@ STGenerator::STGenerator()
 {
   fMode = kError;
   fIsPersistence = kFALSE;
+  fIsStoreRMS = kFALSE;
+  fIsPositivePolarity = kFALSE;
 }
 
 STGenerator::STGenerator(TString mode)
 {
+  fMode = kError;
   SetMode(mode);
   fIsPersistence = kFALSE;
+  fIsStoreRMS = kFALSE;
+  fIsPositivePolarity = kFALSE;
 }
 
 STGenerator::~STGenerator()
 {
   if (fCore)
     delete fCore;
+}
+
+void
+STGenerator::SetPositivePolarity(Bool_t value)
+{
+  fIsPositivePolarity = value;
 }
 
 void
@@ -74,6 +85,7 @@ STGenerator::SetMode(TString mode)
   if (mode.EqualTo("pedestal")) {
     fMode = kPedestal;
     fNumEvents = 0;
+    fSumRMSCut = 0;
   } else if (mode.EqualTo("gain"))
     fMode = kGain;
   else if (mode.EqualTo("signaldelay"))
@@ -178,6 +190,24 @@ STGenerator::SetPersistence(Bool_t value)
   fIsPersistence = value;
 }
 
+void
+STGenerator::SetStoreRMS(Bool_t value)
+{
+  if (fMode == kGain || fMode == kSignalDelay) {
+    cout << "== [STGenerator::SetStoreRMS()] This method only valid with Pedestal data generation mode!" << endl;
+
+    return;
+  }
+
+  fIsStoreRMS = value;
+}
+
+void
+STGenerator::SetSumRMSCut(Int_t value)
+{
+  fSumRMSCut = value;
+}
+
 Bool_t
 STGenerator::AddData(TString filename)
 {
@@ -248,8 +278,14 @@ STGenerator::StartProcess()
     return;
   }
 
-  if (fMode == kPedestal)
+  fCore -> SetPositivePolarity(fIsPositivePolarity);
+
+  if (fMode == kPedestal) {
+    fCore -> SetData(0);
+    fCore -> SetPedestalGenerationMode();
+
     GeneratePedestalData();
+  }
   else if (fMode == kGain)
     GenerateGainCalibrationData();
   else if (fMode == kSignalDelay)
@@ -270,15 +306,23 @@ STGenerator::GeneratePedestalData()
   Double_t ***mean = new Double_t**[fRows];
   Double_t ***rms2 = new Double_t**[fRows];
 
+  Double_t **padMean = new Double_t*[fRows];
+  Double_t **padRMS2 = new Double_t*[fRows];
+
   for (iRow = 0; iRow < fRows; iRow++) {
     numValues[iRow] = new Int_t*[fLayers];
     mean[iRow] = new Double_t*[fLayers];
     rms2[iRow] = new Double_t*[fLayers];
+
+    padMean[iRow] = new Double_t[fLayers];
+    padRMS2[iRow] = new Double_t[fLayers];
     for (iLayer = 0; iLayer < fLayers; iLayer++) {
       numValues[iRow][iLayer] = new Int_t[fNumTbs];
       mean[iRow][iLayer] = new Double_t[fNumTbs];
       rms2[iRow][iLayer] = new Double_t[fNumTbs];
 
+      padMean[iRow][iLayer] = 0;
+      padRMS2[iRow][iLayer] = 0;
       for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
         numValues[iRow][iLayer][iTb] = 0;
         mean[iRow][iLayer][iTb] = 0;
@@ -302,6 +346,18 @@ STGenerator::GeneratePedestalData()
   }
   */
 
+  Double_t rmsSum = 0;
+  Int_t storeEventID = 0;
+  Int_t excluded = 0;
+
+  TTree *rmsTree = NULL;
+  if (fIsStoreRMS) {
+    rmsTree = new TTree("rmsSumTree", "");
+    rmsTree -> Branch("eventID", &storeEventID, "eventID/I");
+    rmsTree -> Branch("rmsSum", &rmsSum, "rmsSum/D");
+    rmsTree -> Branch("excluded", &excluded, "excluded/I");
+  }
+
   STRawEvent *event = NULL;
   Int_t eventID = 0;
   Int_t numExcluded = 0;
@@ -319,9 +375,48 @@ STGenerator::GeneratePedestalData()
       }
     }
 
-    cout << "[STGenerator] Start processing event: " << event -> GetEventID() << endl;
+    rmsSum = 0;
+    excluded = 0;
 
     Int_t numPads = event -> GetNumPads();
+
+    for (Int_t iPad = 0; iPad < numPads; iPad++) {
+      STPad *pad = event -> GetPad(iPad);
+      Int_t *adc = pad -> GetRawADC();
+
+      Int_t row = pad -> GetRow();
+      Int_t layer = pad -> GetLayer();
+
+      Int_t numTbs = 0;
+      for (Int_t iTb = 3; iTb < fNumTbs - 3; iTb++) {
+        math -> Reset();
+        math -> Set(numTbs++, padMean[row][layer], padRMS2[row][layer]);
+        math -> Add(adc[iTb]);
+        padMean[row][layer] = math -> GetMean();
+        padRMS2[row][layer] = math -> GetRMS2();
+      }
+
+      rmsSum += sqrt(padRMS2[row][layer]);
+    }
+
+    if (fSumRMSCut != 0 && rmsSum > fSumRMSCut)
+      excluded = 1;
+
+    if (fIsStoreRMS) {
+      storeEventID = event -> GetEventID();
+      rmsTree -> Fill();
+    }
+
+    if (excluded) {
+      if (event -> GetEventID()%200 == 0)
+        cout << "[STGenerator] Skip event: " << event -> GetEventID() << endl;
+
+      continue;
+    }
+
+    if (event -> GetEventID()%200 == 0)
+      cout << "[STGenerator] Start processing event: " << event -> GetEventID() << endl;
+
     for (Int_t iPad = 0; iPad < numPads; iPad++) {
       STPad *pad = event -> GetPad(iPad);
       Int_t *adc = pad -> GetRawADC();
@@ -335,13 +430,15 @@ STGenerator::GeneratePedestalData()
         math -> Add(adc[iTb]);
         mean[row][layer][iTb] = math -> GetMean();
         rms2[row][layer][iTb] = math -> GetRMS2();
+
         /*
         math[row][layer][iTb] -> Add(adc[iTb]);
         */
       }
     }
 
-    cout << "[STGenerator] Done processing event: " << event -> GetEventID() << endl;
+    if (event -> GetEventID()%200 == 0)
+      cout << "[STGenerator] Done processing event: " << event -> GetEventID() << endl;
 
     eventID++;
   }
@@ -358,6 +455,7 @@ STGenerator::GeneratePedestalData()
       for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
         pedestal[0][iTb] = mean[iRow][iLayer][iTb];
         pedestal[1][iTb] = sqrt(rms2[iRow][iLayer][iTb]);
+        
         /*
         pedestal[0][iTb] = math[iRow][iLayer][iTb] -> GetMean();
         pedestal[1][iTb] = math[iRow][iLayer][iTb] -> GetRMS();
