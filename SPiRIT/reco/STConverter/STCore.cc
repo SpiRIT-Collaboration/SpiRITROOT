@@ -60,6 +60,7 @@ void STCore::Initialize()
 //  fDecoderPtr -> SetDebugMode(1);
 
   fIsData = kFALSE;
+  fIsPedestalGenerationMode = kFALSE;
   fIsPedestalData = kFALSE;
   fIsInternalPedestal = kFALSE;
 
@@ -85,6 +86,11 @@ Bool_t STCore::AddData(TString filename)
 void STCore::SetNoAutoReload(Bool_t value)
 {
   fDecoderPtr -> SetNoAutoReload(value);
+}
+
+void STCore::SetPedestalGenerationMode(Bool_t value)
+{
+  fIsPedestalGenerationMode = value;
 }
 
 void STCore::SetPositivePolarity(Bool_t value)
@@ -182,9 +188,8 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
     return NULL;
   }
 
-  if (!fIsPedestalData && !fIsInternalPedestal) {
+  if (!fIsPedestalData && !fIsInternalPedestal && !fIsPedestalGenerationMode)
     std::cout << "== [STCore] Pedestal data file is not set!" << std::endl;
-  }
 
   fPrevEventNo = eventID;
 

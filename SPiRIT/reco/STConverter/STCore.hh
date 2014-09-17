@@ -34,6 +34,7 @@ class STCore : public TObject {
     // setters
     Bool_t AddData(TString filename);
     void SetNoAutoReload(Bool_t value = kFALSE);
+    void SetPedestalGenerationMode(Bool_t value = kTRUE);
     void SetPositivePolarity(Bool_t value = kTRUE);
     Bool_t SetData(Int_t value);
     Int_t GetNumData();
@@ -63,6 +64,7 @@ class STCore : public TObject {
     Bool_t fIsData;
 
     STPedestal *fPedestalPtr;
+    Bool_t fIsPedestalGenerationMode;
     Bool_t fIsInternalPedestal;
     Bool_t fIsPedestalData;
     Int_t fStartTb;
