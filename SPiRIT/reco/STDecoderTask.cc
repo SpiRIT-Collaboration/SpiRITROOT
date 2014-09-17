@@ -26,7 +26,12 @@ STDecoderTask::STDecoderTask()
   fDecoder = NULL;
   fDataNum = 0;
 
+  fUseInternalPedestal = kFALSE;
+  fStartTb = 3;
+  fAverageTbs = 20;
   fPedestalFile = "";
+  fPedestalRMSFactor = 0;
+
   fNumTbs = 512;
 
   fGainCalibrationFile = "";
@@ -45,14 +50,15 @@ STDecoderTask::~STDecoderTask()
 {
 }
 
-void STDecoderTask::SetPersistence(Bool_t value)                   { fIsPersistence = value; }
-void STDecoderTask::SetNumTbs(Int_t numTbs)                        { fNumTbs = numTbs; }
-void STDecoderTask::AddData(TString filename)                      { fDataList.push_back(filename); }
-void STDecoderTask::SetData(Int_t value)                           { fDataNum = value; }
-void STDecoderTask::SetPedestalData(TString filename)              { fPedestalFile = filename; }
-void STDecoderTask::SetGainCalibrationData(TString filename)       { fGainCalibrationFile = filename; }
-void STDecoderTask::SetGainBase(Double_t constant, Double_t slope) { fGainConstant = constant; fGainSlope = slope; }
-void STDecoderTask::SetSignalDelayData(TString filename)           { fSignalDelayFile = filename; }
+void STDecoderTask::SetPersistence(Bool_t value)                           { fIsPersistence = value; }
+void STDecoderTask::SetNumTbs(Int_t numTbs)                                { fNumTbs = numTbs; }
+void STDecoderTask::AddData(TString filename)                              { fDataList.push_back(filename); }
+void STDecoderTask::SetData(Int_t value)                                   { fDataNum = value; }
+void STDecoderTask::SetInternalPedestal(Int_t startTb, Int_t averageTbs)   { fStartTb = startTb; fAverageTbs = averageTbs; } 
+void STDecoderTask::SetPedestalData(TString filename, Double_t rmsFactor)  { fPedestalFile = filename; fPedestalRMSFactor = rmsFactor; }
+void STDecoderTask::SetGainCalibrationData(TString filename)               { fGainCalibrationFile = filename; }
+void STDecoderTask::SetGainBase(Double_t constant, Double_t slope)         { fGainConstant = constant; fGainSlope = slope; }
+void STDecoderTask::SetSignalDelayData(TString filename)                   { fSignalDelayFile = filename; }
 
 InitStatus
 STDecoderTask::Init()
@@ -73,12 +79,12 @@ STDecoderTask::Init()
   fDecoder -> SetNumTbs(fNumTbs);
   fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
   fDecoder -> SetAGETMap((fPar -> GetFile(1)).Data());
-  if (fPedestalFile.EqualTo("")) {
-    fLogger -> Info(MESSAGE_ORIGIN, "Use internal pedestal!");
 
-    fDecoder -> SetInternalPedestal();
-  } else {
-    Bool_t isSetPedestalData = fDecoder -> SetPedestalData(fPedestalFile);
+  if (fUseInternalPedestal)
+    fDecoder -> SetInternalPedestal(fStartTb, fAverageTbs);
+
+  if (!fPedestalFile.EqualTo("")) {
+    Bool_t isSetPedestalData = fDecoder -> SetPedestalData(fPedestalFile, fPedestalRMSFactor);
     if (!isSetPedestalData) {
       fLogger -> Error(MESSAGE_ORIGIN, "Cannot find pedestal data file!");
       

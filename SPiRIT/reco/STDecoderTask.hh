@@ -53,8 +53,10 @@ class STDecoderTask : public FairTask {
     void AddData(TString filename);
     /// Setting which data to be decoded
     void SetData(Int_t value);
-    /// Setting pedestal data file. If not set, internal pedestal calculation method will be used.
-    void SetPedestalData(TString filename);
+    /// Setting values for internal pedestal calculation.
+    void SetInternalPedestal(Int_t startTb = 3, Int_t averageTbs = 20);
+    /// Setting pedestal data file for external pedestal data.
+    void SetPedestalData(TString filename, Double_t rmsFactor = 0);
     /// Setting gain calibration data file. If not set, gain is not calibrated.
     void SetGainCalibrationData(TString filename);
     /// Setting gain calibration base.
@@ -79,7 +81,12 @@ class STDecoderTask : public FairTask {
 
     vector<TString> fDataList;    /// Raw data file list
     Int_t fDataNum;               /// Set which number in data list to be decoded
+
+    Bool_t fUseInternalPedestal;  /// Falg for using internal pedestal calculation
+    Int_t fStartTb;               /// Starting time bucket number for internal pedestal calculation
+    Int_t fAverageTbs;            /// The number of time buckets for internal pedestal calculation
     TString fPedestalFile;        /// Pedestal data file name
+    Double_t fPedestalRMSFactor;  /// Pedestal RMS factor that will be multiplied to external pedestal RMS value
 
     TString fGainCalibrationFile; /// Gain calibration data file name
     Double_t fGainConstant;       /// Gain calibration base constant
