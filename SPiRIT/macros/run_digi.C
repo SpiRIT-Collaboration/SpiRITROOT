@@ -22,7 +22,7 @@ void run_digi
   // __ Digi output file _______________________________
 
   TString digiFile=mcFile;
-          digiFile.ReplaceAll("mc","digi");
+          digiFile.ReplaceAll(".root","_digi.root");
 
 
   // __ Run ____________________________________________
