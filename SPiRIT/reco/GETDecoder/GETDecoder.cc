@@ -343,7 +343,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
 
       frameSize = (htonl(frameSize) >> 8)*64;
 
-      fData.seekg((Int_t)fData.tellg() - 4 + frameSize);
+      fData.seekg((ULong64_t)fData.tellg() - 4 + frameSize);
 
       fCurrentFrameID++;
     }
@@ -393,7 +393,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     fFrame -> SetFrameID(frameNo);
     fFrame -> SetPolarity((fIsPositivePolarity ? +1 : -1));
 
-    fData.seekg((Int_t) fData.tellg() - 28 + headerSize);
+    fData.seekg((ULong64_t) fData.tellg() - 28 + headerSize);
 
     UInt_t data;
     for (Int_t iItem = 0; iItem < nItems; iItem++) {
@@ -564,7 +564,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
   fFrame -> SetFrameID(frameNo);
   fFrame -> SetPolarity((fIsPositivePolarity ? +1 : -1));
 
-  fData.seekg((Int_t) fData.tellg() - 28 + headerSize);
+  fData.seekg((ULong64_t) fData.tellg() - 28 + headerSize);
 
   UInt_t data;
   for (Int_t iItem = 0; iItem < nItems; iItem++) {
@@ -635,7 +635,7 @@ void GETDecoder::ReadMergedFrameInfo()
   fData.read(reinterpret_cast<Char_t *>(&fCurrentMergedFrameSize), 3);
   fData.ignore(8);
   fData.read(reinterpret_cast<Char_t *>(&fNumMergedFrames), 4);
-  fData.seekg((Int_t)fData.tellg() - 16);
+  fData.seekg((ULong64_t)fData.tellg() - 16);
 
   if (fEndianness == kBig) {
     fCurrentMergedFrameSize = htonl(fCurrentMergedFrameSize) >> 8;
@@ -647,7 +647,7 @@ void GETDecoder::ReadInnerFrameInfo()
 {
   fData.ignore(1);
   fData.read(reinterpret_cast<Char_t *>(&fCurrentInnerFrameSize), 3);
-  fData.seekg((Int_t)fData.tellg() - 4);
+  fData.seekg((ULong64_t)fData.tellg() - 4);
 
   fCurrentInnerFrameSize = (htonl(fCurrentInnerFrameSize) >> 8)*64;
 }

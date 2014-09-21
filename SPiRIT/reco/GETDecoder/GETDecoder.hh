@@ -107,16 +107,16 @@ class GETDecoder : public TObject
     Int_t fFrameType;  /// frame type. 0: normal frame, 1: event number merged, 2: event time merged
     Int_t fMergedHeaderSize; /// header size of merged frame. For additional skip bytes when finding frame by frame number.
     Int_t fNumMergedFrames; /// the number of merged frames. For additional skip bytes when finding frame by frame number.
-    UInt_t fMergedFrameStartPoint; /// byte number of the merged frame start point. For navigational feature in a merged frame.
-    UInt_t fCurrentMergedFrameSize; /// size of a merged frame of the frame ID **fCurrentFrameID**. For additional skip bytes when finding frame by frame number.
-    UInt_t fCurrentInnerFrameSize; /// size of an inner frame.
+    ULong64_t fMergedFrameStartPoint; /// byte number of the merged frame start point. For navigational feature in a merged frame.
+    ULong64_t fCurrentMergedFrameSize; /// size of a merged frame of the frame ID **fCurrentFrameID**. For additional skip bytes when finding frame by frame number.
+    ULong64_t fCurrentInnerFrameSize; /// size of an inner frame.
 
     Bool_t fDebugMode; /// flag for debug mode
     Bool_t fIsAutoReload; /// Flag for auto reloading continuing data file in the list.
     Bool_t fIsPositivePolarity; /// Flag for the signal polarity
 
     std::ifstream fData;            /// rawdata filestream
-    UInt_t fFileSize; /// file size
+    ULong64_t fFileSize; /// file size
     std::vector<TString> fDataList; /// rawdata file list
     Int_t fCurrentDataID;        /// current file index in list
 
