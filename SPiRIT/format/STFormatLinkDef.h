@@ -12,6 +12,7 @@
 #pragma link C++ class STHitCluster+;
 #pragma link C++ class STPrimaryCluster+;
 #pragma link C++ class STDriftedElectron+;
+#pragma link C++ class STDigitizedElectron+;
 #pragma link C++ class STAvalanche+;
 
 #endif
