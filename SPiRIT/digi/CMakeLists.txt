@@ -10,8 +10,9 @@ ${CMAKE_SOURCE_DIR}/geobase
 ${CMAKE_SOURCE_DIR}/SPiRIT/mc
 ${CMAKE_SOURCE_DIR}/SPiRIT/par
 ${CMAKE_SOURCE_DIR}/SPiRIT/format
-${CMAKE_SOURCE_DIR}/SPiRIT/digi
 ${CMAKE_SOURCE_DIR}/SPiRIT/digi/PadResponse
+${CMAKE_SOURCE_DIR}/SPiRIT/digi/DigiElectron
+${CMAKE_SOURCE_DIR}/SPiRIT/digi
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -25,7 +26,10 @@ link_directories(${LINK_DIRECTORIES})
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
 PadResponse/STPadResponse.cc
+DigiElectron/STDriftElectron.cc
+DigiElectron/STWireResponse.cc
 
+STDigiElectronTask.cc
 STClusterizerTask.cc
 STDriftTask.cc
 STAvalancheTask.cc
