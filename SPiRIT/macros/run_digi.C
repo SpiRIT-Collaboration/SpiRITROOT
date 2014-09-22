@@ -1,6 +1,7 @@
-void run_digi
-(TString mcFile      = "data/test.mc_youngstest.root",
- TString mcParFile   = "data/params_youngstest.root",
+void run_newDigi
+(TString mcFile      = "data/spirit_v2.root",
+ TString mcParFile   = "data/spirit_params_v2.root",
+ TString digiFile    = "data/spirit.digi.root",
  TString digiParFile = "ST.parameters.par")
 {
   // __ Set Enviroment _________________________________
@@ -21,8 +22,8 @@ void run_digi
 
   // __ Digi output file _______________________________
 
-  TString digiFile=mcFile;
-          digiFile.ReplaceAll(".root","_digi.root");
+  //TString digiFile=mcFile;
+  //        digiFile.ReplaceAll(".root","_digi.root");
 
 
   // __ Run ____________________________________________
@@ -46,23 +47,10 @@ void run_digi
 
   // __ ST digi tasks___________________________________
 
-  STClusterizerTask* clusterizer = new STClusterizerTask();
-                     clusterizer -> SetPersistence(kTRUE);
-                     //clusterizer -> SetTestMode();
+  STDigiElectronTask* digi = new STDigiElectronTask();
+                      digi -> SetPersistence(kTRUE);
 
-  STDriftTask* drifter = new STDriftTask();
-               drifter -> SetPersistence(kTRUE);
-               //drifter -> SetTestMode();
-               drifter -> SetWriteHistogram();
-
-  STAvalancheTask* avalanche = new STAvalancheTask();
-                   avalanche -> SetPersistence(kTRUE);
-                   avalanche -> SetWriteHistogram();
-                   //avalanche -> SetTestMode();
-
-  fRun -> AddTask(clusterizer);
-  fRun -> AddTask(drifter);
-  fRun -> AddTask(avalanche);
+  fRun -> AddTask(digi);
 
   // __ Init and run ___________________________________
 
