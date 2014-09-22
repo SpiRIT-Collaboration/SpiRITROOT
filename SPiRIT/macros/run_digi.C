@@ -1,4 +1,4 @@
-void run_newDigi
+void run_digi
 (TString mcFile      = "data/spirit_v2.root",
  TString mcParFile   = "data/spirit_params_v2.root",
  TString digiFile    = "data/spirit.digi.root",
