@@ -24,12 +24,12 @@ STMap::STMap()
 }
 
 // Getters
-void STMap::GetRowNLayer(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx, Int_t &padRow, Int_t &padLayer) {
+Bool_t STMap::GetRowNLayer(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx, Int_t &padRow, Int_t &padLayer) {
   if (fPadLayerOfCh[chIdx] == -2) {
     padLayer = -2;
     padRow = -2;
 
-    return;
+    return kFALSE;
   }
 
   Int_t UAIdx = GetUAIdx(coboIdx, asadIdx);
@@ -41,10 +41,10 @@ void STMap::GetRowNLayer(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chId
     padLayer = (UAIdx/100)*28 + agetIdx*7 + (6 - fPadLayerOfCh[chIdx]);
   }
 
-  return;
+  return kTRUE;
 }
 
-void STMap::GetMapData(Int_t padRow, Int_t padLayer, Int_t &UAIdx, Int_t &coboIdx, Int_t &asadIdx, Int_t &agetIdx, Int_t &chIdx)
+Bool_t STMap::GetMapData(Int_t padRow, Int_t padLayer, Int_t &UAIdx, Int_t &coboIdx, Int_t &asadIdx, Int_t &agetIdx, Int_t &chIdx)
 {
   if (padRow < 0 || padRow >= 108 || padLayer < 0 || padLayer >= 112) {
     UAIdx = -1;
@@ -53,7 +53,7 @@ void STMap::GetMapData(Int_t padRow, Int_t padLayer, Int_t &UAIdx, Int_t &coboId
     agetIdx = -1;
     chIdx = -1;
 
-    return;
+    return kFALSE;
   }
 
   UAIdx = (padLayer/28)*100 + padRow;
@@ -86,6 +86,8 @@ void STMap::GetMapData(Int_t padRow, Int_t padLayer, Int_t &UAIdx, Int_t &coboId
         break;
       }
   }
+
+  return kTRUE;
 }
 
 Bool_t STMap::IsSetUAMap()

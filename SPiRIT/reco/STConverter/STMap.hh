@@ -35,8 +35,8 @@ class STMap : public TObject {
     Bool_t IsSetUAMap();
     Bool_t IsSetAGETMap();
 
-    void GetRowNLayer(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx, Int_t &padRow, Int_t &padLayer);
-    void GetMapData(Int_t padRow, Int_t padLayer, Int_t &UAIdx, Int_t &coboIdx, Int_t &asadIdx, Int_t &agetIdx, Int_t &chIdx);
+    Bool_t GetRowNLayer(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx, Int_t &padRow, Int_t &padLayer);
+    Bool_t GetMapData(Int_t padRow, Int_t padLayer, Int_t &UAIdx, Int_t &coboIdx, Int_t &asadIdx, Int_t &agetIdx, Int_t &chIdx);
 
     Int_t GetUAIdx(Int_t coboIdx, Int_t asadIdx);
     Int_t GetCoboIdx(Int_t uaIdx);
