@@ -112,7 +112,11 @@ STDigiElectronTask::Exec(Option_t *opt)
   Double_t       zWire;
   Int_t          gain;
 
+  //InitializeRawEvent();
+  //wireResponse -> SetRawEvent(event);
+
   for(Int_t iPoint=1; iPoint<nPoints; iPoint++) {
+    cout << iPoint << " / " << nPoints << endl;
     MCPoint = (STMCPoint*) fMCPointArray -> At(iPoint);
 
     Double_t energyLoss = (MCPoint -> GetEnergyLoss())*1E9; //convert from [GeV] to [eV]
@@ -132,7 +136,8 @@ STDigiElectronTask::Exec(Option_t *opt)
 
       positionTimeDrift = driftElectron -> Drift();
       zWire             = wireResponse  -> FindZWire(positionTimeDrift.Z());
-      gain              = wireResponse  -> FillPad(positionTimeDrift.X());
+      gain              = wireResponse  -> FillPad(positionTimeDrift.X(),
+                                                   positionTimeDrift.T());
 
       Int_t size = fDigitizedElectronArray -> GetEntriesFast();
       STDigitizedElectron* electron 
@@ -149,7 +154,48 @@ STDigiElectronTask::Exec(Option_t *opt)
   cout << "STDigiElectronTask : Number of digi electron created : " 
        << fDigitizedElectronArray -> GetEntriesFast() << endl;
 
-  //wireResponse  -> WriteHistogram();
+  wireResponse -> WriteHistogram();
 
   return;
 }
+
+/*
+void
+STDigiElectronTask::InitializeRawEvent()
+{
+  nTBs = fPar -> GetNumTbs(); // number of time buckets
+
+  event = new STRawEvent();
+  event -> SetName("event");
+  event -> SetEventID(1);
+
+  map = new STMap();
+  map -> SetUAMap(fPar -> GetFile("UAMapFile"));
+  map -> SetAGETMap(fPar -> GetFile("AGETMapFile"));
+
+  Int_t row, layer;
+
+  for(Int_t iCoBo=0; iCoBo<12; iCoBo++){
+    for(Int_t iAsAd=0; iAsAd<4; iAsAd++){
+      for(Int_t iAGET=0; iAGET<4; iAGET++){
+        for(Int_t iCh=0; iCh<68; iCh++){
+
+          Bool_t isActive = map -> GetRowNLayer(iCoBo, iAsAd, iAGET, iCh, row, layer);
+          //if(!isActive) continue;
+          if(row<0) continue;
+
+          STPad* pad = new STPad(row,layer);
+                 pad -> SetPedestalSubtracted(kTRUE);
+
+          for(int iTB=0; iTB<nTBs; iTB++){
+            pad -> SetADC(iTB, 0);
+          }
+
+          event -> SetPad(pad);
+          delete pad;
+        }
+      }
+    }
+  }
+}
+*/
