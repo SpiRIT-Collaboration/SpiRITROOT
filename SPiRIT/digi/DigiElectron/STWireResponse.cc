@@ -12,6 +12,8 @@ ClassImp(STWireResponse);
 STWireResponse::STWireResponse(STGas* gas)
 : fGas(gas)
 {
+  maxTime = 10000.;    //[ns]
+
   // wire plane 
   Int_t nWire = 363;
   zCenterWire  = 67.2; // [cm]
@@ -80,15 +82,14 @@ Int_t STWireResponse::FillPad(Double_t x, Double_t t)
   x2 = (binX+1)*binSizeX - xPadPlane/2;
 
   content  = fWPField -> Integral(z1,z2,x1,x2);
-  content += fPadPlane -> GetBinContent(binZ,binX);
 
-  /*
-  Int_t t
-  STPad* pad = event -> GetPad(binX,binZ);
-         pad -> GetADC(
-         */
+  Int_t iTB = floor( t * nTBs / maxTime );
 
-  fPadPlane -> SetBinContent(binZ,binX,content);
+  pad = fEvent -> GetPad(binX,binZ);
+  pad -> SetADC(iTB, content + (pad -> GetADC(iTB)) );
+
+  fPadPlane -> SetBinContent(binZ,binX, content + (fPadPlane -> GetBinContent(binZ,binX)) );
+
 
   /*
   for(Int_t dZ=-1; dZ<=1; dZ++){

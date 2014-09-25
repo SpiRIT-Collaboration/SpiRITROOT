@@ -12,7 +12,7 @@ STDriftElectron::STDriftElectron(STDigiPar* par, STGas* gas)
   fGas(gas)
 {
   fWirePlaneY = (fPar -> GetAnodeWirePlaneY())/10; // [mm] to [cm]
-  fVelDrift   = fGas -> GetDriftVelocity();        // [cm/ns]
+  fVelDrift   = (fGas -> GetDriftVelocity())/1000; // [cm/us] to [cm/ns]
   fCoefDL     = fGas -> GetCoefDiffusionLong();
   fCoefDT     = fGas -> GetCoefDiffusionTrans();
 }

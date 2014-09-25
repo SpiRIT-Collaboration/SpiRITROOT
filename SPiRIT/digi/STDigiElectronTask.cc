@@ -2,7 +2,7 @@
 // Description:
 //      DigiElectron task class source
 //
-//      STDigiElectron reads in MCPoints and produces primary clusters
+//      STDigiElectronTask reads in MCPoints and produces primary clusters
 //
 //      Input  : STMC
 //      Output : STDigitizedElectron
@@ -97,7 +97,7 @@ void STDigiElectronTask::SetParContainers()
 void
 STDigiElectronTask::Exec(Option_t *opt)
 {
-  if(fDigitizedElectronArray == 0) Fatal("STDigiElectron::Exec)","No Digitized Electron Array");
+  if(fDigitizedElectronArray == 0) Fatal("STDigiElectronTask::Exec)","No Digitized Electron Array");
   fDigitizedElectronArray -> Delete();
 
   Int_t nPoints = fMCPointArray -> GetEntries();
@@ -105,15 +105,15 @@ STDigiElectronTask::Exec(Option_t *opt)
     Warning("STDigiElectronTask::Exec", "Not enough Hits in Tpc for Digitization (<2)");
     return;
   }
-  else cout << "STDigiElectronTask : Number of MC pooints : " << nPoints << endl;
+  else cout << "[STDigiElectronTask] Number of MC points : " << nPoints << endl;
 
   TLorentzVector positionTimeMC;
   TLorentzVector positionTimeDrift;
   Double_t       zWire;
   Int_t          gain;
 
-  //InitializeRawEvent();
-  //wireResponse -> SetRawEvent(event);
+  InitializeRawEvent();
+  wireResponse -> SetRawEvent(event, nTBs);
 
   for(Int_t iPoint=1; iPoint<nPoints; iPoint++) {
     cout << iPoint << " / " << nPoints << endl;
@@ -151,15 +151,15 @@ STDigiElectronTask::Exec(Option_t *opt)
     }
   }
 
-  cout << "STDigiElectronTask : Number of digi electron created : " 
+  cout << "[STDigiElectronTask] Number of digi electron created : " 
        << fDigitizedElectronArray -> GetEntriesFast() << endl;
 
   wireResponse -> WriteHistogram();
+  WriteRawEvent();
 
   return;
 }
 
-/*
 void
 STDigiElectronTask::InitializeRawEvent()
 {
@@ -170,8 +170,8 @@ STDigiElectronTask::InitializeRawEvent()
   event -> SetEventID(1);
 
   map = new STMap();
-  map -> SetUAMap(fPar -> GetFile("UAMapFile"));
-  map -> SetAGETMap(fPar -> GetFile("AGETMapFile"));
+  map -> SetUAMap((fPar -> GetFile(0)).Data());
+  map -> SetAGETMap((fPar -> GetFile(1)).Data());
 
   Int_t row, layer;
 
@@ -181,8 +181,7 @@ STDigiElectronTask::InitializeRawEvent()
         for(Int_t iCh=0; iCh<68; iCh++){
 
           Bool_t isActive = map -> GetRowNLayer(iCoBo, iAsAd, iAGET, iCh, row, layer);
-          //if(!isActive) continue;
-          if(row<0) continue;
+          if(!isActive) continue;
 
           STPad* pad = new STPad(row,layer);
                  pad -> SetPedestalSubtracted(kTRUE);
@@ -197,5 +196,17 @@ STDigiElectronTask::InitializeRawEvent()
       }
     }
   }
+
 }
-*/
+
+void STDigiElectronTask::WriteRawEvent()
+{
+  cout << "[STDigiElectronTask] Writing event..." << endl;
+
+  TFile* file = FairRootManager::Instance() -> GetOutFile();
+
+  file -> mkdir("RawEvent");
+  file -> cd("RawEvent");
+
+  event -> Write();
+}

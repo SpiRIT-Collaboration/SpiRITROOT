@@ -28,8 +28,8 @@
 #include "STMCPoint.hh"
 #include "STDriftElectron.hh"
 #include "STWireResponse.hh"
-//#include "STMap.hh"
-//#include "STRawEvent.hh"
+#include "STMap.hh"
+#include "STRawEvent.hh"
 
 class STDigiElectronTask : public FairTask
 {
@@ -49,7 +49,7 @@ class STDigiElectronTask : public FairTask
     virtual void Exec(Option_t *opt);
 
   private:
-    //void InitializeRawEvent();
+    void InitializeRawEvent();
     void WriteRawEvent();
 
     // variables
@@ -58,8 +58,8 @@ class STDigiElectronTask : public FairTask
     TClonesArray *fDigitizedElectronArray; /// Primary cluster array
 
     Int_t nTBs;
-    //STRawEvent* event;
-    //STMap* map;
+    STRawEvent* event;
+    STMap* map;
 
     STDriftElectron* driftElectron;
     STWireResponse*  wireResponse;

@@ -19,13 +19,16 @@ class STWireResponse
     Int_t    FillPad(Double_t x, Double_t t);
     void     WriteHistogram();
 
-    void     SetRawEvent(STRawEvent* event) { fEvent = event; };
+    void     SetRawEvent(STRawEvent* event, Int_t nTBsP) 
+             { fEvent = event; nTBs = nTBsP; };
 
   private :
     TH2D* fPadPlane;
     TF2*  fWPField;
 
     STGas* fGas;
+
+    Double_t maxTime;
 
     Double_t fGain;
     Double_t zCenterWire;
@@ -48,6 +51,8 @@ class STWireResponse
 
     // STRawEvent
     STRawEvent* fEvent;
+    STPad*      pad;
+    Int_t       nTBs;
 
   ClassDef(STWireResponse, 1);
 };

@@ -13,6 +13,7 @@ ${CMAKE_SOURCE_DIR}/SPiRIT/format
 ${CMAKE_SOURCE_DIR}/SPiRIT/digi/PadResponse
 ${CMAKE_SOURCE_DIR}/SPiRIT/digi/DigiElectron
 ${CMAKE_SOURCE_DIR}/SPiRIT/digi
+${CMAKE_SOURCE_DIR}/SPiRIT/reco/STConverter
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -48,6 +49,7 @@ Set(DEPENDENCIES
   STMC
   STPar
   STFormat
+  STReco
 )
 
 GENERATE_LIBRARY()
