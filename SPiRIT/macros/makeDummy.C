@@ -1,4 +1,4 @@
-void makeDummy(const Int_t nEvents = 10)
+void makeDummy(const Int_t nEvents = 20000)
 {
   gRandom -> SetSeed(time(0));
   
@@ -35,10 +35,12 @@ void makeDummy(const Int_t nEvents = 10)
   run->AddModule(target);
   
   FairDetector* spirit = new STDetector("STDetector", kTRUE);
-  spirit->SetGeometryFileName("testingsave_geom.root");
+  spirit->SetGeometryFileName("spirit_v03.1.root");
   run->AddModule(spirit);
     
   // ------------------------------------------------------------------------
+
+  run->SetMaterials("media.geo");      
     
   // -----   Create PrimaryGenerator   --------------------------------------
   FairPrimaryGenerator *primGen = new FairPrimaryGenerator();
