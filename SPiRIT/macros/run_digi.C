@@ -1,7 +1,7 @@
 void run_digi
 (TString mcFile      = "data/spirit_v2.root",
  TString mcParFile   = "data/spirit_params_v2.root",
- TString digiFile    = "data/spirit.digi.root",
+ TString digiFile    = "data/spirit.raw.root",
  TString digiParFile = "ST.parameters.par")
 {
   // __ Set Enviroment _________________________________
