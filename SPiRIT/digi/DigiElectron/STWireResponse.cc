@@ -76,6 +76,9 @@ Int_t STWireResponse::FillPad(Double_t x, Double_t t)
   Double_t x2;
   Double_t content;
 
+  Int_t iTB = floor( t * nTBs / maxTime );
+
+  /*
   z1 = binZ*binSizeZ;
   z2 = (binZ+1)*binSizeZ;
   x1 = binX*binSizeX - xPadPlane/2;
@@ -83,15 +86,12 @@ Int_t STWireResponse::FillPad(Double_t x, Double_t t)
 
   content  = fWPField -> Integral(z1,z2,x1,x2);
 
-  Int_t iTB = floor( t * nTBs / maxTime );
-
   pad = fEvent -> GetPad(binX,binZ);
   pad -> SetADC(iTB, content + (pad -> GetADC(iTB)) );
 
   fPadPlane -> SetBinContent(binZ,binX, content + (fPadPlane -> GetBinContent(binZ,binX)) );
+  */
 
-
-  /*
   for(Int_t dZ=-1; dZ<=1; dZ++){
     for(Int_t dX=-1; dX<=1; dX++){
 
@@ -104,10 +104,13 @@ Int_t STWireResponse::FillPad(Double_t x, Double_t t)
       x2 = (ibinX+1)*binSizeX - xPadPlane/2;
 
       content  = fWPField -> Integral(z1,z2,x1,x2);
-      content += fPadPlane -> GetBinContent(ibinZ,ibinX);
+
+      pad = fEvent -> GetPad(ibinX,ibinZ);
+      pad -> SetADC(iTB, content + (pad -> GetADC(iTB)) );
+
+      fPadPlane -> SetBinContent(ibinZ,ibinX, content + (fPadPlane -> GetBinContent(ibinZ,ibinX)) );
     }
   }
-  */
 
   return gain;
 }
