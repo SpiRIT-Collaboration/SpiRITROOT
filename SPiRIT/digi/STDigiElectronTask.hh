@@ -41,7 +41,7 @@ class STDigiElectronTask : public FairTask
     // Operators
     // Getters
     // Setters
-    void SetPersistence(Bool_t val) { fIsPersistent = val; };
+    void SetPersistence(Bool_t val) { fIsPersistence = val; };
     
     // Main methods
     virtual InitStatus Init();
@@ -50,15 +50,15 @@ class STDigiElectronTask : public FairTask
 
   private:
     void InitializeRawEvent();
-    void WriteRawEvent();
 
     // variables
     TString fMCPointBranchName;            /// Name of MC data branch
     TClonesArray *fMCPointArray;           /// Point array for MC data
     TClonesArray *fDigitizedElectronArray; /// Primary cluster array
+    TClonesArray *fRawEventArray;          /// Primary cluster array
 
     Int_t nTBs;
-    STRawEvent* event;
+    STRawEvent* rawEvent;
     STMap* map;
 
     STDriftElectron* driftElectron;
@@ -71,7 +71,7 @@ class STDigiElectronTask : public FairTask
     Double_t EIonize;   /// ionization energy
 
 
-    Bool_t fIsPersistent; /// If true, save container
+    Bool_t fIsPersistence; /// If true, save container
 
   ClassDef(STDigiElectronTask, 1);
 };

@@ -39,7 +39,7 @@ ClassImp(STDigiElectronTask);
 
 STDigiElectronTask::STDigiElectronTask()
 : FairTask("SPiRIT DigiElectron"),
-  fIsPersistent(kFALSE)
+  fIsPersistence(kFALSE)
 {
   fMCPointBranchName = "STMCPoint";
 }
@@ -69,7 +69,10 @@ STDigiElectronTask::Init()
   
   // Create and register output array
   fDigitizedElectronArray = new TClonesArray("STDigitizedElectron"); 
-  ioman -> Register("STDigitizedElectron", "ST", fDigitizedElectronArray, fIsPersistent);
+  ioman -> Register("STDigitizedElectron", "ST", fDigitizedElectronArray, fIsPersistence);
+
+  fRawEventArray = new TClonesArray("STRawEvent"); 
+  ioman -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
 
   fGas = fPar -> GetGas();
   EIonize = (fGas -> GetEIonize())*1E6; //convert from MeV to eV
@@ -113,7 +116,7 @@ STDigiElectronTask::Exec(Option_t *opt)
   Int_t          gain;
 
   InitializeRawEvent();
-  wireResponse -> SetRawEvent(event, nTBs);
+  wireResponse -> SetRawEvent(rawEvent, nTBs);
 
   for(Int_t iPoint=1; iPoint<nPoints; iPoint++) {
     cout << iPoint << " / " << nPoints << endl;
@@ -155,7 +158,8 @@ STDigiElectronTask::Exec(Option_t *opt)
        << fDigitizedElectronArray -> GetEntriesFast() << endl;
 
   wireResponse -> WriteHistogram();
-  WriteRawEvent();
+
+  new ((*fRawEventArray)[0]) STRawEvent(rawEvent);
 
   return;
 }
@@ -165,9 +169,9 @@ STDigiElectronTask::InitializeRawEvent()
 {
   nTBs = fPar -> GetNumTbs(); // number of time buckets
 
-  event = new STRawEvent();
-  event -> SetName("event");
-  event -> SetEventID(1);
+  rawEvent = new STRawEvent();
+  rawEvent -> SetName("rawEvent");
+  rawEvent -> SetEventID(1);
 
   map = new STMap();
   map -> SetUAMap((fPar -> GetFile(0)).Data());
@@ -190,23 +194,11 @@ STDigiElectronTask::InitializeRawEvent()
             pad -> SetADC(iTB, 0);
           }
 
-          event -> SetPad(pad);
+          rawEvent -> SetPad(pad);
           delete pad;
         }
       }
     }
   }
 
-}
-
-void STDigiElectronTask::WriteRawEvent()
-{
-  cout << "[STDigiElectronTask] Writing event..." << endl;
-
-  TFile* file = FairRootManager::Instance() -> GetOutFile();
-
-  file -> mkdir("RawEvent");
-  file -> cd("RawEvent");
-
-  event -> Write();
 }
