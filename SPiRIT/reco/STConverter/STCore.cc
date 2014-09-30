@@ -133,6 +133,7 @@ void STCore::SetInternalPedestal(Int_t startTb, Int_t averageTbs)
     std::cout << "== [STCore] Internal pedestal calculation will be done!" << std::endl;
   }
 
+  fIsInternalPedestal = kTRUE;
   fStartTb = startTb;
   fAverageTbs = averageTbs;
 }
