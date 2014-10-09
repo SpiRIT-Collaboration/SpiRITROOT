@@ -1,65 +1,33 @@
 #include "../run_mc_eloss.C"
 #include "calculateEnergyLoss.cc"
 
-void energyLossStudy(Bool_t createMC = kFALSE)
+void energyLossStudy(TString outFileName = "data/energyLoss.dat", 
+                     Bool_t  createMC    = kFALSE, 
+                     Int_t   nEvents     = 10,
+                     Int_t   particle    = 0,
+                     Int_t   momentum    = 300)
 {
   TString tagHead = "eLossTest";
-  TString tag;
+  TString tag     = tagHead + "_" + TString::Itoa(particle,10) + "_" + TString::Itoa(momentum,10) + "MeV";
 
-  Int_t nEvents     = 10;
-  Int_t particle    = 0;
-  Int_t maxMomentum = 400;
-  Int_t dMomentum   = 10;
-
-  Int_t    momentum;
   Double_t energy;
-
   Double_t mass = 938.272; // [MeV]
 
-  const Int_t nEnergy = maxMomentum/dMomentum;
-  Double_t dEdx[nEnergy];
-  Double_t travelDistance[nEnergy];
+  Double_t dEdx;
+  Double_t travelDistance;
 
-  Double_t dEdxVal;
-  Double_t travelDistanceVal;
+  energy = sqrt(mass + momentum*momentum);
+  cout << "[creatMCSamples ] Particle momentum : " << setw(8) << momentum << " MeV/c" << endl;
+  cout << "[creatMCSamples ] Particle energy   : " << setw(8) << energy   << " MeV" << endl;
 
-  cout << "[creatMCSamples ] Number of Energy  : " << setw(8) << nEnergy << endl;
+  if(createMC) run_mc_eloss(nEvents, particle, (Double_t)momentum, tag); // MC
+  calculateEnergyLoss(tag, dEdx, travelDistance); // Energy loss calculation
 
-  for(Int_t iEnergy=0; iEnergy<nEnergy; iEnergy++)
-  {
-    momentum = (iEnergy+1)*dMomentum;
-    energy = sqrt(mass + momentum*momentum);
-    cout << "[creatMCSamples ] Particle momentum : " << setw(8) << momentum << endl;
-    cout << "[creatMCSamples ] Particle energy   : " << setw(8) << energy   << endl;
-    tag = tagHead + "_" + TString::Itoa(particle,10) + "_" + TString::Itoa(momentum,10) + "MeV";
-
-
-
-
-    if(createMC) run_mc_eloss(nEvents, particle, (Double_t)momentum, tag); // MC
-    calculateEnergyLoss(tag, dEdxVal, travelDistanceVal); // Energy loss calculation
-
-
-
-
-    dEdx[iEnergy]           = dEdxVal;
-    travelDistance[iEnergy] = travelDistanceVal;
-  }
-
-  cout << endl;
-  cout << setw(20) << "Energy [MeV]" 
-       << setw(20) << "dE/dx [MeV/mm]" 
-       << setw(25) << "Travel distance [mm]" << endl;
-  cout << "--------------------|" 
-       << "-------------------|"
-       << "------------------------" << endl;
-  for(Int_t iEnergy=0; iEnergy<nEnergy; iEnergy++)
-  {
-    momentum = (iEnergy+1)*dMomentum;
-    energy = sqrt(mass + momentum*momentum);
-    cout << setw(20) << energy
-         << setw(20) << dEdx[iEnergy]
-         << setw(25) << travelDistance[iEnergy] << endl;
-  }
-
+  ofstream outFile(outFileName.Data(), ios::out | ios::app );
+           outFile << setw(3)  << particle
+                   << setw(5)  << momentum
+                   << setw(15) << energy
+                   << setw(15) << dEdx
+                   << setw(15) << travelDistance
+                   << endl;
 }

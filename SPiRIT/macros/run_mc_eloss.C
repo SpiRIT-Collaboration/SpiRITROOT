@@ -110,14 +110,14 @@ void run_mc_eloss(Int_t    nEvents  = 1,
   // -----   Runtime database   ---------------------------------------------
   Bool_t kParameterMerged = kTRUE;
   FairParRootFileIo* parOut = new FairParRootFileIo(kParameterMerged);
-  parOut->open(parFile.Data());
-  rtdb->setOutput(parOut);
-  rtdb->saveOutput();
-  rtdb->print();
+  parOut -> open(parFile.Data());
+  rtdb -> setOutput(parOut);
+  rtdb -> saveOutput();
+  rtdb -> print();
 
 
 
-  run->Run(nEvents);
+  run -> Run(nEvents);
   delete run;
 
 
