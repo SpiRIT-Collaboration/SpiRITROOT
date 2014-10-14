@@ -1,62 +1,55 @@
-void run_digi
-(TString mcFile      = "data/spirit_v2.root",
- TString mcParFile   = "data/spirit_params_v2.root",
- TString digiFile    = "data/spirit.raw.root",
- TString digiParFile = "ST.parameters.par")
+void run_digi(TString tag = "eLossTest")
 {
-  // __ Set Enviroment _________________________________
+  TStopwatch timer;
+  timer.Start();
 
-  TString sysDir = gSystem->Getenv("VMCWORKDIR");
+  TString workDir     = gSystem -> Getenv("SPIRITDIR");
+  TString geomDir     = workDir + "/geometry";
+  TString confDir     = workDir + "/gconfig";
+  TString dataDir     = "data";
+  TString mcFile      = dataDir + "/spirit_" + tag + ".mc.root"; 
+  TString mcParFile   = dataDir + "/spirit_" + tag + ".params.root"; 
+  TString digiFile    = dataDir + "/spirit_" + tag + ".raw.root"; 
+  TString digiParFile = workDir + "/parameters/ST.parameters.par";
 
-  TString geomDir = sysDir + "/../SPiRIT/geometry";
   gSystem->Setenv("GEOMPATH",geomDir.Data());
-
-  TString confDir = sysDir;
-          confDir.ReplaceAll("/geometry","/gconfig");
   gSystem->Setenv("CONFIG_DIR",confDir.Data());
 
-  TString digiParDir = sysDir;
-          digiParDir += "/../SPiRIT/parameters/";
-          digiParFile = digiParDir + digiParFile;
 
 
-  // __ Digi output file _______________________________
-
-  //TString digiFile=mcFile;
-  //        digiFile.ReplaceAll(".root","_digi.root");
-
-
-  // __ Run ____________________________________________
+  FairLogger *logger = FairLogger::GetLogger();
+              logger -> SetLogFileName("log/digi.log");
+              logger -> SetLogToScreen(kTRUE);
+              logger -> SetLogToFile(kTRUE);
+              logger -> SetLogVerbosityLevel("HIGH");
 
   FairRunAna* fRun = new FairRunAna();
               fRun -> SetInputFile(mcFile.Data());
               fRun -> SetOutputFile(digiFile.Data());
 
-
-  // __ Parameter ______________________________________
-
-
   FairParRootFileIo*  mcParInput = new FairParRootFileIo();
                       mcParInput -> open(mcParFile);
   FairParAsciiFileIo* digiParInput = new FairParAsciiFileIo();
-                      digiParInput -> open(digiParFile.Data());
+                      digiParInput -> open(digiParFile);
   
   FairRuntimeDb* fDb = fRun -> GetRuntimeDb();
                  fDb -> setFirstInput(mcParInput);
                  fDb -> setSecondInput(digiParInput);
 
-  // __ ST digi tasks___________________________________
-
   STDigiElectronTask* digi = new STDigiElectronTask();
                       digi -> SetPersistence(kTRUE);
 
+
+
+
   fRun -> AddTask(digi);
-
-  // __ Init and run ___________________________________
-
   fRun -> Init();
   fRun -> Run(0,1);
 
-  //fDb -> saveOutput();
-  //fDb -> print();
+  timer.Stop();
+  cout << endl << endl;
+  cout << "Digi macro finished succesfully." << endl;
+  cout << "Output file : " << digiFile       << endl;
+  cout << "Real time " << timer.RealTime()   << " s" << endl;
+  cout << "CPU  time " << timer.CpuTime()    << " s" << endl << endl;
 }

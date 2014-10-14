@@ -4,7 +4,7 @@
   gStyle -> SetStatX(0.3);             
   gStyle -> SetStatY(0.9);             
 
-  TFile* file = new TFile("data/test.digi_youngstest.root");
+  TFile* file = new TFile("data/spirit.digi.root");
          file -> cd("STDriftTask");
 
   TDirectory* dirDrift = (TDirectory*) file -> GetDirectory("STDriftTask");

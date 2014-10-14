@@ -1,6 +1,6 @@
 void run_mc_eloss(Int_t    nEvents  = 1,
                   Int_t    particle = 0,
-                  Double_t momentum = 300, // [MeV/c]
+                  Double_t momentum = 100, // [MeV/c]
                   TString  tag      = "eLossTest")
 {
   momentum *= 0.001;
@@ -22,16 +22,16 @@ void run_mc_eloss(Int_t    nEvents  = 1,
 
   gRandom -> SetSeed(time(0));
 
-  TString dir           = gSystem->Getenv("VMCWORKDIR");
-  TString tutdir        = dir + "/../SPiRIT/macros";
-  TString tut_geomdir   = dir + "/../SPiRIT/geometry";
-  TString tut_configdir = dir + "/../SPiRIT/gconfig";
-  TString outDir        = "data";
-  TString outFile       = outDir + "/spirit_" + tag + ".mc.root"; 
-  TString parFile       = outDir + "/spirit_" + tag + ".params.root";
+  TString workDir = gSystem -> Getenv("SPIRITDIR");
+  TString tutdir  = workDir + "/macros";
+  TString geoDir  = workDir + "/geometry";
+  TString confDir = workDir + "/gconfig";
+  TString dataDir = "data";
+  TString outFile = dataDir + "/spirit_" + tag + ".mc.root"; 
+  TString parFile = dataDir + "/spirit_" + tag + ".params.root"; 
 
-  gSystem->Setenv("GEOMPATH",tut_geomdir.Data());
-  gSystem->Setenv("CONFIG_DIR",tut_configdir.Data());
+  gSystem -> Setenv("GEOMPATH",   geoDir.Data());
+  gSystem -> Setenv("CONFIG_DIR", confDir.Data());
 
   gDebug = 0;
 
@@ -43,7 +43,7 @@ void run_mc_eloss(Int_t    nEvents  = 1,
   timer.Start();
 
   FairLogger *logger = FairLogger::GetLogger();
-              logger->SetLogFileName("spirit.log");    // define log file name
+              logger->SetLogFileName("log/spirit.log");    // define log file name
               logger->SetLogToScreen(kTRUE);
               logger->SetLogToFile(kTRUE);
               logger->SetLogVerbosityLevel("HIGH");    // Print very accurate output. Levels are LOW, MEDIUM and HIGH
@@ -126,9 +126,12 @@ void run_mc_eloss(Int_t    nEvents  = 1,
   timer.Stop();
   Double_t rtime = timer.RealTime();
   Double_t ctime = timer.CpuTime();
+
   cout << endl << endl;
-  cout << "Macro finished succesfully." << endl;
-  cout << "Output file is "    << outFile << endl;
-  cout << "Parameter file is " << parFile << endl;
-  cout << "Real time " << rtime << " s, CPU time " << ctime << "s" << endl << endl;
+  cout << "Macro finished succesfully."  << endl;
+  cout << "Output file    : " << outFile << endl;
+  cout << "Parameter file : " << parFile << endl;
+  cout << "Real time " << rtime << " s"  << endl;
+  cout << "CPU  time " << ctime << " s"  << endl << endl;
+  cout << endl << endl;
 }
