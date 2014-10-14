@@ -35,15 +35,15 @@ STSystemManipulator::~STSystemManipulator()
 {}
 
 STEvent *
-STSystemManipulator::Manipulate(STEvent *event)
+STSystemManipulator::Change(STEvent *event)
 {
-  if (event -> IsManipulated())
+  if (event -> IsChanged())
     return event;
 
   Bool_t isClustered = event -> IsClustered();
   Bool_t isTracked = event -> IsTracked();
   STEvent *newEvent = new STEvent(event);
-  newEvent -> SetIsManipulated(kTRUE);
+  newEvent -> SetIsChanged(kTRUE);
 
   Int_t numHits = newEvent -> GetNumHits();
   for (Int_t iHit = 0; iHit < numHits; iHit++) {
@@ -85,6 +85,12 @@ STSystemManipulator::Manipulate(STEvent *event)
   return newEvent;
 }
 
+STEvent *
+STSystemManipulator::Restore(STEvent *event)
+{
+  return NULL;
+}
+
 void
 STSystemManipulator::Translate(TVector3 &vector, TVector3 trans)
 {
@@ -121,9 +127,4 @@ STSystemManipulator::Exchange(TMatrixD &matrix)
   matrix(1, 0) = matrix(0, 1);
   matrix(2, 0) = matrix(0, 2);
   matrix(2, 1) = matrix(1, 2);
-}
-
-void
-STSystemManipulator::RestoreExchange(TVector3 &vector)
-{
 }

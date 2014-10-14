@@ -75,6 +75,6 @@ STUnitTestTask::Exec(Option_t *opt)
   STEvent *eventHC = (STEvent *) fEventHCArray -> At(0);
 
   STSystemManipulator manipulator = STSystemManipulator();
-  new ((*fEventHCMArray)[0]) STEvent(manipulator.Manipulate(eventHC));
+  new ((*fEventHCMArray)[0]) STEvent(manipulator.Change(eventHC));
   STEvent *eventHCM = (STEvent *) fEventHCMArray -> At(0);
 }
