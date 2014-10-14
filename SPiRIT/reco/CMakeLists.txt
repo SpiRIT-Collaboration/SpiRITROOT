@@ -62,6 +62,7 @@ RiemannTracking/STHelixHTCorrelator.cc
 STDecoderTask.cc
 STPSATask.cc
 STHitClusteringTask.cc
+STSMTask.cc
 STRiemannTrackingTask.cc
 STUnitTestTask.cc
 )

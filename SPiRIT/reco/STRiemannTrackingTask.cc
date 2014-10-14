@@ -20,7 +20,6 @@
 #include "STHitCluster.hh"
 #include "STRiemannTrackFinder.hh"
 #include "STRiemannHit.hh"
-#include "STSystemManipulator.hh"
 
 #include "STProximityHTCorrelator.hh"
 #include "STHelixHTCorrelator.hh"
@@ -84,18 +83,30 @@ STRiemannTrackingTask::STRiemannTrackingTask()
 
   // SPiRIT Settings
   fMinPoints = 3;
-  fProxCut = 2.0;
+  fProxCut = 10.0;
   fProxZStretch = 1.0; // 1.6;
-  fHelixCut = 2.0;
-  fMaxRMS = 0.15;
+  fHelixCut = 10.0;
+  fMaxRMS = 10.0;
 
   fMergeTracks = kTRUE;
   fTTProxCut = 15.0;
-  fTTDipCut = 0.2;
-  fTTHelixCut = 0.5;
-  fTTPlaneCut = 0.3;
+  fTTDipCut = 10.0;
+  fTTHelixCut = 10.0;
+  fTTPlaneCut = 10.0;
 
-  fRiemannScale = 86.1;
+  fRiemannScale = 25.0;
+
+  fMergeCurlers = kTRUE;
+  fBlowUp = 1.;
+
+  fSkipCrossingAreas = kTRUE;
+
+  fDoMultiStep = kTRUE;
+  fMinHitsZ = 2;
+  fMinHitsR = 2;
+  fMinHitsPhi = 2;
+
+  fVerbose = kFALSE;
 
   /*
   // PANDA settings
@@ -130,20 +141,6 @@ STRiemannTrackingTask::STRiemannTrackingTask()
 
   friemannscale = 8.6;
   */
-
-  fMergeCurlers = kTRUE;
-  fBlowUp = 1.;
-
-  fSkipCrossingAreas = kTRUE;
-
-  fDoMultiStep = kTRUE;
-  fMinHitsZ = 2;
-  fMinHitsR = 2;
-  fMinHitsPhi = 2;
-
-  fCounter = 0;
-
-  fVerbose = kFALSE;
 }
 
 STRiemannTrackingTask::~STRiemannTrackingTask()
@@ -213,9 +210,9 @@ STRiemannTrackingTask::Init()
     }
   */
 
-  fEventHCArray = (TClonesArray *) ioMan -> GetObject("STEventHC");
-  if (fEventHCArray == 0) {
-    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEventHC array!");
+  fEventHCMArray = (TClonesArray *) ioMan -> GetObject("STEventHCM");
+  if (fEventHCMArray == 0) {
+    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEventHCM array!");
 
     return kERROR;
   }
@@ -225,9 +222,6 @@ STRiemannTrackingTask::Init()
 
   fRiemannHitArray = new TClonesArray("STRiemannHit");
   ioMan -> Register("STRiemannHit", "SPiRIT", fRiemannHitArray, fIsPersistence);
-
-  fEventHCMArray = new TClonesArray("STEvent");
-  ioMan -> Register("STEventHCM", "SPiRIT", fEventHCMArray, fIsPersistence);
 
   fTrackFinder = new STRiemannTrackFinder();
   fTrackFinder -> SetSorting(fSorting);
@@ -306,10 +300,9 @@ STRiemannTrackingTask::Exec(Option_t *opt)
     fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find RiemannHitArray!");
   fRiemannHitArray -> Delete();
 
-  STEvent *eventHC = (STEvent *) fEventHCArray -> At(0);
+  if (fEventHCMArray -> GetEntriesFast() == 0)
+    return;
 
-  STSystemManipulator manipulator = STSystemManipulator();
-  new ((*fEventHCMArray)[0]) STEvent(manipulator.Manipulate(eventHC));
   STEvent *eventHCM = (STEvent *) fEventHCMArray -> At(0);
 
   // clean up fRiemannList!
@@ -512,6 +505,7 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
         clusterBuffer -> erase(remove(clusterBuffer -> begin(), clusterBuffer -> end(), trk -> GetHit(iCl) -> GetCluster()), clusterBuffer -> end());
      
       nGoodTrks++;
+      fLogger -> Info(MESSAGE_ORIGIN, "================================================================================ good Track!");
 
       //push back unique track to riemannlist
       if (std::find(trackletListCopy.begin(), trackletListCopy.end(), trk) == trackletListCopy.end()) 

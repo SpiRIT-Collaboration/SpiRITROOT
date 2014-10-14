@@ -27,6 +27,7 @@
 
 #pragma link C++ class STHitClusteringTask+;
 
+#pragma link C++ class STSMTask+;
 #pragma link C++ class STSystemManipulator+;
 
 #pragma link C++ class STRiemannHit+;

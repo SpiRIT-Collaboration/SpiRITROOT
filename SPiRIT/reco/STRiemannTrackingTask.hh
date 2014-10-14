@@ -89,7 +89,6 @@ class STRiemannTrackingTask : public FairTask
                      Bool_t skipCrossingAreas = kTRUE,
                      Bool_t skipAndDelete = kTRUE);
 
-    TClonesArray *fEventHCArray;
     TClonesArray *fEventHCMArray;
     TClonesArray *fMvdArray;
     TClonesArray *fRiemannTrackArray;
@@ -106,8 +105,6 @@ class STRiemannTrackingTask : public FairTask
     Bool_t fIsPersistence;
 
     Double_t fMaxRadius; /// outer radius of padplane
-
-    Int_t fCounter;
 
     // tuning parameters for Conformal Map TrackFinder
     Bool_t fSortingMode;
