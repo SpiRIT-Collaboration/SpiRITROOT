@@ -24,7 +24,7 @@ using std::vector;
 
 class STEvent : public TNamed {
   public:
-    STEvent(Bool_t isClustered = kFALSE, Bool_t isTracked = kFALSE, Bool_t isManipulated = kFALSE);
+    STEvent(Bool_t isClustered = kFALSE, Bool_t isTracked = kFALSE, Bool_t isChanged = kFALSE);
     STEvent(STEvent *object);
     ~STEvent();
 
@@ -39,7 +39,7 @@ class STEvent : public TNamed {
 
     void SetIsClustered(Bool_t value);
     void SetIsTracked(Bool_t value);
-    void SetIsManipulated(Bool_t value);
+    void SetIsChanged(Bool_t value);
 
     // getters
     Int_t GetEventID();
@@ -61,12 +61,12 @@ class STEvent : public TNamed {
 
     Bool_t IsClustered();
     Bool_t IsTracked();
-    Bool_t IsManipulated();
+    Bool_t IsChanged();
 
   private:
     Bool_t fIsClustered;
     Bool_t fIsTracked;
-    Bool_t fIsManipulated;
+    Bool_t fIsChanged;
 
     Int_t fEventID;
 

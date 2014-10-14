@@ -15,14 +15,14 @@
 
 ClassImp(STEvent);
 
-STEvent::STEvent(Bool_t isClustered, Bool_t isTracked, Bool_t isManipulated)
+STEvent::STEvent(Bool_t isClustered, Bool_t isTracked, Bool_t isChanged)
 :TNamed("STEvent", "Event container")
 {
   fEventID = -1;
 
   fIsClustered = isClustered;
   fIsTracked = isTracked;
-  fIsManipulated = isManipulated;
+  fIsChanged = isChanged;
 }
 
 STEvent::STEvent(STEvent *object)
@@ -32,7 +32,7 @@ STEvent::STEvent(STEvent *object)
 
   fIsClustered = object -> IsClustered();
   fIsTracked = object -> IsTracked();
-  fIsManipulated = object -> IsManipulated();
+  fIsChanged = object -> IsChanged();
 
   fHitArray = *(object -> GetHitArray());
 
@@ -46,11 +46,11 @@ STEvent::~STEvent()
 
 void STEvent::SetIsClustered(Bool_t value)   { fIsClustered = value; }
 void STEvent::SetIsTracked(Bool_t value)     { fIsClustered = value; }
-void STEvent::SetIsManipulated(Bool_t value) { fIsClustered = value; }
+void STEvent::SetIsChanged(Bool_t value) { fIsClustered = value; }
 
 Bool_t STEvent::IsClustered()                { return fIsClustered; }
 Bool_t STEvent::IsTracked()                  { return fIsTracked; }
-Bool_t STEvent::IsManipulated()              { return fIsManipulated; }
+Bool_t STEvent::IsChanged()                  { return fIsChanged; }
 
 Int_t STEvent::GetNumClusters()              { return fClusterArray.size(); }
 
