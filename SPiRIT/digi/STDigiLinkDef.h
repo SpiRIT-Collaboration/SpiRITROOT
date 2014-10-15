@@ -4,15 +4,8 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class STPadResponse+;
-
 #pragma link C++ class STDriftElectron+;
 #pragma link C++ class STWireResponse+;
 #pragma link C++ class STDigiElectronTask+;
-
-#pragma link C++ class STClusterizerTask+;
-#pragma link C++ class STDriftTask+;
-#pragma link C++ class STAvalancheTask+;
-#pragma link C++ class STPadResponseTask+;
 
 #endif

@@ -26,15 +26,9 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
-PadResponse/STPadResponse.cc
 DigiElectron/STDriftElectron.cc
 DigiElectron/STWireResponse.cc
-
 STDigiElectronTask.cc
-STClusterizerTask.cc
-STDriftTask.cc
-STAvalancheTask.cc
-STPadResponseTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
