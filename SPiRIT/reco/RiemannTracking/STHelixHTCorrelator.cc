@@ -23,6 +23,7 @@
 #include "TMath.h"
 
 //#include "DebugLogger.h"
+#include "Riostream.h"
 
 STHelixHTCorrelator::STHelixHTCorrelator(Double_t hdistcut)
 {
@@ -44,6 +45,7 @@ STHelixHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bool_t
 
   Double_t stat = 2. - track -> GetQuality(); // tighten cut for better defined tracks
 
+//  cout << "d: " << d << "fHDistCut*stat: " << fHDistCut*stat << endl;
   if (d > fHDistCut*stat) { // for best track: fHDistCut < d, for worst track: 2*fHDistCut < d, then die
 //    DebugLogger::Instance() -> Histo("HT_riemanncuts",8,0,20,20);
     survive = kFALSE;

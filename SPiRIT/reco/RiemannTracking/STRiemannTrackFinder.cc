@@ -148,7 +148,7 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
   UInt_t numFinishedTracks = 0;
   UInt_t numNewTracks = 0;
   UInt_t numClusters = clusterList.size();
-  if(numClusters < 3)
+  if (numClusters < 3)
     return 0;
 
   SortClusters(clusterList);
@@ -204,30 +204,51 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
         // If the track is far out of the current cluster range, make it finish or delete by the condition.
         if (fSorting == STRiemannSort::kSortR) {
           Perp += 3*fProxCut;
+          /* Genie 
+          std::cout << "Perp: " << Perp << " fProxCut: " << fProxCut << std::endl;
+          std::cout << "fPerp: " << track -> GetFirstHit() -> GetCluster() -> GetPosition().Perp() << std::endl;
+          std::cout << "lPerp: " << track -> GetLastHit() -> GetCluster() -> GetPosition().Perp() << std::endl;
+          */
           if (track -> GetFirstHit() -> GetCluster() -> GetPosition().Perp() > Perp &&
               track -> GetLastHit() -> GetCluster() -> GetPosition().Perp() > Perp)
             finished = kTRUE;
         } else if (fSorting == STRiemannSort::kSortPhi) {
           Double_t Phi = rhit -> GetCluster() -> GetPosition().Phi();
           Double_t dPhi = 2*fProxCut/Perp; // approx for small angles
+          /* Genie
+          std::cout << "dPhi: " << dPhi << std::endl;
+          std::cout << "fdPhi: " << Phi - track -> GetFirstHit() -> GetCluster() -> GetPosition().Phi() << std::endl;
+          std::cout << "ldPhi: " << Phi - track -> GetLastHit() -> GetCluster() -> GetPosition().Phi() << std::endl;
+          */
           if (Phi - track -> GetFirstHit() -> GetCluster() -> GetPosition().Phi() > dPhi &&
               Phi - track -> GetLastHit() -> GetCluster() -> GetPosition().Phi() > dPhi)
             finished = kTRUE;
         } else if (fSorting == STRiemannSort::kSortReversePhi) {
           Double_t Phi = rhit -> GetCluster() -> GetPosition().Phi();
           Double_t dPhi = -2*fProxCut/Perp; // approx for small angles
+          /* Genie
+          std::cout << "dPhi: " << dPhi << std::endl;
+          std::cout << "fdPhi: " << Phi - track -> GetFirstHit() -> GetCluster() -> GetPosition().Phi() << std::endl;
+          std::cout << "ldPhi: " << Phi - track -> GetLastHit() -> GetCluster() -> GetPosition().Phi() << std::endl;
+          */
           if (Phi - track -> GetFirstHit() -> GetCluster() -> GetPosition().Phi() < dPhi &&
               Phi - track -> GetLastHit() -> GetCluster() -> GetPosition().Phi() < dPhi)
             finished = kTRUE;
         } else if (fSorting == STRiemannSort::kSortZ) {
           Double_t Z = rhit -> GetCluster() -> GetPosition().Z();
           Double_t dZ = 3*fProxCut;
+          /* Genie
+          std::cout << "dZ: " << dZ << std::endl;
+          std::cout << "fdZ: " << track -> GetFirstHit() -> GetCluster() -> GetPosition().Z() - Z << std::endl;
+          std::cout << "ldZ: " << track -> GetLastHit() -> GetCluster() -> GetPosition().Z() - Z << std::endl;
+          */
           if (track -> GetFirstHit() -> GetCluster() -> GetPosition().Z() - Z > dZ &&
               track -> GetLastHit() -> GetCluster() -> GetPosition().Z() - Z > dZ)
             finished = kTRUE;
         }
 
         if (finished && willDelete) {
+//          std::cout << "Finished and willDelete" << std::endl;
           track -> DeleteHits();
           delete track;
           candList.erase(candList.begin() + iTrack);
@@ -235,7 +256,8 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
           continue;
         }
 
-        if(finished) {
+        if (finished) {
+//          std::cout << "Finished" << std::endl;
           track -> SetFinished();
           numFinishedTracks++;
           continue;
@@ -249,6 +271,7 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
       Bool_t trackSurvive = kFALSE;
       vector<Double_t> matchQualities(numCorrelators, 99999.); // for saving the match qualities for each correlator
       Int_t level = 0; // number of survived correlators
+
       #ifdef DEBUGHT
         if (iCluster == fMaxNumHitsForPR - 1)
           std::cout << "Testing hit " << iCluster << " with track " << iTrack << "; trk quality: " << track -> GetQuality() << std::endl;
@@ -260,17 +283,19 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
         Bool_t survive = kFALSE;
         Bool_t applicable = fHTCorrelators[iCor] -> Correlate(track, rhit, survive, matchQuality);
         #ifdef DEBUGHT
-          if (iCluster == fMaxNumHitsForPR-1){
+          if (iCluster == fMaxNumHitsForPR - 1) {
             if (!applicable)
               std::cout << " HT correlator " << iCor << " NOT applicable" << std::endl;
             else
               std::cout << " HT correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
           }
         #endif
+
+//        std::cout << "applicable: " << ( applicable == kTRUE ? "Applicable" : "Not Applicable" ) << std::endl;
         if (!applicable)
           continue; // try the next correlator
 
-        if (!survive){
+        if (!survive) {
           trackSurvive = kFALSE;
           break; // track has failed this level --> can be excluded
         }
@@ -318,7 +343,6 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
         std::cout << "fBestMatchQuality[maxlevel] " << fBestMatchQuality[maxlevel] << std::endl;
       }
     #endif
-
 
     if (!foundAtAll) { // new track if no track survived
       /*if(fSkipAndDelete) {
@@ -417,6 +441,7 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
   #ifdef DEBUGTT
   std::cout << "STRiemannTrackFinder::mergeTracks: " << numTracks << " track to merge\n";
   #endif
+
   if (numTracks < 2)
     return; // need at least 2 trackcands to merge
 
@@ -471,7 +496,7 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
       // IF THE TRACK track2 SURVIVES EACH CORRELATOR
       // IT IS MERGED WITH THE TRACK track1
       Bool_t survive = kTRUE;
-      for(UInt_t iCor = 0; iCor < fTTCorrelators.size(); ++iCor){ // loop through correlators
+      for (UInt_t iCor = 0; iCor < fTTCorrelators.size(); iCor++) { // loop through correlators
         // CORRELATE track1 WITH track2
         // all correlators must be applicable and must be survived!
         Double_t matchQuality;

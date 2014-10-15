@@ -89,10 +89,10 @@ STRiemannTrackingTask::STRiemannTrackingTask()
   fMaxRMS = 10.0;
 
   fMergeTracks = kTRUE;
-  fTTProxCut = 15.0;
-  fTTDipCut = 10.0;
-  fTTHelixCut = 10.0;
-  fTTPlaneCut = 10.0;
+  fTTProxCut = 25.0;
+  fTTDipCut = 20.0;
+  fTTHelixCut = 20.0;
+  fTTPlaneCut = 20.0;
 
   fRiemannScale = 25.0;
 
@@ -343,11 +343,12 @@ STRiemannTrackingTask::Exec(Option_t *opt)
 
   riemannTemp.clear();
 
-  if(fMergeTracks) {
+  if (fMergeTracks) {
     if (fVerbose)
       std::cerr << "\n merge of fRiemannList: merge " << fRiemannList.size() << " tracks ... ";
       
     fTrackFinder -> MergeTracks(fRiemannList);
+
     if (fVerbose)
       std::cerr << " done - created " << fRiemannList.size() << " merged tracks" << std::endl;
   }
@@ -367,7 +368,7 @@ STRiemannTrackingTask::Exec(Option_t *opt)
 
   riemannTemp.clear();
 
-  if(fMergeTracks) {
+  if (fMergeTracks) {
     if (fVerbose)
       std::cerr << "\n merge of fRiemannList: merge " << fRiemannList.size() << " tracks ... ";
 
@@ -393,7 +394,7 @@ STRiemannTrackingTask::Exec(Option_t *opt)
 
   riemannTemp.clear();
 
-  if(fMergeTracks) {
+  if (fMergeTracks) {
     if (fVerbose)
       std::cerr << "\nfinal merge of fRiemannList: merge " << fRiemannList.size() << " tracks ... ";
 

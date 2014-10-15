@@ -24,6 +24,8 @@
 
 #define SPEEDUP 5
 
+//#include "Riostream.h"
+
 STProximityHTCorrelator::STProximityHTCorrelator(Double_t cut, Double_t zStretch, Double_t helixcut)
 {
   fProxCut = cut;
@@ -46,6 +48,7 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
   if (track -> IsFitted()) {
     Double_t circDist = TMath::Abs((posX - track -> GetCenter()).Perp() - track -> GetR());
 
+//    cout << "circDist: " << circDist << " fHelixCut: " << fHelixCut << endl;
     if (circDist > fHelixCut) {
       matchQuality = circDist;
       survive = kFALSE;
@@ -64,17 +67,21 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
   Double_t dis;
     
   // Check last and first hit for match
-  for (UInt_t iHit = numHits - 1; iHit < 0; iHit--) {
+  for (UInt_t iHit = numHits - 1; kTRUE; iHit -= iHit) {
     pos = track -> GetHit(iHit) -> GetCluster() -> GetPosition();
     dis3 = posX - pos;
     dis3.SetZ(dis3.Z()/fZStretch); // What's this fZStretch for?
     dis = dis3.Mag();
 
+//    cout << "dis: " << dis << " proxcut: " << proxcut << endl;
     if (dis < proxcut) {
       matchQuality = dis;
       survive = kTRUE;
       return kTRUE;
     }
+
+    if (iHit == 0)
+      break;
   }
 
   // The hit (numHits = 1), resp. both hits  (numHits = 2) have been checked and did not survive
@@ -98,6 +105,7 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
       if (mindis < largecut)
         closest = iHit;
 
+//      cout << "mindis: " << mindis << " proxcut: " << proxcut << endl;
       if (mindis < proxcut && track -> IsFitted()) {
         matchQuality = mindis;
         survive = kTRUE;
@@ -121,6 +129,7 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
   dist.SetZ(dist.Z()/fZStretch);
   l = dist.Mag();
 
+  cout << "l: " << l << " proxcut: " << proxcut << endl;
   if (l > proxcut) {
     survive = kFALSE;
     return kTRUE;
