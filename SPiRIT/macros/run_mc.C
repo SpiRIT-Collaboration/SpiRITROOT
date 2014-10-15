@@ -7,13 +7,14 @@ void run_mc(const Int_t nEvents   = 10,
 
 
   // -- Inviroment Setting -------------------------------------------------
-  TString workDir = gSystem -> Getenv("SPIRITDIR");
-  TString tutdir  = workDir + "/macros";
-  TString geoDir  = workDir + "/geometry";
-  TString confDir = workDir + "/gconfig";
-  TString dataDir = "data";
-  TString outFile = dataDir + "/spirit_" + tag + ".mc.root"; 
-  TString parFile = dataDir + "/spirit_" + tag + ".params.root"; 
+  TString workDir   = gSystem -> Getenv("SPIRITDIR");
+  TString tutdir    = workDir + "/macros";
+  TString geoDir    = workDir + "/geometry";
+  TString confDir   = workDir + "/gconfig";
+  TString dataDir   = "data";
+  TString outFile   = dataDir + "/spirit_" + tag + ".mc.root"; 
+  TString parFile   = dataDir + "/spirit_" + tag + ".params.root"; 
+  TString mediaFile = "media.geo";
 
   gSystem -> Setenv("GEOMPATH",   geoDir.Data());
   gSystem -> Setenv("CONFIG_DIR", confDir.Data());
@@ -223,10 +224,10 @@ void run_mc(const Int_t nEvents   = 10,
 
 
   // -----   Run initialisation   -------------------------------------------
-  run -> SetName("TGeant3");              // Transport engine
+  run -> SetName(GeantMode);              // Transport engine
   run -> SetOutputFile(outFile);          // Output file
   run -> SetWriteRunInfoFile(kFALSE);  
-  run -> SetMaterials("media.geo");      
+  run -> SetMaterials(mediaFile);      
   run -> AddModule(cave);
   run -> AddModule(spirit);
   run -> SetField(fMagField);

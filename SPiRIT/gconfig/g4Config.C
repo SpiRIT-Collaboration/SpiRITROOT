@@ -33,9 +33,9 @@ void Config()
    cout << "Geant4 has been created." << endl;
 
 /// create the Specific stack
-   FairStack *stack = new FairStack(1000); 
+   STStack *stack = new STStack(1000); 
    stack->StoreSecondaries(kTRUE);
-   stack->SetMinPoints(0);
+   stack->SetMinPoints(1);
    geant4->SetStack(stack);
 
    if(FairRunSim::Instance()->IsExtDecayer()){
@@ -51,7 +51,7 @@ void Config()
    cout << " -I g4Config() using g4conf  macro: " << configm1 << endl;
 
    //set geant4 specific stuff
-  geant4->SetMaxNStep(1000000);  // default is 30000
+  geant4->SetMaxNStep(1E6);  // default is 30000
   geant4->ProcessGeantMacro(configm1.Data());
 
 }

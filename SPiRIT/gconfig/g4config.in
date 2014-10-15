@@ -15,14 +15,18 @@
 # don't store secondaries
 #/mcTracking/saveSecondaries true
 
-#/mcDet/setMaxStepInLowDensityMaterials 1 mm
+
+# Default step limit is set to 10 cm 
+# for materials with density below 0.001 g/cm3
+#/mcDet/setLimitDensity 1.e-6 g/cm3
+/mcDet/setMaxStepInLowDensityMaterials 1 mm
 
 #/mcPhysics/setSpecialCuts true
 #/mcPhysics/printGeneralCuts true
 
 
 #/cuts/setLowEdge 100 eV
-/cuts/setHighEdge 100 GeV
+#/cuts/setHighEdge 100 GeV
 
 #/mcPhysics/rangeCut 1.
 
@@ -33,7 +37,7 @@
 #/mcVerbose/all 2
 #/mcVerbose/geometryManager 1
 #/mcVerbose/physicsList 2
-/tracking/verbose 1
+#/tracking/verbose 1
 
 #/control/manual   
 #/control/createHTML  
@@ -43,5 +47,3 @@
 # Limit max number of Cerenkov photons per step
 # (Needed as Cerenkov process does not limit step itself)
 #
-
-

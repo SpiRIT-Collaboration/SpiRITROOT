@@ -1,7 +1,9 @@
-void run_digi(TString tag = "eLossTest")
+void run_digi(TString tag = "test")
 {
   TStopwatch timer;
   timer.Start();
+
+  Int_t nEvents = 10;
 
   TString workDir     = gSystem -> Getenv("SPIRITDIR");
   TString geomDir     = workDir + "/geometry";
@@ -44,7 +46,7 @@ void run_digi(TString tag = "eLossTest")
 
   fRun -> AddTask(digi);
   fRun -> Init();
-  fRun -> Run(0,1);
+  fRun -> Run(0, nEvents);
 
   timer.Stop();
   cout << endl << endl;
