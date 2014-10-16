@@ -1,16 +1,17 @@
-void newEventDisplay_mc() {
+void newEventDisplay_mc(TString tag = "urqmd1") 
+{
   FairLogger *fLogger = FairLogger::GetLogger();
   fLogger -> SetLogToScreen(kTRUE);
   fLogger->SetLogVerbosityLevel("MEDIUM");
 
   // -----   Reconstruction run   -------------------------------------------
   FairRunAna *fRun= new FairRunAna();
-  fRun -> SetInputFile("data/spirit_test.reco.root");
-  fRun -> SetOutputFile("data/spirit_test.reco_display.root");
+  fRun -> SetInputFile("data/spirit_" + tag + ".reco.root");
+  fRun -> SetOutputFile("data/spirit_" + tag + ".reco_display.root");
 
   FairRuntimeDb* rtdb = fRun->GetRuntimeDb();
   FairParRootFileIo* parIo1 = new FairParRootFileIo();
-  parIo1->open("data/spirit_test.params.root");
+  parIo1->open("data/spirit_" + tag + ".params.root");
   rtdb->setFirstInput(parIo1);
 
   FairEventManager *fMan = new FairEventManager();

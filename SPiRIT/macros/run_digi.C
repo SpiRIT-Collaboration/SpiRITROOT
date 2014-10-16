@@ -1,9 +1,9 @@
-void run_digi(TString tag = "test")
+void run_digi(TString tag = "urqmd1")
 {
   TStopwatch timer;
   timer.Start();
 
-  Int_t nEvents = 10;
+  Int_t nEvents = 1;
 
   TString workDir     = gSystem -> Getenv("SPIRITDIR");
   TString geomDir     = workDir + "/geometry";

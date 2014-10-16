@@ -1,4 +1,4 @@
-void run_reco_mc(TString tag = "test")
+void run_reco_mc(TString tag = "urqmd1")
 {
   FairLogger *logger = FairLogger::GetLogger();
   logger -> SetLogFileName("log/reco_mc.log");

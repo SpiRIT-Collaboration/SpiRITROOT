@@ -90,7 +90,7 @@ void run_mc_eloss(Int_t    nEvents  = 1,
 
 
 
-  run -> SetName("TGeant3");              // Transport engine
+  run -> SetName("TGeant4");              // Transport engine
   run -> SetOutputFile(outFile);          // Output file
   run -> SetWriteRunInfoFile(kFALSE);  
   run -> SetMaterials("media.geo");       // Materials

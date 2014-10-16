@@ -1,6 +1,7 @@
-void run_mc(const Int_t nEvents   = 10,
-            TString     tag       = "test",
-            TString     GeantMode = "TGeant3")
+void run_mc(const Int_t nEvents   = 1,
+            TString     tag       = "urqmd1",
+            TString     GeantMode = "TGeant4",
+            TString     geoFile   = "spirit_v03.1.root")
 {
   gRandom -> SetSeed(time(0));
 
@@ -185,7 +186,7 @@ void run_mc(const Int_t nEvents   = 10,
               cave -> SetGeometryFileName("cave_vacuum.geo"); 
 
   FairDetector* spirit = new STDetector("STDetector", kTRUE);
-                spirit -> SetGeometryFileName("spirit_v03.1.root");
+                spirit -> SetGeometryFileName(geoFile.Data());
 
 
 

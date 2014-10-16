@@ -20,8 +20,15 @@
 #/mcPhysics/setSpecialCuts true
 #/mcPhysics/printGeneralCuts true
 
+#/mcDet/printMaterials
+#/mcDet/printMaterialsProperties
+#/mcDet/printMedia
+#/mcDet/printVolumes
 
-#/cuts/setLowEdge 100 eV
+/mcDet/setLimitDensity 0.01 g/cm3
+/mcDet/setMaxStepInLowDensityMaterials 1 mm
+
+/cuts/setLowEdge   10 eV
 /cuts/setHighEdge 100 GeV
 
 #/mcPhysics/rangeCut 1.
@@ -33,12 +40,12 @@
 #/mcVerbose/all 2
 #/mcVerbose/geometryManager 1
 #/mcVerbose/physicsList 2
-/tracking/verbose 0
+#/tracking/verbose 1
 
 #/control/manual   
 #/control/createHTML  
 
-/run/particle/dumpCutValues
+#/run/particle/dumpCutValues
 
 # Limit max number of Cerenkov photons per step
 # (Needed as Cerenkov process does not limit step itself)
