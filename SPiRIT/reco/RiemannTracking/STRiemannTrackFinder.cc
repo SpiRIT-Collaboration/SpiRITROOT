@@ -185,6 +185,7 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
       fBestMatchQuality[iCor] = 99999.; // reset 
 
     for (UInt_t iTrack = 0; iTrack < candList.size(); iTrack++) { // loop over tracks
+      cout << "candList.size(): " << candList.size() << " iTrack: " << iTrack << endl;
       STRiemannTrack *track = candList[iTrack];
 
       if (track -> IsFinished())
@@ -591,7 +592,7 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
   for (Int_t iCand = 0; iCand < candList.size(); iCand++) {
     if (candList[iCand] == NULL) {
       candList.erase(candList.begin() + iCand);
-      iCand++; // go one step back because "erase" shifts back the rest
+      iCand--; // go one step back because "erase" shifts back the rest
     }
   }
 
