@@ -129,7 +129,7 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
   dist.SetZ(dist.Z()/fZStretch);
   l = dist.Mag();
 
-  cout << "l: " << l << " proxcut: " << proxcut << endl;
+//  cout << "l: " << l << " proxcut: " << proxcut << endl;
   if (l > proxcut) {
     survive = kFALSE;
     return kTRUE;
