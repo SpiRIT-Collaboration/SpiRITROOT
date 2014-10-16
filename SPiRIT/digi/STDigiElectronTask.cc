@@ -103,6 +103,9 @@ STDigiElectronTask::Exec(Option_t *opt)
   if(fDigitizedElectronArray == 0) Fatal("STDigiElectronTask::Exec)","No Digitized Electron Array");
   fDigitizedElectronArray -> Delete();
 
+  if(fRawEventArray == 0) Fatal("STDigiElectronTask::Exec)","No Raw Event Array");
+  fRawEventArray -> Delete();
+
   Int_t nPoints = fMCPointArray -> GetEntries();
   if(nPoints < 2){
     Warning("STDigiElectronTask::Exec", "Not enough Hits in Tpc for Digitization (<2)");
@@ -160,6 +163,8 @@ STDigiElectronTask::Exec(Option_t *opt)
   wireResponse -> WriteHistogram();
 
   new ((*fRawEventArray)[0]) STRawEvent(rawEvent);
+
+  delete rawEvent;
 
   return;
 }
