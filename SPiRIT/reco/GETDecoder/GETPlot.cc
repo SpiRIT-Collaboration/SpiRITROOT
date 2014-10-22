@@ -339,7 +339,8 @@ TCanvas *GETPlot::ShowFrame(Int_t frameNo, Int_t innerFrameNo, Int_t startTb, In
       if (isSkip)
         continue;
 
-      fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
+//      fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
+      fFrame -> SetFPNPedestal();
       fFrame -> SubtractPedestal(iAget, iCh);
 
       Double_t *adc = NULL;
