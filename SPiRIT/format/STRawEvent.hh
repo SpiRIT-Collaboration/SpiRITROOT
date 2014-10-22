@@ -29,10 +29,12 @@ class STRawEvent : public TNamed {
     // setters
     void SetEventID(Int_t evtid);
     void SetPad(STPad *pad);
+    void SetIsGood(Bool_t value);
 
     // getters
     Int_t GetEventID();
     Int_t GetNumPads();
+    Bool_t IsGood();
 
     std::vector<STPad> *GetPads();
 
@@ -42,6 +44,8 @@ class STRawEvent : public TNamed {
   private:
     Int_t fEventID;
     std::vector<STPad> fPadArray;
+
+    Bool_t fIsGood;
 
   ClassDef(STRawEvent, 1);
 };
