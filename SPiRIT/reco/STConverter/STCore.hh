@@ -42,7 +42,7 @@ class STCore : public TObject {
     void SetNumTbs(Int_t value);
     void SetInternalPedestal(Int_t startTb = 10, Int_t averageTbs = 20);
     Bool_t SetPedestalData(TString filename, Double_t rmsFactor = 0);
-    void SetPedestalFPN();
+    void SetFPNPedestal();
 
     Bool_t SetGainCalibrationData(TString filename);
     void SetGainBase(Double_t constant, Double_t slope);

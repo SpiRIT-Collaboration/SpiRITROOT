@@ -159,7 +159,7 @@ Bool_t STCore::SetPedestalData(TString filename, Double_t rmsFactor)
   return fIsPedestalData;
 }
 
-void STCore::SetPedestalFPN()
+void STCore::SetFPNPedestal()
 {
   fIsFPNPedestal = kTRUE;
   fPedestalMode = kPedestalFPN;
