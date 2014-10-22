@@ -43,7 +43,7 @@ GETFrame::GETFrame()
   fIsFPNPedestalUsed = kFALSE;
   memset(fFPNPedestalMean, 0, sizeof(Double_t)*4*4);
   fFPNStartTb = 3;
-  fFPNAverageTbs = 20;
+  fFPNAverageTbs = 10;
 
   fMath = new GETMath();
 }
@@ -146,14 +146,14 @@ void GETFrame::SetFPNPedestal() {
   fIsFPNPedestalUsed = kTRUE;
 }
 
-void GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor)
+Bool_t GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor)
 {
   Int_t index = GetIndex(agetIdx, chIdx, 0);
 
   if (!fIsCalcPedestalUsed[index/512] && !fIsSetPedestalUsed[index/512] && !fIsFPNPedestalUsed) {
     std::cout << "== [GETFrame] Run CalcPedestal(), SetPedestal(), or SetFPNPedestal() first!" << std::endl;
     
-    return;
+    return kFALSE;
   }
 
   if (!fIsFPNPedestalUsed) {
@@ -187,7 +187,7 @@ void GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor)
 
       if (startTb > fNumTbs - fFPNAverageTbs - 3) {
         std::cout << "Something is returned!" << std::endl;
-        return;
+        return kFALSE;
       }
     }
 
@@ -218,6 +218,8 @@ void GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor)
   FindMaxIdx(agetIdx, chIdx);
 
   fIsPedestalSubtracted[index/512] = kTRUE;
+
+  return kTRUE;
 }
 
 void GETFrame::FindMaxIdx(Int_t agetIdx, Int_t chIdx) {
