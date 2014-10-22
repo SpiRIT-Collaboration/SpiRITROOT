@@ -239,12 +239,32 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
       continue;
     }
 
+    Int_t frameType = fDecoderPtr -> GetFrameType();
+
+    if ((frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime) && !(fRawEventPtr -> IsGood())) {
+      Int_t currentInnerFrameID = fDecoderPtr -> GetCurrentInnerFrameID();
+      Int_t numInnerFrames = fDecoderPtr -> GetNumMergedFrames();
+
+      while (!(currentInnerFrameID + 1 == numInnerFrames)) {
+        fDecoderPtr -> GetFrame(fCurrFrameNo);
+
+        currentInnerFrameID = fDecoderPtr -> GetCurrentInnerFrameID();
+        numInnerFrames = fDecoderPtr -> GetNumMergedFrames();
+      }
+
+      fCurrFrameNo++;
+      fPrevEventNo = fCurrEventNo;
+      return fRawEventPtr;
+    }
+
     fRawEventPtr -> SetEventID(fCurrEventNo);
 
     Int_t coboID = frame -> GetCoboID();
-    Int_t frameType = fDecoderPtr -> GetFrameType();
+
+    // Two lines below are temporary. Will be deleted in real experiment.
     if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime)
       coboID = fDecoderPtr -> GetCurrentInnerFrameID();
+
     Int_t asadID = frame -> GetAsadID();
 
     for (Int_t iAget = 0; iAget < 4; iAget++) {
@@ -301,7 +321,16 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           } else if (fPedestalMode == kPedestalFPN)
             frame -> SetFPNPedestal();
 
-          frame -> SubtractPedestal(iAget, iCh, fPedestalRMSFactor);
+          Bool_t good = frame -> SubtractPedestal(iAget, iCh, fPedestalRMSFactor);
+          fRawEventPtr -> SetIsGood(good);
+          if (!good) {
+            delete pad;
+
+            iAget = 4;
+            iCh = 68;
+
+            continue;
+          }
 
           Double_t *adc = frame -> GetADC(iAget, iCh);
 
