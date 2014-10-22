@@ -72,6 +72,8 @@ class GETFrame : public TObject
                       );
     //! Set pedestal from calculation done outside this class.
     void SetPedestal(Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Double_t *pedestalSigma);
+    //! Set FPN pedestal
+    void SetFPNPedestal();
     //! Subtract pedestal using internal, external or both.
     void SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor = 0);
     //! Return the time bucket index of the maximum ADC value.
@@ -86,6 +88,10 @@ class GETFrame : public TObject
   private:
     //! Internally used method to get the index of the array
     Int_t GetIndex(Int_t agetIdx, Int_t chIdx, Int_t buckIdx);
+    //! Internally used method to get the corresponding FPN channel number to the given channel number
+    Int_t GetFPNChannel(Int_t agetIdx, Int_t chIdx);
+    //! Internally used method to get the index of corresponding FPN array index from the given channel number
+    Int_t GetFPNArrayIndex(Int_t agetIdx, Int_t chIdx);
     //! Find the maximum point in signal and store it in fMaxAdcIdx[] array
     void FindMaxIdx(Int_t agetIdx, Int_t chIdx);
 
@@ -100,15 +106,23 @@ class GETFrame : public TObject
     Int_t fPolarity;               /// signal polarity
     Int_t fRawAdc[4*68*512];       /// An array containing raw ADC values
 
-    Bool_t fIsPedestalSubtracted[4*68];  /// Flag for checking if pedestal is subtracted
-    Bool_t fIsCalcPedestalUsed[4*68];    /// Flag for checking if CalcPedestal() is used or not
-    Bool_t fIsSetPedestalUsed[4*68];     /// Flag for checking if SetPedestal() is used or not
     Int_t fMaxAdcIdx[4*68];        /// An array containing indices of maximum ADC value in each channel
     Double_t fAdc[4*68*512];       /// An array containing pedestal-subtracted ADC values
+
+    Bool_t fIsPedestalSubtracted[4*68];  /// Flag for checking if pedestal is subtracted
+
+    Bool_t fIsCalcPedestalUsed[4*68];    /// Flag for checking if CalcPedestal() is used or not
     Double_t fInternalPedestal[4*68];      /// An array containing pedestal value of corresponding channel
+
+    Bool_t fIsSetPedestalUsed[4*68];     /// Flag for checking if SetPedestal() is used or not
     Double_t fPedestalDataMean[4*68];       /// An array containing mean value of externally set pedestal data
     Double_t fPedestalData[4*68*512];       /// An array containing external pedestal values
     Double_t fPedestalSigmaData[4*68*512];  /// An array containing external pedestal sigma values
+
+    Bool_t fIsFPNPedestalUsed;     /// Flag for checking if FPNPedestal() is used or not
+    Double_t fFPNPedestalMean[4*4];        /// An array containing pedestal mean value calculated with FPN channels
+    Int_t fFPNStartTb;             /// First time bucket used to calculate FPN mean
+    Int_t fFPNAverageTbs;             /// The number of time buckets used to calculate FPN mean
 
   //! Added for making dictionary by ROOT
   ClassDef(GETFrame, 1);

@@ -25,16 +25,25 @@ GETFrame::GETFrame()
   fAsadIdx = 0;
   fPolarity = -1;
 
-  memset(fIsPedestalSubtracted, kFALSE, sizeof(Bool_t)*4*68);
-  memset(fIsCalcPedestalUsed, kFALSE, sizeof(Bool_t)*4*68);
-  memset(fIsSetPedestalUsed, kFALSE, sizeof(Bool_t)*4*68);
   memset(fRawAdc, 0, sizeof(Int_t)*4*68*512);
+
   memset(fMaxAdcIdx, 0, sizeof(Int_t)*4*68);
   memset(fAdc, 0, sizeof(Double_t)*4*68*512);
+
+  memset(fIsPedestalSubtracted, kFALSE, sizeof(Bool_t)*4*68);
+
+  memset(fIsCalcPedestalUsed, kFALSE, sizeof(Bool_t)*4*68);
   memset(fInternalPedestal, 0, sizeof(Double_t)*4*68);
+
+  memset(fIsSetPedestalUsed, kFALSE, sizeof(Bool_t)*4*68);
   memset(fPedestalDataMean, 0, sizeof(Double_t)*4*68);
   memset(fPedestalData, 0, sizeof(Double_t)*4*68*512);
   memset(fPedestalSigmaData, 0, sizeof(Double_t)*4*68*512);
+
+  fIsFPNPedestalUsed = kFALSE;
+  memset(fFPNPedestalMean, 0, sizeof(Double_t)*4*4);
+  fFPNStartTb = 3;
+  fFPNAverageTbs = 20;
 
   fMath = new GETMath();
 }
@@ -116,25 +125,94 @@ void GETFrame::SetPedestal(Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Doubl
   fIsSetPedestalUsed[index/512] = kTRUE;
 }
 
+void GETFrame::SetFPNPedestal() {
+  /**
+    * Use FPN channels as pedestal.
+   **/
+
+  for (Int_t iAget = 0; iAget < 4; iAget++) {
+    for (Int_t iFPN = 0; iFPN < 4; iFPN++) {
+      Int_t fpnCh = (iFPN + 1 + iFPN/2)*11 + iFPN/2;
+      Int_t fpnIndex = GetIndex(iAget, fpnCh, 0);
+
+      fMath -> Reset();
+      for (Int_t iTb = fFPNStartTb; iTb < fFPNStartTb + fFPNAverageTbs; iTb++)
+        fMath -> Add(fRawAdc[fpnIndex + iTb]);
+
+      fFPNPedestalMean[iAget*4 + iFPN] = fMath -> GetMean();;
+    }
+  }
+
+  fIsFPNPedestalUsed = kTRUE;
+}
+
 void GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor)
 {
   Int_t index = GetIndex(agetIdx, chIdx, 0);
 
-  if (!fIsCalcPedestalUsed[index/512] && !fIsSetPedestalUsed[index/512]) {
-    std::cout << "== [GETFrame] Run CalcPedestal() or SetPedestal() first!" << std::endl;
+  if (!fIsCalcPedestalUsed[index/512] && !fIsSetPedestalUsed[index/512] && !fIsFPNPedestalUsed) {
+    std::cout << "== [GETFrame] Run CalcPedestal(), SetPedestal(), or SetFPNPedestal() first!" << std::endl;
     
     return;
   }
 
-  for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
-    Double_t pedestal = GetPedestal(agetIdx, chIdx, iTb, rmsFactor);
-    Double_t adc = 0;
-    if (fPolarity < 0)
-      adc = pedestal - fRawAdc[index + iTb];
-    else
-      adc = fRawAdc[index + iTb] - pedestal;
+  if (!fIsFPNPedestalUsed) {
+    for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+      Double_t pedestal = GetPedestal(agetIdx, chIdx, iTb, rmsFactor);
+      Double_t adc = 0;
+      if (fPolarity < 0)
+        adc = pedestal - fRawAdc[index + iTb];
+      else
+        adc = fRawAdc[index + iTb] - pedestal;
 
-    fAdc[index + iTb] = ((adc < 0 || fRawAdc[index + iTb] == 0) ? 0 : adc);
+      fAdc[index + iTb] = ((adc < 0 || fRawAdc[index + iTb] == 0) ? 0 : adc);
+    }
+  } else {
+    Int_t fpnCh = GetFPNChannel(agetIdx, chIdx);
+    Int_t fpnArrayIndex = GetFPNArrayIndex(agetIdx, chIdx);
+
+    Int_t fpnIndex = GetIndex(agetIdx, fpnCh, 0);
+
+    Int_t startTb = fFPNStartTb;
+
+    while (1) {
+      fMath -> Reset();
+      for (Int_t iTb = startTb; iTb < startTb + fFPNAverageTbs; iTb++)
+        fMath -> Add(fRawAdc[index + iTb]);
+
+      if (fMath -> GetRMS() < 5)
+        break;
+
+      startTb += fFPNAverageTbs;
+
+      if (startTb > fNumTbs - fFPNAverageTbs - 3) {
+        std::cout << "Something is returned!" << std::endl;
+        return;
+      }
+    }
+
+    Double_t baselineDiff = 0;
+    if (startTb == fFPNStartTb)
+      baselineDiff = fFPNPedestalMean[fpnArrayIndex] - fMath -> GetMean();
+    else { 
+      baselineDiff = - fMath -> GetMean();
+
+      fMath -> Reset();
+      for (Int_t iTb = startTb; iTb < startTb + fFPNAverageTbs; iTb++)
+        fMath -> Add(fRawAdc[fpnIndex + iTb]);
+
+      baselineDiff += fMath -> GetMean();
+    }
+
+    for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+      Double_t adc = 0;
+      if (fPolarity < 0)
+        adc = (fRawAdc[fpnIndex + iTb] - baselineDiff) - fRawAdc[index + iTb];
+      else
+        adc = fRawAdc[index + iTb] - (fRawAdc[fpnIndex + iTb] - baselineDiff);
+
+      fAdc[index + iTb] = ((adc < 0 || fRawAdc[index + iTb] == 0) ? 0 : adc);
+    }
   }
 
   FindMaxIdx(agetIdx, chIdx);
@@ -239,4 +317,43 @@ Int_t GETFrame::GetIndex(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
   }
 
   return agetIdx*68*512 + chIdx*512 + buckIdx;
+}
+
+Int_t GETFrame::GetFPNChannel(Int_t agetIdx, Int_t chIdx)
+{
+  if (agetIdx > 3) {
+    std::cout << "== [GETFrame] AGET number should be in [0,3]!" << std::endl;
+
+    return -1;
+  } else if (chIdx > 67) {
+    std::cout << "== [GETFrame] Channel number should be in [0,67]!" << std::endl;
+
+    return -1;
+  }
+
+  Int_t fpn = -1;
+
+       if (chIdx < 17) fpn = 11;
+  else if (chIdx < 34) fpn = 22;
+  else if (chIdx < 51) fpn = 45;
+  else                 fpn = 56;
+
+  return fpn;
+}
+
+Int_t GETFrame::GetFPNArrayIndex(Int_t agetIdx, Int_t chIdx)
+{
+  if (agetIdx > 3) {
+    std::cout << "== [GETFrame] AGET number should be in [0,3]!" << std::endl;
+
+    return -1;
+  } else if (chIdx > 67) {
+    std::cout << "== [GETFrame] Channel number should be in [0,67]!" << std::endl;
+
+    return -1;
+  }
+
+  Int_t fpnChannel = GetFPNChannel(agetIdx, chIdx);
+
+  return agetIdx*4 + fpnChannel/11 - 1 - fpnChannel%11;
 }
