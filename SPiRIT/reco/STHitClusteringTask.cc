@@ -93,6 +93,12 @@ STHitClusteringTask::Exec(Option_t *opt)
   STEvent *eventH = (STEvent *) fEventHArray -> At(0);
   STEvent *eventHC = (STEvent *) new ((*fEventHCArray)[0]) STEvent();
 
+  if (!(eventH -> IsGood())) {
+    eventHC -> SetIsGood(kFALSE);
+
+    return;
+  }
+
   Double_t sliceY = fDriftLength/fYDivider;
 
   vector<STHit> *hitArray = eventH -> GetHitArray();
