@@ -73,6 +73,8 @@ STPSATask::Init()
 
   ioMan -> Register("STEventH", "SPiRIT", fEventHArray, fIsPersistence);
 
+  fRunNo = 0;
+
   return kSUCCESS;
 }
 
@@ -97,11 +99,17 @@ STPSATask::Exec(Option_t *opt)
 {
   fEventHArray -> Delete();
 
+  if (fRawEventArray -> GetEntriesFast() == 0)
+    return;
+
   STRawEvent *rawEvent = (STRawEvent *) fRawEventArray -> At(0);
   std::cout << rawEvent -> GetEventID() << " " << rawEvent -> GetNumPads() << std::endl;  
 
   STEvent *event = (STEvent *) new ((*fEventHArray)[0]) STEvent();
-  event -> SetEventID(rawEvent -> GetEventID());
+  event -> SetEventID(fRunNo++);
 
-  fPSA -> Analyze(rawEvent, event);
+  if (!(rawEvent -> IsGood()))
+    event -> SetIsGood(kFALSE);
+  else
+    fPSA -> Analyze(rawEvent, event);
 }
