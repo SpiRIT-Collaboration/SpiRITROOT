@@ -71,6 +71,7 @@ STEventDraw::STEventDraw(const Char_t *name, Color_t color, Style_t style, Int_t
   fMaxZ = 1344;
   fMinX = 432;
   fMaxX = -432;
+  fThreshold = 0;
 
   fLogger = FairLogger::GetLogger();
 }
@@ -82,6 +83,7 @@ STEventDraw::~STEventDraw()
 void STEventDraw::SetVerbose(Int_t verbose)       { fVerbose = verbose; }
 void STEventDraw::Set2DPlot(Bool_t value)         { fIs2DPlot = value; }
 void STEventDraw::Set2DPlotExternal(Bool_t value) { fIs2DPlotExternal = value; }
+void STEventDraw::SetThreshold(Int_t value)       { fThreshold = value; }
 
 void
 STEventDraw::Set2DPlotRange(Int_t uaIdx)
@@ -191,6 +193,10 @@ void STEventDraw::Exec(Option_t* option)
     for (Int_t iPoint = 0; iPoint < numPoints; iPoint++) {
       if (TString(GetName()).EqualTo("STEventH")) {
         STHit aPoint = aEvent -> GetHitArray() -> at(iPoint);
+
+        if (fThreshold != 0 && aPoint.GetCharge() < fThreshold)
+          continue;
+
         TVector3 vec(GetVector(aPoint));
         pointSet -> SetNextPoint(vec.X()/10., vec.Y()/10., vec.Z()/10.); // mm -> cm
         pointSet -> SetPointId(GetValue(aPoint, iPoint));
@@ -199,6 +205,10 @@ void STEventDraw::Exec(Option_t* option)
           fPadPlane -> Fill(vec.Z(), vec.X(), aPoint.GetCharge());
       } else { //if (TString(GetName()).EqualTo("STEventHC")) {
         STHitCluster aPoint = aEvent -> GetClusterArray() -> at(iPoint);
+
+        if (fThreshold != 0 && aPoint.GetCharge() < fThreshold)
+          continue;
+
         TVector3 vec(GetVector(aPoint));
         pointSet -> SetNextPoint(vec.X()/10., vec.Y()/10., vec.Z()/10.); // mm -> cm
         pointSet -> SetPointId(GetValue(aPoint, iPoint));

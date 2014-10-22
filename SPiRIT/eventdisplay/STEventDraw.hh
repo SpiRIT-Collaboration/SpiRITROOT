@@ -48,6 +48,9 @@ class STEventDraw : public FairTask
     //!
     void Set2DPlotRange(Int_t uaIdx);
 
+    ///
+    void SetThreshold(Int_t value);
+
     virtual InitStatus Init();
     virtual void Exec(Option_t* option);
 
@@ -76,6 +79,7 @@ class STEventDraw : public FairTask
     Int_t fMaxZ;                      //!<
     Int_t fMinX;                      //!<
     Int_t fMaxX;                      //!<
+    Int_t fThreshold;                 ///
 
   private:
     STEventDraw(const STEventDraw&);
