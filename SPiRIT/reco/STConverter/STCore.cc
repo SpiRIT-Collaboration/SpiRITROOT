@@ -65,6 +65,7 @@ void STCore::Initialize()
   fIsInternalPedestal = kFALSE;
   fPedestalMode = kNoPedestal;
   fPedestalRMSFactor = 0;
+  fIsFPNPedestal = kFALSE;
 
   fGainCalibrationPtr = new STGainCalibration();
   fIsGainCalibrationData = kFALSE;
@@ -126,7 +127,7 @@ void STCore::SetNumTbs(Int_t value)
 void STCore::SetInternalPedestal(Int_t startTb, Int_t averageTbs)
 {
   if (fIsPedestalData) {
-    fPedestalMode = kPedestalBoth;
+    fPedestalMode = kPedestalBothIE;
     std::cout << "== [STCore] Using both pedestal data is set!" << std::endl;
   } else {
     fPedestalMode = kPedestalInternal;
@@ -144,7 +145,7 @@ Bool_t STCore::SetPedestalData(TString filename, Double_t rmsFactor)
 
   if (fIsPedestalData) {
     if (fIsInternalPedestal) {
-      fPedestalMode = kPedestalBoth;
+      fPedestalMode = kPedestalBothIE;
       std::cout << "== [STCore] Using both pedestal data is set!" << std::endl;
     } else {
       fPedestalMode = kPedestalExternal;
@@ -156,6 +157,14 @@ Bool_t STCore::SetPedestalData(TString filename, Double_t rmsFactor)
     std::cout << "== [STCore] Pedestal data is not set! Check it exists!" << std::endl;
 
   return fIsPedestalData;
+}
+
+void STCore::SetPedestalFPN()
+{
+  fIsFPNPedestal = kTRUE;
+  fPedestalMode = kPedestalFPN;
+
+  std::cout << "== [STCore] Using FPN pedestal is set!" << std::endl;
 }
 
 Bool_t STCore::SetGainCalibrationData(TString filename)
@@ -280,14 +289,18 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           pad -> SetMaxADCIdx(maxADCIdx);
           pad -> SetPedestalSubtracted(kTRUE);
         } else if (fPedestalMode != kNoPedestal) {
-          if (fPedestalMode == kPedestalBoth)
+          if (fPedestalMode == kPedestalBothIE)
             frame -> CalcPedestal(iAget, iCh, fStartTb, fAverageTbs);
 
           Double_t pedestal[512];
           Double_t pedestalSigma[512];
 
-          fPedestalPtr -> GetPedestal(row, layer, pedestal, pedestalSigma);
-          frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
+          if (fPedestalMode == kPedestalExternal || fPedestalMode == kPedestalBothIE) {
+            fPedestalPtr -> GetPedestal(row, layer, pedestal, pedestalSigma);
+            frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
+          } else if (fPedestalMode == kPedestalFPN)
+            frame -> SetFPNPedestal();
+
           frame -> SubtractPedestal(iAget, iCh, fPedestalRMSFactor);
 
           Double_t *adc = frame -> GetADC(iAget, iCh);
