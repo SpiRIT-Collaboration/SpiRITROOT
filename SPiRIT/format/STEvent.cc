@@ -23,6 +23,8 @@ STEvent::STEvent(Bool_t isClustered, Bool_t isTracked, Bool_t isChanged)
   fIsClustered = isClustered;
   fIsTracked = isTracked;
   fIsChanged = isChanged;
+
+  fIsGood = kFALSE;
 }
 
 STEvent::STEvent(STEvent *object)
@@ -38,6 +40,8 @@ STEvent::STEvent(STEvent *object)
 
   if (IsClustered())
     fClusterArray = *(object -> GetClusterArray());
+
+  fIsGood = object -> IsGood();
 }
 
 STEvent::~STEvent()
@@ -45,40 +49,25 @@ STEvent::~STEvent()
 }
 
 void STEvent::SetIsClustered(Bool_t value)   { fIsClustered = value; }
-void STEvent::SetIsTracked(Bool_t value)     { fIsClustered = value; }
-void STEvent::SetIsChanged(Bool_t value) { fIsClustered = value; }
+void STEvent::SetIsTracked(Bool_t value)     { fIsTracked = value; }
+void STEvent::SetIsChanged(Bool_t value)     { fIsChanged = value; }
+
+void STEvent::SetIsGood(Bool_t value)        { fIsGood = value; }
 
 Bool_t STEvent::IsClustered()                { return fIsClustered; }
 Bool_t STEvent::IsTracked()                  { return fIsTracked; }
 Bool_t STEvent::IsChanged()                  { return fIsChanged; }
 
+Bool_t STEvent::IsGood()                     { return fIsGood; }
+
 Int_t STEvent::GetNumClusters()              { return fClusterArray.size(); }
 
 // setters
-void STEvent::SetEventID(Int_t evtid)
-{
-  fEventID = evtid;
-}
-
-void STEvent::AddHit(STHit *hit)
-{
-  fHitArray.push_back(*hit);
-}
-
-void STEvent::SetHitArray(vector<STHit> *hitArray)
-{
-  fHitArray = *hitArray;
-}
-
-void STEvent::AddCluster(STHitCluster *cluster)
-{
-  fClusterArray.push_back(*cluster);
-}
-
-void STEvent::SetClusterArray(vector<STHitCluster> *clusterArray)
-{
-  fClusterArray = *clusterArray;
-}
+void STEvent::SetEventID(Int_t evtid)                             { fEventID = evtid; } 
+void STEvent::AddHit(STHit *hit)                                  { fHitArray.push_back(*hit); } 
+void STEvent::SetHitArray(vector<STHit> *hitArray)                { fHitArray = *hitArray; } 
+void STEvent::AddCluster(STHitCluster *cluster)                   { fClusterArray.push_back(*cluster); } 
+void STEvent::SetClusterArray(vector<STHitCluster> *clusterArray) { fClusterArray = *clusterArray; }
 
 // getters
 Int_t STEvent::GetEventID() { return fEventID; }

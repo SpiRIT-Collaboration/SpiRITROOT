@@ -41,6 +41,8 @@ class STEvent : public TNamed {
     void SetIsTracked(Bool_t value);
     void SetIsChanged(Bool_t value);
 
+    void SetIsGood(Bool_t value);
+
     // getters
     Int_t GetEventID();
 
@@ -63,10 +65,14 @@ class STEvent : public TNamed {
     Bool_t IsTracked();
     Bool_t IsChanged();
 
+    Bool_t IsGood();
+
   private:
     Bool_t fIsClustered;
     Bool_t fIsTracked;
     Bool_t fIsChanged;
+
+    Bool_t fIsGood;
 
     Int_t fEventID;
 
