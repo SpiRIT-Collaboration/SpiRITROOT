@@ -1,4 +1,4 @@
-# Create a library called "libSTMC" which includes the source files given in the array .
+# Create a library called "libSTField" which includes the source files given in the array.
 
 set(INCLUDE_DIRECTORIES
 ${ROOT_INCLUDE_DIR} 
