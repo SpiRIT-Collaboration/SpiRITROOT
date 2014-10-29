@@ -26,7 +26,7 @@ void Config()
 /// character: eg. stepLimit+specialCuts.
 
    TG4RunConfiguration* runConfiguration 
-           = new TG4RunConfiguration("geomRoot", "QGSP_BERT_EMV", "stepLimiter+specialCuts+specialControls");
+           = new TG4RunConfiguration("geomRoot", "FTFP_BERT_EMY", "stepLimiter+specialCuts");
 
 /// Create the G4 VMC 
    TGeant4* geant4 = new TGeant4("TGeant4", "The Geant4 Monte Carlo", runConfiguration);
@@ -34,8 +34,6 @@ void Config()
 
 /// create the Specific stack
    STStack *stack = new STStack(1000); 
-   stack->StoreSecondaries(kTRUE);
-   stack->SetMinPoints(1);
    geant4->SetStack(stack);
 
    if(FairRunSim::Instance()->IsExtDecayer()){
@@ -46,7 +44,7 @@ void Config()
 /// Customise Geant4 setting
 /// (verbose level, global range cut, ..)
 
-   TString configm(gSystem->Getenv("VMCWORKDIR"));
+   TString configm(gSystem->Getenv("SPIRITDIR"));
    configm1 = configm + "/gconfig/g4config.in";
    cout << " -I g4Config() using g4conf  macro: " << configm1 << endl;
 
