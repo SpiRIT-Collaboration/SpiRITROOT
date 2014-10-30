@@ -48,6 +48,7 @@ STPSA::STPSA()
   fNumTbs = fPar -> GetNumTbs();
   fTBTime = fPar -> GetTBTime();
   fDriftVelocity = fPar -> GetDriftVelocity();
+  fMaxDriftLength = fPar -> GetDriftLength();
 
   fThreshold = -1;
 }

@@ -41,18 +41,19 @@ class STPSA
     virtual void Analyze(STRawEvent *rawEvent, STEvent *event) = 0;
 
   protected:
-    FairLogger *fLogger;     //!< logger pointer
-    STDigiPar *fPar;         //!< parameter container
+    FairLogger *fLogger;      /// logger pointer
+    STDigiPar *fPar;          /// parameter container
 
-    Int_t fPadPlaneX;        //!< pad plane size x in mm
-    Int_t fPadSizeX;         //!< pad size x in mm
-    Int_t fPadSizeZ;         //!< pad size y in mm
+    Int_t fPadPlaneX;         /// pad plane size x in mm
+    Int_t fPadSizeX;          /// pad size x in mm
+    Int_t fPadSizeZ;          /// pad size y in mm
 
-    Int_t fNumTbs;           //!< the number of time buckets used in taking data
-    Int_t fTBTime;           //!< time duration of a time bucket in ns
-    Double_t fDriftVelocity; //!< drift velocity of electron in cm/us
+    Int_t fNumTbs;            /// the number of time buckets used in taking data
+    Int_t fTBTime;            /// time duration of a time bucket in ns
+    Double_t fDriftVelocity;  /// drift velocity of electron in cm/us
+    Double_t fMaxDriftLength; /// maximum drift length in mm
 
-    Int_t fThreshold;        //!< threshold of ADC value
+    Int_t fThreshold;         /// threshold of ADC value
 
     //!< Calculate x position in mm. This returns the center position of given pad row.
     Double_t CalculateX(Int_t row);
