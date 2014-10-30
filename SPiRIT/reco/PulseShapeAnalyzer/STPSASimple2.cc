@@ -66,6 +66,9 @@ STPSASimple2::Analyze(STRawEvent *rawEvent, STEvent *event)
       if (fThreshold > 0 && charge < fThreshold)
         continue;
 
+      if (yPos > 0 || yPos < -fMaxDriftLength)
+        continue;
+
       STHit *hit = new STHit(hitNum, xPos, yPos, zPos, charge);
       event -> AddHit(hit);
       delete hit;
