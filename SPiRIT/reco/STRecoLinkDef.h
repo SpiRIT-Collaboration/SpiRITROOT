@@ -31,6 +31,7 @@
 #pragma link C++ class STSystemManipulator+;
 
 #pragma link C++ class STRiemannHit+;
+#pragma link C++ class STRiemannSort+;
 #pragma link C++ class STRiemannTrack+;
 #pragma link C++ class STRiemannTrackingTask+;
 
