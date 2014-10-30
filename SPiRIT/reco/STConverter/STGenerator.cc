@@ -639,6 +639,11 @@ STGenerator::GenerateGainCalibrationData()
   cout << "== Gain calibration data " << fOutputFile << " Created!" << endl;
 }
 
+void
+STGenerator::GenerateSignalDelayData()
+{
+}
+
 Int_t
 STGenerator::GetIntParameter(TString parameter)
 {
