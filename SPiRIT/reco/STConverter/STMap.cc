@@ -21,6 +21,15 @@ STMap::STMap()
 {
   fIsSetUAMap = 0;
   fIsSetAGETMap = 0;
+
+  for (Int_t iCobo = 0; iCobo < 12; iCobo++)
+    for (Int_t iAsad = 0; iAsad < 4; iAsad++)
+      fUAMap[iCobo][iAsad] = -1;
+
+  for (Int_t iCh = 0; iCh < 68; iCh++) {
+    fPadRowOfCh[iCh] = -2;
+    fPadLayerOfCh[iCh] = -2;
+  }
 }
 
 // Getters
@@ -56,11 +65,11 @@ Bool_t STMap::GetMapData(Int_t padRow, Int_t padLayer, Int_t &UAIdx, Int_t &cobo
     return kFALSE;
   }
 
-  UAIdx = (padLayer/28)*100 + padRow;
+  UAIdx = (padLayer/28)*100 + padRow/9;
   coboIdx = GetCoboIdx(UAIdx);
   asadIdx = GetAsadIdx(UAIdx);
 
-  if (padRow < 6) {
+  if (padRow/9 < 6) {
     Int_t agetRow = padRow%9;
     Int_t uaLayer = padLayer%28;
 
@@ -179,4 +188,21 @@ Int_t STMap::GetAsadIdx(Int_t uaIdx)
         return iAsad;
 
   return -1;
+}
+
+void STMap::SetUAMap(Int_t uaIdx, Int_t coboIdx, Int_t asadIdx)
+{
+  fUAMap[coboIdx][asadIdx] = uaIdx;
+}
+
+void STMap::SetAGETMap(Int_t chIdx, Int_t padRow, Int_t padLayer)
+{
+  fPadRowOfCh[chIdx] = padRow;
+  fPadLayerOfCh[chIdx] = padLayer;
+}
+
+void STMap::GetAGETMap(Int_t chIdx, Int_t &padRow, Int_t &padLayer)
+{
+  padRow = fPadRowOfCh[chIdx];
+  padLayer = fPadLayerOfCh[chIdx];
 }
