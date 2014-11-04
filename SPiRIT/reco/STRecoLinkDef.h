@@ -35,6 +35,8 @@
 #pragma link C++ class STRiemannTrack+;
 #pragma link C++ class STRiemannTrackingTask+;
 
+#pragma link C++ class STHoughSpaceLine+;
+
 #pragma link C++ class STUnitTestTask+;
 
 #endif

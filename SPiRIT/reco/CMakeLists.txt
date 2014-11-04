@@ -17,6 +17,7 @@ ${CMAKE_SOURCE_DIR}/SPiRIT/reco/STConverter
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/PulseShapeAnalyzer
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/SystemManipulator
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/RiemannTracking
+${CMAKE_SOURCE_DIR}/SPiRIT/reco/HoughTracking
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -58,6 +59,8 @@ RiemannTracking/STDipTTCorrelator.cc
 RiemannTracking/STRiemannTTCorrelator.cc
 RiemannTracking/STProximityHTCorrelator.cc
 RiemannTracking/STHelixHTCorrelator.cc
+
+HoughTracking/STHoughSpaceLine.cc
 
 STDecoderTask.cc
 STPSATask.cc
