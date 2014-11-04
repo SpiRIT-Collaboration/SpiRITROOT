@@ -42,6 +42,10 @@ class STMap : public TObject {
     Int_t GetCoboIdx(Int_t uaIdx);
     Int_t GetAsadIdx(Int_t uaIdx);
 
+    void SetUAMap(Int_t uaIdx, Int_t coboIdx, Int_t asadIdx);
+    void SetAGETMap(Int_t chIdx, Int_t padRow, Int_t padLayer);
+    void GetAGETMap(Int_t chIdx, Int_t &padRow, Int_t &padLayer);
+
   private:
     Bool_t fIsSetUAMap;
     Bool_t fIsSetAGETMap;
