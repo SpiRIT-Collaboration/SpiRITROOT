@@ -12,6 +12,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <cmath>
 #include <arpa/inet.h>
 
 #include "TSystem.h"
@@ -66,25 +67,30 @@ void GETDecoder::Initialize()
 {
   fNumTbs = 512;
 
+  fEndianness = 0;
+  fMergedUnitBlock = 1;
   fFrameType = -1;
   fMergedHeaderSize = 0;
   fNumMergedFrames = 0;
+  fUnitBlock = 1;
+  fMergedFrameStartPoint = 0;
   fCurrentMergedFrameSize = 0;
+  fCurrentInnerFrameSize = 0;
 
   fDebugMode = kFALSE;
-
-  fCurrentDataID = -1;
   fIsAutoReload = kTRUE;
   fIsPositivePolarity = kFALSE;
+
+  fFileSize = 0;
+  fCurrentDataID = -1;
 
   fFrame = 0;
   fCurrentFrameID = -1;
   fCurrentInnerFrameID = -1;
+  fEOF = kFALSE;
 
   fGETMath = 0;
-
   fGETPlot = 0;
-  fEOF = kFALSE;
 }
 
 void GETDecoder::SetNumTbs(Int_t value)
@@ -178,6 +184,8 @@ Bool_t GETDecoder::SetData(Int_t index)
     UShort_t headerSize = 0;
     UInt_t numMergedFrames = 0;
     fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
+    fData.seekg(5);
+    fData.read(reinterpret_cast<Char_t *>(&fFrameType), 2);
     fData.seekg(8);
     fData.read(reinterpret_cast<Char_t *>(&headerSize), 2);
     fData.seekg(0);
@@ -189,17 +197,22 @@ Bool_t GETDecoder::SetData(Int_t index)
     */
 
     fEndianness = ((metaType&0x80) >> 7);
-    if (fEndianness == kBig) // First bit of the first byte determines endianness. 0:Big, 1:Little
+    if (fEndianness == kBig) {// MSB of the first byte determines endianness. 0:Big, 1:Little
       headerSize = htons(headerSize);
+      fFrameType = htons(fFrameType);
+    }
 
-    if (headerSize == 20) { // Merged frame by event number
+    if (fFrameType == 0xff01) { // Merged frame by event number
       fFrameType = kMergedID;
-      fMergedHeaderSize = headerSize;
-    } else if (headerSize == 24) { // Merged frame by event time
+      fMergedUnitBlock = pow(2, metaType&0xf);
+      fMergedHeaderSize = headerSize*fMergedUnitBlock;
+    } else if (fFrameType == 0xff02) { // Merged frame by event time
       fFrameType = kMergedTime;
-      fMergedHeaderSize = headerSize;
+      fMergedUnitBlock = pow(2, metaType&0xf);
+      fMergedHeaderSize = headerSize*fMergedUnitBlock;
     } else { // Normal frame by CoBo
       fFrameType = kNormal;
+      fUnitBlock = pow(2, metaType&0xf);
       fMergedHeaderSize = 0;
       fNumMergedFrames = 0;
     }
@@ -328,9 +341,12 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
       if (fDebugMode)
         std::cout << "== [GETDecoder] Skipping Frame No. " << fCurrentFrameID + 1 << std::endl;
 
-      fData.ignore(1);
-
+      UShort_t metaType = 0;
+      fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
       fData.read(reinterpret_cast<Char_t *>(&frameSize), 3);
+
+      fEndianness = ((metaType&0x80) >> 7);
+      fUnitBlock = pow(2, metaType&0xf);
 
       if (fData.eof()) {
         std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
@@ -341,7 +357,10 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
         return 0;
       }
 
-      frameSize = (htonl(frameSize) >> 8)*64;
+      if (fEndianness == kBig)
+        frameSize = (htonl(frameSize) >> 8);
+
+      frameSize *= fUnitBlock;
 
       fData.seekg((ULong64_t)fData.tellg() - 4 + frameSize);
 
@@ -356,7 +375,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
       return GetFrame(frameNo);
     }
 
-    fData.ignore(8);
+    UShort_t metaType = 0;
+    fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
+    fData.ignore(7);
     fData.read(reinterpret_cast<Char_t *>(&headerSize), 2);
     fData.ignore(2);
     fData.read(reinterpret_cast<Char_t *>(&nItems), 4);
@@ -374,11 +395,17 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
       return 0;
     }
 
-    headerSize = htons(headerSize)*64;
-    nItems = htonl(nItems);
-    eventIdx = htonl(eventIdx);
-    coboIdx = (htons(coboIdx) >> 8);
-    asadIdx = (htons(asadIdx) >> 8);
+    fEndianness = ((metaType&0x80) >> 7);
+    fUnitBlock = pow(2, metaType&0xf);
+    if (fEndianness == kBig) {
+      headerSize = htons(headerSize);
+      nItems = htonl(nItems);
+      eventIdx = htonl(eventIdx);
+      coboIdx = (htons(coboIdx) >> 8);
+      asadIdx = (htons(asadIdx) >> 8);
+    }
+
+    headerSize *= fUnitBlock;
 
     if (fDebugMode)
       PrintFrameInfo(frameNo, eventIdx, coboIdx, asadIdx);
@@ -398,7 +425,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     UInt_t data;
     for (Int_t iItem = 0; iItem < nItems; iItem++) {
       fData.read(reinterpret_cast<Char_t *>(&data), 4);
-      data = htonl(data);
+
+      if (fEndianness == kBig)
+        data = htonl(data);
 
       UShort_t agetIdx = ((data & 0xc0000000) >> 30);
       UShort_t chanIdx = ((data & 0x3f800000) >> 23);
@@ -536,7 +565,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
     SkipInnerFrame();
   }
 
-  fData.ignore(8);
+  UShort_t metaType = 0;
+  fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
+  fData.ignore(7);
   fData.read(reinterpret_cast<Char_t *>(&headerSize), 2);
   fData.ignore(2);
   fData.read(reinterpret_cast<Char_t *>(&nItems), 4);
@@ -545,11 +576,18 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
   fData.read(reinterpret_cast<Char_t *>(&coboIdx), 1);
   fData.read(reinterpret_cast<Char_t *>(&asadIdx), 1);
 
-  headerSize = htons(headerSize)*64;
-  nItems = htonl(nItems);
-  eventIdx = htonl(eventIdx);
-  coboIdx = (htons(coboIdx) >> 8);
-  asadIdx = (htons(asadIdx) >> 8);
+  fEndianness = ((metaType&0x80) >> 7);
+  fUnitBlock = pow(2, metaType&0xf);
+
+  if (fEndianness == kBig) {
+    headerSize = htons(headerSize);
+    nItems = htonl(nItems);
+    eventIdx = htonl(eventIdx);
+    coboIdx = (htons(coboIdx) >> 8);
+    asadIdx = (htons(asadIdx) >> 8);
+  }
+
+  headerSize *= fUnitBlock;
 
   if (fDebugMode)
     PrintFrameInfo(frameNo, eventIdx, coboIdx, asadIdx);
@@ -569,7 +607,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
   UInt_t data;
   for (Int_t iItem = 0; iItem < nItems; iItem++) {
     fData.read(reinterpret_cast<Char_t *>(&data), 4);
-    data = htonl(data);
+
+    if (fEndianness == kBig)
+      data = htonl(data);
 
     UShort_t agetIdx = ((data & 0xc0000000) >> 30);
     UShort_t chanIdx = ((data & 0x3f800000) >> 23);
@@ -631,25 +671,36 @@ void GETDecoder::SkipMergedFrame()
 void GETDecoder::ReadMergedFrameInfo()
 {
   fMergedFrameStartPoint = fData.tellg();
-  fData.ignore(1);
+  UShort_t metaType = 0;
+  fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
   fData.read(reinterpret_cast<Char_t *>(&fCurrentMergedFrameSize), 3);
   fData.ignore(8);
   fData.read(reinterpret_cast<Char_t *>(&fNumMergedFrames), 4);
   fData.seekg((ULong64_t)fData.tellg() - 16);
 
+  fEndianness = ((metaType&0x80) >> 7);
+  fMergedUnitBlock = pow(2, metaType&0xf);
   if (fEndianness == kBig) {
     fCurrentMergedFrameSize = htonl(fCurrentMergedFrameSize) >> 8;
     fNumMergedFrames = htonl(fNumMergedFrames);
   }
+
+  fCurrentMergedFrameSize *= fMergedUnitBlock;
 }
 
 void GETDecoder::ReadInnerFrameInfo()
 {
-  fData.ignore(1);
+  UShort_t metaType = 0;
+  fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
   fData.read(reinterpret_cast<Char_t *>(&fCurrentInnerFrameSize), 3);
   fData.seekg((ULong64_t)fData.tellg() - 4);
 
-  fCurrentInnerFrameSize = (htonl(fCurrentInnerFrameSize) >> 8)*64;
+  fEndianness = ((metaType&0x80) >> 7);
+  fUnitBlock = pow(2, metaType&0xf);
+  if (fEndianness == kBig)
+    fCurrentInnerFrameSize = (htonl(fCurrentInnerFrameSize) >> 8);
+
+  fCurrentInnerFrameSize *= fUnitBlock;
 }
 
 void GETDecoder::CheckEOF() {

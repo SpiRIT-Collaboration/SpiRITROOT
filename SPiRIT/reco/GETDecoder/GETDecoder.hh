@@ -104,9 +104,11 @@ class GETDecoder : public TObject
     Int_t fNumTbs; /// the number of time buckets. It's determined when taking data and should be changed manually by user. (Default: 512)
 
     Bool_t fEndianness; /// Endianness of the data. 0: Big-endian, 1: Little-endian
-    Int_t fFrameType;  /// frame type. 0: normal frame, 1: event number merged, 2: event time merged
+    Int_t fMergedUnitBlock; /// Unit block size used in merged frame header
+    UShort_t fFrameType;  /// frame type. 0: normal frame, 1: event number merged, 2: event time merged
     Int_t fMergedHeaderSize; /// header size of merged frame. For additional skip bytes when finding frame by frame number.
     Int_t fNumMergedFrames; /// the number of merged frames. For additional skip bytes when finding frame by frame number.
+    Int_t fUnitBlock; /// Unit block size used in frame header
     ULong64_t fMergedFrameStartPoint; /// byte number of the merged frame start point. For navigational feature in a merged frame.
     ULong64_t fCurrentMergedFrameSize; /// size of a merged frame of the frame ID **fCurrentFrameID**. For additional skip bytes when finding frame by frame number.
     ULong64_t fCurrentInnerFrameSize; /// size of an inner frame.
