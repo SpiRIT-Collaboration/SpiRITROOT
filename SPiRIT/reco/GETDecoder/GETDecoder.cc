@@ -376,8 +376,11 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     }
 
     UShort_t metaType = 0;
+    UShort_t frameType = 0;
     fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
-    fData.ignore(7);
+    fData.ignore(4);
+    fData.read(reinterpret_cast<Char_t *>(&frameType), 2);
+    fData.ignore(1);
     fData.read(reinterpret_cast<Char_t *>(&headerSize), 2);
     fData.ignore(2);
     fData.read(reinterpret_cast<Char_t *>(&nItems), 4);
@@ -398,6 +401,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     fEndianness = ((metaType&0x80) >> 7);
     fUnitBlock = pow(2, metaType&0xf);
     if (fEndianness == kBig) {
+      frameType = htons(frameType);
       headerSize = htons(headerSize);
       nItems = htonl(nItems);
       eventIdx = htonl(eventIdx);
@@ -423,21 +427,48 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     fData.seekg((ULong64_t) fData.tellg() - 28 + headerSize);
 
     UInt_t data;
-    for (Int_t iItem = 0; iItem < nItems; iItem++) {
-      fData.read(reinterpret_cast<Char_t *>(&data), 4);
+    if (frameType == 1) {
+      for (Int_t iItem = 0; iItem < nItems; iItem++) {
+        fData.read(reinterpret_cast<Char_t *>(&data), 4);
 
-      if (fEndianness == kBig)
-        data = htonl(data);
+        if (fEndianness == kBig)
+          data = htonl(data);
 
-      UShort_t agetIdx = ((data & 0xc0000000) >> 30);
-      UShort_t chanIdx = ((data & 0x3f800000) >> 23);
-      UShort_t buckIdx = ((data & 0x007fc000) >> 14);
-      UShort_t sample = (data & 0x00000fff);         
+        UShort_t agetIdx = ((data & 0xc0000000) >> 30);
+        UShort_t chanIdx = ((data & 0x3f800000) >> 23);
+        UShort_t buckIdx = ((data & 0x007fc000) >> 14);
+        UShort_t sample = (data & 0x00000fff);         
 
-      if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
-        continue; 
-                                                                     
-      fFrame -> SetRawADC(agetIdx, chanIdx, buckIdx, sample); 
+        if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
+          continue; 
+                                                                       
+        fFrame -> SetRawADC(agetIdx, chanIdx, buckIdx, sample); 
+      }
+    } else if (frameType == 2) {
+      for (Int_t iItem = 0; iItem < nItems; iItem++) {
+        fData.read(reinterpret_cast<Char_t *>(&data), 4);
+
+        if (fEndianness == kBig)
+          data = htonl(data);
+
+        UShort_t agetIdx = ((data & 0xc0000000) >> 30);
+        UShort_t chanIdx = ((iItem/4)*2)%68;
+        UShort_t buckIdx = iItem/(68*4/2);
+        UShort_t sample = ((data & 0x0fff0000) >> 16);
+
+        if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
+          continue; 
+                                                                       
+        fFrame -> SetRawADC(agetIdx, chanIdx, buckIdx, sample); 
+
+        agetIdx = ((data & 0xc000) >> 14);
+        sample = (data & 0x0fff);
+
+        if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
+          continue; 
+                                                                       
+        fFrame -> SetRawADC(agetIdx, chanIdx + 1, buckIdx, sample); 
+      }
     }
 
     fCurrentFrameID = frameNo;
@@ -566,8 +597,11 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
   }
 
   UShort_t metaType = 0;
+  UShort_t frameType = 0;
   fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
-  fData.ignore(7);
+  fData.ignore(4);
+  fData.read(reinterpret_cast<Char_t *>(&frameType), 2);
+  fData.ignore(1);
   fData.read(reinterpret_cast<Char_t *>(&headerSize), 2);
   fData.ignore(2);
   fData.read(reinterpret_cast<Char_t *>(&nItems), 4);
@@ -580,6 +614,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
   fUnitBlock = pow(2, metaType&0xf);
 
   if (fEndianness == kBig) {
+    frameType = htons(frameType);
     headerSize = htons(headerSize);
     nItems = htonl(nItems);
     eventIdx = htonl(eventIdx);
@@ -605,21 +640,48 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
   fData.seekg((ULong64_t) fData.tellg() - 28 + headerSize);
 
   UInt_t data;
-  for (Int_t iItem = 0; iItem < nItems; iItem++) {
-    fData.read(reinterpret_cast<Char_t *>(&data), 4);
+  if (frameType == 1) {
+    for (Int_t iItem = 0; iItem < nItems; iItem++) {
+      fData.read(reinterpret_cast<Char_t *>(&data), 4);
 
-    if (fEndianness == kBig)
-      data = htonl(data);
+      if (fEndianness == kBig)
+        data = htonl(data);
 
-    UShort_t agetIdx = ((data & 0xc0000000) >> 30);
-    UShort_t chanIdx = ((data & 0x3f800000) >> 23);
-    UShort_t buckIdx = ((data & 0x007fc000) >> 14);
-    UShort_t sample = (data & 0x00000fff);         
+      UShort_t agetIdx = ((data & 0xc0000000) >> 30);
+      UShort_t chanIdx = ((data & 0x3f800000) >> 23);
+      UShort_t buckIdx = ((data & 0x007fc000) >> 14);
+      UShort_t sample = (data & 0x00000fff);         
 
-    if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
-      continue; 
-                                                                   
-    fFrame -> SetRawADC(agetIdx, chanIdx, buckIdx, sample); 
+      if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
+        continue; 
+                                                                     
+      fFrame -> SetRawADC(agetIdx, chanIdx, buckIdx, sample); 
+    }
+  } else if (frameType == 2) {
+    for (Int_t iItem = 0; iItem < nItems; iItem++) {
+      fData.read(reinterpret_cast<Char_t *>(&data), 4);
+
+      if (fEndianness == kBig)
+        data = htonl(data);
+
+      UShort_t agetIdx = ((data & 0xc0000000) >> 30);
+      UShort_t chanIdx = ((iItem/4)*2)%68;
+      UShort_t buckIdx = iItem/(68*4/2);
+      UShort_t sample = ((data & 0x0fff0000) >> 16);
+
+      if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
+        continue; 
+                                                                     
+      fFrame -> SetRawADC(agetIdx, chanIdx, buckIdx, sample); 
+
+      agetIdx = ((data & 0xc000) >> 14);
+      sample = (data & 0x0fff);
+
+      if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
+        continue; 
+                                                                     
+      fFrame -> SetRawADC(agetIdx, chanIdx + 1, buckIdx, sample); 
+    }
   }
 
   CheckEOF();
