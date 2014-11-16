@@ -240,8 +240,8 @@ TCanvas *GETPlot::ShowRawFrame(Int_t frameNo, Int_t innerFrameNo, Int_t numChann
       Int_t charge[512] = {0};
 
       for (Int_t iTb = 0; iTb < fMaxTb; iTb++) {
-        if (rawadc[iTb] == 0)
-          continue;
+//        if (rawadc[iTb] == 0)
+//          continue;
         
         tb[numSamples] = iTb;
         charge[numSamples] = rawadc[iTb];
