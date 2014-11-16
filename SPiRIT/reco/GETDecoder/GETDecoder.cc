@@ -377,12 +377,14 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
 
     UShort_t metaType = 0;
     UShort_t frameType = 0;
+    UShort_t itemSize = 0;
     fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
-    fData.ignore(4);
+    fData.read(reinterpret_cast<Char_t *>(&frameSize), 3);
+    fData.ignore(1);
     fData.read(reinterpret_cast<Char_t *>(&frameType), 2);
     fData.ignore(1);
     fData.read(reinterpret_cast<Char_t *>(&headerSize), 2);
-    fData.ignore(2);
+    fData.read(reinterpret_cast<Char_t *>(&itemSize), 2);
     fData.read(reinterpret_cast<Char_t *>(&nItems), 4);
     fData.ignore(6);
     fData.read(reinterpret_cast<Char_t *>(&eventIdx), 4);
@@ -398,21 +400,34 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
       return 0;
     }
 
+    metaType = 8;
     fEndianness = ((metaType&0x80) >> 7);
     fUnitBlock = pow(2, metaType&0xf);
     if (fEndianness == kBig) {
       frameType = htons(frameType);
+      frameSize = (htonl(frameSize) >> 8);
       headerSize = htons(headerSize);
+      itemSize = htons(itemSize);
       nItems = htonl(nItems);
       eventIdx = htonl(eventIdx);
       coboIdx = (htons(coboIdx) >> 8);
       asadIdx = (htons(asadIdx) >> 8);
     }
 
+    frameSize *= fUnitBlock;
     headerSize *= fUnitBlock;
 
-    if (fDebugMode)
+    if (fDebugMode) {
       PrintFrameInfo(frameNo, eventIdx, coboIdx, asadIdx);
+      std::cout << "  frameType: " << frameType << std::endl;
+      std::cout << "  frameSize: " << frameSize << std::endl;
+      std::cout << " headerSize: " << headerSize << std::endl;
+      std::cout << "   itemSize: " << itemSize << std::endl;
+      std::cout << "   numItems: " << nItems << std::endl;
+      std::cout << "   eventIdx: " << eventIdx << std::endl;
+      std::cout << " fUnitBlock: " << fUnitBlock << std::endl;
+      std::cout << "fEndianness: " << fEndianness << std::endl;
+    }
 
     if (fFrame != 0)
       delete fFrame;
@@ -426,10 +441,14 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
 
     fData.seekg((ULong64_t) fData.tellg() - 28 + headerSize);
 
-    UInt_t data;
+    if (fDebugMode) {
+      std::cout << " currentFrameStart: " << (ULong64_t)fData.tellg() - headerSize << std::endl;
+    }
+
     if (frameType == 1) {
+      UInt_t data;
       for (Int_t iItem = 0; iItem < nItems; iItem++) {
-        fData.read(reinterpret_cast<Char_t *>(&data), 4);
+        fData.read(reinterpret_cast<Char_t *>(&data), itemSize);
 
         if (fEndianness == kBig)
           data = htonl(data);
@@ -445,33 +464,30 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
         fFrame -> SetRawADC(agetIdx, chanIdx, buckIdx, sample); 
       }
     } else if (frameType == 2) {
+      UShort_t data;
       for (Int_t iItem = 0; iItem < nItems; iItem++) {
-        fData.read(reinterpret_cast<Char_t *>(&data), 4);
+        fData.read(reinterpret_cast<Char_t *>(&data), itemSize);
 
         if (fEndianness == kBig)
-          data = htonl(data);
+          data = htons(data);
 
-        UShort_t agetIdx = ((data & 0xc0000000) >> 30);
-        UShort_t chanIdx = ((iItem/4)*2)%68;
-        UShort_t buckIdx = iItem/(68*4/2);
-        UShort_t sample = ((data & 0x0fff0000) >> 16);
+        UShort_t agetIdx = ((data & 0xc000) >> 14);
+        UShort_t chanIdx = ((iItem/8)*2 + iItem%2)%68;
+        UShort_t buckIdx = iItem/(68*4);
+        UShort_t sample = data & 0x0fff;
 
         if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
           continue; 
                                                                        
         fFrame -> SetRawADC(agetIdx, chanIdx, buckIdx, sample); 
-
-        agetIdx = ((data & 0xc000) >> 14);
-        sample = (data & 0x0fff);
-
-        if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
-          continue; 
-                                                                       
-        fFrame -> SetRawADC(agetIdx, chanIdx + 1, buckIdx, sample); 
       }
     }
 
     fCurrentFrameID = frameNo;
+
+    if (fDebugMode) {
+      std::cout << " currentFrameEnd: " << (ULong64_t)fData.tellg() << std::endl;
+    }
 
     return fFrame;
   }
@@ -598,12 +614,14 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
 
   UShort_t metaType = 0;
   UShort_t frameType = 0;
+  UShort_t itemSize = 0;
   fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
-  fData.ignore(4);
+  fData.read(reinterpret_cast<Char_t *>(&frameSize), 3);
+  fData.ignore(1);
   fData.read(reinterpret_cast<Char_t *>(&frameType), 2);
   fData.ignore(1);
   fData.read(reinterpret_cast<Char_t *>(&headerSize), 2);
-  fData.ignore(2);
+  fData.read(reinterpret_cast<Char_t *>(&itemSize), 2);
   fData.read(reinterpret_cast<Char_t *>(&nItems), 4);
   fData.ignore(6);
   fData.read(reinterpret_cast<Char_t *>(&eventIdx), 4);
@@ -615,13 +633,16 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
 
   if (fEndianness == kBig) {
     frameType = htons(frameType);
+    frameSize = (htonl(frameSize) >> 8);
     headerSize = htons(headerSize);
+    itemSize = htons(itemSize);
     nItems = htonl(nItems);
     eventIdx = htonl(eventIdx);
     coboIdx = (htons(coboIdx) >> 8);
     asadIdx = (htons(asadIdx) >> 8);
   }
 
+  frameSize *= fUnitBlock;
   headerSize *= fUnitBlock;
 
   if (fDebugMode)
@@ -639,10 +660,10 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
 
   fData.seekg((ULong64_t) fData.tellg() - 28 + headerSize);
 
-  UInt_t data;
   if (frameType == 1) {
+    UInt_t data;
     for (Int_t iItem = 0; iItem < nItems; iItem++) {
-      fData.read(reinterpret_cast<Char_t *>(&data), 4);
+      fData.read(reinterpret_cast<Char_t *>(&data), itemSize);
 
       if (fEndianness == kBig)
         data = htonl(data);
@@ -658,29 +679,22 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
       fFrame -> SetRawADC(agetIdx, chanIdx, buckIdx, sample); 
     }
   } else if (frameType == 2) {
+    UShort_t data;
     for (Int_t iItem = 0; iItem < nItems; iItem++) {
-      fData.read(reinterpret_cast<Char_t *>(&data), 4);
+      fData.read(reinterpret_cast<Char_t *>(&data), itemSize);
 
       if (fEndianness == kBig)
-        data = htonl(data);
+        data = htons(data);
 
-      UShort_t agetIdx = ((data & 0xc0000000) >> 30);
-      UShort_t chanIdx = ((iItem/4)*2)%68;
-      UShort_t buckIdx = iItem/(68*4/2);
-      UShort_t sample = ((data & 0x0fff0000) >> 16);
+      UShort_t agetIdx = ((data & 0xc000) >> 14);
+      UShort_t chanIdx = ((iItem/8)*2 + iItem%2)%68;
+      UShort_t buckIdx = iItem/(68*4);
+      UShort_t sample = data & 0x0fff;
 
       if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
         continue; 
                                                                      
       fFrame -> SetRawADC(agetIdx, chanIdx, buckIdx, sample); 
-
-      agetIdx = ((data & 0xc000) >> 14);
-      sample = (data & 0x0fff);
-
-      if (chanIdx >= 68 || agetIdx >= 4 || buckIdx >= 512)
-        continue; 
-                                                                     
-      fFrame -> SetRawADC(agetIdx, chanIdx + 1, buckIdx, sample); 
     }
   }
 
