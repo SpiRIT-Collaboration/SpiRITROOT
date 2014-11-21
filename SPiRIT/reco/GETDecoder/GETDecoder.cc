@@ -400,7 +400,6 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
       return 0;
     }
 
-    metaType = 8;
     fEndianness = ((metaType&0x80) >> 7);
     fUnitBlock = pow(2, metaType&0xf);
     if (fEndianness == kBig) {
