@@ -126,7 +126,7 @@ void GETFrame::SetPedestal(Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Doubl
   fIsSetPedestalUsed[index/512] = kTRUE;
 }
 
-void GETFrame::SetFPNPedestal(Int_t sigmaThreshold) {
+void GETFrame::SetFPNPedestal(Double_t sigmaThreshold) {
   /**
     * Use FPN channels as pedestal.
    **/
