@@ -73,7 +73,7 @@ class GETFrame : public TObject
     //! Set pedestal from calculation done outside this class.
     void SetPedestal(Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Double_t *pedestalSigma);
     //! Set FPN pedestal
-    void SetFPNPedestal();
+    void SetFPNPedestal(Int_t sigmaThreshold = 5);
     //! Subtract pedestal using internal, external or both.
     Bool_t SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor = 0);
     //! Return the time bucket index of the maximum ADC value.
@@ -120,6 +120,7 @@ class GETFrame : public TObject
     Double_t fPedestalSigmaData[4*68*512];  /// An array containing external pedestal sigma values
 
     Bool_t fIsFPNPedestalUsed;     /// Flag for checking if FPNPedestal() is used or not
+    Int_t fFPNSigmaThreshold;      /// Sigma threshold when calculating baseline value
     Double_t fFPNPedestalMean[4*4];        /// An array containing pedestal mean value calculated with FPN channels
     Int_t fFPNStartTb;             /// First time bucket used to calculate FPN mean
     Int_t fFPNAverageTbs;             /// The number of time buckets used to calculate FPN mean

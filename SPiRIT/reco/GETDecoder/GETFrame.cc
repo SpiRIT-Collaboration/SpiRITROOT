@@ -41,6 +41,7 @@ GETFrame::GETFrame()
   memset(fPedestalSigmaData, 0, sizeof(Double_t)*4*68*512);
 
   fIsFPNPedestalUsed = kFALSE;
+  fFPNSigmaThreshold = 0;
   memset(fFPNPedestalMean, 0, sizeof(Double_t)*4*4);
   fFPNStartTb = 3;
   fFPNAverageTbs = 10;
@@ -125,10 +126,12 @@ void GETFrame::SetPedestal(Int_t agetIdx, Int_t chIdx, Double_t *pedestal, Doubl
   fIsSetPedestalUsed[index/512] = kTRUE;
 }
 
-void GETFrame::SetFPNPedestal() {
+void GETFrame::SetFPNPedestal(Int_t sigmaThreshold) {
   /**
     * Use FPN channels as pedestal.
    **/
+
+  fFPNSigmaThreshold = sigmaThreshold;
 
   for (Int_t iAget = 0; iAget < 4; iAget++) {
     for (Int_t iFPN = 0; iFPN < 4; iFPN++) {
@@ -180,13 +183,13 @@ Bool_t GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor
       for (Int_t iTb = startTb; iTb < startTb + fFPNAverageTbs; iTb++)
         fMath -> Add(fRawAdc[index + iTb]);
 
-      if (fMath -> GetRMS() < 5)
+      if (fMath -> GetRMS() < fFPNSigmaThreshold)
         break;
 
       startTb += fFPNAverageTbs;
 
       if (startTb > fNumTbs - fFPNAverageTbs - 3) {
-        std::cout << "Something is returned!" << std::endl;
+        std::cout << "There's no part satisfying sigma threshold " << fFPNSigmaThreshold << "!" << std::endl;
         return kFALSE;
       }
     }
