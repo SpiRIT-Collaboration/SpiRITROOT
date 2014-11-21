@@ -66,6 +66,7 @@ void STCore::Initialize()
   fPedestalMode = kNoPedestal;
   fPedestalRMSFactor = 0;
   fIsFPNPedestal = kFALSE;
+  fFPNSigmaThreshold = 5;
 
   fGainCalibrationPtr = new STGainCalibration();
   fIsGainCalibrationData = kFALSE;
@@ -159,10 +160,11 @@ Bool_t STCore::SetPedestalData(TString filename, Double_t rmsFactor)
   return fIsPedestalData;
 }
 
-void STCore::SetFPNPedestal()
+void STCore::SetFPNPedestal(Int_t sigmaThreshold)
 {
   fIsFPNPedestal = kTRUE;
   fPedestalMode = kPedestalFPN;
+  fFPNSigmaThreshold = sigmaThreshold;
 
   std::cout << "== [STCore] Using FPN pedestal is set!" << std::endl;
 }
@@ -319,7 +321,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
             fPedestalPtr -> GetPedestal(row, layer, pedestal, pedestalSigma);
             frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
           } else if (fPedestalMode == kPedestalFPN)
-            frame -> SetFPNPedestal();
+            frame -> SetFPNPedestal(fFPNSigmaThreshold);
 
           Bool_t good = frame -> SubtractPedestal(iAget, iCh, fPedestalRMSFactor);
           fRawEventPtr -> SetIsGood(good);
