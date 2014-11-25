@@ -13,7 +13,7 @@ STHoughSpaceLine::STHoughSpaceLine(){
 
 STHoughSpaceLine::STHoughSpaceLine(STEvent *event){
  
-     if (!event->IsClustered()){}
+     //if (event->IsClustered()) std::cout<<" SpiRITROOT : Clustered event "<<std::cout; 
 
 }
 
@@ -24,20 +24,29 @@ STHoughSpaceLine::~STHoughSpaceLine(){
 
 void STHoughSpaceLine::Initialize(){
   // Default constructor
+  fStandardMode = kFALSE;
   fGUIMode = kFALSE;
+  fDrawHist = kFALSE;
   fDebugMode = 0;
+  fClusteredMode = kTRUE;
 }
 
-void STHoughSpaceLine::SetGUIMode(){
-
+void STHoughSpaceLine::SetGUIMode(Int_t guimode){
+ 
+  fDrawHist = guimode;
   std::cout<<" ****** GUI Mode to Visualize Hough Space and Tracks ******* "<<std::endl;
 
   fGUIMode = kTRUE;
-  HistHough = new TH2F("HistHough","HistHough",1000,0,4,1000,-400,400);
-  ClusterProjXZ = new TH2F("ClusterProjXZ","ClusterProjXZ",100,-400,400,100,-400,400);
-  HC = new TCanvas("HC","HC",200,10,1000,1000);
-  HC->Divide(1,2);
-  HC->Draw();
+  HistHoughXZ = new TH2F("HistHoughXZ","HistHoughXZ",1000,0,4,1000,-400,400);
+  //ClusterProjXZ = new TH2F("ClusterProjXZ","ClusterProjXZ",1000,-300,300,1000,0,800);
+  ClusterProjXZ = new TH2F("ClusterProjXZ","ClusterProjXZ",100,-400,400,100,0,800);
+  HistHoughXY = new TH2F("HistHoughXY","HistHoughXY",1000,0,4,1000,-400,400);
+  ClusterProjXY = new TH2F("ClusterProjXY","ClusterProjXY",100,-400,400,100,-0,800);
+  if(fDrawHist){
+       	  HC = new TCanvas("HC","HC",200,10,1000,750);
+	  HC->Divide(2,1);
+	  HC->Draw();
+  }
 
 }
 
@@ -50,35 +59,71 @@ void STHoughSpaceLine::SetDebugMode(Int_t verbosity){
 
 }
 
+void STHoughSpaceLine::SetMode(TString mode){
+
+      
+        mode.ToLower();
+	  if (mode.EqualTo("clustered")) {
+		fClusteredMode = kTRUE;
+		std::cout<<" Data mode set to Clustered "<<std::endl;
+	  }  else if (mode.EqualTo("standard")){
+		 fStandardMode = kTRUE;
+                 fClusteredMode = kFALSE;
+		std::cout<<" Data mode set to Standard "<<std::endl; 
+ 	  } else {
+          std::cout<<" Wrong mode. Please set a mode (Default is Clustered). Exiting... "<<std::endl; 
+          exit(1);
+	  }
+
+}
+
 
 void STHoughSpaceLine::GetClusterSpace(STEvent *event){
 
-       if(fGUIMode) ResetHoughSpace();
+      if(fGUIMode) ResetHoughSpace();
+
+      if(fClusteredMode){
 
        fClustersNum = event -> GetNumClusters();
          for (Int_t iCluster = 0; iCluster <fClustersNum; iCluster++){ 
                       SingleCluster = event -> GetCluster(iCluster);
                       fClusterPos= SingleCluster -> GetPosition();
                       //fClusterPos.Print();
-                      SetXZSingle(fClusterPos.X(),fClusterPos.Z());
+                      SetSingle(fClusterPos.X(),fClusterPos.Y(),fClusterPos.Z());
 		      
 	}
-        if(fGUIMode){
-		 DrawHoughSpace();
-                 Int_t maxbinx;
+
+      }
+
+
+      if(fGUIMode){
+	         if(fDrawHist) DrawHoughSpace();
+	         Int_t maxbinx;
                  Int_t maxbiny;
                  Int_t maxbinz;  
-                 HistHough->GetMaximumBin(maxbinx,maxbiny,maxbinz);
+                 HistHoughXZ->GetMaximumBin(maxbinx,maxbiny,maxbinz);
+                 std::cout<<" **********    Hough Space XZ   ************"<<std::endl;
                  std::cout<<" maxbinx : "<<maxbinx<<"   maxbiny  : "<<maxbiny<<"  maxbinz : "<<maxbinz<<std::endl;
-  	         Double_t x_coord = HistHough->GetXaxis()->GetBinCenter(maxbinx);
-                 Double_t y_coord = HistHough->GetYaxis()->GetBinCenter(maxbiny);
-		 std::cout<<"  Maximum of Hough Space - Distance of approach : "<<std::dec<<y_coord<<"   Angle : "<<std::dec<<x_coord<<std::endl;
-	}
+  	         Double_t x_coord = HistHoughXZ->GetXaxis()->GetBinCenter(maxbinx);
+                 Double_t y_coord = HistHoughXZ->GetYaxis()->GetBinCenter(maxbiny);
+		 std::cout<<"  First Maximum of the Hough Space - Distance of approach : "<<std::dec<<y_coord<<"   Angle : "<<std::dec<<x_coord<<std::endl;
+		 Int_t locmaxbinx = maxbinx;
+                 Int_t locmaxbiny = maxbiny;
+                 Int_t locmaxbinz = maxbinz;
+                 GetNextMaximumBin(locmaxbinx,locmaxbiny,locmaxbinz,HistHoughXZ);
+		 std::cout<<" ********************************************"<<std::endl;
+		 std::cout<<" locmaxbinx : "<<locmaxbinx<<"   locmaxbiny  : "<<locmaxbiny<<"  locmaxbinz : "<<locmaxbinz<<std::endl;
+  	         x_coord = HistHoughXZ->GetXaxis()->GetBinCenter(locmaxbinx);
+                 y_coord = HistHoughXZ->GetYaxis()->GetBinCenter(locmaxbiny);
+		 std::cout<<" Second Maximum of the Hough Space - Distance of approach : "<<std::dec<<y_coord<<"   Angle : "<<std::dec<<x_coord<<std::endl;
+
+      }
+
 
 
 }
 
-void STHoughSpaceLine::SetXZSingle(Float_t x,Float_t z){
+void STHoughSpaceLine::SetSingle(Float_t x, Float_t y,Float_t z){
 
                      
 
@@ -90,18 +135,21 @@ void STHoughSpaceLine::SetXZSingle(Float_t x,Float_t z){
                              // fTheta.push_back(itheta); // Test
                              // Float_t angle = (  (itheta*TMath::Pi()) /(1800.0)  );
 			      Float_t angle = TMath::Pi()*(static_cast<Float_t>(itheta)/1023);
-  			      Float_t d0 = (TMath::Cos(angle)*x)  +  (TMath::Sin(angle)*z);
+  			      Float_t d0_XZ = (TMath::Cos(angle)*x)  +  (TMath::Sin(angle)*z);
+                              Float_t d0_XY = (TMath::Cos(angle)*x)  +  (TMath::Sin(angle)*y);
                               
 			      if(fGUIMode){	
-					HistHough->Fill(angle,d0);
-                              		ClusterProjXZ->Fill(x,z);
+					HistHoughXZ->Fill(angle,d0_XZ);
+                              		ClusterProjXZ->Fill(z,x);
+                                        HistHoughXY->Fill(angle,d0_XY);
+                              		ClusterProjXY->Fill(y,x);
                                         
 			        }
 
 				   
 			
 			
-			        else {fMapKey = EncodeMapKey(d0,angle);
+			        else {fMapKey = EncodeMapKey(d0_XZ,angle);
                                 //if(!HoughMap.count(fMapKey)) HoughMap.insert(std::pair<Int_t,Int_t>(fMapKey,1)); //Starts in 1 instead of 0
                                  HoughMap[fMapKey]++;
 				}
@@ -126,7 +174,11 @@ void STHoughSpaceLine::DrawHoughSpace(){
        HC->cd(1);
        ClusterProjXZ->Draw();
        HC->cd(2);
-       HistHough->Draw("zcol");
+       HistHoughXZ->Draw("zcol");
+       //  HC->cd(3);
+       //ClusterProjXY->Draw();
+       //HC->cd(4);
+       //HistHoughXY->Draw("zcol");
        
        HC->Modified();
        HC->Update();
@@ -135,8 +187,10 @@ void STHoughSpaceLine::DrawHoughSpace(){
 
 void STHoughSpaceLine::ResetHoughSpace(){
        
-       HistHough->Reset();
+       HistHoughXZ->Reset();
        ClusterProjXZ->Reset();
+       HistHoughXY->Reset();
+       ClusterProjXY->Reset();
       
 
 }
@@ -170,6 +224,51 @@ Int_t STHoughSpaceLine::EncodeMapKey(Float_t d, Float_t ang){
      }
 
      return HMapKey;
+
+}
+
+Int_t STHoughSpaceLine::GetNextMaximumBin(Int_t &locmax, Int_t &locmay, Int_t &locmaz, TH2F* HoughSpace){
+
+       Double_t dist;
+
+       Float_t loc_x_bin = locmax;
+       Float_t loc_y_bin = locmay;
+
+       Int_t bin, binx, biny, binz;
+       Int_t locm;
+       Int_t xfirst  = HoughSpace->GetXaxis()->GetFirst();
+       Int_t xlast   = HoughSpace->GetXaxis()->GetLast();
+       Int_t yfirst  = HoughSpace->GetYaxis()->GetFirst();
+       Int_t ylast   = HoughSpace->GetYaxis()->GetLast();
+       Int_t zfirst  = HoughSpace->GetZaxis()->GetFirst();
+       Int_t zlast   = HoughSpace->GetXaxis()->GetLast();
+
+	Double_t maximum = -FLT_MAX, value;
+	locm = locmax = locmay = locmaz = 0;
+
+           for (binz=zfirst;binz<=zlast;binz++) {
+     		 for (biny=yfirst;biny<=ylast;biny++) {
+        		 for (binx=xfirst;binx<=xlast;binx++) {
+           			 bin = HoughSpace->GetBin(binx,biny,binz);
+            			 value = HoughSpace->GetBinContent(bin);
+                                 dist = TMath::Sqrt( pow(loc_x_bin-binx,2) + pow(loc_y_bin-biny,2) );
+                                // std::cout<<" Dist : "<<dist<<std::endl;
+                                // std::cout<<" Maximum Local coord X :" <<loc_x_bin<<"  Maximum Local coord Y :"<<loc_y_bin<<"  Bin x :"<<binx<<"  Bin y :"<<biny<<std::endl;
+            		   if( dist > 100 ){	
+			      if (value > maximum) {
+				 maximum = value;
+               			 locm    = bin;
+              			 locmax  = binx;
+               			 locmay  = biny;
+               			 locmaz  = binz;
+				}
+			     }	
+			 }
+		 }
+	    }
+ 
+         return locm;
+
 
 }
 

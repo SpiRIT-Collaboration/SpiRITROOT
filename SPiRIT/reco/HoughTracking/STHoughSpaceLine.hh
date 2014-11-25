@@ -15,7 +15,9 @@
 #include "TVector3.h"
 #include "TMath.h"
 #include "TH2.h"
+#include "TH1.h"
 #include "TCanvas.h"
+#include "TAxis.h"
 
 #include <vector>
 #include <string>
@@ -51,15 +53,23 @@ class STHoughSpaceLine : public TObject
  void GetClusterSpace(STEvent *event);
  void Initialize();
 
- void SetGUIMode();
+ void SetGUIMode(Int_t guimode);
  void SetDebugMode(Int_t verbosity);
+ void SetMode(TString mode);
 
- TH2F *HistHough;
+ Int_t GetNextMaximumBin(Int_t &locmax, Int_t &locmay, Int_t &locmaz,TH2F* HoughSpace);
+
+ TH2F *HistHoughXZ;
+ TH2F *HistHoughXY;
  TH2F *ClusterProjXZ;
+ TH2F *ClusterProjXY;
  TCanvas *HC;
 
  Bool_t fGUIMode;
  Bool_t fDebugMode;
+ Bool_t fClusteredMode;
+ Bool_t fStandardMode;
+ Bool_t fDrawHist;
 
  
 
@@ -79,7 +89,7 @@ class STHoughSpaceLine : public TObject
   Int_t fMapKey;
   
 
-  void SetXZSingle(Float_t x,Float_t z);
+  void SetSingle(Float_t x, Float_t y ,Float_t z);
   void DrawHoughSpace();
   void ResetHoughSpace();
 
