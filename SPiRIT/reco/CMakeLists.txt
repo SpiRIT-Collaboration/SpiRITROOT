@@ -61,6 +61,7 @@ RiemannTracking/STProximityHTCorrelator.cc
 RiemannTracking/STHelixHTCorrelator.cc
 
 HoughTracking/STHoughSpaceLine.cc
+HoughTracking/STHoughSpaceHelix.cc
 
 STDecoderTask.cc
 STPSATask.cc
