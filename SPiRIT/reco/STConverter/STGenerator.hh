@@ -32,6 +32,7 @@ class STGenerator : public TObject {
     Bool_t SetParameterDir(TString dir);
     void SetInternalPedestal(Int_t startTb = 3, Int_t numTbs = 20);
     Bool_t SetPedestalData(TString filename, Double_t rmsFactor = 0);
+    void SetFPNPedestal(Double_t fpnThreshold = 5);
     void SetPersistence(Bool_t value = kTRUE);
     void SetStoreRMS(Bool_t value = kTRUE);
     void SetSumRMSCut(Int_t value = 0);

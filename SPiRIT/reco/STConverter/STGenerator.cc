@@ -191,6 +191,12 @@ STGenerator::SetPedestalData(TString filename, Double_t rmsFactor)
 }
 
 void
+STGenerator::SetFPNPedestal(Double_t fpnThreshold)
+{
+  return fCore -> SetFPNPedestal(fpnThreshold);
+}
+
+void
 STGenerator::SetPersistence(Bool_t value)
 {
   fIsPersistence = value;
