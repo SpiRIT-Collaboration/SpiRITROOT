@@ -40,6 +40,8 @@ class GETPlot : public TObject
 
     //! Set the plotting range.
     void SetAgetRange(Int_t type, Int_t agetIdx, Double_t minx, Double_t maxx, Double_t miny, Double_t maxy);
+    //! Set FPN sigma threshold
+    void SetFPNThreshold(Double_t sigma);
 
     //! Draw the summary spectra of the file set to the decoder, and return the canvas.
     TCanvas *ShowSummarySpectra(Int_t startTb = 10,  /// Starting time bucket index
@@ -62,6 +64,8 @@ class GETPlot : public TObject
 
     Int_t fMinTb; /// minimum time bucket index for drawing
     Int_t fMaxTb; /// maximum time bucket index for drawing
+
+    Double_t fFPNThreshold; /// FPN sigma threshold
 
     GETDecoder *fDecoder; /// decoder pointer
     GETFrame *fFrame;     /// frame container pointer

@@ -58,6 +58,7 @@ void GETPlot::Initialize()
 
   fGraph = new TGraph();
   fAsad = NULL;
+  fFPNThreshold = 5;
 }
 
 void GETPlot::SetDecoder(GETDecoder *decoder)
@@ -101,6 +102,11 @@ void GETPlot::SetAgetRange(Int_t type, Int_t agetIdx, Double_t minx, Double_t ma
     fAgetMinY[type][agetIdx] = miny;
     fAgetMaxY[type][agetIdx] = maxy;
   }
+}
+
+void GETPlot::SetFPNThreshold(Double_t sigma)
+{
+  fFPNThreshold = sigma;
 }
 
 TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs, Int_t notConnected, Int_t innerFrame)
@@ -340,7 +346,7 @@ TCanvas *GETPlot::ShowFrame(Int_t frameNo, Int_t innerFrameNo, Int_t startTb, In
         continue;
 
 //      fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
-      fFrame -> SetFPNPedestal();
+      fFrame -> SetFPNPedestal(fFPNThreshold);
       fFrame -> SubtractPedestal(iAget, iCh);
 
       Double_t *adc = NULL;
