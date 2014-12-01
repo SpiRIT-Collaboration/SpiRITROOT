@@ -52,6 +52,7 @@ class STGenerator : public TObject {
     void GenerateSignalDelayData();
 
     Int_t GetIntParameter(TString parameter);
+    Double_t GetDoubleParameter(TString parameter);
     TString GetFileParameter(Int_t index);
 
     enum EMode { kError, kPedestal, kGain, kSignalDelay };
@@ -74,8 +75,8 @@ class STGenerator : public TObject {
     Int_t fNumTbs;
     Int_t fRows;
     Int_t fLayers;
-    Int_t fPadX;
-    Int_t fPadZ;
+    Double_t fPadX;
+    Double_t fPadZ;
 
   ClassDef(STGenerator, 1)
 };

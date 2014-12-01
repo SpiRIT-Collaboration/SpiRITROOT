@@ -145,8 +145,8 @@ STGenerator::SetParameterDir(TString dir)
 
     fRows = GetIntParameter("PadRows");
     fLayers = GetIntParameter("PadLayers");
-    fPadX = GetIntParameter("PadSizeX");
-    fPadZ = GetIntParameter("PadSizeZ");
+    fPadX = GetDoubleParameter("PadSizeX");
+    fPadZ = GetDoubleParameter("PadSizeZ");
 
     Int_t uaMapIndex = GetIntParameter("UAMapFile");
     TString uaMapFile = GetFileParameter(uaMapIndex);
@@ -660,6 +660,22 @@ STGenerator::GetIntParameter(TString parameter)
   parameters.close();
 }
 
+Double_t
+STGenerator::GetDoubleParameter(TString parameter)
+{
+  ifstream parameters(fParameterFile);
+  while (kTRUE) {
+    TString value;
+    value.ReadToken(parameters);
+    if (value.EqualTo(Form("%s:Double_t", parameter.Data()))) {
+      value.ReadToken(parameters);
+      parameters.close();
+      return value.Atof();
+    }
+  }
+  parameters.close();
+}
+
 TString
 STGenerator::GetFileParameter(Int_t index)
 {
@@ -681,7 +697,10 @@ STGenerator::GetFileParameter(Int_t index)
 
   fileList.close();
 
-  return listFile.ReplaceAll("parameters/ST.files.par", buffer);
+  TString newFilename = buffer;
+  newFilename.ReplaceAll("parameters/", "");
+
+  return listFile.ReplaceAll("ST.files.par", newFilename.Data());
 }
 
 void
