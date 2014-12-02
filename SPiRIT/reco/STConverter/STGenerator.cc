@@ -588,7 +588,7 @@ STGenerator::GenerateGainCalibrationData()
         Double_t min = (spectrum.GetPositionX())[0] - 80; 
         Double_t max = (spectrum.GetPositionX())[0] + 80; 
 
-        thisHist -> Fit("gaus", "0", "", min, max);
+        thisHist -> Fit("gaus", "0Q", "", min, max);
         if (!(thisHist -> GetFunction("gaus")))
           continue;
 
@@ -604,7 +604,7 @@ STGenerator::GenerateGainCalibrationData()
       if (fIsPersistence) {
         TGraphErrors *aPad = new TGraphErrors(numVoltages, voltages, means, 0, sigmas);
         aPad -> SetName(Form("pad_%d_%d", iRow, iLayer));
-        aPad -> Fit("pol1", "0");
+        aPad -> Fit("pol1", "0Q");
 
         fCS[iRow][iLayer][0] = ((TF1 *) aPad -> GetFunction("pol1")) -> GetParameter(0);
         fCS[iRow][iLayer][1] = ((TF1 *) aPad -> GetFunction("pol1")) -> GetParameter(1);
@@ -737,7 +737,7 @@ STGenerator::Print()
     cout << " Output File: " << fOutputFile << endl;
     cout << " Data list:" << endl;
     for (Int_t iData = 0; iData < numData; iData++)
-      cout << "   " << Form("%.1f V  ", fVoltageArray.at(iData)) << fCore -> GetDataName(iData) << endl;
+      cout << "   " << Form("%.2f V  ", fVoltageArray.at(iData)) << fCore -> GetDataName(iData) << endl;
   }
   cout << "============================================" << endl;
 }
