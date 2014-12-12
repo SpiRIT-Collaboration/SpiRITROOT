@@ -120,6 +120,9 @@ Bool_t GETDecoder::AddData(TString filename)
   if (numElements == 0)
     path = gSystem -> pwd();
   else {
+    if (filename(0, 1) == "/")
+      path.Append("/");
+
     for (Int_t i = 0; i < numElements; i++) {
       path.Append(((TObjString *) pathElements -> At(i)) -> GetString());
       path.Append("/");
