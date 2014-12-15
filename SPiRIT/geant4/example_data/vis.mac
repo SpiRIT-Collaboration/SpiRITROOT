@@ -1,0 +1,9 @@
+/vis/open OGLIX 700x700
+/vis/drawVolume
+/vis/viewer/set/viewpointThetaPhi -70 10
+/tracking/storeTrajectory 1
+/vis/drawVolume
+/vis/scene/add/axes -60 -60 -40 20 cm
+/vis/scene/add/trajectories
+/vis/viewer/flush
+#/run/beamOn 1
