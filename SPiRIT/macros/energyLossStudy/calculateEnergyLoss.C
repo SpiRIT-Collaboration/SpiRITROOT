@@ -6,11 +6,13 @@ void calculateEnergyLoss(TString   mcFileNameTag = "test",
   TString mcFileNameTail = ".mc.root";
   TString mcFileName     = mcFileNameHead + mcFileNameTag + mcFileNameTail;
 
-  Double_t zLength;
-  Double_t zLengthX;
-  Double_t energyLoss;
-  Double_t energyLossSum;
-  Double_t energyLossX; 
+  cout << "[calculateEnergyLoss ] Calculating " << mcFileName << endl;
+
+  Double_t zLength;        // traveled length [cm]
+  Double_t zLengthMean;    // traveled length [cm] - mean value
+  Double_t energyLoss;     // energy loss
+  Double_t energyLossSum;  // energy loss sum
+  Double_t energyLossMean; // energy loss - mean value
 
   STMCPoint* point; 
   TClonesArray *pointArray;
@@ -19,8 +21,10 @@ void calculateEnergyLoss(TString   mcFileNameTag = "test",
   TTree* tree = (TTree*) file -> Get("cbmsim");
          tree -> SetBranchAddress("STMCPoint", &pointArray);
 
+  cout << " - " << "i "<< "zLength[mm]  " << "energyLossSum[MeV]" << endl;
   Int_t nEvents = tree -> GetEntriesFast();
-  for(Int_t iEvent=0; iEvent<nEvents; iEvent++) {
+  for(Int_t iEvent=0; iEvent<nEvents; iEvent++) 
+  {
     tree -> GetEntry(iEvent);
 
     energyLossSum=0;
@@ -31,18 +35,15 @@ void calculateEnergyLoss(TString   mcFileNameTag = "test",
 
       energyLoss = ( point -> GetEnergyLoss() )*1000; // [GeV] to [MeV]
       energyLossSum += energyLoss; 
-      zLength = point -> GetLength()*10; // [cm] to [mm]
+      if(zLength<(point->GetLength()*10)) zLength = point -> GetLength()*10; // [cm] to [mm]
     }
+    cout << "   " << iEvent << " " << zLength << " " << energyLossSum << endl;
+
     if(zLength==0) continue;
-    energyLossX = ((Double_t)iEvent/(iEvent+1))*energyLossX + ((energyLossSum/zLength)/(iEvent+1));
-    zLengthX = ((Double_t)iEvent/(iEvent+1))*zLengthX + (zLength/(iEvent+1));
-    //cout << iEvent << " / " << nEvents << " : " 
-    //     << energyLossX << "(+" << energyLossSum/zLength << "),\t" 
-    //     << zLengthX    << "(+" << zLength       << ")" << endl;
+    energyLossMean = ( (Double_t)iEvent/(iEvent+1) * energyLossMean )  +  ((energyLossSum/zLength)/(iEvent+1));
+    zLengthMean    = ( (Double_t)iEvent/(iEvent+1) *    zLengthMean )  +  (               zLength /(iEvent+1));
   }
 
-  dEdxVal           = energyLossX;
-  travelDistanceVal = zLengthX;
-
-  //cout << mcFileNameTag << "\t" << energyLossX << "\t" << zLengthX << endl;
+  dEdxVal           = energyLossMean;
+  travelDistanceVal = zLengthMean;
 }
