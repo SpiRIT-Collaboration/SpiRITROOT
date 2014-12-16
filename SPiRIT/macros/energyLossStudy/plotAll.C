@@ -1,5 +1,5 @@
-#include "Bethe_formula/bethe_bloch.C"
-#include "Bethe_formula/bethe_bloch_correction.C"
+//#include "Bethe_formula/bethe_bloch.C"
+//#include "Bethe_formula/bethe_bloch_correction.C"
 
 void plotAll()
 { 
@@ -58,6 +58,7 @@ void plotAll()
           graphEAy -> SetMarkerColor(kBlue);
 
   // Bethe calculations
+  /*
   TF1* betheP = new TF1("betheP",bethe_bloch,0,fMaxE,2);
        betheP -> SetLineColor(43);
        betheP -> SetLineWidth(3);
@@ -68,6 +69,21 @@ void plotAll()
        betheCP -> SetParameters(938.272, 1);
        betheCP -> SetLineColor(30);
        betheCP -> SetLineWidth(3);
+       */
+
+  /*
+  TGraph* graphG = new TGraph();
+          graphG -> SetMarkerStyle(20);
+          ifstream geant4P("/home/ejungwoo/SPiRITROOT/SPiRIT/geant4/example_data/geant4Proton.dat");
+          Double_t energyG, energyLossG;
+          Int_t ii=0; 
+          while(geant4P >> energyG >> energyLossG)
+          {
+            cout << energyG << " " <<  energyLossG << endl;
+            graphG -> SetPoint(ii++, energyG, energyLossG);
+          }
+          */
+
 
   // Dummy
   TH1D* histELog = new TH1D("histLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,fMaxE);
@@ -89,11 +105,13 @@ void plotAll()
           graphTAy -> SetMarkerStyle(28);
           graphTAy -> SetMarkerColor(kBlue);
 
+  /*
   TF1* betheTP = new TF1("betheTP",bethe_bloch_correction,0,fMaxE,3);
        betheTP -> SetLineColor(30);
        betheTP -> SetLineWidth(3);
        //betheTP -> SetParameters(massPR[0], chargePR[0], 1);
        betheCP -> SetParameters(938.272, 1, 1);
+       */
 
 
 
@@ -171,6 +189,7 @@ void plotAll()
   legendE  -> Draw("SAME");
   graphEP  -> Draw("SAME P");
   graphEPy -> Draw("SAME P");
+  //graphG -> Draw("SAME P");
 //  graphEA  -> Draw("SAME P");
 //  graphEAy -> Draw("SAME P");
 //  betheP    -> Draw("SAME");
@@ -185,6 +204,7 @@ void plotAll()
   graphEP  -> Draw("SAME P");
   //graphEA  -> Draw("SAME P");
   graphEPy -> Draw("SAME P");
+  //graphG -> Draw("SAME P");
   //graphEAy -> Draw("SAME P");
 //  betheP    -> Draw("SAME");
 //  betheCP   -> Draw("SAME");
@@ -201,7 +221,7 @@ void plotAll()
            legendT -> AddEntry(graphTPy,"proton (TRIM/LISE++)","P");
            //legendT -> AddEntry(graphTA,"alpha","P");
            //legendT -> AddEntry(graphTAy,"alpha (TRIM/LISE++)","P");
-           legendT -> AddEntry(betheTP,  "proton (bethe-bloch corr.)","L");
+           //legendT -> AddEntry(betheTP,  "proton (bethe-bloch corr.)","L");
            legendT -> SetTextSize(fTextSize);
            legendT -> SetFillColor(0);
 
@@ -212,7 +232,7 @@ void plotAll()
   graphTP  -> Draw("SAME P");
   //graphTA  -> Draw("SAME P");
   //graphTAy -> Draw("SAME P");
-  betheTP   -> Draw("SAME");
+  //betheTP   -> Draw("SAME");
   graphTPy -> Draw("SAME P");
   if(fSaveFlag) cvsT     -> SaveAs("figures/traveledLength.pdf");
 }
