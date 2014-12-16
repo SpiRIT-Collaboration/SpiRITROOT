@@ -70,10 +70,23 @@ STGainCheck::SetGainBase(Double_t constant, Double_t slope)
 }
 
 void
+STGainCheck::SetGainBase(Int_t row, Int_t layer)
+{
+  fCore -> SetGainBase(row, layer);
+}
+
+void
 STGainCheck::SetInternalPedestal(Int_t startTb, Int_t numTbs)
 {
   fCore -> SetInternalPedestal(startTb, numTbs);
 }
+
+void
+STGainCheck::SetFPNPedestal(Double_t sigmaThreshold)
+{
+  fCore -> SetFPNPedestal(sigmaThreshold);
+}
+
 
 Bool_t
 STGainCheck::SetPedestalData(TString filename)
@@ -88,9 +101,9 @@ STGainCheck::AddPulserData(TString filename)
 }
 
 void
-STGainCheck::SetGainCalibrationData(TString filename)
+STGainCheck::SetGainCalibrationData(TString filename, TString dataType)
 {
-  fCore -> SetGainCalibrationData(filename);
+  fCore -> SetGainCalibrationData(filename, dataType);
 }
 
 TCanvas *

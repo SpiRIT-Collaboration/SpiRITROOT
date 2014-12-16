@@ -16,19 +16,21 @@
 
 #include "TFile.h"
 #include "TTree.h"
+#include "TGraphErrors.h"
 
 #include <fstream>
 
 class STGainCalibration : public TObject {
   public:
     STGainCalibration();
-    STGainCalibration(TString gainCalibrationData);
+    STGainCalibration(TString gainCalibrationData, TString dataType = "f");
     ~STGainCalibration() {};
 
     void Initialize();
-    Bool_t SetGainCalibrationData(TString gainCalibrationData);
+    Bool_t SetGainCalibrationData(TString gainCalibrationData, TString dataType);
 
     Bool_t IsSetGainCalibrationData();
+    Bool_t SetGainBase(Int_t row, Int_t layer);
     Bool_t SetGainBase(Double_t constant, Double_t slope);
     Bool_t CalibrateADC(Int_t padRow, Int_t padLayer, Int_t numTbs, Double_t *adc);
 
@@ -43,6 +45,14 @@ class STGainCalibration : public TObject {
 
     Double_t fBaseConstant;
     Double_t fBaseSlope;
+
+    TString fDataType;
+
+    TGraphErrors *fGraph[108][112];
+    TGraphErrors *fGraphR[108][112];
+
+    Int_t fBaseRow;
+    Int_t fBaseLayer;
 
   ClassDef(STGainCalibration, 1);
 };
