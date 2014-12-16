@@ -32,6 +32,7 @@ STCore::STCore(TString filename)
 {
   Initialize();
   AddData(filename);
+  SetNumTbs(512);
 }
 
 STCore::STCore(TString filename, Int_t numTbs)
@@ -74,6 +75,7 @@ void STCore::Initialize()
   fSignalDelayPtr = new STSignalDelay();
   fIsSignalDelayData = kFALSE;
 
+  fNumTbs = 512;
   fStartTb = 3;
   fAverageTbs = 20;
 
@@ -169,11 +171,23 @@ void STCore::SetFPNPedestal(Double_t sigmaThreshold)
   std::cout << "== [STCore] Using FPN pedestal is set!" << std::endl;
 }
 
-Bool_t STCore::SetGainCalibrationData(TString filename)
+Bool_t STCore::SetGainCalibrationData(TString filename, TString dataType)
 {
-  fIsGainCalibrationData = fGainCalibrationPtr -> SetGainCalibrationData(filename);
+  fIsGainCalibrationData = fGainCalibrationPtr -> SetGainCalibrationData(filename, dataType);
 
+  std::cout << "== [STCore] Gain calibration data is set!" << std::endl;
   return fIsGainCalibrationData;
+}
+
+void STCore::SetGainBase(Int_t row, Int_t layer)
+{
+  if (!fIsGainCalibrationData) {
+    std::cout << "== [STCore] Set gain calibration data first!" << std::endl;
+
+    return;
+  }
+
+  fGainCalibrationPtr -> SetGainBase(row, layer);
 }
 
 void STCore::SetGainBase(Double_t constant, Double_t slope)
