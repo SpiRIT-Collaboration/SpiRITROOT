@@ -228,6 +228,9 @@ Bool_t GETDecoder::SetData(Int_t index)
 
     fCurrentDataID = index;
 
+    fCurrentFrameID = -1;
+    fCurrentInnerFrameID = -1;
+
     return kTRUE;
   }
 }
@@ -354,8 +357,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
       if (fData.eof()) {
         std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
 
-        if (SetNextFile() && fIsAutoReload)
-          return GetFrame(0);
+        if (fIsAutoReload)
+          if (SetNextFile())
+            return GetFrame(0);
 
         return 0;
       }
@@ -397,8 +401,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     if (fData.eof()) {
       std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
 
-      if (SetNextFile() && fIsAutoReload)
-        return GetFrame(0);
+      if (fIsAutoReload)
+        if (SetNextFile())
+          return GetFrame(0);
 
       return 0;
     }
@@ -506,8 +511,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
     if (fEOF) {
       std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
 
-      if (SetNextFile() && fIsAutoReload)
-        return GetFrame(0, 0);
+      if (fIsAutoReload)
+        if (SetNextFile())
+          return GetFrame(0, 0);
 
       return 0;
     } else if (fCurrentFrameID == -1 && fCurrentInnerFrameID == -1) {
@@ -582,8 +588,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
       std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
       fCurrentInnerFrameID = fNumMergedFrames - 1;
 
-      if (SetNextFile() && fIsAutoReload)
-        return GetFrame(0, 0);
+      if (fIsAutoReload)
+        if (SetNextFile())
+          return GetFrame(0, 0);
 
       return 0;
     }
@@ -594,8 +601,9 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
   if (fEOF) {
     std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
 
-    if (SetNextFile() && fIsAutoReload)
-      return GetFrame(0, 0);
+    if (fIsAutoReload)
+      if (SetNextFile())
+        return GetFrame(0, 0);
 
     return 0;
   }
