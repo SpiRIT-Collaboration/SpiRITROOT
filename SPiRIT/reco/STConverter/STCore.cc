@@ -108,6 +108,10 @@ Bool_t STCore::SetData(Int_t value)
 {
   fIsData = fDecoderPtr -> SetData(value);
 
+  fPrevEventNo = -1;
+  fCurrEventNo = -1;
+  fCurrFrameNo = 0;
+
   return fIsData;
 }
 
