@@ -1,22 +1,30 @@
 TString MCPEFileName = "data/MC_proton_dEdx.dat";
 TString MCAEFileName = "data/MC_alpha_dEdx.dat";
-
 TString TLPEFileName = "data/TRIMLISE++_proton_dEdx.dat";
 TString TLAEFileName = "data/TRIMLISE++_alpha_dEdx.dat";
-
 TString TLPLFileName = "data/TRIMLISE++_proton_driftLength.dat";
 TString TLALFileName = "data/TRIMLISE++_alpha_driftLength.dat";
 
 TString PEFigureName    = "figures/dEdx_proton.pdf";
 TString PELogFigureName = "figures/dEdx_proton_log.pdf";
-
 TString AEFigureName    = "figures/dEdx_alpha.pdf";
 TString AELogFigureName = "figures/dEdx_alpha_log.pdf";
+TString LFigureName     = "figures/driftLength.pdf";
+
+Int_t Color1 = kBlue;
+Int_t Color2 = kSpring-1;
+Int_t Color3 = kRed-4;
+
+Int_t MStyle1 = 24;
+Int_t MStyle2 = 20;
+Int_t MStyle3 = 25;
+Int_t MStyle4 = 21;
+
 
 void plotAll()
 {
-  Bool_t   saveFlag  = kTRUE;
-  Double_t fMaxE     = 420;
+  Bool_t   saveFlag  = kFALSE;
+  Double_t kEMax     = 420;
   Double_t dEdxMaxP  = 0.005;
   Double_t dEdxMinP  = 0.0002;
   Double_t dEdxMaxA  = 0.05;
@@ -31,35 +39,41 @@ void plotAll()
 
 
   // proton dEdx
-  TH2D* histPE = new TH2D("histP",";Energy (MeV); dE/dx (MeV/mm)",10,0,fMaxE,10,0,dEdxMaxP);
-  TH1D* histPELog = new TH1D("histPLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,fMaxE);
+  TH2D* histPE = new TH2D("histP",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax,10,0,dEdxMaxP);
+  //TH2D* histPE = new TH2D("histP",";Energy (MeV); dE/dx (MeV/mm)",10,0,80,10,0,dEdxMaxP);
+  TH1D* histPELog = new TH1D("histPLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax);
+  //TH1D* histPELog = new TH1D("histPLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,80);
         histPELog -> SetMinimum(dEdxMinP);
         histPELog -> SetMaximum(dEdxMaxP);
 
   TGraph* graphTLPE  = GetTLPE();
-          graphTLPE -> SetMarkerStyle(25);
-          graphTLPE -> SetMarkerColor(kBlue);
+          graphTLPE -> SetMarkerStyle(MStyle1);
+          graphTLPE -> SetMarkerColor(Color1);
 
-  TGraph* graphMCPE0 = GetMCPE(0);
-          graphMCPE0 -> SetMarkerStyle(20);
-          graphMCPE0 -> SetMarkerColor(kGreen-3);
+  TGraph* graphMCPE0 = GetMCP(0);
+          graphMCPE0 -> SetMarkerStyle(MStyle2);
+          graphMCPE0 -> SetMarkerColor(Color2);
+          graphMCPE0 -> SetLineColor(Color2);
+          graphMCPE0 -> SetLineStyle(2);
 
-  TGraph* graphMCPE  = GetMCPE(1);
-          graphMCPE -> SetMarkerStyle(20);
-          graphMCPE -> SetMarkerColor(46);
+  TGraph* graphMCPE  = GetMCP(1);
+          graphMCPE -> SetMarkerStyle(MStyle2);
+          graphMCPE -> SetMarkerColor(Color3);
+          graphMCPE -> SetLineColor(Color3);
+          graphMCPE -> SetLineStyle(2);
 
-  TLegend *legendE = new TLegend(0.43,0.80,0.9,0.9);
+  TLegend *legendE = new TLegend(0.40,0.80,0.9,0.9);
            legendE -> AddEntry(graphTLPE,  "proton (TRIM/LISE++)","P");
-           legendE -> AddEntry(graphMCPE0, "proton (MC, secondaries not included)","P");
-           legendE -> AddEntry(graphMCPE,  "proton (MC, secondaries included)","P");
+           legendE -> AddEntry(graphMCPE0, "proton (MC, secondaries not included)","PL");
+           legendE -> AddEntry(graphMCPE,  "proton (MC, secondaries included)","PL");
            legendE -> SetFillColor(0);
 
   TCanvas* cvsP = new TCanvas("cvsP","cvsP",700,700);
            cvsP -> SetGrid();
   histPE      -> Draw();
-  graphTLPE  -> Draw("P");
-  graphMCPE0 -> Draw("P SAME");
-  graphMCPE  -> Draw("P SAME");
+  graphMCPE0 -> Draw("PL");
+  graphMCPE  -> Draw("PL SAME");
+  graphTLPE  -> Draw("P SAME");
   legendE    -> Draw("SAME");
   if(saveFlag) cvsP -> SaveAs(PEFigureName);
 
@@ -67,9 +81,9 @@ void plotAll()
            cvsPLog -> SetGrid();
            cvsPLog -> SetLogy();
   histPELog   -> Draw();
-  graphTLPE  -> Draw("P");
-  graphMCPE0 -> Draw("P SAME");
+  graphMCPE0 -> Draw("P");
   graphMCPE  -> Draw("P SAME");
+  graphTLPE  -> Draw("P SAME");
   legendE    -> Draw("SAME");
   if(saveFlag) cvsPLog -> SaveAs(PELogFigureName);
 
@@ -77,55 +91,100 @@ void plotAll()
 
 
   // alpha dEdx
-  TH2D* histAE = new TH2D("histA",";Energy (MeV); dE/dx (MeV/mm)",10,0,fMaxE,10,0,dEdxMaxA);
-  TH1D* histAELog = new TH1D("histALog",";Energy (MeV); dE/dx (MeV/mm)",10,0,fMaxE);
+  TH2D* histAE = new TH2D("histA",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax,10,0,dEdxMaxA);
+  //TH2D* histAE = new TH2D("histA",";Energy (MeV); dE/dx (MeV/mm)",10,0,80,10,0,dEdxMaxA);
+  TH1D* histAELog = new TH1D("histALog",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax);
+  //TH1D* histAELog = new TH1D("histALog",";Energy (MeV); dE/dx (MeV/mm)",10,0,80);
         histAELog -> SetMinimum(dEdxMinA);
         histAELog -> SetMaximum(dEdxMaxA);
 
   TGraph* graphTLAE  = GetTLAE();
-          graphTLAE -> SetMarkerStyle(25);
-          graphTLAE -> SetMarkerColor(kBlue);
+          graphTLAE -> SetMarkerStyle(MStyle3);
+          graphTLAE -> SetMarkerColor(Color1);
 
-  TGraph* graphMCAE0 = GetMCAE(0);
-          graphMCAE0 -> SetMarkerStyle(20);
+  TGraph* graphMCAE0 = GetMCA(0);
+          graphMCAE0 -> SetMarkerStyle(MStyle4);
           //graphMCAE0 -> SetMarkerColor(30);
-          graphMCAE0 -> SetMarkerColor(kGreen-3);
+          graphMCAE0 -> SetMarkerColor(Color2);
+          graphMCAE0 -> SetLineColor(Color2);
+          graphMCAE0 -> SetLineStyle(2);
 
-  TGraph* graphMCAE  = GetMCAE(1);
-          graphMCAE -> SetMarkerStyle(20);
-          graphMCAE -> SetMarkerColor(46);
+  TGraph* graphMCAE  = GetMCA(1);
+          graphMCAE -> SetMarkerStyle(MStyle4);
+          graphMCAE -> SetMarkerColor(Color3);
+          graphMCAE -> SetLineColor(Color3);
+          graphMCAE -> SetLineStyle(2);
 
-  TLegend *legendE = new TLegend(0.43,0.80,0.9,0.9);
-           legendE -> AddEntry(graphTLAE,  "alpha (TRIM/LISE++)","P");
-           legendE -> AddEntry(graphMCAE0, "alpha (MC, secondaries not included)","P");
-           legendE -> AddEntry(graphMCAE,  "alpha (MC, secondaries included)","P");
-           legendE -> SetFillColor(0);
+  TLegend *legendAE = new TLegend(0.38,0.80,0.9,0.9);
+           legendAE -> AddEntry(graphTLPE,  "alpha (TRIM/LISE++)","P");
+           legendAE -> AddEntry(graphMCPE0, "alpha (MC, secondaries not included)","PL");
+           legendAE -> AddEntry(graphMCPE,  "alpha (MC, secondaries included)","PL");
+           legendAE -> SetFillColor(0);
 
   TCanvas* cvsA = new TCanvas("cvsA","cvsA",700,700);
            cvsA -> SetGrid();
   histAE      -> Draw();
-  graphTLAE  -> Draw("P");
-  graphMCAE0 -> Draw("P SAME");
-  graphMCAE  -> Draw("P SAME");
-  legendE    -> Draw("SAME");
+  graphMCAE0 -> Draw("PL");
+  graphMCAE  -> Draw("PL SAME");
+  graphTLAE  -> Draw("P SAME");
+  legendAE   -> Draw("SAME");
   if(saveFlag) cvsA -> SaveAs(AEFigureName);
 
   TCanvas* cvsALog = new TCanvas("cvsALog","cvsALog",700,700);
            cvsALog -> SetGrid();
            cvsALog -> SetLogy();
-  histAELog   -> Draw();
-  graphTLAE   -> Draw("P");
-  graphMCAE0  -> Draw("P SAME");
-  graphMCAE   -> Draw("P SAME");
-  legendE     -> Draw("SAME");
+  histAELog  -> Draw();
+  graphMCAE0 -> Draw("P");
+  graphMCAE  -> Draw("P SAME");
+  graphTLAE  -> Draw("P SAME");
+  legendAE   -> Draw("SAME");
   if(saveFlag) cvsALog -> SaveAs(AELogFigureName);
 
 
 
 
+
+
+
+
   // drift length
-  //TGraph* graphMCPL= GetMCPE(2);
-  //TGraph* graphTLPL= GetTLPL();
+  TH2D* histL = new TH2D("histL",";Energy (MeV);Mean traveled distance (mm)",10,0,70,10,0,2000);
+  TGraph* graphTLPL  = GetTLPL();
+          graphTLPL -> SetMarkerStyle(MStyle1);
+          graphTLPL -> SetMarkerColor(Color1);
+
+  TGraph* graphMCPL = GetMCP(2);
+          graphMCPL -> SetMarkerStyle(MStyle2);
+          graphMCPL -> SetMarkerColor(Color3);
+          graphMCPL -> SetLineColor(Color3);
+          graphMCPL -> SetLineStyle(2);
+
+  TGraph* graphTLAL  = GetTLAL();
+          graphTLAL -> SetMarkerStyle(MStyle3);
+          graphTLAL -> SetMarkerColor(Color1);
+
+  TGraph* graphMCAL = GetMCA(2);
+          graphMCAL -> SetMarkerStyle(MStyle4);
+          graphMCAL -> SetMarkerColor(Color3);
+          graphMCAL -> SetLineColor(Color3);
+          graphMCAL -> SetLineStyle(2);
+
+  TLegend *legendL = new TLegend(0.55,0.77,0.9,0.9);
+           legendL -> AddEntry(graphTLPL,  "proton (TRIM/LISE++)","P");
+           legendL -> AddEntry(graphMCPL,  "proton (MC)","PL");
+           legendL -> AddEntry(graphTLAL,  "alpha (TRIM/LISE++)","P");
+           legendL -> AddEntry(graphMCAL,  "alpha (MC)","PL");
+           legendL -> SetFillColor(0);
+
+  TCanvas* cvsL = new TCanvas("cvsL","cvsL",700,700);
+           cvsL -> SetGrid();
+  histL      -> Draw();
+  graphTLPL  -> Draw("P");
+  graphMCPL  -> Draw("PL SAME");
+  graphTLAL  -> Draw("P");
+  graphMCAL  -> Draw("PL SAME");
+  legendL    -> Draw("SAME");
+  if(saveFlag) cvsL -> SaveAs(LFigureName);
 }
 
 
@@ -137,7 +196,7 @@ void plotAll()
 
 
 
-TGraph* GetMCPE(Int_t type = 0) // TRIM LISE++ Proton dE/dx
+TGraph* GetMCP(Int_t type = 0) // TRIM LISE++ Proton dE/dx
 {
   Int_t i=0;
   Int_t dummyI;
@@ -183,13 +242,13 @@ TGraph* GetTLPL() // TRIM LISE++ Proton Drift Length
   Double_t kE, l;
   TGraph* graph = new TGraph();
   ifstream file(TLPLFileName);
-  while(file>>kE>>l) graph->SetPoint(i++,kE,l);
+  while(file>>kE>>l) graph->SetPoint(i++,kE,l*1000);
   return graph;
 }
 
 
 
-TGraph* GetMCAE(Int_t type = 0) // TRIM LISE++ Proton dE/dx
+TGraph* GetMCA(Int_t type = 0) // TRIM LISE++ Proton dE/dx
 {
   Int_t i=0;
   Int_t dummyI;
@@ -235,6 +294,6 @@ TGraph* GetTLAL() // TRIM LISE++ Proton Drift Length
   Double_t kE, l;
   TGraph* graph = new TGraph();
   ifstream file(TLALFileName);
-  while(file>>kE>>l) graph->SetPoint(i++,kE,l);
+  while(file>>kE>>l) graph->SetPoint(i++,kE,l*1000);
   return graph;
 }
