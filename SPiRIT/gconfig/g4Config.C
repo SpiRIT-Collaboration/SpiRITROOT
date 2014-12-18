@@ -26,7 +26,10 @@ void Config()
 /// character: eg. stepLimit+specialCuts.
 
    TG4RunConfiguration* runConfiguration 
-           = new TG4RunConfiguration("geomRoot", "FTFP_BERT_EMY", "stepLimiter+specialCuts");
+     //= new TG4RunConfiguration("geomRoot", "FTFP_BERT", "stepLimiter+specialCuts");
+     = new TG4RunConfiguration("geomRoot", "QGSP_BERT_HP", "stepLimiter+specialCuts");
+     //= new TG4RunConfiguration("geomRoot", "QGSP_BIC_HP", "stepLimiter+specialCuts");
+     //= new TG4RunConfiguration("geomRoot", "FTFP_BERT", "stepLimiter+specialCuts");
 
 /// Create the G4 VMC 
    TGeant4* geant4 = new TGeant4("TGeant4", "The Geant4 Monte Carlo", runConfiguration);

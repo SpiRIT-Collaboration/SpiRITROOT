@@ -1,238 +1,240 @@
-//#include "Bethe_formula/bethe_bloch.C"
-//#include "Bethe_formula/bethe_bloch_correction.C"
+TString MCPEFileName = "data/MC_proton_dEdx.dat";
+TString MCAEFileName = "data/MC_alpha_dEdx.dat";
+
+TString TLPEFileName = "data/TRIMLISE++_proton_dEdx.dat";
+TString TLAEFileName = "data/TRIMLISE++_alpha_dEdx.dat";
+
+TString TLPLFileName = "data/TRIMLISE++_proton_driftLength.dat";
+TString TLALFileName = "data/TRIMLISE++_alpha_driftLength.dat";
+
+TString PEFigureName    = "figures/dEdx_proton.pdf";
+TString PELogFigureName = "figures/dEdx_proton_log.pdf";
+
+TString AEFigureName    = "figures/dEdx_alpha.pdf";
+TString AELogFigureName = "figures/dEdx_alpha_log.pdf";
 
 void plotAll()
-{ 
-  /** Initial Settings **/
-
-  Bool_t fSaveFlag = kFALSE;
-  Int_t  fTextSize = 0.018;
-  Double_t fMaxE   = 420;
-
-  /// 0 : proton, 1 : alpha
-  Double_t massPR[2]   = {938.272, 0};
-  Double_t chargePR[2] = {1, 0};
-
-  Double_t dEdx_max = 0.005;
-  Double_t dEdx_min = 0.00007;
-
-
-
-  /** Initial Settings **/
-
-  TString inputFileName1 = "data/energyLossProton.dat";
-  TString inputFileName2 = "data/energyLossAlpha.dat";
-  TString inputFileName3 = "TRIM_LISE++/data_eloss.dat";
-  TString inputFileName4 = "TRIM_LISE++/data_range.dat";
+{
+  Bool_t   saveFlag  = kTRUE;
+  Double_t fMaxE     = 420;
+  Double_t dEdxMaxP  = 0.005;
+  Double_t dEdxMinP  = 0.0002;
+  Double_t dEdxMaxA  = 0.05;
+  Double_t dEdxMinA  = 0.002;
 
   gStyle -> SetOptStat(0);
   gStyle -> SetTitleOffset(2.4,"y");
   gStyle -> SetTitleOffset(1.2,"x");
   gStyle -> SetPadLeftMargin(0.17);
 
-  Int_t    dummy; // dummy
-  Double_t p;     // particle ID : basically not needed
-  Double_t m;     // momentum
-  Double_t e;     // energy
-  Double_t de;    // dE/dx 
-  Double_t l;     // traveled length
-
-  Int_t    index = 0; // graph counting index
-
-  TH2D* histE = new TH2D("hist",";Energy (MeV); dE/dx (MeV/mm)",10,0,fMaxE,10,0,dEdx_max);
-  // energy proton MC
-  TGraph* graphEP = new TGraph();
-          graphEP -> SetMarkerStyle(20);
-          graphEP -> SetMarkerColor(kRed);
-  // energy proton Yassid
-  TGraph* graphEPy = new TGraph();
-          graphEPy -> SetMarkerStyle(34);
-          graphEPy -> SetMarkerColor(kBlue);
-  // energy alpha MC
-  TGraph* graphEA = new TGraph();
-          graphEA -> SetMarkerStyle(25);
-          graphEA -> SetMarkerColor(kRed);
-  // energy alpha Yassid
-  TGraph* graphEAy = new TGraph();
-          graphEAy -> SetMarkerStyle(28);
-          graphEAy -> SetMarkerColor(kBlue);
-
-  // Bethe calculations
-  /*
-  TF1* betheP = new TF1("betheP",bethe_bloch,0,fMaxE,2);
-       betheP -> SetLineColor(43);
-       betheP -> SetLineWidth(3);
-       //betheP -> SetParameters(massPR[0], chargePR[0]);
-       betheP -> SetParameters(938.272, 1);
-  TF1* betheCP = new TF1("betheCP",bethe_bloch_correction,0,fMaxE,2);
-       //betheCP -> SetParameters(massPR[0], chargePR[0], 0);
-       betheCP -> SetParameters(938.272, 1);
-       betheCP -> SetLineColor(30);
-       betheCP -> SetLineWidth(3);
-       */
-
-  /*
-  TGraph* graphG = new TGraph();
-          graphG -> SetMarkerStyle(20);
-          ifstream geant4P("/home/ejungwoo/SPiRITROOT/SPiRIT/geant4/example_data/geant4Proton.dat");
-          Double_t energyG, energyLossG;
-          Int_t ii=0; 
-          while(geant4P >> energyG >> energyLossG)
-          {
-            cout << energyG << " " <<  energyLossG << endl;
-            graphG -> SetPoint(ii++, energyG, energyLossG);
-          }
-          */
-
-
-  // Dummy
-  TH1D* histELog = new TH1D("histLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,fMaxE);
-        histELog -> SetMinimum(dEdx_min);
-        histELog -> SetMaximum(dEdx_max);
-
-  // Traveled distance 
-  TH2D* histT = new TH2D("histT",";Energy (MeV);Mean traveled distance (mm)",10,0,fMaxE,10,0,1700);
-  TGraph* graphTP = new TGraph();
-          graphTP -> SetMarkerStyle(20);
-          graphTP -> SetMarkerColor(kRed);
-  TGraph* graphTPy = new TGraph();
-          graphTPy -> SetMarkerStyle(34);
-          graphTPy -> SetMarkerColor(kBlue);
-  TGraph* graphTA = new TGraph();
-          graphTA -> SetMarkerStyle(25);
-          graphTA -> SetMarkerColor(kRed);
-  TGraph* graphTAy = new TGraph();
-          graphTAy -> SetMarkerStyle(28);
-          graphTAy -> SetMarkerColor(kBlue);
-
-  /*
-  TF1* betheTP = new TF1("betheTP",bethe_bloch_correction,0,fMaxE,3);
-       betheTP -> SetLineColor(30);
-       betheTP -> SetLineWidth(3);
-       //betheTP -> SetParameters(massPR[0], chargePR[0], 1);
-       betheCP -> SetParameters(938.272, 1, 1);
-       */
 
 
 
+  // proton dEdx
+  TH2D* histPE = new TH2D("histP",";Energy (MeV); dE/dx (MeV/mm)",10,0,fMaxE,10,0,dEdxMaxP);
+  TH1D* histPELog = new TH1D("histPLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,fMaxE);
+        histPELog -> SetMinimum(dEdxMinP);
+        histPELog -> SetMaximum(dEdxMaxP);
 
+  TGraph* graphTLPE  = GetTLPE();
+          graphTLPE -> SetMarkerStyle(25);
+          graphTLPE -> SetMarkerColor(kBlue);
 
+  TGraph* graphMCPE0 = GetMCPE(0);
+          graphMCPE0 -> SetMarkerStyle(20);
+          graphMCPE0 -> SetMarkerColor(kGreen-3);
 
+  TGraph* graphMCPE  = GetMCPE(1);
+          graphMCPE -> SetMarkerStyle(20);
+          graphMCPE -> SetMarkerColor(46);
 
-  /** Reading Data **/
-
-  // Proton - MC  ==================================
-  ifstream inputFile1;
-  inputFile1.open(inputFileName1.Data());
-
-  while(inputFile1 >> p >> m >> e >> de >> l) {
-    graphEP -> SetPoint(index,e,de);
-    graphTP -> SetPoint(index,e,l);
-    index++;
-  }
-
-  // Alpha - MC  ===================================
-  ifstream inputFile2;
-  inputFile2.open(inputFileName2.Data());
-
-
-  index = 0;
-  while(inputFile2 >> p >> m >> e >> de >> l) {
-    graphEA -> SetPoint(index,e,de);
-    graphTA -> SetPoint(index,e,l);
-    index++;
-  }
-
-  // TRIM/LISE++ energy ============================
-  ifstream inputFile3;
-  inputFile3.open(inputFileName3.Data());
-
-  index = 0;
-  while(inputFile3 >> dummy >> e >> de){
-    if(dummy==0) graphEPy -> SetPoint(index,e,de);
-    if(dummy==4) graphEAy -> SetPoint(index,e,de);
-    index++;
-  }
-
-
-  // TRIM/LISE++ range =============================
-  ifstream inputFile4;
-  inputFile4.open(inputFileName4.Data());
-
-  index = 0;
-  while(inputFile4 >> dummy >> e >> l){
-
-    if(dummy==0) graphTPy -> SetPoint(index,e,l*1000);
-    if(dummy==4) graphTAy -> SetPoint(index,e,l*1000);
-    index++;
-  }
-
-
-
-
-
-  /** Plotting Data **/
-
-  TLegend *legendE = new TLegend(0.55,0.82,0.9,0.9);
-           legendE -> AddEntry(graphEP, "proton (GEANT4)","P");
-           legendE -> AddEntry(graphEPy,"proton (TRIM/LISE++)","P");
-           //legendE -> AddEntry(betheP,   "proton (bethe-bloch)","L");
-           //legendE -> AddEntry(betheCP,  "proton (bethe-bloch corr.)","L");
-           //legendE -> AddEntry(graphEA, "alpha (GEANT4)","P");
-           //legendE -> AddEntry(graphEAy,"alpha (TRIM/LISE++)","P");
-           legendE -> SetTextSize(fTextSize);
+  TLegend *legendE = new TLegend(0.43,0.80,0.9,0.9);
+           legendE -> AddEntry(graphTLPE,  "proton (TRIM/LISE++)","P");
+           legendE -> AddEntry(graphMCPE0, "proton (MC, secondaries not included)","P");
+           legendE -> AddEntry(graphMCPE,  "proton (MC, secondaries included)","P");
            legendE -> SetFillColor(0);
 
-  TCanvas* cvsE = new TCanvas("cvsE","",700,700);
-           cvsE -> SetGrid(1,1);
-  histE    -> Draw();
-  legendE  -> Draw("SAME");
-  graphEP  -> Draw("SAME P");
-  graphEPy -> Draw("SAME P");
-  //graphG -> Draw("SAME P");
-//  graphEA  -> Draw("SAME P");
-//  graphEAy -> Draw("SAME P");
-//  betheP    -> Draw("SAME");
-//  betheCP   -> Draw("SAME");
-  if(fSaveFlag) cvsE -> SaveAs("figures/dEdx.pdf");
+  TCanvas* cvsP = new TCanvas("cvsP","cvsP",700,700);
+           cvsP -> SetGrid();
+  histPE      -> Draw();
+  graphTLPE  -> Draw("P");
+  graphMCPE0 -> Draw("P SAME");
+  graphMCPE  -> Draw("P SAME");
+  legendE    -> Draw("SAME");
+  if(saveFlag) cvsP -> SaveAs(PEFigureName);
 
-  TCanvas* cvsELog = new TCanvas("cvsELog","",700,700);
-           cvsELog -> SetLogy();
-           cvsELog -> SetGrid(1,1);
-  histELog -> Draw();
-  legendE  -> Draw("SAME");
-  graphEP  -> Draw("SAME P");
-  //graphEA  -> Draw("SAME P");
-  graphEPy -> Draw("SAME P");
-  //graphG -> Draw("SAME P");
-  //graphEAy -> Draw("SAME P");
-//  betheP    -> Draw("SAME");
-//  betheCP   -> Draw("SAME");
-  if(fSaveFlag) cvsELog  -> SaveAs("figures/dEdx_Log.pdf");
+  TCanvas* cvsPLog = new TCanvas("cvsPLog","cvsPLog",700,700);
+           cvsPLog -> SetGrid();
+           cvsPLog -> SetLogy();
+  histPELog   -> Draw();
+  graphTLPE  -> Draw("P");
+  graphMCPE0 -> Draw("P SAME");
+  graphMCPE  -> Draw("P SAME");
+  legendE    -> Draw("SAME");
+  if(saveFlag) cvsPLog -> SaveAs(PELogFigureName);
 
 
 
 
+  // alpha dEdx
+  TH2D* histAE = new TH2D("histA",";Energy (MeV); dE/dx (MeV/mm)",10,0,fMaxE,10,0,dEdxMaxA);
+  TH1D* histAELog = new TH1D("histALog",";Energy (MeV); dE/dx (MeV/mm)",10,0,fMaxE);
+        histAELog -> SetMinimum(dEdxMinA);
+        histAELog -> SetMaximum(dEdxMaxA);
 
-  //Double_t yOSL = 0.15;
-  Double_t yOSL = 0;
-  TLegend *legendT = new TLegend(0.58,0.80-yOSL,0.9,0.9-yOSL);
-           legendT -> AddEntry(graphTP,"proton","P");
-           legendT -> AddEntry(graphTPy,"proton (TRIM/LISE++)","P");
-           //legendT -> AddEntry(graphTA,"alpha","P");
-           //legendT -> AddEntry(graphTAy,"alpha (TRIM/LISE++)","P");
-           //legendT -> AddEntry(betheTP,  "proton (bethe-bloch corr.)","L");
-           legendT -> SetTextSize(fTextSize);
-           legendT -> SetFillColor(0);
+  TGraph* graphTLAE  = GetTLAE();
+          graphTLAE -> SetMarkerStyle(25);
+          graphTLAE -> SetMarkerColor(kBlue);
 
-  TCanvas* cvsT = new TCanvas("cvsT","",700,700);
-           cvsT -> SetGrid(1,1);
-  histT    -> Draw();
-  legendT  -> Draw("SAME");
-  graphTP  -> Draw("SAME P");
-  //graphTA  -> Draw("SAME P");
-  //graphTAy -> Draw("SAME P");
-  //betheTP   -> Draw("SAME");
-  graphTPy -> Draw("SAME P");
-  if(fSaveFlag) cvsT     -> SaveAs("figures/traveledLength.pdf");
+  TGraph* graphMCAE0 = GetMCAE(0);
+          graphMCAE0 -> SetMarkerStyle(20);
+          //graphMCAE0 -> SetMarkerColor(30);
+          graphMCAE0 -> SetMarkerColor(kGreen-3);
+
+  TGraph* graphMCAE  = GetMCAE(1);
+          graphMCAE -> SetMarkerStyle(20);
+          graphMCAE -> SetMarkerColor(46);
+
+  TLegend *legendE = new TLegend(0.43,0.80,0.9,0.9);
+           legendE -> AddEntry(graphTLAE,  "alpha (TRIM/LISE++)","P");
+           legendE -> AddEntry(graphMCAE0, "alpha (MC, secondaries not included)","P");
+           legendE -> AddEntry(graphMCAE,  "alpha (MC, secondaries included)","P");
+           legendE -> SetFillColor(0);
+
+  TCanvas* cvsA = new TCanvas("cvsA","cvsA",700,700);
+           cvsA -> SetGrid();
+  histAE      -> Draw();
+  graphTLAE  -> Draw("P");
+  graphMCAE0 -> Draw("P SAME");
+  graphMCAE  -> Draw("P SAME");
+  legendE    -> Draw("SAME");
+  if(saveFlag) cvsA -> SaveAs(AEFigureName);
+
+  TCanvas* cvsALog = new TCanvas("cvsALog","cvsALog",700,700);
+           cvsALog -> SetGrid();
+           cvsALog -> SetLogy();
+  histAELog   -> Draw();
+  graphTLAE   -> Draw("P");
+  graphMCAE0  -> Draw("P SAME");
+  graphMCAE   -> Draw("P SAME");
+  legendE     -> Draw("SAME");
+  if(saveFlag) cvsALog -> SaveAs(AELogFigureName);
+
+
+
+
+  // drift length
+  //TGraph* graphMCPL= GetMCPE(2);
+  //TGraph* graphTLPL= GetTLPL();
+}
+
+
+
+
+
+
+
+
+
+
+TGraph* GetMCPE(Int_t type = 0) // TRIM LISE++ Proton dE/dx
+{
+  Int_t i=0;
+  Int_t dummyI;
+  Double_t kE, dEdx, dEdx2, l;
+  TGraph* graph = new TGraph();
+  ifstream file(MCPEFileName);
+
+  // dEdx, secondaries not included
+  if(type==0) 
+    while(file>>dummyI>>dummyI>>kE>>dEdx>>dEdx2>>l) 
+      graph->SetPoint(i++,kE,dEdx);
+
+  // dEdx, secondaries included
+  else if(type==1) 
+    while(file>>dummyI>>dummyI>>kE>>dEdx>>dEdx2>>l) 
+      graph->SetPoint(i++,kE,dEdx+dEdx2);
+
+  // drift Length
+  else if(type==2)
+    while(file>>dummyI>>dummyI>>kE>>dEdx>>dEdx2>>l)
+      graph->SetPoint(i++,kE,l);
+
+  return graph;
+}
+
+
+
+TGraph* GetTLPE() // TRIM LISE++ Proton dE/dx
+{
+  Int_t i=0;
+  Double_t kE, dEdx;
+  TGraph* graph = new TGraph();
+  ifstream file(TLPEFileName);
+  while(file>>kE>>dEdx) graph->SetPoint(i++,kE,dEdx);
+  return graph;
+}
+
+
+
+TGraph* GetTLPL() // TRIM LISE++ Proton Drift Length
+{
+  Int_t i=0;
+  Double_t kE, l;
+  TGraph* graph = new TGraph();
+  ifstream file(TLPLFileName);
+  while(file>>kE>>l) graph->SetPoint(i++,kE,l);
+  return graph;
+}
+
+
+
+TGraph* GetMCAE(Int_t type = 0) // TRIM LISE++ Proton dE/dx
+{
+  Int_t i=0;
+  Int_t dummyI;
+  Double_t kE, dEdx, dEdx2, l;
+  TGraph* graph = new TGraph();
+  ifstream file(MCAEFileName);
+
+  // dEdx, secondaries not included
+  if(type==0) 
+    while(file>>dummyI>>dummyI>>kE>>dEdx>>dEdx2>>l) 
+      graph->SetPoint(i++,kE,dEdx);
+
+  // dEdx, secondaries included
+  else if(type==1) 
+    while(file>>dummyI>>dummyI>>kE>>dEdx>>dEdx2>>l) 
+      graph->SetPoint(i++,kE,dEdx+dEdx2);
+
+  // drift Length
+  else if(type==2)
+    while(file>>dummyI>>dummyI>>kE>>dEdx>>dEdx2>>l)
+      graph->SetPoint(i++,kE,l);
+
+  return graph;
+}
+
+
+
+TGraph* GetTLAE() // TRIM LISE++ Proton dE/dx
+{
+  Int_t i=0;
+  Double_t kE, dEdx;
+  TGraph* graph = new TGraph();
+  ifstream file(TLAEFileName);
+  while(file>>kE>>dEdx) graph->SetPoint(i++,kE,dEdx);
+  return graph;
+}
+
+
+
+TGraph* GetTLAL() // TRIM LISE++ Proton Drift Length
+{
+  Int_t i=0;
+  Double_t kE, l;
+  TGraph* graph = new TGraph();
+  ifstream file(TLALFileName);
+  while(file>>kE>>l) graph->SetPoint(i++,kE,l);
+  return graph;
 }

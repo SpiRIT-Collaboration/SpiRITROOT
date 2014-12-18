@@ -98,14 +98,14 @@ void run_mc_eloss(Int_t    nEvents  = 1,
   run -> AddModule(spirit);
   run -> SetField(fMagField);
   run -> SetGenerator(primGen);  
-  run -> SetRadLenRegister(kTRUE);
+  //run -> SetRadLenRegister(kTRUE);
   run -> SetStoreTraj(kTRUE);
   run -> Init();
 
   FairTrajFilter* trajFilter = FairTrajFilter::Instance();
   trajFilter->SetStorePrimaries(kTRUE);
   trajFilter->SetStoreSecondaries(kTRUE);
-  //  trajFilter->SetStepSizeCut(0.001);  
+  //trajFilter->SetStepSizeCut(0.001);  
 
   // -----   Runtime database   ---------------------------------------------
   Bool_t kParameterMerged = kTRUE;
