@@ -2,15 +2,21 @@
 #include "TRandom.h"
 #include "STDriftElectron.hh"
 
+#include "FairRunAna.h"
+#include "FairRuntimeDb.h"
+
 using std::cout;
 using std::endl;
 
 ClassImp(STDriftElectron);
 
-STDriftElectron::STDriftElectron(STDigiPar* par, STGas* gas)
-: fPar(par),
-  fGas(gas)
+STDriftElectron::STDriftElectron()
 {
+  FairRunAna* ana = FairRunAna::Instance();
+  FairRuntimeDb* rtdb = ana->GetRuntimeDb();
+  fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
+  fGas = fPar -> GetGas();
+
   fWirePlaneY = (fPar -> GetAnodeWirePlaneY())/10; // [mm] to [cm]
   fVelDrift   = (fGas -> GetDriftVelocity())/1000; // [cm/us] to [cm/ns]
   fCoefDL     = fGas -> GetCoefDiffusionLong();

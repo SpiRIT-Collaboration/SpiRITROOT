@@ -1,6 +1,7 @@
 #ifndef STWIRERESPONSE_HH
 #define STWIRERESPONSE_HH
 
+#include "STDigiPar.hh"
 #include "STGas.hh"
 #include "STRawEvent.hh"
 #include "STPad.hh"
@@ -12,7 +13,7 @@
 class STWireResponse
 {
   public :
-    STWireResponse(STGas* gas);
+    STWireResponse();
     ~STWireResponse() {};
 
     Double_t FindZWire(Double_t z);
@@ -26,6 +27,7 @@ class STWireResponse
     TH2D* fPadPlane;
     TF2*  fWPField;
 
+    STDigiPar* fPar;
     STGas* fGas;
 
     Double_t maxTime;

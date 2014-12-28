@@ -1,46 +1,36 @@
-#include "TRandom.h"
+#include "STPadResponse.hh"
 
-#include "STWireResponse.hh"
-#include "FairRootManager.h"
-#include "iostream"
+#include "TRandom.h"
 
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
+#include "FairRootManager.h"
 
-using std::cout;
-using std::endl;
+ClassImp(STPadResponse);
 
-ClassImp(STWireResponse);
-
-STWireResponse::STWireResponse()
+STPadResponse::STPadResponse()
 {
   FairRunAna* ana = FairRunAna::Instance();
   FairRuntimeDb* rtdb = ana->GetRuntimeDb();
   fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
+
+  fNTBs = fPar -> GetNumTbs();
   fGas = fPar -> GetGas();
+  fGain = fGas -> GetGain();
 
   maxTime = 10000.;    //[ns]
 
-  // wire plane 
-  Int_t nWire = 363;
-  zCenterWire  = 67.2; // [cm]
-  zSpacingWire = 0.4;  // [cm]
+  xPadPlane = 96.61;   // [cm]
+  zPadPlane = 144.64;  // [cm]
 
-  zFirstWire = zCenterWire - (nWire-1)/2 * zSpacingWire;
-  zLastWire  = zCenterWire + (nWire-1)/2 * zSpacingWire;
-
-  // pad plane 
-  xPadPlane = 96.61;
-  zPadPlane = 144.64;
-
-  binSizeZ = zPadPlane/112;
-  binSizeX = xPadPlane/108;
+  binSizeZ = zPadPlane/112;  //[cm]
+  binSizeX = xPadPlane/108;  //[cm]
 
   fPadPlane 
     = new TH2D("ElDistXZAval","", 112,0,zPadPlane,
                                   108,-xPadPlane/2,xPadPlane/2);
 
-  fWPField = new TF2("WPField", this, &STWireResponse::WPField,
+  fWPField = new TF2("WPField", this, &STPadResponse::WPField,
                      Double_t(0), zPadPlane, -xPadPlane/2, xPadPlane/2, 5,
                      "STWireReponse", "WPField");
   // [0] : amplitude
@@ -49,24 +39,11 @@ STWireResponse::STWireResponse()
   // [3] : meanZ
   // [4] : sigmaZ
   fWPField -> SetParameters(1,0,1,0,1);
-  
-  fGain = fGas -> GetGain();
 }
 
-Double_t STWireResponse::FindZWire(Double_t z)
+Int_t STPadResponse::FillPad(Double_t x, Double_t t, Double_t zWire)
 {
-  Int_t iWire = floor( (z - zCenterWire + zSpacingWire/2) / zSpacingWire );
-  zWire = iWire * zSpacingWire + zCenterWire;
-
-  if(zWire>zLastWire)  zWire = zLastWire;
-  if(zWire<zFirstWire) zWire = zFirstWire;
-
-  return zWire;
-}
-
-Int_t STWireResponse::FillPad(Double_t x, Double_t t)
-{
-  gain = gRandom -> Gaus(fGain,fGain/100);
+  Int_t gain = gRandom -> Gaus(fGain,fGain/100);
   if(gain<0) return 0;
 
   fWPField -> SetParameters(gain,zWire,0.2,x,0.2);
@@ -83,7 +60,7 @@ Int_t STWireResponse::FillPad(Double_t x, Double_t t)
   Double_t x2;
   Double_t content;
 
-  Int_t iTB = floor( t * nTBs / maxTime );
+  Int_t iTB = floor( t * fNTBs / maxTime );
 
   /*
   z1 = binZ*binSizeZ;
@@ -93,7 +70,7 @@ Int_t STWireResponse::FillPad(Double_t x, Double_t t)
 
   content  = fWPField -> Integral(z1,z2,x1,x2);
 
-  pad = fEvent -> GetPad(binX,binZ);
+  pad = fRawEvent -> GetPad(binX,binZ);
   pad -> SetADC(iTB, content + (pad -> GetADC(iTB)) );
 
   fPadPlane -> SetBinContent(binZ,binX, content + (fPadPlane -> GetBinContent(binZ,binX)) );
@@ -112,7 +89,7 @@ Int_t STWireResponse::FillPad(Double_t x, Double_t t)
 
       content  = fWPField -> Integral(z1,z2,x1,x2);
 
-      pad = fEvent -> GetPad(ibinX,ibinZ);
+      pad = fRawEvent -> GetPad(ibinX,ibinZ);
       pad -> SetADC(iTB, content + (pad -> GetADC(iTB)) );
 
       fPadPlane -> SetBinContent(ibinZ,ibinX, content + (fPadPlane -> GetBinContent(ibinZ,ibinX)) );
@@ -122,7 +99,7 @@ Int_t STWireResponse::FillPad(Double_t x, Double_t t)
   return gain;
 }
 
-void STWireResponse::WriteHistogram()
+void STPadResponse::WriteHistogram()
 {
   TFile* file = FairRootManager::Instance() -> GetOutFile();
 
@@ -132,7 +109,7 @@ void STWireResponse::WriteHistogram()
   fPadPlane -> Write();
 }
 
-Double_t STWireResponse::WPField(Double_t *x, Double_t *par)
+Double_t STPadResponse::WPField(Double_t *x, Double_t *par)
 {
   Float_t xx = x[0];
   Float_t yy = x[1];

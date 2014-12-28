@@ -8,7 +8,7 @@
 class STDriftElectron
 {
   public :
-    STDriftElectron(STDigiPar* par, STGas* gas);
+    STDriftElectron();
     ~STDriftElectron() {};
 
     void SetMCHit(TLorentzVector positionTimeMC);

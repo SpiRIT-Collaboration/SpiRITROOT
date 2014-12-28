@@ -29,6 +29,10 @@ set(SRCS
 DigiElectron/STDriftElectron.cc
 DigiElectron/STWireResponse.cc
 STDigiElectronTask.cc
+STDriftTask.cc
+STProcessManager.cc
+PadResponse/STPadResponse.cc
+STPadResponseTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

@@ -77,8 +77,8 @@ STDigiElectronTask::Init()
   fGas = fPar -> GetGas();
   EIonize = (fGas -> GetEIonize())*1E6; //convert from MeV to eV
 
-  driftElectron = new STDriftElectron(fPar, fGas);
-  wireResponse  = new STWireResponse(fGas);
+  driftElectron = new STDriftElectron();
+  wireResponse  = new STWireResponse();
 
   return kSUCCESS;
 }
