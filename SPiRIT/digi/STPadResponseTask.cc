@@ -54,7 +54,7 @@ InitStatus STPadResponseTask::Init()
 
   fDigitizedElectronArray = (TClonesArray*) ioman->GetObject("STDigitizedElectron");
   fRawEventArray = new TClonesArray("STRawEvent"); 
-  ioman->Register("STRawEvent", "ST", fRawEventArray, kTRUE);
+  ioman->Register("PPEvent", "ST", fRawEventArray, kTRUE);
 
   fWireResponse  = new STWireResponse();
   fPadResponse  = new STPadResponse();
@@ -98,7 +98,7 @@ void STPadResponseTask::Exec(Option_t* option)
   fProcess.End();
   fPadResponse -> WriteHistogram();
 
-  fLogger->Info(MESSAGE_ORIGIN, "Raw event created.");
+  fLogger->Info(MESSAGE_ORIGIN, "Pad plane event created.");
 
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
   delete fRawEvent;
@@ -115,7 +115,7 @@ void STPadResponseTask::Finish()
 void
 STPadResponseTask::InitializeRawEvent()
 {
-  nTBs = fPar -> GetNumTbs(); // number of time buckets
+  fNTBs = fPar -> GetNumTbs(); // number of time buckets
 
   fRawEvent = new STRawEvent();
   fRawEvent -> SetName("RawEvent");
@@ -138,7 +138,7 @@ STPadResponseTask::InitializeRawEvent()
           STPad* pad = new STPad(row,layer);
                  pad -> SetPedestalSubtracted(kTRUE);
 
-          for(int iTB=0; iTB<nTBs; iTB++){
+          for(int iTB=0; iTB<fNTBs; iTB++){
             pad -> SetADC(iTB, 0);
           }
 

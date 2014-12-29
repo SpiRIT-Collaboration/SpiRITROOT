@@ -3,6 +3,15 @@
 
 #include "FairTask.h"
 
+// SPiRIT-TPC class headers
+#include "STDigiPar.hh"
+#include "STMap.hh"
+#include "STRawEvent.hh"
+#include "STPad.hh"
+
+// ROOT class headers
+#include "TClonesArray.h"
+
 class TClonesArray;
 
 class STElectronicsTask : public FairTask
@@ -12,7 +21,7 @@ class STElectronicsTask : public FairTask
     /** Default constructor **/
     STElectronicsTask();
 
-    /** Constructor with parameters (Optional)
+    /** Constructor with parameters (Optional) **/
     //  STElectronicsTask(Int_t verbose);
 
 
@@ -38,11 +47,20 @@ class STElectronicsTask : public FairTask
 
   private:
 
-    /** Input array from previous already existing data level **/
-    //  TClonesArray* <InputDataLevel>;
 
-    /** Output array to  new data level**/
-    //  TClonesArray* <OutputDataLevel>;
+    /** In/Output array to  new data level**/
+    TClonesArray *fPPEventArray;
+    TClonesArray *fRawEventArray;
+    STRawEvent* fPPEvent;
+    STRawEvent* fRawEvent;
+
+    /** Parameter Container **/
+    STDigiPar* fPar;
+
+    /** Parameters **/
+    Int_t fNTBs;
+    Int_t fNBinPulser;
+    Double_t fPulser[100];
 
     STElectronicsTask(const STElectronicsTask&);
     STElectronicsTask operator=(const STElectronicsTask&);

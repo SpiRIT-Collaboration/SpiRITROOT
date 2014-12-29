@@ -38,13 +38,16 @@ void run_digi(TString tag = "urqmd1")
                  fDb -> setFirstInput(mcParInput);
                  fDb -> setSecondInput(digiParInput);
 
-  STDigiElectronTask* digi = new STDigiElectronTask();
-                      digi -> SetPersistence(kTRUE);
+  STDriftTask* drift = new STDriftTask();
+  STPadResponseTask* padResponse = new STPadResponseTask();
+  STElectronicsTask* electronics = new STElectronicsTask();
 
 
 
 
-  fRun -> AddTask(digi);
+  fRun -> AddTask(drift);
+  fRun -> AddTask(padResponse);
+  fRun -> AddTask(electronics);
   fRun -> Init();
   fRun -> Run(0, nEvents);
 

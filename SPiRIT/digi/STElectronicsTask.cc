@@ -14,9 +14,11 @@
 
 // ST header
 #include "STElectronicsTask.hh"
+#include "STProcessManager.hh"
 
 // C/C++ class headers
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -51,9 +53,19 @@ InitStatus STElectronicsTask::Init()
   // Get a handle from the IO manager
   FairRootManager* ioman = FairRootManager::Instance();
 
-  fPPEventArray = (TClonesArray*) ioman->GetObject("STPPEvent");
+  fPPEventArray = (TClonesArray*) ioman->GetObject("PPEvent");
   fRawEventArray = new TClonesArray("STRawEvent"); 
   ioman->Register("STRawEvent", "ST", fRawEventArray, kTRUE);
+
+  fNTBs = fPar -> GetNumTbs(); // number of time buckets
+
+  TString workDir = gSystem -> Getenv("SPIRITDIR");
+  TString pulserFileName = workDir + "/parameters/Pulser.dat";
+
+  fNBinPulser = 0;
+  Double_t val;
+  ifstream pulserFile(pulserFileName.Data());
+  while(pulserFile >> val) fPulser[fNBinPulser++] = val;
 
   return kSUCCESS;
 
@@ -70,6 +82,53 @@ InitStatus STElectronicsTask::ReInit()
 void STElectronicsTask::Exec(Option_t* option)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Exec of STElectronicsTask");
+
+  if(!fRawEventArray) 
+    fLogger->Fatal(MESSAGE_ORIGIN,"No RawEventArray!");
+
+  fLogger->Info(MESSAGE_ORIGIN, "Pad plane event found.");
+
+  fPPEvent  = (STRawEvent*) fPPEventArray -> At(0);
+  fRawEvent = new STRawEvent();
+  fRawEvent -> SetEventID(fPPEvent->GetEventID());
+
+  STPad* padI;
+
+  Double_t *adcI;
+  Double_t adcO[512];
+
+  Int_t nPads = fPPEvent -> GetNumPads();
+  STProcessManager fProcess("Electronics", nPads);
+  for(Int_t iPad=0; iPad<nPads; iPad++) {
+    fProcess.PrintOut(iPad);
+    padI = fPPEvent -> GetPad(iPad);
+    adcI = padI -> GetADC();
+    for(Int_t iTB=0; iTB<fNTBs; iTB++) adcO[iTB]=0;
+    for(Int_t iTB=0; iTB<fNTBs; iTB++) {
+      Double_t val = adcI[iTB];
+      Int_t jTB=iTB;
+      Int_t kTB=0;
+      while(jTB<fNTBs && kTB<fNBinPulser) 
+        adcO[jTB++] += val*fPulser[kTB++];
+    }
+    Int_t row   = padI -> GetRow();
+    Int_t layer = padI -> GetLayer();
+    STPad *padO = new STPad(row, layer);
+    padO -> SetPedestalSubtracted();
+    for(Int_t iTB=0; iTB<fNTBs; iTB++) 
+      padO -> SetADC(iTB,adcO[iTB]);
+    padO -> SetADC(adcO);
+    fRawEvent -> SetPad(padO);
+    delete padO;
+  }
+  fProcess.End();
+
+  new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
+  delete fRawEvent;
+
+  fLogger->Info(MESSAGE_ORIGIN, "Raw event created.");
+
+  return;
 }
 
 // ---- Finish --------------------------------------------------------

@@ -11,7 +11,8 @@ ${CMAKE_SOURCE_DIR}/SPiRIT/mc
 ${CMAKE_SOURCE_DIR}/SPiRIT/par
 ${CMAKE_SOURCE_DIR}/SPiRIT/format
 ${CMAKE_SOURCE_DIR}/SPiRIT/digi/PadResponse
-${CMAKE_SOURCE_DIR}/SPiRIT/digi/DigiElectron
+#${CMAKE_SOURCE_DIR}/SPiRIT/digi/DigiElectron
+${CMAKE_SOURCE_DIR}/SPiRIT/digi/DriftElectron
 ${CMAKE_SOURCE_DIR}/SPiRIT/digi
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/STConverter
 )
@@ -26,13 +27,14 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
-DigiElectron/STDriftElectron.cc
-DigiElectron/STWireResponse.cc
-STDigiElectronTask.cc
+DriftElectron/STDriftElectron.cc
+DriftElectron/STWireResponse.cc
+#STDigiElectronTask.cc
 STDriftTask.cc
 STProcessManager.cc
 PadResponse/STPadResponse.cc
 STPadResponseTask.cc
+STElectronicsTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

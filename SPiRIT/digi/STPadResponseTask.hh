@@ -20,6 +20,7 @@
 #include "STGas.hh"
 #include "STMap.hh"
 #include "STRawEvent.hh"
+#include "STPad.hh"
 
 // ROOT class headers
 #include "TClonesArray.h"
@@ -70,14 +71,14 @@ class STPadResponseTask : public FairTask
     TClonesArray *fRawEventArray;
     STRawEvent* fRawEvent;
 
-    /** Parameters **/
+    /** Parameter Container **/
     STDigiPar* fPar;
 
     /** Pad Map **/
     STMap* fMap;
 
     /** Parameters **/
-    Int_t nTBs;
+    Int_t fNTBs;
 
 
 
