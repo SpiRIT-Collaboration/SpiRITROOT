@@ -42,7 +42,7 @@ void makePulserData()
   TString workDir = gSystem -> Getenv("SPIRITDIR");
   TString fileName = workDir + "/parameters/PulserExample.dat";
   ofstream file(fileName.Data());
-  for(Int_t i=135; i<186; i++)
+  for(Int_t i=135; i<185; i++)
     file << adcTot[i] << endl;
 
 

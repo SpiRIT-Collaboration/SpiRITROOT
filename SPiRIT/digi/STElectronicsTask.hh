@@ -45,6 +45,10 @@ class STElectronicsTask : public FairTask
     /** Finish task called at the end of the run **/
     virtual void Finish();
 
+
+    /** Setters **/
+    void SetSignalPolarity(Bool_t val) { fSignalPolarity = val; };
+
   private:
 
 
@@ -60,7 +64,18 @@ class STElectronicsTask : public FairTask
     /** Parameters **/
     Int_t fNTBs;
     Int_t fNBinPulser;
-    Double_t fPulser[100];
+
+    Double_t fPulser[100]; /// Pulser shape
+
+    Double_t fADCDynamicRange; /// [Coulomb]
+    Double_t fADCMax;          /// ADC maximum value [ADC-Ch]
+    Double_t fADCMaxUseable;   /// Actual useable ADC maximum value [ADC-Ch]
+    Double_t fADCDefualt;      /// defualt background value of ADC [ADC-Ch]
+    Bool_t   fSignalPolarity;  /// 1: positive, 0: negative
+
+
+
+
 
     STElectronicsTask(const STElectronicsTask&);
     STElectronicsTask operator=(const STElectronicsTask&);

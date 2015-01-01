@@ -24,7 +24,12 @@ using namespace std;
 
 // ---- Default constructor -------------------------------------------
 STElectronicsTask::STElectronicsTask()
-  :FairTask("STElectronicsTask")
+  :FairTask("STElectronicsTask"),
+   fADCDynamicRange(120.e-15),
+   fADCMax(4095),
+   fADCMaxUseable(3600),
+   fADCDefualt(100),
+   fSignalPolarity(0)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STElectronicsTask");
 }
@@ -65,10 +70,12 @@ InitStatus STElectronicsTask::Init()
   fNBinPulser = 0;
   Double_t val;
   ifstream pulserFile(pulserFileName.Data());
-  while(pulserFile >> val) fPulser[fNBinPulser++] = val;
+
+  Double_t coulombToEV = 6.241e18; 
+  Double_t pulserConstant = (fADCMaxUseable-fADCDefualt)/(fADCDynamicRange*coulombToEV);
+  while(pulserFile >> val) fPulser[fNBinPulser++] = pulserConstant*val;
 
   return kSUCCESS;
-
 }
 
 // ---- ReInit  -------------------------------------------------------
@@ -115,9 +122,17 @@ void STElectronicsTask::Exec(Option_t* option)
     Int_t layer = padI -> GetLayer();
     STPad *padO = new STPad(row, layer);
     padO -> SetPedestalSubtracted();
-    for(Int_t iTB=0; iTB<fNTBs; iTB++) 
+    // AGET chip protection from ZAP board
+    for(Int_t iTB=0; iTB<fNTBs; iTB++)
+      if(adcO[iTB]>fADCMaxUseable) 
+        adcO[iTB] = fADCMaxUseable;
+    // polarity 
+    if(fSignalPolarity==0)
+      for(Int_t iTB=0; iTB<fNTBs; iTB++)
+        adcO[iTB] = fADCMaxUseable - adcO[iTB];
+    // set ADC
+    for(Int_t iTB=0; iTB<fNTBs; iTB++)
       padO -> SetADC(iTB,adcO[iTB]);
-    padO -> SetADC(adcO);
     fRawEvent -> SetPad(padO);
     delete padO;
   }
