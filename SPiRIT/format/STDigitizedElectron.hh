@@ -32,7 +32,7 @@ class STDigitizedElectron : public TObject
     //Getters
     Double_t GetX();
     Double_t GetZ();
-    Double_t GetZWire();
+    Int_t    GetZWire();
     Double_t GetTime();
     Int_t    GetGain();
 
@@ -40,9 +40,9 @@ class STDigitizedElectron : public TObject
     void SetIndex(Int_t index);
     
   private :
-    Double_t fX;     /// x position [cm]
-    Double_t fZ;     /// z position [cm]
-    Double_t fZWire; /// z position of wire where electron is absorbed[cm]
+    Double_t fX;     /// x position [mm]
+    Double_t fZ;     /// z position [mm]
+    Int_t    fZWire; /// z position of wire where electron is absorbed [mm]
     Double_t fTime;  /// arrival time on wire plane [ns]
     Int_t    fGain;  /// amound of gain in wire plane
 

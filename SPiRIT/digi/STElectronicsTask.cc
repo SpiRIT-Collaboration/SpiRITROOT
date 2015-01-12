@@ -20,6 +20,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "TRandom.h"
+
 using namespace std;
 
 // ---- Default constructor -------------------------------------------
@@ -28,7 +30,7 @@ STElectronicsTask::STElectronicsTask()
    fADCDynamicRange(120.e-15),
    fADCMax(4095),
    fADCMaxUseable(3600),
-   fADCDefualt(100),
+   fADCPedestal(400),
    fSignalPolarity(0)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STElectronicsTask");
@@ -72,7 +74,7 @@ InitStatus STElectronicsTask::Init()
   ifstream pulserFile(pulserFileName.Data());
 
   Double_t coulombToEV = 6.241e18; 
-  Double_t pulserConstant = (fADCMaxUseable-fADCDefualt)/(fADCDynamicRange*coulombToEV);
+  Double_t pulserConstant = (fADCMaxUseable-fADCPedestal)/(fADCDynamicRange*coulombToEV);
   while(pulserFile >> val) fPulser[fNBinPulser++] = pulserConstant*val;
 
   return kSUCCESS;
@@ -123,9 +125,11 @@ void STElectronicsTask::Exec(Option_t* option)
     STPad *padO = new STPad(row, layer);
     padO -> SetPedestalSubtracted();
     // AGET chip protection from ZAP board
-    for(Int_t iTB=0; iTB<fNTBs; iTB++)
+    for(Int_t iTB=0; iTB<fNTBs; iTB++) {
+      adcO[iTB] += gRandom -> Gaus(fADCPedestal,4);
       if(adcO[iTB]>fADCMaxUseable) 
         adcO[iTB] = fADCMaxUseable;
+    }
     // polarity 
     if(fSignalPolarity==0)
       for(Int_t iTB=0; iTB<fNTBs; iTB++)

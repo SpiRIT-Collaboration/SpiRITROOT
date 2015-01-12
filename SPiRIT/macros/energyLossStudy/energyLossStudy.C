@@ -40,7 +40,7 @@ void energyLossStudy(TString outFileName = "data/energyLoss.dat",
   cout << "[creatMCSamples ] Particle energy   : " << setw(8) << energy   << " MeV" << endl;
 
   if(createMC) run_mc_eloss(nEvents, particle, (Double_t)momentum, tag); // MC
-  calculateEnergyLoss(tag, dEdx, dEdx2, travelDistance); // Energy loss calculation
+  CalculateEnergyLoss(tag, dEdx, dEdx2, travelDistance); // Energy loss calculation
 
   ofstream outFile(outFileName.Data(), ios::out | ios::app );
            outFile << setw(3)  << particle
@@ -56,7 +56,7 @@ void energyLossStudy(TString outFileName = "data/energyLoss.dat",
 
 
 
-void calculateEnergyLoss(TString   mcFileNameTag = "test",
+void CalculateEnergyLoss(TString   mcFileNameTag = "test",
                          Double_t  &dEdxVal,
                          Double_t  &dEdxVal2,
                          Double_t  &travelDistanceVal)
@@ -65,7 +65,7 @@ void calculateEnergyLoss(TString   mcFileNameTag = "test",
   TString mcFileNameTail = ".mc.root";
   TString mcFileName     = mcFileNameHead + mcFileNameTag + mcFileNameTail;
 
-  cout << "[calculateEnergyLoss ] Calculating " << mcFileName << endl;
+  cout << "[CalculateEnergyLoss ] Calculating " << mcFileName << endl;
 
   Double_t zLength = 0;    // traveled length [cm]
   Double_t zLengthMean;    // traveled length [cm] - mean value

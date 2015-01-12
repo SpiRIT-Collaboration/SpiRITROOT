@@ -27,7 +27,7 @@ void Config()
 
    TG4RunConfiguration* runConfiguration 
      //= new TG4RunConfiguration("geomRoot", "FTFP_BERT", "stepLimiter+specialCuts");
-     = new TG4RunConfiguration("geomRoot", "QGSP_BERT_HP", "stepLimiter+specialCuts");
+     = new TG4RunConfiguration("geomRoot", "QGSP_BERT_HP_EMY", "stepLimiter+specialCuts");
      //= new TG4RunConfiguration("geomRoot", "QGSP_BIC_HP", "stepLimiter+specialCuts");
      //= new TG4RunConfiguration("geomRoot", "FTFP_BERT", "stepLimiter+specialCuts");
 

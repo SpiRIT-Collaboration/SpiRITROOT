@@ -115,9 +115,10 @@ void exampleDetectorConstruction::ConstructMaterials()
     Methane -> AddElement(elH, 4);
   
   const G4double denP10 = 1.53e-3*g/cm3;
+  G4double tot = 0.9*denArgonGas + 0.1*denMethane;
   P10Gas = new G4Material("P10Gas", denP10, 2, kStateGas, labTemp);
-    P10Gas -> AddMaterial(ArgonGas, 0.9*denArgonGas/denP10);
-    P10Gas -> AddMaterial(Methane,  0.1*denMethane/denP10);
+    P10Gas -> AddMaterial(ArgonGas, 0.9*denArgonGas/tot);
+    P10Gas -> AddMaterial(Methane,  0.1*denMethane/tot);
 
 }
 

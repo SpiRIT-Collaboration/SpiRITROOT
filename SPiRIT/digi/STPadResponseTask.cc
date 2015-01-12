@@ -89,14 +89,15 @@ void STPadResponseTask::Exec(Option_t* option)
   {
     fProcess.PrintOut(iElectron);
     fDigiElectron = (STDigitizedElectron*) fDigitizedElectronArray -> At(iElectron);
+
     Double_t xEl = fDigiElectron -> GetX();
     Double_t tEl = fDigiElectron -> GetTime();
-    Double_t zWi = fDigiElectron -> GetZWire();
+    Int_t    zWi = fDigiElectron -> GetZWire();
+    Int_t   gain = fDigiElectron -> GetGain();
 
-    fPadResponse -> FillPad(xEl, tEl, zWi);
+    fPadResponse -> FillPad(gain, xEl, tEl, zWi);
   }
   fProcess.End();
-  fPadResponse -> WriteHistogram();
 
   fLogger->Info(MESSAGE_ORIGIN, "Pad plane event created.");
 

@@ -1,5 +1,5 @@
 void run_mc(const Int_t nEvents   = 1,
-            TString     tag       = "urqmd1",
+            TString     tag       = "test",
             TString     GeantMode = "TGeant4",
             TString     geoFile   = "spirit_v03.1.root")
 {

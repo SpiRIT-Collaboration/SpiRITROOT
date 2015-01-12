@@ -5,7 +5,7 @@
 #/mcphysics/rangeCutForGamma    0.01 mm   # ERROR
 #/mcphysics/rangeCutForElectron 0.01 mm
 #/mcphysics/rangeCutForPositron 0.01 mm
- /mcPhysics/rangeCuts           0.2  mm
+ /mcPhysics/rangeCuts           0.1  mm
 
 #/mcRegions/setRangePrecision   0.01 mm   # ERROR
 #/mcPhysics/printGlobalCuts               # ERROR

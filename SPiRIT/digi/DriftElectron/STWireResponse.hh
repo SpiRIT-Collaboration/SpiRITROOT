@@ -12,17 +12,16 @@ class STWireResponse
     STWireResponse();
     ~STWireResponse() {};
 
-    Double_t FindZWire(Double_t z);
+    Int_t FindZWire(Double_t z);
 
   private :
 
     STDigiPar* fPar;
-    STGas* fGas;
 
-    Double_t zCenterWire;
-    Double_t zSpacingWire;
-    Double_t zFirstWire;
-    Double_t zLastWire;
+    Int_t zCenterWire;
+    Int_t  zSpacingWire;
+    Int_t zFirstWire;
+    Int_t zLastWire;
 
   ClassDef(STWireResponse, 1);
 };

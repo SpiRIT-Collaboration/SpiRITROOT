@@ -1,5 +1,5 @@
 #ifndef _STMCPOINT_H_
-#define _SPMCPOINT_H_ 1
+#define _STMCPOINT_H_ 1
 
 
 #include "FairMCPoint.h"

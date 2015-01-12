@@ -23,7 +23,7 @@ Int_t MStyle4 = 21;
 
 void plotAll()
 {
-  Bool_t   saveFlag  = kFALSE;
+  Bool_t   saveFlag  = kTRUE;
   Double_t kEMax     = 420;
   Double_t dEdxMaxP  = 0.005;
   Double_t dEdxMinP  = 0.0002;
@@ -39,10 +39,10 @@ void plotAll()
 
 
   // proton dEdx
-  TH2D* histPE = new TH2D("histP",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax,10,0,dEdxMaxP);
-  //TH2D* histPE = new TH2D("histP",";Energy (MeV); dE/dx (MeV/mm)",10,0,80,10,0,dEdxMaxP);
-  TH1D* histPELog = new TH1D("histPLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax);
-  //TH1D* histPELog = new TH1D("histPLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,80);
+  //TH2D* histPE = new TH2D("histP",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax,10,0,dEdxMaxP);
+  TH2D* histPE = new TH2D("histP",";Energy (MeV); dE/dx (MeV/mm)",10,0,80,10,0,dEdxMaxP);
+  //TH1D* histPELog = new TH1D("histPLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax);
+  TH1D* histPELog = new TH1D("histPLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,80);
         histPELog -> SetMinimum(dEdxMinP);
         histPELog -> SetMaximum(dEdxMaxP);
 
@@ -91,10 +91,10 @@ void plotAll()
 
 
   // alpha dEdx
-  TH2D* histAE = new TH2D("histA",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax,10,0,dEdxMaxA);
-  //TH2D* histAE = new TH2D("histA",";Energy (MeV); dE/dx (MeV/mm)",10,0,80,10,0,dEdxMaxA);
-  TH1D* histAELog = new TH1D("histALog",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax);
-  //TH1D* histAELog = new TH1D("histALog",";Energy (MeV); dE/dx (MeV/mm)",10,0,80);
+  //TH2D* histAE = new TH2D("histA",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax,10,0,dEdxMaxA);
+  TH2D* histAE = new TH2D("histA",";Energy (MeV); dE/dx (MeV/mm)",10,0,80,10,0,dEdxMaxA);
+  //TH1D* histAELog = new TH1D("histALog",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax);
+  TH1D* histAELog = new TH1D("histALog",";Energy (MeV); dE/dx (MeV/mm)",10,0,80);
         histAELog -> SetMinimum(dEdxMinA);
         histAELog -> SetMaximum(dEdxMaxA);
 
@@ -116,9 +116,9 @@ void plotAll()
           graphMCAE -> SetLineStyle(2);
 
   TLegend *legendAE = new TLegend(0.38,0.80,0.9,0.9);
-           legendAE -> AddEntry(graphTLPE,  "alpha (TRIM/LISE++)","P");
-           legendAE -> AddEntry(graphMCPE0, "alpha (MC, secondaries not included)","PL");
-           legendAE -> AddEntry(graphMCPE,  "alpha (MC, secondaries included)","PL");
+           legendAE -> AddEntry(graphTLAE,  "alpha (TRIM/LISE++)","P");
+           legendAE -> AddEntry(graphMCAE0, "alpha (MC, secondaries not included)","PL");
+           legendAE -> AddEntry(graphMCAE,  "alpha (MC, secondaries included)","PL");
            legendAE -> SetFillColor(0);
 
   TCanvas* cvsA = new TCanvas("cvsA","cvsA",700,700);
@@ -196,7 +196,7 @@ void plotAll()
 
 
 
-TGraph* GetMCP(Int_t type = 0) // TRIM LISE++ Proton dE/dx
+TGraph* GetMCP(Int_t type = 0) // MC Proton dE/dx
 {
   Int_t i=0;
   Int_t dummyI;
@@ -248,7 +248,7 @@ TGraph* GetTLPL() // TRIM LISE++ Proton Drift Length
 
 
 
-TGraph* GetMCA(Int_t type = 0) // TRIM LISE++ Proton dE/dx
+TGraph* GetMCA(Int_t type = 0) // MC Alpha dE/dx
 {
   Int_t i=0;
   Int_t dummyI;
@@ -276,7 +276,7 @@ TGraph* GetMCA(Int_t type = 0) // TRIM LISE++ Proton dE/dx
 
 
 
-TGraph* GetTLAE() // TRIM LISE++ Proton dE/dx
+TGraph* GetTLAE() // TRIM LISE++ Alpha dE/dx
 {
   Int_t i=0;
   Double_t kE, dEdx;
@@ -288,7 +288,7 @@ TGraph* GetTLAE() // TRIM LISE++ Proton dE/dx
 
 
 
-TGraph* GetTLAL() // TRIM LISE++ Proton Drift Length
+TGraph* GetTLAL() // TRIM LISE++ Alpha Drift Length
 {
   Int_t i=0;
   Double_t kE, l;

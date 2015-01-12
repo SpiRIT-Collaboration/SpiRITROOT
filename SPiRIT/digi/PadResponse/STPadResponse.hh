@@ -4,7 +4,7 @@
 #include "STGas.hh"
 #include "STRawEvent.hh"
 #include "TH2D.h"
-#include "TF2.h"
+#include "TF1.h"
 #include "TMath.h"
 
 class STPadResponse
@@ -13,18 +13,24 @@ class STPadResponse
     STPadResponse();
     ~STPadResponse() {};
 
-    void  SetRawEvent(STRawEvent* event) { fRawEvent = event; };
-    Int_t FillPad(Double_t x, Double_t t, Double_t zWire);
-    void  WriteHistogram();
+    void SetRawEvent(STRawEvent* event) { fRawEvent = event; };
+    void FillPad(Int_t gain, Double_t x, Double_t t, Int_t zWire);
 
   private :
+    // methods
+    void FindPad(Double_t xElectron, 
+                    Int_t zWire, 
+                    Int_t &row, 
+                    Int_t &layer, 
+                    Int_t &type);
+
     // Parameter containers
     STDigiPar* fPar;
     STGas* fGas;
 
     // Function
-    TF2*     fWPField;
-    Double_t WPField(Double_t *x, Double_t *par);
+    TF1*     fPadResponseFunction1; // par[0] : mean
+    Double_t fPadResponseFunction(Double_t *x, Double_t *par);
 
     // STRawEvent
     STRawEvent* fRawEvent;
@@ -32,13 +38,16 @@ class STPadResponse
     TH2D*       fPadPlane;
 
     //Parameters
-    Int_t    fGain;
+    Double_t fTimeMax;
     Int_t    fNTBs;
-    Double_t maxTime;
-    Double_t xPadPlane;
-    Double_t zPadPlane;
-    Double_t binSizeZ;
-    Double_t binSizeX;
+    Int_t    fXPadPlane;
+    Int_t    fZPadPlane;
+    Int_t    fBinSizeZ;
+    Int_t    fBinSizeX;
+    Int_t    fNBinsX;
+    Int_t    fNBinsZ;
+
+    Double_t fFillRatio[3][3];
 
   ClassDef(STPadResponse, 1);
 };

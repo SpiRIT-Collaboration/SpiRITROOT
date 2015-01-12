@@ -24,9 +24,9 @@ int main(int argc, char ** argv)
 	exampleDetectorConstruction* exampleDC = new exampleDetectorConstruction();
 	runManager -> SetUserInitialization(exampleDC);
 
-  //G4VModularPhysicsList* physicsList = new FTFP_BERT;
-  G4VModularPhysicsList* physicsList = new QGSP_BERT;
-  physicsList->RegisterPhysics(new G4StepLimiterPhysics());
+  G4VModularPhysicsList* physicsList = new FTFP_BERT;
+  //G4VModularPhysicsList* physicsList = new QGSP_BERT;
+  //physicsList->RegisterPhysics(new G4StepLimiterPhysics());
   runManager->SetUserInitialization(physicsList);
 
 	examplePrimaryGeneratorAction* examplePGA = new examplePrimaryGeneratorAction(kineticEnergy);

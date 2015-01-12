@@ -70,7 +70,7 @@ class STElectronicsTask : public FairTask
     Double_t fADCDynamicRange; /// [Coulomb]
     Double_t fADCMax;          /// ADC maximum value [ADC-Ch]
     Double_t fADCMaxUseable;   /// Actual useable ADC maximum value [ADC-Ch]
-    Double_t fADCDefualt;      /// defualt background value of ADC [ADC-Ch]
+    Double_t fADCPedestal;     /// defualt background value of ADC [ADC-Ch]
     Bool_t   fSignalPolarity;  /// 1: positive, 0: negative
 
 

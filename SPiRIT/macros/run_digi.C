@@ -1,4 +1,4 @@
-void run_digi(TString tag = "urqmd1")
+void run_digi(TString tag = "test")
 {
   TStopwatch timer;
   timer.Start();
@@ -41,6 +41,7 @@ void run_digi(TString tag = "urqmd1")
   STDriftTask* drift = new STDriftTask();
   STPadResponseTask* padResponse = new STPadResponseTask();
   STElectronicsTask* electronics = new STElectronicsTask();
+                     electronics -> SetSignalPolarity(1);
 
 
 

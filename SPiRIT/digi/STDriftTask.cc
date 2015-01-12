@@ -23,6 +23,7 @@
 // Root class headers
 #include "TLorentzVector.h"
 #include "TString.h"
+#include "TRandom.h"
 
 using namespace std;
 
@@ -96,10 +97,10 @@ void STDriftTask::Exec(Option_t* option)
   }
   fLogger->Info(MESSAGE_ORIGIN, Form("There are %d MC points.",nMCPoints));
 
-  TLorentzVector V4MC;
-  TLorentzVector V4Drift;
-  Double_t       zWire;
-  Double_t       gain;
+  TLorentzVector V4MC;    // [cm]
+  TLorentzVector V4Drift; // [cm]
+  Int_t          zWire;   // [mm]
+  Int_t          gain0 = fGas -> GetGain();
 
   STProcessManager fProcess(TString("Drifiting"), nMCPoints);
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
@@ -113,13 +114,15 @@ void STDriftTask::Exec(Option_t* option)
     
     Int_t nElectrons = (Int_t)floor(fabs(eLoss/fEIonize));
     for(Int_t iElectron=0; iElectron<nElectrons; iElectron++) {
+      Int_t gain = gRandom -> Gaus(gain0,10);
+      if(gain<=0) continue;
       V4Drift = fDriftElectron->Drift();
       zWire   = fWireResponse->FindZWire(V4Drift.Z());
 
       Int_t index = fDigitizedElectronArray->GetEntriesFast();
       STDigitizedElectron* electron
         = new ((*fDigitizedElectronArray)[index])
-          STDigitizedElectron(V4Drift.X(), V4Drift.Z(), zWire, V4Drift.T(),1);
+          STDigitizedElectron(V4Drift.X()*10, V4Drift.Z()*10, zWire, V4Drift.T(),gain);
       electron -> SetIndex(index);
     }
   }

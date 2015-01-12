@@ -41,7 +41,7 @@ STDigitizedElectron::~STDigitizedElectron()
 // Getters
 Double_t STDigitizedElectron::GetX()     { return fX; }
 Double_t STDigitizedElectron::GetZ()     { return fZ; }
-Double_t STDigitizedElectron::GetZWire() { return fZWire; }
+Int_t    STDigitizedElectron::GetZWire() { return fZWire; }
 Double_t STDigitizedElectron::GetTime()  { return fTime; }
 Int_t    STDigitizedElectron::GetGain()  { return fGain; }
 

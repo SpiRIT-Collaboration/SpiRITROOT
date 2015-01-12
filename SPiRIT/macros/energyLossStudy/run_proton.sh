@@ -7,7 +7,7 @@ rm $dataFile
 
 for (( momentum=10; momentum<=1000; momentum+=20 ))
 do
-  root -q -l 'energyLossStudy.C("'$dataFile'", kTRUE, 10, 0, '$momentum')'
+  root -q -l 'energyLossStudy.C("'$dataFile'", kTRUE, 100, 0, '$momentum')'
 done
 
 root -l plotAll.C

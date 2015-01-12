@@ -1,10 +1,12 @@
 #include "STPadResponse.hh"
 
-#include "TRandom.h"
-
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
 #include "FairRootManager.h"
+
+#include "iostream"
+
+using namespace std;
 
 ClassImp(STPadResponse);
 
@@ -15,107 +17,95 @@ STPadResponse::STPadResponse()
   fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
 
   fNTBs = fPar -> GetNumTbs();
-  fGas = fPar -> GetGas();
-  fGain = fGas -> GetGain();
 
-  maxTime = 10000.;    //[ns]
+  fTimeMax = 10000.;    //[ns]
 
-  xPadPlane = 96.61;   // [cm]
-  zPadPlane = 144.64;  // [cm]
+  fXPadPlane = (fPar -> GetPadPlaneX()); // [mm]
+  fZPadPlane = (fPar -> GetPadPlaneZ()); // [mm]
 
-  binSizeZ = zPadPlane/112;  //[cm]
-  binSizeX = xPadPlane/108;  //[cm]
+  fBinSizeX = 8;   //[mm]
+  fBinSizeZ = 12;  //[mm]
 
-  fPadPlane 
-    = new TH2D("ElDistXZAval","", 112,0,zPadPlane,
-                                  108,-xPadPlane/2,xPadPlane/2);
+  fNBinsX = fXPadPlane/fBinSizeX; // 108
+  fNBinsZ = fZPadPlane/fBinSizeZ; // 112
 
-  fWPField = new TF2("WPField", this, &STPadResponse::WPField,
-                     Double_t(0), zPadPlane, -xPadPlane/2, xPadPlane/2, 5,
-                     "STWireReponse", "WPField");
-  // [0] : amplitude
-  // [1] : meanX
-  // [2] : sigmaX
-  // [3] : meanZ
-  // [4] : sigmaZ
-  fWPField -> SetParameters(1,0,1,0,1);
+  // type 0 (tot=.982)
+  fFillRatio[0][0] = 0.491;
+  fFillRatio[0][1] = 0.491;
+  fFillRatio[0][2] = 0;
+
+  // type 1 (tot=.999)
+  fFillRatio[1][0] = 0.215;
+  fFillRatio[1][1] = 0.733;
+  fFillRatio[1][2] = 0.051;
+
+  // type 2 (tot=.999)
+  fFillRatio[2][0] = 0.051;
+  fFillRatio[2][1] = 0.733;
+  fFillRatio[2][2] = 0.215;
+
+  fPadResponseFunction1
+    = new TF1("fPadResponseFunction", this, &STPadResponse::fPadResponseFunction,
+              -fXPadPlane/2, fXPadPlane/2, 1, "STPadResponse", "fPadResponseFunction");
+   
+  fPadResponseFunction1 -> SetParameter(0,0);
 }
 
-Int_t STPadResponse::FillPad(Double_t x, Double_t t, Double_t zWire)
+void 
+STPadResponse::FindPad(Double_t xElectron, 
+                          Int_t zWire, 
+                          Int_t &row, 
+                          Int_t &layer, 
+                          Int_t &type)
 {
-  Int_t gain = gRandom -> Gaus(fGain,fGain/100);
-  if(gain<0) return 0;
+  row   = floor(xElectron/fBinSizeX) + fNBinsX/2;
+  layer = floor(zWire/fBinSizeZ);
 
-  fWPField -> SetParameters(gain,zWire,0.2,x,0.2);
-
-  Int_t bin = fPadPlane -> Fill(zWire,x,0);
-  Int_t binZ, binX, dummy;
-  fPadPlane -> GetBinXYZ(bin, binZ, binX, dummy);
-
-  if(binZ<0 || binZ>112 || binX<0 || binX>108) return 0;
-
-  Double_t z1;
-  Double_t z2;
-  Double_t x1;
-  Double_t x2;
-  Double_t content;
-
-  Int_t iTB = floor( t * fNTBs / maxTime );
-
-  /*
-  z1 = binZ*binSizeZ;
-  z2 = (binZ+1)*binSizeZ;
-  x1 = binX*binSizeX - xPadPlane/2;
-  x2 = (binX+1)*binSizeX - xPadPlane/2;
-
-  content  = fWPField -> Integral(z1,z2,x1,x2);
-
-  pad = fRawEvent -> GetPad(binX,binZ);
-  pad -> SetADC(iTB, content + (pad -> GetADC(iTB)) );
-
-  fPadPlane -> SetBinContent(binZ,binX, content + (fPadPlane -> GetBinContent(binZ,binX)) );
-  */
-
-  for(Int_t dZ=-1; dZ<=1; dZ++){
-    for(Int_t dX=-1; dX<=1; dX++){
-
-      Int_t ibinZ = binZ+dZ;
-      Int_t ibinX = binX+dX;
-
-      z1 = ibinZ*binSizeZ;
-      z2 = (ibinZ+1)*binSizeZ;
-      x1 = ibinX*binSizeX - xPadPlane/2;
-      x2 = (ibinX+1)*binSizeX - xPadPlane/2;
-
-      content  = fWPField -> Integral(z1,z2,x1,x2);
-
-      pad = fRawEvent -> GetPad(ibinX,ibinZ);
-      pad -> SetADC(iTB, content + (pad -> GetADC(iTB)) );
-
-      fPadPlane -> SetBinContent(ibinZ,ibinX, content + (fPadPlane -> GetBinContent(ibinZ,ibinX)) );
-    }
+  if(row<0 || row>fNBinsX || layer<0 || layer>fNBinsZ) {
+    type=-1;
+    return;
   }
 
-  return gain;
+  Int_t d = zWire%fBinSizeZ;
+
+       if(d==0) type=0;
+  else if(d==4) type=1;
+  else if(d==8) type=2;
 }
 
-void STPadResponse::WriteHistogram()
+
+void STPadResponse::FillPad(Int_t gain, Double_t x, Double_t t, Int_t zWire)
 {
-  TFile* file = FairRootManager::Instance() -> GetOutFile();
+  Int_t row, layer, type;
+  FindPad(x, zWire, row, layer, type);
 
-  file -> mkdir("PadPlane");
-  file -> cd("PadPlane");
+  if(type==-1) return;
 
-  fPadPlane -> Write();
+  fPadResponseFunction1 -> SetParameter(0,x);
+  Int_t iTB = floor( t * fNTBs / fTimeMax );
+
+  for(Int_t iLayer=0; iLayer<3; iLayer++){ Int_t jLayer = layer+iLayer-1;
+  for(Int_t iRow=0;   iRow<5;   iRow++)  { Int_t jRow   = row+iRow-2;
+
+
+    pad = fRawEvent -> GetPad(jRow,jLayer);
+    if(!pad) continue;
+
+    Double_t x1 = jRow*fBinSizeX - fXPadPlane/2;
+    Double_t x2 = (jRow+1)*fBinSizeX - fXPadPlane/2;
+    Double_t content = gain*fFillRatio[type][iLayer]*(fPadResponseFunction1->Integral(x1,x2));
+    pad -> SetADC(iTB, content + (pad -> GetADC(iTB)) );
+
+  }
+  }
+
 }
 
-Double_t STPadResponse::WPField(Double_t *x, Double_t *par)
+Double_t STPadResponse::fPadResponseFunction(Double_t *x, Double_t *par)
 {
-  Float_t xx = x[0];
-  Float_t yy = x[1];
+  Double_t val = 0.0874277
+                *( TMath::ATan(0.868044*TMath::TanH(0.889*((x[0]-par[0])/4-1)))
+                  -TMath::ATan(0.868044*TMath::TanH(0.889*((x[0]-par[0])/4+1))) );
 
-  Double_t val = par[0]*TMath::Gaus(xx,par[1],par[2],kTRUE)
-                       *TMath::Gaus(yy,par[3],par[4],kTRUE);
-
-  return val;
+  return -val;
 }

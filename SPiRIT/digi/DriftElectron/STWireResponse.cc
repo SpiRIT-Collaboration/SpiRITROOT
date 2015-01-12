@@ -17,22 +17,23 @@ STWireResponse::STWireResponse()
   FairRunAna* ana = FairRunAna::Instance();
   FairRuntimeDb* rtdb = ana->GetRuntimeDb();
   fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
-  fGas = fPar -> GetGas();
 
   // wire plane 
   Int_t nWire = 363;
-  zCenterWire  = 67.2; // [cm]
-  zSpacingWire = 0.4;  // [cm]
+  Int_t zPadPlane = fPar -> GetPadPlaneZ();
+  zCenterWire  = zPadPlane/2;
+  zSpacingWire = 4;  // [mm]
 
   zFirstWire = zCenterWire - (nWire-1)/2 * zSpacingWire;
   zLastWire  = zCenterWire + (nWire-1)/2 * zSpacingWire;
-
 }
 
-Double_t STWireResponse::FindZWire(Double_t z)
+Int_t STWireResponse::FindZWire(Double_t z)
 {
-  Int_t    iWire = floor( (z - zCenterWire + zSpacingWire/2) / zSpacingWire );
-  Double_t zWire = iWire * zSpacingWire + zCenterWire;
+  z *= 10; // [cm] to [mm]
+
+  Int_t iWire = floor( (z - zCenterWire + zSpacingWire/2) / zSpacingWire );
+  Int_t zWire = iWire * zSpacingWire + zCenterWire;
 
   if(zWire>zLastWire)  zWire = zLastWire;
   if(zWire<zFirstWire) zWire = zFirstWire;
