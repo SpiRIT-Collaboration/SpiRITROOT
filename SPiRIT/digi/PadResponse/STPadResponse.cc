@@ -4,7 +4,10 @@
 #include "FairRuntimeDb.h"
 #include "FairRootManager.h"
 
-#include "iostream"
+#include <iostream>
+#include <fstream>
+
+#include <omp.h>
 
 using namespace std;
 
@@ -47,8 +50,18 @@ STPadResponse::STPadResponse()
   fPadResponseFunction1
     = new TF1("fPadResponseFunction", this, &STPadResponse::fPadResponseFunction,
               -fXPadPlane/2, fXPadPlane/2, 1, "STPadResponse", "fPadResponseFunction");
-   
-  fPadResponseFunction1 -> SetParameter(0,0);
+
+  TString  workDir = gSystem -> Getenv("SPIRITDIR");
+  TString  integralDataName = workDir + "/parameters/PadResponseIntegral.dat";
+  ifstream integralData(integralDataName.Data());
+
+  Double_t x, val;
+  Int_t nPoints = 0;
+
+  fPadResponseIntegralData = new TGraph();
+  while(integralData >> x >> val) fPadResponseIntegralData -> SetPoint(nPoints++, x, val);
+
+  integralData.close();
 }
 
 void 
@@ -74,6 +87,7 @@ STPadResponse::FindPad(Double_t xElectron,
 }
 
 
+/*
 void STPadResponse::FillPad(Int_t gain, Double_t x, Double_t t, Int_t zWire)
 {
   Int_t row, layer, type;
@@ -87,8 +101,8 @@ void STPadResponse::FillPad(Int_t gain, Double_t x, Double_t t, Int_t zWire)
   for(Int_t iLayer=0; iLayer<3; iLayer++){ Int_t jLayer = layer+iLayer-1;
   for(Int_t iRow=0;   iRow<5;   iRow++)  { Int_t jRow   = row+iRow-2;
 
-
-    pad = fRawEvent -> GetPad(jRow,jLayer);
+    STPad* pad = fRawEvent -> GetPad(jRow*112+jLayer);
+    //STPad* pad = fRawEvent -> GetPad(jRow,jLayer);
     if(!pad) continue;
 
     Double_t x1 = jRow*fBinSizeX - fXPadPlane/2;
@@ -99,6 +113,36 @@ void STPadResponse::FillPad(Int_t gain, Double_t x, Double_t t, Int_t zWire)
   }
   }
 
+}
+*/
+
+void STPadResponse::FillPad(Int_t gain, Double_t x, Double_t t, Int_t zWire)
+{
+  Int_t row, layer, type;
+  FindPad(x, zWire, row, layer, type);
+
+  if(type==-1) return;
+
+  Int_t iTB = floor( t * fNTBs / fTimeMax );
+
+  for(Int_t iLayer=0; iLayer<3; iLayer++){ Int_t jLayer = layer+iLayer-1;
+  for(Int_t iRow=0;   iRow<5;   iRow++)  { Int_t jRow   = row+iRow-2;
+
+    //totally depends on how you set pads in STRawEvent
+    STPad* pad = fRawEvent -> GetPad(jRow*112+jLayer);
+    if(!pad) continue;
+
+    Double_t x1 = jRow*fBinSizeX - fXPadPlane/2;
+    Double_t x2 = (jRow+1)*fBinSizeX - fXPadPlane/2;
+    Double_t content = gain*fFillRatio[type][iLayer]
+                      *(fPadResponseIntegralData -> Eval(x2-x)
+                       -fPadResponseIntegralData -> Eval(x1-x));
+                      //*(TMath::Erf((x2-x)/5.85941)/2
+                      // -TMath::Erf((x1-x)/5.85941)/2);
+    pad -> SetADC(iTB, content + (pad -> GetADC(iTB)) );
+
+  }
+  }
 }
 
 Double_t STPadResponse::fPadResponseFunction(Double_t *x, Double_t *par)

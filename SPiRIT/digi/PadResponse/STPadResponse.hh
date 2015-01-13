@@ -6,6 +6,7 @@
 #include "TH2D.h"
 #include "TF1.h"
 #include "TMath.h"
+#include "TGraph.h"
 
 class STPadResponse
 {
@@ -31,10 +32,10 @@ class STPadResponse
     // Function
     TF1*     fPadResponseFunction1; // par[0] : mean
     Double_t fPadResponseFunction(Double_t *x, Double_t *par);
+    TGraph*  fPadResponseIntegralData;
 
     // STRawEvent
     STRawEvent* fRawEvent;
-    STPad*      pad;
     TH2D*       fPadPlane;
 
     //Parameters

@@ -126,27 +126,18 @@ STPadResponseTask::InitializeRawEvent()
   fMap -> SetUAMap((fPar -> GetFile(0)).Data());
   fMap -> SetAGETMap((fPar -> GetFile(1)).Data());
 
-  Int_t row, layer;
+  for(Int_t row=0; row<108; row++){ 
+    for(Int_t layer=0; layer<112; layer++){ 
 
-  for(Int_t iCoBo=0; iCoBo<12; iCoBo++){
-    for(Int_t iAsAd=0; iAsAd<4; iAsAd++){
-      for(Int_t iAGET=0; iAGET<4; iAGET++){
-        for(Int_t iCh=0; iCh<68; iCh++){
+      STPad* pad = new STPad(row,layer);
+      pad -> SetPedestalSubtracted(kTRUE);
 
-          Bool_t isActive = fMap -> GetRowNLayer(iCoBo, iAsAd, iAGET, iCh, row, layer);
-          if(!isActive) continue;
-
-          STPad* pad = new STPad(row,layer);
-                 pad -> SetPedestalSubtracted(kTRUE);
-
-          for(int iTB=0; iTB<fNTBs; iTB++){
-            pad -> SetADC(iTB, 0);
-          }
-
-          fRawEvent -> SetPad(pad);
-          delete pad;
-        }
+      for(int iTB=0; iTB<fNTBs; iTB++){
+        pad -> SetADC(iTB, 0);
       }
+
+      fRawEvent -> SetPad(pad);
+      delete pad;
     }
   }
 
