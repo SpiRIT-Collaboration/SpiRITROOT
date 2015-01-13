@@ -26,10 +26,9 @@ void Config()
 /// character: eg. stepLimit+specialCuts.
 
    TG4RunConfiguration* runConfiguration 
-     //= new TG4RunConfiguration("geomRoot", "FTFP_BERT", "stepLimiter+specialCuts");
-     = new TG4RunConfiguration("geomRoot", "QGSP_BERT_HP_EMY", "stepLimiter+specialCuts");
-     //= new TG4RunConfiguration("geomRoot", "QGSP_BIC_HP", "stepLimiter+specialCuts");
-     //= new TG4RunConfiguration("geomRoot", "FTFP_BERT", "stepLimiter+specialCuts");
+     = new TG4RunConfiguration("geomRoot", "QGSP_BERT_HP_EMY", "stepLimiter+specialCuts+specialControls");
+   //= new TG4RunConfiguration("geomRoot", "FTFP_BERT_EMY",    "stepLimiter+specialCuts+specialControls");
+   //= new TG4RunConfiguration("geomRoot", "QGSP_BIC_HP_EMY",  "stepLimiter+specialCuts+specialControls");
 
 /// Create the G4 VMC 
    TGeant4* geant4 = new TGeant4("TGeant4", "The Geant4 Monte Carlo", runConfiguration);
@@ -52,7 +51,7 @@ void Config()
    cout << " -I g4Config() using g4conf  macro: " << configm1 << endl;
 
    //set geant4 specific stuff
-  geant4->SetMaxNStep(1E6);  // default is 30000
+  geant4->SetMaxNStep(1E7);  // default is 30000
   geant4->ProcessGeantMacro(configm1.Data());
 
 }

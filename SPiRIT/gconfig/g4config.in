@@ -2,24 +2,24 @@
 # SPiRIT g4config.in - Called from g4Config.C #
 #=============================================#
 
-#/mcphysics/rangeCutForGamma    0.01 mm   # ERROR
-#/mcphysics/rangeCutForElectron 0.01 mm
-#/mcphysics/rangeCutForPositron 0.01 mm
- /mcPhysics/rangeCuts           0.1  mm
+/mcPhysics/rangeCuts 0.001 mm
 
-#/mcRegions/setRangePrecision   0.01 mm   # ERROR
-#/mcPhysics/printGlobalCuts               # ERROR
-#/mcPhysics/printGlobalControls           # ERROR
+/cuts/setLowEdge  100 eV
+/cuts/setHighEdge  1 MeV
 
- /cuts/setLowEdge   100  eV
- /cuts/setHighEdge   10 GeV
-
+#/mcphysics/rangeCutForElectron    1 mm
+#/mcphysics/rangeCutForPositron    1 mm
+#/run/setCut 1 um
 #/run/dumpCutValues
-#/run/setCut 0.001 mm
 #/run/particle/applyCuts
 
 #/mcVerbose/all                   0
 #/mcVerbose/runAction             1
 #/mcVerbose/composedPhysicsList   1
- /mcVerbose/trackingAction        1
+#/mcVerbose/trackingAction        1
 #/mcVerbose/eventAction           0
+
+#/mcphysics/rangeCutForGamma    0.01 mm   # ERROR
+#/mcRegions/setRangePrecision   0.01 mm   # ERROR
+#/mcPhysics/printGlobalCuts               # ERROR
+#/mcPhysics/printGlobalControls           # ERROR
