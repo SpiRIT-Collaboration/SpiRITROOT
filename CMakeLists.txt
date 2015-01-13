@@ -73,6 +73,12 @@ SET(SIMPATH $ENV{SIMPATH})
 # directory
 CHECK_EXTERNAL_PACKAGE_INSTALL_DIR()
 
+find_package(OpenMP)
+if(OPENMP_FOUND)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
 # searches for needed packages
 # REQUIRED means that cmake will stop if this packages are not found
 # For example the framework can run without GEANT4, but ROOT is
