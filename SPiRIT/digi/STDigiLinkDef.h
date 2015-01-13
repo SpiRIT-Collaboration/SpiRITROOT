@@ -10,7 +10,6 @@
 #pragma link C++ class STDriftTask+;
 #pragma link C++ class STWireResponse+;
 #pragma link C++ class STDriftElectron+;
-//#pragma link C++ class STDigiElectronTask+;
 
 #pragma link C++ class STPadResponse+;
 #pragma link C++ class STPadResponseTask+;
