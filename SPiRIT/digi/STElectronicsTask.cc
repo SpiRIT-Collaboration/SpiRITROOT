@@ -95,9 +95,12 @@ void STElectronicsTask::Exec(Option_t* option)
   if(!fRawEventArray) 
     fLogger->Fatal(MESSAGE_ORIGIN,"No RawEventArray!");
 
-  fLogger->Info(MESSAGE_ORIGIN, "Pad plane event found.");
-
   fPPEvent  = (STRawEvent*) fPPEventArray -> At(0);
+
+  Int_t nPads = fPPEvent -> GetNumPads();
+  fLogger->Info(MESSAGE_ORIGIN, 
+                Form("Pad plane event found. There are %d pads.",nPads));
+
   fRawEvent = new STRawEvent();
   fRawEvent -> SetEventID(fPPEvent->GetEventID());
 
@@ -106,7 +109,6 @@ void STElectronicsTask::Exec(Option_t* option)
   Double_t *adcI;
   Double_t adcO[512];
 
-  Int_t nPads = fPPEvent -> GetNumPads();
   STProcessManager fProcess("Electronics", nPads);
   for(Int_t iPad=0; iPad<nPads; iPad++) {
     fProcess.PrintOut(iPad);

@@ -25,4 +25,7 @@ void STProcessManager::PrintOut(Int_t i)
          << setw(3) << (fCount++)*fStep << " %" << flush;
 }
 
-void STProcessManager::End() { cout << endl; }
+void STProcessManager::End() 
+{ 
+  cout << "\r[" << fProcessName << " ] COMPLETE            " << endl; 
+}

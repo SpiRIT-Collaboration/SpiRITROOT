@@ -14,11 +14,13 @@ class STPadResponse
     STPadResponse();
     ~STPadResponse() {};
 
-    void SetRawEvent(STRawEvent* event) { fRawEvent = event; };
+    void Init();
     void FillPad(Int_t gain, Double_t x, Double_t t, Int_t zWire);
+    void CloneRawEvent(STRawEvent *rawEvent);
 
   private :
     // methods
+    void InitializeRawEventDummy();
     void FindPad(Double_t xElectron, 
                     Int_t zWire, 
                     Int_t &row, 
@@ -30,23 +32,21 @@ class STPadResponse
     STGas* fGas;
 
     // Function
-    TF1*     fPadResponseFunction1; // par[0] : mean
-    Double_t fPadResponseFunction(Double_t *x, Double_t *par);
     TGraph*  fPadResponseIntegralData;
 
     // STRawEvent
-    STRawEvent* fRawEvent;
-    TH2D*       fPadPlane;
+    STRawEvent* fRawEventDummy;
+    Bool_t fIsActivePad[108*112];
 
     //Parameters
     Double_t fTimeMax;
     Int_t    fNTBs;
     Int_t    fXPadPlane;
     Int_t    fZPadPlane;
-    Int_t    fBinSizeZ;
-    Int_t    fBinSizeX;
-    Int_t    fNBinsX;
-    Int_t    fNBinsZ;
+    Int_t    fBinSizeLayer;
+    Int_t    fBinSizeRow;
+    Int_t    fNRows;
+    Int_t    fNLayers;
 
     Double_t fFillRatio[3][3];
 

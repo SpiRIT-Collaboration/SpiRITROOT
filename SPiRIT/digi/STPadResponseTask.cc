@@ -56,7 +56,6 @@ InitStatus STPadResponseTask::Init()
   fRawEventArray = new TClonesArray("STRawEvent"); 
   ioman->Register("PPEvent", "ST", fRawEventArray, kTRUE);
 
-  fWireResponse  = new STWireResponse();
   fPadResponse  = new STPadResponse();
 
   return kSUCCESS;
@@ -78,8 +77,9 @@ void STPadResponseTask::Exec(Option_t* option)
   if(!fRawEventArray) 
     fLogger->Fatal(MESSAGE_ORIGIN,"No RawEventArray!");
 
-  InitializeRawEvent();
-  fPadResponse -> SetRawEvent(fRawEvent);
+  fRawEvent = new ((*fRawEventArray)[0]) STRawEvent();
+
+  fPadResponse -> Init();
 
   Int_t nElectrons = fDigitizedElectronArray -> GetEntries();
   fLogger->Info(MESSAGE_ORIGIN, Form("There are %d digitized electrons.",nElectrons));
@@ -99,10 +99,13 @@ void STPadResponseTask::Exec(Option_t* option)
   }
   fProcess.End();
 
-  fLogger->Info(MESSAGE_ORIGIN, "Pad plane event created.");
+  fPadResponse -> CloneRawEvent(fRawEvent);
 
-  new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
-  delete fRawEvent;
+  Int_t nPads = fRawEvent -> GetNumPads();
+  fLogger->Info(MESSAGE_ORIGIN, 
+                Form("Pad plane event created. There are %d active pads.",nPads));
+
+  //delete fRawEvent;
 
   return;
 }
@@ -111,36 +114,6 @@ void STPadResponseTask::Exec(Option_t* option)
 void STPadResponseTask::Finish()
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Finish of STPadResponseTask");
-}
-
-void
-STPadResponseTask::InitializeRawEvent()
-{
-  fNTBs = fPar -> GetNumTbs(); // number of time buckets
-
-  fRawEvent = new STRawEvent();
-  fRawEvent -> SetName("RawEvent");
-  fRawEvent -> SetEventID(1);
-
-  fMap = new STMap();
-  fMap -> SetUAMap((fPar -> GetFile(0)).Data());
-  fMap -> SetAGETMap((fPar -> GetFile(1)).Data());
-
-  for(Int_t row=0; row<108; row++){ 
-    for(Int_t layer=0; layer<112; layer++){ 
-
-      STPad* pad = new STPad(row,layer);
-      pad -> SetPedestalSubtracted(kTRUE);
-
-      for(int iTB=0; iTB<fNTBs; iTB++){
-        pad -> SetADC(iTB, 0);
-      }
-
-      fRawEvent -> SetPad(pad);
-      delete pad;
-    }
-  }
-
 }
 
 ClassImp(STPadResponseTask);

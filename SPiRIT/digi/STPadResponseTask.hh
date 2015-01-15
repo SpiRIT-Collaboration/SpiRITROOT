@@ -14,11 +14,9 @@
 
 // SPiRIT-TPC class headers
 #include "STDigitizedElectron.hh"
-#include "STWireResponse.hh"
 #include "STPadResponse.hh"
 #include "STDigiPar.hh"
 #include "STGas.hh"
-#include "STMap.hh"
 #include "STRawEvent.hh"
 #include "STPad.hh"
 
@@ -60,7 +58,6 @@ class STPadResponseTask : public FairTask
     void InitializeRawEvent();
 
     /** Wire & Pad **/
-    STWireResponse* fWireResponse;
     STPadResponse*  fPadResponse;
 
     /** Input array from previous already existing data level **/
@@ -73,9 +70,6 @@ class STPadResponseTask : public FairTask
 
     /** Parameter Container **/
     STDigiPar* fPar;
-
-    /** Pad Map **/
-    STMap* fMap;
 
     /** Parameters **/
     Int_t fNTBs;
