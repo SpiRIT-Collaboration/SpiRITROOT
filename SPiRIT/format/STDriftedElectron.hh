@@ -1,23 +1,5 @@
-//---------------------------------------------------------------------
-// Description:
-//      Drifted Electron data class header
-//
-//      Data class for drifted elctron STDriftTask.
-//      Drifted electron is electrons drifted through gas
-//      with diffusions
-//
-//      Created by : STDriftTask
-//      Used    by : STAvalacheTask
-//
-// Author List:
-//      JungWoo Lee     Korea Univ.       (original author)
-//
-//----------------------------------------------------------------------
+#pragma once 
 
-#ifndef _STDRIFTEDELECTRON_H_
-#define _STDRIFTEDELECTRON_H_
-
-// ROOT class headers
 #include "TObject.h"
 
 class STDriftedElectron : public TObject
@@ -28,8 +10,10 @@ class STDriftedElectron : public TObject
     STDriftedElectron();
 
     STDriftedElectron(Double_t x,
-                      Double_t z,
-                      Double_t time);
+                        Double_t z,
+                        Double_t zWire,
+                        Double_t time,
+                        Int_t    gain);
 
     /** Default destructor **/
     ~STDriftedElectron();
@@ -37,19 +21,21 @@ class STDriftedElectron : public TObject
     //Getters
     Double_t GetX();
     Double_t GetZ();
+       Int_t GetZWire();
     Double_t GetTime();
+       Int_t GetGain();
 
     //Setters
     void SetIndex(Int_t index);
     
   private :
-    Double_t fX;     ///  x position [cm]
-    Double_t fZ;     ///  z position [cm]
-    Double_t fTime;  ///  arrival time on wire plane from primary collision time[ns]
+    Double_t fX;     /// x position [mm]
+    Double_t fZ;     /// z position [mm]
+    Int_t    fZWire; /// z position of wire where electron is absorbed [mm]
+    Double_t fTime;  /// arrival time on wire plane [ns]
+    Int_t    fGain;  /// amound of gain in wire plane
 
-    Int_t    fIndex; ///  position of STDriftedElectron in "TClonesArray"
+    Int_t    fIndex; /// position of STDriftedElectron in "TClonesArray"
 
-  ClassDef(STDriftedElectron,1)
+  ClassDef(STDriftedElectron, 1)
 };
-
-#endif

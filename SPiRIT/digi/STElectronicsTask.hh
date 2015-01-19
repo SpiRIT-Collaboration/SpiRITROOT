@@ -1,5 +1,16 @@
-#ifndef STELECTRONICSTASK_H
-#define STELECTRONICSTASK_H
+/**
+ * @brief Simulate pulser signal made in GET electronics. 
+ *
+ * @author JungWoo Lee (Korea Univ.)
+ *
+ * @detail This class receives and returns STRawEvent. 
+ *
+ * Pulser data is obtained from HIMAC experiment using GET electronics.
+ * We use this data to geneerate signal through electronics task. Height of 
+ * the output signal will be proportional to input signal magnitude.
+ */ 
+
+#pragma once
 
 #include "FairTask.h"
 
@@ -12,75 +23,52 @@
 // ROOT class headers
 #include "TClonesArray.h"
 
-class TClonesArray;
-
 class STElectronicsTask : public FairTask
 {
   public:
 
-    /** Default constructor **/
-    STElectronicsTask();
+    STElectronicsTask(); //!< Default constructor
+    ~STElectronicsTask(); //!< Destructor
 
-    /** Constructor with parameters (Optional) **/
-    //  STElectronicsTask(Int_t verbose);
+    virtual InitStatus Init();        //!< Initiliazation of task at the beginning of a run.
+    virtual void Exec(Option_t* opt); //!< Executed for each event.
+    virtual void SetParContainers();  //!< Load the parameter container from the runtime database.
 
-
-    /** Destructor **/
-    ~STElectronicsTask();
-
-
-    /** Initiliazation of task at the beginning of a run **/
-    virtual InitStatus Init();
-
-    /** ReInitiliazation of task when the runID changes **/
-    virtual InitStatus ReInit();
-
-
-    /** Executed for each event. **/
-    virtual void Exec(Option_t* opt);
-
-    /** Load the parameter container from the runtime database **/
-    virtual void SetParContainers();
-
-    /** Finish task called at the end of the run **/
-    virtual void Finish();
-
-
-    /** Setters **/
-    void SetSignalPolarity(Bool_t val) { fSignalPolarity = val; };
+    /**
+     * Set dynamic range of ADC. Unit is in [Coulomb].
+     * Default value is 120 fC.
+     */
+    void SetDynamicRange(Double_t val);
+    void SetPedestalMean(Double_t val);      //!< Set pedestal mean. Default is 400 [ADC]
+    void SetPedestalSigma(Double_t val);     //!< Set pedestal sigma. Default is 4 [ADC]
+    void SetPedestalSubtraction(Bool_t val); //!< Set pedestal subtraction. Default is kTRUE.
+    void SetSignalPolarity(Bool_t val);      //!< Set signal polarity. Default is 1(positive).
 
   private:
 
+    TClonesArray *fPPEventArray;  //!< [INPUT] Array of STRawEvent.
+    STRawEvent* fPPEvent;         //!< [INPUT] Input event.
 
-    /** In/Output array to  new data level**/
-    TClonesArray *fPPEventArray;
-    TClonesArray *fRawEventArray;
-    STRawEvent* fPPEvent;
-    STRawEvent* fRawEvent;
+    TClonesArray *fRawEventArray; //!< [OUTPUT] Array of STRawEvent.
+    STRawEvent* fRawEvent;        //!< [OUTPUT] Ouput event.
 
-    /** Parameter Container **/
-    STDigiPar* fPar;
+    STDigiPar* fPar; //!< Base parameter container.
 
-    /** Parameters **/
-    Int_t fNTBs;
-    Int_t fNBinPulser;
+    Int_t fNTBs;       //!< Number of time buckets.
+    Int_t fNBinPulser; //!< Number of bin for pulser data.
 
-    Double_t fPulser[100]; /// Pulser shape
+    Double_t fPulser[100]; //!< Pulser shape data.
 
-    Double_t fADCDynamicRange; /// [Coulomb]
-    Double_t fADCMax;          /// ADC maximum value [ADC-Ch]
-    Double_t fADCMaxUseable;   /// Actual useable ADC maximum value [ADC-Ch]
-    Double_t fADCPedestal;     /// defualt background value of ADC [ADC-Ch]
-    Bool_t   fSignalPolarity;  /// 1: positive, 0: negative
-
-
-
-
+    Double_t fADCDynamicRange;    //!< Dynamic range of ADC [Coulomb]
+    Double_t fADCMax;             //!< ADC maximum value [ADC-Ch]
+    Double_t fADCMaxUseable;      //!< Actual useable ADC maximum value [ADC-Ch]
+    Double_t fPedestalMean;       //!< Defualt background value of ADC [ADC-Ch]
+    Double_t fPedestalSigma;      //!< Defualt background sigma of ADC [ADC-Ch]
+    Bool_t   fPedestalSubtracted; //!< Pedestal subtracted flag.
+    Bool_t   fSignalPolarity;     //!< Polartity of signal (1: positive, 0: negative)
 
     STElectronicsTask(const STElectronicsTask&);
     STElectronicsTask operator=(const STElectronicsTask&);
 
     ClassDef(STElectronicsTask,1);
 };
-
-#endif

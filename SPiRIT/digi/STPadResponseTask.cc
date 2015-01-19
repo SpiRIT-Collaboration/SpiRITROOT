@@ -1,11 +1,11 @@
-//---------------------------------------------------------------------
-// Description:
-//      Pad response task class source
-//
-// Author List:
-//      JungWoo Lee     Korea Univ.       (original author)
-//
-//----------------------------------------------------------------------
+/**
+ * @brief Process drifting of electron from created position to anode wire
+ * plane. 
+ *
+ * @author JungWoo Lee (Korea Univ.)
+ *
+ * @detail See header file or detail.
+ */
 
 // Fair class header
 #include "FairRootManager.h"
@@ -21,21 +21,19 @@
 
 using namespace std;
 
-// ---- Default constructor -------------------------------------------
 STPadResponseTask::STPadResponseTask()
-  :FairTask("STPadResponseTask")
+:FairTask("STPadResponseTask")
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STPadResponseTask");
 }
 
-// ---- Destructor ----------------------------------------------------
 STPadResponseTask::~STPadResponseTask()
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Destructor of STPadResponseTask");
 }
 
-// ----  Initialisation  ----------------------------------------------
-void STPadResponseTask::SetParContainers()
+void 
+STPadResponseTask::SetParContainers()
 {
   fLogger->Debug(MESSAGE_ORIGIN,"SetParContainers of STPadResponseTask");
 
@@ -44,17 +42,16 @@ void STPadResponseTask::SetParContainers()
   fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
 }
 
-// ---- Init ----------------------------------------------------------
-InitStatus STPadResponseTask::Init()
+InitStatus 
+STPadResponseTask::Init()
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Initilization of STPadResponseTask");
 
-  // Get a handle from the IO manager
   FairRootManager* ioman = FairRootManager::Instance();
 
-  fDigitizedElectronArray = (TClonesArray*) ioman->GetObject("STDigitizedElectron");
+  fElectronArray = (TClonesArray*) ioman->GetObject("STDriftedElectron");
   fRawEventArray = new TClonesArray("STRawEvent"); 
-  ioman->Register("PPEvent", "ST", fRawEventArray, kTRUE);
+  ioman->Register("PPEvent", "ST", fRawEventArray, fInputPersistance);
 
   fPadResponse  = new STPadResponse();
 
@@ -62,15 +59,8 @@ InitStatus STPadResponseTask::Init()
 
 }
 
-// ---- ReInit  -------------------------------------------------------
-InitStatus STPadResponseTask::ReInit()
-{
-  fLogger->Debug(MESSAGE_ORIGIN,"Initilization of STPadResponseTask");
-  return kSUCCESS;
-}
-
-// ---- Exec ----------------------------------------------------------
-void STPadResponseTask::Exec(Option_t* option)
+void 
+STPadResponseTask::Exec(Option_t* option)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Exec of STPadResponseTask");
 
@@ -81,19 +71,19 @@ void STPadResponseTask::Exec(Option_t* option)
 
   fPadResponse -> Init();
 
-  Int_t nElectrons = fDigitizedElectronArray -> GetEntries();
+  Int_t nElectrons = fElectronArray -> GetEntries();
   fLogger->Info(MESSAGE_ORIGIN, Form("There are %d digitized electrons.",nElectrons));
 
   STProcessManager fProcess("PadReponse", nElectrons);
   for(Int_t iElectron=0; iElectron<nElectrons; iElectron++)
   {
     fProcess.PrintOut(iElectron);
-    fDigiElectron = (STDigitizedElectron*) fDigitizedElectronArray -> At(iElectron);
+    fElectron = (STDriftedElectron*) fElectronArray -> At(iElectron);
 
-    Double_t xEl = fDigiElectron -> GetX();
-    Double_t tEl = fDigiElectron -> GetTime();
-    Int_t    zWi = fDigiElectron -> GetZWire();
-    Int_t   gain = fDigiElectron -> GetGain();
+    Double_t xEl = fElectron -> GetX();
+    Double_t tEl = fElectron -> GetTime();
+    Int_t    zWi = fElectron -> GetZWire();
+    Int_t   gain = fElectron -> GetGain();
 
     fPadResponse -> FillPad(gain, xEl, tEl, zWi);
   }
@@ -108,12 +98,6 @@ void STPadResponseTask::Exec(Option_t* option)
   //delete fRawEvent;
 
   return;
-}
-
-// ---- Finish --------------------------------------------------------
-void STPadResponseTask::Finish()
-{
-  fLogger->Debug(MESSAGE_ORIGIN,"Finish of STPadResponseTask");
 }
 
 ClassImp(STPadResponseTask);

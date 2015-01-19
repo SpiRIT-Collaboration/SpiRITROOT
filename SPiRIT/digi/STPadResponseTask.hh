@@ -1,11 +1,19 @@
-//---------------------------------------------------------------------
-// Description:
-//      Pad response task class header
-//
-// Author List:
-//      JungWoo Lee     Korea Univ.       (original author)
-//
-//----------------------------------------------------------------------
+/**
+ * @brief Calculate pad response between anode wire and cathode pad. Put
+ * charge data into pads(STPad).
+ *
+ * @author JungWoo Lee (Korea Univ.)
+ *
+ * @detail This class receives STDriftedElectron as a input and returns
+ * STRawEvent as a output.
+ *
+ * Calculate corresponding pads and time bucket for signal in wire plane. 
+ * Pad response function is calculated from Gatti distribution. This function
+ * gives signal distribution in function of position. Pads are filled base on
+ * this function.
+ *
+ * Pad with no signal is neglected from STRawEvent.
+ */
 
 #pragma once 
 
@@ -13,7 +21,7 @@
 #include "FairTask.h"
 
 // SPiRIT-TPC class headers
-#include "STDigitizedElectron.hh"
+#include "STDriftedElectron.hh"
 #include "STPadResponse.hh"
 #include "STDigiPar.hh"
 #include "STGas.hh"
@@ -27,52 +35,26 @@ class STPadResponseTask : public FairTask
 {
   public:
 
-    /** Default constructor **/
-    STPadResponseTask();
+    STPadResponseTask();  //!< Default constructor
+    ~STPadResponseTask(); //!< Destructor
 
-    /** Constructor with parameters (Optional) **/
-    //  STPadResponseTask(Int_t verbose);
-
-
-    /** Destructor **/
-    ~STPadResponseTask();
-
-
-    /** Initiliazation of task at the beginning of a run **/
-    virtual InitStatus Init();
-
-    /** ReInitiliazation of task when the runID changes **/
-    virtual InitStatus ReInit();
-
-
-    /** Executed for each event. **/
-    virtual void Exec(Option_t* opt);
-
-    /** Load the parameter container from the runtime database **/
-    virtual void SetParContainers();
-
-    /** Finish task called at the end of the run **/
-    virtual void Finish();
+    virtual InitStatus Init();        //!< Initiliazation of task at the beginning of a run.
+    virtual void Exec(Option_t* opt); //!< Executed for each event.
+    virtual void SetParContainers();  //!< Load the parameter container from the runtime database.
 
   private:
-    void InitializeRawEvent();
 
-    /** Wire & Pad **/
-    STPadResponse*  fPadResponse;
+    STPadResponse* fPadResponse;   //!< See STPadResponse class for detail.
 
-    /** Input array from previous already existing data level **/
-    TClonesArray* fDigitizedElectronArray;
-    STDigitizedElectron* fDigiElectron;
+    TClonesArray* fElectronArray;  //!< [INPUT] Array of STDriftedElectron.
+    STDriftedElectron* fElectron;  //!< [INPUT] Electron data in anode wire plane.
 
-    /** Output array to  new data level**/
-    TClonesArray *fRawEventArray;
-    STRawEvent* fRawEvent;
+    TClonesArray *fRawEventArray;  //!< [OUTPUT] Array of STRawEvent.
+    STRawEvent* fRawEvent;         //!< [OUTPUT] Event data with array of STPad.
 
-    /** Parameter Container **/
-    STDigiPar* fPar;
+    STDigiPar* fPar; //!< Base parameter container.
 
-    /** Parameters **/
-    Int_t fNTBs;
+    Int_t fNTBs; //!< Number of time buckets.
 
 
 

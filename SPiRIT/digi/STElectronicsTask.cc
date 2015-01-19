@@ -1,11 +1,10 @@
-//---------------------------------------------------------------------
-// Description:
-//      Pad response task class source
-//
-// Author List:
-//      JungWoo Lee     Korea Univ.       (original author)
-//
-//----------------------------------------------------------------------
+/**
+ * @brief Simulate pulse signal made in GET electronics. 
+ *
+ * @author JungWoo Lee (Korea Univ.)
+ *
+ * @detail See header file for detail.
+ */
 
 // Fair class header
 #include "FairRootManager.h"
@@ -24,26 +23,26 @@
 
 using namespace std;
 
-// ---- Default constructor -------------------------------------------
 STElectronicsTask::STElectronicsTask()
   :FairTask("STElectronicsTask"),
    fADCDynamicRange(120.e-15),
    fADCMax(4095),
    fADCMaxUseable(3600),
-   fADCPedestal(400),
-   fSignalPolarity(0)
+   fPedestalMean(400),
+   fPedestalSigma(4),
+   fPedestalSubtracted(kTRUE),
+   fSignalPolarity(1)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STElectronicsTask");
 }
 
-// ---- Destructor ----------------------------------------------------
 STElectronicsTask::~STElectronicsTask()
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Destructor of STElectronicsTask");
 }
 
-// ----  Initialisation  ----------------------------------------------
-void STElectronicsTask::SetParContainers()
+void 
+STElectronicsTask::SetParContainers()
 {
   fLogger->Debug(MESSAGE_ORIGIN,"SetParContainers of STElectronicsTask");
 
@@ -52,8 +51,8 @@ void STElectronicsTask::SetParContainers()
   fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
 }
 
-// ---- Init ----------------------------------------------------------
-InitStatus STElectronicsTask::Init()
+InitStatus 
+STElectronicsTask::Init()
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Initilization of STElectronicsTask");
 
@@ -62,9 +61,9 @@ InitStatus STElectronicsTask::Init()
 
   fPPEventArray = (TClonesArray*) ioman->GetObject("PPEvent");
   fRawEventArray = new TClonesArray("STRawEvent"); 
-  ioman->Register("STRawEvent", "ST", fRawEventArray, kTRUE);
+  ioman->Register("STRawEvent", "ST", fRawEventArray, fInputPersistance);
 
-  fNTBs = fPar -> GetNumTbs(); // number of time buckets
+  fNTBs = fPar -> GetNumTbs();
 
   TString workDir = gSystem -> Getenv("SPIRITDIR");
   TString pulserFileName = workDir + "/parameters/Pulser.dat";
@@ -74,21 +73,14 @@ InitStatus STElectronicsTask::Init()
   ifstream pulserFile(pulserFileName.Data());
 
   Double_t coulombToEV = 6.241e18; 
-  Double_t pulserConstant = (fADCMaxUseable-fADCPedestal)/(fADCDynamicRange*coulombToEV);
+  Double_t pulserConstant = (fADCMaxUseable-fPedestalMean)/(fADCDynamicRange*coulombToEV);
   while(pulserFile >> val) fPulser[fNBinPulser++] = pulserConstant*val;
 
   return kSUCCESS;
 }
 
-// ---- ReInit  -------------------------------------------------------
-InitStatus STElectronicsTask::ReInit()
-{
-  fLogger->Debug(MESSAGE_ORIGIN,"Initilization of STElectronicsTask");
-  return kSUCCESS;
-}
-
-// ---- Exec ----------------------------------------------------------
-void STElectronicsTask::Exec(Option_t* option)
+void 
+STElectronicsTask::Exec(Option_t* option)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Exec of STElectronicsTask");
 
@@ -128,15 +120,20 @@ void STElectronicsTask::Exec(Option_t* option)
     padO -> SetPedestalSubtracted();
     // AGET chip protection from ZAP board
     for(Int_t iTB=0; iTB<fNTBs; iTB++) {
-      adcO[iTB] += gRandom -> Gaus(fADCPedestal,4);
-      if(adcO[iTB]>fADCMaxUseable) 
-        adcO[iTB] = fADCMaxUseable;
+      if(fPedestalSubtracted)
+        if(adcO[iTB]>fADCMaxUseable-fPedestalMean) 
+          adcO[iTB] = fADCMaxUseable;
+      else {
+        adcO[iTB] += gRandom -> Gaus(fPedestalMean,fPedestalSigma);
+        if(adcO[iTB]>fADCMaxUseable) 
+          adcO[iTB] = fADCMaxUseable;
+      }
     }
-    // polarity 
+    // Polarity 
     if(fSignalPolarity==0)
       for(Int_t iTB=0; iTB<fNTBs; iTB++)
         adcO[iTB] = fADCMaxUseable - adcO[iTB];
-    // set ADC
+    // Set ADC
     for(Int_t iTB=0; iTB<fNTBs; iTB++)
       padO -> SetADC(iTB,adcO[iTB]);
     fRawEvent -> SetPad(padO);
@@ -152,10 +149,11 @@ void STElectronicsTask::Exec(Option_t* option)
   return;
 }
 
-// ---- Finish --------------------------------------------------------
-void STElectronicsTask::Finish()
-{
-  fLogger->Debug(MESSAGE_ORIGIN,"Finish of STElectronicsTask");
-}
+void STElectronicsTask::SetDynamicRange(Double_t val) { fADCDynamicRange = val; }
+void STElectronicsTask::SetPedestalMean(Double_t val) { fPedestalMean = val; }
+void STElectronicsTask::SetPedestalSigma(Double_t val) { fPedestalSigma = val; }
+void STElectronicsTask::SetPedestalSubtraction(Bool_t val) { fPedestalSubtracted = val; }
+void STElectronicsTask::SetSignalPolarity(Bool_t val) { fSignalPolarity = val; }
+
 
 ClassImp(STElectronicsTask)

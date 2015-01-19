@@ -1,22 +1,22 @@
-//---------------------------------------------------------------------
-// Description:
-//      Drift electron task class source
-//
-// Author List:
-//      JungWoo Lee     Korea Univ.       (original author)
-//
-//----------------------------------------------------------------------
+/**
+ * @brief Process drifting of electron from created position to anode wire
+ * plane. 
+ *
+ * @author JungWoo Lee (Korea Univ.)
+ *
+ * @detail See header file for detail.
+ */
+
+// This class & SPiRIT class headers
+#include "STDriftTask.hh"
+#include "STProcessManager.hh"
 
 // Fair class header
 #include "FairRootManager.h"
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
 
-// ST header
-#include "STDriftTask.hh"
-#include "STProcessManager.hh"
-
-// C/C++ class headers
+// STL class headers
 #include <cmath>
 #include <iostream>
 
@@ -27,20 +27,17 @@
 
 using namespace std;
 
-// ---- Default constructor -------------------------------------------
 STDriftTask::STDriftTask()
-  :FairTask("STDriftTask")
+:FairTask("STDriftTask")
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STDriftTask");
 }
 
-// ---- Destructor ----------------------------------------------------
 STDriftTask::~STDriftTask()
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Destructor of STDriftTask");
 }
 
-// ----  Initialisation  ----------------------------------------------
 void 
 STDriftTask::SetParContainers()
 {
@@ -51,18 +48,16 @@ STDriftTask::SetParContainers()
   fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
 }
 
-// ---- Init ----------------------------------------------------------
 InitStatus 
 STDriftTask::Init()
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Initilization of STDriftTask");
 
-  // Get a handle from the IO manager
   FairRootManager* ioman = FairRootManager::Instance();
 
   fMCPointArray = (TClonesArray*) ioman->GetObject("STMCPoint");
-  fDigitizedElectronArray = new TClonesArray("STDigitizedElectron");
-  ioman->Register("STDigitizedElectron","ST",fDigitizedElectronArray,kTRUE);
+  fElectronArray = new TClonesArray("STDriftedElectron");
+  ioman->Register("STDriftedElectron","ST",fElectronArray,fInputPersistance);
 
   fGas = fPar->GetGas();
   fEIonize = (fGas->GetEIonize())*1.E6; // [MeV] to [eV]
@@ -74,21 +69,14 @@ STDriftTask::Init()
 
 }
 
-// ---- ReInit  -------------------------------------------------------
-InitStatus STDriftTask::ReInit()
-{
-  fLogger->Debug(MESSAGE_ORIGIN,"Initilization of STDriftTask");
-  return kSUCCESS;
-}
-
-// ---- Exec ----------------------------------------------------------
-void STDriftTask::Exec(Option_t* option)
+void 
+STDriftTask::Exec(Option_t* option)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Exec of STDriftTask");
 
-  if(!fDigitizedElectronArray) 
+  if(!fElectronArray) 
     fLogger->Fatal(MESSAGE_ORIGIN,"No DigitizedElectronArray!");
-  fDigitizedElectronArray -> Delete();
+  fElectronArray -> Delete();
 
   Int_t nMCPoints = fMCPointArray->GetEntries();
   if(nMCPoints<20){
@@ -97,47 +85,44 @@ void STDriftTask::Exec(Option_t* option)
   }
   fLogger->Info(MESSAGE_ORIGIN, Form("There are %d MC points.",nMCPoints));
 
-  TLorentzVector V4MC;    // [cm]
-  TLorentzVector V4Drift; // [cm]
+  TLorentzVector v4MC;    // [mm]
+  TLorentzVector v4Drift; // [mm]
   Int_t          zWire;   // [mm]
   Int_t          gain0 = fGas -> GetGain();
 
-  STProcessManager fProcess(TString("Drifiting"), nMCPoints);
+  STProcessManager fProcess(TString("Drifiting Task"), nMCPoints);
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
     fProcess.PrintOut(iPoint);
     fMCPoint = (STMCPoint*) fMCPointArray->At(iPoint);
     Double_t eLoss = (fMCPoint->GetEnergyLoss())*1.E9; // [GeV] to [eV]
     if(eLoss<0) continue;
 
-    V4MC.SetXYZT(fMCPoint->GetX(),fMCPoint->GetY(),fMCPoint->GetZ(),fMCPoint->GetTime());
-    fDriftElectron->SetMCHit(V4MC);
+    v4MC.SetXYZT(fMCPoint->GetX()*10,
+                 fMCPoint->GetY()*10,
+                 fMCPoint->GetZ()*10,
+                 fMCPoint->GetTime());
+    fDriftElectron->SetMCHit(v4MC);
     
     Int_t nElectrons = (Int_t)floor(fabs(eLoss/fEIonize));
     for(Int_t iElectron=0; iElectron<nElectrons; iElectron++) {
-      Int_t gain = gRandom -> Gaus(gain0,10);
+      Int_t gain = gRandom -> Gaus(gain0,30);
       if(gain<=0) continue;
-      V4Drift = fDriftElectron->Drift();
-      zWire   = fWireResponse->FindZWire(V4Drift.Z());
+      v4Drift = fDriftElectron->Drift();
+      zWire   = fWireResponse->FindZWire(v4Drift.Z());
 
-      Int_t index = fDigitizedElectronArray->GetEntriesFast();
-      STDigitizedElectron* electron
-        = new ((*fDigitizedElectronArray)[index])
-          STDigitizedElectron(V4Drift.X()*10, V4Drift.Z()*10, zWire, V4Drift.T(),gain);
+      Int_t index = fElectronArray->GetEntriesFast();
+      STDriftedElectron* electron
+        = new ((*fElectronArray)[index])
+          STDriftedElectron(v4Drift.X(), v4Drift.Z(), zWire, v4Drift.T(), gain);
       electron -> SetIndex(index);
     }
   }
   fProcess.End();
 
-  Int_t nDigiElectrons = fDigitizedElectronArray->GetEntriesFast();
+  Int_t nDigiElectrons = fElectronArray->GetEntriesFast();
   fLogger->Info(MESSAGE_ORIGIN, Form("%d digitized electrons created.",nDigiElectrons));
 
   return;
-}
-
-// ---- Finish --------------------------------------------------------
-void STDriftTask::Finish()
-{
-  fLogger->Debug(MESSAGE_ORIGIN,"Finish of STDriftTask");
 }
 
 ClassImp(STDriftTask);

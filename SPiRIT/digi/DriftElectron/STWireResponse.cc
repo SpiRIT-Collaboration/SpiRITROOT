@@ -1,11 +1,15 @@
-#include "TRandom.h"
+/**
+ * @brief Calculate z-position of wire
+ *
+ * @author JungWoo Lee (Korea Univ.)
+ */
 
 #include "STWireResponse.hh"
 #include "FairRootManager.h"
-#include "iostream"
-
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
+#include <iostream>
+#include "TRandom.h"
 
 using std::cout;
 using std::endl;
@@ -18,25 +22,22 @@ STWireResponse::STWireResponse()
   FairRuntimeDb* rtdb = ana->GetRuntimeDb();
   fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
 
-  // wire plane 
-  Int_t nWire = 363;
+  Int_t nWire = 363; // number of wires
   Int_t zPadPlane = fPar -> GetPadPlaneZ();
-  zCenterWire  = zPadPlane/2;
-  zSpacingWire = 4;  // [mm]
+  fZCenterWire = zPadPlane/2;
+  fZSpacingWire = 4;
 
-  zFirstWire = zCenterWire - (nWire-1)/2 * zSpacingWire;
-  zLastWire  = zCenterWire + (nWire-1)/2 * zSpacingWire;
+  fZFirstWire = fZCenterWire - (nWire-1)/2 * fZSpacingWire;
+  fZLastWire  = fZCenterWire + (nWire-1)/2 * fZSpacingWire;
 }
 
 Int_t STWireResponse::FindZWire(Double_t z)
 {
-  z *= 10; // [cm] to [mm]
+  Int_t iWire = floor( (z - fZCenterWire + fZSpacingWire/2) / fZSpacingWire );
+  Int_t zWire = iWire * fZSpacingWire + fZCenterWire;
 
-  Int_t iWire = floor( (z - zCenterWire + zSpacingWire/2) / zSpacingWire );
-  Int_t zWire = iWire * zSpacingWire + zCenterWire;
-
-  if(zWire>zLastWire)  zWire = zLastWire;
-  if(zWire<zFirstWire) zWire = zFirstWire;
+  if(zWire>fZLastWire)  zWire = fZLastWire;
+  if(zWire<fZFirstWire) zWire = fZFirstWire;
 
   return zWire;
 }
