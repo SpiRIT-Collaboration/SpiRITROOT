@@ -68,11 +68,6 @@ STPadResponse::FindPad(Double_t xElectron,
   row   = floor(xElectron/fPadSizeRow) + fNRows/2;
   layer = floor(zWire/fPadSizeLayer);
 
-  if(row<0 || row>=fNRows || layer<0 || layer>=fNLayers) {
-    type=-1;
-    return;
-  }
-
   Int_t d = zWire%fPadSizeLayer;
 
        if(d==0) type=0;
@@ -84,8 +79,6 @@ void STPadResponse::FillPad(Int_t gain, Double_t x, Double_t t, Int_t zWire)
 {
   Int_t row, layer, type;
   FindPad(x, zWire, row, layer, type);
-
-  if(type==-1) return;
 
   Int_t iTB = floor( t * fNTBs / fTimeMax );
 
