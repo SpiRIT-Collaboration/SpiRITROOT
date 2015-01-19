@@ -119,20 +119,23 @@ STElectronicsTask::Exec(Option_t* option)
     STPad *padO = new STPad(row, layer);
     padO -> SetPedestalSubtracted();
     // AGET chip protection from ZAP board
-    for(Int_t iTB=0; iTB<fNTBs; iTB++) {
-      if(fPedestalSubtracted)
-        if(adcO[iTB]>fADCMaxUseable-fPedestalMean) 
-          adcO[iTB] = fADCMaxUseable;
-      else {
+    if(fPedestalSubtracted) {
+      for(Int_t iTB=0; iTB<fNTBs; iTB++){
+        if(adcO[iTB]>(fADCMaxUseable-fPedestalMean)) adcO[iTB] = fADCMaxUseable;
+      }
+    }
+    else {
+      for(Int_t iTB=0; iTB<fNTBs; iTB++) {
         adcO[iTB] += gRandom -> Gaus(fPedestalMean,fPedestalSigma);
-        if(adcO[iTB]>fADCMaxUseable) 
-          adcO[iTB] = fADCMaxUseable;
+        if(adcO[iTB]>fADCMaxUseable) adcO[iTB] = fADCMaxUseable;
       }
     }
     // Polarity 
-    if(fSignalPolarity==0)
-      for(Int_t iTB=0; iTB<fNTBs; iTB++)
+    if(fSignalPolarity==0) {
+      for(Int_t iTB=0; iTB<fNTBs; iTB++){
         adcO[iTB] = fADCMaxUseable - adcO[iTB];
+      }
+    }
     // Set ADC
     for(Int_t iTB=0; iTB<fNTBs; iTB++)
       padO -> SetADC(iTB,adcO[iTB]);
@@ -149,11 +152,11 @@ STElectronicsTask::Exec(Option_t* option)
   return;
 }
 
-void STElectronicsTask::SetDynamicRange(Double_t val) { fADCDynamicRange = val; }
-void STElectronicsTask::SetPedestalMean(Double_t val) { fPedestalMean = val; }
-void STElectronicsTask::SetPedestalSigma(Double_t val) { fPedestalSigma = val; }
+void STElectronicsTask::SetDynamicRange(Double_t val)      {    fADCDynamicRange = val; }
+void STElectronicsTask::SetPedestalMean(Double_t val)      {       fPedestalMean = val; }
+void STElectronicsTask::SetPedestalSigma(Double_t val)     {      fPedestalSigma = val; }
 void STElectronicsTask::SetPedestalSubtraction(Bool_t val) { fPedestalSubtracted = val; }
-void STElectronicsTask::SetSignalPolarity(Bool_t val) { fSignalPolarity = val; }
+void STElectronicsTask::SetSignalPolarity(Bool_t val)      {     fSignalPolarity = val; }
 
 
 ClassImp(STElectronicsTask)
