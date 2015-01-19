@@ -24,14 +24,15 @@
 using namespace std;
 
 STElectronicsTask::STElectronicsTask()
-  :FairTask("STElectronicsTask"),
-   fADCDynamicRange(120.e-15),
-   fADCMax(4095),
-   fADCMaxUseable(3600),
-   fPedestalMean(400),
-   fPedestalSigma(4),
-   fPedestalSubtracted(kTRUE),
-   fSignalPolarity(1)
+:FairTask("STElectronicsTask"),
+ fEventID(0),
+ fADCDynamicRange(120.e-15),
+ fADCMax(4095),
+ fADCMaxUseable(3600),
+ fPedestalMean(400),
+ fPedestalSigma(4),
+ fPedestalSubtracted(kTRUE),
+ fSignalPolarity(1)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STElectronicsTask");
 }
@@ -90,8 +91,6 @@ STElectronicsTask::Exec(Option_t* option)
   fPPEvent  = (STRawEvent*) fPPEventArray -> At(0);
 
   Int_t nPads = fPPEvent -> GetNumPads();
-  fLogger->Info(MESSAGE_ORIGIN, 
-                Form("Pad plane event found. There are %d pads.",nPads));
 
   fRawEvent = new STRawEvent();
   fRawEvent -> SetEventID(fPPEvent->GetEventID());
@@ -101,9 +100,7 @@ STElectronicsTask::Exec(Option_t* option)
   Double_t *adcI;
   Double_t adcO[512];
 
-  STProcessManager fProcess("Electronics", nPads);
   for(Int_t iPad=0; iPad<nPads; iPad++) {
-    fProcess.PrintOut(iPad);
     padI = fPPEvent -> GetPad(iPad);
     adcI = padI -> GetADC();
     for(Int_t iTB=0; iTB<fNTBs; iTB++) adcO[iTB]=0;
@@ -142,12 +139,13 @@ STElectronicsTask::Exec(Option_t* option)
     fRawEvent -> SetPad(padO);
     delete padO;
   }
-  fProcess.End();
 
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
   delete fRawEvent;
 
-  fLogger->Info(MESSAGE_ORIGIN, "Raw event created.");
+  fLogger->Info(MESSAGE_ORIGIN, 
+                Form("Event #%d : Raw Event created.",
+                     fEventID++, nPads));
 
   return;
 }

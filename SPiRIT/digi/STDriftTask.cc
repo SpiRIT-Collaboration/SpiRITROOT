@@ -19,6 +19,7 @@
 // STL class headers
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 
 // Root class headers
 #include "TLorentzVector.h"
@@ -28,7 +29,8 @@
 using namespace std;
 
 STDriftTask::STDriftTask()
-:FairTask("STDriftTask")
+:FairTask("STDriftTask"),
+ fEventID(0)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STDriftTask");
 }
@@ -83,16 +85,13 @@ STDriftTask::Exec(Option_t* option)
     fLogger->Warning(MESSAGE_ORIGIN, "Not enough hits for digitization!");
     return;
   }
-  fLogger->Info(MESSAGE_ORIGIN, Form("There are %d MC points.",nMCPoints));
 
   TLorentzVector v4MC;    // [mm]
   TLorentzVector v4Drift; // [mm]
   Int_t          zWire;   // [mm]
   Int_t          gain0 = fGas -> GetGain();
 
-  STProcessManager fProcess(TString("Drifiting Task"), nMCPoints);
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
-    fProcess.PrintOut(iPoint);
     fMCPoint = (STMCPoint*) fMCPointArray->At(iPoint);
     Double_t eLoss = (fMCPoint->GetEnergyLoss())*1.E9; // [GeV] to [eV]
     if(eLoss<0) continue;
@@ -117,10 +116,13 @@ STDriftTask::Exec(Option_t* option)
       electron -> SetIndex(index);
     }
   }
-  fProcess.End();
 
-  Int_t nDigiElectrons = fElectronArray->GetEntriesFast();
-  fLogger->Info(MESSAGE_ORIGIN, Form("%d digitized electrons created.",nDigiElectrons));
+  Int_t nDriftElectrons = fElectronArray->GetEntriesFast();
+
+  fLogger->Info(MESSAGE_ORIGIN, 
+                Form("Event #%d : MC points (%d) found. Drift electrons (%d) created.",
+                     fEventID++, nMCPoints, nDriftElectrons));
+
 
   return;
 }

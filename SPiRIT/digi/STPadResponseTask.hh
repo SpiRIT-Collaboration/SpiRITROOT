@@ -44,6 +44,8 @@ class STPadResponseTask : public FairTask
 
   private:
 
+    Int_t fEventID; //!< EventID
+
     STPadResponse* fPadResponse;   //!< See STPadResponse class for detail.
 
     TClonesArray* fElectronArray;  //!< [INPUT] Array of STDriftedElectron.

@@ -68,7 +68,7 @@ STPadResponse::FindPad(Double_t xElectron,
   row   = floor(xElectron/fPadSizeRow) + fNRows/2;
   layer = floor(zWire/fPadSizeLayer);
 
-  if(row<0 || row>fNRows || layer<0 || layer>fNLayers) {
+  if(row<0 || row>=fNRows || layer<0 || layer>=fNLayers) {
     type=-1;
     return;
   }
@@ -89,28 +89,33 @@ void STPadResponse::FillPad(Int_t gain, Double_t x, Double_t t, Int_t zWire)
 
   Int_t iTB = floor( t * fNTBs / fTimeMax );
 
-  for(Int_t iLayer=0; iLayer<3; iLayer++){ Int_t jLayer = layer+iLayer-1;
-  for(Int_t iRow=0;   iRow<5;   iRow++)  { Int_t jRow   = row+iRow-2;
+  for(Int_t iLayer=0; iLayer<3; iLayer++){ 
+    Int_t jLayer = layer+iLayer-1;
+    if(iLayer<0 || jLayer>=fNLayers) continue;
 
-    STPad* pad = fRawEventDummy -> GetPad(jRow*fNLayers+jLayer);
-    if(!pad) continue;
+    for(Int_t iRow=0;   iRow<5;   iRow++)  { 
+      Int_t jRow = row+iRow-2;
+      if(jRow<0 || jRow>=fNRows) continue;
 
-    Double_t x1 = jRow*fPadSizeRow - fXPadPlane/2;
-    Double_t x2 = (jRow+1)*fPadSizeRow - fXPadPlane/2;
+      STPad* pad = fRawEventDummy -> GetPad(jRow*fNLayers+jLayer);
+      if(!pad) continue;
 
-    Double_t content;
-    if(!fUseIntegratedData)
-      content = gain*fFillRatio[type][iLayer]
-               *(TMath::Erf((x2-x)/5.85941)/2
-                -TMath::Erf((x1-x)/5.85941)/2);
-    else
-      content = gain*fFillRatio[type][iLayer]
-               *(fIntegratedData -> Eval(x2-x)
-                -fIntegratedData -> Eval(x1-x));
+      Double_t x1 = jRow*fPadSizeRow - fXPadPlane/2;
+      Double_t x2 = (jRow+1)*fPadSizeRow - fXPadPlane/2;
 
-    pad -> SetADC(iTB, content + (pad -> GetADC(iTB)) );
-    fIsActivePad[jRow*fNLayers+jLayer] = kTRUE;
-  }
+      Double_t content;
+      if(!fUseIntegratedData)
+        content = gain*fFillRatio[type][iLayer]
+                 *(TMath::Erf((x2-x)/5.85941)/2
+                  -TMath::Erf((x1-x)/5.85941)/2);
+      else
+        content = gain*fFillRatio[type][iLayer]
+                 *(fIntegratedData -> Eval(x2-x)
+                  -fIntegratedData -> Eval(x1-x));
+
+      pad -> SetADC(iTB, content + pad -> GetADC(iTB));
+      fIsActivePad[jRow*fNLayers+jLayer] = kTRUE;
+    }
   }
 }
 

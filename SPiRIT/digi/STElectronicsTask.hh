@@ -35,7 +35,7 @@ class STElectronicsTask : public FairTask
     virtual void SetParContainers();  //!< Load the parameter container from the runtime database.
 
     /**
-     * Set dynamic range of ADC. Unit is in [Coulomb].
+     * Set dynamic range of ADC. Unit in [Coulomb].
      * Default value is 120 fC.
      */
     void SetDynamicRange(Double_t val);
@@ -45,6 +45,8 @@ class STElectronicsTask : public FairTask
     void SetSignalPolarity(Bool_t val);      //!< Set signal polarity. Default is 1(positive).
 
   private:
+
+    Int_t fEventID;
 
     TClonesArray *fPPEventArray;  //!< [INPUT] Array of STRawEvent.
     STRawEvent* fPPEvent;         //!< [INPUT] Input event.

@@ -45,6 +45,8 @@ class STDriftTask : public FairTask
 
   private:
 
+    Int_t fEventID; //!< EventID
+
     STDriftElectron* fDriftElectron; //!< See STDriftElectron class for detail. 
     STWireResponse*  fWireResponse;  //!< See STWireResponse class for detail. 
 

@@ -22,7 +22,8 @@
 using namespace std;
 
 STPadResponseTask::STPadResponseTask()
-:FairTask("STPadResponseTask")
+:FairTask("STPadResponseTask"),
+ fEventID(0)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STPadResponseTask");
 }
@@ -72,12 +73,8 @@ STPadResponseTask::Exec(Option_t* option)
   fPadResponse -> Init();
 
   Int_t nElectrons = fElectronArray -> GetEntries();
-  fLogger->Info(MESSAGE_ORIGIN, Form("There are %d digitized electrons.",nElectrons));
-
-  STProcessManager fProcess("PadReponse", nElectrons);
   for(Int_t iElectron=0; iElectron<nElectrons; iElectron++)
   {
-    fProcess.PrintOut(iElectron);
     fElectron = (STDriftedElectron*) fElectronArray -> At(iElectron);
 
     Double_t xEl = fElectron -> GetX();
@@ -87,15 +84,13 @@ STPadResponseTask::Exec(Option_t* option)
 
     fPadResponse -> FillPad(gain, xEl, tEl, zWi);
   }
-  fProcess.End();
 
   fPadResponse -> CloneRawEvent(fRawEvent);
 
   Int_t nPads = fRawEvent -> GetNumPads();
   fLogger->Info(MESSAGE_ORIGIN, 
-                Form("Pad plane event created. There are %d active pads.",nPads));
-
-  //delete fRawEvent;
+                Form("Event #%d : Active pads (%d) created.",
+                     fEventID++, nPads));
 
   return;
 }
