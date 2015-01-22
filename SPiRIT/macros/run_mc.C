@@ -1,5 +1,5 @@
-void run_mc(const Int_t nEvents   = 1,
-            TString     tag       = "test",
+void run_mc(TString     tag       = "test",
+            Int_t       nEvents   = 1,
             TString     GeantMode = "TGeant4",
             TString     geoFile   = "spirit_v03.1.root")
 {
@@ -114,7 +114,7 @@ void run_mc(const Int_t nEvents   = 1,
         if(urA==-1){
           if(urZ==0) tempmass=masspi[0];
           else       tempmass=masspi[1];
-          cout << evtnum << "\t" << urZ << endl;
+          //cout << evtnum << "\t" << urZ << endl;
         }
         else tempmass=mass[urZ][urA];
 
@@ -165,10 +165,10 @@ void run_mc(const Int_t nEvents   = 1,
 
   // -----   Logger  --------------------------------------------------------
   FairLogger *logger = FairLogger::GetLogger();
-              logger -> SetLogFileName("log/MyLog.log");    // define log file name
-              logger -> SetLogToScreen(kFALSE);         // log to screen and to file 
+              logger -> SetLogFileName("log/MCLog.log"); // define log file name
+              logger -> SetLogToScreen(kFALSE);          // log to screen and to file 
               logger -> SetLogToFile(kTRUE);
-              logger -> SetLogVerbosityLevel("HIGH");   // Print very accurate output. Levels are LOW, MEDIUM and HIGH
+              logger -> SetLogVerbosityLevel("HIGH");    // Print very accurate output. Levels are LOW, MEDIUM and HIGH
 
 
 
@@ -216,7 +216,7 @@ void run_mc(const Int_t nEvents   = 1,
   for(Int_t i=0; i<gennum; i++){
     fIongen[i] = new FairParticleGenerator(pid[dnum][i],1,
                                            pxl[dnum][i],pyl[dnum][i],pzl[dnum][i],
-                                           0.0,-21.33,3.0);
+                                           0.0,-21.33,-3.52);
     primGen -> AddGenerator(fIongen[i]);
   }
 
