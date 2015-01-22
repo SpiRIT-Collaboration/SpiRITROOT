@@ -48,12 +48,12 @@ class STEvent : public TNamed {
 
     Int_t GetNumHits();
     STHit *GetHit(Int_t hitNo);
-    STHit *RemoveHit(Int_t hitNo);
+    void RemoveHit(Int_t hitNo);
     vector<STHit> *GetHitArray();
 
     Int_t GetNumClusters();
     STHitCluster *GetCluster(Int_t clusterNo);
-    STHitCluster *RemoveCluster(Int_t clusterNo);
+    void RemoveCluster(Int_t clusterNo);
     vector<STHitCluster> *GetClusterArray();
 
 //    Int_t GetNumTracks();
@@ -80,7 +80,7 @@ class STEvent : public TNamed {
     vector<STHitCluster> fClusterArray;
 //    vector<STTrack> fTrackArray;
 
-  ClassDef(STEvent, 1);
+  ClassDef(STEvent, 2);
 };
 
 #endif

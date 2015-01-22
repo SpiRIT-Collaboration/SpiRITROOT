@@ -78,15 +78,12 @@ STHit *STEvent::GetHit(Int_t hitNo)
   return (hitNo < GetNumHits() ? &fHitArray[hitNo] : NULL);
 }
 
-STHit *STEvent::RemoveHit(Int_t hitNo)
+void STEvent::RemoveHit(Int_t hitNo)
 {
   if (!(hitNo < GetNumHits()))
     return NULL;
 
-  STHit *removedHit = new STHit(fHitArray[hitNo]);
   fHitArray.erase(fHitArray.begin() + hitNo);
-
-  return removedHit;
 }
 
 vector<STHit> *STEvent::GetHitArray()
@@ -102,15 +99,12 @@ STHitCluster *STEvent::GetCluster(Int_t clusterNo)
   return &fClusterArray[clusterNo];
 }
 
-STHitCluster *STEvent::RemoveCluster(Int_t clusterNo)
+void STEvent::RemoveCluster(Int_t clusterNo)
 {
   if (!(clusterNo < GetNumClusters()) || !IsClustered())
     return NULL;
 
-  STHitCluster *removedCluster = new STHitCluster(fClusterArray[clusterNo]);
   fClusterArray.erase(fClusterArray.begin() + clusterNo);
-
-  return removedCluster;
 }
 
 vector<STHitCluster> *STEvent::GetClusterArray()
