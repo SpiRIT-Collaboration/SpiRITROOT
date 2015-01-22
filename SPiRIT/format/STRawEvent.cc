@@ -52,13 +52,32 @@ void STRawEvent::PrintPads()
 void STRawEvent::SetEventID(Int_t evtid) { fEventID = evtid; }
 void STRawEvent::SetPad(STPad *pad)      { fPadArray.push_back(*pad); } 
 void STRawEvent::SetIsGood(Bool_t value) { fIsGood = value; }
+void STRawEvent::RemovePad(Int_t padNo) 
+{
+  if (!(padNo < GetNumPads()))
+    return NULL;
+
+  fPadArray.erase(fPadArray.begin() + padNo);
+}
+
+void STRawEvent::RemovePad(Int_t row, Int_t layer) 
+{
+  for (Int_t iPad = 0; iPad < GetNumPads(); iPad++) {
+    Int_t padRow = fPadArray[iPad].GetRow();
+    Int_t padLayer = fPadArray[iPad].GetLayer();
+
+    if (row == padRow && layer == padLayer)
+      fPadArray.erase(fPadArray.begin() + padNo);
+  }
+}
+
 
 // getters
-             Int_t  STRawEvent::GetEventID()        { return fEventID; }
-             Int_t  STRawEvent::GetNumPads()        { return fPadArray.size(); }
-            Bool_t  STRawEvent::IsGood()            { return fIsGood; }
-std::vector<STPad> *STRawEvent::GetPads()           { return &fPadArray; }
-             STPad *STRawEvent::GetPad(Int_t padNo) { return (padNo < GetNumPads() ? &fPadArray[padNo] : NULL); }
+             Int_t  STRawEvent::GetEventID()         { return fEventID; }
+             Int_t  STRawEvent::GetNumPads()         { return fPadArray.size(); }
+            Bool_t  STRawEvent::IsGood()             { return fIsGood; }
+std::vector<STPad> *STRawEvent::GetPads()            { return &fPadArray; }
+             STPad *STRawEvent::GetPad(Int_t padNo)  { return (padNo < GetNumPads() ? &fPadArray[padNo] : NULL); }
 
 STPad *STRawEvent::GetPad(Int_t row, Int_t layer)
 {

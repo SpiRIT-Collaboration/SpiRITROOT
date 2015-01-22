@@ -30,6 +30,8 @@ class STRawEvent : public TNamed {
     void SetEventID(Int_t evtid);
     void SetPad(STPad *pad);
     void SetIsGood(Bool_t value);
+    void RemovePad(Int_t padNo);
+    void RemovePad(Int_t row, Int_t layer);
 
     // getters
     Int_t GetEventID();
@@ -47,7 +49,7 @@ class STRawEvent : public TNamed {
 
     Bool_t fIsGood;
 
-  ClassDef(STRawEvent, 1);
+  ClassDef(STRawEvent, 2);
 };
 
 #endif
