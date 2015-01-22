@@ -126,7 +126,7 @@ InitStatus STEventDraw::Init()
   fPointSet = 0;
 
   if (fIs2DPlot) {
-    gStyle -> SetPalette(1);
+    gStyle -> SetPalette(55);
     if (fIs2DPlotExternal) {
       UInt_t width = 0, height = 0;
       Int_t dummy = 0;
