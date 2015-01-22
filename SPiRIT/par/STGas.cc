@@ -38,7 +38,6 @@ STGas::STGas(TString GasFileName)
 
 void STGas::InitializeParameters()
 {
-  cout << "Initializing gas parameters..." << endl;
   ifstream gasFile(fGasFileName.Data(), std::fstream::in);
   if(gasFile==NULL) cerr << "Gas file " << fGasFileName.Data() << " not found!!" << endl;
 

@@ -40,11 +40,9 @@ Double_t  STDigiPar::GetDriftLength()      { return fDriftLength; }
 STGas *STDigiPar::GetGas()
 { 
   if(fGas==NULL){
-    std::cerr << "Initializing gas file with " << fGasFileName.Data() << std::endl;
     fGas = new STGas(fGasFileName.Data());
   }
   return fGas;
-  //return new STGas(*fGas); 
 }
 
 Int_t STDigiPar::GetTBTime() {
