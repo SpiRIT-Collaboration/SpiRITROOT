@@ -1,21 +1,11 @@
-void run_mc_singleTrack(Int_t    nEvents  = 1,
-                        Int_t    particle = 0,
-                        Double_t momentum = 600, // [MeV/c]
-                        TString  tag      = "singleTrack")
+void run_mc_eloss(Int_t    nEvents  = 10000,
+                  Int_t    particle = 0,
+                  TString  tag      = "eloss")
 {
-  momentum *= 0.001;
   Int_t particleID;
 
   if (particle==0) particleID = 2212;         // Proton
-  if (particle==1) particleID = 1000010020;   // Deuteron
-  if (particle==2) particleID = 1000010030;   // Triton
-  if (particle==3) particleID = 1000020030;   // Helion
-  if (particle==4) particleID = 1000020040;   // pha
-  if (particle==5) particleID = 211;          // Pi+
-  if (particle==6) particleID = -211;         // Pi-
-  if (particle==7) particleID = 11;           // e-
-  if (particle==8) particleID = -11;          // e+
-  if (particle==9) particleID = 2112;         // neutron
+  if (particle==4) particleID = 1000020040;   // alpha
 
 
 
@@ -78,7 +68,7 @@ void run_mc_singleTrack(Int_t    nEvents  = 1,
                                              (159.64+50)/2);
 
   FairBoxGenerator* boxGen1 = new FairBoxGenerator(particleID, 1);           //Use Proton
-                    boxGen1->SetPRange(momentum,momentum); //GeV/c 
+                    boxGen1->SetPRange(10*0.001,2010*0.001); //GeV/c 
                     boxGen1->SetPhiRange(90.,90.); //degrees
                     boxGen1->SetThetaRange(0.,0.); //degrees
                     boxGen1->SetXYZ(0.,-51.01/2, 0); // cm 

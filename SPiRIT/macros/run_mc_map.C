@@ -101,7 +101,7 @@ void run_mc_map(Int_t    nEvents  = 1,
   FairTrajFilter* trajFilter = FairTrajFilter::Instance();
   trajFilter->SetStorePrimaries(kTRUE);
   trajFilter->SetStoreSecondaries(kTRUE);
-   trajFilter->SetStepSizeCut(0.001);  
+  trajFilter->SetStepSizeCut(0.001);  
 
   // -----   Runtime database   ---------------------------------------------
   Bool_t kParameterMerged = kTRUE;
