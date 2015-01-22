@@ -1,10 +1,10 @@
-void run_reco_mc(TString tag = "urqmd1")
+void run_reco_mc(TString tag = "test")
 {
   FairLogger *logger = FairLogger::GetLogger();
   logger -> SetLogFileName("log/reco_mc.log");
-  logger -> SetLogToFile(kTRUE);
+  logger -> SetLogToFile(kFALSE);
   logger -> SetLogToScreen(kTRUE);
-  logger -> SetLogVerbosityLevel("MEDIUM");
+  //logger -> SetLogVerbosityLevel("MEDIUM");
 
   FairRunAna* run = new FairRunAna();
   run -> SetInputFile("data/spirit_" + tag + ".raw.root");
@@ -22,15 +22,28 @@ void run_reco_mc(TString tag = "urqmd1")
 
   STPSATask *psaTask = new STPSATask();
   psaTask -> SetPersistence();
-  psaTask -> SetThreshold(10);
+  psaTask -> SetThreshold(5);
+  psaTask -> SetPSAMode(1);
   run -> AddTask(psaTask);
 
   STHitClusteringTask *hcTask = new STHitClusteringTask();
   hcTask -> SetPersistence();
-  hcTask -> SetVerbose(2);
+  //hcTask -> SetVerbose(2);
   run -> AddTask(hcTask);
+
+  STSMTask* smTask = new STSMTask();
+  smTask -> SetPersistence();
+  smTask -> SetMode(STSMTask::kChange);
+  run -> AddTask(smTask);
+
+  STRiemannTrackingTask* rmTask = new STRiemannTrackingTask();
+  rmTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ,0);
+  rmTask -> SetPersistence();
+  //rmTask -> SetVerbose(kTRUE);
+  rmTask -> SetMergeTracks(kTRUE);
+  //run -> AddTask(rmTask);
 
   run->Init();
 
-  run->Run(0, 1);
+  run->Run(0, 0);
 }
