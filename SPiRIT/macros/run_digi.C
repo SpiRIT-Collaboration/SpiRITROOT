@@ -3,7 +3,7 @@ void run_digi(TString tag = "test")
   TStopwatch timer;
   timer.Start();
 
-  Int_t nEvents = 1;
+  Int_t nEvents = 10;
 
   TString workDir     = gSystem -> Getenv("SPIRITDIR");
   TString geomDir     = workDir + "/geometry";
@@ -23,7 +23,7 @@ void run_digi(TString tag = "test")
               logger -> SetLogFileName("log/digi.log");
               logger -> SetLogToScreen(kTRUE);
               logger -> SetLogToFile(kTRUE);
-              logger -> SetLogVerbosityLevel("HIGH");
+              logger -> SetLogVerbosityLevel("LOW");
 
   FairRunAna* fRun = new FairRunAna();
               fRun -> SetInputFile(mcFile.Data());
@@ -38,10 +38,13 @@ void run_digi(TString tag = "test")
                  fDb -> setFirstInput(mcParInput);
                  fDb -> setSecondInput(digiParInput);
 
-  STDriftTask* drift = new STDriftTask();
-  STPadResponseTask* padResponse = new STPadResponseTask();
-  STElectronicsTask* electronics = new STElectronicsTask();
-                     electronics -> SetSignalPolarity(1);
+  STDriftTask* drift = new STDriftTask(); 
+               drift -> SetInputPersistance(kTRUE);
+  STPadResponseTask* padResponse = new STPadResponseTask(); 
+                     padResponse -> SetInputPersistance(kTRUE);
+                     padResponse -> AssumeGausPRF();
+  STElectronicsTask* electronics = new STElectronicsTask(); 
+                     electronics -> SetInputPersistance(kTRUE);
 
 
 
@@ -50,7 +53,7 @@ void run_digi(TString tag = "test")
   fRun -> AddTask(padResponse);
   fRun -> AddTask(electronics);
   fRun -> Init();
-  fRun -> Run(0, nEvents);
+  fRun -> Run(0,0);
 
   timer.Stop();
   cout << endl << endl;
