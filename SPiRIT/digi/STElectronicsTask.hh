@@ -16,7 +16,6 @@
 
 // SPiRIT-TPC class headers
 #include "STDigiPar.hh"
-#include "STMap.hh"
 #include "STRawEvent.hh"
 #include "STPad.hh"
 

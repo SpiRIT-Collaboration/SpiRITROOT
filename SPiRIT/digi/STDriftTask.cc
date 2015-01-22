@@ -62,13 +62,55 @@ STDriftTask::Init()
   ioman->Register("STDriftedElectron","ST",fElectronArray,fInputPersistance);
 
   fGas = fPar->GetGas();
-  fEIonize = (fGas->GetEIonize())*1.E6; // [MeV] to [eV]
 
-  fDriftElectron = new STDriftElectron();
-  fWireResponse  = new STWireResponse();
+  fYAnodeWirePlane = fPar->GetAnodeWirePlaneY(); // [mm]
+  fZWidthPadPlane  = fPar->GetPadPlaneZ(); // [mm]
+  fNumWires        = 363;
+  fZSpacingWire    = 4;
+  fZOffsetWire     = 2;
+
+  /* 
+   *           < CONFIGURATION 1 >              < CONFIGURATION 2 >      \n
+   *
+   *         -----------------------          -----------------------    \n
+   *        |                       |        |                       |   \n
+   *        |      1/3     2/3      |        |  1/6     1/2     5/6  |   \n
+   *   PAD  |                       |        |                       |   \n
+   *        |     across the pad    |        |     across the pad    |   \n
+   *        |                       |        |                       |   \n
+   *         ---------12 mm---------          -----------------------    \n
+   *
+   *        |       |       |       |            |       |       |       \n
+   *        |       |       |       |            |       |       |       \n
+   *  WIRE  |       |  4 mm |       |            |       |       |       \n
+   *        |       |       |       |            |       |       |       \n
+   *        |       |       |       |            |       |       |       \n
+   *
+   *
+   *                             ---> z-axis (layer)
+   *
+   *
+   *  - CONFIGURATION 1 : Use fZOffsetWire = 0
+   *  - CONFIGURATION 2 : Use fZOffsetWire = 2
+   *
+   *  Default is CONFIGURATION 2.
+   */
+
+  fZCenterWire = fZWidthPadPlane/2+fZOffsetWire;
+  fZFirstWire  = fZCenterWire - fNumWires/2*fZSpacingWire;
+  fZLastWire   = fZCenterWire + fNumWires/2*fZSpacingWire;
+  fZCritWire   = fZOffsetWire; // = 0*fZSpacingWire + fZOffsetWire
+  fICritWire   = (fZCritWire-fZOffsetWire)/fZSpacingWire; // == 0
+  fIFirstWire  = (fZFirstWire-fZOffsetWire)/fZSpacingWire;
+  fILastWire   = (fZLastWire-fZOffsetWire)/fZSpacingWire;
+
+  fEIonize  = fGas->GetEIonize()*1.E6; // [MeV] to [eV]
+  fVelDrift = fGas->GetDriftVelocity()/100; // [cm/us] to [mm/ns]
+  fCoefT    = fGas->GetCoefDiffusionTrans()/sqrt(10); // [cm^(-1/2)] to [mm^(-1/2)]
+  fCoefL    = fGas->GetCoefDiffusionLong()/sqrt(10);  // [cm^(-1/2)] to [mm^(-1/2)]
+  fGain     = fGas->GetGain();
 
   return kSUCCESS;
-
 }
 
 void 
@@ -81,38 +123,51 @@ STDriftTask::Exec(Option_t* option)
   fElectronArray -> Delete();
 
   Int_t nMCPoints = fMCPointArray->GetEntries();
-  if(nMCPoints<20){
-    fLogger->Warning(MESSAGE_ORIGIN, "Not enough hits for digitization!");
+  if(nMCPoints<10){
+    fLogger->Warning(MESSAGE_ORIGIN, "Not enough hits for digitization! (<10)");
     return;
   }
 
-  TLorentzVector v4MC;    // [mm]
-  TLorentzVector v4Drift; // [mm]
-  Int_t          zWire;   // [mm]
-  Int_t          gain0 = fGas -> GetGain();
+  /**
+   * NOTE! that fMCPoint has unit of [cm] for length scale,
+   * [GeV] for energy and [ns] for time.
+   */
 
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
     fMCPoint = (STMCPoint*) fMCPointArray->At(iPoint);
     Double_t eLoss = (fMCPoint->GetEnergyLoss())*1.E9; // [GeV] to [eV]
-    if(eLoss<0) continue;
 
-    v4MC.SetXYZT(fMCPoint->GetX()*10,
-                 fMCPoint->GetY()*10,
-                 fMCPoint->GetZ()*10,
-                 fMCPoint->GetTime());
-    fDriftElectron->SetMCHit(v4MC);
-    
+    Double_t lDrift = fYAnodeWirePlane-(fMCPoint->GetY())*10; // drift length [mm]
+    Double_t tDrift = lDrift/fVelDrift; // drift time [ns]
+    Double_t sigmaL = fCoefL*sqrt(lDrift); // sigma in longitudinal direction
+    Double_t sigmaT = fCoefT*sqrt(lDrift); // sigma in transversal direction
+
     Int_t nElectrons = (Int_t)floor(fabs(eLoss/fEIonize));
     for(Int_t iElectron=0; iElectron<nElectrons; iElectron++) {
-      Int_t gain = gRandom -> Gaus(gain0,30);
+      Int_t gain = gRandom -> Gaus(fGain,20); // TODO : Gain function is neede.
       if(gain<=0) continue;
-      v4Drift = fDriftElectron->Drift();
-      zWire   = fWireResponse->FindZWire(v4Drift.Z());
+
+      Double_t dr    = gRandom->Gaus(0,sigmaL); // displacement in radial direction
+      Double_t angle = gRandom->Uniform(2*TMath::Pi()); // random angle
+
+      Double_t dx = dr*TMath::Cos(angle); // displacement in x-direction
+      Double_t dz = dr*TMath::Sin(angle); // displacement in y-direction
+      Double_t dt = gRandom->Gaus(0,sigmaT)/fVelDrift; // displacement in time
+
+      Int_t iWire = (Int_t)floor((fMCPoint->GetZ()*10+dz+fZSpacingWire/2)/fZSpacingWire);
+      if(iWire<fIFirstWire) iWire = fIFirstWire;
+      if(iWire>fILastWire)  iWire = fILastWire;
+      Int_t zWire = iWire*fZSpacingWire+fZOffsetWire;
 
       Int_t index = fElectronArray->GetEntriesFast();
-      STDriftedElectron* electron
+      STDriftedElectron *electron
         = new ((*fElectronArray)[index])
-          STDriftedElectron(v4Drift.X(), v4Drift.Z(), zWire, v4Drift.T(), gain);
+          STDriftedElectron(fMCPoint->GetX()*10, dx,
+                            fMCPoint->GetZ()*10, dz, 
+                            fMCPoint->GetTime()+tDrift, dt,
+                            iWire, zWire,
+                            gain);
+
       electron -> SetIndex(index);
     }
   }
