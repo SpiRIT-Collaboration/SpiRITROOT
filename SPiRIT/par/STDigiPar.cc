@@ -29,6 +29,8 @@ STDigiPar::~STDigiPar()
    Int_t  STDigiPar::GetPadPlaneZ()        { return fPadPlaneZ; }
    Int_t  STDigiPar::GetPadSizeX()         { return fPadSizeX; }
    Int_t  STDigiPar::GetPadSizeZ()         { return fPadSizeZ; }
+   Int_t  STDigiPar::GetPadRows()          { return fPadLayers; }
+   Int_t  STDigiPar::GetPadLayers()        { return fPadLayers; }
 Double_t  STDigiPar::GetAnodeWirePlaneY()  { return fAnodeWirePlaneY; }
 Double_t  STDigiPar::GetGroundWirePlaneY() { return fGroundWirePlaneY; }
 Double_t  STDigiPar::GetGatingWirePlaneY() { return fGatingWirePlaneY; }
@@ -40,9 +42,11 @@ Double_t  STDigiPar::GetDriftLength()      { return fDriftLength; }
 STGas *STDigiPar::GetGas()
 { 
   if(fGas==NULL){
+    std::cerr << "Initializing gas file with " << fGasFileName.Data() << std::endl;
     fGas = new STGas(fGasFileName.Data());
   }
   return fGas;
+  //return new STGas(*fGas); 
 }
 
 Int_t STDigiPar::GetTBTime() {
@@ -80,6 +84,14 @@ Bool_t STDigiPar::getParams(FairParamList *paramList)
     }
     if (!(paramList -> fill("PadSizeZ", &fPadSizeZ))) {
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadSizeZ parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("PadRows", &fPadRows))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadRows parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("PadLayers", &fPadLayers))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadRows parameter!");
       return kFALSE;
     }
     if (!(paramList -> fill("AnodeWirePlaneY", &fAnodeWirePlaneY))) {
@@ -148,6 +160,8 @@ void STDigiPar::putParams(FairParamList *paramList)
   paramList -> add("PadPlaneZ", fPadPlaneZ);
   paramList -> add("PadSizeX", fPadSizeX);
   paramList -> add("PadSizeZ", fPadSizeZ);
+  paramList -> add("PadRows", fPadRows);
+  paramList -> add("PadLayers", fPadLayers);
   paramList -> add("AnodeWirePlaneY", fAnodeWirePlaneY);
   paramList -> add("GroundWirePlaneY", fGroundWirePlaneY);
   paramList -> add("GatingWirePlaneY", fGatingWirePlaneY);
