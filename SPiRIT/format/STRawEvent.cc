@@ -55,7 +55,7 @@ void STRawEvent::SetIsGood(Bool_t value) { fIsGood = value; }
 void STRawEvent::RemovePad(Int_t padNo) 
 {
   if (!(padNo < GetNumPads()))
-    return NULL;
+    return;
 
   fPadArray.erase(fPadArray.begin() + padNo);
 }
@@ -67,7 +67,7 @@ void STRawEvent::RemovePad(Int_t row, Int_t layer)
     Int_t padLayer = fPadArray[iPad].GetLayer();
 
     if (row == padRow && layer == padLayer)
-      fPadArray.erase(fPadArray.begin() + padNo);
+      fPadArray.erase(fPadArray.begin() + iPad);
   }
 }
 

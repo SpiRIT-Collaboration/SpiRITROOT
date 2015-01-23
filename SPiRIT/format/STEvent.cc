@@ -81,7 +81,7 @@ STHit *STEvent::GetHit(Int_t hitNo)
 void STEvent::RemoveHit(Int_t hitNo)
 {
   if (!(hitNo < GetNumHits()))
-    return NULL;
+    return;
 
   fHitArray.erase(fHitArray.begin() + hitNo);
 }
@@ -102,7 +102,7 @@ STHitCluster *STEvent::GetCluster(Int_t clusterNo)
 void STEvent::RemoveCluster(Int_t clusterNo)
 {
   if (!(clusterNo < GetNumClusters()) || !IsClustered())
-    return NULL;
+    return;
 
   fClusterArray.erase(fClusterArray.begin() + clusterNo);
 }
