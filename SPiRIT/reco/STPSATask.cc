@@ -14,6 +14,7 @@
 #include "STPSA.hh"
 #include "STPSASimple.hh"
 #include "STPSASimple2.hh"
+#include "STPSALayer.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -67,6 +68,10 @@ STPSATask::Init()
     fLogger -> Info(MESSAGE_ORIGIN, "Use STPSASimple2!");
 
     fPSA = new STPSASimple2();
+  } else if (fPSAMode == 2) {
+    fLogger -> Info(MESSAGE_ORIGIN, "Use STPSALayer!");
+
+    fPSA = new STPSALayer();
   }
 
   fPSA -> SetThreshold((Int_t)fThreshold);
