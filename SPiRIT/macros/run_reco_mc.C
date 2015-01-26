@@ -1,4 +1,4 @@
-void run_reco_mc(TString tag = "test")
+void run_reco_mc(TString tag = "test", Int_t threshold = 0)
 {
   FairLogger *logger = FairLogger::GetLogger();
   logger -> SetLogFileName("log/reco_mc.log");
@@ -22,8 +22,8 @@ void run_reco_mc(TString tag = "test")
 
   STPSATask *psaTask = new STPSATask();
   psaTask -> SetPersistence();
-  psaTask -> SetThreshold(5);
-  psaTask -> SetPSAMode(1);
+  psaTask -> SetThreshold(threshold);
+  psaTask -> SetPSAMode(2);
   run -> AddTask(psaTask);
 
   STHitClusteringTask *hcTask = new STHitClusteringTask();

@@ -28,7 +28,7 @@ STElectronicsTask::STElectronicsTask()
  fEventID(0),
  fADCDynamicRange(120.e-15),
  fADCMax(4095),
- fADCMaxUseable(3600),
+ fADCMaxUseable(4095),
  fPedestalMean(400),
  fPedestalSigma(4),
  fPedestalSubtracted(kTRUE),

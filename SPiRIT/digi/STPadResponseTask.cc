@@ -91,10 +91,12 @@ STPadResponseTask::Exec(Option_t* option)
   {
     fElectron = (STDriftedElectron*) fElectronArray -> At(iElectron);
 
-    Double_t xEl = fElectron->GetX() + fElectron->GetDX();
-    Double_t tEl = fElectron->GetT() + fElectron->GetDT();
-    Int_t    iWi = fElectron->GetIWire();
-    Int_t   gain = fElectron->GetGain();
+    Double_t xEl = fElectron->GetX() + fElectron->GetDiffusedX();
+    Double_t tEl = fElectron->GetHitTime() 
+                  +fElectron->GetDriftTime()
+                  +fElectron->GetDiffusedTime();
+    Int_t iWire  = fElectron->GetIWire();
+    Int_t gain   = fElectron->GetGain();
 
     Int_t row   = (Int_t)floor(xEl/fPadSizeRow) + fNRows/2;
     /** 
@@ -107,14 +109,14 @@ STPadResponseTask::Exec(Option_t* option)
      * - 1 : wire at the center (z) of the pad 
      * - 2 : wire with 5/6 across (z) the pad.
      */
-    Int_t layer = iWi/3;
-    Int_t type  = iWi%3; //< %3 : same reason as above
+    Int_t layer = iWire/3;
+    Int_t type  = iWire%3; //< %3 : same reason as above
     Int_t iTb   = floor(tEl*fNTbs/fTimeMax);
 
     // Covering 5x5(25 in total) pads cover 99.97 % of all the charges.
     for(Int_t iLayer=0; iLayer<5; iLayer++){ 
       Int_t jLayer = layer+iLayer-2;
-      if(iLayer<0 || jLayer>=fNLayers) continue;
+      if(jLayer<0 || jLayer>=fNLayers) continue;
 
       for(Int_t iRow=0; iRow<5; iRow++)  { 
         Int_t jRow = row+iRow-2;
@@ -135,7 +137,10 @@ STPadResponseTask::Exec(Option_t* option)
                    *( (0.5*TMath::Erf((x2-xEl)/fPRIPar0)) 
                      -(0.5*TMath::Erf((x1-xEl)/fPRIPar0)) );
         }
-        pad -> SetADC(iTb, content+pad->GetADC(iTb));
+        //cout << jRow << " " << jLayer << endl;
+        Double_t content0 = pad->GetADC(iTb);
+        //cout << content0 << endl;
+        pad -> SetADC(iTb, content0+content);
         fIsActivePad[jRow*fNLayers+jLayer] = kTRUE;
       }
     }

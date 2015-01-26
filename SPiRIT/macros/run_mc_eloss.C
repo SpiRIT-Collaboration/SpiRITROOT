@@ -1,6 +1,6 @@
-void run_mc_eloss(Int_t    nEvents  = 10000,
+void run_mc_eloss(Int_t    nEvents  = 100,
                   Int_t    particle = 0,
-                  TString  tag      = "eloss")
+                  TString  tag      = "eloss0")
 {
   Int_t particleID;
 

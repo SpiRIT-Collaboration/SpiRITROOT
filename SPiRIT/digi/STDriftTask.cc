@@ -105,9 +105,9 @@ STDriftTask::Init()
   fILastWire   = (fZLastWire-fZOffsetWire)/fZSpacingWire;
 
   fEIonize  = fGas->GetEIonize()*1.E6; // [MeV] to [eV]
-  fVelDrift = fGas->GetDriftVelocity()/100; // [cm/us] to [mm/ns]
-  fCoefT    = fGas->GetCoefDiffusionTrans()/sqrt(10); // [cm^(-1/2)] to [mm^(-1/2)]
-  fCoefL    = fGas->GetCoefDiffusionLong()/sqrt(10);  // [cm^(-1/2)] to [mm^(-1/2)]
+  fVelDrift = fGas->GetDriftVelocity()/100.; // [cm/us] to [mm/ns]
+  fCoefT    = fGas->GetCoefDiffusionTrans()*sqrt(10.); // [cm^(-1/2)] to [mm^(-1/2)]
+  fCoefL    = fGas->GetCoefDiffusionLong()*sqrt(10.);  // [cm^(-1/2)] to [mm^(-1/2)]
   fGain     = fGas->GetGain();
 
   return kSUCCESS;
@@ -147,12 +147,12 @@ STDriftTask::Exec(Option_t* option)
       Int_t gain = gRandom -> Gaus(fGain,20); // TODO : Gain function is neede.
       if(gain<=0) continue;
 
-      Double_t dr    = gRandom->Gaus(0,sigmaL); // displacement in radial direction
+      Double_t dr    = gRandom->Gaus(0,sigmaT); // displacement in radial direction
       Double_t angle = gRandom->Uniform(2*TMath::Pi()); // random angle
 
       Double_t dx = dr*TMath::Cos(angle); // displacement in x-direction
       Double_t dz = dr*TMath::Sin(angle); // displacement in y-direction
-      Double_t dt = gRandom->Gaus(0,sigmaT)/fVelDrift; // displacement in time
+      Double_t dt = gRandom->Gaus(0,sigmaL)/fVelDrift; // displacement in time
 
       Int_t iWire = (Int_t)floor((fMCPoint->GetZ()*10+dz+fZSpacingWire/2)/fZSpacingWire);
       if(iWire<fIFirstWire) iWire = fIFirstWire;
@@ -164,7 +164,8 @@ STDriftTask::Exec(Option_t* option)
         = new ((*fElectronArray)[index])
           STDriftedElectron(fMCPoint->GetX()*10, dx,
                             fMCPoint->GetZ()*10, dz, 
-                            fMCPoint->GetTime()+tDrift, dt,
+                            fMCPoint->GetY()*10,
+                            fMCPoint->GetTime(), tDrift, dt,
                             iWire, zWire,
                             gain);
 

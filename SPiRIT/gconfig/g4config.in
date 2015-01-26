@@ -2,10 +2,10 @@
 # SPiRIT g4config.in - Called from g4Config.C #
 #=============================================#
 
-/mcPhysics/rangeCuts 0.001 mm
+/mcPhysics/rangeCuts 0.01 mm
 
 /cuts/setLowEdge  100 eV
-/cuts/setHighEdge  1 MeV
+/cuts/setHighEdge   1 MeV
 
 #/mcphysics/rangeCutForElectron    1 mm
 #/mcphysics/rangeCutForPositron    1 mm
