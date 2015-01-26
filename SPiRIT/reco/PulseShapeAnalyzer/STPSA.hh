@@ -41,28 +41,27 @@ class STPSA
     virtual void Analyze(STRawEvent *rawEvent, STEvent *event) = 0;
 
   protected:
-    FairLogger *fLogger;      /// logger pointer
-    STDigiPar *fPar;          /// parameter container
+    FairLogger *fLogger;      ///< logger pointer
+    STDigiPar *fPar;          ///< parameter container
 
-    Int_t fPadPlaneX;         /// pad plane size x in mm
-    Int_t fPadSizeX;          /// pad size x in mm
-    Int_t fPadSizeZ;          /// pad size y in mm
+    Int_t fPadPlaneX;         ///< pad plane size x in mm
+    Int_t fPadSizeX;          ///< pad size x in mm
+    Int_t fPadSizeZ;          ///< pad size y in mm
+    Int_t fPadRows;           ///< number of total pad rows
+    Int_t fPadLayers;         ///< number of total pad layers
 
-    Int_t fNumTbs;            /// the number of time buckets used in taking data
-    Int_t fTBTime;            /// time duration of a time bucket in ns
-    Double_t fDriftVelocity;  /// drift velocity of electron in cm/us
-    Double_t fMaxDriftLength; /// maximum drift length in mm
+    Int_t fNumTbs;            ///< the number of time buckets used in taking data
+    Int_t fTBTime;            ///< time duration of a time bucket in ns
+    Double_t fDriftVelocity;  ///< drift velocity of electron in cm/us
+    Double_t fMaxDriftLength; ///< maximum drift length in mm
 
-    Int_t fThreshold;         /// threshold of ADC value
+    Int_t fThreshold;         ///< threshold of ADC value
 
-    //!< Calculate x position in mm. This returns the center position of given pad row.
-    Double_t CalculateX(Int_t row);
-    //!< Calculate y position in mm using the peak index.
-    Double_t CalculateY(Int_t peakIdx);
-    //!< Calculate z position in mm. This returns the center position of given pad layer.
-    Double_t CalculateZ(Int_t layer);
+    Double_t CalculateX(Int_t row);      ///< Calculate x position in mm. This returns the center position of given pad row.
+    Double_t CalculateY(Int_t peakIdx);  ///< Calculate y position in mm using the peak index.
+    Double_t CalculateZ(Int_t layer);    ///< Calculate z position in mm. This returns the center position of given pad layer.
 
-  ClassDef(STPSA, 1)
+  ClassDef(STPSA, 2)
 };
 
 #endif

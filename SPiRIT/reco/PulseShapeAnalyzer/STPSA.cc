@@ -44,6 +44,8 @@ STPSA::STPSA()
   fPadPlaneX = fPar -> GetPadPlaneX();
   fPadSizeX = fPar -> GetPadSizeX();
   fPadSizeZ = fPar -> GetPadSizeZ();
+  fPadRows = fPar -> GetPadRows();
+  fPadLayers = fPar -> GetPadLayers();
 
   fNumTbs = fPar -> GetNumTbs();
   fTBTime = fPar -> GetTBTime();

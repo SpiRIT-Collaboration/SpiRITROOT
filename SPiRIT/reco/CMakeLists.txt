@@ -47,6 +47,7 @@ STConverter/STMapTest.cc
 PulseShapeAnalyzer/STPSA.cc
 PulseShapeAnalyzer/STPSASimple.cc
 PulseShapeAnalyzer/STPSASimple2.cc
+PulseShapeAnalyzer/STPSALayer.cc
 
 #HitClusterizer/STHitClusteringSimple.cc
 
