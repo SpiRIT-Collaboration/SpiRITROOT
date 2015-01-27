@@ -19,6 +19,9 @@
 // ROOT classes
 #include "TSpectrum.h"
 
+// STL
+#include <vector>
+
 class STPSALayer : public STPSA
 {
   public:
@@ -30,22 +33,24 @@ class STPSALayer : public STPSA
   private:
     void Reset();
     void PreAnalyze(STRawEvent *rawEvent);
-    void DeletePeakInfo(STRawEvent *rawEvent, Short_t row, Short_t layer, Short_t peakNum);
+    void DeletePeakInfo(STRawEvent *rawEvent, Int_t row, Int_t layer, Int_t peakNum);
     void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope);
 
-    TSpectrum *fPeakFinder;   ///< TSpectrum object
+    TSpectrum *fPeakFinder;                    ///< TSpectrum object
 
-    Int_t fNumSidePads;       ///< The number of pads to average side of the pad having the highest peak
-    Short_t **fPadID;         ///< Pad ID with row and layer
-    Short_t **fNumPeaks;      ///< The number of peaks in the fired pad
+    std::vector<STPad> *fPadArray;             ///< Pad array pointer in STRawEvent
 
-    Short_t fPeakStorageSize; ///< Maximum number of peaks in a pad
-    Short_t ***fPeakTbs;      ///< Peak positions in amplitude increasing order
-    Short_t ***fPeakValues;   ///< Peak amplitude in increasing order
+    Int_t fNumSidePads;                        ///< The number of pads to average side of the pad having the highest peak
+    Int_t fNumSideTbs;                         ///< The number of tbs to search peak near the maximum peak
+    Int_t **fNumPeaks;                         ///< The number of peaks in the fired pad
 
-    Short_t fMinPoints;       ///< Minimum points of slope for determing the hit time
-    Short_t fPercPeakMin;     ///< Minimum percentage of peak for determinig the hit time
-    Short_t fPercPeakMax;     ///< Maximum percentage of peak for determinig the hit time
+    Int_t fPeakStorageSize;                    ///< Maximum number of peaks in a pad
+    Int_t ***fPeakTbs;                         ///< Peak positions in amplitude increasing order
+    Double_t ***fPeakValues;                   ///< Peak amplitude in increasing order
+
+    Int_t fMinPoints;                          ///< Minimum points of slope for determing the hit time
+    Int_t fPercPeakMin;                        ///< Minimum percentage of peak for determinig the hit time
+    Int_t fPercPeakMax;                        ///< Maximum percentage of peak for determinig the hit time
 
   ClassDef(STPSALayer, 1)
 };
