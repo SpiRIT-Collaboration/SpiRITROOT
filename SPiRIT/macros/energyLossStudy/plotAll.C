@@ -1,3 +1,4 @@
+TString G4PEFileName = "../../geant4/eLossProton.dat";
 TString MCPEFileName = "data/MC_proton_dEdx.dat";
 TString MCAEFileName = "data/MC_alpha_dEdx.dat";
 TString TLPEFileName = "data/TRIMLISE++_proton_dEdx.dat";
@@ -24,7 +25,7 @@ Int_t MStyle4 = 21;
 void plotAll()
 {
   Bool_t   saveFlag  = kTRUE;
-  Double_t kEMax     = 420;
+  Double_t kEMax     = 80;
   Double_t dEdxMaxP  = 0.005;
   Double_t dEdxMinP  = 0.0002;
   Double_t dEdxMaxA  = 0.05;
@@ -39,10 +40,8 @@ void plotAll()
 
 
   // proton dEdx
-  //TH2D* histPE = new TH2D("histP",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax,10,0,dEdxMaxP);
-  TH2D* histPE = new TH2D("histP",";Energy (MeV); dE/dx (MeV/mm)",10,0,80,10,0,dEdxMaxP);
-  //TH1D* histPELog = new TH1D("histPLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax);
-  TH1D* histPELog = new TH1D("histPLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,80);
+  TH2D* histPE = new TH2D("histP",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax,10,0,dEdxMaxP);
+  TH1D* histPELog = new TH1D("histPLog",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax);
         histPELog -> SetMinimum(dEdxMinP);
         histPELog -> SetMaximum(dEdxMaxP);
 
@@ -62,39 +61,47 @@ void plotAll()
           graphMCPE -> SetLineColor(Color3);
           graphMCPE -> SetLineStyle(2);
 
-  TLegend *legendE = new TLegend(0.40,0.80,0.9,0.9);
-           legendE -> AddEntry(graphTLPE,  "proton (TRIM/LISE++)","P");
-           legendE -> AddEntry(graphMCPE0, "proton (MC, secondaries not included)","PL");
-           legendE -> AddEntry(graphMCPE,  "proton (MC, secondaries included)","PL");
+  TGraph* graphG4PE  = GetG4P();
+          graphG4PE -> SetMarkerColor(kBlack);
+          graphG4PE -> SetLineColor(13);
+          graphG4PE -> SetLineStyle(2);
+
+  TLegend *legendE = new TLegend(0.55,0.80,0.9,0.9);
+           legendE -> AddEntry(graphTLPE, "proton (TRIM/LISE++)","P");
+           legendE -> AddEntry(graphMCPE, "proton (MC)","PL");
+           legendE -> AddEntry(graphG4PE, "proton (pure Geant4)","PL");
            legendE -> SetFillColor(0);
 
   TCanvas* cvsP = new TCanvas("cvsP","cvsP",700,700);
            cvsP -> SetGrid();
   histPE      -> Draw();
-  graphMCPE0 -> Draw("PL");
+  //graphMCPE0 -> Draw("PL");
   graphMCPE  -> Draw("PL SAME");
+  graphG4PE  -> Draw("PL SAME");
   graphTLPE  -> Draw("P SAME");
   legendE    -> Draw("SAME");
   if(saveFlag) cvsP -> SaveAs(PEFigureName);
 
+  /*
   TCanvas* cvsPLog = new TCanvas("cvsPLog","cvsPLog",700,700);
            cvsPLog -> SetGrid();
            cvsPLog -> SetLogy();
   histPELog   -> Draw();
-  graphMCPE0 -> Draw("P");
+  //graphMCPE0 -> Draw("P");
   graphMCPE  -> Draw("P SAME");
+  graphG4PE  -> Draw("P SAME");
   graphTLPE  -> Draw("P SAME");
   legendE    -> Draw("SAME");
   if(saveFlag) cvsPLog -> SaveAs(PELogFigureName);
+  */
 
 
 
 
+  /*
   // alpha dEdx
-  //TH2D* histAE = new TH2D("histA",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax,10,0,dEdxMaxA);
-  TH2D* histAE = new TH2D("histA",";Energy (MeV); dE/dx (MeV/mm)",10,0,80,10,0,dEdxMaxA);
-  //TH1D* histAELog = new TH1D("histALog",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax);
-  TH1D* histAELog = new TH1D("histALog",";Energy (MeV); dE/dx (MeV/mm)",10,0,80);
+  TH2D* histAE = new TH2D("histA",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax,10,0,dEdxMaxA);
+  TH1D* histAELog = new TH1D("histALog",";Energy (MeV); dE/dx (MeV/mm)",10,0,kEMax);
         histAELog -> SetMinimum(dEdxMinA);
         histAELog -> SetMaximum(dEdxMaxA);
 
@@ -185,12 +192,25 @@ void plotAll()
   graphMCAL  -> Draw("PL SAME");
   legendL    -> Draw("SAME");
   if(saveFlag) cvsL -> SaveAs(LFigureName);
+  */
 }
 
 
 
 
 
+TGraph *GetG4P(Int_t type = 0)
+{
+  TGraph* graph = new TGraph();
+  graph -> SetMarkerStyle(20);
+
+  Int_t i=0;
+  Double_t k, e;
+  ifstream inFile(G4PEFileName);
+  while(inFile >> k >> e) graph -> SetPoint(i++, k, e);
+
+  return graph;
+}
 
 
 

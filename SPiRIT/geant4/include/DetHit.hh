@@ -10,10 +10,11 @@ class DetHit: public G4VHit
 {
 	private:
 		G4double fX, fY, fZ, fT, fE;
+    G4int fParentID;
 
 	public:
 		DetHit();
-		DetHit(G4double, G4double, G4double, G4double, G4double);
+		DetHit(G4double, G4double, G4double, G4double, G4double, G4int);
 		virtual ~DetHit();
 
 		DetHit(const DetHit &right);
@@ -29,6 +30,7 @@ class DetHit: public G4VHit
 		G4double GetZ() const { return fZ; };
 		G4double GetT() const { return fT; };
 		G4double GetE() const { return fE; };
+		G4int    GetParentID() const { return fParentID; };
 };
 
 inline DetHit::DetHit(const DetHit &right)
@@ -39,6 +41,7 @@ inline DetHit::DetHit(const DetHit &right)
 	fZ = right.fZ;
 	fT = right.fT;
 	fE = right.fE;
+	fParentID = right.fParentID;
 }
 
 inline const DetHit &DetHit::operator=(const DetHit &right)
@@ -48,6 +51,7 @@ inline const DetHit &DetHit::operator=(const DetHit &right)
 	fZ = right.fZ;
 	fT = right.fT;
 	fE = right.fE;
+	fParentID = right.fParentID;
 	return *this;
 }
 

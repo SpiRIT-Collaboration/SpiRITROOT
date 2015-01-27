@@ -18,5 +18,7 @@ class exampleEventAction: public G4UserEventAction
 		G4int hitsCollectionID;
 
     G4double fKineticEnergy;
+
+    G4int eventID;
 };
 #endif

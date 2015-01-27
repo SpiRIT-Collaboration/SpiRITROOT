@@ -1,4 +1,4 @@
-void run_mc_singleTrack(Int_t    nEvents  = 100,
+void run_mc_singleTrack(Int_t    nEvents  = 1,
                         Int_t    particle = 0,
                         Double_t momentum = 600, // [MeV/c]
                         TString  tag      = "singleTrack")
@@ -77,12 +77,12 @@ void run_mc_singleTrack(Int_t    nEvents  = 100,
                                             -(159.64+50)/2,
                                              (159.64+50)/2);
 
-  FairBoxGenerator* boxGen1 = new FairBoxGenerator(particleID, nEvents); //Use Proton
+  FairBoxGenerator* boxGen1 = new FairBoxGenerator(particleID, 1); //Use Proton
                     boxGen1->SetPRange(momentum,momentum); //GeV/c 
-                    //boxGen1->SetPhiRange(90.,90.); //degrees
-                    //boxGen1->SetThetaRange(0.,0.); //degrees
-                    boxGen1->SetPhiRange(0.,90); //degrees
-                    boxGen1->SetThetaRange(0.,360); //degrees
+                    boxGen1->SetPhiRange(90.,90.); //degrees
+                    boxGen1->SetThetaRange(0.,0.); //degrees
+                    //boxGen1->SetPhiRange(0.,90); //degrees
+                    //boxGen1->SetThetaRange(0.,360); //degrees
                     boxGen1->SetXYZ(0.,-51.01/2, 0); // cm 
 
   FairPrimaryGenerator* primGen = new FairPrimaryGenerator();
@@ -119,7 +119,7 @@ void run_mc_singleTrack(Int_t    nEvents  = 100,
 
 
 
-  run -> Run(1);
+  run -> Run(nEvents);
   delete run;
 
 

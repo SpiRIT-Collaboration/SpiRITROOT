@@ -39,9 +39,10 @@ G4bool DetSD::ProcessHits(G4Step *aStep, G4TouchableHistory *ROHist)
     G4double y = aStep -> GetPreStepPoint() -> GetPosition().getY();
     G4double z = aStep -> GetPreStepPoint() -> GetPosition().getZ();
     G4double t = aStep -> GetPreStepPoint() -> GetGlobalTime();
+    G4int parentID = aStep -> GetTrack() -> GetParentID();
 
 
-		DetHit *aHit = new DetHit(x, y, z, t, energyDeposit);
+		DetHit *aHit = new DetHit(x, y, z, t, energyDeposit, parentID);
 		hitsCollection -> insert(aHit);
 	}
 
