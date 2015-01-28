@@ -11,6 +11,7 @@
 
 // SpiRITROOT classes
 #include "STPSALayer.hh"
+#include "STProcessManager.hh"
 
 // STL
 #include <cmath>
@@ -23,6 +24,7 @@ ClassImp(STPSALayer)
 
 STPSALayer::STPSALayer()
 {
+
 #ifdef DEBUG
   fLogger -> Info(MESSAGE_ORIGIN, "Start Initializing!");
 #endif
@@ -76,6 +78,8 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
   Int_t hitNum = 0;
 
   STPad pad = fPadArray -> at(0);
+  Int_t totalPads = fPadArray -> size();
+  STProcessManager manager("STPSALayer", totalPads);
   whileStart:
   while (rawEvent -> GetNumPads()) {
 
@@ -261,7 +265,10 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
     hitNum++;
 
     DeletePeakInfo(rawEvent, row, layer, 0);
+    manager.PrintOut(totalPads - fPadArray -> size());
   }
+
+  manager.End();
 }
 
 void

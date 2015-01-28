@@ -11,6 +11,7 @@ ${CMAKE_SOURCE_DIR}/SPiRIT/mc
 ${CMAKE_SOURCE_DIR}/SPiRIT/stack
 ${CMAKE_SOURCE_DIR}/SPiRIT/par
 ${CMAKE_SOURCE_DIR}/SPiRIT/format
+${CMAKE_SOURCE_DIR}/SPiRIT/util
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/STConverter
@@ -83,6 +84,7 @@ Set(DEPENDENCIES
 # Basically those are the libraries in the header files' directory.
     STFormat
     STPar
+    STUtil
     Spectrum
 )
 
