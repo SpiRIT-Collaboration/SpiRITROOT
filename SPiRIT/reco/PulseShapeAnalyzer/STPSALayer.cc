@@ -79,7 +79,11 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
 
   STPad pad = fPadArray -> at(0);
   Int_t totalPads = fPadArray -> size();
+
+#ifndef DEBUG
   STProcessManager manager("STPSALayer", totalPads);
+#endif
+
   whileStart:
   while (rawEvent -> GetNumPads()) {
 
@@ -265,10 +269,20 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
     hitNum++;
 
     DeletePeakInfo(rawEvent, row, layer, 0);
+
+#ifndef DEBUG
     manager.PrintOut(totalPads - fPadArray -> size());
+#endif
+
+#ifdef DEBUG
+      fLogger -> Info(MESSAGE_ORIGIN, Form("Found hit %d, (x, y, z) = (%.2f, %.2f, %.2f), charge = %.2f!", hitNum, xPos, yPos, zPos, peakValue));
+#endif
   }
 
+#ifndef DEBUG
   manager.End();
+#endif
+
 }
 
 void
