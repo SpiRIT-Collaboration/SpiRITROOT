@@ -66,19 +66,19 @@ STPSA::SetThreshold(Int_t threshold)
 }
 
 Double_t
-STPSA::CalculateX(Int_t row)
+STPSA::CalculateX(Double_t row)
 {
   return (row + 0.5)*fPadSizeX - fPadPlaneX/2.;
 }
 
 Double_t
-STPSA::CalculateY(Int_t peakIdx)
+STPSA::CalculateY(Double_t peakIdx)
 {
   return -peakIdx*fTBTime*fDriftVelocity/100.;
 }
 
 Double_t
-STPSA::CalculateZ(Int_t layer)
+STPSA::CalculateZ(Double_t layer)
 {
   return (layer + 0.5)*fPadSizeZ;
 }
