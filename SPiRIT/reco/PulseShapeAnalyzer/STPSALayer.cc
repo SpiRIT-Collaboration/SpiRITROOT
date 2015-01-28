@@ -243,7 +243,6 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
       fLogger -> Info(MESSAGE_ORIGIN, Form("Too few points for fitting: %d!", selectedPoints));
 #endif
 
-      DeletePeakInfo(rawEvent, row, layer, 0);
       if (rawEvent -> GetNumPads())
         pad = fPadArray -> at(0);
 
@@ -349,7 +348,7 @@ STPSALayer::PreAnalyze(STRawEvent *rawEvent)
       fPeakValues[row][layer][iPeak] = peakAdc;
 
 #ifdef DEBUG
-      fLogger -> Info(MESSAGE_ORIGIN, Form("row: %d, layer: %d, tb: %d, adc: %f, pointer: %p", pad -> GetRow(), pad -> GetLayer(), peakTb, peakAdc, pad));
+      fLogger -> Info(MESSAGE_ORIGIN, Form("row: %d, layer: %d, tb: %d, adc: %f", pad -> GetRow(), pad -> GetLayer(), peakTb, peakAdc));
 #endif
 
     }
