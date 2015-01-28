@@ -1,4 +1,4 @@
-# Create a library called "libSTDigi" which includes the source files given in the array .
+# Create a library called "libSTUtil" which includes the source files given in the array .
 
 set(INCLUDE_DIRECTORIES
 ${ROOT_INCLUDE_DIR} 
@@ -7,10 +7,6 @@ ${CMAKE_SOURCE_DIR}/fairtools
 ${CMAKE_SOURCE_DIR}/parbase
 ${CMAKE_SOURCE_DIR}/geobase
 # Add all the folders having header files you used in the code.
-${CMAKE_SOURCE_DIR}/SPiRIT/mc
-${CMAKE_SOURCE_DIR}/SPiRIT/par
-${CMAKE_SOURCE_DIR}/SPiRIT/format
-${CMAKE_SOURCE_DIR}/SPiRIT/digi
 ${CMAKE_SOURCE_DIR}/SPiRIT/util
 )
 
@@ -24,25 +20,18 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
-STDriftTask.cc
-STPadResponseTask.cc
-STElectronicsTask.cc
+STProcessManager.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
 
-Set(LINKDEF STDigiLinkDef.h)
-Set(LIBRARY_NAME STDigi)
+Set(LINKDEF STUtilLinkDef.h)
+Set(LIBRARY_NAME STUtil)
 Set(DEPENDENCIES
   Base
   Stack
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
-  STMC
-  STPar
-  STFormat
-  STReco
-  STUtil
 )
 
 GENERATE_LIBRARY()
