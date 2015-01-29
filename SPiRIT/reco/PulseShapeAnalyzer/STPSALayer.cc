@@ -20,6 +20,8 @@
 // ROOT classes
 #include "TH2D.h"
 
+#define DEBUG
+
 ClassImp(STPSALayer)
 
 STPSALayer::STPSALayer()
@@ -31,6 +33,9 @@ STPSALayer::STPSALayer()
 
   fPeakFinder = new TSpectrum();
 
+  fNumFiredPads = 0;
+  fArrayIdx = 0;
+
   fNumSidePads = 2;
   fNumSideTbs = 2;
   fPeakStorageSize = 50;
@@ -39,6 +44,7 @@ STPSALayer::STPSALayer()
   fPercPeakMin = 10;
   fPercPeakMax = 90;
 
+  fPadIdxArray = new Int_t[fPadLayers*fPadRows];
   fNumPeaks = new Int_t*[fPadRows];
   fPeakTbs = new Int_t**[fPadRows];
   fPeakValues = new Double_t**[fPadRows];
@@ -47,6 +53,7 @@ STPSALayer::STPSALayer()
     fPeakTbs[iRow] = new Int_t*[fPadLayers];
     fPeakValues[iRow] = new Double_t*[fPadLayers];
     for (Int_t iLayer = 0; iLayer < fPadLayers; iLayer++) {
+      fPadIdxArray[iLayer*fPadRows + iRow] = -1;
       fNumPeaks[iRow][iLayer] = 0;
       fPeakTbs[iRow][iLayer] = new Int_t[fPeakStorageSize];
       fPeakValues[iRow][iLayer] = new Double_t[fPeakStorageSize];
@@ -69,26 +76,30 @@ STPSALayer::~STPSALayer()
 void
 STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
 {
-  PreAnalyze(rawEvent);
+  Reset();
+
+  fPadArray = rawEvent -> GetPads();
+
+  PreAnalyze();
 
 #ifdef DEBUG
-  fLogger -> Info(MESSAGE_ORIGIN, "Start analyzing the evnet!");
+  fLogger -> Info(MESSAGE_ORIGIN, "Start analyzing the event!");
 #endif
 
   Int_t hitNum = 0;
 
-  STPad pad = fPadArray -> at(0);
-  Int_t totalPads = fPadArray -> size();
+  STPad pad = fPadArray -> at(GetUnusedPadIdx());
+  Int_t totalPads = fNumFiredPads;
 
 #ifndef DEBUG
   STProcessManager manager("STPSALayer", totalPads);
 #endif
 
   whileStart:
-  while (rawEvent -> GetNumPads()) {
+  while (fNumFiredPads) {
 
 #ifdef DEBUG
-    fLogger -> Info(MESSAGE_ORIGIN, Form("Start with pad row: %d, layer: %d, rest pads: %d", pad.GetRow(), pad.GetLayer(), rawEvent -> GetNumPads()));
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Start with pad row: %d, layer: %d, numPeaks: %d, rest pads: %d", pad.GetRow(), pad.GetLayer(), fNumPeaks[pad.GetRow()][pad.GetLayer()], fNumFiredPads));
 #endif
 
     Int_t row = pad.GetRow();
@@ -101,26 +112,13 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
       fLogger -> Info(MESSAGE_ORIGIN, Form("No peak in pad row: %d, layer: %d!", pad.GetRow(), pad.GetLayer()));
 #endif
 
-      DeletePeakInfo(rawEvent, row, layer, 0);
-      if (rawEvent -> GetNumPads())
-        pad = fPadArray -> at(0);
+      pad = fPadArray -> at(GetUnusedPadIdx());
 
       goto whileStart;
     }
 
     Int_t peakTb = fPeakTbs[row][layer][0];
     Double_t peakValue = fPeakValues[row][layer][0];
-
-    if (peakValue < fThreshold) {
-
-#ifdef DEBUG
-      fLogger -> Info(MESSAGE_ORIGIN, Form("Peak isn't bigger than threshold: %f in pad row: %d, layer: %d!", peakValue, pad.GetRow(), pad.GetLayer()));
-#endif
-
-      DeletePeakInfo(rawEvent, row, layer, 0);
-
-      goto whileStart;
-    }
 
     if (!(row == 0)) {
 
@@ -140,10 +138,7 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
             fLogger -> Info(MESSAGE_ORIGIN, Form("peakTb: %d, peakValue: %f, left tb: %d, peakValue: %f!", peakTb, peakValue, leftPeakTb, leftPeakValue));
 #endif
 
-            if (rawEvent -> GetNumPads()) {
-              STPad *nextPad = rawEvent -> GetPad(row - 1, layer);
-              pad = (!nextPad ? fPadArray -> at(0) : *nextPad);
-            }
+            pad = fPadArray -> at(fPadIdxArray[GetArrayIdx(row - 1, layer)]);
 
             goto whileStart;
           }
@@ -169,15 +164,24 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
             fLogger -> Info(MESSAGE_ORIGIN, Form("peakTb: %d, peakValue: %f, right tb: %d, peakValue: %f!", peakTb, peakValue, rightPeakTb, rightPeakValue));
 #endif
 
-            if (rawEvent -> GetNumPads()) {
-              STPad *nextPad = rawEvent -> GetPad(row + 1, layer);
-              pad = (!nextPad ? fPadArray -> at(0) : *nextPad);
-            }
+            pad = fPadArray -> at(fPadIdxArray[GetArrayIdx(row + 1, layer)]);
 
             goto whileStart;
           }
         }
       }
+    }
+
+    if (peakValue < fThreshold) {
+
+#ifdef DEBUG
+      fLogger -> Info(MESSAGE_ORIGIN, Form("Peak isn't bigger than threshold: %f in pad row: %d, layer: %d!", peakValue, pad.GetRow(), pad.GetLayer()));
+#endif
+
+      DeletePeakInfo(row, layer, 0);
+      pad = fPadArray -> at(GetUnusedPadIdx());
+
+      goto whileStart;
     }
 
     Double_t weightedRowSum = 0;
@@ -193,7 +197,7 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
       Int_t sideNumPeaks = fNumPeaks[iRow][layer];
 
 #ifdef DEBUG
-      fLogger -> Info(MESSAGE_ORIGIN, Form("iRow: %d layer: %d sideNumPeaks: %d!", iRow, layer, sideNumPeaks));
+      fLogger -> Info(MESSAGE_ORIGIN, Form("iRow: %d, layer: %d, sideNumPeaks: %d!", iRow, layer, sideNumPeaks));
 #endif
 
       if (!sideNumPeaks)
@@ -207,7 +211,7 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
           weightedRowSum += sidePeakValue*iRow;
           chargeSum += sidePeakValue;
 
-          DeletePeakInfo(rawEvent, iRow, layer, iPeak);
+          DeletePeakInfo(iRow, layer, iPeak);
         }
       }
     }
@@ -243,8 +247,7 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
       fLogger -> Info(MESSAGE_ORIGIN, Form("Too few points for fitting: %d!", selectedPoints));
 #endif
 
-      if (rawEvent -> GetNumPads())
-        pad = fPadArray -> at(0);
+      pad = fPadArray -> at(GetUnusedPadIdx());
 
       goto whileStart;
     }
@@ -267,10 +270,8 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
 
     hitNum++;
 
-    DeletePeakInfo(rawEvent, row, layer, 0);
-
 #ifndef DEBUG
-    manager.PrintOut(totalPads - fPadArray -> size());
+    manager.PrintOut(totalPads - fNumFiredPads);
 #endif
 
 #ifdef DEBUG
@@ -287,10 +288,14 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
 void
 STPSALayer::Reset()
 {
+  fNumFiredPads = 0;
+  fArrayIdx = 0;
+
   fPadArray = NULL;
 
   for (Int_t iRow = 0; iRow < fPadRows; iRow++) {
     for (Int_t iLayer = 0; iLayer < fPadLayers; iLayer++) {
+      fPadIdxArray[iLayer*fPadRows + iRow] = -1;
       fNumPeaks[iRow][iLayer] = 0;
 
       for (Int_t iPeak = 0; iPeak < fPeakStorageSize; iPeak++) {
@@ -301,32 +306,54 @@ STPSALayer::Reset()
   }
 }
 
+Int_t
+STPSALayer::GetArrayIdx(Int_t row, Int_t layer)
+{
+  return (layer*fPadRows + row);
+}
+
+Int_t
+STPSALayer::GetUnusedPadIdx()
+{
+  Int_t row = fArrayIdx%108;
+  Int_t layer = fArrayIdx/108;
+
+  if (fNumPeaks[row][layer]) {
+
+#ifdef DEBUG
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Unused fArrayIdx: %d, pad row: %d, layer: %d, fPadIdxArray: %d!", fArrayIdx, row, layer, fPadIdxArray[fArrayIdx]));
+#endif
+
+    return fPadIdxArray[fArrayIdx];
+  } else {
+    fArrayIdx++;
+    
+    return GetUnusedPadIdx();
+  }
+}
+
 void
-STPSALayer::PreAnalyze(STRawEvent *rawEvent)
+STPSALayer::PreAnalyze()
 {
 #ifdef DEBUG
   fLogger -> Info(MESSAGE_ORIGIN, "Start pre-analyzing!");
 #endif
-
-  Reset();
-
-  fPadArray = rawEvent -> GetPads();
   
-  Int_t numPads = rawEvent -> GetNumPads();
+  Int_t numPads = fPadArray -> size();
   Int_t hitNum = 0;
   for (Int_t iPad = 0; iPad < numPads; iPad++) {
-    STPad *pad = rawEvent -> GetPad(iPad);
+    STPad pad = fPadArray -> at(iPad);
 
-    Int_t row = pad -> GetRow();
-    Int_t layer = pad -> GetLayer();
+    Int_t row = pad.GetRow();
+    Int_t layer = pad.GetLayer();
 
-    if (!(pad -> IsPedestalSubtracted())) {
+    if (!(pad.IsPedestalSubtracted())) {
       fLogger -> Error(MESSAGE_ORIGIN, "Pedestal should be subtracted to use this class!");
 
       std::exit(0);
     }
 
-    Double_t *adc = pad -> GetADC();
+    Double_t *adc = pad.GetADC();
 
     Float_t floatADC[512] = {0};
     Float_t dummy[512] = {0};
@@ -338,6 +365,8 @@ STPSALayer::PreAnalyze(STRawEvent *rawEvent)
     if (numPeaks == 0)
       continue;
 
+    fNumFiredPads++;
+    fPadIdxArray[layer*fPadRows + row] = iPad;
     fNumPeaks[row][layer] = numPeaks;
 
     for (Int_t iPeak = 0; iPeak < numPeaks; iPeak++) {
@@ -348,7 +377,7 @@ STPSALayer::PreAnalyze(STRawEvent *rawEvent)
       fPeakValues[row][layer][iPeak] = peakAdc;
 
 #ifdef DEBUG
-      fLogger -> Info(MESSAGE_ORIGIN, Form("row: %d, layer: %d, tb: %d, adc: %f", pad -> GetRow(), pad -> GetLayer(), peakTb, peakAdc));
+      fLogger -> Info(MESSAGE_ORIGIN, Form("row: %d, layer: %d, tb: %d, adc: %f", pad.GetRow(), pad.GetLayer(), peakTb, peakAdc));
 #endif
 
     }
@@ -360,29 +389,32 @@ STPSALayer::PreAnalyze(STRawEvent *rawEvent)
 }
 
 void
-STPSALayer::DeletePeakInfo(STRawEvent *rawEvent, Int_t row, Int_t layer, Int_t peakNum)
+STPSALayer::DeletePeakInfo(Int_t row, Int_t layer, Int_t peakNum)
 {
+  if (fNumPeaks[row][layer]) {
+
+#ifdef DEBUG
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Delete peak info - row: %d, layer: %d, peakNum: %d!", row, layer, peakNum));
+#endif
+
+    for (Int_t iPeak = peakNum; iPeak < fNumPeaks[row][layer]; iPeak++) {
+      fPeakTbs[row][layer][iPeak] = fPeakTbs[row][layer][iPeak + 1];
+      fPeakValues[row][layer][iPeak] = fPeakValues[row][layer][iPeak + 1];
+    }
+
+    fNumPeaks[row][layer]--;
+  }
+
   if (!fNumPeaks[row][layer]) {
 
 #ifdef DEBUG
     fLogger -> Info(MESSAGE_ORIGIN, Form("Delete pad row: %d, layer: %d!", row, layer));
 #endif
 
-    rawEvent -> RemovePad(row , layer);
+    fNumFiredPads--;
 
     return;
   }
-
-#ifdef DEBUG
-  fLogger -> Info(MESSAGE_ORIGIN, Form("Delete peak info - row: %d, layer: %d, peakNum: %d!", row, layer, peakNum));
-#endif
-
-  for (Int_t iPeak = peakNum; iPeak < fNumPeaks[row][layer]; iPeak++) {
-    fPeakTbs[row][layer][iPeak] = fPeakTbs[row][layer][iPeak + 1];
-    fPeakValues[row][layer][iPeak] = fPeakValues[row][layer][iPeak + 1];
-  }
-
-  fNumPeaks[row][layer]--;
 }
 
 void

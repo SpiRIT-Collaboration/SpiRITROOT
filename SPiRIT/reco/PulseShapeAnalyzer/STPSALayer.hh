@@ -32,13 +32,19 @@ class STPSALayer : public STPSA
 
   private:
     void Reset();
-    void PreAnalyze(STRawEvent *rawEvent);
-    void DeletePeakInfo(STRawEvent *rawEvent, Int_t row, Int_t layer, Int_t peakNum);
+    Int_t GetArrayIdx(Int_t row, Int_t layer);
+    Int_t GetUnusedPadIdx();
+    void PreAnalyze();
+    void DeletePeakInfo(Int_t row, Int_t layer, Int_t peakNum);
     void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope);
 
     TSpectrum *fPeakFinder;                    ///< TSpectrum object
 
     std::vector<STPad> *fPadArray;             ///< Pad array pointer in STRawEvent
+
+    Int_t fNumFiredPads;                       ///< The number of total fired pads
+    Int_t *fPadIdxArray;                       ///< Array of pad index in fPadArray
+    Int_t fArrayIdx;                           ///< Row index to point unused pad
 
     Int_t fNumSidePads;                        ///< The number of pads to average side of the pad having the highest peak
     Int_t fNumSideTbs;                         ///< The number of tbs to search peak near the maximum peak
