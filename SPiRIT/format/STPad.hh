@@ -36,6 +36,8 @@ class STPad : public TObject
     void SetADC(Double_t *val);
     void SetADC(Int_t idx, Double_t val);
 
+    STPad &operator= (STPad right);
+
     // getters
     Int_t GetLayer();
     Int_t GetRow();
@@ -61,7 +63,7 @@ class STPad : public TObject
     Bool_t fIsGainCalibrated;
     Double_t fAdc[512];
 
-  ClassDef(STPad, 1);
+  ClassDef(STPad, 2);
 };
 
 #endif

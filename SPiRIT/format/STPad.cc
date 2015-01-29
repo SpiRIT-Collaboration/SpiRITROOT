@@ -54,6 +54,24 @@ void STPad::SetMaxADCIdx(Int_t val)           { fMaxAdcIdx = val; }
 void STPad::SetADC(Double_t *val)             { memcpy(fAdc, val, sizeof(fAdc)); }
 void STPad::SetADC(Int_t idx, Double_t val)   { fAdc[idx] = val; }
 
+STPad &STPad::operator= (STPad right)
+{
+  Initialize();
+
+  fRow = right.GetRow();
+  fLayer = right.GetLayer();
+
+  memcpy(fRawAdc, right.GetRawADC(), sizeof(fRawAdc));
+  memcpy(fAdc, right.GetADC(), sizeof(fAdc));
+
+  fMaxAdcIdx = right.GetMaxADCIdx();
+
+  fIsPedestalSubtracted = right.IsPedestalSubtracted();
+  fIsGainCalibrated = right.IsGainCalibrated();
+
+  return *this;
+}
+
 // getters
  Int_t  STPad::GetLayer()             { return fLayer; }
  Int_t  STPad::GetRow()               { return fRow; }
@@ -84,4 +102,3 @@ Double_t STPad::GetADC(Int_t idx)
 
   return fAdc[idx];
 }
-
