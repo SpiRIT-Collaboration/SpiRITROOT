@@ -17,11 +17,6 @@
 #include <cmath>
 #include <cstdlib>
 
-// ROOT classes
-#include "TH2D.h"
-
-#define DEBUG
-
 ClassImp(STPSALayer)
 
 STPSALayer::STPSALayer()
@@ -207,7 +202,7 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
         Int_t sidePeakTb = fPeakTbs[iRow][layer][iPeak];
         Int_t sidePeakValue = fPeakValues[iRow][layer][iPeak];
 
-        if (TMath::Abs(sidePeakTb - peakTb) < 3) {
+        if (TMath::Abs(sidePeakTb - peakTb) < fNumSideTbs) {
           weightedRowSum += sidePeakValue*iRow;
           chargeSum += sidePeakValue;
 
@@ -315,8 +310,8 @@ STPSALayer::GetArrayIdx(Int_t row, Int_t layer)
 Int_t
 STPSALayer::GetUnusedPadIdx()
 {
-  Int_t row = fArrayIdx%108;
-  Int_t layer = fArrayIdx/108;
+  Int_t row = fArrayIdx%fPadRows;
+  Int_t layer = fArrayIdx/fPadRows;
 
   if (fNumPeaks[row][layer]) {
 
