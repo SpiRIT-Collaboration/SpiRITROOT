@@ -41,21 +41,16 @@ STPSALayer::STPSALayer()
 
   fPadIdxArray = new Int_t[fPadLayers*fPadRows];
   fNumPeaks = new Int_t*[fPadRows];
-  fPeakTbs = new Int_t**[fPadRows];
-  fPeakValues = new Double_t**[fPadRows];
+  fPeaks = new STPeak**[fPadRows];
   for (Int_t iRow = 0; iRow < fPadRows; iRow++) {
     fNumPeaks[iRow] = new Int_t[fPadLayers];
-    fPeakTbs[iRow] = new Int_t*[fPadLayers];
-    fPeakValues[iRow] = new Double_t*[fPadLayers];
+    fPeaks[iRow] = new STPeak*[fPadLayers];
     for (Int_t iLayer = 0; iLayer < fPadLayers; iLayer++) {
       fPadIdxArray[iLayer*fPadRows + iRow] = -1;
       fNumPeaks[iRow][iLayer] = 0;
-      fPeakTbs[iRow][iLayer] = new Int_t[fPeakStorageSize];
-      fPeakValues[iRow][iLayer] = new Double_t[fPeakStorageSize];
-      for (Int_t iPeak = 0; iPeak < fPeakStorageSize; iPeak++) {
-        fPeakTbs[iRow][iLayer][iPeak] = 0;
-        fPeakValues[iRow][iLayer][iPeak] = 0;
-      }
+      fPeaks[iRow][iLayer] = new STPeak[fPeakStorageSize];
+      for (Int_t iPeak = 0; iPeak < fPeakStorageSize; iPeak++)
+        fPeaks[iRow][iLayer][iPeak].Reset();
     }
   }
 
@@ -112,8 +107,8 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
       goto whileStart;
     }
 
-    Int_t peakTb = fPeakTbs[row][layer][0];
-    Double_t peakValue = fPeakValues[row][layer][0];
+    Int_t peakTb = fPeaks[row][layer][0].tb;
+    Double_t peakValue = fPeaks[row][layer][0].value;
 
     if (!(row == 0)) {
 
@@ -124,8 +119,8 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
       Int_t leftNumPeaks = fNumPeaks[row - 1][layer];
       if (leftNumPeaks) {
         for (Int_t iPeak = 0; iPeak < leftNumPeaks; iPeak++) {
-          Int_t leftPeakTb = fPeakTbs[row - 1][layer][iPeak];
-          Double_t leftPeakValue = fPeakValues[row - 1][layer][iPeak];
+          Int_t leftPeakTb = fPeaks[row - 1][layer][iPeak].tb;
+          Double_t leftPeakValue = fPeaks[row - 1][layer][iPeak].value;
 
           if (TMath::Abs(leftPeakTb - peakTb) < fNumSideTbs && peakValue < leftPeakValue) {
 
@@ -150,8 +145,8 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
       Int_t rightNumPeaks = fNumPeaks[row + 1][layer];
       if (rightNumPeaks) {
         for (Int_t iPeak = 0; iPeak < rightNumPeaks; iPeak++) {
-          Int_t rightPeakTb = fPeakTbs[row + 1][layer][iPeak];
-          Double_t rightPeakValue = fPeakValues[row + 1][layer][iPeak];
+          Int_t rightPeakTb = fPeaks[row + 1][layer][iPeak].tb;
+          Double_t rightPeakValue = fPeaks[row + 1][layer][iPeak].value;
 
           if (TMath::Abs(rightPeakTb - peakTb) < fNumSideTbs && peakValue < rightPeakValue) {
 
@@ -199,8 +194,8 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
         continue;
 
       for (Int_t iPeak = 0; iPeak < sideNumPeaks; iPeak++) {
-        Int_t sidePeakTb = fPeakTbs[iRow][layer][iPeak];
-        Int_t sidePeakValue = fPeakValues[iRow][layer][iPeak];
+        Int_t sidePeakTb = fPeaks[iRow][layer][iPeak].tb;
+        Int_t sidePeakValue = fPeaks[iRow][layer][iPeak].value;
 
         if (TMath::Abs(sidePeakTb - peakTb) < fNumSideTbs) {
           weightedRowSum += sidePeakValue*iRow;
@@ -293,10 +288,8 @@ STPSALayer::Reset()
       fPadIdxArray[iLayer*fPadRows + iRow] = -1;
       fNumPeaks[iRow][iLayer] = 0;
 
-      for (Int_t iPeak = 0; iPeak < fPeakStorageSize; iPeak++) {
-        fPeakTbs[iRow][iLayer][iPeak] = 0;
-        fPeakValues[iRow][iLayer][iPeak] = 0;
-      }
+      for (Int_t iPeak = 0; iPeak < fPeakStorageSize; iPeak++)
+        fPeaks[iRow][iLayer][iPeak].Reset();
     }
   }
 }
@@ -368,8 +361,9 @@ STPSALayer::PreAnalyze()
       Int_t peakTb = (Int_t)ceil((fPeakFinder -> GetPositionX())[iPeak]);
       Double_t peakAdc = adc[peakTb];
 
-      fPeakTbs[row][layer][iPeak] = peakTb;
-      fPeakValues[row][layer][iPeak] = peakAdc;
+      fPeaks[row][layer][iPeak].index = iPad;
+      fPeaks[row][layer][iPeak].tb = peakTb;
+      fPeaks[row][layer][iPeak].value = peakAdc;
 
 #ifdef DEBUG
       fLogger -> Info(MESSAGE_ORIGIN, Form("row: %d, layer: %d, tb: %d, adc: %f", pad.GetRow(), pad.GetLayer(), peakTb, peakAdc));
@@ -393,8 +387,8 @@ STPSALayer::DeletePeakInfo(Int_t row, Int_t layer, Int_t peakNum)
 #endif
 
     for (Int_t iPeak = peakNum; iPeak < fNumPeaks[row][layer]; iPeak++) {
-      fPeakTbs[row][layer][iPeak] = fPeakTbs[row][layer][iPeak + 1];
-      fPeakValues[row][layer][iPeak] = fPeakValues[row][layer][iPeak + 1];
+      fPeaks[row][layer][iPeak].tb = fPeaks[row][layer][iPeak + 1].tb;
+      fPeaks[row][layer][iPeak].value = fPeaks[row][layer][iPeak + 1].value;
     }
 
     fNumPeaks[row][layer]--;

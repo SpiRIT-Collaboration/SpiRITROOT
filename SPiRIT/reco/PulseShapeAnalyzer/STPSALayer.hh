@@ -22,6 +22,8 @@
 // STL
 #include <vector>
 
+class STPeak;
+
 class STPSALayer : public STPSA
 {
   public:
@@ -51,12 +53,23 @@ class STPSALayer : public STPSA
     Int_t **fNumPeaks;                         ///< The number of peaks in the fired pad
 
     Int_t fPeakStorageSize;                    ///< Maximum number of peaks in a pad
-    Int_t ***fPeakTbs;                         ///< Peak positions in amplitude increasing order
-    Double_t ***fPeakValues;                   ///< Peak amplitude in increasing order
+    STPeak ***fPeaks;                          ///< Peak container pointer
 
     Int_t fMinPoints;                          ///< Minimum points of slope for determing the hit time
     Int_t fPercPeakMin;                        ///< Minimum percentage of peak for determinig the hit time
     Int_t fPercPeakMax;                        ///< Maximum percentage of peak for determinig the hit time
 
   ClassDef(STPSALayer, 1)
+};
+
+class STPeak
+{
+  public:
+    Int_t index;
+    Int_t tb;
+    Double_t value;
+
+    void Reset() { index = -1; tb = -1; value = -1; } 
+
+    STPeak &operator=(STPeak right) { index = right.index; tb = right.tb; value = right.value; return *this; }
 };
