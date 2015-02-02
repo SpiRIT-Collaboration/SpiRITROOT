@@ -31,6 +31,11 @@ STPSALayer::STPSALayer()
   fNumFiredPads = 0;
   fArrayIdx = 0;
 
+  fIgnoreLeft = kFALSE;
+  fIgnoreRight = kFALSE;
+  fPrevRightPeak.Reset();
+  fPrevLeftPeak.Reset();
+
   fNumSidePads = 2;
   fNumSideTbs = 2;
   fPeakStorageSize = 50;
@@ -110,6 +115,34 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
     Int_t peakTb = fPeaks[row][layer][0].tb;
     Double_t peakValue = fPeaks[row][layer][0].value;
 
+    if (fIgnoreLeft) {
+      Int_t iPeak = 0;
+      while (1) { 
+        peakTb = fPeaks[row][layer][iPeak].tb;
+        peakValue = fPeaks[row][layer][iPeak].value;
+
+        if (TMath::Abs(fPrevLeftPeak.tb - peakTb) < fNumSideTbs && peakValue >= fPrevLeftPeak.value)
+          break;
+        else {
+          iPeak++;
+          continue;
+        }
+      }
+    } else if (fIgnoreRight) {
+      Int_t iPeak = 0;
+      while (1) { 
+        peakTb = fPeaks[row][layer][iPeak].tb;
+        peakValue = fPeaks[row][layer][iPeak].value;
+
+        if (TMath::Abs(fPrevRightPeak.tb - peakTb) < fNumSideTbs && peakValue >= fPrevRightPeak.value)
+          break;
+        else {
+          iPeak++;
+          continue;
+        }
+      }
+    }
+
     if (!(row == 0)) {
 
 #ifdef DEBUG
@@ -129,12 +162,19 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
 #endif
 
             pad = fPadArray -> at(fPadIdxArray[GetArrayIdx(row - 1, layer)]);
+            fPrevRightPeak.index = fPeaks[row - 1][layer][iPeak].index;
+            fPrevRightPeak.tb = leftPeakTb;
+            fPrevRightPeak.value = leftPeakValue;
+            fIgnoreRight = kTRUE;
 
             goto whileStart;
           }
         }
       }
     }
+    
+    fPrevRightPeak.Reset();
+    fIgnoreLeft = kFALSE;
 
     if (!(row + 1 == fPadRows)) {
 
@@ -155,12 +195,19 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
 #endif
 
             pad = fPadArray -> at(fPadIdxArray[GetArrayIdx(row + 1, layer)]);
+            fPrevLeftPeak.index = fPeaks[row + 1][layer][iPeak].index;
+            fPrevLeftPeak.tb = rightPeakTb;
+            fPrevLeftPeak.value = rightPeakValue;
+            fIgnoreLeft = kTRUE;
 
             goto whileStart;
           }
         }
       }
     }
+
+    fPrevLeftPeak.Reset();
+    fIgnoreRight = kFALSE;
 
     if (peakValue < fThreshold) {
 
@@ -280,6 +327,12 @@ STPSALayer::Reset()
 {
   fNumFiredPads = 0;
   fArrayIdx = 0;
+
+  fIgnoreLeft = kFALSE;
+  fIgnoreRight = kFALSE;
+
+  fPrevRightPeak.Reset();
+  fPrevLeftPeak.Reset();
 
   fPadArray = NULL;
 
