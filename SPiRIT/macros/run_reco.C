@@ -1,14 +1,16 @@
-void run_reco()
+void run_reco(TString filename)
 {
   FairLogger *logger = FairLogger::GetLogger();
-  logger -> SetLogFileName("genieLog.log");
+  logger -> SetLogFileName("run_reco.log");
   logger -> SetLogToFile(kTRUE);
   logger -> SetLogToScreen(kTRUE);
   logger -> SetLogVerbosityLevel("MEDIUM");
 
   FairRunAna* run = new FairRunAna();
   run -> SetInputFile("mc.dummy.root");
-  run -> SetOutputFile("output.root");
+  TString outputFile = filename;
+  outputFile.ReplaceAll(".graw", ".reco.root");
+  run -> SetOutputFile(outputFile.Data());
 
   TString file = "../parameters/ST.parameters.par";
 
@@ -20,25 +22,20 @@ void run_reco()
   rtdb -> setFirstInput(parIo2);
   rtdb -> setSecondInput(parIo1);
 
-//  STDigiPar *digiPar = (STDigiPar *) rtdb -> getContainer("STDigiPar");
+  STDigiPar *digiPar = (STDigiPar *) rtdb -> getContainer("STDigiPar");
 
   STDecoderTask *decoderTask = new STDecoderTask();
-  decoderTask -> AddData("SETGRAWFILE.graw");
-  decoderTask -> SetInternalPedestal(5, 20);
-//  decoderTask -> SetPedestal("../../../cosmic_RIKEN_20140715/CoBo_AsAd0-2014-07-11T18-56-57.670_0000.graw.root");
-  decoderTask -> SetNumTbs(512);
+  decoderTask -> AddData(filename.Data());
+  decoderTask -> SetFPNPedestal();
+  decoderTask -> SetNumTbs(digiPar -> GetNumTbs());
   decoderTask -> SetPersistence();
   run -> AddTask(decoderTask);
 
   STPSATask *psaTask = new STPSATask();
   psaTask -> SetPersistence();
-  psaTask -> SetThreshold(40);
+  psaTask -> SetPSAMode(2);
+  psaTask -> SetThreshold(50);
   run -> AddTask(psaTask);
-
-  STHitClusteringTask *hcTask = new STHitClusteringTask();
-  hcTask -> SetPersistence();
-  hcTask -> SetVerbose(2);
-  run -> AddTask(hcTask);
 
   run->Init();
 

@@ -1,4 +1,4 @@
-void makeDummy(const Int_t nEvents = 20000)
+void makeDummy(const Int_t nEvents = 100000)
 {
   gRandom -> SetSeed(time(0));
   
