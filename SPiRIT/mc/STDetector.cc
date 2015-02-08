@@ -18,6 +18,7 @@
 #include "TVirtualMC.h"
 
 #include <iostream>
+
 using std::cout;
 using std::endl;
 
@@ -55,67 +56,50 @@ STDetector::~STDetector()
   }
 }
 
-void STDetector::Initialize()
+void 
+STDetector::Initialize()
 {
   FairDetector::Initialize();
   FairRuntimeDb* rtdb= FairRun::Instance()->GetRuntimeDb();
   STGeoPar* par=(STGeoPar*)(rtdb->getContainer("STGeoPar"));
 }
 
-Bool_t  STDetector::ProcessHits(FairVolume* vol)
+Bool_t
+STDetector::ProcessHits(FairVolume* vol)
 {
-  /** This method is called from the MC stepping */
+  if(!(gMC -> IsTrackInside()))
+    return kFALSE;
 
-  //Set parameters at entrance of volume. Reset ELoss.
-//  if ( gMC->IsTrackEntering() ) {
+  fELoss = gMC->Edep();
+  if(fELoss==0)
+    return kFALSE;
 
-    if (!(gMC -> IsTrackInside()))
-      return kFALSE;
+  STStack* stack = (STStack*) gMC->GetStack();
 
-    fELoss  = gMC -> Edep();
+  fTrackID     = stack->GetCurrentTrackNumber();
+  fVolumeID    = vol->getMCid();
+  fTime        = gMC->TrackTime() * 1.0e09;
+  fLength      = gMC->TrackLength();
+  gMC->TrackPosition(fPos);
+  gMC->TrackMomentum(fMom);
 
-    if (fELoss == 0)
-      return kFALSE;
+  AddHit(fTrackID, fVolumeID, 
+         TVector3(fPos.X(),  fPos.Y(),  fPos.Z()),
+         TVector3(fMom.Px(), fMom.Py(), fMom.Pz()), 
+         fTime, fLength, fELoss);
 
-//    fELoss  = 0;
-    fTime   = gMC->TrackTime() * 1.0e09;
-    fLength = gMC->TrackLength();
-    gMC->TrackPosition(fPos);
-    gMC->TrackMomentum(fMom);
-//  }
-
-  // Sum energy loss for all steps in the active volume
-//  fELoss += gMC->Edep();
-
-  // Create STMCPoint at exit of active volume
-//  if ( gMC->IsTrackExiting()    ||
-//       gMC->IsTrackStop()       ||
-//       gMC->IsTrackDisappeared()   ) {
-    fTrackID  = gMC->GetStack()->GetCurrentTrackNumber();
-    fVolumeID = vol->getMCid();
-//    if (fELoss == 0. ) { return kFALSE; }
-    AddHit(fTrackID, fVolumeID, TVector3(fPos.X(),  fPos.Y(),  fPos.Z()),
-           TVector3(fMom.Px(), fMom.Py(), fMom.Pz()), fTime, fLength,
-           fELoss);
-
-    // Increment number of SPiRIT det points in TParticle
-    STStack* stack = (STStack*) gMC->GetStack();
-    stack->AddPoint(kSPiRIT);
-//  }
-
+  stack->AddPoint(kSPiRIT);
   return kTRUE;
 }
 
-void STDetector::EndOfEvent()
+void 
+STDetector::EndOfEvent()
 {
-
   fSTMCPointCollection->Clear();
-
 }
 
-
-
-void STDetector::Register()
+void 
+STDetector::Register()
 {
 
   /** This will create a branch in the output tree called
@@ -136,10 +120,12 @@ TClonesArray* STDetector::GetCollection(Int_t iColl) const
   else { return NULL; }
 }
 
+
 void STDetector::Reset()
 {
   fSTMCPointCollection->Clear();
 }
+
 
 void STDetector::ConstructGeometry()
 {
@@ -190,18 +176,20 @@ void STDetector::ConstructGeometry()
   ProcessNodes ( volList );
 }
 
-STMCPoint* STDetector::AddHit(Int_t trackID, Int_t detID,
-                                      TVector3 pos, TVector3 mom,
-                                      Double_t time, Double_t length,
-                                      Double_t eLoss)
+STMCPoint* 
+STDetector::AddHit(Int_t trackID, Int_t detID,
+                   TVector3 pos, TVector3 mom,
+                   Double_t time, Double_t length,
+                   Double_t eLoss)
 {
   TClonesArray& clref = *fSTMCPointCollection;
   Int_t size = clref.GetEntriesFast();
   return new(clref[size]) STMCPoint(trackID, detID, pos, mom,
-         time, length, eLoss);
+                                    time, length, eLoss);
 }
 
-Bool_t STDetector::CheckIfSensitive(std::string name)
+Bool_t
+STDetector::CheckIfSensitive(std::string name)
 {
   TString nameStr(name);
 

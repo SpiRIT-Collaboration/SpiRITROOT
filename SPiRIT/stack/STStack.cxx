@@ -33,6 +33,7 @@ STStack::STStack(Int_t size)
     fStack(),
     fParticles(new TClonesArray("TParticle", size)),
     fTracks(new TClonesArray("STMCTrack", size)),
+    fPrimaryTracks(new TClonesArray("STMCTrack", 100)),
     fStoreMap(),
     fStoreIter(),
     fIndexMap(),
@@ -65,6 +66,10 @@ STStack::~STStack()
   if (fTracks) {
     fTracks->Delete();
     delete fTracks;
+  }
+  if (fPrimaryTracks) {
+    fPrimaryTracks->Delete();
+    delete fPrimaryTracks;
   }
 }
 // -------------------------------------------------------------------------
@@ -180,6 +185,9 @@ TParticle* STStack::PopPrimaryForTracking(Int_t iPrim)
     Fatal("STStack::PopPrimaryForTracking", "Not a primary track");
   }
 
+  STMCTrack* track =
+    new( (*fPrimaryTracks)[iPrim]) STMCTrack(part);
+
   return part;
 
 }
@@ -241,7 +249,7 @@ void STStack::FillTrackArray()
     if (store) {
       STMCTrack* track =
         new( (*fTracks)[fNTracks]) STMCTrack(GetParticle(iPart));
-      fIndexMap[iPart] = fNTracks;
+      fIndexMap[iPart] = fNTracks; 
       // --> Set the number of points in the detectors for this track
       for (Int_t iDet=kREF; iDet<kSTOPHERE; iDet++) {
         pair<Int_t, Int_t> a(iPart, iDet);
@@ -333,6 +341,7 @@ void STStack::Reset()
   while (! fStack.empty() ) { fStack.pop(); }
   fParticles->Clear();
   fTracks->Clear();
+  fPrimaryTracks->Clear();
   fPointsMap.clear();
 }
 // -------------------------------------------------------------------------
@@ -342,7 +351,8 @@ void STStack::Reset()
 // -----   Public method Register   ----------------------------------------
 void STStack::Register()
 {
-  FairRootManager::Instance()->Register("MCTrack", "Stack", fTracks,kTRUE);
+  FairRootManager::Instance()->Register("MCTrack", "Stack", fTracks, kFALSE);
+  FairRootManager::Instance()->Register("PrimaryTrack", "Stack", fPrimaryTracks, kTRUE);
 }
 // -------------------------------------------------------------------------
 
@@ -398,8 +408,9 @@ void STStack::AddPoint(DetectorId detId, Int_t iTrack)
 Int_t STStack::GetCurrentParentTrackNumber() const
 {
   TParticle* currentPart = GetCurrentTrack();
-  if ( currentPart ) { return currentPart->GetFirstMother(); }
-  else { return -1; }
+
+  if(currentPart) return currentPart->GetFirstMother();
+  else return -1;
 }
 // -------------------------------------------------------------------------
 

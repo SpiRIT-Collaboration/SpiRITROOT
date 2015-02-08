@@ -217,6 +217,7 @@ class STStack : public FairGenericStack
 
     /** Array of FairMCTracks containg the tracks written to the output **/
     TClonesArray* fTracks;
+    TClonesArray* fPrimaryTracks;
 
 
     /** STL map from particle index to storage flag  **/
@@ -234,11 +235,12 @@ class STStack : public FairGenericStack
 
 
     /** Some indizes and counters **/
-    Int_t fCurrentTrack;  //! Index of current track
-    Int_t fNPrimaries;    //! Number of primary particles
-    Int_t fNParticles;    //! Number of entries in fParticles
-    Int_t fNTracks;       //! Number of entries in fTracks
-    Int_t fIndex;         //! Used for merging
+
+    Int_t fCurrentTrack;  //!< Index of current track
+    Int_t fNPrimaries;    //!< Number of primary particles
+    Int_t fNParticles;    //!< Number of entries in fParticles
+    Int_t fNTracks;       //!< Number of entries in fTracks
+    Int_t fIndex;         //!< Used for merging
 
 
     /** Variables defining the criteria for output selection **/
