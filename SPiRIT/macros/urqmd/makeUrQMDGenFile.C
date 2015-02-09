@@ -51,17 +51,24 @@ void makeUrQMDGenFile()
   Double_t px;
   Double_t py;
   Double_t pz;
-  Double_t pxl;
-  Double_t pyl;
-  Double_t pzl;
   Double_t tempmass;
   Double_t totalC;
+
+  Int_t nTracks;
+  vector<Double_t> pxl;
+  vector<Double_t> pyl;
+  vector<Double_t> pzl;
+  vector<Int_t>    pdgl;
 
   genfile<<10<<endl;
   for(Int_t i=0; i<10; i++){
     urqmd >> evtnum >> evtmult;
-    genfile<<evtnum<<" "<<evtmult<<endl;
 
+    nTracks=0;
+    pxl.clear();
+    pyl.clear();
+    pzl.clear();
+    pdgl.clear();
     for(Int_t j=1; j<=evtmult; j++){
       urqmd >> urA >> urZ >> px >> py >> pz;
 
@@ -77,9 +84,9 @@ void makeUrQMDGenFile()
         totalC = TMath::Sqrt(px*px+py*py+pz*pz+tempmass*tempmass);
         mLorentz.SetPxPyPzE(px,py,pz,totalC);
         mLorentz.Boost(beta);
-        pxl = mLorentz.Px()/1000.;
-        pyl = mLorentz.Py()/1000.;
-        pzl = mLorentz.Pz()/1000.;
+        pxl.push_back(mLorentz.Px()/1000.);
+        pyl.push_back(mLorentz.Py()/1000.);
+        pzl.push_back(mLorentz.Pz()/1000.);
 
         //Setting pdg
         if (urA==-1 && urZ==1)  pdg=211;
@@ -91,9 +98,15 @@ void makeUrQMDGenFile()
         if (urA==3  && urZ==1)  pdg=1000010030;
         if (urA==3  && urZ==2)  pdg=1000020030;
         if (urA==4  && urZ==2)  pdg=1000020040;
+        pdgl.push_back(pdg);
 
-        genfile<<pdg<<" "<<pxl<<" "<<pyl<<" "<<pzl<<endl;
+        nTracks++;
       }
     }
+    genfile<<i<<" "<<nTracks<<endl;
+    for(Int_t iTrack=0; iTrack<nTracks; iTrack++)
+      genfile<<pdgl[iTrack]<<" "<<pxl[iTrack]<<" "<<pyl[iTrack]<<" "<<pzl[iTrack]<<endl;
+
   }
+  genfile.close();
 }
