@@ -4,6 +4,7 @@
  */
 
 #include "STEventGenGenerator.hh"
+#include "TSystem.h"
 #include <iostream>
 
 using namespace std;
@@ -26,6 +27,9 @@ STEventGenGenerator::STEventGenGenerator(TString fileName)
   fV3Vertex(TVector3(0,0,0)),
   fNEvents(0)
 {
+  TString input_dir = gSystem->Getenv("SPIRITDIR");
+  fGenFileName = input_dir+"/input/"+fGenFileName;
+
   LOG(INFO)<<"-I Opening EventGen file "<<fGenFileName<<FairLogger::endl;
   fGenFile.open(fGenFileName.Data());
   if(!fGenFile.is_open())
@@ -57,7 +61,6 @@ STEventGenGenerator::ReadEvent(FairPrimaryGenerator* primGen)
   for(Int_t i=0; i<nTracks; i++){
     fGenFile>>pdg>>px>>py>>pz;
     primGen->AddTrack(pdg,px,py,pz,fV3Vertex.X(),fV3Vertex.Y(),fV3Vertex.Z());
-    cout<<pdg<<" "<<px<<" "<<py<<" "<<pz<<endl;
   }
 
   return kTRUE;
