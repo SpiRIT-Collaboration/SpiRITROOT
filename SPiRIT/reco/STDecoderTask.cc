@@ -57,7 +57,7 @@ void STDecoderTask::SetNumTbs(Int_t numTbs)                                { fNu
 void STDecoderTask::AddData(TString filename)                              { fDataList.push_back(filename); }
 void STDecoderTask::SetData(Int_t value)                                   { fDataNum = value; }
 void STDecoderTask::SetInternalPedestal(Int_t startTb, Int_t averageTbs)   { fUseInternalPedestal = kTRUE; fStartTb = startTb; fAverageTbs = averageTbs; } 
-void STDecoderTask::SetFPNPedestal()                                       { fUseFPNPedestal = kTRUE; fUseInternalPedestal = kFALSE; fPedestalFile = ""; }
+void STDecoderTask::SetFPNPedestal(Double_t threshold)                     { fUseFPNPedestal = kTRUE; fFPNSigmaThreshold = threshold; fUseInternalPedestal = kFALSE; fPedestalFile = ""; }
 void STDecoderTask::SetPedestalData(TString filename, Double_t rmsFactor)  { fPedestalFile = filename; fPedestalRMSFactor = rmsFactor; }
 void STDecoderTask::SetGainCalibrationData(TString filename)               { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainBase(Double_t constant, Double_t slope)         { fGainConstant = constant; fGainSlope = slope; }
@@ -98,7 +98,7 @@ STDecoderTask::Init()
   }
 
   if (fUseFPNPedestal)
-    fDecoder -> SetFPNPedestal();
+    fDecoder -> SetFPNPedestal(fFPNSigmaThreshold);
 
   if (fGainCalibrationFile.EqualTo(""))
     fLogger -> Info(MESSAGE_ORIGIN, "Gain not calibrated!");

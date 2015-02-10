@@ -26,19 +26,19 @@ void run_reco(TString filename)
 
   STDecoderTask *decoderTask = new STDecoderTask();
   decoderTask -> AddData(filename.Data());
-  decoderTask -> SetFPNPedestal();
+  decoderTask -> SetFPNPedestal(120);
   decoderTask -> SetNumTbs(digiPar -> GetNumTbs());
   decoderTask -> SetPersistence();
   run -> AddTask(decoderTask);
 
   STPSATask *psaTask = new STPSATask();
   psaTask -> SetPersistence();
-  psaTask -> SetPSAMode(2);
+  psaTask -> SetPSAMode(1);
   psaTask -> SetThreshold(50);
   run -> AddTask(psaTask);
 
   run->Init();
 
-  run->Run(0, 20000);
+  run->Run(0, 20);
 //  run->Run(0, 194);
 }

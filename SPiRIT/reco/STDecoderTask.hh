@@ -58,7 +58,7 @@ class STDecoderTask : public FairTask {
     /// Setting pedestal data file for external pedestal data.
     void SetPedestalData(TString filename, Double_t rmsFactor = 0);
     /// Setting to use FPN channels as pedestal
-    void SetFPNPedestal();
+    void SetFPNPedestal(Double_t threshold = 5);
     /// Setting gain calibration data file. If not set, gain is not calibrated.
     void SetGainCalibrationData(TString filename);
     /// Setting gain calibration base.
@@ -90,6 +90,7 @@ class STDecoderTask : public FairTask {
     TString fPedestalFile;        /// Pedestal data file name
     Double_t fPedestalRMSFactor;  /// Pedestal RMS factor that will be multiplied to external pedestal RMS value
     Bool_t fUseFPNPedestal;       /// Flas for using FPN channel as pedestal
+    Double_t fFPNSigmaThreshold;  /// 
 
     TString fGainCalibrationFile; /// Gain calibration data file name
     Double_t fGainConstant;       /// Gain calibration base constant

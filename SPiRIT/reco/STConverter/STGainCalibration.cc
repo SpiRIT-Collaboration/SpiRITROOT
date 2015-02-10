@@ -41,8 +41,8 @@ void STGainCalibration::Initialize()
 
   fDataType = "f";
 
-  memset(fGraph, NULL, sizeof(TGraphErrors)*108*112);
-  memset(fGraphR, NULL, sizeof(TGraphErrors)*108*112);
+  memset(fGraph, NULL, sizeof(TGraphErrors *)*108*112);
+  memset(fGraphR, NULL, sizeof(TGraphErrors *)*108*112);
 
   fBaseRow = -9999;
   fBaseLayer = -9999;

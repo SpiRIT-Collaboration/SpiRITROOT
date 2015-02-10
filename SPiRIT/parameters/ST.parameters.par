@@ -16,7 +16,7 @@ AnodeWirePlaneY:Double_t     -4.05   # mm
 GroundWirePlaneY:Double_t     -8.1   # mm
 GatingWirePlaneY:Double_t      -14   # mm
 EField:Double_t                  0
-NumTbs:Int_t                   256
+NumTbs:Int_t                   512
 SamplingRate:Int_t              25   # MHz
 DriftVelocity:Double_t        5.45   # cm/us
 DriftLength:Double_t           496   # mm
