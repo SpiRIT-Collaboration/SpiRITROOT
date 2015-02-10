@@ -282,8 +282,8 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
     Int_t coboID = frame -> GetCoboID();
 
     // Two lines below are temporary. Will be deleted in real experiment.
-    if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime)
-      coboID = fDecoderPtr -> GetCurrentInnerFrameID();
+//    if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime)
+//      coboID = fDecoderPtr -> GetCurrentInnerFrameID();
 
     Int_t asadID = frame -> GetAsadID();
 
