@@ -168,7 +168,7 @@ Bool_t GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor
       else
         adc = fRawAdc[index + iTb] - pedestal;
 
-      fAdc[index + iTb] = ((adc < 0 || fRawAdc[index + iTb] == 0) ? 0 : adc);
+      fAdc[index + iTb] = adc;
     }
   } else {
     Int_t fpnCh = GetFPNChannel(agetIdx, chIdx);
@@ -214,7 +214,7 @@ Bool_t GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor
       else
         adc = fRawAdc[index + iTb] - (fRawAdc[fpnIndex + iTb] - baselineDiff);
 
-      fAdc[index + iTb] = ((adc < 0 || fRawAdc[index + iTb] == 0) ? 0 : adc);
+      fAdc[index + iTb] = adc;
     }
   }
 
