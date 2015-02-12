@@ -30,8 +30,8 @@ class STGainCalibration : public TObject {
     Bool_t SetGainCalibrationData(TString gainCalibrationData, TString dataType);
 
     Bool_t IsSetGainCalibrationData();
-    Bool_t SetGainBase(Int_t row, Int_t layer);
-    Bool_t SetGainBase(Double_t constant, Double_t slope);
+    void SetGainBase(Int_t row, Int_t layer);
+    void SetGainBase(Double_t constant, Double_t slope);
     Bool_t CalibrateADC(Int_t padRow, Int_t padLayer, Int_t numTbs, Double_t *adc);
 
   private:

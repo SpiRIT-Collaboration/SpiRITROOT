@@ -41,8 +41,8 @@ void STGainCalibration::Initialize()
 
   fDataType = "f";
 
-  memset(fGraph, NULL, sizeof(TGraphErrors)*108*112);
-  memset(fGraphR, NULL, sizeof(TGraphErrors)*108*112);
+  memset(fGraph, 0, sizeof(TGraphErrors *)*108*112);
+  memset(fGraphR, 0, sizeof(TGraphErrors *)*108*112);
 
   fBaseRow = -9999;
   fBaseLayer = -9999;
@@ -97,13 +97,13 @@ Bool_t STGainCalibration::SetGainCalibrationData(TString gainCalibrationData, TS
   return kFALSE;
 }
 
-Bool_t STGainCalibration::SetGainBase(Int_t row, Int_t layer)
+void STGainCalibration::SetGainBase(Int_t row, Int_t layer)
 {
   fBaseRow = row;
   fBaseLayer = layer;
 }
 
-Bool_t STGainCalibration::SetGainBase(Double_t constant, Double_t slope)
+void STGainCalibration::SetGainBase(Double_t constant, Double_t slope)
 {
   fBaseConstant = constant;
   fBaseSlope = slope;
