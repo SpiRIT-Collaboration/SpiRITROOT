@@ -22,6 +22,9 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
+STEveEventManager.cc
+STEveEventManagerEditor.cc
+STEveReco.cc
 STEventDraw.cc
 STHitDraw.cc
 STHitClusterDraw.cc
@@ -34,6 +37,9 @@ Set(LIBRARY_NAME STEventDisplay) # Change the library name and delete this comme
 Set(DEPENDENCIES
     Base
     Stack
+    EventDisplay
+# ROOT Eve package
+    Eve
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
     STFormat
