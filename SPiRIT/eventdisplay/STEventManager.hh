@@ -16,18 +16,19 @@
 
 class TGListTreeItem;
 
-class STEveEventManager : public TEveEventManager
+class STEventManager : public TEveEventManager
 {
   public : 
-    static STEveEventManager* Instance();
-    STEveEventManager();
-    virtual ~STEveEventManager();
+    static STEventManager* Instance();
+    STEventManager();
+    virtual ~STEventManager();
 
     virtual void GotoEvent(Int_t event); ///< *MENU*
     virtual void NextEvent();            ///< *MENU*
     virtual void PrevEvent();            ///< *MENU*
 
     void AddTask(FairTask* task) { fRunAna->AddTask(task); }
+    virtual void InitRiemann(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
     virtual void Init(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
 
     virtual Int_t GetCurrentEvent() {return fEntry;}
@@ -45,11 +46,11 @@ class STEveEventManager : public TEveEventManager
 
     TCanvas* fCvsPadPlane;
 
-    static STEveEventManager* fInstance;
+    static STEventManager* fInstance;
 
-    STEveEventManager(const STEveEventManager&);
-    STEveEventManager& operator=(const STEveEventManager&);
+    STEventManager(const STEventManager&);
+    STEventManager& operator=(const STEventManager&);
 
 
-  ClassDef(STEveEventManager,1);
+  ClassDef(STEventManager,1);
 };

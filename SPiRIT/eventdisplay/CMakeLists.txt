@@ -10,6 +10,7 @@ ${CMAKE_SOURCE_DIR}/eventdisplay
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/SPiRIT/eventdisplay
 ${CMAKE_SOURCE_DIR}/SPiRIT/format
+${CMAKE_SOURCE_DIR}/SPiRIT/reco/RiemannTracking
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -22,9 +23,9 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
-STEveEventManager.cc
-STEveEventManagerEditor.cc
-STEveReco.cc
+STEventManager.cc
+STEventManagerEditor.cc
+STEventDrawTask.cc
 STEventDraw.cc
 STHitDraw.cc
 STHitClusterDraw.cc
@@ -43,6 +44,7 @@ Set(DEPENDENCIES
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
     STFormat
+    STReco
 )
 
 GENERATE_LIBRARY()

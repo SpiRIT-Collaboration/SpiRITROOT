@@ -1,5 +1,5 @@
-#include "STEveEventManagerEditor.hh"
-#include "STEveEventManager.hh"
+#include "STEventManagerEditor.hh"
+#include "STEventManager.hh"
 
 #include "FairRootManager.h"
 #include "FairRunAna.h"
@@ -19,13 +19,13 @@
 class TGWindow;
 class TObject;
 
-ClassImp(STEveEventManagerEditor)
+ClassImp(STEventManagerEditor)
 
-STEveEventManagerEditor::STEveEventManagerEditor
+STEventManagerEditor::STEventManagerEditor
 (const TGWindow* p, Int_t width, Int_t height, UInt_t options, Pixel_t back)
 : TGedFrame(p, width, height, options | kVerticalFrame, back),
   fObject(0),
-  fManager(STEveEventManager::Instance()),
+  fManager(STEventManager::Instance()),
   fCurrentEvent(0),
   fEventTime(NULL)
 {
@@ -33,13 +33,13 @@ STEveEventManagerEditor::STEveEventManagerEditor
 }
 
 void 
-STEveEventManagerEditor::Init()
+STEventManagerEditor::Init()
 {
   FairRootManager* fRootManager=FairRootManager::Instance();
   TChain* chain = fRootManager->GetInChain();
   Int_t Entries= chain->GetEntriesFast();
 
-  MakeTitle("STEveEventManager  Editor");
+  MakeTitle("STEventManager  Editor");
   TGVerticalFrame* fEventFrame= CreateEditorTabSubFrame("Event");
   TGCompositeFrame* title1 = new TGCompositeFrame(fEventFrame, 250, 10,
       kVerticalFrame | kLHintsExpandX |
@@ -76,7 +76,7 @@ STEveEventManagerEditor::Init()
                         TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
                         TGNumberFormat::kNELLimitMinMax, 0, Entries);
   f->AddFrame(fCurrentEvent, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
-  fCurrentEvent->Connect("ValueSet(Long_t)","STEveEventManagerEditor", 
+  fCurrentEvent->Connect("ValueSet(Long_t)","STEventManagerEditor", 
                          this, "SelectEvent()");
   title1->AddFrame(f);
 
@@ -89,13 +89,13 @@ STEveEventManagerEditor::Init()
 
   TGTextButton* fUpdate = new TGTextButton(title1, "Update");
   title1->AddFrame(fUpdate, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,1,1));
-  fUpdate->Connect("Clicked()", "STEveEventManagerEditor", this, "SelectEvent()");
+  fUpdate->Connect("Clicked()", "STEventManagerEditor", this, "SelectEvent()");
 
   fEventFrame->AddFrame(title1, new TGLayoutHints(kLHintsTop, 0, 0, 2, 0));
 }
 
 void 
-STEveEventManagerEditor::SelectEvent()
+STEventManagerEditor::SelectEvent()
 {
   fManager->GotoEvent(fCurrentEvent->GetIntNumber());
 
@@ -108,7 +108,7 @@ STEveEventManagerEditor::SelectEvent()
 }
 
 void 
-STEveEventManagerEditor::SetModel(TObject* obj)
+STEventManagerEditor::SetModel(TObject* obj)
 {
   fObject = obj;
 }

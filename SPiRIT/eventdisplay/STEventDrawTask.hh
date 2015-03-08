@@ -18,17 +18,19 @@
 #include "TH2D.h"
 #include "TGraph.h"
 
-#include "STEveEventManager.hh"
+#include "STEventManager.hh"
+#include "STRiemannTrack.hh"
+#include "STRiemannHit.hh"
 #include "STEvent.hh"
 #include "STHit.hh"
 
-class STEveReco : public FairTask
+class STEventDrawTask : public FairTask
 {
   public :
-    STEveReco();
-    STEveReco(TString modes);
+    STEventDrawTask();
+    STEventDrawTask(TString modes);
 
-    virtual ~STEveReco();
+    virtual ~STEventDrawTask();
 
     virtual InitStatus Init();
     virtual void Exec(Option_t* option);
@@ -37,23 +39,43 @@ class STEveReco : public FairTask
     void Set2DPlotRange(Int_t uaIdx);
     void SetThreshold(Int_t val) { fThreshold=val; }
 
+    void SetHitAttributes(Color_t, Size_t, Style_t);
+    void SetHitClusterAttributes(Color_t, Size_t, Style_t);
+    void SetRiemannAttributes(Color_t, Size_t, Style_t);
+
   private :
     void DrawPadPlane();
     void UpdateCvsPadPlane();
+
+    void DrawHitPoints();
+    void DrawHitClusterPoints();
+    void DrawRiemannHits();
 
     Bool_t fIs2DPlotRange;
 
     TClonesArray* fHitArray;
     TClonesArray* fHitClusterArray;
-    TClonesArray* fRiemannArray;
+    TClonesArray* fRiemannTrackArray;
     TClonesArray* fKalmanArray;
 
-    STEveEventManager* fEventManager;
+    STEventManager* fEventManager;
 
     Int_t fThreshold;
 
     TEvePointSet* fHitSet;
+    Color_t fHitColor;
+    Size_t  fHitSize;
+    Style_t fHitStyle;
+
     TEvePointSet* fHitClusterSet;
+    Color_t fHitClusterColor;
+    Size_t  fHitClusterSize;
+    Style_t fHitClusterStyle;
+
+    vector<TEvePointSet*> fRiemannSetArray;
+    Color_t fRiemannColor;
+    Size_t  fRiemannSize;
+    Style_t fRiemannStyle;
 
     TCanvas* fCvsPadPlane;
     TH2D* fPadPlane;
@@ -62,5 +84,5 @@ class STEveReco : public FairTask
     Int_t fMinX;
     Int_t fMaxX;
 
-    ClassDef(STEveReco,1);
+    ClassDef(STEventDrawTask,1);
 };
