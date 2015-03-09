@@ -32,7 +32,7 @@ STEventDrawTask::STEventDrawTask()
   fHitClusterSet(0),
   //fHitClusterColor(kAzure-5),
   fHitClusterColor(kYellow-5),
-  fHitClusterSize(1.5),
+  fHitClusterSize(1),
   fHitClusterStyle(kOpenCircle),
   fRiemannSetArray(0),
   fRiemannColor(kBlue),
@@ -130,7 +130,7 @@ STEventDrawTask::DrawHitClusterPoints()
     if(cluster.GetCharge()<fThreshold) continue;
     TVector3 position = cluster.GetPosition();
     fHitClusterSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
-    //cout << "cluster : " << position.X()/10. << " " << position.Y()/10. << " " << position.Z()/10. << endl;
+    //cout << "cluster : " << cluster.GetClusterID() << " " << position.X()/10. << " " << position.Y()/10. << " " << position.Z()/10. << endl;
     fHitClusterSet -> SetPointId(new TNamed(Form("HitCluster %d",iCluster),""));
   }
   gEve -> AddElement(fHitClusterSet);
@@ -140,12 +140,13 @@ void
 STEventDrawTask::DrawRiemannHits()
 {
   STRiemannTrack* track = 0;
-  STRiemannHit* hit = 0;
-  STHitCluster* cluster = 0;
+  STHitCluster* rCluster = 0;
   TEvePointSet* riemannClusterSet = 0;
 
+  STEvent* event = (STEvent*) fHitClusterArray->At(0);
+
   Int_t nTracks = fRiemannTrackArray -> GetEntries();
-  cout << "number of rieman tracks : " << nTracks << endl;
+  //cout << "number of rieman tracks : " << nTracks << endl;
   for(Int_t iTrack=0; iTrack<nTracks; iTrack++) 
   {
     track = (STRiemannTrack*) fRiemannTrackArray -> At(iTrack);
@@ -157,13 +158,15 @@ STEventDrawTask::DrawRiemannHits()
     riemannClusterSet -> SetMarkerStyle(fRiemannStyle);
     for(Int_t iCluster=0; iCluster<nClusters; iCluster++)
     {
-      hit = track -> GetHit(iCluster);
-      cout << "riemann hit : " << hit -> GetX().X() << " " << hit -> GetX().Y() << " " << hit -> GetX().Z() << endl;
-      cluster = track -> GetHit(iCluster) -> GetCluster();
-      if(cluster -> GetCharge()<fThreshold) continue;
-      TVector3 position = cluster -> GetPosition();
+      rCluster = track -> GetHit(iCluster) -> GetCluster();
+      if((rCluster->GetCharge())<fThreshold) continue;
+      Int_t id = rCluster -> GetClusterID();
+      //cout << id << endl;
+      STHitCluster oCluster = event->GetClusterArray()->at(id);
+
+      TVector3 position = oCluster.GetPosition();
       riemannClusterSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
-      cout << "riemann cluster: " << position.X()/10. << " " << position.Y()/10. << " " << position.Z()/10. << endl;
+      //cout << "riemann cluster: " << oCluster.GetClusterID() << " " << position.X()/10. << " " << position.Y()/10. << " " << position.Z()/10. << endl;
       riemannClusterSet -> SetPointId(new TNamed(Form("RiemanCluster %d",iCluster),""));
     }
     gEve -> AddElement(riemannClusterSet);

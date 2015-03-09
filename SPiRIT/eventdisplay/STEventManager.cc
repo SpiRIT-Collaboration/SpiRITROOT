@@ -139,7 +139,7 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
   dfViewer->CurrentCamera().RotateRad(-.7, 0.5);
   dfViewer->DoDraw();
 
-  RunEvent();
+  //RunEvent();
 }
 
 void 
