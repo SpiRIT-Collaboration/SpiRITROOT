@@ -15,8 +15,8 @@ void run_eve(TString tag = "test")
 
   FairRootManager* ioman = FairRootManager::Instance();
 
-  STEveEventManager *eveMan = new STEveEventManager();
-  STEveReco* eve = new STEveReco();
+  STEventManager *eveMan = new STEventManager();
+  STEventDrawTask* eve = new STEventDrawTask();
 
   eveMan->AddTask(eve);
   eveMan->Init();                    
