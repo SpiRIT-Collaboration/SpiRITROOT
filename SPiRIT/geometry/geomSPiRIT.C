@@ -129,7 +129,7 @@ void geomSPiRIT()
   TGeoVolume *cageCorner4 = gGeoManager->MakeTubs("cageCorner4",aluminium,rActiveCorner,rCageCorner,yActiveC/2,270,360);
 
   TGeoCompositeShape* cageCornerComposite = new TGeoCompositeShape("cageCornerComposite", "cageCorner1:combiActiveCorner1+cageCorner2:combiActiveCorner2+cageCorner3:combiActiveCorner3+cageCorner4:combiActiveCorner4");
-  TGeoVolume *cageCorner = new TGeoVolume("field_cage_in",cageCornerComposite);
+  TGeoVolume *cageCorner = new TGeoVolume("cageCorner",cageCornerComposite);
   cageCorner -> SetMedium(aluminium);
 
   // ----------------------------------------------------
@@ -204,7 +204,7 @@ void geomSPiRIT()
   TGeoVolume *frontWindowFrameR = gGeoManager->MakeBox("frontWindowFrameR",aluminium,fwinframesidex/2.,fwinframesidey/2.,fwinframez/2.);
   TGeoVolume *frontWindowFrameL = gGeoManager->MakeBox("frontWindowFrameL",aluminium,fwinframesidex/2.,fwinframesidey/2.,fwinframez/2.);
   TGeoVolume *frontWindowFrameT = gGeoManager->MakeBox("frontWindowFrameT",aluminium,fwinframetopx/2.,fwinframetopy/2.,fwinframez/2.);
-  TGeoVolume *frontWindowFrameL = gGeoManager->MakeBox("frontWindowFrameB",aluminium,fwinframebotx/2.,fwinframeboty/2.,fwinframez/2.);
+  TGeoVolume *frontWindowFrameB = gGeoManager->MakeBox("frontWindowFrameB",aluminium,fwinframebotx/2.,fwinframeboty/2.,fwinframez/2.);
   TGeoVolume *frontWindowTrapR  = gGeoManager->MakeTrap("frontWindowTrapR",aluminium,fwinframez/2.0,traptheta,0.0,fwindowy/2.0,trapbase/2.0,trapbase/2.0,0.0,fwindowy/2.0,0.0,0.0,0.0);
   TGeoVolume *frontWindowTrapL  = gGeoManager->MakeTrap("frontWindowTrapL",aluminium,fwinframez/2.0,-traptheta,0.0,fwindowy/2.0,trapbase/2.0,trapbase/2.0,0.0,fwindowy/2.0,0.0,0.0,0.0);
 
@@ -506,7 +506,7 @@ void geomSPiRIT()
   topFrame->AddNode(topframefb,1,trtopframefront);
   topFrame->AddNode(topframefb,2,trtopframeback);
 
-  Int_t colorTopFrame = kBlue+4;
+  Int_t colorTopFrame = 12;
   topframeside -> SetLineColor(colorTopFrame);
   topframeside -> SetLineColor(colorTopFrame);
   topframefb   -> SetLineColor(colorTopFrame);
@@ -533,7 +533,7 @@ void geomSPiRIT()
   topFrame->AddNode(topframefblexan,1,trtopframefrontlexan);
   topFrame->AddNode(topframefblexan,2,trtopframebacklexan);
 
-  Int_t colorTopLexan = kBlue-3;
+  Int_t colorTopLexan = 12;
   topframesidelexan -> SetLineColor(colorTopLexan);
   topframesidelexan -> SetLineColor(colorTopLexan);
   topframefblexan -> SetLineColor(colorTopLexan);
@@ -645,12 +645,12 @@ void geomSPiRIT()
   for (Int_t i=0; i<1455; i++) {
     cowireout[i] = new TGeoCombiTrans("cowireout",0.0,-0.7127,72.75-0.1*i,rowire);
     cowiremid[i] = new TGeoCombiTrans("cowiremid",0.0,-0.1127,72.75-0.1*i,rowire);
-    wirePlane->AddNode(wpoutwire,i+1,cowireout[i]);
-    wirePlane->AddNode(wpmidwire,i+1,cowiremid[i]);
+    //wirePlane->AddNode(wpoutwire,i+1,cowireout[i]);
+    //wirePlane->AddNode(wpmidwire,i+1,cowiremid[i]);
   }
   for (Int_t i=0; i<363; i++) {
     cowirein[i] = new TGeoCombiTrans("cowirein",0.0,0.2873,72.6-0.4*i,rowire);
-    wirePlane->AddNode(wpinwire,i+1,cowirein[i]);
+    //wirePlane->AddNode(wpinwire,i+1,cowirein[i]);
   }
   TGeoTranslation *trwireplane = new TGeoTranslation(0.0,26.9575,4.804);
 
@@ -736,13 +736,13 @@ void geomSPiRIT()
   tpc -> AddNode(backWindow,1,trbackwindow);
   tpc -> AddNode(topFrame,1);
   tpc -> AddNode(ribmain,1,trrib);
-  //tpc -> AddNode(wirePlane,1,trwireplane);
-  tpc -> AddNode(padPlane,1,trpadplane);
+  tpc -> AddNode(wirePlane,1,trwireplane);
+  //tpc -> AddNode(padPlane,1,trpadplane);
 
   // ----------------------------------------------------
   //  Visual Attributes 
   // ----------------------------------------------------
-  Int_t transparency = 0;
+  Int_t transparency = 80;
   Int_t transparencyActive = 70 + transparency; if(transparencyActive>100) transparencyActive = 100;
   Int_t transparencyWindow = 50 + transparency; if(transparencyWindow>100) transparencyWindow = 100;
   Int_t transparencyWire   = 50 + transparency; if(transparencyWire  >100) transparencyWire   = 100;
@@ -764,8 +764,9 @@ void geomSPiRIT()
   padPlane          -> SetTransparency(transparency);
 
   active            -> SetLineColor(kBlue-10);
-  //cageFront         -> SetLineColor(kOrange+3);
-  cageFront         -> SetLineColor(kOrange-4);
+  //cageFront         -> SetLineColor(kOrange-7);
+  cageFront         -> SetLineColor(kBlue-4);
+  //cageFront         -> SetLineColor(kOrange-4);
   cageSide          -> SetLineColor(18);
   cageCorner        -> SetLineColor(18);
   frontWindow       -> SetLineColor(18);
