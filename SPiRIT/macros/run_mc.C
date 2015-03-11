@@ -29,7 +29,7 @@ void run_mc(TString tag = "test")
   FairModule* cave= new FairCave("CAVE");
   cave -> SetGeometryFileName("cave_vacuum.geo"); 
   FairDetector* spirit = new STDetector("STDetector", kTRUE);
-  spirit -> SetGeometryFileName("spirit_v03.1.root");
+  spirit -> SetGeometryFileName("geomSPiRIT.root");
 
 
   // -----   Create and set magnetic field   --------------------------------
@@ -102,7 +102,4 @@ void run_mc(TString tag = "test")
   // -----   Start run   ----------------------------------------------------
   run -> Run(nEvents);
   delete run;
-
-
-  cout << "Output file : " << outFile << endl;
 }
