@@ -31,9 +31,9 @@ STEventDrawTask::STEventDrawTask()
   fHitStyle(kFullDotMedium),
   fHitClusterSet(0),
   //fHitClusterColor(kAzure-5),
-  fHitClusterColor(kYellow-5),
+  fHitClusterColor(kWhite),
   fHitClusterSize(1),
-  fHitClusterStyle(kOpenCircle),
+  fHitClusterStyle(kDot),
   fRiemannSetArray(0),
   fRiemannColor(kBlue),
   fRiemannSize(1.5),
@@ -153,7 +153,7 @@ STEventDrawTask::DrawRiemannHits()
 
     Int_t nClusters = track -> GetNumHits();
     riemannClusterSet = new TEvePointSet(Form("RiemannTrack_%d",iTrack),nClusters,TEvePointSelectorConsumer::kTVT_XYZ);
-    riemannClusterSet -> SetMarkerColor(fRiemannColor+iTrack);
+    riemannClusterSet -> SetMarkerColor(GetRiemannColor(iTrack));
     riemannClusterSet -> SetMarkerSize(fRiemannSize);
     riemannClusterSet -> SetMarkerStyle(fRiemannStyle);
     for(Int_t iCluster=0; iCluster<nClusters; iCluster++)
@@ -313,4 +313,19 @@ STEventDrawTask::SetRiemannAttributes(Color_t color, Size_t size, Style_t style)
   fRiemannColor = color;
   fRiemannSize = size;
   fRiemannStyle = style;
+}
+
+Color_t 
+STEventDrawTask::GetRiemannColor(Int_t index)
+{
+  Color_t color;
+  Color_t colors[] = {kRed, kBlue, kMagenta, kCyan, kGreen, kYellow, kPink, kSpring, kAzure, kOrange, kViolet, kTeal};
+
+  Int_t quotient  = index/12;
+  Int_t offColor  = (quotient%11) -5;
+  Int_t remainder = index%12;
+
+  color = colors[remainder];
+  color += offColor;
+  return color;
 }

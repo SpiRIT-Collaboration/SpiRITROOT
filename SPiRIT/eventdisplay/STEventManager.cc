@@ -12,8 +12,8 @@
 #include "TEveViewer.h"
 #include "TEveWindow.h"
 #include "TEveBrowser.h"
-
 #include "TRootEmbeddedCanvas.h"
+#include "TObjArray.h"
 
 #include "TGTab.h"
 #include "TGLViewer.h"
@@ -110,6 +110,14 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 
     Int_t transparency = 80;
 
+    TObjArray* listVolume = gGeoManager -> GetListOfVolumes();
+    Int_t nVolumes = listVolume -> GetEntries();
+    for(Int_t i=0; i<nVolumes; i++)
+    {
+      ((TGeoVolume*) listVolume -> At(i)) -> SetTransparency(transparency);
+    }
+
+    /*
     //gGeoManager -> DefaultColors();
     gGeoManager -> GetVolume("field_cage_in")     -> SetVisibility(kFALSE); //active
     gGeoManager -> GetVolume("cageFront")         -> SetTransparency(transparency);
@@ -125,6 +133,7 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
     gGeoManager -> GetVolume("ribmain")           -> SetTransparency(transparency);
     gGeoManager -> GetVolume("wirePlane")         -> SetTransparency(transparency);
     //gGeoManager -> GetVolume("padPlane")          -> SetTransparency(transparency);
+    */
 
     gEve->FullRedraw3D(kTRUE);
     fEvent= gEve->AddEvent(this);
@@ -133,10 +142,10 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
   /**************************************************************************/
 
   //gEve->GetBrowser()->GetTabRight()->SetTab(1);
-  gEve->Redraw3D(kTRUE, kTRUE);
+  //gEve->Redraw3D(kTRUE, kTRUE);
 
   TGLViewer *dfViewer = gEve->GetDefaultGLViewer();
-  dfViewer->CurrentCamera().RotateRad(-.7, 0.5);
+  dfViewer->CurrentCamera().RotateRad(-.7, 2.3);
   dfViewer->DoDraw();
 
   //RunEvent();

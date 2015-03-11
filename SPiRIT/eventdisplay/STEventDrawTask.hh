@@ -51,6 +51,8 @@ class STEventDrawTask : public FairTask
     void DrawHitClusterPoints();
     void DrawRiemannHits();
 
+    Color_t GetRiemannColor(Int_t);
+
     Bool_t fIs2DPlotRange;
 
     TClonesArray* fHitArray;
