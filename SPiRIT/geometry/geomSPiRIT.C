@@ -785,9 +785,13 @@ void geomSPiRIT()
   //  End of Building Geometry
   // ----------------------------------------------------
   gGeoManager -> CloseGeometry();
-  top->Draw("ogl");
+  //top->Draw("ogl");
 
-  TFile *geoFile = new TFile("geomSPiRIT.root","recreate"); 
+  TString dir = gSystem->Getenv("SPIRITDIR");
+  TString geoFileName = dir + "/geometry/geomSPiRIT.root";
+
+  cout << geoFileName << endl;
+  TFile *geoFile = new TFile(geoFileName,"recreate"); 
   top -> Write(); 
   geoFile -> Close(); 
 }
