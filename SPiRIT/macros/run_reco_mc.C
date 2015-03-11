@@ -1,4 +1,4 @@
-void run_reco_mc(TString tag = "test", Int_t threshold = 0)
+void run_reco_mc(TString tag = "test", Int_t threshold = 1)
 {
   FairLogger *logger = FairLogger::GetLogger();
   logger -> SetLogFileName("log/reco_mc.log");
@@ -16,7 +16,7 @@ void run_reco_mc(TString tag = "test", Int_t threshold = 0)
   FairParAsciiFileIo* parIo1 = new FairParAsciiFileIo();
   parIo1 -> open(file.Data(), "in");
   FairParRootFileIo* parIo2 = new FairParRootFileIo();
-  parIo2 -> open("param.dummy.root");
+  parIo2 -> open("data/spirit_" + tag + ".params.root");
   rtdb -> setFirstInput(parIo2);
   rtdb -> setSecondInput(parIo1);
 
@@ -39,9 +39,9 @@ void run_reco_mc(TString tag = "test", Int_t threshold = 0)
   STRiemannTrackingTask* rmTask = new STRiemannTrackingTask();
   rmTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ,0);
   rmTask -> SetPersistence();
-  //rmTask -> SetVerbose(kTRUE);
+  rmTask -> SetVerbose(kTRUE);
   rmTask -> SetMergeTracks(kTRUE);
-  //run -> AddTask(rmTask);
+  run -> AddTask(rmTask);
 
   run->Init();
 
