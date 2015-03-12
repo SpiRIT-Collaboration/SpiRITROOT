@@ -112,6 +112,7 @@ STPadResponseTask::Exec(Option_t* option)
     Int_t layer = iWire/3;
     Int_t type  = iWire%3; //< %3 : same reason as above
     Int_t iTb   = floor(tEl*fNTbs/fTimeMax);
+    if(iTb>fNTbs) continue;
 
     // Covering 5x5(25 in total) pads cover 99.97 % of all the charges.
     for(Int_t iLayer=0; iLayer<5; iLayer++){ 
@@ -137,9 +138,7 @@ STPadResponseTask::Exec(Option_t* option)
                    *( (0.5*TMath::Erf((x2-xEl)/fPRIPar0)) 
                      -(0.5*TMath::Erf((x1-xEl)/fPRIPar0)) );
         }
-        //cout << jRow << " " << jLayer << endl;
         Double_t content0 = pad->GetADC(iTb);
-        //cout << content0 << endl;
         pad -> SetADC(iTb, content0+content);
         fIsActivePad[jRow*fNLayers+jLayer] = kTRUE;
       }
@@ -235,7 +234,7 @@ STPadResponseTask::InitPRF()
     for(Int_t iPad=0; iPad<5; iPad++){
       Double_t val 
         = fPRLayer->Integral(-fPadSizeLayer/2+(iPad-2)*fPadSizeLayer-(iType-1)*spacingWire,
-                             fPadSizeLayer/2+(iPad-2)*fPadSizeLayer-(iType-1)*spacingWire);
+                              fPadSizeLayer/2+(iPad-2)*fPadSizeLayer-(iType-1)*spacingWire);
       fFillRatio[iType][iPad] = val/totL;
     }
   }
