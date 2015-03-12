@@ -47,11 +47,16 @@ void run_mc(TString tag = "test")
 
 
   // -----   Create PrimaryGenerator   --------------------------------------
+  /*
   STEventGenGenerator* gen = new STEventGenGenerator("UrQMD_300AMeV_short.egen");
-  gen->SetPrimaryVertex(0,-21,-3);
+  gen->SetPrimaryVertex(0,-21.33,-3.52);
+  */
+  STSimpleEventGenerator* gen = new STSimpleEventGenerator("../input/GEN_singleTrack.sgen");
+  gen->SetPrimaryVertex(0,-21.33,-3.52);
+
   Int_t nEvents = gen->GetNEvents();
   cout << "Number of events : " << nEvents << endl;
-  FairPrimaryGenerator *primGen = new FairPrimaryGenerator();
+  FairPrimaryGenerator* primGen = new FairPrimaryGenerator();
   primGen->AddGenerator(gen);
 
 
