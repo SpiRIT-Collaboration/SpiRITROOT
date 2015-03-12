@@ -40,12 +40,16 @@ class STSimpleEventGenerator : public FairGenerator
     void SetPrimaryVertex(Double_t x, Double_t y, Double_t z)
     { fV3Vertex.SetXYZ(x,y,z); };
 
+    /** Get number of events written in EventGen file **/
+    Int_t GetNEvents() { return fNEvents; };
+
   private :
 
     TString  fGenFileName; //!< EventGen file name
     ifstream fGenFile;     //!< EventGen file
 
     TVector3 fV3Vertex;    //!< Position of primary vertex
+    Int_t    fNEvents;     //!< Total number of events
 
 
 

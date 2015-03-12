@@ -4,6 +4,7 @@
  */
 
 #include "STSimpleEventGenerator.hh"
+#include "TSystem.h"
 #include <iostream>
 
 using namespace std;
@@ -14,7 +15,8 @@ STSimpleEventGenerator::STSimpleEventGenerator()
 : FairGenerator(),
   fGenFileName(""),
   fGenFile(NULL),
-  fV3Vertex(TVector3(0,0,0))
+  fV3Vertex(TVector3(0,0,0)),
+  fNEvents(0)
 {
 }
 
@@ -22,12 +24,17 @@ STSimpleEventGenerator::STSimpleEventGenerator(TString fileName)
 : FairGenerator("STEventGen",fileName),
   fGenFileName(fileName),
   fGenFile(NULL),
-  fV3Vertex(TVector3(0,0,0))
+  fV3Vertex(TVector3(0,0,0)),
+  fNEvents(0)
 {
+  TString input_dir = gSystem->Getenv("SPIRITDIR");
+  fGenFileName = input_dir+"/input/"+fGenFileName;
+
   LOG(INFO)<<"-I Opening EventGen file "<<fGenFileName<<FairLogger::endl;
   fGenFile.open(fGenFileName.Data());
   if(!fGenFile.is_open())
     LOG(FATAL)<<"Cannont open EventGen file."<<fGenFileName<<FairLogger::endl;
+  fGenFile>>fNEvents;
 }
 
 STSimpleEventGenerator::~STSimpleEventGenerator()
