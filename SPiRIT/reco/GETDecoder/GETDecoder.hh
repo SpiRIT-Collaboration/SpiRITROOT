@@ -101,6 +101,9 @@ class GETDecoder : public TObject
     //! Check if the file is end
     void CheckEOF();
 
+    //! Check if there's blob frame
+    void CheckBlobFrame();
+
     Int_t fNumTbs; /// the number of time buckets. It's determined when taking data and should be changed manually by user. (Default: 512)
 
     Bool_t fEndianness; /// Endianness of the data. 0: Big-endian, 1: Little-endian
@@ -129,6 +132,8 @@ class GETDecoder : public TObject
 
     GETPlot *fGETPlot;     /// GETPlot pointer
     GETMath *fGETMath;     /// GETMath pointer
+
+    UInt_t fBlobFrameSize; /// Blob frame size to skip
 
   ClassDef(GETDecoder, 1); /// added for making dictionary by ROOT
 };

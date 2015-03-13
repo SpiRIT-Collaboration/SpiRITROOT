@@ -91,6 +91,8 @@ void GETDecoder::Initialize()
 
   fGETMath = 0;
   fGETPlot = 0;
+
+  fBlobFrameSize = 0;
 }
 
 void GETDecoder::SetNumTbs(Int_t value)
@@ -181,17 +183,20 @@ Bool_t GETDecoder::SetData(Int_t index)
     fFileSize = fData.tellg();
 
     std::cout << "== [GETDecoder] " << filename << " is opened!" << std::endl;
-    fData.seekg(0);
+
+    CheckBlobFrame();
+
+    fData.seekg(0 + fBlobFrameSize);
 
     UShort_t metaType = 0;
     UShort_t headerSize = 0;
     UInt_t numMergedFrames = 0;
     fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
-    fData.seekg(5);
+    fData.seekg(5 + fBlobFrameSize);
     fData.read(reinterpret_cast<Char_t *>(&fFrameType), 2);
-    fData.seekg(8);
+    fData.seekg(8 + fBlobFrameSize);
     fData.read(reinterpret_cast<Char_t *>(&headerSize), 2);
-    fData.seekg(0);
+    fData.seekg(0 + fBlobFrameSize);
 
     /*
       Note:
@@ -377,7 +382,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     if (frameNo < fCurrentFrameID) {
       fCurrentFrameID = -1;
       fData.clear();
-      fData.seekg(0);
+      fData.seekg(0 + fBlobFrameSize);
 
       return GetFrame(frameNo);
     }
@@ -426,14 +431,15 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
 
     if (fDebugMode) {
       PrintFrameInfo(frameNo, eventIdx, coboIdx, asadIdx);
-      std::cout << "  frameType: " << frameType << std::endl;
-      std::cout << "  frameSize: " << frameSize << std::endl;
-      std::cout << " headerSize: " << headerSize << std::endl;
-      std::cout << "   itemSize: " << itemSize << std::endl;
-      std::cout << "   numItems: " << nItems << std::endl;
-      std::cout << "   eventIdx: " << eventIdx << std::endl;
-      std::cout << " fUnitBlock: " << fUnitBlock << std::endl;
-      std::cout << "fEndianness: " << fEndianness << std::endl;
+      std::cout << "     frameType: " << frameType << std::endl;
+      std::cout << "     frameSize: " << frameSize << std::endl;
+      std::cout << "    headerSize: " << headerSize << std::endl;
+      std::cout << "      itemSize: " << itemSize << std::endl;
+      std::cout << "      numItems: " << nItems << std::endl;
+      std::cout << "      eventIdx: " << eventIdx << std::endl;
+      std::cout << "    fUnitBlock: " << fUnitBlock << std::endl;
+      std::cout << "   fEndianness: " << fEndianness << std::endl;
+      std::cout << "fBlobFrameSize: " << fBlobFrameSize << std::endl;
     }
 
     if (fFrame != 0)
@@ -561,7 +567,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo, Int_t innerFrameNo)
     fCurrentFrameID = -1;
     fCurrentInnerFrameID = -1;
     fData.clear();
-    fData.seekg(0);
+    fData.seekg(0 + fBlobFrameSize);
     ReadMergedFrameInfo();
     CheckEOF();
 
@@ -794,4 +800,24 @@ void GETDecoder::CheckEOF() {
     fEOF = 1;
   else
     fEOF = 0;
+}
+
+void GETDecoder::CheckBlobFrame() {
+  fData.seekg(0);
+
+  UShort_t metaType = 0;
+  UInt_t frameSize = 0;
+
+  fData.read(reinterpret_cast<Char_t *>(&metaType), 1);
+
+  fEndianness = ((metaType&0x80) >> 7);
+
+  if ((metaType&0x40) == 0x40) {
+    fData.read(reinterpret_cast<Char_t *>(&frameSize), 3);
+
+    if (fEndianness == kBig) // MSB of the first byte determines endianness. 0:Big, 1:Little
+      frameSize = (htonl(frameSize) >> 8);
+
+    fBlobFrameSize = frameSize;
+  }
 }
