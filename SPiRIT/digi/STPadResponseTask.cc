@@ -56,7 +56,7 @@ STPadResponseTask::Init()
   fRawEventArray = new TClonesArray("STRawEvent"); 
   ioman->Register("PPEvent", "ST", fRawEventArray, fInputPersistance);
 
-  fTimeMax   = 10000.; //[ns]
+  fTBTime    = fPar -> GetTBTime();
   fNTbs      = fPar -> GetNumTbs();
   fXPadPlane = fPar -> GetPadPlaneX();
   fZPadPlane = fPar -> GetPadPlaneZ(); 
@@ -111,7 +111,7 @@ STPadResponseTask::Exec(Option_t* option)
      */
     Int_t layer = iWire/3;
     Int_t type  = iWire%3; //< %3 : same reason as above
-    Int_t iTb   = floor(tEl*fNTbs/fTimeMax);
+    Int_t iTb   = tEl/fTBTime;
     if(iTb>fNTbs) continue;
 
     // Covering 5x5(25 in total) pads cover 99.97 % of all the charges.

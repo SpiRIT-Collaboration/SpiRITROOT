@@ -85,7 +85,7 @@ class STPadResponseTask : public FairTask
     Bool_t   fAssumeGausPRF; //!< Approximate to use gaussian function for pad response function.
     Double_t fPRIPar0; //!< Parameter to use in fitting gaussian like pad response function.
 
-    Double_t fTimeMax;      //!< Maximum time from primary event time. [ns]
+    Int_t    fTBTime;       //!< One time bucket time [ns]
     Int_t    fNTbs;         //!< Number of time buckets.
     Int_t    fXPadPlane;    //!< Pad plane x-axis size. [mm]
     Int_t    fZPadPlane;    //!< Pad plane z-axis size. [mm]
