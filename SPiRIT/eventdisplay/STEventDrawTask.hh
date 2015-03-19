@@ -27,6 +27,7 @@
 class STEventDrawTask : public FairTask
 {
   public :
+    static STEventDrawTask* Instance();
     STEventDrawTask();
     STEventDrawTask(TString modes);
 
@@ -42,6 +43,9 @@ class STEventDrawTask : public FairTask
     void SetHitAttributes(Color_t, Size_t, Style_t);
     void SetHitClusterAttributes(Color_t, Size_t, Style_t);
     void SetRiemannAttributes(Color_t, Size_t, Style_t);
+    void SetSelfRiemannSet(Int_t iRiemannSet = -1, Bool_t offElse = kTRUE);
+
+    Int_t GetNRiemannSet() { return fRiemannSetArray.size(); };
 
   private :
     void DrawPadPlane();
@@ -86,5 +90,7 @@ class STEventDrawTask : public FairTask
     Int_t fMinX;
     Int_t fMaxX;
 
-    ClassDef(STEventDrawTask,1);
+    static STEventDrawTask* fInstance;
+
+  ClassDef(STEventDrawTask,1);
 };

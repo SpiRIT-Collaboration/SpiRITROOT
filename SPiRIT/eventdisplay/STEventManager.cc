@@ -117,24 +117,6 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
       ((TGeoVolume*) listVolume -> At(i)) -> SetTransparency(transparency);
     }
 
-    /*
-    //gGeoManager -> DefaultColors();
-    gGeoManager -> GetVolume("field_cage_in")     -> SetVisibility(kFALSE); //active
-    gGeoManager -> GetVolume("cageFront")         -> SetTransparency(transparency);
-    gGeoManager -> GetVolume("cageSide")          -> SetTransparency(transparency);
-    gGeoManager -> GetVolume("cageCorner")        -> SetTransparency(transparency);
-    gGeoManager -> GetVolume("frontWindow")       -> SetTransparency(transparency);
-    gGeoManager -> GetVolume("frontWindowFrame")  -> SetTransparency(transparency);
-    gGeoManager -> GetVolume("frontWindowCradle") -> SetTransparency(transparency);
-    gGeoManager -> GetVolume("bottomPlate")       -> SetTransparency(transparency);
-    gGeoManager -> GetVolume("backWindowFrame")   -> SetTransparency(transparency);
-    gGeoManager -> GetVolume("backWindow")        -> SetTransparency(transparency);
-    gGeoManager -> GetVolume("topFrame")          -> SetTransparency(transparency);
-    gGeoManager -> GetVolume("ribmain")           -> SetTransparency(transparency);
-    gGeoManager -> GetVolume("wirePlane")         -> SetTransparency(transparency);
-    //gGeoManager -> GetVolume("padPlane")          -> SetTransparency(transparency);
-    */
-
     gEve->FullRedraw3D(kTRUE);
     fEvent= gEve->AddEvent(this);
   }
@@ -147,8 +129,6 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
   TGLViewer *dfViewer = gEve->GetDefaultGLViewer();
   dfViewer->CurrentCamera().RotateRad(-.7, 2.3);
   dfViewer->DoDraw();
-
-  //RunEvent();
 }
 
 void 
@@ -176,4 +156,10 @@ void
 STEventManager::RunEvent()
 {
   fRunAna->Run((Long64_t)fEntry);
+} 
+
+void
+STEventManager::AddTask(FairTask* task)
+{ 
+  fRunAna->AddTask(task); 
 }

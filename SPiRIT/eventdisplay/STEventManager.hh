@@ -6,7 +6,7 @@
 #pragma once
 
 #include "TEveEventManager.h"
-//#include "FairEventManager.h"
+//#include "STEventDrawTask.hh"
 
 #include "FairRunAna.h"
 #include "FairRootManager.h"
@@ -27,9 +27,11 @@ class STEventManager : public TEveEventManager
     virtual void NextEvent();            ///< *MENU*
     virtual void PrevEvent();            ///< *MENU*
 
-    void AddTask(FairTask* task) { fRunAna->AddTask(task); }
+    void AddTask(FairTask* task);
     virtual void InitRiemann(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
     virtual void Init(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
+
+    void SetSelfRiemannSet(Int_t val) {};
 
     virtual Int_t GetCurrentEvent() {return fEntry;}
 

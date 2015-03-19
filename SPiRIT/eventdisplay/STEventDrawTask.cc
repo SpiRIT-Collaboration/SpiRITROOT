@@ -17,6 +17,12 @@ using namespace std;
 
 ClassImp(STEventDrawTask);
 
+STEventDrawTask* STEventDrawTask::fInstance=0;
+STEventDrawTask* STEventDrawTask::Instance()
+{
+  return fInstance;
+}
+
 STEventDrawTask::STEventDrawTask()
 : fIs2DPlotRange(kFALSE),
   fHitArray(0),
@@ -30,7 +36,6 @@ STEventDrawTask::STEventDrawTask()
   fHitSize(1),
   fHitStyle(kFullDotMedium),
   fHitClusterSet(0),
-  //fHitClusterColor(kAzure-5),
   fHitClusterColor(kWhite),
   fHitClusterSize(1),
   fHitClusterStyle(kDot),
@@ -45,6 +50,7 @@ STEventDrawTask::STEventDrawTask()
   fMinX(432),
   fMaxX(-432)
 {
+  fInstance=this;
 }
 
 STEventDrawTask::~STEventDrawTask()
@@ -84,7 +90,7 @@ STEventDrawTask::Exec(Option_t* option)
   if(fRiemannTrackArray) DrawRiemannHits();
 
   gEve -> Redraw3D(kFALSE);
-  UpdateCvsPadPlane();
+  //UpdateCvsPadPlane();
 }
 
 void 
@@ -130,7 +136,6 @@ STEventDrawTask::DrawHitClusterPoints()
     if(cluster.GetCharge()<fThreshold) continue;
     TVector3 position = cluster.GetPosition();
     fHitClusterSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
-    //cout << "cluster : " << cluster.GetClusterID() << " " << position.X()/10. << " " << position.Y()/10. << " " << position.Z()/10. << endl;
     fHitClusterSet -> SetPointId(new TNamed(Form("HitCluster %d",iCluster),""));
   }
   gEve -> AddElement(fHitClusterSet);
@@ -146,7 +151,6 @@ STEventDrawTask::DrawRiemannHits()
   STEvent* event = (STEvent*) fHitClusterArray->At(0);
 
   Int_t nTracks = fRiemannTrackArray -> GetEntries();
-  //cout << "number of rieman tracks : " << nTracks << endl;
   for(Int_t iTrack=0; iTrack<nTracks; iTrack++) 
   {
     track = (STRiemannTrack*) fRiemannTrackArray -> At(iTrack);
@@ -161,17 +165,52 @@ STEventDrawTask::DrawRiemannHits()
       rCluster = track -> GetHit(iCluster) -> GetCluster();
       if((rCluster->GetCharge())<fThreshold) continue;
       Int_t id = rCluster -> GetClusterID();
-      //cout << id << endl;
       STHitCluster oCluster = event->GetClusterArray()->at(id);
 
       TVector3 position = oCluster.GetPosition();
       riemannClusterSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
-      //cout << "riemann cluster: " << oCluster.GetClusterID() << " " << position.X()/10. << " " << position.Y()/10. << " " << position.Z()/10. << endl;
       riemannClusterSet -> SetPointId(new TNamed(Form("RiemanCluster %d",iCluster),""));
     }
     gEve -> AddElement(riemannClusterSet);
     fRiemannSetArray.push_back(riemannClusterSet);
   }
+}
+
+void 
+STEventDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
+{
+  Int_t nRiemannSets = fRiemannSetArray.size();
+
+  if(iRiemannSet==-1) 
+  {
+    if(!offElse)
+    {
+      for(Int_t i=0; i<nRiemannSets; i++)
+      {
+        TEvePointSet* pointSet = fRiemannSetArray[i];
+        pointSet -> SetRnrSelf(kTRUE);
+      }
+    }
+    else
+    {
+      for(Int_t i=0; i<nRiemannSets; i++)
+      {
+        TEvePointSet* pointSet = fRiemannSetArray[i];
+        pointSet -> SetRnrSelf(kFALSE);
+      }
+    }
+  }
+
+  else 
+  {
+    for(Int_t i=0; i<nRiemannSets; i++)
+    {
+      TEvePointSet* pointSet = fRiemannSetArray[i];
+      if(i==iRiemannSet) pointSet -> SetRnrSelf(kTRUE);
+      else if(offElse) pointSet -> SetRnrSelf(kFALSE);
+    }
+  }
+
 }
 
 void
@@ -321,11 +360,12 @@ STEventDrawTask::GetRiemannColor(Int_t index)
   Color_t color;
   Color_t colors[] = {kRed, kBlue, kMagenta, kCyan, kGreen, kYellow, kPink, kSpring, kAzure, kOrange, kViolet, kTeal};
 
-  Int_t quotient  = index/12;
-  Int_t offColor  = (quotient%11) -5;
   Int_t remainder = index%12;
-
   color = colors[remainder];
+
+  Int_t quotient  = index/12;
+  Int_t offColor  = (quotient%10) -5;
   color += offColor;
+
   return color;
 }
