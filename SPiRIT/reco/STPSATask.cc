@@ -109,7 +109,7 @@ STPSATask::Exec(Option_t *opt)
   std::cout << rawEvent -> GetEventID() << " " << rawEvent -> GetNumPads() << std::endl;  
 
   STEvent *event = (STEvent *) new ((*fEventHArray)[0]) STEvent();
-  event -> SetEventID(event -> GetEventID());
+  event -> SetEventID(rawevent -> GetEventID());
 
   if (!(rawEvent -> IsGood()))
     event -> SetIsGood(kFALSE);
