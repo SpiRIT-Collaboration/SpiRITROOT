@@ -26,9 +26,6 @@ set(SRCS
 STEventManager.cc
 STEventManagerEditor.cc
 STEventDrawTask.cc
-STEventDraw.cc
-STHitDraw.cc
-STHitClusterDraw.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
