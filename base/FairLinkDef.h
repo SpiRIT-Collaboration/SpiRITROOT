@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 // $Id: FairLinkDef.h,v 1.4 2006/09/15 12:43:35 turany Exp $
 
 #ifdef __CINT__
@@ -10,6 +17,8 @@
 #pragma link C++ class FairBaseParSet;
 #pragma link C++ class FairGeoParSet;
 #pragma link C++ class FairDetector+;
+#pragma link C++ class FairEventBuilder+;
+#pragma link C++ class FairEventBuilderManager+;
 #pragma link C++ class FairEventHeader;
 #pragma link C++ class FairFileHeader+;
 #pragma link C++ class FairGeaneApplication+;
@@ -18,6 +27,7 @@
 //#pragma link C++ class FairLinkedData+;
 //#pragma link C++ class FairSingleLinkedData+;
 #pragma link C++ class FairMultiLinkedData+;
+#pragma link C++ class FairMultiLinkedData_Interface+;
 //#pragma link C++ class FairBasePoint+;
 #pragma link C++ class FairHit+;
 #pragma link C++ class FairIon+;
@@ -27,6 +37,7 @@
 #pragma link C++ class FairModule-;
 #pragma link C++ class FairParticle+;
 #pragma link C++ class FairPrimaryGenerator+;
+#pragma link C++ class FairRecoEventHeader+;
 #pragma link C++ class FairRootManager+;
 #pragma link C++ class FairRun+;
 #pragma link C++ class FairRunAna;
@@ -56,14 +67,21 @@
 #pragma link C++ class FairRingSorter;
 #pragma link C++ class FairRingSorterTask;
 #pragma link C++ class FairAnaSelector+;
+#pragma link C++ class FairLinkManager+;
 
-//#pragma link C++ class FairRunOnline;
-//#pragma link C++ class FairSource;
-//#pragma link C++ class FairRemoteSource;
-//#pragma link C++ class FairLmdSource;
-//#pragma link C++ class FairUnpack;
-//#pragma link C++ class MRevBuffer;
-//#pragma link C++ class REvent;
+
+#pragma link C++ class FairRunOnline;
+#pragma link C++ class FairSource;
+#pragma link C++ class FairFileSource;
+#ifdef BUILD_MBS
+#pragma link C++ class FairMbsSource;
+#pragma link C++ class FairRemoteSource;
+#pragma link C++ class FairMbsStreamSource;
+#pragma link C++ class FairLmdSource;
+#pragma link C++ class FairUnpack;
+#pragma link C++ class MRevBuffer;
+#pragma link C++ class REvent;
+#endif
 
 #if ROOT_VERSION_CODE < 333824
 #pragma link C++ class TVirtualMagField+;

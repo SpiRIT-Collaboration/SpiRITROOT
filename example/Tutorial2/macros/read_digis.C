@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 void read_digis(){
 
     TStopwatch timer;
@@ -28,7 +35,7 @@ void read_digis(){
  
     FairParAsciiFileIo* parInput2 = new FairParAsciiFileIo();
     TString tutDetDigiFile = gSystem->Getenv("VMCWORKDIR");
-    tutDetDigiFile += "/Tutorial2/macros/tutdet.digi.par";
+    tutDetDigiFile += "/Tutorial2/parameters/tutdet.digi.par";
     parInput2->open(tutDetDigiFile.Data(),"in");
 
     rtdb->setFirstInput(io1);

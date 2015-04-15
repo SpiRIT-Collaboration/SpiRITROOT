@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #include "FairDbLogService.h"
 #include <cstdio>
 #include <cassert>
@@ -276,8 +283,14 @@ FairDbLogStream* FairDbLogService::CreateStream(const char* name)
   return logStream;
 }
 
-FairDbLogService::FairDbLogService() :
-  fkFatalAbort(0)
+FairDbLogService::FairDbLogService() 
+ : fDefaultLogLevel(),
+   fDefaultOStream(),
+   fDefaultFormat(),
+   fFairDbLogStreamTable(),
+   fFairDbLogCatList(),
+   fCurrentRun(-1),
+   fkFatalAbort(0)
 {
   // Set the default log level for all streams
   fDefaultLogLevel = FairDbLog::kInfo;

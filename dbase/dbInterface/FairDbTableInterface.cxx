@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #include "FairDbTableInterface.h"
 #include "FairDbLogService.h"
 #include "FairDbBufferFile.h"           // for string, FairDbBufferFile
@@ -12,7 +19,7 @@
 #include "DataType.h"                    // for DataType_t
 #include "ValCondition.h"                 // for ValCondition
 #include "ValInterval.h"                   // for ValInterval
-#include "db_detector_def.h"            // for Detector, etc
+#include "db_detector_def.h"            // for FairDbDetector, etc
 
 #include "Riosfwd.h"                    // for ostream
 
@@ -56,7 +63,7 @@ FairDbTableInterface::FairDbTableInterface(FairDbConnectionPool* cascader,
                                     << ( fExists ? " (table exists)"
                                          : " (table missing)" )
                                     << endl;
-  DBLOG("FairDb",FairDbLog::kInfo)<< "Connected Table Row  " << fObjTableMap << endl;
+  DBLOG("FairDb",FairDbLog::kInfo)<< "Connected Table Row: " << fObjTableMap << endl;
 
 }
 
@@ -267,7 +274,7 @@ ValTimeStamp FairDbTableInterface::QueryOverlayCreationDate(const FairDbValRecor
     UInt_t dbNo)
 {
   const ValInterval& vr(vrec.GetValInterval());
-  ValCondition vc((Detector::Detector_t) vr.GetDetectorMask(),
+  ValCondition vc((FairDbDetector::Detector_t) vr.GetDetectorMask(),
                   (DataType::DataType_t) vr.GetSimMask(),
                   vr.GetTimeStart());
 

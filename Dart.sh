@@ -74,7 +74,7 @@ else
   GCC_VERSION=$($CXX -dumpversion)
 fi
 
-export LABEL1=${LINUX_FLAVOUR}-$SYSTEM-$COMPILER$GCC_VERSION-fairsoft_$FAIRSOFT_VERSION
+export LABEL1=${LINUX_FLAVOUR}-$SYSTEM-$COMPILER$GCC_VERSION-fairroot_$GIT_BRANCH-fairsoft_$FAIRSOFT_VERSION
 export LABEL=$(echo $LABEL1 | sed -e 's#/#_#g')
 
 # get the number of processors
@@ -88,6 +88,9 @@ then
     export number_of_processors=$(cat /proc/cpuinfo | grep processor | wc -l)
   fi
   export SITE=$(hostname -f)
+  if [ -z $SITE ]; then
+    export SITE=$(uname -n)
+  fi  
 elif [ "$arch" = "darwin" ];
 then
   if [ "$NCPU" != "" ];

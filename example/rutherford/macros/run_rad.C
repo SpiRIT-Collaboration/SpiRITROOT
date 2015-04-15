@@ -1,4 +1,11 @@
-void run_rad(Int_t nEvents = 100)
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+void run_rad(Int_t nEvents = 100, TString mcEngine="TGeant3")
 {
   
   TString dir = gSystem->Getenv("VMCWORKDIR");
@@ -11,8 +18,11 @@ void run_rad(Int_t nEvents = 100)
   gSystem->Setenv("CONFIG_DIR",tut_configdir.Data());
 
   TString outDir  = "data";
-  TString outFile = outDir + "/test1.mc.root";
-  TString parFile = outDir + "/params.root";
+  TString outFile = outDir + "/test1_";
+  outFile = outFile + mcEngine + ".mc.root";
+
+  TString parFile = outDir + "/params1_";    
+  parFile = parFile + mcEngine + ".root";   
 
   // In general, the following parts need not be touched
   // ========================================================================
@@ -37,7 +47,7 @@ void run_rad(Int_t nEvents = 100)
  
   // -----   Create simulation run   ----------------------------------------
   FairRunSim* run = new FairRunSim();
-  run->SetName("TGeant3");              // Transport engine
+  run->SetName(mcEngine);              // Transport engine
   run->SetOutputFile(outFile);          // Output file
   FairRuntimeDb* rtdb = run->GetRuntimeDb();
   // ------------------------------------------------------------------------

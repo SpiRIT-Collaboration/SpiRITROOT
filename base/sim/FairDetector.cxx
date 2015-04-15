@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 // -------------------------------------------------------------------------
 // -----                    FairDetector source file                   -----
 // -----            Created 06/01/04  by M. Al-Turany/ D. Bertini      -----
@@ -36,12 +43,37 @@ FairDetector::FairDetector(const char* Name, Bool_t Active, Int_t DetId )
 }
 // -------------------------------------------------------------------------
 
+FairDetector::FairDetector(const FairDetector& rhs)
+  :FairModule(rhs),
+   fDetId(rhs.fDetId),
+   fLogger(rhs.fLogger)
+{
+}
+// -------------------------------------------------------------------------
+
 FairDetector::~FairDetector()
 {
 
   if ( flGeoPar ) { delete flGeoPar; }
 
 }
+// -------------------------------------------------------------------------
+
+FairDetector& FairDetector::operator= (const FairDetector& rhs)
+{
+  // check assignment to self
+  if (this == &rhs) return *this;
+
+  // base class assignment
+  FairModule::operator=(rhs);
+
+  // assignment operator
+  fDetId = rhs.fDetId;
+  fLogger = rhs.fLogger;
+
+  return *this;
+}
+
 // -------------------------------------------------------------------------
 
 FairDetector::FairDetector()

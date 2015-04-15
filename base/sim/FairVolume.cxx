@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 // -------------------------------------------------------------------------
 // -----                      FairVolume source file                   -----
 // -----          Created 12/01/04  by M. Al-Turany                    -----
@@ -18,6 +25,7 @@ FairVolume::FairVolume()
     fCopyNo(-1),        /**Volume Copy No*/
     fMotherId(-1),    /**Mother Volume Id*/
     fMotherCopyNo(-1),  /**Mother Volume Copy No*/
+    fDetector(0),
     fModule(NULL),         /**The Module (detector) which will proccess the hits for this volume*/
     fNode(NULL)            /**Node corre*/
 {
@@ -36,10 +44,14 @@ FairVolume::FairVolume(TString name, Int_t id, Int_t ModId, FairModule* fMod)
    fCopyNo(-1),        /**Volume Copy No*/
    fMotherId(0),     /**Mother Volume Id*/
    fMotherCopyNo(0),  /**Mother Volume Copy No*/
+   fDetector(0),
    fModule(fMod),        /**The Module (detector) which will proccess the hits for this volume*/
    fNode(NULL)            /**Node corre*/
 
 {
+    if (fModule && fModule->InheritsFrom("FairDetector")){
+        fDetector=dynamic_cast<FairDetector *>(fModule);
+    }
 
 }
 

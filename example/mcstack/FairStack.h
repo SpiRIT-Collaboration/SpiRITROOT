@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 // -------------------------------------------------------------------------
 // -----                       FairStack header file                    -----
 // -----           Created 10/08/04  by D. Bertini / V. Friese         -----
@@ -196,7 +203,8 @@ class FairStack : public FairGenericStack
     TParticle* GetParticle(Int_t trackId) const;
     TClonesArray* GetListOfParticles() { return fParticles; }
 
-
+    /** Clone this object (used in MT mode only) */
+    virtual FairGenericStack* CloneStack() const { return new FairStack(); }
 
   private:
     /** FairLogger for debugging and info */

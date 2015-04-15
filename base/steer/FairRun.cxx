@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 // -------------------------------------------------------------------------
 // -----                   FairRun source file                         -----
 // -----            Created 06/01/04  by M. Al-Turany                  -----
@@ -11,6 +18,7 @@
 #include "FairRootManager.h"            // for FairRootManager
 #include "FairRuntimeDb.h"              // for FairRuntimeDb
 #include "FairTask.h"                   // for FairTask
+#include "FairLinkManager.h"			// for FairLinkManager
 
 #include "TFile.h"                      // for TFile
 #include "TList.h"                      // for TList
@@ -19,34 +27,40 @@
 #include <stddef.h>                     // for NULL
 
 //_____________________________________________________________________________
-FairRun* FairRun::fRunInstance= 0;
+TMCThreadLocal FairRun* FairRun::fRunInstance= 0;
 //_____________________________________________________________________________
 FairRun* FairRun::Instance()
 {
   return fRunInstance;
 }
 //_____________________________________________________________________________
-FairRun::FairRun()
+FairRun::FairRun(Bool_t isMaster)
   :TNamed(),
    fNTasks(0),
    fLogger(FairLogger::GetLogger()),
    fRtdb(FairRuntimeDb::instance()),
    fTask(new FairTask("FairTaskList")),
    fOutname(""),
-   fRootManager(new FairRootManager()),
+   fRootManager(0),
    fOutFile(0),
    fRunId(0),
    fAna(kFALSE),
    fEvHead(NULL),
    fFileHeader(new FairFileHeader()),
-   fWriteRunInfo(kTRUE)
+   fGenerateRunInfo(kFALSE),
+   fIsMaster(isMaster)
 {
   if (fRunInstance) {
     Fatal("FairRun", "Singleton instance already exists.");
     return;
   }
   fRunInstance=this;
-  fRootManager->SetFileHeader(fFileHeader);
+
+  if ( isMaster ) {
+    fRootManager = new FairRootManager(),
+    fRootManager->SetFileHeader(fFileHeader);
+  }
+  new FairLinkManager();
 }
 //_____________________________________________________________________________
 FairRun::~FairRun()
@@ -73,7 +87,7 @@ FairRun::~FairRun()
 void FairRun::SetOutputFile(const char* fname)
 {
   fOutname=fname;
-  fOutFile = fRootManager->OpenOutFile(fOutname);
+  if (fRootManager) fOutFile = fRootManager->OpenOutFile(fOutname);
 
 }
 //_____________________________________________________________________________
@@ -81,6 +95,8 @@ void FairRun::SetOutputFile(const char* fname)
 //_____________________________________________________________________________
 void FairRun::SetOutputFile(TFile* f)
 {
+  if (! fRootManager) return;
+
   fOutname=f->GetName();
   fRootManager->OpenOutFile(f);
   fOutFile = f;
@@ -122,7 +138,31 @@ FairEventHeader*  FairRun::GetEventHeader()
   }
   return fEvHead;
 }
+
+void FairRun::SetUseFairLinks(Bool_t val)
+{
+        fRootManager->SetUseFairLinks(val);
+}
+
 //_____________________________________________________________________________
+void FairRun::SetWriteRunInfoFile(Bool_t write)
+{
+  LOG(WARNING) << "Function FairRun::SetWriteRunInfoFile(Bool_t) is depcrecated and will vanish in future versions of FairRoot.\n";
+  LOG(WARNING) << "Please use FairRun::SetGenerateRunInfo(Bool_t) instead." << FairLogger::endl;
+
+  fGenerateRunInfo = write;
+}
+
+Bool_t FairRun::GetWriteRunInfoFile()
+{
+  LOG(WARNING) << "Function FairRun::GetWriteRunInfoFile() is depcrecated and will vanish in future versions of FairRoot.\n";
+  LOG(WARNING) << "Please use FairRun::IsRunInfoGenerated() instead." << FairLogger::endl;
+
+  return fGenerateRunInfo;
+}
+
+
+
 ClassImp(FairRun)
 
 

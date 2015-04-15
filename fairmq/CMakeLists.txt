@@ -1,58 +1,198 @@
-include_directories(
-  ${BASE_INCLUDE_DIRECTORIES}
+ ################################################################################
+ #    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    #
+ #                                                                              #
+ #              This software is distributed under the terms of the             # 
+ #         GNU Lesser General Public Licence version 3 (LGPL) version 3,        #  
+ #                  copied verbatim in the file "LICENSE"                       #
+ ################################################################################
+Set(INCLUDE_DIRECTORIES
   ${CMAKE_SOURCE_DIR}/fairmq
-  ${ZMQ_INCLUDE_DIR}
-  ${ROOT_INCLUDE_DIR}
+  ${CMAKE_SOURCE_DIR}/fairmq/devices
+  ${CMAKE_SOURCE_DIR}/fairmq/examples/req-rep
+  ${CMAKE_SOURCE_DIR}/fairmq/tools
 )
 
-Set(SRCS
-  "FairMQSampler.cxx"
-  "FairMQBenchmarkSampler.cxx"
-  "FairMQStateMachine.cxx"
-  "FairMQConfigurable.cxx"
-  "FairMQBuffer.cxx"
-  "FairMQSamplerTask.cxx"
-  "FairMQLogger.cxx"
-  "FairMQContext.cxx"
-  "FairMQMessage.cxx"
-  "FairMQSocket.cxx"
-  "FairMQBalancedStandaloneSplitter.cxx"
-  "FairMQStandaloneMerger.cxx"
-  "FairMQProcessor.cxx"
-  "FairMQProcessorTask.cxx"
-  "FairMQSink.cxx"
-  "FairMQDevice.cxx"
-  "FairMQProxy.cxx"
+Set(SYSTEM_INCLUDE_DIRECTORIES
+  ${Boost_INCLUDE_DIR}
 )
+
+If(PROTOBUF_FOUND)
+  Set(INCLUDE_DIRECTORIES
+    ${INCLUDE_DIRECTORIES}
+    # # following directory is only for protobuf tests and is not essential part of FairMQ
+    #${CMAKE_SOURCE_DIR}/fairmq/prototest
+  )
+  Set(SYSTEM_INCLUDE_DIRECTORIES
+    ${SYSTEM_INCLUDE_DIRECTORIES}
+    ${PROTOBUF_INCLUDE_DIR}
+  )
+EndIf(PROTOBUF_FOUND)
+
+If(NANOMSG_FOUND)
+  Set(INCLUDE_DIRECTORIES
+    ${INCLUDE_DIRECTORIES}
+    ${CMAKE_SOURCE_DIR}/fairmq/nanomsg
+  )
+  Set(SYSTEM_INCLUDE_DIRECTORIES
+    ${SYSTEM_INCLUDE_DIRECTORIES}
+    ${NANOMSG_LIBRARY_SHARED}
+  )
+Else(NANOMSG_FOUND)
+  Set(INCLUDE_DIRECTORIES
+    ${INCLUDE_DIRECTORIES}
+    ${CMAKE_SOURCE_DIR}/fairmq/zeromq
+  )
+  Set(SYSTEM_INCLUDE_DIRECTORIES
+    ${SYSTEM_INCLUDE_DIRECTORIES}
+    ${ZMQ_INCLUDE_DIR}
+  )
+EndIf(NANOMSG_FOUND)
+
+Include_Directories(${INCLUDE_DIRECTORIES})
+Include_Directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
 
 Set(LINK_DIRECTORIES
-  ${ROOT_LIBRARY_DIR}
   ${Boost_LIBRARY_DIRS}
 )
 
-link_directories(${LINK_DIRECTORIES})
+Link_Directories(${LINK_DIRECTORIES})
 
-Set(LIBRARY_NAME FairMQ)
-Set(LINKDEF)
-Set(DEPENDENCIES 
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${ZMQ_LIBRARY_SHARED}
-  Base ParBase FairTools GeoBase boost_thread boost_timer boost_system
+set(SRCS
+  "FairMQLogger.cxx"
+  "FairMQConfigurable.cxx"
+  "FairMQStateMachine.cxx"
+  "FairMQTransportFactory.cxx"
+  "FairMQMessage.cxx"
+  "FairMQSocket.cxx"
+  "FairMQDevice.cxx"
+  "devices/FairMQBenchmarkSampler.cxx"
+  "devices/FairMQSink.cxx"
+  "devices/FairMQBuffer.cxx"
+  "devices/FairMQProxy.cxx"
+  "devices/FairMQSplitter.cxx"
+  "devices/FairMQMerger.cxx"
+  "FairMQPoller.cxx"
+  "examples/req-rep/FairMQExampleClient.cxx"
+  "examples/req-rep/FairMQExampleServer.cxx"
 )
+
+if(PROTOBUF_FOUND)
+  # following source files are only for protobuf tests and are not essential part of FairMQ
+  # set(SRCS
+  #   ${SRCS}
+  #   "prototest/payload.pb.cc"
+  #   "prototest/FairMQProtoSampler.cxx"
+  #   "prototest/FairMQBinSampler.cxx"
+  #   "prototest/FairMQBinSink.cxx"
+  #   "prototest/FairMQProtoSink.cxx"
+  # )
+  set(DEPENDENCIES
+    ${DEPENDENCIES}
+    ${PROTOBUF_LIBRARY}
+  )
+endif(PROTOBUF_FOUND)
+
+if(NANOMSG_FOUND)
+  set(SRCS
+    ${SRCS}
+    "nanomsg/FairMQTransportFactoryNN.cxx"
+    "nanomsg/FairMQMessageNN.cxx"
+    "nanomsg/FairMQSocketNN.cxx"
+    "nanomsg/FairMQPollerNN.cxx"
+  )
+  set(DEPENDENCIES
+    ${DEPENDENCIES}
+    ${NANOMSG_LIBRARY_SHARED}
+  )
+else(NANOMSG_FOUND)
+  set(SRCS
+    ${SRCS}
+    "zeromq/FairMQTransportFactoryZMQ.cxx"
+    "zeromq/FairMQMessageZMQ.cxx"
+    "zeromq/FairMQSocketZMQ.cxx"
+    "zeromq/FairMQPollerZMQ.cxx"
+    "zeromq/FairMQContextZMQ.cxx"
+  )
+  set(DEPENDENCIES
+    ${DEPENDENCIES}
+    ${ZMQ_LIBRARY_SHARED}
+  )
+endif(NANOMSG_FOUND)
+
+
+# to copy src that are header-only files (e.g. c++ template) for FairRoot external installation
+# manual install (globbing add not recommended)
+Set(FairMQHDRFiles
+  devices/GenericSampler.h
+  devices/GenericSampler.tpl
+  devices/GenericProcessor.h
+  devices/GenericFileSink.h
+  devices/GenericFileSink.tpl
+  tools/FairMQTools.h
+)
+install(FILES ${FairMQHDRFiles} DESTINATION include)
+
+set(DEPENDENCIES
+  ${DEPENDENCIES}
+  boost_thread boost_timer boost_system boost_program_options boost_random
+)
+
+set(LIBRARY_NAME FairMQ)
 
 GENERATE_LIBRARY()
 
-Set(Exe_Names bsampler buffer splitter merger sink proxy n_one_merger one_n_splitter)
-Set(Exe_Source runBenchmarkSampler.cxx runBuffer.cxx runSplitter.cxx runMerger.cxx runSink.cxx runProxy.cxx runNToOneMerger.cxx runOneToNSplitter.cxx)
+set(Exe_Names
+  bsampler
+  buffer
+  splitter
+  merger
+  sink
+  proxy
+  example_client
+  example_server
+)
 
-List(LENGTH Exe_Names _length)
-Math(EXPR _length ${_length}-1)
+# following executables are only for protobuf tests and are not essential part of FairMQ
+# if(PROTOBUF_FOUND)
+#   set(Exe_Names
+#       ${Exe_Names}
+#       binsampler
+#       protosampler
+#       binsink
+#       protosink
+#       )
+# endif(PROTOBUF_FOUND)
+
+set(Exe_Source 
+  run/runBenchmarkSampler.cxx
+  run/runBuffer.cxx
+  run/runSplitter.cxx
+  run/runMerger.cxx
+  run/runSink.cxx
+  run/runProxy.cxx
+  examples/req-rep/runExampleClient.cxx
+  examples/req-rep/runExampleServer.cxx
+)
+
+# following source files are only for protobuf tests and are not essential part of FairMQ
+# if(PROTOBUF_FOUND)
+#   set(Exe_Source
+#       ${Exe_Source}
+#       run/runBinSampler.cxx
+#       run/runProtoSampler.cxx
+#       run/runBinSink.cxx
+#       run/runProtoSink.cxx
+#       )
+# endif(PROTOBUF_FOUND)
+
+list(LENGTH Exe_Names _length)
+math(EXPR _length ${_length}-1)
 
 ForEach(_file RANGE 0 ${_length})
-  List(GET Exe_Names ${_file} _name)
-  List(GET Exe_Source ${_file} _src)
-  Set(EXE_NAME ${_name})
-  Set(SRCS ${_src})
-  Set(DEPENDENCIES FairMQ)
+  list(GET Exe_Names ${_file} _name)
+  list(GET Exe_Source ${_file} _src)
+  set(EXE_NAME ${_name})
+  set(SRCS ${_src})
+  set(DEPENDENCIES FairMQ)
   GENERATE_EXECUTABLE()
 EndForEach(_file RANGE 0 ${_length})

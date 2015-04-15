@@ -1,4 +1,11 @@
-void run_reco()
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+void run_reco( TString mcEngine="TGeant3" )
 {
    // ----  Load libraries   -------------------------------------------------
   FairLogger *logger = FairLogger::GetLogger();
@@ -12,20 +19,26 @@ void run_reco()
   // Verbosity level (0=quiet, 1=event level, 2=track level, 3=debug)
   Int_t iVerbose = 0; // just forget about it, for the moment
   
-  // Input file (MC events)
-  TString inFile = "data/testrun.root";
-  
-  // Parameter file
-  TString parFile = "data/testparams.root"; 
+  // Input file (MC Events)
+  TString  inFile     ="testrun_";
+  inFile = inFile + mcEngine + ".root";
 
-  // Output file
-  TString outFile = "data/testreco.root";
-  
+  // Output file name
+  TString  outFile     ="testreco_";
+  outFile = outFile + mcEngine + ".root";
+
+  // Parameter file
+  TString  parFile     ="testparams_";
+  parFile = parFile + mcEngine + ".root";
+
+  // Millepede file name
+  TString  milleFile     ="testmille_";
+  milleFile = milleFile + mcEngine;
 
   TList *parFileList = new TList();
 
   TString workDir = gSystem->Getenv("VMCWORKDIR");
-  paramDir = workDir + "/Tutorial4/macros/parameters/";
+  paramDir = workDir + "/Tutorial4/parameters/";
 
 //  TObjString tutDetDigiFile = paramDir + "TutorialDet.missallign.par";
   TObjString tutDetDigiFile = paramDir + "example.par";
@@ -62,6 +75,7 @@ void run_reco()
   FairTutorialDet4MilleWriter* writer = new FairTutorialDet4MilleWriter();
 //  writer->SetWriteAscii(kTRUE);
   writer->SetVersion(2);
+  writer->SetFileName(milleFile);
   fRun->AddTask(writer);
   
 

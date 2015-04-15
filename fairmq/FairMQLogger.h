@@ -1,43 +1,52 @@
-/*
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+/**
  * FairMQLogger.h
  *
- *  Created on: Dec 4, 2012
- *      Author: dklein
+ * @since 2012-12-04
+ * @author D. Klein, A. Rybalchenko
  */
 
 #ifndef FAIRMQLOGGER_H_
 #define FAIRMQLOGGER_H_
-#include <string>
+
 #include <sstream>
 #include <sys/time.h>
-#include "Rtypes.h"
-#include "TString.h"
+#include <iostream>
+#include <iomanip>
+#include <ctime>
 
+using namespace std;
 
 class FairMQLogger
 {
-  private:
-    static FairMQLogger* instance;
-    TString fBindAddress;
   public:
-    enum {
-      DEBUG, INFO, ERROR, STATE
+    enum
+    {
+        DEBUG,
+        INFO,
+        ERROR,
+        WARN,
+        STATE
     };
     FairMQLogger();
-    FairMQLogger(TString bindAdress);
     virtual ~FairMQLogger();
-    void Log(Int_t type, TString logmsg);
-    static FairMQLogger* GetInstance();
-    static FairMQLogger* InitInstance(TString bindAddress);
+    ostringstream& Log(int type);
+
+  private:
+    ostringstream os;
 };
 
 typedef unsigned long long timestamp_t;
 
-static timestamp_t get_timestamp ()
-{
-  struct timeval now;
-  gettimeofday (&now, NULL);
-  return now.tv_usec + (timestamp_t)now.tv_sec * 1000000;
-}
+timestamp_t get_timestamp();
+
+#define LOG(type) FairMQLogger().Log(FairMQLogger::type)
+#define MQLOG(type) FairMQLogger().Log(FairMQLogger::type)
 
 #endif /* FAIRMQLOGGER_H_ */

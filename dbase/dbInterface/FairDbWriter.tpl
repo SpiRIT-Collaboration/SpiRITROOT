@@ -155,7 +155,8 @@ Bool_t FairDbWriter<T>::Activate(const ValInterval& vr,
   fAggregateNo=aggNo;
   fDbNo=dbEntry;
 
-  this->Open(vr,fAggregateNo,fVersion,creationDate,fDbNo,fLogTitle);
+  return this->Open(vr,fAggregateNo,fVersion,creationDate,fDbNo,fLogTitle);
+
 
 }
 
@@ -228,7 +229,7 @@ Bool_t FairDbWriter<T>::CanOutput(Bool_t reportErrors) const
   UInt_t nstmts = fPacket->GetNumSqlStmts();
 
   if ( nstmts == 0 ) {
-    // not even a VLD insert
+    // not even a VAL insert
     if ( reportErrors ) {
       DBLOG("FairDb",FairDbLog::kError) << "Cannot output validity set for table "
                                         << fTableName
@@ -238,12 +239,12 @@ Bool_t FairDbWriter<T>::CanOutput(Bool_t reportErrors) const
   }
 
   if ( nstmts == 1 ) {
-    // if VLD insert present but no data rows, just issue a stern warning
+    // if VAL insert present but no data rows, just issue a stern warning
     // as it may be intended to obscure now invalid data
     string stmt = fPacket->GetStmt(0);
     bool isvldentry =
       (stmt.find("INSERT INTO") != string::npos ) &&
-      (stmt.find("VLD VALUES")  != string::npos);
+      (stmt.find("VAL VALUES")  != string::npos);
     if ( isvldentry ) {
       if ( reportErrors ) {
         DBLOG("FairDb",FairDbLog::kWarning) << "VAL entry but no data for "
@@ -255,7 +256,7 @@ Bool_t FairDbWriter<T>::CanOutput(Bool_t reportErrors) const
         DBLOG("FairDb",FairDbLog::kError)
             << "Cannot output validity set for table "
             << fTableName
-            << ", (no VLD info) no data has been written." << endl;
+            << ", (no VAL info) no data has been written." << endl;
         fPacket->Print();
       }
       return kFALSE;

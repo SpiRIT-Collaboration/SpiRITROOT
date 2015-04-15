@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #ifndef FAIRRUNANA_H
 #define FAIRRUNANA_H
 
@@ -42,6 +49,8 @@ class FairRunAna : public FairRun
     void        Run(Double_t delta_t);
     /**Run for the given single entry*/
     void        Run(Long64_t entry);
+    /**Run event reconstruction from event number NStart to event number NStop */
+    void        RunEventReco(Int_t NStart ,Int_t NStop);
     /**Run from event number NStart to event number NStop over mixed input files */
     void        RunMixed(Int_t NStart, Int_t NStop);
     /**Run over all TSBuffers until the data is processed*/
@@ -136,7 +145,12 @@ class FairRunAna : public FairRun
     Bool_t GetLMDProcessingStatus( void ) {
       return fFinishProcessingLMDFile;
     }
-
+    /**
+     * This method will simply forward the call to the FairRootManager, 
+     * if  true all inputs are mixed, i.e: each read event will take one entry from each input and put
+     * them in one big event and send it to the next step
+    */
+    void SetMixAllInputs(Bool_t Status);
 
   private:
 

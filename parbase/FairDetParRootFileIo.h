@@ -1,9 +1,18 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #ifndef FAIRDETPARROOTFILEIO_H
 #define FAIRDETPARROOTFILEIO_H
 
 #include "FairDetParIo.h"               // for FairDetParIo
 
 #include "Rtypes.h"                     // for Int_t, Text_t, etc
+
+using std::fstream;
 
 class FairParRootFile;
 class FairParSet;

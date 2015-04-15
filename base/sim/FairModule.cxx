@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 // -------------------------------------------------------------------------
 // -----                     FairModule source file                    -----
 // -----            Created 06/01/04  by M. Al-Turany                  -----
@@ -33,8 +40,13 @@
 #include "TString.h"                    // for TString, operator!=, etc
 #include "TSystem.h"                    // for TSystem, gSystem
 
+#ifdef ROOT_HAS_GDML
+#include "TGDMLParse.h"
+#endif
+
 #include <stdlib.h>                     // for getenv
 #include <string.h>                     // for NULL, strcmp, strlen
+#include <map>
 
 class FairGeoMedium;
 class TGeoMedium;
@@ -80,6 +92,32 @@ FairModule::FairModule(const char* Name, const char* title ,Bool_t Active)
 }
 
 //__________________________________________________________________________
+FairModule::FairModule(const FairModule& rhs)
+  :TNamed(rhs),
+   fMotherVolumeName(rhs.fMotherVolumeName),
+   fgeoVer(rhs.fgeoVer),
+   fgeoName(rhs.fgeoName),
+   fModId(rhs.fModId),
+   fActive(rhs.fActive),
+   fNbOfSensitiveVol(rhs.fNbOfSensitiveVol),
+   fVerboseLevel(rhs.fVerboseLevel),
+   flGeoPar(0),
+   kGeoSaved(rhs.kGeoSaved)
+{
+   // Do not change anything in global fields (svList. vList)
+
+  // TO DO - add when we know what type is the elements of flGeoPar
+  //flGeoPar=new TObjArray();
+  //TIter it = rhs.flGeoPar->MakeIterator();
+  // Copy parameters
+  //TObject* obj;
+  //while((obj=it->Next())) {
+  //  flGeoPar->Add(...);
+  //}
+
+}
+
+//__________________________________________________________________________
 
 FairModule::FairModule()
   : TNamed(),
@@ -94,6 +132,38 @@ FairModule::FairModule()
     kGeoSaved(kFALSE)
 {
 
+}
+
+//__________________________________________________________________________
+FairModule& FairModule::operator= (const FairModule& rhs)
+{
+  // check assignment to self
+  if (this == &rhs) return *this;
+
+  // base class assignment
+  TNamed::operator=(rhs);
+
+  // assignment operator
+  fMotherVolumeName = rhs.fMotherVolumeName;
+  fgeoVer = rhs.fgeoVer;
+  fgeoName = rhs.fgeoName;
+  fModId = rhs.fModId;
+  fActive = rhs.fActive;
+  fNbOfSensitiveVol = rhs.fNbOfSensitiveVol;
+  fVerboseLevel = rhs.fVerboseLevel;
+  flGeoPar = 0;
+  kGeoSaved = rhs.kGeoSaved;
+
+  // TO DO - add when we know what type is the elements of flGeoPar
+  //flGeoPar=new TObjArray();
+  //TIter it = rhs.flGeoPar->MakeIterator();
+  // copy parameters
+  //TObject* obj;
+  //while((obj=it->Next())) {
+  //  flGeoPar->Add(...);
+  //}
+
+  return *this;
 }
 
 //__________________________________________________________________________
@@ -295,62 +365,164 @@ void FairModule::ConstructRootGeometry()
 
   if(v1==0) {
     LOG(FATAL)<<"Could not find any geometry in file " << GetGeometryFileName().Data() << FairLogger::endl;
-  }
-  gGeoManager=OldGeo;
-  gGeoManager->cd();
-  // If AddToVolume is empty add the volume to the top volume Cave
-  // If it is defined check i´f the volume exists and if it exists add the volume from the root file
-  // to the already existing volume
-  TGeoVolume* Cave=NULL;
-  if ( 0 == fMotherVolumeName.Length() ) {
-    Cave= gGeoManager->GetTopVolume();
   } else {
-    Cave = gGeoManager->GetVolume(fMotherVolumeName);
-  }
-  if(Cave!=NULL) {
-    /**Every thing is OK, we have a TGeoVolume and now we add it to the simulation TGeoManager  */
-    gGeoManager->AddVolume(v1);
-    /** force rebuilding of voxels */
-    TGeoVoxelFinder* voxels = v1->GetVoxels();
-    if (voxels) { voxels->SetNeedRebuild(); }
+    gGeoManager=OldGeo;
+    gGeoManager->cd();
+    // If AddToVolume is empty add the volume to the top volume Cave
+    // If it is defined check i´f the volume exists and if it exists add the volume from the root file
+    // to the already existing volume
+    TGeoVolume* Cave=NULL;
+    if ( 0 == fMotherVolumeName.Length() ) {
+      Cave= gGeoManager->GetTopVolume();
+    } else {
+      Cave = gGeoManager->GetVolume(fMotherVolumeName);
+    }
+    if(Cave!=NULL) {
+      /**Every thing is OK, we have a TGeoVolume and now we add it to the simulation TGeoManager  */
+      gGeoManager->AddVolume(v1);
+      /** force rebuilding of voxels */
+      TGeoVoxelFinder* voxels = v1->GetVoxels();
+      if (voxels) { voxels->SetNeedRebuild(); }
 
-    // else { fLogger->Fatal(MESSAGE_ORIGIN, "\033[5m\033[31mFairModule::ConstructRootGeometry(): could not find voxels  \033[0m"); }
+      // else { fLogger->Fatal(MESSAGE_ORIGIN, "\033[5m\033[31mFairModule::ConstructRootGeometry(): could not find voxels  \033[0m"); }
 
-    /**To avoid having different names of the default matrices because we could have get the volume from another
-     * TGeoManager, we reset the default matrix name
-     */
-    TGeoMatrix* M = n->GetMatrix();
-    SetDefaultMatrixName(M);
+      /**To avoid having different names of the default matrices because we could have get the volume from another
+       * TGeoManager, we reset the default matrix name
+       */
+      TGeoMatrix* M = n->GetMatrix();
+      SetDefaultMatrixName(M);
 
-    /** NOw we can remove the matrix so that the new geomanager will rebuild it properly*/
-    gGeoManager->GetListOfMatrices()->Remove(M);
-    TGeoHMatrix* global = gGeoManager->GetHMatrix();
-    gGeoManager->GetListOfMatrices()->Remove(global); //Remove the Identity matrix
-    /**Now we can add the node to the existing cave */
-    Cave->AddNode(v1,0, M);
-    /** correction from O. Merle: in case of a TGeoVolume (v1) set the material properly */
-    AssignMediumAtImport(v1);
-    /** now go through the herachy and set the materials properly, this is important becase the CAD converter
-     *  produce TGeoVolumes with materials that have only names and no properties
-     */
-    ExpandNode(n);
-    if(NewGeo!=0) { delete NewGeo; }
-    delete f;
-  } else {
-    LOG(FATAL)<<"Could not find the given mother volume "<< fMotherVolumeName.Data() << " where the geomanger should be added."<<FairLogger::endl;
+      /** NOw we can remove the matrix so that the new geomanager will rebuild it properly*/
+      gGeoManager->GetListOfMatrices()->Remove(M);
+      TGeoHMatrix* global = gGeoManager->GetHMatrix();
+      gGeoManager->GetListOfMatrices()->Remove(global); //Remove the Identity matrix
+      /**Now we can add the node to the existing cave */
+      Cave->AddNode(v1,0, M);
+      /** correction from O. Merle: in case of a TGeoVolume (v1) set the material properly */
+
+      AssignMediumAtImport(v1);
+      /** now go through the herachy and set the materials properly, this is important becase the CAD converter
+       *  produce TGeoVolumes with materials that have only names and no properties
+       */
+      ExpandNode(n);
+      if(NewGeo!=0) { delete NewGeo; }
+      delete f;
+    } else {
+      LOG(FATAL)<<"Could not find the given mother volume "<< fMotherVolumeName.Data() << " where the geomanger should be added."<<FairLogger::endl;
+    }
   }
 }
+
+#ifdef ROOT_HAS_GDML
+
+void FairModule::ConstructGDMLGeometry(TGeoMatrix* posrot)
+{
+    // Parse the GDML file
+    TFile *old = gFile;
+	TGDMLParse parser;
+	TGeoVolume* gdmlTop;
+	gdmlTop = parser.GDMLReadFile(GetGeometryFileName());
+
+    // Change ID of media. TGDMLParse starts allways from 0. Need to shift.
+    ReAssignMediaId();
+
+    // Add volume to the cave and go through it recursively
+	gGeoManager->GetTopVolume()->AddNode(gdmlTop,1,posrot);
+	ExpandNodeForGDML(gGeoManager->GetTopVolume()->GetNode(gGeoManager->GetTopVolume()->GetNdaughters()-1));
+    gFile = old;
+}
+
+void FairModule::ExpandNodeForGDML(TGeoNode* curNode)
+{
+    // Get pointer to volume and assign medium
+	TGeoVolume* curVol = curNode->GetVolume();
+    AssignMediumAtImport(curVol);
+
+    // Check if the volume is sensitive
+    if ( (this->InheritsFrom("FairDetector")) && CheckIfSensitive(curVol->GetName())) {
+        LOG(DEBUG2)<<"Sensitive Volume "<< curVol->GetName() << FairLogger::endl;
+        AddSensitiveVolume(curVol);
+    }
+
+	//! Recursevly go down the tree of nodes
+	if (curVol->GetNdaughters() != 0)
+	{
+		TObjArray* NodeChildList = curVol->GetNodes();
+		TGeoNode* curNodeChild;
+		for (Int_t j=0; j<NodeChildList->GetEntriesFast(); j++)
+		{
+			curNodeChild = (TGeoNode*)NodeChildList->At(j);
+			ExpandNodeForGDML(curNodeChild);
+		}
+	}
+}
+
+#else
+
+void FairModule::ConstructGDMLGeometry(TGeoMatrix* posrot)
+{
+    gLogger->Error(MESSAGE_ORIGIN," Could not construct magnet geometry from gdml file. ");
+    gLogger->Error(MESSAGE_ORIGIN," The used ROOT version does not support gdml. ");
+    gLogger->Error(MESSAGE_ORIGIN," Please recompile ROOT with gdml support. ");
+    gLogger->Fatal(MESSAGE_ORIGIN," Stop execution at this point. ");
+}
+
+void FairModule::ExpandNodeForGDML(TGeoNode* curNode)
+{
+}
+
+#endif
+
+void FairModule::ReAssignMediaId()
+{
+    // Initialise pointer to GeoBuilder
+    FairGeoBuilder* geoBuilder = FairGeoLoader::Instance()->getGeoBuilder();
+    // Get list of TGeo media
+    TList* media = gGeoManager->GetListOfMedia();
+    // Loop over new media which are not in GeoBase and shift the ID
+    TGeoMedium* med;
+    TGeoMedium* med2;
+    for(Int_t i = geoBuilder->GetNMedia(); i < media->GetEntries(); i++)
+    {
+        med = (TGeoMedium*) media->At(i);
+        med->SetId(i+1);
+    }
+    // Change GeoBase medium index
+    geoBuilder->SetNMedia(media->GetEntries());
+
+    // Revove dublicated materials
+    TList* materials = gGeoManager->GetListOfMaterials();
+    TIter next1(materials);
+    // map for existing materials
+    std::map<TString, Bool_t> mapMatName;
+    TGeoMaterial* mat;
+    while( (mat = (TGeoMaterial*)next1()) )
+    {
+        // If material exist - delete dublicated. If not - set the flag
+        if(mapMatName[mat->GetName()])
+        {
+            materials->Remove(mat);
+        }
+        else
+        {
+            mapMatName[mat->GetName()] = kTRUE;
+        }
+    }
+}
+
 //__________________________________________________________________________
 void FairModule::ConstructASCIIGeometry()
 {
   LOG(WARNING)<<"The method ConstructASCIIGeometry has to be implemented in the detector class which inherits from FairModule"<<FairLogger::endl;
 }
+
 //__________________________________________________________________________
 Bool_t FairModule::CheckIfSensitive(std::string name)
 {
   LOG(WARNING)<<"The method CheckIfSensitive has to be implemented in the detector class which inherits from FairModule"<<FairLogger::endl;
   return kFALSE;
 }
+
 //__________________________________________________________________________
 void FairModule::ExpandNode(TGeoNode* fN)
 {
@@ -380,6 +552,7 @@ void FairModule::ExpandNode(TGeoNode* fN)
     }
   }
 }
+
 //__________________________________________________________________________
 void FairModule::SetDefaultMatrixName(TGeoMatrix* matrix)
 {
@@ -421,22 +594,46 @@ void FairModule::AssignMediumAtImport(TGeoVolume* v)
   FairGeoBuilder* geobuild  = FairGeoLoader::Instance()->getGeoBuilder();
 
   TGeoMedium* med1=v->GetMedium();
+
+
   if(med1) {
+    // In newer ROOT version also a TGeoVolumeAssembly has a material and medium.
+    // This medium is called dummy and is automatically set when the geometry is constructed.
+    // Since this material and medium is neither in the TGeoManager (at this point) nor in our
+    // ASCII file we have to create it the same way it is done in TGeoVolume::CreateDummyMedium()
+    // In the end the new medium and material has to be added to the TGeomanager, because this is
+    // not done automatically when using the default constructor. For all other constructors the
+    // newly created medium or material is added to the TGeomanger.
+    // Create the medium and material only the first time.
+    TString medName = (TString)(med1->GetName());
+    if ( medName.EqualTo("dummy") && NULL == gGeoManager->GetMedium(medName) ) {
+
+      TGeoMaterial *dummyMaterial = new TGeoMaterial();
+      dummyMaterial->SetName("dummy");
+
+      TGeoMedium* dummyMedium = new TGeoMedium();
+      dummyMedium->SetName("dummy");
+      dummyMedium->SetMaterial(dummyMaterial);
+
+      gGeoManager->GetListOfMedia()->Add(dummyMedium);
+      gGeoManager->AddMaterial(dummyMaterial);
+    }
+
     TGeoMaterial* mat1=v->GetMaterial();
     TGeoMaterial* newMat = gGeoManager->GetMaterial(mat1->GetName());
     if( newMat==0) {
       /**The Material is not defined in the TGeoManager, we try to create one if we have enough information about it*/
       FairGeoMedium* FairMedium=Media->getMedium(mat1->GetName());
       if (!FairMedium) {
+        LOG(FATAL)<<"Material "<< mat1->GetName() << "is not defined in ASCII file nor in Root file." << FairLogger::endl;
+        //     FairMedium=new FairGeoMedium(mat1->GetName());
+        //      Media->addMedium(FairMedium);
+      } else {
 
- 	LOG(FATAL)<<"Material "<< mat1->GetName() << "is not defined in ASCII file nor in Root file." << FairLogger::endl;
-	 FairMedium=new FairGeoMedium(mat1->GetName());
-	 Media->addMedium(FairMedium);
+        Int_t nmed=geobuild->createMedium(FairMedium);
+        v->SetMedium(gGeoManager->GetMedium(nmed));
+        gGeoManager->SetAllIndex();
       }
-  
-	Int_t nmed=geobuild->createMedium(FairMedium);
-      v->SetMedium(gGeoManager->GetMedium(nmed));
-      gGeoManager->SetAllIndex();
     } else {
       /**Material is already available in the TGeoManager and we can set it */
       TGeoMedium* med2= gGeoManager->GetMedium(mat1->GetName());
@@ -448,6 +645,13 @@ void FairModule::AssignMediumAtImport(TGeoVolume* v)
       LOG(FATAL)<<"The volume "<< v->GetName() << "has no medium information and not an Assembly so we have to quit"<<FairLogger::endl;
     }
   }
+}
+
+//__________________________________________________________________________
+FairModule* FairModule::CloneModule() const
+{
+  Fatal("CloneModule","Has to be overriden in multi-threading applications.");
+  return 0;
 }
 
 //__________________________________________________________________________

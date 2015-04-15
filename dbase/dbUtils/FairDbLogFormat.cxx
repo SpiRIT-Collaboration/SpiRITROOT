@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #include "FairDbLogFormat.h"
 #include "FairDbLogBFormat.h"
 
@@ -26,6 +33,10 @@ ostream& operator<<(ostream& os, const FairDbLogBFormat& bf)
 }
 
 FairDbLogFormat::FairDbLogFormat(const char* f)
+ : prc(6),
+   wdt(0),
+   fmt(),
+   flc()
 {
   int i, j=0, k=0;
   char c, n[2][16];

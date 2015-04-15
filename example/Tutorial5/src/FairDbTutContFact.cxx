@@ -1,15 +1,25 @@
-/////////////////////////////////////////////////////////////
-//
-//  FairDbTutContFact
-//
-//  Factory for the parameter containers
-//
-/////////////////////////////////////////////////////////////
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+
+/** 
+ *  FairDbTutContFact.cxx 
+ * 
+ *  Factory for the parameter containers
+ *
+ *  created @ 09-01-2014 
+ *  by         D.Bertini  
+ */ 
+
 #include "FairDbTutContFact.h"
 
 #include "FairDbTutPar.h"               // for FairDbTutPar
 #include "FairDbTutParBin.h"            // for FairDbTutParBin
-#include "FairParSet.h"                 // for FairParSet
+#include "FairDbParSet.h"                 // for FairParSet
 #include "FairRuntimeDb.h"              // for FairRuntimeDb
 
 #include "Riosfwd.h"                    // for ostream
@@ -62,7 +72,7 @@ FairParSet* FairDbTutContFact::createContainer(FairContainer* c)
 
   const char* name=c->GetName();
   cout << "-I-FairDbTutContFact::createContainer " << name << endl;
-  FairParSet* p=NULL;
+  FairDbParSet* p=NULL;
   if (strcmp(name,"TUTParDefault")==0) {
     p=new FairDbTutPar(c->getConcatName().Data(),c->GetTitle(),c->getContext());
     // Set Arguments needed for SQL versioning managment
@@ -90,5 +100,5 @@ FairParSet* FairDbTutContFact::createContainer(FairContainer* c)
     p->SetLogTitle(name);
   }
 
-  return p;
+  return (FairParSet*) p;
 }

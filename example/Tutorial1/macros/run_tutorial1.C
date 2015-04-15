@@ -1,4 +1,11 @@
-void run_tutorial1(Int_t nEvents = 10)
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+void run_tutorial1(Int_t nEvents = 10, TString mcEngine = "TGeant3")
 {
   
   TString dir = getenv("VMCWORKDIR");
@@ -21,16 +28,18 @@ void run_tutorial1(Int_t nEvents = 10)
   TString outDir = "./";
 
   // Output file name
-  TString outFile = Form("%s/tutorial1_%s.mc_p%1.3f_t%1.0f_n%d.root",
-			 outDir.Data(),
+  TString outFile = Form("%s/tutorial1_%s_%s.mc_p%1.3f_t%1.0f_n%d.root",
+                         outDir.Data(),
+			 mcEngine.Data(),
 			 partName[chosenPart].Data(),
 			 momentum,
 			 theta,
 			 nEvents);
   
   // Parameter file name
-  TString parFile = Form("%s/tutorial1_%s.params_p%1.3f_t%1.0f_n%d.root",
+  TString parFile = Form("%s/tutorial1_%s_%s.params_p%1.3f_t%1.0f_n%d.root",
 			 outDir.Data(),
+			 mcEngine.Data(),
 			 partName[chosenPart].Data(),
 			 momentum,
 			 theta,
@@ -50,7 +59,7 @@ void run_tutorial1(Int_t nEvents = 10)
 
   // -----   Create simulation run   ----------------------------------------
   FairRunSim* run = new FairRunSim();
-  run->SetName("TGeant3");              // Transport engine
+  run->SetName(mcEngine);              // Transport engine
   run->SetOutputFile(outFile);          // Output file
   FairRuntimeDb* rtdb = run->GetRuntimeDb();
   // ------------------------------------------------------------------------

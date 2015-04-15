@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #ifndef FAIRRUNANAPROOF_H
 #define FAIRRUNANAPROOF_H
 
@@ -11,7 +18,6 @@
 #include "FairRunAna.h"
 
 #include "TProof.h"
-#include <iostream>
 
 class FairRunAnaProof : public FairRunAna
 {
@@ -75,6 +81,11 @@ class FairRunAnaProof : public FairRunAna
     /** Output status indicator: "copy","merge","dataset"*/
     TString                                  fProofOutputStatus;
 
+  private:
+  
+    FairRunAnaProof(const FairRunAnaProof&);
+    FairRunAnaProof operator=(const FairRunAnaProof&);
+    
     ClassDef(FairRunAnaProof ,1)
 
 };

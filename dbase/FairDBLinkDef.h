@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 
 #ifdef __CINT__
 
@@ -12,9 +19,9 @@
 #pragma link C++ enum          Experiment::EExperiment;
 #pragma link C++ nestedtypedef Experiment::Experiment_t;
 
-#pragma link C++ namespace     Detector;
-#pragma link C++ enum          Detector::EDetector;
-#pragma link C++ nestedtypedef Detector::Detector_t;
+#pragma link C++ namespace     FairDbDetector;
+#pragma link C++ enum          FairDbDetector::EDetector;
+#pragma link C++ nestedtypedef FaiDbDetector::Detector_t;
 
 #pragma link C++ namespace     DataType;
 #pragma link C++ enum          DataType::EDataType;
@@ -76,6 +83,7 @@
 #pragma link C++ class FairDbTableInterfaceStore+;
 #pragma link C++ class FairDbTableInterface+;
 #pragma link C++ class FairDbObjTableMap+;
+#pragma link C++ class FairDbParSet+;
 #pragma link C++ class FairDbDataTypeUnion+;
 #pragma link C++ class FairDbStopWatch+;
 #pragma link C++ class FairDbStopWatchManager+;
@@ -94,9 +102,15 @@
 #pragma link C++ class FairRegistryElementGeneric<const char*>-;
 #pragma link C++ function operator<<(ostream&, const FairRegistry&);
 
+// dbIO
+#pragma link C++ class FairParTSQLIo+;
+#pragma link C++ class FairDetParTSQLIo+;
+#pragma link C++ class FairGenericParTSQLIo+;
+
+
 // #### SQL object
-#pragma link C++ class FairTSQLObject+;
-#pragma link C++ enum  FairDBObjectMemberTypes;
-#pragma link C++ union FairDBObjectMemberValues;
-#pragma link C++ class FairDBObjectMemberValue+;
+//#pragma link C++ class FairTSQLObject+;
+//#pragma link C++ enum  FairDBObjectMemberTypes;
+//#pragma link C++ union FairDBObjectMemberValues;
+//#pragma link C++ class FairDBObjectMemberValue+;
 #endif

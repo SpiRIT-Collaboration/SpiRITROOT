@@ -1,23 +1,19 @@
-plots(Int_t nEvents = 1000, Int_t iout=1)
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+plots(Int_t nEvents = 1000, Int_t iout=1, TString mcEngine="TGeant3")
 {
 
-  gROOT->LoadMacro("$VMCWORKDIR/gconfig/basiclibs.C");
-  basiclibs();
-  gSystem->Load("libFairTools");
-  gSystem->Load("libFairDB");
-  gSystem->Load("libGeoBase");
-  gSystem->Load("libParBase");
-  gSystem->Load("libBase");
-  gSystem->Load("libMCStack");
-  gSystem->Load("libGen");
-  gSystem->Load("libPassive");
-  gSystem->Load("libTutorial4");
-
   // Input data definitions
-  TString  MCFile    = "data/testrun.root";
-  TString  RecoFile  = "data/testreco.root";
-  TString  ParFile   = "data/testparams.root";
-
+  //-----User Settings:-----------------------------------------------
+  TString  MCFile     ="testrun_" + mcEngine + ".root";
+  TString  ParFile       ="testparams_" + mcEngine + ".root";
+  TString  RecoFile       ="testreco_"+ mcEngine + ".root";;
+  
 
   // -----   Reconstruction run   -------------------------------------------
   FairRunAna *fRun= new FairRunAna();
@@ -38,8 +34,8 @@ plots(Int_t nEvents = 1000, Int_t iout=1)
 	
   FairMCEventHeader *MCEventHeader  = new FairMCEventHeader();
   TClonesArray *MCTracks   = new TClonesArray("FairMCTrack");
-  TClonesArray *TutorialDetPoints  = new TClonesArray("FairTutorialDetPoint");
-  TClonesArray *TutorialDetHits    = new TClonesArray("FairTutorialDetHit");
+  TClonesArray *TutorialDetPoints  = new TClonesArray("FairTutorialDet4Point");
+  TClonesArray *TutorialDetHits    = new TClonesArray("FairTutorialDet4Hit");
 
   t1->SetBranchAddress("MCEventHeader.",&MCEventHeader);
   t1->SetBranchAddress("MCTrack",       &MCTracks);
@@ -47,11 +43,11 @@ plots(Int_t nEvents = 1000, Int_t iout=1)
   t2->SetBranchAddress("TutorialDetHit",        &TutorialDetHits);
 
   FairMCTrack     *MCTrack;
-  FairTutorialDetPoint    *Point;
-  FairTutorialDetHit      *Hit;
+  FairTutorialDet4Point    *Point;
+  FairTutorialDet4Hit      *Hit;
 
   //histograms 
-  fRun->SetOutputFile("data/test.ana.root");
+  fRun->SetOutputFile("test.ana.root");
   TFile *fHist = fRun->GetOutputFile();
 
   Float_t xrange=80.;
@@ -97,9 +93,9 @@ for (Int_t iev=0; iev< nevent; iev++) {
     
   // Hit loop					
   for (Int_t j =0; j<nHits; j++) {
-    Hit   = (FairTutorialDetHit*) TutorialDetHits->At(j);
+    Hit   = (FairTutorialDet4Hit*) TutorialDetHits->At(j);
     Int_t l = Hit->GetRefIndex();
-    Point = (FairTutorialDetPoint*) TutorialDetPoints->At(l);
+    Point = (FairTutorialDet4Point*) TutorialDetPoints->At(l);
 
     // Point info
     x_poi	= Point -> GetX();

@@ -1,4 +1,11 @@
-void run_rutherford(Int_t nEvents = 10)
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+void run_rutherford(Int_t nEvents = 10, TString mcEngine="TGeant3")
 {
   
   TString dir = gSystem->Getenv("VMCWORKDIR");
@@ -11,8 +18,11 @@ void run_rutherford(Int_t nEvents = 10)
   gSystem->Setenv("CONFIG_DIR",tut_configdir.Data());
 
   TString outDir  = "data";
-  TString outFile = outDir + "/test.mc.root";
-  TString parFile = outDir + "/params.root";
+  TString outFile = outDir + "/test_";
+  outFile = outFile + mcEngine + ".mc.root";
+
+  TString parFile = outDir + "/params_";
+  parFile = parFile + mcEngine + ".root";
 
   // In general, the following parts need not be touched
   // ========================================================================
@@ -37,7 +47,7 @@ void run_rutherford(Int_t nEvents = 10)
  
   // -----   Create simulation run   ----------------------------------------
   FairRunSim* run = new FairRunSim();
-  run->SetName("TGeant3");              // Transport engine
+  run->SetName(mcEngine);              // Transport engine
   run->SetOutputFile(outFile);          // Output file
   FairRuntimeDb* rtdb = run->GetRuntimeDb();
   // ------------------------------------------------------------------------

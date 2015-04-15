@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 
 #include "FairDbExtSqlContent.h"
 
@@ -9,7 +16,7 @@ FairDbExtSqlContent::FairDbExtSqlContent(const std::string& ctxt)
     fIntervalType(kUndefined),
     fTimeStart(),
     fTimeEnd(),
-    fDetType(Detector::kUnknown),
+    fDetType(FairDbDetector::kUnknown),
     fSimType(DataType::kUnknown)
 {
 
@@ -18,7 +25,7 @@ FairDbExtSqlContent::FairDbExtSqlContent(const std::string& ctxt)
 FairDbExtSqlContent::FairDbExtSqlContent(IntervalType interval,
     ValTimeStamp start,
     ValTimeStamp end,
-    Detector::Detector_t det,
+    FairDbDetector::Detector_t det,
     DataType::DataType_t sim)
   : FairDbString(),
     fIntervalType(interval),

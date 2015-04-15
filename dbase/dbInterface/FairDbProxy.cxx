@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #include "FairDbProxy.h"
 #include "FairDbLogService.h"
 #include "FairDbConnection.h"           // for FairDbConnection
@@ -12,7 +19,7 @@
 #include "DataType.h"                    // for DataType_t
 #include "ValCondition.h"                 // for ValCondition, operator<<
 #include "ValTimeStamp.h"               // for ValTimeStamp, operator<<, etc
-#include "db_detector_def.h"            // for Detector, etc
+#include "db_detector_def.h"            // for FairDbDetector, etc
 
 #include "Riosfwd.h"                    // for ostream
 #include "TCollection.h"                // for TIter
@@ -90,7 +97,7 @@ void FairDbProxy::FindTimeLimits(const ValCondition& vc,
 
 // Extract information for ValCondition.
 
-  Detector::Detector_t    detType(vc.GetDetector());
+  FairDbDetector::Detector_t    detType(vc.GetDetector());
   DataType::DataType_t       simFlg(vc.GetDataType());
 
 // Use an auto_ptr to manage ownership of FairDbStatement and TSQLStatement
@@ -252,7 +259,7 @@ FairDbResultPool*  FairDbProxy::QueryValidity (const ValCondition& vc,
 
   string startGateString(FairDb::MakeDateTimeString(startGate));
   string endGateString(FairDb::MakeDateTimeString(endGate));
-  Detector::Detector_t    detType(vc.GetDetector());
+  FairDbDetector::Detector_t    detType(vc.GetDetector());
   DataType::DataType_t       simFlg(vc.GetDataType());
 
 // Generate SQL for context.
@@ -293,9 +300,9 @@ FairDbResultPool*  FairDbProxy::QueryValidity (const string& context,
   DBLOG("FairDb",FairDbLog::kInfo) << "db_id: " << dbNo
                                    << " SQL query: " << sql.c_str() << endl;
 
+
   FairDbStatement* stmtDb = fConnectionPool.CreateStatement(dbNo);
   return new FairDbResultPool(stmtDb,sql,fMetaValid,fTableInterface,dbNo);
-
 }
 
 
@@ -533,8 +540,11 @@ void  FairDbProxy::CreateMetaData(FairDbTableMetaData& metaData) const
   // Checking meta-data
   for ( UInt_t dbNo = 0; dbNo < fConnectionPool.GetNumDb(); dbNo++ ) {
     FairDbConnection* connection = fConnectionPool.GetConnection(dbNo);
+    if (!connection) {continue;} 
+
     TSQLServer* server = connection->GetServer();
-    if ( ! server ) { continue; }
+    if (!server) {continue;}
+
     connection->Connect();
     TSQLTableInfo* meta = server->GetTableInfo(tableName);
     if ( ! meta ) {

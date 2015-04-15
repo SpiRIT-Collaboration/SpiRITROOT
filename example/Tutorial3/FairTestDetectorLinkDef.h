@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #ifdef __CINT__
 
 #pragma link off all globals;
@@ -22,5 +29,23 @@
 #pragma link C++ class FairTestDetectorTimeRecoTask+;
 #pragma link C++ class FairTestDetectorDigiRingSorter+;
 #pragma link C++ class FairTestDetectorDigiSorterTask+;
+
+#pragma link C++ namespace TestDetectorPayload;
+#pragma link C++ nestedclass;
+#pragma link C++ nestedtypedef;
+
+#pragma link C++ class TestDetectorPayload::TimeStamp+;
+#pragma link C++ class TestDetectorPayload::Digi+;
+#pragma link C++ class TestDetectorPayload::Hit+;
+
+
+
+
+//#pragma link C++ namespace MyData;
+//#pragma link C++ class MyData::Base+;
+//#pragma link C++ class MyData::Derived1+;
+//#pragma link C++ class MyData::Derived2+;
+//#pragma link C++ class MyData::Derived3+;
+
 
 #endif

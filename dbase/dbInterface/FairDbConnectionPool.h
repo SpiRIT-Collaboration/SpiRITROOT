@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #ifndef FAIRDBCONNECTIONPOOL_H
 #define FAIRDBCONNECTIONPOOL_H
 
@@ -12,6 +19,8 @@
 #include <ostream>                      // for ostream
 #include <string>                       // for string
 #include <vector>                       // for vector
+
+using std::ostream;
 
 class FairDbStatement;
 
@@ -69,6 +78,7 @@ class FairDbConnectionPool
     FairDbConnectionPool(const FairDbConnectionPool& conn);
 
     void SetAuthorisingEntry(Int_t entry) {fGlobalSeqNoDbNo = entry;}
+    Int_t GetAuthorisingEntry() {return fGlobalSeqNoDbNo;}
 
   protected:
 

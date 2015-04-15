@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 
 #include "FairDbOutTableBuffer.h"
 #include "FairDbLogService.h"
@@ -128,10 +135,12 @@ FairDbOutTableBuffer& FairDbOutTableBuffer::operator<<(const FairDbStreamer& src
 
 Bool_t FairDbOutTableBuffer::StoreDefaultIfInvalid(FairDb::DataTypes type)
 {
-
   FairDbFieldType typeSupplied(type);
   FairDbFieldType typeRequired(CurColFieldType());
-  if ( typeSupplied.IsCompatible(typeRequired) ) { return kFALSE; }
+
+  if ( typeSupplied.IsCompatible(typeRequired) ) {
+    return kFALSE;
+  }
 
   string udef = typeRequired.UndefinedValue();
   MAXDBLOG("FairDb",FairDbLog::kError,20)
@@ -145,8 +154,8 @@ Bool_t FairDbOutTableBuffer::StoreDefaultIfInvalid(FairDb::DataTypes type)
   Store(udef.c_str());
   fBadData = kTRUE;
   return kTRUE;
-
 }
+
 void FairDbOutTableBuffer::Store(const string& str)
 {
 

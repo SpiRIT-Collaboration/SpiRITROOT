@@ -1,14 +1,27 @@
-//
-// C++ Interface: FairDbTutPar
-//
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+
+/** 
+ *  FairDbTutPar.h 
+ * 
+ *  created @ 09-01-2014 
+ *  by         D.Bertini  
+ */ 
+
+
 #ifndef FAIRDBTUTPAR_H
 #define FAIRDBTUTPAR_H
 
-#include "FairParGenericSet.h"          // for FairParGenericSet
+#include "FairDbParSet.h"
 #include "DataType.h"                    // for EDataType::kData
 #include "ValCondition.h"                 // for ValCondition
 #include "ValTimeStamp.h"               // for ValTimeStamp
-#include "db_detector_def.h"            // for Detector, etc
+#include "db_detector_def.h"            // for FairDbDetector, etc
 
 #include "Rtypes.h"                     // for Double_t, Int_t, UInt_t, etc
 
@@ -28,7 +41,7 @@ class FairDbValRecord;
 class FairParamList;
 
 
-class FairDbTutPar : public FairParGenericSet
+class FairDbTutPar : public FairDbParSet
 {
   public :
     FairDbTutPar (const char* name="FairDbTutPar",
@@ -57,7 +70,8 @@ class FairDbTutPar : public FairParGenericSet
     virtual std::string GetTableDefinition(const char* Name = 0);
 
     virtual FairDbObjTableMap* CreateObjTableMap() const {
-      return new FairDbTutPar();
+       FairDbTutPar* p = new FairDbTutPar();
+      return dynamic_cast<FairDbObjTableMap*> (p);
     }
 
     // Atomic IO (intrinsic)
@@ -71,7 +85,7 @@ class FairDbTutPar : public FairParGenericSet
 
     // Validity frame definition
     virtual ValCondition GetContext(UInt_t rid) {
-      return ValCondition(Detector::kGfi,
+      return ValCondition(FairDbDetector::kGfi,
                           DataType::kData,
                           ValTimeStamp(rid));
     }

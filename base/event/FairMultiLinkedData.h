@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 /**
  * FairMultiLinkedData.h
  *
@@ -31,6 +38,7 @@ class FairMultiLinkedData : public  TObject
     virtual ~FairMultiLinkedData() {};
 
     virtual std::set<FairLink>    GetLinks() const {    return fLinks;}           ///< returns stored links as FairLinks
+    virtual FairLink		GetEntryNr() const { return fEntryNr;}				///< gives back the entryNr
     virtual Int_t           GetNLinks() const { return fLinks.size(); }       ///< returns the number of stored links
     virtual FairLink        GetLink(Int_t pos) const;                 ///< returns the FairLink at the given position
     virtual FairMultiLinkedData   GetLinksWithType(Int_t type) const;             ///< Gives you a list of links which contain the given type
@@ -41,7 +49,9 @@ class FairMultiLinkedData : public  TObject
     virtual void SetDefaultType(Int_t type) {  fDefaultType = type;}
     virtual void SetPersistanceCheck(Bool_t check) {fPersistanceCheck = check;}       ///< Controls if a persistance check of a link is done or not
     virtual void SetVerbose(Int_t level) {fVerbose = level;}                ///< Sets the verbosity level
+    virtual void SetInsertHistory(Bool_t val){ fInsertHistory = val;}		///< Toggles if history of a link is inserted or not
 
+    virtual void SetEntryNr(FairLink entry){ fEntryNr = entry;}
     virtual void SetLinks(FairMultiLinkedData links, Float_t mult = 1.0);           ///< Sets the links as vector of FairLink
     virtual void SetLink(FairLink link, Bool_t bypass = kFALSE, Float_t mult = 1.0);      ///< Sets the Links with a single FairLink
 
@@ -49,7 +59,7 @@ class FairMultiLinkedData : public  TObject
     virtual void AddLink(FairLink link, Bool_t bypass = kFALSE, Float_t mult = 1.0);      ///< Adds a FairLink link at the end of fLinks. If multi is kTRUE a link is allowed more than once otherwise it is stored only once
 
     virtual void InsertLink(FairLink link);                         ///< Inserts a link into the list of links without persistance checking
-
+    virtual void InsertHistory(FairLink link);                      ///< Adds the FairLinks of the inserted link to the set of links of this object
 
 
     virtual void AddAllWeights(Double_t weight);                        ///< Adds weight to all Links
@@ -69,13 +79,15 @@ class FairMultiLinkedData : public  TObject
     virtual void ResetLinks() {fLinks.clear();}                                    ///< Clears fLinks
 
 
-    void Print(std::ostream& out = std::cout) const {
-      out << "[";
+    std::ostream& Print(std::ostream& out = std::cout) const
+    {
+      out << GetEntryNr() << " -> [";
       for (Int_t i = 0; i < GetNLinks(); i++) {
         GetLink(i).Print(out);
         out << " ";
       }
       out << "]";
+      return out;
     }                                                     ///< Output
 
     friend std::ostream& operator<< (std::ostream& out, const FairMultiLinkedData& data) {
@@ -85,18 +97,20 @@ class FairMultiLinkedData : public  TObject
 
   protected:
     std::set<FairLink> fLinks;
-    Bool_t fPersistanceCheck;
-    Int_t fVerbose;
+    FairLink fEntryNr;
+    Bool_t fPersistanceCheck; //!
+    Bool_t fInsertHistory; //!
+    Int_t fVerbose; //!
 
     virtual void SimpleAddLinks(Int_t fileId, Int_t evtId, Int_t dataType, std::vector<Int_t> links, Bool_t bypass, Float_t mult) {
       for (UInt_t i = 0; i < links.size(); i++) {
-        AddLink(FairLink(fileId, evtId, dataType, links[i]), bypass, mult);
+        fLinks.insert(FairLink(fileId, evtId, dataType, links[i]));
       }
     }
     Int_t fDefaultType;
 
 
-    ClassDef(FairMultiLinkedData, 3);
+    ClassDef(FairMultiLinkedData, 4);
 };
 
 /**\fn virtual void FairMultiLinkedData::SetLinks(Int_t type, std::vector<Int_t> links)

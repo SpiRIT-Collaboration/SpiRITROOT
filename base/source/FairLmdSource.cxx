@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 // -----------------------------------------------------------------------------
 // -----                                                                   -----
 // -----                           FairLmdSource                           -----
@@ -10,30 +17,36 @@ using namespace std;
 #include "TObjString.h"
 
 #include "FairLmdSource.h"
-
+#include "FairLogger.h"
 
 FairLmdSource::FairLmdSource()
-  : FairSource(),
+  : FairMbsSource(),
     fCurrentFile(0),
+	fNEvent(0),
+    fCurrentEvent(0),
     fFileNames(new TList()),
     fxInputChannel(NULL),
     fxEvent(NULL),
     fxBuffer(NULL),
     fxEventData(NULL),
-    fxSubEvent(NULL)
+    fxSubEvent(NULL),
+    fxInfoHeader(NULL)
 {
 }
 
 
 FairLmdSource::FairLmdSource(const FairLmdSource& source)
-  : FairSource(source),
+  : FairMbsSource(source),
     fCurrentFile(source.GetCurrentFile()),
+	fNEvent(0),
+    fCurrentEvent(0),
     fFileNames(new TList()),
     fxInputChannel(NULL),
     fxEvent(NULL),
     fxBuffer(NULL),
     fxEventData(NULL),
-    fxSubEvent(NULL)
+    fxSubEvent(NULL),
+    fxInfoHeader(NULL)
 {
 }
 
@@ -54,7 +67,7 @@ void FairLmdSource::AddFile(TString fileName)
 
 Bool_t FairLmdSource::Init()
 {
-  if(! FairSource::Init()) {
+  if(! FairMbsSource::Init()) {
     return kFALSE;
   }
 
@@ -69,17 +82,22 @@ Bool_t FairLmdSource::Init()
 
   fCurrentFile += 1;
 
+ // Init Counters
+  fNEvent=fCurrentEvent=0;
+
   return kTRUE;
 }
 
 
 Bool_t FairLmdSource::OpenNextFile(TString fileName)
 {
-  Int_t inputMode = 1;
+  Int_t inputMode = GETEVT__FILE;
   fxInputChannel = new s_evt_channel;
-  s_filhe fxInfoHeader;
   void* headptr = &fxInfoHeader;
   INTS4 status;
+
+  LOG(INFO) << "File " << fileName << " will be opened." << FairLogger::endl;
+
   status = f_evt_get_open(inputMode,
                           const_cast<char*>(fileName.Data()),
                           fxInputChannel,
@@ -88,17 +106,20 @@ Bool_t FairLmdSource::OpenNextFile(TString fileName)
                           1);
 
   if(status) {
+     LOG(ERROR) << "File " << fileName << " opening failed." << FairLogger::endl;
     return kFALSE;
   }
 
-  cout << "-I- FairLmdSource::OpenNextFile : file "
-       << fileName << " opened." << endl;
+  LOG(INFO) << "File " << fileName << " opened." << FairLogger::endl;
+
+  // Decode File Header
+  Bool_t result = Unpack((Int_t*)fxInfoHeader, sizeof(s_filhe), -4, -4, -4, -4, -4);
 
   return kTRUE;
 }
 
 
-Int_t FairLmdSource::ReadEvent()
+Int_t FairLmdSource::ReadEvent(UInt_t iev)
 {
   void* evtptr = &fxEvent;
   void* buffptr = &fxBuffer;
@@ -108,6 +129,13 @@ Int_t FairLmdSource::ReadEvent()
   //Int_t fCurrentMbsEventNo = fuEventCounter;
 
   if(GETEVT__SUCCESS != status) {
+
+    LOG(INFO) << "FairMbsStreamSource::ReadEvent()"
+              << FairLogger::endl;
+
+    CHARS* sErrorString = NULL;
+    f_evt_error(status, sErrorString , 0);
+
     if(fCurrentFile >= fFileNames->GetSize()) {
       return 1;
     }
@@ -125,6 +153,15 @@ Int_t FairLmdSource::ReadEvent()
     }
   }
 
+ //Store Start Times
+  if (fCurrentEvent==0 ) 
+      Unpack((Int_t*)fxBuffer, sizeof(s_bufhe), -4, -4, -4, -4, -4);
+
+
+  // Decode event header
+  Bool_t result = kFALSE;
+  /*Bool_t result = */Unpack((Int_t*)fxEvent, sizeof(s_ve10_1), -2, -2, -2, -2, -2);
+
   Int_t nrSubEvts = f_evt_get_subevent(fxEvent, 0, NULL, NULL, NULL);
   Int_t sebuflength;
   Short_t setype;
@@ -132,37 +169,56 @@ Int_t FairLmdSource::ReadEvent()
   Short_t seprocid;
   Short_t sesubcrate;
   Short_t secontrol;
+
+  LOG(DEBUG2)<< "FairLmdSource::ReadEvent => Found " << nrSubEvts << " Sub-event "
+             << FairLogger::endl;
+  //if (fCurrentEvent%10000==0)
+  //cout << " -I- LMD_ANA:  evt# " <<  fCurrentEvent << "  n_subevt# " << nrSubEvts << " evt processed# " << fNEvent <<  " : " << fxEvent->l_count << endl;
+
+
 //  Int_t* SubEventDataPtr = new Int_t;
   for(Int_t i = 1; i <= nrSubEvts; i++) {
     void* SubEvtptr = &fxSubEvent;
     void* EvtDataptr = &fxEventData;
-    Int_t* nrlongwords = new Int_t;
-    status = f_evt_get_subevent(fxEvent, i, (Int_t**)SubEvtptr, (Int_t**)EvtDataptr, nrlongwords);
+    Int_t nrlongwords;
+    status = f_evt_get_subevent(fxEvent, i, (Int_t**)SubEvtptr, (Int_t**)EvtDataptr, &nrlongwords);
     if(status) {
       return 1;
     }
-    sebuflength = fxSubEvent->l_dlen;
+    sebuflength = nrlongwords;
     setype = fxSubEvent->i_type;
     sesubtype = fxSubEvent->i_subtype;
     seprocid = fxSubEvent->i_procid;
     sesubcrate = fxSubEvent->h_subcrate;
     secontrol = fxSubEvent->h_control;
-    delete nrlongwords;
 
-    if(! Unpack(fxEventData, sebuflength,
-                setype, sesubtype,
-                seprocid, sesubcrate, secontrol)) {
-      return 2;
+    //cout << setype << "  " << sesubtype << "  " << seprocid << "  " << sesubcrate << "  " << secontrol << endl;
+
+    if(Unpack(fxEventData, sebuflength,
+              setype, sesubtype,
+              seprocid, sesubcrate, secontrol)) {
+      result = kTRUE;
     }
   }
 
-  return 0;
+  // Increment evt counters.
+  fNEvent++;
+  fCurrentEvent++;
+ 
+  if(! result)
+  {
+    return 2;
+  }
+
+ return 0;
 }
 
 
 void FairLmdSource::Close()
 {
   f_evt_get_close(fxInputChannel);
+  Unpack((Int_t*)fxBuffer, sizeof(s_bufhe), -4, -4, -4, -4, -4);  
+  fCurrentEvent=0;
 }
 
 

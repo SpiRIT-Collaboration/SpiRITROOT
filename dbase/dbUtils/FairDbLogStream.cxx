@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #include "FairDbLogStream.h"
 #include <cstdlib>
 #include <cstdio>
@@ -47,16 +54,18 @@ const char kColor_BgBlack[]    = { 0x1B, '[', '4', '7', 'm', 0 };
 
 
 FairDbLogStream::FairDbLogStream()
-  :fLogLevel(0)
-  ,fCurrentLogLevel(0)
+  : fLogLevel(0), 
+    fFileStat(),
+    fCurrentLogLevel(0)
 {
   strcpy(fName, "");
   Init();
 }
 
 FairDbLogStream::FairDbLogStream(const char* name)
-  :fLogLevel(0)
-  ,fCurrentLogLevel(0)
+  : fLogLevel(0),
+    fFileStat(),
+    fCurrentLogLevel(0)
 {
   if (strlen(name)>kMaxNameSize) {
     strncpy(fName, name, kMaxNameSize);

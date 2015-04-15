@@ -1,3 +1,18 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+
+/** 
+ *  FairDbTutPar.cxx 
+ * 
+ *  created @ 09-01-2014 
+ *  by         D.Bertini  
+ */ 
+
 #include "FairDbTutPar.h"
 
 #include "FairDbLogFormat.h"
@@ -28,7 +43,7 @@ template class  FairDbWriter<FairDbTutPar>;
 
 
 FairDbTutPar::FairDbTutPar(const char* name, const char* title, const char* context, Bool_t own)
-  : FairParGenericSet(name,title,context, own),
+  : FairDbParSet(name,title,context, own),
     fTopPitch(0.),
     fTopAnchor(0.),
     fTopNrFE(0),
@@ -126,7 +141,7 @@ void FairDbTutPar::fill(UInt_t rid)
 
   // Define a Context
   ValTimeStamp ts(rid);
-  ValCondition context(Detector::kGfi,DataType::kData,ts);
+  ValCondition context(FairDbDetector::kGfi,DataType::kData,ts);
 
   // Activate reading for this Context
   fParam_Reader->Activate(context, GetVersion());
@@ -150,7 +165,6 @@ void FairDbTutPar::fill(UInt_t rid)
 
 void FairDbTutPar::store(UInt_t rid)
 {
-
   // Boolean IO test variable
   Bool_t fail= kFALSE;
 

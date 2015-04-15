@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #include "FairDbLogEntry.h"
 
 #include "FairDb.h"                     // for Version
@@ -137,7 +144,7 @@ void FairDbLogEntry::Recreate(const string& tableName,
 {
   if (    fSeqNo > 0
           && ( tableName    == ""                       || tableName   == fLogTableName )
-          && ( detMask      == Detector::FullMask()     || detMask     == fLogDetMask )
+          && ( detMask      == FairDbDetector::FullMask()     || detMask     == fLogDetMask )
           && ( simMask      == DataType::FullMask()      || simMask     == fLogSimMask )
           && ( task         == 0                        || task        == fLogVersion )
           && ( logSeqNoMin  == 0                        || logSeqNoMin ==  fLogSeqNoMin)

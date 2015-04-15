@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #include "FairDbConfigBuffer.h"
 #include "FairDbLogService.h"
 #include "FairDbFieldType.h"            // for FairDbFieldType
@@ -9,7 +16,7 @@
 #include "DataType.h"                    // for EDataType::kData
 #include "ValInterval.h"                   // for ValInterval
 #include "ValTimeStamp.h"               // for ValTimeStamp
-#include "db_detector_def.h"            // for Detector, etc
+#include "db_detector_def.h"            // for FairDbDetector, etc
 
 #include <iostream>                     // for operator<<, basic_ostream, etc
 #include <sstream>                      // IWYU pragma: keep 
@@ -23,7 +30,7 @@ using std::istringstream;
 ClassImp(FairDbConfigBuffer)
 
 
-ValCondition  FairDbConfigBuffer::fgDefaultContext(Detector::kCal,
+ValCondition  FairDbConfigBuffer::fgDefaultContext(FairDbDetector::kCal,
     DataType::kData,
     ValTimeStamp() );
 

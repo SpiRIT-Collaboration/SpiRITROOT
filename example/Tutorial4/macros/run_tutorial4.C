@@ -1,13 +1,19 @@
-void run_tutorial4(Int_t nEvents = 10)
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+void run_tutorial4(Int_t nEvents = 10, TString mcEngine="TGeant3")
 {
   
   TString dir = getenv("VMCWORKDIR");
-  TString tutdir = dir + "/Tutorial4";
 
-  TString tut_geomdir = dir + "/geometry";
-  gSystem->Setenv("GEOMPATH",tut_geomdir.Data());
+//  TString tut_geomdir = dir + "/geometry";
+//  gSystem->Setenv("GEOMPATH",tut_geomdir.Data());
 
-  TString tut_configdir = dir + "/Tutorial4/macros/gconfig";
+  TString tut_configdir = dir + "/Tutorial4/gconfig";
   gSystem->Setenv("CONFIG_DIR",tut_configdir.Data());
 
   Double_t momentum = 2.;
@@ -17,13 +23,15 @@ void run_tutorial4(Int_t nEvents = 10)
   TString outDir = "./";
 
   // Output file name
-  TString  outFile     ="data/testrun.root";
-  TString  parFile     ="data/testparams.root";
+  TString  outFile     ="testrun_";
+  outFile = outFile + mcEngine + ".root";
+
+  TString  parFile     ="testparams_";
+  parFile = parFile + mcEngine + ".root";
   
   TList *parFileList = new TList();
 
-  TString workDir = gSystem->Getenv("VMCWORKDIR");
-  paramDir = workDir + "/Tutorial4/macros/parameters/";
+  TString paramDir = dir + "/Tutorial4/parameters/";
 
   TObjString tutDetDigiFile = paramDir + "example.par";
   parFileList->Add(&tutDetDigiFile);
@@ -46,7 +54,7 @@ void run_tutorial4(Int_t nEvents = 10)
  
   // -----   Create simulation run   ----------------------------------------
   FairRunSim* run = new FairRunSim();
-  run->SetName("TGeant3");              // Transport engine
+  run->SetName(mcEngine);              // Transport engine
   run->SetOutputFile(outFile);          // Output file
   FairRuntimeDb* rtdb = run->GetRuntimeDb();
   // ------------------------------------------------------------------------

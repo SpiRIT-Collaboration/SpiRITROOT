@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 // -------------------------------------------------------------------------
 // -----               FairMCApplication header file                   -----
 // -----            Created 06/01/04  by M. Al-Turany                  -----
@@ -15,7 +22,8 @@
 #include "TLorentzVector.h"             // for TLorentzVector
 #include "TString.h"                    // for TString
 
-#include <map>                          // for map, multimap, etc
+#include <map>                           // for map, multimap, etc
+#include <list>                           // for list
 
 class FairDetector;
 class FairEventHeader;
@@ -113,6 +121,16 @@ class FairMCApplication : public TVirtualMCApplication
     virtual void          PostTrack();                                      // MC Application
     /** Define actions at the beginning of each track*/
     virtual void          PreTrack();                                       // MC Application
+
+    /** Clone for worker (used in MT mode only) */
+    virtual TVirtualMCApplication* CloneForWorker() const;
+
+    /** Init worker run (used in MT mode only) */
+    virtual void InitForWorker() const;
+
+    /** Finish worker run (used in MT mode only) */
+    virtual void FinishWorkerRun() const;
+
     /** Run the MC engine
      * @param nofEvents : number of events to simulate
      */
@@ -179,14 +197,10 @@ class FairMCApplication : public TVirtualMCApplication
     Int_t GetIonPdg(Int_t z, Int_t a) const;
 
     // data members
-    /**Iterator for active detector list*/
-    TIterator*           fActDetIter;//!
     /**List of active detector */
     TRefArray*           fActiveDetectors;
     /**List of FairTask*/
     FairTask*             fFairTaskList;//!
-    /**Iterator for detector list (Passive and Active)*/
-    TIterator*           fDetIter; //!
     /**detector list (Passive and Active)*/
     TRefArray*           fDetectors;
     /**Map used for dispatcher*/
@@ -254,14 +268,22 @@ class FairMCApplication : public TVirtualMCApplication
     FairEventHeader*    fEventHeader; //!
 
     FairMCEventHeader*  fMCEventHeader; //!
+    /** list of senstive detectors used in the simuation session*/
+    std::list <FairDetector *> listActiveDetectors; //!
+    /** list of all detectors used in the simuation session*/
+    std::list <FairDetector *> listDetectors;  //!
 
-    ClassDef(FairMCApplication,2)  //Interface to MonteCarlo application
+    
+    ClassDef(FairMCApplication,3)  //Interface to MonteCarlo application
 
   private:
+    /** Protected copy constructor */
     FairMCApplication(const FairMCApplication&);
+    /** Protected assignment operator */
     FairMCApplication& operator=(const FairMCApplication&);
 
     FairRunInfo fRunInfo;//!
+    Bool_t      fGeometryIsInitialized;
 };
 
 // inline functions

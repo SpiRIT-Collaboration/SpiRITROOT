@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 //*-- AUTHOR : Ilse Koenig
 //*-- Created : 20/10/2004
 
@@ -11,10 +18,10 @@
 #include "FairContFact.h"               // for FairContFact
 #include "FairDetParAsciiFileIo.h"      // for FairDetParAsciiFileIo
 #include "FairDetParRootFileIo.h"       // for FairDetParRootFileIo
-#include "FairDetParTSQLIo.h"           // for FairDetParTSQLIo
+//#include "FairDetParTSQLIo.h"           // for FairDetParTSQLIo
 #include "FairGenericParAsciiFileIo.h"  // for FairGenericParAsciiFileIo
 #include "FairGenericParRootFileIo.h"   // for FairGenericParRootFileIo
-#include "FairGenericParTSQLIo.h"       // for FairGenericParTSQLIo
+//#include "FairGenericParTSQLIo.h"       // for FairGenericParTSQLIo
 #include "FairLogger.h"                 // for FairLogger, MESSAGE_ORIGIN
 #include "FairParAsciiFileIo.h"         // for FairParAsciiFileIo
 #include "FairParIo.h"                  // for FairParIo
@@ -320,7 +327,7 @@ Int_t FairRuntimeDb::findOutputVersion(FairParSet* cont)
   }
   if ((firstInput==output) && (in1>0 && in2==-1)) { return in1; }
   TIter next(runs);
-  v=0;
+ // v=0;
   while ((run=(FairRtdbRun*)next())) {
     vers=run->getParVersion(name);
     if (vers->getInputVersion(1)==in1 && vers->getInputVersion(2)==in2) {
@@ -431,7 +438,7 @@ Bool_t FairRuntimeDb::writeContainer(FairParSet* cont, FairRtdbRun* run, FairRtd
           cont->print();
           /*Int_t test = */
           cont->write(output);
-          //std::cout << "-I- FairRuntimeDB: SQL write() called 2 = "<< test << "\n";
+          //std::cout << "-I- FairRuntimeDB: SQL write() called 2 =  \n";
         }
       }
       break;//End of TSQL IO
@@ -799,11 +806,12 @@ void FairRuntimeDb::activateParIo(FairParIo* io)
       FairDetParAsciiFileIo* pn=
         new FairGenericParAsciiFileIo(((FairParAsciiFileIo*)io)->getFile());
       io->setDetParIo(pn);
-    } else if(strcmp(ioName,"FairParTSQLIo") == 0) {
-      //std::cout << "\n\n\n\t TSQL versie is called en nu de rest \n\n";
-      FairDetParTSQLIo* pn = new FairGenericParTSQLIo();
-      io->setDetParIo(pn);
     }
+    // else if(strcmp(ioName,"FairParTSQLIo") == 0) {
+    //  std::cout << "\n\n\n\t TSQL versie is called en nu de rest \n\n";
+    //  FairDetParTSQLIo* pn = new FairGenericParTSQLIo();
+    //  io->setDetParIo(pn);
+    //}
   }
   TIter next(&contFactories);
   FairContFact* fact;

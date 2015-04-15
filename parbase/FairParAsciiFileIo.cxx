@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 //*-- AUTHOR : Ilse Koenig
 //*-- Created : 21/10/2004
 
@@ -14,6 +21,7 @@
 
 #include "FairDetParIo.h"               // for FairDetParIo
 #include "FairRuntimeDb.h"              // for FairRuntimeDb
+#include "FairLogger.h"
 
 #include "TCollection.h"                // for TIter
 #include "TList.h"                      // for TList, TListIter
@@ -73,8 +81,9 @@ Bool_t FairParAsciiFileIo::open(const Text_t* fname, const Text_t* status)
 
 Bool_t FairParAsciiFileIo::open(const TList* fnamelist, const Text_t* status)
 {
+  TString outFileName = gSystem->WorkingDirectory();
 
-  TString outFileName = "all_";
+  outFileName += "/all_";
   Int_t pid = gSystem->GetPid();
   outFileName += pid;
   outFileName += ".par";
@@ -82,6 +91,11 @@ Bool_t FairParAsciiFileIo::open(const TList* fnamelist, const Text_t* status)
   TObjString* string;
   TListIter myIter(fnamelist);
   while((string = (TObjString*)myIter.Next())) {
+    // check if the file exist
+    // if file exist return value is false
+    if ( gSystem->AccessPathName(string->GetString())) {
+      LOG(FATAL) << "Parameter file " << string->GetString() << " does not exist." << FairLogger::endl;
+    }
     //    cout <<  string->GetString() <<endl;
     catCommand += string->GetString();
     catCommand += " ";

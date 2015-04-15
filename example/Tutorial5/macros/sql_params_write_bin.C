@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 Int_t  sql_params_write_bin()
 {
   // ----  Load libraries   -------------------------------------------------
@@ -9,7 +16,6 @@ Int_t  sql_params_write_bin()
   gSystem->Load("libParBase");
   gSystem->Load("libBase");
   gSystem->Load("libMCStack");
-  gSystem->Load("libField");
   gSystem->Load("libTutorial5");
 
   // Generate a unique RunID
@@ -25,8 +31,8 @@ Int_t  sql_params_write_bin()
   // Set the Ascii IO as first input
   FairParAsciiFileIo* inp1 = new FairParAsciiFileIo();
 
-  TString work = getenv("VMCWORKDIR");
-  TString filename = work + "/Tutorial5/macros/ascii-example_bin.par";
+  //TString work = getenv("VMCWORKDIR");
+  TString filename = "ascii-example_bin.par";
   inp1->open(filename.Data(),"in");
   db->setFirstInput(inp1);
 

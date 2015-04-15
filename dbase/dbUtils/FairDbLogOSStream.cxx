@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #include "FairDbLogOSStream.h"
 #include <cstdio>
 extern "C" {
@@ -25,9 +32,9 @@ ostream& operator<<(ostream& os, const FairDbLogCatStream& m)
   return os;
 }
 
-FairDbLogCatStream::FairDbLogCatStream() : fOutFile("") { }
+FairDbLogCatStream::FairDbLogCatStream() : fOutFile(""), fFileList() { }
 
-FairDbLogCatStream::FairDbLogCatStream(const char* fileName) : fOutFile(fileName) { }
+FairDbLogCatStream::FairDbLogCatStream(const char* fileName) : fOutFile(fileName), fFileList() { }
 
 FairDbLogCatStream::~FairDbLogCatStream() { }
 
@@ -62,7 +69,7 @@ void FairDbLogCatStream::DoConcatenation()
     if ((*inFile)) {
       char ch;
       while (inFile->get(ch)) { outFile.put(ch); }
-      delete inFile;
+      if (inFile) delete inFile;
       if ( unlink(itrFairDbLogName->c_str()) != 0) {
         cerr << "-W- " << __FILE__ << ":" << __LINE__
              << "Failed to unlink file '"
@@ -74,6 +81,7 @@ void FairDbLogCatStream::DoConcatenation()
            << " Can't open file " << (*itrFairDbLogName)
            << " for read."
            << " File skipped\n";
+      if (inFile) delete inFile; 
       continue;
     }
   }
@@ -87,8 +95,8 @@ void FairDbLogFileOStream::Close()
   }
 }
 
-FairDbLogFileOStream::FairDbLogFileOStream(const char* name, openmode mode) :
-  fFileName(name)
+FairDbLogFileOStream::FairDbLogFileOStream(const char* name, openmode mode) 
+ : FairDbLogOStream(), fFileName(name), fOfstream()
 {
   // Open a file using this name
   fOfstream = new ofstream(fFileName.c_str(), mode);
@@ -183,6 +191,7 @@ void FairDbLogOStreamService::Register(FairDbLogOStreamMaker_t logOStreamMaker)
 
 
 FairDbLogStandardOStream::FairDbLogStandardOStream(const char* name)
+ : FairDbLogOStream(), kStream() 
 {
   if (strcmp(name,"cout") == 0) { kStream = kCout; return; }
   if (strcmp(name,"cerr") == 0) { kStream = kCerr; return; }

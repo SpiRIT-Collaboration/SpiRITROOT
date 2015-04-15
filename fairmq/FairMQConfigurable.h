@@ -1,28 +1,36 @@
-/*
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+/**
  * FairMQConfigurable.h
  *
- *  Created on: Oct 25, 2012
- *      Author: dklein
+ * @since 2012-10-25
+ * @author D. Klein, A. Rybalchenko
  */
 
 #ifndef FAIRMQCONFIGURABLE_H_
 #define FAIRMQCONFIGURABLE_H_
 
-#include "Rtypes.h"
-#include "TString.h"
+#include <string>
 
+using namespace std;
 
 class FairMQConfigurable
 {
   public:
-    enum {
-      Last = 1
+    enum
+    {
+        Last = 1
     };
     FairMQConfigurable();
-    virtual void SetProperty(const Int_t& key, const TString& value, const Int_t& slot = 0);
-    virtual TString GetProperty(const Int_t& key, const TString& default_ = "", const Int_t& slot = 0);
-    virtual void SetProperty(const Int_t& key, const Int_t& value, const Int_t& slot = 0);
-    virtual Int_t GetProperty(const Int_t& key, const Int_t& default_ = 0, const Int_t& slot = 0);
+    virtual void SetProperty(const int key, const string& value, const int slot = 0);
+    virtual string GetProperty(const int key, const string& default_ = "", const int slot = 0);
+    virtual void SetProperty(const int key, const int value, const int slot = 0);
+    virtual int GetProperty(const int key, const int default_ = 0, const int slot = 0);
     virtual ~FairMQConfigurable();
 };
 

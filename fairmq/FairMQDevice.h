@@ -1,80 +1,102 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 /**
  * FairMQDevice.h
  *
- *  @since Oct 25, 2012
- *  @authors: D. Klein, A. Rybalchenko
+ * @since 2012-10-25
+ * @author D. Klein, A. Rybalchenko
  */
 
 #ifndef FAIRMQDEVICE_H_
 #define FAIRMQDEVICE_H_
 
+#include <vector>
+#include <string>
+#include <iostream>
+
 #include "FairMQConfigurable.h"
 #include "FairMQStateMachine.h"
-#include <vector>
-#include "FairMQContext.h"
+#include "FairMQTransportFactory.h"
 #include "FairMQSocket.h"
-#include "Rtypes.h"
-#include "TString.h"
 
+using namespace std;
 
 class FairMQDevice : public FairMQStateMachine, public FairMQConfigurable
 {
   public:
-    enum {
-      Id = FairMQConfigurable::Last,
-      NumIoThreads,
-      NumInputs,
-      NumOutputs,
-      InputAddress,
-      InputMethod,
-      InputSocketType,
-      InputSndBufSize,
-      InputRcvBufSize,
-      OutputAddress,
-      OutputMethod,
-      OutputSocketType,
-      OutputSndBufSize,
-      OutputRcvBufSize,
-      LogIntervalInMs,
-      Last
+    enum
+    {
+        Id = FairMQConfigurable::Last,
+        NumIoThreads,
+        NumInputs,
+        NumOutputs,
+        PortRangeMin,
+        PortRangeMax,
+        InputAddress,
+        InputMethod,
+        InputSocketType,
+        InputSndBufSize,
+        InputRcvBufSize,
+        OutputAddress,
+        OutputMethod,
+        OutputSocketType,
+        OutputSndBufSize,
+        OutputRcvBufSize,
+        LogIntervalInMs,
+        LogInputRate,
+        LogOutputRate,
+        Last
     };
 
     FairMQDevice();
 
     virtual void LogSocketRates();
-    virtual void ListenToCommands();
 
-    virtual void SetProperty(const Int_t& key, const TString& value, const Int_t& slot = 0);
-    virtual TString GetProperty(const Int_t& key, const TString& default_ = "", const Int_t& slot = 0);
-    virtual void SetProperty(const Int_t& key, const Int_t& value, const Int_t& slot = 0);
-    virtual Int_t GetProperty(const Int_t& key, const Int_t& default_ = 0, const Int_t& slot = 0);
+    virtual void SetProperty(const int key, const string& value, const int slot = 0);
+    virtual string GetProperty(const int key, const string& default_ = "", const int slot = 0);
+    virtual void SetProperty(const int key, const int value, const int slot = 0);
+    virtual int GetProperty(const int key, const int default_ = 0, const int slot = 0);
+
+    virtual void SetTransport(FairMQTransportFactory* factory);
 
     virtual ~FairMQDevice();
 
   protected:
-    TString fId;
-    Int_t fNumIoThreads;
-    FairMQContext* fPayloadContext;
+    string fId;
 
-    Int_t fNumInputs;
-    Int_t fNumOutputs;
+    int fNumIoThreads;
 
-    std::vector<TString> *fInputAddress;
-    std::vector<TString> *fInputMethod;
-    std::vector<Int_t> *fInputSocketType;
-    std::vector<Int_t> *fInputSndBufSize;
-    std::vector<Int_t> *fInputRcvBufSize;
+    int fNumInputs;
+    int fNumOutputs;
 
-    std::vector<TString> *fOutputAddress;
-    std::vector<TString> *fOutputMethod;
-    std::vector<Int_t> *fOutputSocketType;
-    std::vector<Int_t> *fOutputSndBufSize;
-    std::vector<Int_t> *fOutputRcvBufSize;
+    int fPortRangeMin;
+    int fPortRangeMax;
 
-    std::vector<FairMQSocket*> *fPayloadInputs;
-    std::vector<FairMQSocket*> *fPayloadOutputs;
+    vector<string> fInputAddress;
+    vector<string> fInputMethod;
+    vector<string> fInputSocketType;
+    vector<int> fInputSndBufSize;
+    vector<int> fInputRcvBufSize;
+    vector<int> fLogInputRate;
 
-    Int_t fLogIntervalInMs;
+    vector<string> fOutputAddress;
+    vector<string> fOutputMethod;
+    vector<string> fOutputSocketType;
+    vector<int> fOutputSndBufSize;
+    vector<int> fOutputRcvBufSize;
+    vector<int> fLogOutputRate;
+
+    vector<FairMQSocket*>* fPayloadInputs;
+    vector<FairMQSocket*>* fPayloadOutputs;
+
+    int fLogIntervalInMs;
+
+    FairMQTransportFactory* fTransportFactory;
 
     virtual void Init();
     virtual void Run();
@@ -82,6 +104,15 @@ class FairMQDevice : public FairMQStateMachine, public FairMQConfigurable
     virtual void Shutdown();
     virtual void InitOutput();
     virtual void InitInput();
+    virtual void Bind();
+    virtual void Connect();
+
+    virtual void Terminate();
+
+  private:
+    /// Copy Constructor
+    FairMQDevice(const FairMQDevice&);
+    FairMQDevice operator=(const FairMQDevice&);
 };
 
 #endif /* FAIRMQDEVICE_H_ */

@@ -1,9 +1,16 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #include "FairDbObjTableMap.h"
 
 ClassImp(FairDbObjTableMap)
 
 FairDbObjTableMap::FairDbObjTableMap()
-  : TObject(),
+  : FairParGenericSet("","","",kFALSE),
     fVersion(0),
     fDbEntry(0),
     fLogTitle(""),
@@ -17,7 +24,7 @@ FairDbObjTableMap::FairDbObjTableMap()
 }
 
 FairDbObjTableMap::FairDbObjTableMap(const FairDbObjTableMap& from)
-  : TObject(from),
+  : FairParGenericSet(from),
     fVersion(from.fVersion),
     fDbEntry(from.fDbEntry),
     fLogTitle(from.fLogTitle),
@@ -29,6 +36,7 @@ FairDbObjTableMap::FairDbObjTableMap(const FairDbObjTableMap& from)
     fOwner(from.fOwner)
 {
 }
+
 
 FairDbObjTableMap& FairDbObjTableMap::operator=(const FairDbObjTableMap& from)
 {

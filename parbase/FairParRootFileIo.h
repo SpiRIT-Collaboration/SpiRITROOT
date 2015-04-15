@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #ifndef FAIRPARROOTFILEIO_H
 #define FAIRPARROOTFILEIO_H
 
@@ -6,6 +13,9 @@
 #include "Rtypes.h"                     // for Bool_t, Text_t, Int_t, etc
 #include "TFile.h"                      // for TFile
 #include "TNamed.h"                     // for TNamed
+
+#include <fstream>
+using std::fstream;
 
 class FairRtdbRun;
 class TKey;

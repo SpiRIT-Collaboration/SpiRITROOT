@@ -1,5 +1,14 @@
-void run_reco()
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+void run_reco( TString mcEngine="TGeant3" )
 {
+
+  gSystem->Load("libFairTestDetector");
   FairLogger *logger = FairLogger::GetLogger();
   logger->SetLogFileName("MyLog.log");
   logger->SetLogToScreen(kTRUE);
@@ -12,13 +21,16 @@ void run_reco()
   Int_t iVerbose = 0; // just forget about it, for the moment
   
   // Input file (MC events)
-  TString inFile = "data/testdigi.root";
-  
+  TString inFile = "data/testdigi_";
+  inFile = inFile + mcEngine + ".root";
+
   // Parameter file
-  TString parFile = "data/testparams.root"; 
+  TString parFile = "data/testparams_"; 
+  parFile = parFile + mcEngine + ".root";
 
   // Output file
-  TString outFile = "data/testreco.root";
+  TString outFile = "data/testreco_";
+  outFile = outFile + mcEngine + ".root";
   
   // -----   Timer   --------------------------------------------------------
   TStopwatch timer;

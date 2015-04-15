@@ -9,6 +9,8 @@
 
 #include "STDigiPar.hh"
 
+#include <iostream>
+
 ClassImp(STDigiPar)
 
 STDigiPar::STDigiPar(const Char_t *name, const Char_t *title, const Char_t *context)

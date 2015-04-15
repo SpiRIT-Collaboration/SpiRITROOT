@@ -1,3 +1,10 @@
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
 #ifndef FAIRDBOBJTABLEMAP_H
 #define FAIRDBOBJTABLEMAP_H
 
@@ -7,7 +14,7 @@
 #include "ValCondition.h"                 // for ValCondition
 #include "ValInterval.h"                   // for ValInterval
 #include "ValTimeStamp.h"               // for ValTimeStamp
-#include "db_detector_def.h"            // for Detector, etc
+#include "db_detector_def.h"            // for FairDbDetector, etc
 
 #include "Rtypes.h"                     // for UInt_t, Int_t, etc
 
@@ -15,18 +22,29 @@
 #include <cassert>                      // for assert
 #include <string>                       // for string
 
+#include "FairDbStreamer.h"
+
+// < DB use FLAG here ! >
+#include "FairParGenericSet.h"
+
 class FairDbOutTableBuffer;
 class FairDbResult;
 class FairDbResultPool;
 class FairDbValRecord;
 
-class FairDbObjTableMap : public TObject
+// < DB Use Flag Here ! >
+//class FairDbObjTableMap : public TObject
+class FairDbObjTableMap : public FairParGenericSet
 {
   public:
 
     FairDbObjTableMap();
+    FairDbObjTableMap(const char* name,const char* title,const char* context, Bool_t ownership=kFALSE)
+     : FairParGenericSet(name,title,context,ownership) {} 
+
     FairDbObjTableMap(const FairDbObjTableMap& from);
     FairDbObjTableMap& operator=(const FairDbObjTableMap&);
+
     virtual ~FairDbObjTableMap();
 
     virtual       Bool_t CanCache() const { return kFALSE; }
@@ -44,8 +62,8 @@ class FairDbObjTableMap : public TObject
                        const FairDbValRecord* /* valrec */) const { assert(0); }
 
     // Validity frame functions
-    virtual  Int_t GetAggregateNo() const { return -1; }
-    virtual  Int_t GetComboNo() const { return GetAggregateNo(); }
+    virtual  Int_t GetAggregateNo() const { return GetComboNo(); }
+    virtual  Int_t GetComboNo() const { return fCombo; }
     void    SetComboNo(Int_t combo) { fCombo=combo; }
 
     virtual  FairDb::Version GetVersion() const { return  fVersion; }
@@ -78,8 +96,30 @@ class FairDbObjTableMap : public TObject
     //
     ValTimeStamp             GetTimeStart() const { return fTimeStart; }
     ValTimeStamp             GetTimeEnd()   const { return fTimeEnd; }
-    Detector::Detector_t     GetDetector()  const { return fDetType; }
+    FairDbDetector::Detector_t     GetDetector()  const { return fDetType; }
     DataType::DataType_t     GetDataType()   const { return fSimType; }
+
+    // MQ IO functionaly 
+   
+    virtual void Serialize(TString &str, Int_t& p_size){
+                 str = FairDb::StreamAsString(this, p_size); 
+    }
+
+    virtual void  Deserialize(std::string b_str){
+          FairDbStreamer aStreamer;
+          TString par_str(b_str.c_str());
+          aStreamer.SetString(par_str);
+          aStreamer.Fill(this);  
+          //cout << "-E- FairDbObjTableMap Deserializing object dumped : " <<  endl;
+          //  this->Print(); 
+}
+
+   // add dummy RTDB IO function   
+  
+  virtual void putParams(FairParamList*){;}  
+  virtual Bool_t getParams(FairParamList*){return kTRUE;}
+
+
 
 
   protected:
@@ -91,12 +131,14 @@ class FairDbObjTableMap : public TObject
     //
     ValTimeStamp               fTimeStart;
     ValTimeStamp               fTimeEnd;
-    Detector::Detector_t       fDetType;
+    FairDbDetector::Detector_t       fDetType;
     DataType::DataType_t       fSimType;
     //
 
   private:
     FairDbResult* fOwner;
+
+   
 
     ClassDef(FairDbObjTableMap,0)   // FairDbObjTableMap for a specific database table.
 

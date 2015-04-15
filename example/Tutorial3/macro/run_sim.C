@@ -1,4 +1,11 @@
-void run_sim(Int_t nEvents=1024)
+/********************************************************************************
+ *    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    *
+ *                                                                              *
+ *              This software is distributed under the terms of the             * 
+ *         GNU Lesser General Public Licence version 3 (LGPL) version 3,        *  
+ *                  copied verbatim in the file "LICENSE"                       *
+ ********************************************************************************/
+void run_sim(Int_t nEvents=100, TString mcEngine="TGeant3")
 {
   TStopwatch timer;
   timer.Start();
@@ -20,9 +27,16 @@ void run_sim(Int_t nEvents=1024)
   // set the MC version used
   // ------------------------
 
-  fRun->SetName("TGeant3");
+  fRun->SetName(mcEngine);
+
+  TString outfile = "data/testrun_";
+  outfile = outfile + mcEngine + ".root";
+
+  TString outparam = "data/testparams_";
+  outparam = outparam + mcEngine + ".root";
+
   
-  fRun->SetOutputFile("data/testrun.root");
+  fRun->SetOutputFile(outfile);
 
 
   // -----   Magnetic field   -------------------------------------------
@@ -93,7 +107,7 @@ void run_sim(Int_t nEvents=1024)
   FairRuntimeDb *rtdb=fRun->GetRuntimeDb();
   Bool_t kParameterMerged=kTRUE;
   FairParRootFileIo* output=new FairParRootFileIo(kParameterMerged);
-  output->open("data/testparams.root");
+  output->open(outparam);
   rtdb->setOutput(output);
 
   rtdb->saveOutput();
