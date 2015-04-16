@@ -178,7 +178,7 @@ STHitClusteringTask::FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHi
    **/
 
   if (fVerbose > 0)
-    fLogger -> Info(MESSAGE_ORIGIN, Form("Start to find the largest hit and close hits with center Hit:%d in slicedSpace:%d", centerHit -> GetHitID(), slicedSpace.size()));
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Start to find the largest hit and close hits with center Hit:%d in slicedSpace:%lu", centerHit -> GetHitID(), slicedSpace.size()));
 
   Int_t padSizeX = fPar -> GetPadSizeX();
   Int_t padSizeZ = fPar -> GetPadSizeZ();
@@ -213,7 +213,7 @@ STHitClusteringTask::FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHi
   }
 
   if (fVerbose > 1)
-    fLogger -> Info(MESSAGE_ORIGIN, Form("Found clusteredHits %d", clusteredHits.size()));
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Found clusteredHits %lu", clusteredHits.size()));
 
   if (clusteredHits.size() == 1)
     return centerHit;

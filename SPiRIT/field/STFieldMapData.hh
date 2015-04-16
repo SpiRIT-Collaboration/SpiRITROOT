@@ -17,7 +17,7 @@
  **/
 
 #ifndef STFIELDMAPDATA_H
-#define STFIELDMAPDATA
+#define STFIELDMAPDATA_H
 
 
 #include "TNamed.h"

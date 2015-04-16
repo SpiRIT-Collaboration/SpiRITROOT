@@ -12,8 +12,8 @@
 //      Genie Jhang          Korea University
 //-----------------------------------------------------------
 
-#ifndef STCPROXIMITYHTCORRELATOR_HH
-#define STROXIMITYHTCORRELATOR_HH
+#ifndef STPROXIMITYHTCORRELATOR_HH
+#define STPROXIMITYHTCORRELATOR_HH
 
 // SpiRITROOT classes
 #include "STAbsHitTrackCorrelator.hh"
