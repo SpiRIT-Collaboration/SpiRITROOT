@@ -1,8 +1,13 @@
 import os
 import sys
 
-tag  = sys.argv[1]
-mode = sys.argv[2]
+if len(sys.argv)==1 :
+  name = "noname"
+  mode = "full"
+
+else :
+  name  = sys.argv[1]
+  mode = sys.argv[2]
 
 
 
@@ -33,7 +38,7 @@ for imode in modeList :
 print
 print "======== SPiRIT Simulation Macro ========"
 print 
-print "Tag name :", tag
+print "Tag name :", name
 print "Run mode :", mode
 print
 
@@ -82,14 +87,14 @@ if not existData :
 print 
 for imode in modeList :
   if imode == "full" :
-    os.system("root -l -q 'run_mc.C(\""+tag+"\")'")
-    os.system("root -l -q 'run_digi.C(\""+tag+"\"'")
-    os.system("root -l -q 'run_reco_mc.C(\""+tag+"\")'")
-    os.system("root -l    'run_eve.C(\""+tag+"\")'")
-  if imode == "mc"   : os.system("root -l -q 'run_mc.C(\""+tag+"\")'")
-  if imode == "digi" : os.system("root -l -q 'run_digi.C(\""+tag+"\")'")
-  if imode == "reco" : os.system("root -l -q 'run_reco_mc.C(\""+tag+"\")'")
-  if imode == "eve"  : os.system("root -l    'run_eve.C(\""+tag+"\")'")
+    os.system("root -l -q 'run_mc.C(\""+name+"\")'")
+    os.system("root -l -q 'run_digi.C(\""+name+"\"'")
+    os.system("root -l -q 'run_reco_mc.C(\""+name+"\")'")
+    os.system("root -l    'run_eve.C(\""+name+"\")'")
+  if imode == "mc"   : os.system("root -l -q 'run_mc.C(\""+name+"\")'")
+  if imode == "digi" : os.system("root -l -q 'run_digi.C(\""+name+"\")'")
+  if imode == "reco" : os.system("root -l -q 'run_reco_mc.C(\""+name+"\")'")
+  if imode == "eve"  : os.system("root -l    'run_eve.C(\""+name+"\")'")
   if imode == "dummy" : print "dummy run."
 
 print
