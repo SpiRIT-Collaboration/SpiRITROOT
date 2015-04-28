@@ -98,7 +98,7 @@ STPadResponseTask::Exec(Option_t* option)
     Int_t iWire  = fElectron->GetIWire();
     Int_t gain   = fElectron->GetGain();
 
-    Int_t row   = (Int_t)floor(xEl/fPadSizeRow) + fNRows/2;
+    Int_t row   = (xEl+fXPadPlane/2)/fPadSizeRow;
     /** 
      * We can find layer number with /3 because there are just 3 cases for 
      * for position of wire relative to the pad. These cases will be denoted
