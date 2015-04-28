@@ -16,13 +16,18 @@
 
 #include "TCanvas.h"
 #include "TH2D.h"
+#include "TTree.h"
 #include "TGraph.h"
 
 #include "STEventManager.hh"
+#include "STEventManagerEditor.hh"
 #include "STRiemannTrack.hh"
 #include "STRiemannHit.hh"
 #include "STEvent.hh"
 #include "STHit.hh"
+#include "STRawEvent.hh"
+#include "STDigiPar.hh"
+#include "STGas.hh"
 
 class STEventDrawTask : public FairTask
 {
@@ -35,6 +40,7 @@ class STEventDrawTask : public FairTask
 
     virtual InitStatus Init();
     virtual void Exec(Option_t* option);
+    virtual void SetParContainers();
     void Reset();
 
     void Set2DPlotRange(Int_t uaIdx);
@@ -45,10 +51,19 @@ class STEventDrawTask : public FairTask
     void SetRiemannAttributes(Color_t, Size_t, Style_t);
     void SetSelfRiemannSet(Int_t iRiemannSet = -1, Bool_t offElse = kTRUE);
 
+    void SetDigiFile(TString name);
+    static void ClickSelectedPadPlane();
+    void DrawPad(Int_t row, Int_t layer);
+    void DrawPadByPosition(Double_t x, Double_t z);
+
     Int_t GetNRiemannSet() { return fRiemannSetArray.size(); };
+
+    void SetEventManagerEditor(STEventManagerEditor* pointer)
+    { fEventManagerEditor = pointer; } 
 
   private :
     void DrawPadPlane();
+    void SetHistPad();
     void UpdateCvsPadPlane();
 
     void DrawHitPoints();
@@ -57,7 +72,26 @@ class STEventDrawTask : public FairTask
 
     Color_t GetRiemannColor(Int_t);
 
-    Bool_t fIs2DPlotRange;
+    Int_t fCurrentEvent;
+    Int_t fCurrentRow;
+    Int_t fCurrentLayer;
+
+    Bool_t fSet2dPlotRangeFlag;
+    Bool_t fSetDigiFileFlag;
+
+    STDigiPar* fPar;
+
+    Int_t fNTbs;
+    Double_t fXPadPlane;
+
+    Double_t fTBTime;
+    Double_t fDriftVelocity;
+
+    TTree* fDigiTree;
+    TClonesArray* fRawEventArray;
+    STRawEvent* fRawEvent;
+    TH1D* fHistPad;
+    TGraph* fGraphHitTb[20];
 
     TClonesArray* fHitArray;
     TClonesArray* fHitClusterArray;
@@ -65,6 +99,7 @@ class STEventDrawTask : public FairTask
     TClonesArray* fKalmanArray;
 
     STEventManager* fEventManager;
+    STEventManagerEditor* fEventManagerEditor;
 
     Int_t fThreshold;
 
@@ -89,6 +124,8 @@ class STEventDrawTask : public FairTask
     Int_t fMaxZ;
     Int_t fMinX;
     Int_t fMaxX;
+
+    TCanvas* fCvsPad;
 
     static STEventDrawTask* fInstance;
 

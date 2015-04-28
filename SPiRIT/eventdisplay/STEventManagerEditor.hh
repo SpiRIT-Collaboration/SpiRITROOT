@@ -21,12 +21,14 @@ class STEventManagerEditor : public TGedFrame
 
   protected:
     TObject* fObject;
-    STEventManager* fManager;
+    STEventManager*  fManager;
     STEventDrawTask* fDrawTask;
-    TGNumberEntry*  fCurrentEvent;
-    TGNumberEntry*  fCurrentRiemannSet;
-    TGNumberEntry*  fTempRiemannSet;
-    TGLabel* fEventTime;
+    TGNumberEntry*   fCurrentEvent;
+    TGNumberEntry*   fCurrentRiemannSet;
+    TGNumberEntry*   fTempRiemannSet;
+    TGNumberEntry*   fCurrentRow;
+    TGNumberEntry*   fCurrentLayer;
+    TGLabel*         fEventTime;
 
   public:
     STEventManagerEditor(const TGWindow* p=0, Int_t width=170, Int_t height=30,
@@ -35,6 +37,8 @@ class STEventManagerEditor : public TGedFrame
     void SetModel(TObject* obj);
     virtual void SelectEvent();
     virtual void SelectEventIf();
+    virtual void SelectPad();
+    virtual void SelectPadIf();
     virtual void Init();
 
     void SelectRiemannSet();
@@ -44,9 +48,13 @@ class STEventManagerEditor : public TGedFrame
     Int_t GetNRiemannSet();
 
     void ToggleAutoUpdate(Bool_t onoff);
+    void ToggleAutoUpdatePad(Bool_t onoff);
+
+    void SetRowLayer(Int_t row, Int_t layer);
 
   private:
     Bool_t fAutoUpdateFlag;
+    Bool_t fAutoUpdatePadFlag;
 
     ClassDef(STEventManagerEditor, 0); // Specialization of TGedEditor for proper update propagation to TEveManager.
 };

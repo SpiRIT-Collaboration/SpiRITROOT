@@ -1,23 +1,42 @@
-void run_eve(TString tag = "test") 
+void run_eve(TString name = "test") 
 {
+  // Name
+  TString workDir    = gSystem -> Getenv("SPIRITDIR");
+
+  TString inputName  = "data/spirit_" + name + ".reco.root";
+  TString outputName = "data/spirit_" + name + ".eve.root";
+  TString parName    = "data/spirit_" + name + ".params.root";
+  TString digiName   = "data/spirit_" + name + ".raw.root";
+  TString digiParFile = workDir + "/parameters/ST.parameters.par";
+
+  // Logger
   FairLogger *fLogger = FairLogger::GetLogger();
   fLogger -> SetLogToScreen(kTRUE);
-  fLogger->SetLogVerbosityLevel("MEDIUM");
+  fLogger -> SetLogVerbosityLevel("HIGH");
+  //fLogger -> SetLogScreenLevel("DEBUG");
 
+  // Run
   FairRunAna *fRun= new FairRunAna();
-  fRun -> SetInputFile("data/spirit_" + tag + ".reco.root");
-  fRun -> SetOutputFile("data/spirit_" + tag + ".reco_display.root");
+  fRun -> SetInputFile(inputName);
+  fRun -> SetOutputFile(outputName);
 
-  FairRuntimeDb* rtdb = fRun->GetRuntimeDb();
-  FairParRootFileIo* parIo1 = new FairParRootFileIo();
-  parIo1->open("data/spirit_" + tag + ".params.root");
-  rtdb->setFirstInput(parIo1);
+  // Data base 
+  FairParRootFileIo* mcParInput = new FairParRootFileIo();
+  mcParInput->open(parName);
+  FairParAsciiFileIo* digiParInput = new FairParAsciiFileIo();
+  digiParInput -> open(digiParFile);
 
-  FairRootManager* ioman = FairRootManager::Instance();
+  FairRuntimeDb* fDb = fRun->GetRuntimeDb();
+  fDb -> setFirstInput(mcParInput);
+  fDb -> setSecondInput(digiParInput);
 
+  // Event display
   STEventManager *eveMan = new STEventManager();
+  eveMan -> SetVolumeTransparency(80);
   STEventDrawTask* eve = new STEventDrawTask();
-
+  eve -> SetDigiFile(digiName);
   eveMan->AddTask(eve);
+
+
   eveMan->Init();                    
 }

@@ -41,7 +41,9 @@ STEventManager::STEventManager()
   fRunAna(FairRunAna::Instance()),
   fEntry(0),
   fEvent(0),
-  fCvsPadPlane(0)
+  fCvsPadPlane(0),
+  fCvsPad(0),
+  fTransparency(80)
 {
   fInstance=this;
 }
@@ -65,38 +67,60 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 
   Int_t  dummy;
   UInt_t width, height;
-  UInt_t widthMax = 1400, heightMax = 650;
+  UInt_t widthMax = 1400, heightMax = 850;
   Double_t ratio = (Double_t)widthMax/heightMax;
-  gVirtualX->GetWindowSize(gClient->GetRoot()->GetId(), dummy, dummy, width, height);
-  // Assume that width of screen is always larger than the height of screen
+  gVirtualX -> GetWindowSize(gClient -> GetRoot() -> GetId(), dummy, dummy, width, height);
   if(width>widthMax){ width = widthMax; height = heightMax; } 
   else height = (Int_t)(width/ratio);
-  //gEve->GetMainWindow()->Resize(width,height);
+  gEve -> GetMainWindow() -> Resize(width,height);
 
   /**************************************************************************/
 
-  TEveWindowSlot* slot = 0;
-  TEveWindowPack* pack = 0;
+  TEveWindowSlot* slotOverview = NULL;
+  TEveWindowPack* packOverview = NULL;
+  TEveWindowPack* packLeft = NULL;
+  TEveWindowSlot* slotPadPlane = NULL;
+  TEveWindowSlot* slotPad = NULL;
 
-  // 3D
-  slot = TEveWindow::CreateWindowInTab(gEve->GetBrowser()->GetTabRight());
-  pack = slot->MakePack();
-  pack->SetElementName("Overview");
-  pack->SetHorizontal();
-  pack->SetShowTitleBar(kFALSE);
+  TRootEmbeddedCanvas* ecvsPadPlane = new TRootEmbeddedCanvas();
+  TRootEmbeddedCanvas* ecvsPad = new TRootEmbeddedCanvas();
+  TEveWindowFrame* framePadPlane = NULL;
+  TEveWindowFrame* framePad = NULL;
 
-  pack->NewSlot()->MakeCurrent();
-  TEveViewer* view3D = gEve->SpawnNewViewer("3D View", "");
-  view3D->AddScene(gEve->GetGlobalScene());
-  view3D->AddScene(gEve->GetEventScene());
+  slotOverview = TEveWindow::CreateWindowInTab(gEve->GetBrowser()->GetTabRight());
+  slotOverview -> SetElementName("Overview");
+  slotOverview -> SetShowTitleBar(kFALSE);
+  packOverview = slotOverview -> MakePack();
+  packOverview -> SetElementName("Overview");
+  //packOverview -> SetShowTitleBar(kFALSE);
+  packOverview -> SetHorizontal();
 
+  packLeft = packOverview -> NewSlot() -> MakePack();
+  packLeft -> SetElementName("left pack");
+  packLeft -> SetShowTitleBar(kFALSE);
+  packLeft -> SetVertical();
+  packLeft -> NewSlot() -> MakeCurrent();
+  TEveViewer* viwer3D = gEve -> SpawnNewViewer("3D View", "");
+  viwer3D -> AddScene(gEve->GetGlobalScene());
+  viwer3D -> AddScene(gEve->GetEventScene());
 
-  slot = pack->NewSlotWithWeight(1.5);
-  TRootEmbeddedCanvas* ecvs = new TRootEmbeddedCanvas();
-  TEveWindowFrame* frame = slot->MakeFrame(ecvs);
-  frame->SetElementName("SpiRIT Pad Plane");
-  pack->GetEveFrame()->SetShowTitleBar(kFALSE);
-  fCvsPadPlane = ecvs->GetCanvas();
+  slotPadPlane = packOverview -> NewSlot();
+  //slotPadPlane -> SetElementName("pad plane");
+  //slotPadPlane -> SetShowTitleBar(kFALSE);
+  framePadPlane = slotPadPlane -> MakeFrame(ecvsPadPlane);
+  framePadPlane -> SetElementName("SpiRIT Pad Plane");
+  framePadPlane -> SetShowTitleBar(kFALSE);
+  //packOverview -> GetEveFrame() -> SetShowTitleBar(kFALSE);
+  fCvsPadPlane = ecvsPadPlane -> GetCanvas();
+
+  slotPad = packLeft -> NewSlotWithWeight(.6);
+  //slotPad -> SetElementName("pad");
+  //slotPad -> SetShowTitleBar(kFALSE);
+  framePad = slotPad -> MakeFrame(ecvsPad);
+  framePad -> SetElementName("pad");
+  framePad -> SetShowTitleBar(kFALSE);
+  //packLeft -> GetEveFrame() -> SetShowTitleBar(kFALSE);
+  fCvsPad = ecvsPad -> GetCanvas();
 
   /**************************************************************************/
 
@@ -108,13 +132,11 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
       = new TEveGeoTopNode(gGeoManager, geoNode, option, level, nNodes);
     gEve->AddGlobalElement(topNode);
 
-    Int_t transparency = 80;
-
     TObjArray* listVolume = gGeoManager -> GetListOfVolumes();
     Int_t nVolumes = listVolume -> GetEntries();
     for(Int_t i=0; i<nVolumes; i++)
     {
-      ((TGeoVolume*) listVolume -> At(i)) -> SetTransparency(transparency);
+      ((TGeoVolume*) listVolume -> At(i)) -> SetTransparency(fTransparency);
     }
 
     gEve->FullRedraw3D(kTRUE);
@@ -123,12 +145,12 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 
   /**************************************************************************/
 
-  //gEve->GetBrowser()->GetTabRight()->SetTab(1);
-  //gEve->Redraw3D(kTRUE, kTRUE);
+  gEve -> GetBrowser() -> GetTabRight() -> SetTab(1);
+  gEve -> Redraw3D(kTRUE, kTRUE);
 
   TGLViewer *dfViewer = gEve->GetDefaultGLViewer();
-  dfViewer->CurrentCamera().RotateRad(-.7, 2.3);
-  dfViewer->DoDraw();
+  dfViewer -> CurrentCamera().RotateRad(-.7, 2.3);
+  dfViewer -> DoDraw();
 }
 
 void 

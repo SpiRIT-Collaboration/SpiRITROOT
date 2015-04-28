@@ -4,8 +4,11 @@
  */
 
 #include "FairRootManager.h"
+#include "FairRunAna.h"
+#include "FairRuntimeDb.h"
 
 #include "STEventDrawTask.hh"
+#include "STPad.hh"
 
 #include "TEveManager.h"
 #include "TPaletteAxis.h"
@@ -24,21 +27,35 @@ STEventDrawTask* STEventDrawTask::Instance()
 }
 
 STEventDrawTask::STEventDrawTask()
-: fIs2DPlotRange(kFALSE),
+: fCurrentEvent(-1),
+  fCurrentRow(-1),
+  fCurrentLayer(-1),
+  fSet2dPlotRangeFlag(kFALSE),
+  fSetDigiFileFlag(kFALSE),
+  fPar(0),
+  fNTbs(0),
+  fXPadPlane(0),
+  fTBTime(0),
+  fDriftVelocity(0),
+  fDigiTree(0),
+  fRawEventArray(0),
+  fRawEvent(0),
+  fHistPad(0),
   fHitArray(0),
   fHitClusterArray(0),
   fRiemannTrackArray(0),
   fKalmanArray(0),
   fEventManager(0),
+  fEventManagerEditor(0),
   fThreshold(0),
   fHitSet(0),
   fHitColor(kPink),
   fHitSize(1),
-  fHitStyle(kFullDotMedium),
+  fHitStyle(6),
   fHitClusterSet(0),
-  fHitClusterColor(kWhite),
+  fHitClusterColor(kGray+3),
   fHitClusterSize(1),
-  fHitClusterStyle(kDot),
+  fHitClusterStyle(6),
   fRiemannSetArray(0),
   fRiemannColor(kBlue),
   fRiemannSize(1.5),
@@ -48,14 +65,29 @@ STEventDrawTask::STEventDrawTask()
   fMinZ(0),
   fMaxZ(1344),
   fMinX(432),
-  fMaxX(-432)
+  fMaxX(-432),
+  fCvsPad(0)
 {
-  fInstance=this;
+  fInstance = this;
+
+  for(Int_t i=0; i<20; i++)
+    fGraphHitTb[i] = new TGraph();
 }
 
 STEventDrawTask::~STEventDrawTask()
 {
 }
+
+void 
+STEventDrawTask::SetParContainers()
+{
+  fLogger->Debug(MESSAGE_ORIGIN,"SetParContainers of STEventDrawTask");
+
+  FairRunAna* ana = FairRunAna::Instance();
+  FairRuntimeDb* rtdb = ana->GetRuntimeDb();
+  fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
+}
+
 
 InitStatus 
 STEventDrawTask::Init()
@@ -63,21 +95,34 @@ STEventDrawTask::Init()
   FairRootManager* ioMan = FairRootManager::Instance();
   fEventManager = STEventManager::Instance();
 
-  fHitArray = (TClonesArray*) ioMan->GetObject("STEventH");
+  fHitArray = (TClonesArray*) ioMan -> GetObject("STEventH");
   if(fHitArray) LOG(INFO)<<"Hit Found."<<FairLogger::endl;
 
-  fHitClusterArray = (TClonesArray*) ioMan->GetObject("STEventHC");
+  fHitClusterArray = (TClonesArray*) ioMan -> GetObject("STEventHC");
   if(fHitClusterArray) LOG(INFO)<<"Hit Cluster Found."<<FairLogger::endl;
 
-  fRiemannTrackArray = (TClonesArray*) ioMan->GetObject("STRiemannTrack");
+  fRiemannTrackArray = (TClonesArray*) ioMan -> GetObject("STRiemannTrack");
   if(fRiemannTrackArray) LOG(INFO)<<"Riemann Track Found."<<FairLogger::endl;
 
-  fKalmanArray = (TClonesArray*) ioMan->GetObject("STKalmanTrack");
+  fKalmanArray = (TClonesArray*) ioMan -> GetObject("STKalmanTrack");
   if(fKalmanArray) LOG(INFO)<<"Kalman Track Found."<<FairLogger::endl;
 
   gStyle -> SetPalette(55);
-  fCvsPadPlane = fEventManager->GetCvsPadPlane();
+  fCvsPadPlane = fEventManager -> GetCvsPadPlane();
+  fCvsPadPlane -> AddExec("ex","STEventDrawTask::ClickSelectedPadPlane()");
   DrawPadPlane();
+
+  fNTbs = fPar -> GetNumTbs();
+  fXPadPlane = fPar -> GetPadPlaneX();
+
+  fTBTime = fPar -> GetTBTime();
+  fDriftVelocity  = fPar -> GetGas() -> GetDriftVelocity();
+  fDriftVelocity  = fDriftVelocity/100;
+
+  fCvsPad = fEventManager -> GetCvsPad();
+  SetHistPad();
+
+  return kSUCCESS;
 }
 
 void 
@@ -85,35 +130,36 @@ STEventDrawTask::Exec(Option_t* option)
 {
   Reset();
 
-  //if(fHitArray) DrawHitPoints();
+  if(fHitArray) DrawHitPoints();
   if(fHitClusterArray) DrawHitClusterPoints();
   if(fRiemannTrackArray) DrawRiemannHits();
 
   gEve -> Redraw3D(kFALSE);
-  //UpdateCvsPadPlane();
+  UpdateCvsPadPlane();
 }
 
 void 
 STEventDrawTask::DrawHitPoints()
 {
-  STEvent* event = (STEvent*) fHitArray->At(0);
-  Int_t nHits = event->GetNumHits();
+  STEvent* event = (STEvent*) fHitArray -> At(0);
+  Int_t nHits = event -> GetNumHits();
 
   fHitSet = new TEvePointSet("Hit",nHits, TEvePointSelectorConsumer::kTVT_XYZ);
-  fHitSet->SetOwnIds(kTRUE);
-  fHitSet->SetMarkerColor(fHitColor);
-  fHitSet->SetMarkerSize(fHitSize);
-  fHitSet->SetMarkerStyle(fHitStyle);
+  fHitSet -> SetOwnIds(kTRUE);
+  fHitSet -> SetMarkerColor(fHitColor);
+  fHitSet -> SetMarkerSize(fHitSize);
+  fHitSet -> SetMarkerStyle(fHitStyle);
 
-  for(Int_t iHit; iHit<nHits; iHit++)
+  for(Int_t iHit=0; iHit<nHits; iHit++)
   {
-    STHit hit = event->GetHitArray()->at(iHit);
+    STHit hit = event -> GetHitArray() -> at(iHit);
     if(hit.GetCharge()<fThreshold) continue;
     TVector3 position = hit.GetPosition();
-    fHitSet->SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
-    fHitSet->SetPointId(new TNamed(Form("Hit %d",iHit),""));
+    fHitSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
+    fHitSet -> SetPointId(new TNamed(Form("Hit %d",iHit),""));
 
-    fPadPlane->Fill(position.Z(), position.X(), hit.GetCharge());
+    fPadPlane -> Fill(position.X(), position.Z(), hit.GetCharge());
+    //fPadPlane -> Fill(position.Z(), position.X(), hit.GetCharge());
   }
   gEve -> AddElement(fHitSet);
 }
@@ -121,18 +167,18 @@ STEventDrawTask::DrawHitPoints()
 void 
 STEventDrawTask::DrawHitClusterPoints()
 {
-  STEvent* event = (STEvent*) fHitClusterArray->At(0);
-  Int_t nClusters = event->GetNumClusters();
+  STEvent* event = (STEvent*) fHitClusterArray -> At(0);
+  Int_t nClusters = event -> GetNumClusters();
 
   fHitClusterSet = new TEvePointSet("HitCluster",nClusters, TEvePointSelectorConsumer::kTVT_XYZ);
-  fHitClusterSet->SetOwnIds(kTRUE);
-  fHitClusterSet->SetMarkerColor(fHitClusterColor);
-  fHitClusterSet->SetMarkerSize(fHitClusterSize);
-  fHitClusterSet->SetMarkerStyle(fHitClusterStyle);
+  fHitClusterSet -> SetOwnIds(kTRUE);
+  fHitClusterSet -> SetMarkerColor(fHitClusterColor);
+  fHitClusterSet -> SetMarkerSize(fHitClusterSize);
+  fHitClusterSet -> SetMarkerStyle(fHitClusterStyle);
 
-  for(Int_t iCluster; iCluster<nClusters; iCluster++)
+  for(Int_t iCluster=0; iCluster<nClusters; iCluster++)
   {
-    STHitCluster cluster = event->GetClusterArray()->at(iCluster);
+    STHitCluster cluster = event -> GetClusterArray() -> at(iCluster);
     if(cluster.GetCharge()<fThreshold) continue;
     TVector3 position = cluster.GetPosition();
     fHitClusterSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
@@ -148,7 +194,7 @@ STEventDrawTask::DrawRiemannHits()
   STHitCluster* rCluster = 0;
   TEvePointSet* riemannClusterSet = 0;
 
-  STEvent* event = (STEvent*) fHitClusterArray->At(0);
+  STEvent* event = (STEvent*) fHitClusterArray -> At(0);
 
   Int_t nTracks = fRiemannTrackArray -> GetEntries();
   for(Int_t iTrack=0; iTrack<nTracks; iTrack++) 
@@ -163,9 +209,9 @@ STEventDrawTask::DrawRiemannHits()
     for(Int_t iCluster=0; iCluster<nClusters; iCluster++)
     {
       rCluster = track -> GetHit(iCluster) -> GetCluster();
-      if((rCluster->GetCharge())<fThreshold) continue;
+      if((rCluster -> GetCharge())<fThreshold) continue;
       Int_t id = rCluster -> GetClusterID();
-      STHitCluster oCluster = event->GetClusterArray()->at(id);
+      STHitCluster oCluster = event -> GetClusterArray() -> at(id);
 
       TVector3 position = oCluster.GetPosition();
       riemannClusterSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
@@ -217,13 +263,13 @@ void
 STEventDrawTask::Reset()
 {
   if(fHitSet) {
-    fHitSet->Reset();
-    gEve->RemoveElement(fHitSet, fEventManager);
+    fHitSet -> Reset();
+    gEve -> RemoveElement(fHitSet, fEventManager);
   }
 
   if(fHitClusterSet) {
-    fHitClusterSet->Reset();
-    gEve->RemoveElement(fHitClusterSet, fEventManager);
+    fHitClusterSet -> Reset();
+    gEve -> RemoveElement(fHitClusterSet, fEventManager);
   }
 
   Int_t nRiemannTracks = fRiemannSetArray.size();
@@ -231,13 +277,13 @@ STEventDrawTask::Reset()
   if(nRiemannTracks!=0) {
     for(Int_t i=0; i<nRiemannTracks; i++){
       pointSet = fRiemannSetArray[i];
-      gEve->RemoveElement(pointSet, fEventManager);
+      gEve -> RemoveElement(pointSet, fEventManager);
     }
     fRiemannSetArray.clear();
   }
 
   if(fPadPlane!=NULL)
-    fPadPlane->Reset();
+    fPadPlane -> Reset();
 }
 
 void
@@ -245,7 +291,7 @@ STEventDrawTask::Set2DPlotRange(Int_t uaIdx)
 {
   if(uaIdx%100<0 || uaIdx%100>11 || uaIdx/100<0 || uaIdx/100>3) 
   {
-    fLogger->Error(MESSAGE_ORIGIN, 
+    fLogger -> Error(MESSAGE_ORIGIN, 
       "2DPlotRange should be ABB ( A = [0, 3], BB = [00, 11] )!");
     return;
   }
@@ -255,7 +301,39 @@ STEventDrawTask::Set2DPlotRange(Int_t uaIdx)
   fMinX = (uaIdx%100)*8*9 - 432;
   fMaxX = (uaIdx%100 + 1)*8*9 - 432;
 
-  fIs2DPlotRange = kTRUE;
+  fSet2dPlotRangeFlag = kTRUE;
+}
+
+void 
+STEventDrawTask::SetHistPad()
+{
+  if(fHistPad)
+  {
+    fHistPad -> Reset();
+    return;
+  }
+
+  fCvsPad -> cd();
+  fHistPad = new TH1D("Pad","",fNTbs,0,fNTbs);
+  fHistPad -> SetLineColor(9);
+  fHistPad -> SetFillColor(9);
+  fHistPad -> SetFillStyle(3002);
+  fHistPad -> GetXaxis() -> SetTickLength(0.01);
+  fHistPad -> GetXaxis() -> SetTitle("time bucket");
+  fHistPad -> GetXaxis() -> CenterTitle();
+  fHistPad -> GetXaxis() -> SetLabelSize(0.05);
+  fHistPad -> GetXaxis() -> SetTitleSize(0.05);
+  fHistPad -> GetYaxis() -> SetTickLength(0.01);
+  fHistPad -> GetYaxis() -> SetTitle("adc");
+  fHistPad -> GetYaxis() -> CenterTitle();
+  fHistPad -> GetYaxis() -> SetLabelSize(0.05);
+  fHistPad -> GetYaxis() -> SetTitleSize(0.05);
+  fHistPad -> SetMinimum(0);
+  fHistPad -> SetMaximum(4095);
+  fHistPad -> SetStats(0);
+  fHistPad -> Draw();
+  fCvsPad -> SetGridy();
+  fCvsPad -> SetGridx();
 }
 
 void
@@ -263,26 +341,30 @@ STEventDrawTask::DrawPadPlane()
 {
   if(fPadPlane) 
   {
-    fPadPlane->Reset();
+    fPadPlane -> Reset();
     return;
   }
 
   fCvsPadPlane -> cd();
-  fPadPlane = new TH2D("padplane", "", 112, 0, 1344, 108, -432, 432);
+  fPadPlane = new TH2D("padplane", "", 108, -432, 432, 112, 0, 1344);
   fPadPlane -> GetXaxis() -> SetTickLength(0.01);
-  fPadPlane -> GetXaxis() -> SetTitle("z (mm)");
+  fPadPlane -> GetXaxis() -> SetTitle("x (mm)");
   fPadPlane -> GetXaxis() -> CenterTitle();
   fPadPlane -> GetYaxis() -> SetTickLength(0.01);
-  fPadPlane -> GetYaxis() -> SetTitle("x (mm)");
+  fPadPlane -> GetYaxis() -> SetTitle("z (mm)");
+  fPadPlane -> GetYaxis() -> SetTitleOffset(1.3);
   fPadPlane -> GetYaxis() -> CenterTitle();
   fPadPlane -> SetMinimum(0);
   fPadPlane -> SetMaximum(4095);
   fPadPlane -> SetStats(0);
   fPadPlane -> Draw("colz");
+  fCvsPadPlane -> SetGridy();
+  fCvsPadPlane -> SetGridx();
 
+  /*
   for (Int_t i = 0; i < 107; i++) {
-    Int_t x[2] = {-432 + (i + 1)*8, -432 + (i + 1)*8};
-    Int_t z[2] = {0, 1344};
+    Int_t z[2] = {-432 + (i + 1)*8, -432 + (i + 1)*8};
+    Int_t x[2] = {0, 1344};
     TGraph *line = new TGraph(2, z, x);
     line -> SetMarkerStyle(1);
     if ((i + 1)%9 == 0)
@@ -293,8 +375,8 @@ STEventDrawTask::DrawPadPlane()
   }
 
   for (Int_t i = 0; i < 111; i++) {
-    Int_t x[2] = {-432, 432};
-    Int_t z[2] = {(i + 1)*12, (i + 1)*12};
+    Int_t z[2] = {-432, 432};
+    Int_t x[2] = {(i + 1)*12, (i + 1)*12};
     TGraph *line = new TGraph(2, z, x);
     line -> SetMarkerStyle(1);
     if ((i + 1)%7 == 0)
@@ -303,6 +385,7 @@ STEventDrawTask::DrawPadPlane()
         line -> SetLineStyle(3);
     line -> Draw("same");
   }
+  */
 }
 
 void 
@@ -312,10 +395,10 @@ STEventDrawTask::UpdateCvsPadPlane()
   fCvsPadPlane -> Update();
 
   TPaletteAxis *paxis 
-    = (TPaletteAxis *) fPadPlane->GetListOfFunctions()->FindObject("palette");
+    = (TPaletteAxis *) fPadPlane -> GetListOfFunctions() -> FindObject("palette");
 
   if (paxis) {
-    if(fIs2DPlotRange) {
+    if(fSet2dPlotRangeFlag) {
       paxis -> SetX1NDC(0.940);
       paxis -> SetX2NDC(0.955);
       paxis -> SetLabelSize(0.08);
@@ -368,4 +451,101 @@ STEventDrawTask::GetRiemannColor(Int_t index)
   color += offColor;
 
   return color;
+}
+
+void
+STEventDrawTask::SetDigiFile(TString name)
+{
+  TFile* digiFile = new TFile(name,"read");
+  if(!digiFile) return;
+
+  fDigiTree = (TTree*) digiFile -> Get("cbmsim");
+  fDigiTree -> SetBranchAddress("STRawEvent", &fRawEventArray);
+
+  fSetDigiFileFlag = kTRUE;
+}
+
+void
+STEventDrawTask::DrawPad(Int_t row, Int_t layer)
+{
+  if(row==fCurrentRow && layer==fCurrentLayer) return;
+  fCurrentRow = row;
+  fCurrentLayer = layer;
+  fEventManagerEditor -> SetRowLayer(row, layer);
+  Int_t currentEvent = fEventManager -> GetCurrentEvent();
+  if(currentEvent!=fCurrentEvent) 
+  {
+    fDigiTree -> GetEntry(currentEvent);
+    fCurrentEvent = currentEvent;
+    fRawEvent = (STRawEvent*) fRawEventArray -> At(0);
+  }
+  STPad* pad = fRawEvent -> GetPad(row, layer);
+  if(!pad) return;
+  Double_t* adc = pad -> GetADC();
+
+  for(Int_t tb=0; tb<fNTbs; tb++)
+    fHistPad -> SetBinContent(tb+1, adc[tb]);
+
+
+  STEvent* event = (STEvent*) fHitArray -> At(0);
+  Int_t nHits = event -> GetNumHits();
+
+  /*
+  for(Int_t i=0; i<20; i++)
+    fGraphHitTb[i] -> Set(0);
+
+  for(Int_t iHit=0; iHit<nHits; iHit++)
+  {
+    STHit hit = event -> GetHitArray() -> at(iHit);
+    if(hit.GetCharge()<fThreshold) continue;
+    TVector3 position = hit.GetPosition();
+    Double_t tb = position.Z()/fDriftVelocity/fTBTime;
+    //...
+  }
+  */
+
+
+  fCvsPad -> cd();
+  fHistPad -> Draw();
+  fCvsPad -> Modified();
+  fCvsPad -> Update();
+}
+
+void 
+STEventDrawTask::DrawPadByPosition(Double_t x, Double_t z)
+{
+  Int_t row = (x+fXPadPlane/2)/8;
+  Int_t layer = z/12;
+
+  DrawPad(row, layer);
+}
+
+void
+STEventDrawTask::ClickSelectedPadPlane()
+{
+  TObject* select = ((TCanvas*)gPad) -> GetClickSelected();
+  if(!select) return;
+
+  if(select -> InheritsFrom(TH1::Class()))
+  {
+    TH2D* hist = (TH2D*) select;
+
+    Int_t uniqueID = gPad -> GetUniqueID();
+    Int_t xEvent = gPad -> GetEventX();
+    Int_t yEvent = gPad -> GetEventY();
+
+    gPad -> SetUniqueID(yEvent);
+
+    Float_t xAbs = gPad -> AbsPixeltoX(xEvent);
+    Float_t yAbs = gPad -> AbsPixeltoY(yEvent);
+    Double_t xOnClick = gPad -> PadtoX(xAbs);
+    Double_t yOnClick = gPad -> PadtoY(yAbs);
+
+    Int_t bin = hist -> FindBin(xOnClick,yOnClick);
+    Double_t content = hist -> GetBinContent(bin);
+
+    STEventDrawTask::Instance() -> DrawPadByPosition(xOnClick,yOnClick);
+  }
+
+  ((TCanvas*)gPad) -> SetClickSelected(0);
 }

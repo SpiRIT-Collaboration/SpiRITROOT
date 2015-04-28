@@ -6,7 +6,6 @@
 #pragma once
 
 #include "TEveEventManager.h"
-//#include "STEventDrawTask.hh"
 
 #include "FairRunAna.h"
 #include "FairRootManager.h"
@@ -31,11 +30,13 @@ class STEventManager : public TEveEventManager
     virtual void InitRiemann(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
     virtual void Init(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
 
-    void SetSelfRiemannSet(Int_t val) {};
+    void SetSelfRiemannSet(Int_t val) {}
+    void SetVolumeTransparency(Int_t val) { fTransparency = val; }
 
-    virtual Int_t GetCurrentEvent() {return fEntry;}
+    virtual Int_t GetCurrentEvent() { return fEntry; }
 
     TCanvas* GetCvsPadPlane() { return fCvsPadPlane; }
+    TCanvas* GetCvsPad()      { return fCvsPad; }
 
     void RunEvent();
 
@@ -47,6 +48,9 @@ class STEventManager : public TEveEventManager
     TGListTreeItem* fEvent;
 
     TCanvas* fCvsPadPlane;
+    TCanvas* fCvsPad;
+
+    Int_t fTransparency;
 
     static STEventManager* fInstance;
 

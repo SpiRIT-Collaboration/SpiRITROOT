@@ -10,6 +10,7 @@ ${CMAKE_SOURCE_DIR}/eventdisplay
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/SPiRIT/eventdisplay
 ${CMAKE_SOURCE_DIR}/SPiRIT/format
+${CMAKE_SOURCE_DIR}/SPiRIT/par
 ${CMAKE_SOURCE_DIR}/SPiRIT/reco/RiemannTracking
 )
 
@@ -42,6 +43,7 @@ Set(DEPENDENCIES
 # Basically those are the libraries in the header files' directory.
     STFormat
     STReco
+    STPar
 )
 
 GENERATE_LIBRARY()

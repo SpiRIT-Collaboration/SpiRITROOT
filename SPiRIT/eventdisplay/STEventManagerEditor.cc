@@ -35,10 +35,15 @@ STEventManagerEditor::STEventManagerEditor
   fDrawTask(0),
   fCurrentEvent(0),
   fCurrentRiemannSet(0),
+  fCurrentRow(0),
+  fCurrentLayer(0),
   fTempRiemannSet(0),
   fEventTime(NULL),
-  fAutoUpdateFlag(kFALSE)
+  fAutoUpdateFlag(kFALSE),
+  fAutoUpdatePadFlag(kFALSE)
 {
+  fDrawTask = STEventDrawTask::Instance();
+  fDrawTask -> SetEventManagerEditor(this);
   Init();
 }
 
@@ -103,7 +108,7 @@ STEventManagerEditor::Init()
   /********************************************************************/
 
   TGGroupFrame* frameRiemann = new TGGroupFrame(title,"Riemann Tracklet");
-  frameInfo -> SetTitlePos(TGGroupFrame::kLeft);
+  frameRiemann -> SetTitlePos(TGGroupFrame::kLeft);
 
   TGHorizontalFrame* frameRiemann1 = new TGHorizontalFrame(frameRiemann);
   TGLabel* labelTracklet = new TGLabel(frameRiemann1, "Select Tracklet : ");
@@ -142,7 +147,62 @@ STEventManagerEditor::Init()
 
   /********************************************************************/
 
+  TGGroupFrame* framePad = new TGGroupFrame(title,"Pad");
+  framePad -> SetTitlePos(TGGroupFrame::kLeft);
+
+  TGCheckButton* checkAutoUpdatePad = new TGCheckButton(framePad, "Auto Update");
+  checkAutoUpdatePad -> Connect("Toggled(Bool_t)", "STEventManagerEditor", this, "ToggleAutoUpdatePad(Bool_t)");
+  checkAutoUpdatePad -> Toggle(kFALSE);
+
+  TGHorizontalFrame* framePadRow = new TGHorizontalFrame(framePad);
+  TGLabel* labelRow   = new TGLabel(framePadRow, "Row   :");
+  fCurrentRow = new TGNumberEntry(framePadRow, 0., 6, -1,
+                                  TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
+                                  TGNumberFormat::kNELLimitMinMax, 0, 107);
+  fCurrentRow -> Connect("ValueSet(Long_t)", "STEventManagerEditor", this, "SelectPadIf()");
+  framePadRow -> AddFrame(labelRow, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
+  framePadRow -> AddFrame(fCurrentRow, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
+
+  TGHorizontalFrame* framePadLayer = new TGHorizontalFrame(framePad);
+  TGLabel* labelLayer = new TGLabel(framePadLayer, "Layer :");
+  fCurrentLayer = new TGNumberEntry(framePadLayer, 0., 6, -1,
+                                    TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
+                                    TGNumberFormat::kNELLimitMinMax, 0, 111);
+  fCurrentLayer -> Connect("ValueSet(Long_t)", "STEventManagerEditor", this, "SelectPadIf()");
+  framePadLayer -> AddFrame(labelLayer, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
+  framePadLayer -> AddFrame(fCurrentLayer, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
+
+  TGTextButton* buttonUpdatePad = new TGTextButton(framePad, "Update");
+  buttonUpdatePad -> Connect("Clicked()", "STEventManagerEditor", this, "SelectPad()");
+
+  framePad -> AddFrame(checkAutoUpdatePad, new TGLayoutHints(kLHintsLeft, 1,1,5,3));
+  framePad -> AddFrame(framePadRow, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
+  framePad -> AddFrame(framePadLayer, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
+  framePad -> AddFrame(buttonUpdatePad, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,3));
+
+  title -> AddFrame(framePad, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
+
+  /********************************************************************/
+
   fEventFrame -> AddFrame(title, new TGLayoutHints(kLHintsTop, 0, 0, 2, 0));
+}
+
+void
+STEventManagerEditor::ToggleAutoUpdatePad(Bool_t onoff)
+{
+  fAutoUpdatePadFlag = onoff;
+}
+
+void 
+STEventManagerEditor::SelectPadIf()
+{
+  if(fAutoUpdatePadFlag) SelectPad();
+}
+
+void 
+STEventManagerEditor::SelectPad()
+{
+  fDrawTask -> DrawPad(fCurrentRow->GetIntNumber(), fCurrentLayer->GetIntNumber());
 }
 
 void 
@@ -178,14 +238,12 @@ STEventManagerEditor::ToggleAutoUpdate(Bool_t onoff)
 Int_t
 STEventManagerEditor::GetNRiemannSet()
 {
-  if(!fDrawTask) fDrawTask = STEventDrawTask::Instance();
   return fDrawTask -> GetNRiemannSet();
 }
 
 void 
 STEventManagerEditor::SelectRiemannSet()
 {
-  if(!fDrawTask) fDrawTask = STEventDrawTask::Instance();
   fDrawTask -> SetSelfRiemannSet(fCurrentRiemannSet->GetIntNumber(),kTRUE);
   gEve -> Redraw3D();
 }
@@ -193,7 +251,6 @@ STEventManagerEditor::SelectRiemannSet()
 void
 STEventManagerEditor::AddRiemannSet()
 {
-  if(!fDrawTask) fDrawTask = STEventDrawTask::Instance();
   fDrawTask -> SetSelfRiemannSet(fTempRiemannSet->GetIntNumber(),kFALSE);
   gEve -> Redraw3D();
 }
@@ -201,7 +258,6 @@ STEventManagerEditor::AddRiemannSet()
 void
 STEventManagerEditor::VisAllRiemannSet()
 {
-  if(!fDrawTask) fDrawTask = STEventDrawTask::Instance();
   fDrawTask -> SetSelfRiemannSet(-1,kFALSE);
   gEve -> Redraw3D();
 }
@@ -209,7 +265,13 @@ STEventManagerEditor::VisAllRiemannSet()
 void
 STEventManagerEditor::VisOffRiemannSet()
 {
-  if(!fDrawTask) fDrawTask = STEventDrawTask::Instance();
   fDrawTask -> SetSelfRiemannSet(-1,kTRUE);
   gEve -> Redraw3D();
+}
+
+void
+STEventManagerEditor::SetRowLayer(Int_t row, Int_t layer)
+{
+  fCurrentRow -> SetNumber(row);
+  fCurrentLayer -> SetNumber(layer);
 }
