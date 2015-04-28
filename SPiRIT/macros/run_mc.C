@@ -35,7 +35,8 @@ void run_mc(TString tag = "test")
   // -----   Create and set magnetic field   --------------------------------
   FairConstField *fMagField = new FairConstField();
   fMagField -> SetField(0., 5., 0.); // in kG
-  fMagField -> SetFieldRegion(-90.275,90.2752,-95.55/2,95.55/2,-104.82/2,104.82/2);
+  //fMagField -> SetFieldRegion(-90.275,90.2752,-95.55/2,95.55/2,-104.82/2,104.82/2);
+  fMagField -> SetFieldRegion(-150,150,-150,150,-150,150);
 
   /** 
    * Use field map 
@@ -47,11 +48,8 @@ void run_mc(TString tag = "test")
 
 
   // -----   Create PrimaryGenerator   --------------------------------------
-  /*
   STEventGenGenerator* gen = new STEventGenGenerator("UrQMD_300AMeV_short.egen");
-  gen->SetPrimaryVertex(0,-21.33,-3.52);
-  */
-  STSimpleEventGenerator* gen = new STSimpleEventGenerator("../input/GEN_singleTrack.sgen");
+  //STSimpleEventGenerator* gen = new STSimpleEventGenerator("../input/GEN_singleTrack.sgen");
   gen->SetPrimaryVertex(0,-21.33,-3.52);
 
   Int_t nEvents = gen->GetNEvents();
