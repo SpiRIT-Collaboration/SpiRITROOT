@@ -158,7 +158,7 @@ STEventDrawTask::DrawHitPoints()
     fHitSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
     fHitSet -> SetPointId(new TNamed(Form("Hit %d",iHit),""));
 
-    fPadPlane -> Fill(position.X(), position.Z(), hit.GetCharge());
+    fPadPlane -> Fill(-position.X(), position.Z(), hit.GetCharge());
     //fPadPlane -> Fill(position.Z(), position.X(), hit.GetCharge());
   }
   gEve -> AddElement(fHitSet);
@@ -348,7 +348,7 @@ STEventDrawTask::DrawPadPlane()
   fCvsPadPlane -> cd();
   fPadPlane = new TH2D("padplane", "", 108, -432, 432, 112, 0, 1344);
   fPadPlane -> GetXaxis() -> SetTickLength(0.01);
-  fPadPlane -> GetXaxis() -> SetTitle("x (mm)");
+  fPadPlane -> GetXaxis() -> SetTitle("-x (mm)");
   fPadPlane -> GetXaxis() -> CenterTitle();
   fPadPlane -> GetYaxis() -> SetTickLength(0.01);
   fPadPlane -> GetYaxis() -> SetTitle("z (mm)");
@@ -483,6 +483,7 @@ STEventDrawTask::DrawPad(Int_t row, Int_t layer)
   if(!pad) return;
   Double_t* adc = pad -> GetADC();
 
+  fHistPad -> SetTitle(Form("row: %d, layer: %d",row, layer));
   for(Int_t tb=0; tb<fNTbs; tb++)
     fHistPad -> SetBinContent(tb+1, adc[tb]);
 
@@ -514,7 +515,7 @@ STEventDrawTask::DrawPad(Int_t row, Int_t layer)
 void 
 STEventDrawTask::DrawPadByPosition(Double_t x, Double_t z)
 {
-  Int_t row = (x+fXPadPlane/2)/8;
+  Int_t row = (-x+fXPadPlane/2)/8;
   Int_t layer = z/12;
 
   DrawPad(row, layer);
