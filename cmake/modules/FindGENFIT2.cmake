@@ -23,7 +23,7 @@ Find_Library(GENFIT2_LIBRARY NAMES genfit2
 
 If(GENFIT2_LIBRARY)
 
-  MESSAGE(STATUS "Looking for GENFIT2... - found ${SIMPATH}/lib/${GENFIT2_LIBRARY}")
+  MESSAGE(STATUS "Looking for GENFIT2... - found ${SIMPATH}/lib")
 
   Set(GENFIT2_LIBRARY_DIR ${SIMPATH}/lib)
   Set(GENFIT2_LDFLAGS "-L${SIMPATH}/lib -lgenfit2")

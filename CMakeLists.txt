@@ -1,19 +1,12 @@
- ################################################################################
- #    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    #
- #                                                                              #
- #              This software is distributed under the terms of the             # 
- #         GNU Lesser General Public Licence version 3 (LGPL) version 3,        #  
- #                  copied verbatim in the file "LICENSE"                       #
- ################################################################################
-# The name of our project is "FairBase".  CMakeLists files in this project can
-# refer to the root source directory of the project as ${FAIRROOT_SOURCE_DIR} or
-# as ${CMAKE_SOURCE_DIR} and to the root binary directory of the project as 
-# ${FAIRROOT_BINARY_DIR} or ${CMAKE_BINARY_DIR}.
-# This difference is is important for the base classes which are in FAIRROOT 
-# and PANDAROOT.
+# The name of our project is “MYPROJ”.  CMakeLists files in this project can
+# refer to the root source directory of the project as ${MYPROJ_SOURCE_DIR} 
+# or as ${CMAKE_SOURCE_DIR} and to the root binary directory of the project as 
+# ${MYPROJ_BINARY_DIR} or ${CMAKE_BINARY_DIR}.
+# This difference is important for the base classes which are in FAIRROOT 
+# and the experiment part.
 
 # Check if cmake has the required version
-CMAKE_MINIMUM_REQUIRED(VERSION  2.8.2 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.2 FATAL_ERROR)
 
 ### CMP0025   Compiler id for Apple Clang is now AppleClang.
 ### CMP0042   MACOSX_RPATH is enabled by default.
@@ -27,53 +20,70 @@ foreach(p
   endif()
 endforeach()
 
+# Set name of our project to “MYPROJ". Has to be done
+# after check of cmake version since this is a new feature                  
+project(SpiRITROOT)
 
-# Set name of our project to "FAIRROOT". Has to be done
-# after check of cmake version                        
-project(SPiRITROOT)
+#In case you need Fortran 
+#ENABLE_LANGUAGE(Fortran)
+
+# Check for needed environment variables
+IF(NOT DEFINED ENV{FAIRROOTPATH})
+  MESSAGE(FATAL_ERROR "You did not define the environment variable FAIRROOTPATH which is needed to find FairRoot. Please set this variable and execute cmake again.")
+ENDIF(NOT DEFINED ENV{FAIRROOTPATH})
+
+IF(NOT DEFINED ENV{SIMPATH})
+   MESSAGE(FATAL_ERROR "You did not define the environment variable SIMPATH which is nedded to find the external packages. Please set this variable and execute cmake again.") 
+ENDIF(NOT DEFINED ENV{SIMPATH})
+
+SET(SIMPATH $ENV{SIMPATH})
+SET(FAIRROOTPATH $ENV{FAIRROOTPATH})
 
 # where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ 
 # is checked
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/cuda" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${FAIRROOTPATH}/share/fairbase/cmake/modules"  ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${FAIRROOTPATH}/share/fairbase/cmake/modules_old"  ${CMAKE_MODULE_PATH})
 
-SET(VMCWORKDIR ${CMAKE_SOURCE_DIR}/example)
-SET(SPIRITDIR ${CMAKE_SOURCE_DIR}/SPiRIT)
+Set(CheckSrcDir "${FAIRROOTPATH}/share/fairbase/cmake/checks")
 
-# Check if the compiler support specific C++11 features
-# Up to now this is only a check since the code does not use
-# any of the features of the new standard
-Set(CheckSrcDir "${CMAKE_SOURCE_DIR}/cmake/checks")
-include(CheckCXX11Features)
+find_package(FairRoot)
 
 # Load some basic macros which are needed later on
 include(FairMacros)
 include(WriteConfigFile)
-include(Dart)
+include(CTest)
 include(CheckCompiler)
+#include(CheckFortran)
 
 #Check the compiler and set the compile and link flags
+If(NOT CMAKE_BUILD_TYPE)
+  Message("Set BuildType DEBUG")
+  set(CMAKE_BUILD_TYPE Debug)
+EndIf(NOT CMAKE_BUILD_TYPE)
 Check_Compiler()
+
 
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
-
-Option(USE_PATH_INFO "Information from PATH and LD_LIBRARY_PATH are
-used." OFF)
+set(INCLUDE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/include")
+Set(VMCWORKDIR ${CMAKE_SOURCE_DIR})
+Option(USE_PATH_INFO "Information from PATH and LD_LIBRARY_PATH are used." OFF)
 If(USE_PATH_INFO)
-  Set(PATH $ENV{PATH})
+  Set(PATH "$PATH")
   If (APPLE)
     Set(LD_LIBRARY_PATH $ENV{DYLD_LIBRARY_PATH})
   Else (APPLE)
     Set(LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
   EndIf (APPLE)
+Else(USE_PATH_INFO)
+  STRING(REGEX MATCHALL "[^:]+" PATH $ENV{PATH})
 EndIf(USE_PATH_INFO)
 
+
 # Check if the user wants to build the project in the source
-# directory and if the install directory is different from the build
 # directory
 CHECK_OUT_OF_SOURCE_BUILD()
-CHECK_INSTALL_DIRECTORY()
 
 # Check if we are on an UNIX system. If not stop with an error
 # message
@@ -81,101 +91,56 @@ IF(NOT UNIX)
   MESSAGE(FATAL_ERROR "You're not on an UNIX system. The project was up to now only tested on UNIX systems, so we break here. If you want to go on please edit the CMakeLists.txt in the source directory.")
 ENDIF(NOT UNIX)  
 
-
-#Check if necessary environment variables are set
-#If not stop execution unless modular build is activated
-Option(FAIRROOT_MODULAR_BUILD "Modular build without environment variables" OFF)
-IF(NOT FAIRROOT_MODULAR_BUILD)
-  IF(NOT DEFINED ENV{SIMPATH})
-    MESSAGE(FATAL_ERROR "You did not define the environment variable SIMPATH which is nedded to find the external packages. Please set this variable and execute cmake again.")
-  ENDIF(NOT DEFINED ENV{SIMPATH})
-  STRING(REGEX MATCHALL "[^:]+" PATH $ENV{PATH})
-  SET(SIMPATH $ENV{SIMPATH})
-endif(NOT FAIRROOT_MODULAR_BUILD)
-
-
-Option(WITH_DBASE "Switch off the building of FairDB." OFF)
-If(WITH_DBASE)
-  Add_Definitions(-DWITH_DBASE)
-EndIf()
-
 # Check if the external packages are installed into a separate install
 # directory
 CHECK_EXTERNAL_PACKAGE_INSTALL_DIR()
-
-find_package(OpenMP)
-if(OPENMP_FOUND)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
 
 # searches for needed packages
 # REQUIRED means that cmake will stop if this packages are not found
 # For example the framework can run without GEANT4, but ROOT is
 # mandatory
-find_package(CUDA)
+
 find_package(ROOT 5.32.00 REQUIRED)
-find_package(PLUTO REQUIRED)
+find_package(Pythia8)
 find_package(Pythia6 REQUIRED)
-if(FAIRROOT_MODULAR_BUILD)
-  # Geant3, Geant4 installed via cmake
-  find_package(Geant3 REQUIRED)
-  find_package(Geant4 REQUIRED)
-  find_package(CLHEP)
-  find_package(RAVE REQUIRED)
-  find_package(GENFIT2 REQUIRED)
-else(FAIRROOT_MODULAR_BUILD)
-  # For old versions of VMC packages (to be removed)
-  set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules_old" ${CMAKE_MODULE_PATH})
-  find_package(GEANT3 REQUIRED)
-  find_package(GEANT4)
-  find_package(GEANT4DATA)
-  find_package(GEANT4VMC)
-  find_package(CLHEP)
-  find_package(GEANT4DATA)
-  find_package(GEANT4VMC)
-  find_package(CLHEP)
-endif(FAIRROOT_MODULAR_BUILD)
-find_package(RuleChecker)
-find_package(IWYU)
-find_package(ZeroMQ)
-find_package(Protobuf)
-find_package(MYSQL)
-find_package(PGSQL)
-find_package(SQLITE)
-
-
-if(USE_NANOMSG)
-  find_package(nanomsg)
-else(USE_NANOMSG)
-  set(NANOMSG_FOUND false) # lower case false value is needed for bash scripts
-endif(USE_NANOMSG)
-
-If(FAIRSOFT_EXTERN)
-  set(BOOST_ROOT ${SIMPATH})
-  set(GSL_DIR ${SIMPATH})
-Else(FAIRSOFT_EXTERN)
-  set(BOOST_ROOT ${SIMPATH}/basics/boost)
-  set(GSL_DIR ${SIMPATH}/basics/gsl)
-EndIf(FAIRSOFT_EXTERN)
+find_package(Geant3 REQUIRED)
+find_package(Geant4)
+#find_package(GEANT3 REQUIRED)
+#find_package(GEANT4)
+#find_package(GEANT4DATA)
+#find_package(GEANT4VMC)
+find_package(CLHEP)
+find_package(HEPMC)
+find_package(GENFIT2 REQUIRED)
+find_package(RAVE REQUIRED)
 
 Set(Boost_NO_SYSTEM_PATHS TRUE)
 Set(Boost_NO_BOOST_CMAKE TRUE)
+If(${ROOT_LIBRARY_DIR} MATCHES /lib/root)
+  set(BOOST_ROOT ${SIMPATH})
+  set(GSL_DIR ${SIMPATH})
+Else(${ROOT_LIBRARY_DIR} MATCHES /lib/root)
+  set(BOOST_ROOT ${SIMPATH}/basics/boost)
+  set(GSL_DIR ${SIMPATH}/basics/gsl)
+EndIf(${ROOT_LIBRARY_DIR} MATCHES /lib/root)
 Message("-- Looking for Boost ...")
 # If an older version of boost is found both of the variables below are
-# cached and in a second cmake run, a good boost version is found even
-# if the version is to old.
+# cached and in a second cmake run, a good boost version is found even 
+# if the version is to old. 
 # To overcome this problem both variables are cleared before checking
 # for boost.
 Unset(Boost_INCLUDE_DIR CACHE)
 Unset(Boost_LIBRARY_DIRS CACHE)
-find_package(Boost 1.41 COMPONENTS thread system timer program_options random)
+find_package(Boost 1.41)
 If (Boost_FOUND)
   Set(Boost_Avail 1)
-  Set(LD_LIBRARY_PATH ${LD_LIBRARY_PATH} ${Boost_LIBRARY_DIR})
 Else (Boost_FOUND)
   Set(Boost_Avail 0)
 EndIf (Boost_FOUND)
+
+# set a variable which should be used in all CMakeLists.txt
+# Defines all basic include directories from fairbase
+SetBasicVariables()
 
 # Set the library version in the main CMakeLists.txt
 SET(FAIRROOT_MAJOR_VERSION 0)
@@ -188,156 +153,43 @@ SET(FAIRROOT_LIBRARY_PROPERTIES ${FAIRROOT_LIBRARY_PROPERTIES}
     SUFFIX ".so"
 )
 
-# Load the macro to generate the needed version info at compile time
 Generate_Version_Info()
 
-# Set some useful variables
-SetBasicVariables()
+SET(_LIBDIR ${CMAKE_BINARY_DIR}/lib)
+SET(LD_LIBRARY_PATH  ${_LIBDIR} ${LD_LIBRARY_PATH})
+
+#install(DIRECTORY geometry DESTINATION pnd_install 
+#          )
+
+
+# Check if the compiler support specific C++11 features
+# Up to now this is only a check since the code does not use
+# any of the features of the new standard
+include(CheckCXX11Features)
+
+IF(HAS_CXX11_SHAREDPOINTER)
+  Add_Definitions(-DHAS_SHAREDPOINTER)
+ENDIF(HAS_CXX11_SHAREDPOINTER)
 
 # Recurse into the given subdirectories.  This does not actually
 # cause another cmake executable to run.  The same process will walk through
 # the project's entire directory structure.
-add_subdirectory (fairtools)
-add_subdirectory (base)
-If(WITH_DBASE)
-  add_subdirectory (dbase)
-EndIf()
-add_subdirectory (geobase)
-add_subdirectory (parbase) 
-add_subdirectory (generators)
-add_subdirectory (geane)
-add_subdirectory (trackbase)
-add_subdirectory (eventdisplay)
-add_subdirectory (example)
-add_subdirectory (MbsAPI)
-add_subdirectory (datamatch)
-add_subdirectory (SPiRIT)
-If (Boost_FOUND)
-  add_subdirectory (fairmq)
-  add_subdirectory (base/MQ)
-Else (Boost_FOUND)
-  Message(STATUS " Building of the FairMQ library is switched off since the necessary boost libraries couldn't be found on the system ")
-EndIf (Boost_FOUND)
 
-Option(BUILD_DOXYGEN "Build Doxygen" OFF)
-if(BUILD_DOXYGEN)
-  MESSAGE(STATUS "*** Building the Doxygen documentaion ***")
-  ADD_SUBDIRECTORY(doxygen)
-endif(BUILD_DOXYGEN)
+add_subdirectory(mc)
+add_subdirectory(digi)
+add_subdirectory(eventdisplay)
+add_subdirectory(stack)
+add_subdirectory(format)
+add_subdirectory(par)
+add_subdirectory(reco)
+add_subdirectory(field)
+add_subdirectory(util)
+add_subdirectory(generators)
+
+WRITE_CONFIG_FILE(config.sh)
+ 
+configure_file(${CMAKE_SOURCE_DIR}/CTestCustom.cmake 
+               ${CMAKE_BINARY_DIR}/CTestCustom.cmake
+              )
 
 
-if(RULE_CHECKER_FOUND)
-
-  ADD_CUSTOM_TARGET(RULES 
-     COMMAND ${RULE_CHECKER_SCRIPT1} ${CMAKE_BINARY_DIR} viol > violations.html
-     DEPENDS $ENV{ALL_RULES})
-
-endif(RULE_CHECKER_FOUND)
-
-if(IWYU_FOUND)
-
-  ADD_CUSTOM_TARGET(checkHEADERS 
-     DEPENDS $ENV{ALL_HEADER_RULES}
-  )
-
-endif(IWYU_FOUND)
-
-
-Option(BUILD_UNITTESTS "Build all unittests and add them as new tests" OFF)
-If(BUILD_UNITTESTS)
-
-  Message("Build the unit tests.")
-
-  Set(GTEST_ROOT ${SIMPATH})
-  Find_Package(GTest)
-
-  If(GTEST_FOUND)
-    Message("Add tests library and tests.")
-    add_subdirectory(test)
-  EndIf(GTEST_FOUND)
-EndIf(BUILD_UNITTESTS)
-
-Install(DIRECTORY example/gconfig example/geometry
-        DESTINATION share/fairbase/example
-        PATTERN ".svn" EXCLUDE)
-
-Install(FILES ${CMAKE_BINARY_DIR}/config.sh_install
-        DESTINATION bin
-        RENAME FairRootConfig.sh
-       )
-
-Install(FILES ${CMAKE_BINARY_DIR}/check_system.sh
-        DESTINATION bin
-       )
-
-Install(FILES ${CMAKE_BINARY_DIR}/FairVersion.h
-        DESTINATION include
-       )
-
-Install(FILES ${CMAKE_BINARY_DIR}/config.csh_install
-        DESTINATION bin
-        RENAME FairRootConfig.csh
-       )
-
-Install(FILES ${CMAKE_BINARY_DIR}/check_system.csh
-        DESTINATION bin
-       )
-
-Install(DIRECTORY cmake 
-        DESTINATION share/fairbase
-        PATTERN ".svn" EXCLUDE)
-
-Find_Package(Git)
-
-If(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
-  Execute_Process(COMMAND ${GIT_EXECUTABLE} describe --tags
-                  OUTPUT_VARIABLE FAIRROOT_GIT_VERSION
-                  OUTPUT_STRIP_TRAILING_WHITESPACE
-                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                 )
-Else()
-  Set(FAIRROOT_GIT_VERSION v-15.03) 
-EndIf()
-Configure_File(${CMAKE_SOURCE_DIR}/cmake/scripts/fairroot-config.in ${CMAKE_BINARY_DIR}/fairroot-config @ONLY)
-
-Install(PROGRAMS ${CMAKE_BINARY_DIR}/fairroot-config
-        DESTINATION bin
-       )
-
-if(NOT FAIRROOT_MINIMAL)
-
-  WRITE_CONFIG_FILE(config.sh)
-  WRITE_CONFIG_FILE(config.csh)
-#  WRITE_CONFIG_FILE(sroot.sh)
-
-  SET(VMCWORKDIR ${CMAKE_INSTALL_PREFIX}/share/fairbase/example)
-  WRITE_CONFIG_FILE(config.sh_install)
-  WRITE_CONFIG_FILE(config.csh_install)
-
-else(NOT FAIRROOT_MINIMAL)
-  WRITE_MINIMAL_CONFIG_FILE(config.sh)
-endif(NOT FAIRROOT_MINIMAL)
-
-#ADD_CUSTOM_TARGET(BUILD_SUCCESSFUL ALL
-ADD_CUSTOM_TARGET(BUILD_SUCCESSFUL
-                  DEPENDS ${ALL_TARGETS}
-                  COMMAND ${CMAKE_COMMAND} -E echo ""
-                  COMMAND ${CMAKE_COMMAND} -E echo "======================================================"
-                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=  Make sure to add the line below in .bashrc file.  ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=              alias sroot=\\'. sroot.sh\\'              ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=  After that, type \\'. ~/.bashrc\\' and finally        ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=                sroot YOURUSERNAME                  ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=  will set the environment variables and basic      ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=  macros for running SpiRITROOT!                    ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=                                     Enjoy!         ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=          - SpiRITROOT development team -           ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "=                                                    ="
-                  COMMAND ${CMAKE_COMMAND} -E echo "======================================================"
-                  COMMAND ${CMAKE_COMMAND} -E echo ""
-                 )

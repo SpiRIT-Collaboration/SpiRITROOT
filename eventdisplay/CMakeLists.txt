@@ -1,61 +1,46 @@
- ################################################################################
- #    Copyright (C) 2014 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH    #
- #                                                                              #
- #              This software is distributed under the terms of the             # 
- #         GNU Lesser General Public Licence version 3 (LGPL) version 3,        #  
- #                  copied verbatim in the file "LICENSE"                       #
- ################################################################################
-# Create a library called "libEventDisplay" 
-# 06.12.07  M. Al-Turany
+# Create a library called "libSTEventDisplay" which includes the source files given in the array .
 
-Set(INCLUDE_DIRECTORIES
-  ${CMAKE_SOURCE_DIR}/fairtools
-  ${CMAKE_SOURCE_DIR}/geobase 
-  ${CMAKE_SOURCE_DIR}/parbase 
-  ${CMAKE_SOURCE_DIR}/base 
-  ${CMAKE_SOURCE_DIR}/base/steer
-  ${CMAKE_SOURCE_DIR}/base/event
-  ${CMAKE_SOURCE_DIR}/base/field
-  ${CMAKE_SOURCE_DIR}/base/sim
-  ${CMAKE_SOURCE_DIR}/base/source
-  ${CMAKE_SOURCE_DIR}/trackbase 
-  ${CMAKE_SOURCE_DIR}/geane
-  ${CMAKE_SOURCE_DIR}/eventdisplay
+set(INCLUDE_DIRECTORIES
+${ROOT_INCLUDE_DIR} 
+${BASE_INCLUDE_DIRECTORIES}
+# Add all the folders having header files you used in the code.
+${CMAKE_SOURCE_DIR}/eventdisplay
+${CMAKE_SOURCE_DIR}/format
+${CMAKE_SOURCE_DIR}/par
+${CMAKE_SOURCE_DIR}/reco/RiemannTracking
 )
 
-Set(SYSTEM_INCLUDE_DIRECTORIES
-  ${ROOT_INCLUDE_DIR} 
-  ${Boost_INCLUDE_DIR}
-  ${GEANT3_INCLUDE_DIR}
-)
+include_directories(${INCLUDE_DIRECTORIES})
 
-Include_Directories(${INCLUDE_DIRECTORIES})
-Include_Directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
+set(LINK_DIRECTORIES
+${ROOT_LIBRARY_DIR}
+${FAIRROOT_LIBRARY_DIR}
+) 
 
-Set(LINK_DIRECTORIES
-  ${ROOT_LIBRARY_DIR}
-)
- 
-Link_Directories(${LINK_DIRECTORIES})
+link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
-FairEventManager.cxx  
-FairMCTracks.cxx
-FairEventManagerEditor.cxx
-FairMCTracksEditor.cxx
-FairBoxSet.cxx
-FairBoxSetDraw.cxx
-FairBoxSetEditor.cxx
-FairPointSetDraw.cxx
-FairMCPointDraw.cxx
-FairHitDraw.cxx
-FairHitPointSetDraw.cxx
-FairTimeStampPointDraw.cxx
+# Add all the source files below this line. Those must have cc for their extension.
+STEventManager.cc
+STEventManagerEditor.cc
+STEventDrawTask.cc
 )
 
-Set(HEADERS )
-Set(LINKDEF EventDisplayLinkDef.h)
-Set(LIBRARY_NAME EventDisplay)
-Set(DEPENDENCIES Base Eve)
+CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
+
+Set(LINKDEF STEventDisplayLinkDef.h) # Change the linkdef name and delete this comment
+Set(LIBRARY_NAME STEventDisplay) # Change the library name and delete this comment
+Set(DEPENDENCIES
+    Base
+    Stack
+    EventDisplay
+# ROOT Eve package
+    Eve
+# Add all library names your code depending on.
+# Basically those are the libraries in the header files' directory.
+    STFormat
+    STReco
+    STPar
+)
 
 GENERATE_LIBRARY()
