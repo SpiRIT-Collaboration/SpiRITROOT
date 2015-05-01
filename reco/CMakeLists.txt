@@ -22,6 +22,8 @@ ${CMAKE_SOURCE_DIR}/reco/HoughTracking
 
 include_directories(${INCLUDE_DIRECTORIES})
 
+include_directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
+
 set(LINK_DIRECTORIES
 ${ROOT_LIBRARY_DIR}
 ${RAVE_LIBRARY_DIR}
