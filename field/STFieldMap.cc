@@ -55,7 +55,7 @@ STFieldMap::STFieldMap(const char* mapName, const char* fileType)
     fBx(NULL), fBy(NULL), fBz(NULL)   
 {
   SetName(mapName);
-  TString dir = getenv("SPIRITDIR");
+  TString dir = getenv("VMCWORKDIR");
   fFileName = dir + "/input/" + mapName;
   if ( fileType[0] == 'R' ) fFileName += ".root";
   else                      fFileName += ".dat";
@@ -92,7 +92,7 @@ STFieldMap::STFieldMap(STFieldPar* fieldPar)
     fPosY  = fieldPar->GetPositionY();
     fPosZ  = fieldPar->GetPositionZ();
     fScale = fieldPar->GetScale();
-    TString dir = getenv("SPIRITDIR");
+    TString dir = getenv("VMCWORKDIR");
     fFileName = dir + "/input/" + Name + ".root";
     fType = fieldPar->GetType();
   }

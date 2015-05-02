@@ -15,7 +15,7 @@ void Config()
 /// When more than one options are selected, they should be separated with '+'
 /// character: eg. stepLimit+specialCuts.
 
-  TString configDir(gSystem->Getenv("SPIRITDIR"));
+  TString configDir(gSystem->Getenv("VMCWORKDIR"));
 
   ifstream conf(configDir+"/macros/eloss/gconfig/g4Config.dat");
   TString physicsList; conf>>physicsList;

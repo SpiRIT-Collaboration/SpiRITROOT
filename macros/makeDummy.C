@@ -2,7 +2,7 @@ void makeDummy(const Int_t nEvents = 20000)
 {
   gRandom -> SetSeed(time(0));
   
-  TString dir = gSystem->Getenv("SPIRITDIR");
+  TString dir = gSystem->Getenv("VMCWORKDIR");
   TString geomdir = dir + "/geometry";
   gSystem->Setenv("GEOMPATH", geomdir.Data());
 

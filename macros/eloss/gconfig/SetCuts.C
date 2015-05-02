@@ -1,6 +1,6 @@
 void SetCuts()
 {
-  TString configDir(gSystem->Getenv("SPIRITDIR"));
+  TString configDir(gSystem->Getenv("VMCWORKDIR"));
   ifstream cut(configDir+"/macros/eloss/gconfig/SetCuts.dat");
 
   Int_t pPAIR; cut>>pPAIR;

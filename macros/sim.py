@@ -55,7 +55,7 @@ if not runFlag :
 
 
 
-dirSPiRIT = os.environ["SPIRITDIR"]
+dirSPiRIT = os.environ["VMCWORKDIR"]
 dirGeom   = dirSPiRIT + "/geometry/"
 dirConf   = dirSPiRIT + "/gconfig/"
 os.environ["GEOMPATH"] = dirGeom

@@ -787,8 +787,8 @@ void geomSPiRIT()
   gGeoManager -> CloseGeometry();
   //top->Draw("ogl");
 
-  TString dir = gSystem->Getenv("SPIRITDIR");
-  TString geoFileName = dir + "/geometry/geomSPiRIT.root";
+  TString dir = gSystem->Getenv("VMCWORKDIR");
+  TString geoFileName = dir + "/geomSPiRIT.root";
 
   cout << geoFileName << endl;
   TFile *geoFile = new TFile(geoFileName,"recreate"); 

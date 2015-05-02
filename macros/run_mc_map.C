@@ -22,7 +22,7 @@ void run_mc_map(Int_t    nEvents  = 1,
 
   gRandom -> SetSeed(time(0));
 
-  TString workDir = gSystem -> Getenv("SPIRITDIR");
+  TString workDir = gSystem -> Getenv("VMCWORKDIR");
   TString tutdir  = workDir + "/macros";
   TString geoDir  = workDir + "/geometry";
   TString confDir = workDir + "/gconfig";

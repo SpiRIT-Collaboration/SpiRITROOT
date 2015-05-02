@@ -5,7 +5,7 @@ void run_digi(TString tag = "test")
 
   Int_t nEvents = 10;
 
-  TString workDir     = gSystem -> Getenv("SPIRITDIR");
+  TString workDir     = gSystem -> Getenv("VMCWORKDIR");
   TString geomDir     = workDir + "/geometry";
   TString confDir     = workDir + "/gconfig";
   TString dataDir     = "data";

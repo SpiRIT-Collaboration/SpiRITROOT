@@ -4,7 +4,7 @@ void run_mc(TString tag = "test")
   gDebug = 0;
 
   // -- Inviroment Setting -------------------------------------------------
-  TString workDir = gSystem->Getenv("SPIRITDIR");
+  TString workDir = gSystem->Getenv("VMCWORKDIR");
   TString geoDir  = workDir + "/geometry";
   TString confDir = workDir + "/gconfig";
   TString outFile = "data/spirit_" + tag + ".mc.root"; 

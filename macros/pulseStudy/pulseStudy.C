@@ -177,7 +177,7 @@ void test()
 
 
   //pulser setting
-  TString workDir = gSystem -> Getenv("SPIRITDIR");
+  TString workDir = gSystem -> Getenv("VMCWORKDIR");
   TString pulserFileName = workDir + "/parameters/Pulser.dat";
   ifstream pulserFile(pulserFileName.Data());
   Double_t pval;

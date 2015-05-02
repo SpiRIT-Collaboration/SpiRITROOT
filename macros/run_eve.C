@@ -1,7 +1,7 @@
 void run_eve(TString name = "test") 
 {
   // Name
-  TString workDir    = gSystem -> Getenv("SPIRITDIR");
+  TString workDir    = gSystem -> Getenv("VMCWORKDIR");
 
   TString inputName  = "data/spirit_" + name + ".reco.root";
   TString outputName = "data/spirit_" + name + ".eve.root";

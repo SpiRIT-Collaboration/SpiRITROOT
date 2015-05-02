@@ -39,7 +39,7 @@ void makePulserData()
   for(Int_t iTb=0; iTb<nTbs; iTb++) 
     adcTot[iTb] = adcTot[iTb]/maxADC;
 
-  TString workDir = gSystem -> Getenv("SPIRITDIR");
+  TString workDir = gSystem -> Getenv("VMCWORKDIR");
   TString fileName = workDir + "/parameters/PulserExample.dat";
   ofstream file(fileName.Data());
   for(Int_t i=135; i<185; i++)

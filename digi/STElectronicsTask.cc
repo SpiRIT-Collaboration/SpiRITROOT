@@ -66,7 +66,7 @@ STElectronicsTask::Init()
 
   fNTBs = fPar -> GetNumTbs();
 
-  TString workDir = gSystem -> Getenv("SPIRITDIR");
+  TString workDir = gSystem -> Getenv("VMCWORKDIR");
   TString pulserFileName = workDir + "/parameters/Pulser.dat";
 
   fNBinPulser = 0;

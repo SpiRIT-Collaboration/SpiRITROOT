@@ -27,7 +27,7 @@ STSimpleEventGenerator::STSimpleEventGenerator(TString fileName)
   fV3Vertex(TVector3(0,0,0)),
   fNEvents(0)
 {
-  TString input_dir = gSystem->Getenv("SPIRITDIR");
+  TString input_dir = gSystem->Getenv("VMCWORKDIR");
   fGenFileName = input_dir+"/input/"+fGenFileName;
 
   LOG(INFO)<<"-I Opening EventGen file "<<fGenFileName<<FairLogger::endl;
