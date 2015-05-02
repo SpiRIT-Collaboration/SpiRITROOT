@@ -788,7 +788,7 @@ void geomSPiRIT()
   //top->Draw("ogl");
 
   TString dir = gSystem->Getenv("VMCWORKDIR");
-  TString geoFileName = dir + "/geomSPiRIT.root";
+  TString geoFileName = dir + "/geometry/geomSPiRIT.root";
 
   cout << geoFileName << endl;
   TFile *geoFile = new TFile(geoFileName,"recreate"); 
