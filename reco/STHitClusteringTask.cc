@@ -90,6 +90,9 @@ STHitClusteringTask::Exec(Option_t *opt)
 {
   fEventHCArray -> Delete();
 
+  if (fEventHArray -> GetEntriesFast() == 0)
+    return;
+
   STEvent *eventH = (STEvent *) fEventHArray -> At(0);
   STEvent *eventHC = (STEvent *) new ((*fEventHCArray)[0]) STEvent();
 
