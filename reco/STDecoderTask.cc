@@ -45,6 +45,8 @@ STDecoderTask::STDecoderTask()
 
   fPar = NULL;
   fRawEventArray = new TClonesArray("STRawEvent");
+
+  fOldData = kFALSE;
 }
 
 STDecoderTask::~STDecoderTask()
@@ -61,6 +63,7 @@ void STDecoderTask::SetPedestalData(TString filename, Double_t rmsFactor)  { fPe
 void STDecoderTask::SetGainCalibrationData(TString filename)               { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainBase(Double_t constant, Double_t slope)         { fGainConstant = constant; fGainSlope = slope; }
 void STDecoderTask::SetSignalDelayData(TString filename)                   { fSignalDelayFile = filename; }
+void STDecoderTask::SetOldData(Bool_t oldData)                             { fOldData = oldData; }
 
 InitStatus
 STDecoderTask::Init()
@@ -79,6 +82,7 @@ STDecoderTask::Init()
     fDecoder -> AddData(fDataList.at(iFile));
   fDecoder -> SetData(fDataNum);
   fDecoder -> SetNumTbs(fNumTbs);
+  fDecoder -> SetOldData(fOldData);
   fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
   fDecoder -> SetAGETMap((fPar -> GetFile(1)).Data());
 
@@ -157,6 +161,7 @@ STDecoderTask::Exec(Option_t *opt)
   fRawEventArray -> Delete();
 
   STRawEvent *rawEvent = fDecoder -> GetRawEvent();
-  
-  new ((*fRawEventArray)[0]) STRawEvent(rawEvent);
+
+  if (rawEvent != NULL)
+    new ((*fRawEventArray)[0]) STRawEvent(rawEvent);
 }

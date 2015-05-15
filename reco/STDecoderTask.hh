@@ -65,6 +65,8 @@ class STDecoderTask : public FairTask {
     void SetGainBase(Double_t constant, Double_t slope);
     /// Setting signal delay data file. If not set, signal is not delayed.
     void SetSignalDelayData(TString filename);
+    /// Setting to decode old data file
+    void SetOldData(Bool_t oldData = kTRUE);
 
     /// If set, decoded raw data is written in ROOT file with STRawEvent class.
     void SetPersistence(Bool_t value = kTRUE);
@@ -102,6 +104,8 @@ class STDecoderTask : public FairTask {
 
     STDigiPar *fPar;              /// Parameter read-out class pointer
     TClonesArray *fRawEventArray; /// STRawEvent container
+
+    Bool_t fOldData;              /// Set to decode old data
 
   ClassDef(STDecoderTask, 1);
 };
