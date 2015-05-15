@@ -1,5 +1,8 @@
 void run_mc(TString tag = "test")
 {
+  TStopwatch timer;
+  timer.Start();
+
   gRandom -> SetSeed(time(0));
   gDebug = 0;
 
@@ -105,4 +108,11 @@ void run_mc(TString tag = "test")
   // -----   Start run   ----------------------------------------------------
   run -> Run(nEvents);
   delete run;
+
+  timer.Stop();
+  cout << endl << endl;
+  cout << "MC macro finished succesfully." << endl;
+  cout << "Output file : " << outFile      << endl;
+  cout << "Real time " << timer.RealTime()   << " s" << endl;
+  cout << "CPU  time " << timer.CpuTime()    << " s" << endl << endl;
 }

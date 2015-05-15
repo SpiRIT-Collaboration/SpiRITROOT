@@ -6,6 +6,10 @@ void run_reco()
   logger -> SetLogToScreen(kTRUE);
   logger -> SetLogVerbosityLevel("MEDIUM");
 
+  TString workDir = gSystem->Getenv("VMCWORKDIR");
+  TString geoDir  = workDir + "/geometry/";
+  gSystem -> Setenv("GEOMPATH",   geoDir.Data());
+
   FairRunAna* run = new FairRunAna();
   run -> SetInputFile("mc.dummy.root");
   run -> SetOutputFile("output.root");
@@ -23,8 +27,9 @@ void run_reco()
 //  STDigiPar *digiPar = (STDigiPar *) rtdb -> getContainer("STDigiPar");
 
   STDecoderTask *decoderTask = new STDecoderTask();
-  decoderTask -> AddData("SETGRAWFILE.graw");
-  decoderTask -> SetInternalPedestal(5, 20);
+  decoderTask -> AddData("Sr90_veto_20140919_820events.graw");
+  decoderTask -> SetFPNPedestal();
+  decoderTask -> SetOldData(kTRUE);
 //  decoderTask -> SetPedestal("../../../cosmic_RIKEN_20140715/CoBo_AsAd0-2014-07-11T18-56-57.670_0000.graw.root");
   decoderTask -> SetNumTbs(512);
   decoderTask -> SetPersistence();
@@ -40,8 +45,20 @@ void run_reco()
   hcTask -> SetVerbose(2);
   run -> AddTask(hcTask);
 
+  STSMTask* smTask = new STSMTask();
+  smTask -> SetPersistence();
+  smTask -> SetMode(STSMTask::kChange);
+  run -> AddTask(smTask);
+
+  STRiemannTrackingTask* rmTask = new STRiemannTrackingTask();
+  rmTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ,0);
+  rmTask -> SetPersistence();
+  rmTask -> SetVerbose(kTRUE);
+  rmTask -> SetMergeTracks(kTRUE);
+  run -> AddTask(rmTask);
+
   run->Init();
 
-  run->Run(0, 20000);
+  run->Run(0, 250);
 //  run->Run(0, 194);
 }
