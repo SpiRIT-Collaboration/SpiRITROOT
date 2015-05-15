@@ -43,9 +43,10 @@
 
 using namespace std;
 
-#define UPTOHIT
-#define DEBUGHT 1
-#define DEBUGTT 1
+//#define UPTOHIT
+//#define DEBUGHT 1
+//#define DEBUGTT 1
+//#define DEBUG 1
 
 // Class Member definitions -----------
 STRiemannTrackFinder::STRiemannTrackFinder()
@@ -185,7 +186,9 @@ STRiemannTrackFinder::BuildTracks(vector<STHitCluster *> &clusterList, vector<ST
       fBestMatchQuality[iCor] = 99999.; // reset 
 
     for (UInt_t iTrack = 0; iTrack < candList.size(); iTrack++) { // loop over tracks
+#ifdef DEBUG
       cout << "candList.size(): " << candList.size() << " iTrack: " << iTrack << endl;
+#endif
       STRiemannTrack *track = candList[iTrack];
 
       if (track -> IsFinished())

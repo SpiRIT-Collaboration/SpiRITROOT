@@ -39,7 +39,7 @@ void run_reco_mc(TString tag = "test", Int_t threshold = 1)
   STRiemannTrackingTask* rmTask = new STRiemannTrackingTask();
   rmTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ,0);
   rmTask -> SetPersistence();
-  rmTask -> SetVerbose(kTRUE);
+//  rmTask -> SetVerbose(kTRUE);
   rmTask -> SetMergeTracks(kTRUE);
   run -> AddTask(rmTask);
 

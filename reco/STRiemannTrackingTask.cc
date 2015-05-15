@@ -454,7 +454,7 @@ STRiemannTrackingTask::Exec(Option_t *opt)
     std::cerr << "Pattern Reco finished, found tracks: " << foundTracks << "\n";
     std::cerr << "used  " << numUsedCluster << " of " << numCluster << " Clusters \n";
 
-    if (foundTracks != 0 || numUsedCluster != 0)
+    if ((foundTracks != 0 || numUsedCluster != 0) && fVerbose)
       fLogger -> Info(MESSAGE_ORIGIN, Form("FoundTracks: %d and usedCluster: %d", foundTracks, numUsedCluster));
   }
 }
@@ -494,7 +494,8 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
     trk = (*trackletList)[i];
 
     nHits = trk -> GetNumHits();
-    std::cout << "   " << nHits << " hits in tracklet." << std::endl;
+    if (fVerbose)
+      std::cout << "   " << nHits << " hits in tracklet." << std::endl;
 
     if (trk -> DistRMS() < maxRMS && (nHits >= minHits || trk -> IsGood())) {
       trk -> SetFinished(kFALSE);
@@ -505,7 +506,8 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
         clusterBuffer -> erase(remove(clusterBuffer -> begin(), clusterBuffer -> end(), trk -> GetHit(iCl) -> GetCluster()), clusterBuffer -> end());
      
       nGoodTrks++;
-      fLogger -> Info(MESSAGE_ORIGIN, "================================================================================ good Track!");
+      if (fVerbose)
+        fLogger -> Info(MESSAGE_ORIGIN, "================================================================================ good Track!");
 
       //push back unique track to riemannlist
       if (std::find(trackletListCopy.begin(), trackletListCopy.end(), trk) == trackletListCopy.end()) 
