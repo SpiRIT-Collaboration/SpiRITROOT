@@ -75,7 +75,6 @@ STRiemannTrackingTask::STRiemannTrackingTask()
   fLogger = FairLogger::GetLogger();
 
   fIsPersistence = kFALSE;
-  fMaxRadius = 1446.;
 
   fSortingMode = kTRUE;
   fSorting = STRiemannSort::kSortR;
@@ -221,7 +220,7 @@ STRiemannTrackingTask::Init()
   ioMan -> Register("STRiemannTrack", "SPiRIT", fRiemannTrackArray, fIsPersistence);
 
   fRiemannHitArray = new TClonesArray("STRiemannHit");
-  ioMan -> Register("STRiemannHit", "SPiRIT", fRiemannHitArray, fIsPersistence);
+  ioMan -> Register("STRiemannHit", "SPiRIT", fRiemannHitArray, 0);//fIsPersistence);
 
   fTrackFinder = new STRiemannTrackFinder();
   fTrackFinder -> SetSorting(fSorting);

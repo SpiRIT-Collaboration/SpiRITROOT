@@ -104,8 +104,6 @@ class STRiemannTrackingTask : public FairTask
 
     Bool_t fIsPersistence;
 
-    Double_t fMaxRadius; /// outer radius of padplane
-
     // tuning parameters for Conformal Map TrackFinder
     Bool_t fSortingMode;
     Int_t fSorting;
