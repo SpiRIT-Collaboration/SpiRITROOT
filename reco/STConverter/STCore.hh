@@ -53,6 +53,8 @@ class STCore : public TObject {
     Bool_t SetUAMap(TString filename);
     Bool_t SetAGETMap(TString filename);
 
+    void SetOldData(Bool_t oldData = kTRUE);
+
     // getters
     STRawEvent *GetRawEvent(Int_t eventID = -1);
     Int_t GetNumTbs();
@@ -90,6 +92,8 @@ class STCore : public TObject {
     UInt_t fCurrEventNo;
 
     Int_t fCurrFrameNo;
+
+    Bool_t fOldData;
 
   ClassDef(STCore, 1);
 };

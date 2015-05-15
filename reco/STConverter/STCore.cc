@@ -82,6 +82,8 @@ void STCore::Initialize()
   fPrevEventNo = -1;
   fCurrEventNo = -1;
   fCurrFrameNo = 0;
+
+  fOldData = kFALSE;
 }
 
 Bool_t STCore::AddData(TString filename)
@@ -281,9 +283,8 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
 
     Int_t coboID = frame -> GetCoboID();
 
-    // Two lines below are temporary. Will be deleted in real experiment.
-//    if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime)
-//      coboID = fDecoderPtr -> GetCurrentInnerFrameID();
+    if (fOldData == kTRUE && (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime))
+      coboID = fDecoderPtr -> GetCurrentInnerFrameID();
 
     Int_t asadID = frame -> GetAsadID();
 
@@ -400,4 +401,9 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
 Int_t STCore::GetNumTbs()
 {
   return fDecoderPtr -> GetNumTbs();
+}
+
+void STCore::SetOldData(Bool_t oldData)
+{
+  fOldData = oldData;
 }
