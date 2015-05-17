@@ -35,7 +35,7 @@ void makeDummy(const Int_t nEvents = 20000)
   run->AddModule(target);
   
   FairDetector* spirit = new STDetector("STDetector", kTRUE);
-  spirit->SetGeometryFileName("spirit_v03.1.root");
+  spirit->SetGeometryFileName("geomSPiRIT.root");
   run->AddModule(spirit);
     
   // ------------------------------------------------------------------------
