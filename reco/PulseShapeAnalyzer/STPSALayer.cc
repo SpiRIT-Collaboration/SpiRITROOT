@@ -17,6 +17,8 @@
 #include <cmath>
 #include <cstdlib>
 
+//#define DEBUG
+
 ClassImp(STPSALayer)
 
 STPSALayer::STPSALayer()
@@ -107,7 +109,9 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
       fLogger -> Info(MESSAGE_ORIGIN, Form("No peak in pad row: %d, layer: %d!", pad.GetRow(), pad.GetLayer()));
 #endif
 
-      pad = fPadArray -> at(GetUnusedPadIdx());
+      Int_t padIdx = GetUnusedPadIdx();
+      if (padIdx == -1) break;
+      else pad = fPadArray -> at(padIdx);
 
       goto whileStart;
     }
@@ -216,7 +220,10 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
 #endif
 
       DeletePeakInfo(row, layer, 0);
-      pad = fPadArray -> at(GetUnusedPadIdx());
+
+      Int_t padIdx = GetUnusedPadIdx();
+      if (padIdx == -1) break;
+      else pad = fPadArray -> at(padIdx);
 
       goto whileStart;
     }
@@ -284,7 +291,9 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
       fLogger -> Info(MESSAGE_ORIGIN, Form("Too few points for fitting: %d!", selectedPoints));
 #endif
 
-      pad = fPadArray -> at(GetUnusedPadIdx());
+      Int_t padIdx = GetUnusedPadIdx();
+      if (padIdx == -1) break;
+      else pad = fPadArray -> at(padIdx);
 
       goto whileStart;
     }
