@@ -393,7 +393,7 @@ STRiemannTrack::Refit() { // helix fit
 
   // phi goes counterclockwise and can be > 2Pi for curlers
   Double_t meanAngle, twoPi(TMath::TwoPi()), nTurns(1), dZ, dZnull, dZminus, dZplus;
-  Bool_t twoPiCheck(hasBeenFitted && fRadius < 50. && numHits > 10 && TMath::Abs(fM*twoPi) > 1. && TMath::Abs(fM*twoPi) < 300.);
+  Bool_t twoPiCheck(hasBeenFitted && fRadius < 800. && numHits > 10 && TMath::Abs(fM*twoPi) > 10. && TMath::Abs(fM*twoPi) < 250.);
 
   for (Int_t i = 1; i < numHits; i++) {
     hiti = fHits[i] -> GetCluster() -> GetPosition() - fCenter;
@@ -476,7 +476,7 @@ STRiemannTrack::FitAndSort() {
   // if dip [90°+-50°] or R<0.5, resort by angle
   if (fDoSort && fIsFitted &&
       ((fDip > 0.698131701 && fDip < 2.44346095) ||
-      fRadius < 0.5)) {
+      fRadius < 5.)) {
     // keep rough sorting!
     if (GetWinding() > 0)
       std::sort(fHits.begin(), fHits.end(), SortByAngle());
@@ -608,8 +608,8 @@ STRiemannTrack::CenterR()
   //std::cout<< "r1 = " << r1 << "   r2 = " << r2 << "   radius = " << fRadius;
 
   // limit
-  if (fRadius < 0.1)
-    fRadius = 0.1;   // 1 mm
+  if (fRadius < 20.)
+    fRadius = 20.;   // 10 mm
   //if (fRadius>1.E5) fRadius = 1.E5; // 1 km
 
   // center
@@ -833,7 +833,7 @@ STRiemannTrack::GetResolution() const
 
   Double_t projLength = TMath::Abs((GetFirstHit() -> GetAngleOnHelix() - GetLastHit() -> GetAngleOnHelix()) * fRadius);
 
-  if (projLength < 0.1)projLength = 0.1;
+  if (projLength < 1.)projLength = 1.;
 
   // estimate the resolution
   return rms*fRiemannScale/(projLength*projLength) * sqrt(720/(GetNumHits() + 4)); // from pdg book, rms instead of epsilon (spacial resolution)

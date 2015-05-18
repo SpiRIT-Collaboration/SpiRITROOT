@@ -488,7 +488,7 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
           z2min = zTemp;
 
         // tracklets are sorted by z (from small to big), if the smallest z of the track2 is bigger than the maximum z of track1, skip all other tracks
-        if (z2min > (z1max + fTTProxCut + 0.1)) {
+        if (z2min > (z1max + fTTProxCut + 1.)) {
           #ifdef DEBUGTT
             std::cout << " (z2min > (z1max + fTTProxCut + 0.1) ), skipping rest of track2 tracklets (" << numTracks - iTrack2 << ")" << std::endl;
           #endif
