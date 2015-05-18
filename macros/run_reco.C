@@ -38,6 +38,7 @@ void run_reco()
   STPSATask *psaTask = new STPSATask();
   psaTask -> SetPersistence();
   psaTask -> SetThreshold(40);
+  psaTask -> SetPSAMode(2);
   run -> AddTask(psaTask);
 
   STHitClusteringTask *hcTask = new STHitClusteringTask();
