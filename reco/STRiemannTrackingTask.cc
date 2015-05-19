@@ -337,8 +337,8 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   if (fVerbose)
     std::cout << "\n... building tracks from " << fClusterBuffer -> size() << " clusters" << std::endl;
 
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinHitsZ, 0.7*fMaxRMS);
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortR, fMinHitsR, fMaxRMS);
+  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinHitsZ, 0.7*fMaxRMS);
 
   riemannTemp.clear();
 
@@ -386,8 +386,8 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   for (UInt_t iTrack = 0; iTrack < fRiemannList.size(); iTrack++)
     riemannTemp.push_back(fRiemannList[iTrack]);
 
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinPoints+1, fMaxRMS*1.5);
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortR, fMinPoints+3, fMaxRMS);
+  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinPoints+1, fMaxRMS*1.5);
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortPhi, fMinPoints+1, fMaxRMS*1.5);
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortReversePhi, fMinPoints+1, fMaxRMS*1.5);
 
@@ -529,6 +529,8 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
     }
   }
 
-  if (fVerbose)
+  if (fVerbose) {
+    std::cout << "   nGoodTrks: " << nGoodTrks << "  nTracksIn: " << nTracksIn << "   nClIn: " << nClIn << "   clusterBuffer -> size(): " << clusterBuffer -> size() << std::endl;
     std::cout << "   found good tracks: " << nGoodTrks - nTracksIn << ", reduced nCl by " << nClIn - clusterBuffer -> size() << std::endl;
+  }
 }
