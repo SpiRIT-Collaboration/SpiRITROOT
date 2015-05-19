@@ -37,13 +37,13 @@ void run_reco()
 
   STPSATask *psaTask = new STPSATask();
   psaTask -> SetPersistence();
-  psaTask -> SetThreshold(40);
+  psaTask -> SetThreshold(20);
   psaTask -> SetPSAMode(2);
   run -> AddTask(psaTask);
 
   STHitClusteringTask *hcTask = new STHitClusteringTask();
   hcTask -> SetPersistence();
-  hcTask -> SetVerbose(2);
+//  hcTask -> SetVerbose(2);
   run -> AddTask(hcTask);
 
   STSMTask* smTask = new STSMTask();
@@ -54,12 +54,16 @@ void run_reco()
   STRiemannTrackingTask* rmTask = new STRiemannTrackingTask();
   rmTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ,0);
   rmTask -> SetPersistence();
-  rmTask -> SetVerbose(kTRUE);
+//  rmTask -> SetVerbose(kTRUE);
+//rmTask -> SetTrkFinderParameters(proxcut, helixcut, minpointsforfit, zStretch);
+  rmTask -> SetTrkFinderParameters(40, 10, 3, 1.6);
+//rmTask -> SetTrkMergerParameters(TTproxcut, TTdipcut, TThelixcut, TTplanecut); 
+  rmTask -> SetTrkMergerParameters(40, 50, 40, 40); 
   rmTask -> SetMergeTracks(kTRUE);
   run -> AddTask(rmTask);
 
   run->Init();
 
-  run->Run(0, 250);
+  run->Run(249, 250);
 //  run->Run(0, 194);
 }
