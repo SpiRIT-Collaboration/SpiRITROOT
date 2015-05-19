@@ -94,7 +94,7 @@ STHitClusteringTask::Exec(Option_t *opt)
     return;
 
   STEvent *eventH = (STEvent *) fEventHArray -> At(0);
-  STEvent *eventHC = (STEvent *) new ((*fEventHCArray)[0]) STEvent();
+  STEvent *eventHC = (STEvent *) new ((*fEventHCArray)[0]) STEvent(eventH);
 
   if (!(eventH -> IsGood())) {
     eventHC -> SetIsGood(kFALSE);
@@ -107,6 +107,7 @@ STHitClusteringTask::Exec(Option_t *opt)
   vector<STHit> *hitArray = eventH -> GetHitArray();
   std::sort(hitArray -> begin(), hitArray -> end(), STHitSortY());
 
+/*
   vector<STHit> slicedSpace;
   for (Int_t iSlice = 0, currentPosInVector = 0; iSlice < fYDivider; iSlice++) {
     Double_t bottomY = -fDriftLength + iSlice*sliceY;
@@ -129,6 +130,22 @@ STHitClusteringTask::Exec(Option_t *opt)
     
     FindCluster(slicedSpace, eventHC); 
   }
+  */
+
+////////////////////// Delete this
+  for (Int_t iHit = 0; iHit < hitArray -> size(); iHit++) {
+    STHitCluster *cluster = new STHitCluster();
+    STHit *hit = &(hitArray -> at(iHit));
+    hit -> SetIsClustered(kTRUE);
+    hit -> SetClusterID(eventHC -> GetNumClusters());
+
+    cluster -> AddHit(hit);
+    eventHC -> AddHit(hit);
+    cluster -> SetClusterID(eventHC -> GetNumClusters());
+    eventHC -> AddCluster(cluster);
+    delete cluster;
+  }
+////////////////////// Delete this
 
   eventHC -> SetIsClustered(kTRUE);
 }
