@@ -50,7 +50,7 @@ STSystemManipulator::Change(STEvent *event)
     STHit *hit = newEvent -> GetHit(iHit);
 
     TVector3 pos = hit -> GetPosition();
-    Translate(pos, fTrans);
+    Translate(pos);
     Exchange(pos);
     hit -> SetPosition(pos);
 
@@ -65,7 +65,7 @@ STSystemManipulator::Change(STEvent *event)
       STHitCluster *cluster = newEvent -> GetCluster(iCluster);
 
       TVector3 pos = cluster -> GetPosition();
-      Translate(pos, fTrans);
+      Translate(pos);
       Exchange(pos);
       cluster -> SetPosition(pos);
 
@@ -88,27 +88,78 @@ STSystemManipulator::Change(STEvent *event)
 STEvent *
 STSystemManipulator::Restore(STEvent *event)
 {
-  return NULL;
+  if (!(event -> IsChanged()))
+    return event;
+
+  Bool_t isClustered = event -> IsClustered();
+  Bool_t isTracked = event -> IsTracked();
+  STEvent *newEvent = new STEvent(event);
+  newEvent -> SetIsChanged(kFALSE);
+
+  Int_t numHits = newEvent -> GetNumHits();
+  for (Int_t iHit = 0; iHit < numHits; iHit++) {
+    STHit *hit = newEvent -> GetHit(iHit);
+
+    TVector3 pos = hit -> GetPosition();
+    Exchange(pos, kTRUE);
+    Translate(pos, kTRUE);
+    hit -> SetPosition(pos);
+
+    TVector3 posSigma = hit -> GetPosSigma();
+    Exchange(posSigma, kTRUE);
+    hit -> SetPosSigma(posSigma);
+  }
+
+  if (isClustered) {
+    Int_t numClusters = newEvent -> GetNumClusters();
+    for (Int_t iCluster = 0; iCluster < numClusters; iCluster++) {
+      STHitCluster *cluster = newEvent -> GetCluster(iCluster);
+
+      TVector3 pos = cluster -> GetPosition();
+      Exchange(pos, kTRUE);
+      Translate(pos, kTRUE);
+      cluster -> SetPosition(pos);
+
+      TVector3 posSigma = cluster -> GetPosSigma();
+      Exchange(posSigma, kTRUE);
+      cluster -> SetPosSigma(posSigma);
+
+      TMatrixD covMatrix = cluster -> GetCovMatrix();
+      Exchange(covMatrix, kTRUE);
+      cluster -> SetCovMatrix(covMatrix);
+    }
+  }
+
+  if (isTracked) {
+  }
+
+  return newEvent;
 }
 
 void
-STSystemManipulator::Translate(TVector3 &vector, TVector3 trans)
+STSystemManipulator::Translate(TVector3 &vector, Bool_t restore)
 {
-  vector += trans;
+  if (restore)
+    vector -= fTrans;
+  else
+    vector += fTrans;
 }
 
 void
-STSystemManipulator::Exchange(TVector3 &vector)
+STSystemManipulator::Exchange(TVector3 &vector, Bool_t restore)
 {
   Double_t x = vector[0];
   Double_t y = vector[1];
   Double_t z = vector[2];
 
-  vector = TVector3(z, x, y);
+  if (restore)
+    vector = TVector3(y, z, x);
+  else
+    vector = TVector3(z, x, y);
 }
 
 void
-STSystemManipulator::Exchange(TMatrixD &matrix)
+STSystemManipulator::Exchange(TMatrixD &matrix, Bool_t restore)
 {
   Double_t xx = matrix(0, 0);
   Double_t yy = matrix(1, 1);
@@ -117,12 +168,21 @@ STSystemManipulator::Exchange(TMatrixD &matrix)
   Double_t xz = matrix(0, 2);
   Double_t yz = matrix(1, 2);
 
-  matrix(0, 0) = zz;
-  matrix(1, 1) = xx;
-  matrix(2, 2) = yy;
-  matrix(0, 1) = xz;
-  matrix(0, 2) = yz;
-  matrix(1, 2) = xy;
+  if (restore) {
+    matrix(0, 0) = yy;
+    matrix(1, 1) = zz;
+    matrix(2, 2) = xx;
+    matrix(0, 1) = yz;
+    matrix(0, 2) = xy;
+    matrix(1, 2) = xz;
+  } else {
+    matrix(0, 0) = zz;
+    matrix(1, 1) = xx;
+    matrix(2, 2) = yy;
+    matrix(0, 1) = xz;
+    matrix(0, 2) = yz;
+    matrix(1, 2) = xy;
+  }
 
   matrix(1, 0) = matrix(0, 1);
   matrix(2, 0) = matrix(0, 2);

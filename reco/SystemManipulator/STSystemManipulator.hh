@@ -30,11 +30,11 @@ class STSystemManipulator {
     STEvent *Restore(STEvent *event);
 
   private:
-    void Translate(TVector3 &vector, TVector3 trans);
-    void Exchange(TVector3 &vector);
-    void Exchange(TMatrixD &matrix);
+    void Translate(TVector3 &vector, Bool_t restore = 0);
+    void Exchange(TVector3 &vector, Bool_t restore = 0);
+    void Exchange(TMatrixD &matrix, Bool_t restore = 0);
 
-    TVector3 fTrans;   //!< default translation vector - [mm]
+    TVector3 fTrans;   ///< default translation vector - [mm]
 
   ClassDef(STSystemManipulator, 1);
 };
