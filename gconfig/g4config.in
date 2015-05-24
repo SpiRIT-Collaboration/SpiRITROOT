@@ -2,16 +2,18 @@
 # SPiRIT g4config.in - Called from g4Config.C #
 #=============================================#
 
-/mcPhysics/rangeCuts 0.01 mm
+#/mcPhysics/rangeCuts 0.01 mm
 
 /cuts/setLowEdge  100 eV
-/cuts/setHighEdge   1 MeV
+/cuts/setHighEdge   10 GeV
 
-#/mcphysics/rangeCutForElectron    1 mm
+/mcPhysics/rangeCutForElectron    100 km
 #/mcphysics/rangeCutForPositron    1 mm
 #/run/setCut 1 um
 #/run/dumpCutValues
 #/run/particle/applyCuts
+
+/mcDet/setIsUserMaxStep 1
 
 #/mcVerbose/all                   0
 #/mcVerbose/runAction             1
