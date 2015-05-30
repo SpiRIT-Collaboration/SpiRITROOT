@@ -5,14 +5,14 @@
 
 /** GLOBALS **/
 
-const TString gTag = "VMCG4_1cm";
+const TString gTag = "VMCG4";
 
-const Bool_t gFlagCreateGen = 1;
-const Bool_t gFlagRunMC     = 1;
+const Bool_t gFlagCreateGen = 0;
+const Bool_t gFlagRunMC     = 0;
 const Bool_t gFlagRunAna    = 1;
 
 //const TString gGeoFileName   = "spirit_v03.1.root";
-const TString gGeoFileName   = "spirit_1cm.root";
+const TString gGeoFileName   = "geomSPiRIT.root";
 const TString gGenFileName   = "data/GEN_"+gTag+".sgen";
 const TString gGeantMode     = "TGeant4";
 const TString gMCFileName    = "data/SIM_"+gTag+".mc.root";
@@ -25,20 +25,23 @@ const TString gELossFileName = "data/eloss_"+gTag+".dat";
 const Int_t gPDG  = 2212;
 const Double_t gMass = 0.938272;
 
-const Double_t gKE[] = {0.01,0.011,0.012,0.013,0.014,0.015,0.016,0.017,0.018,0.019,
-                        0.02,0.225,0.025,0.275,0.030,0.0325,0.035,0.0375,
-                        0.04,0.045,0.05,0.055,0.06,0.065,0.07,0.08,0.09,0.1};
+const Double_t gKE[] = {0.01,0.011,0.012,0.013,0.014,0.015,0.016,0.017,0.018,
+                        0.02,0.0225,0.025,0.0275,0.030,0.0325,0.035,0.0375,
+                        0.04,0.045,0.05,0.055,0.06,0.065,0.07,0.08,0.09,0.1,
+                        0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18,0.2,0.225,0.25,0.275,
+                        0.3,0.325,0.35,0.375,0.4};
 
-const Int_t gNEventPerEnergy = 2000;
+const Int_t gNEventPerEnergy = 1000;
 const Int_t gNKE = ARRSIZE(gKE);
 const Int_t gNRunKE = gNKE;
 //const Int_t gNRunKE = gNKE;
 const Int_t gNRunEvents = gNRunKE*gNEventPerEnergy;
 
-const TString G4PhysicsList = "QGSP_BERT_HP_EMY";
-const TString G4Controls    = "stepLimiter";
+const TString G4PhysicsList = "FTFP_BERT_EMY";
+const TString G4Controls    = "stepLimiter+specialCuts";
 //const TString G4Controls    = "stepLimiter+specialCuts+specialControls";
 
+/*
 const Int_t Process_PAIR = 1; //!< pair production
 const Int_t Process_COMP = 1; //!< Compton scattering
 const Int_t Process_PHOT = 1; //!< photo electric effect
@@ -57,10 +60,12 @@ const Double_t CUT_B  = 1.0E4;  //!< BCUT* [GeV]
 const Double_t CUT_E  = 1.0E-3; //!< CUTELE [GeV]
 const Double_t CUT_P  = 1.0E4;  //!< PPCUTM [GeV]
 const Double_t TOFMAX = 1.E10;  //!< TOFMAX [GeV]
+*/
 
-const Double_t RangeCuts       = 0.01;
-const Int_t    CutLowEdge_eV   = 100; // eV
-const Int_t    CutHighEdge_MeV = 1;   // MeV
+const Int_t    CutLowEdge_eV   = 1; // eV
+const Int_t    CutHighEdge_MeV = 1000;   // MeV
+const Double_t RangeCuts       = 0.01; // mm
+const Double_t RangeCutForElectron = 100; // km
 
 
 
@@ -110,8 +115,11 @@ void RunMC()
   fMagField->SetField(0,0,0);
   fMagField->SetFieldRegion(-90,90,-50,50,-100,100);
 
-  STSimpleEventGenerator* gen = new STSimpleEventGenerator(gGenFileName);
-  gen->SetPrimaryVertex(0,-25,0);
+  Double_t *listP = new Double_t[gNKE];
+  for (Int_t iKE = 0; iKE < gNKE; iKE++)
+    listP[iKE] = CalMomentum(gKE[iKE], gMass);
+
+  STSimpleEventGenerator* gen = new STSimpleEventGenerator(gPDG, gNKE, listP, gNEventPerEnergy, 0, -25, 1);
   FairPrimaryGenerator* primGen = new FairPrimaryGenerator();
   primGen->AddGenerator(gen);
 
@@ -122,7 +130,7 @@ void RunMC()
   run->SetMaterials("media.geo");
   run->AddModule(cave);
   run->AddModule(spirit);
-  run->SetField(fMagField);
+//  run->SetField(fMagField);
   run->SetGenerator(primGen);
   run->Init();
 
@@ -204,6 +212,7 @@ void CreateG4Configure()
   conf << G4Controls.Data()    << endl;
   conf.close();
 
+/*
   std::ofstream cut("gconfig/SetCuts.dat");
   cut << Process_PAIR << endl;
   cut << Process_COMP << endl;
@@ -223,11 +232,14 @@ void CreateG4Configure()
   cut << CUT_P << endl;
   cut << TOFMAX << endl;
   cut.close();
+*/
 
   std::ofstream conf_in("gconfig/g4config.in");
-  conf_in << "/mcPhysics/rangeCuts " << RangeCuts << " mm" << endl;
   conf_in << "/cuts/setLowEdge  " << CutLowEdge_eV << " eV" << endl;
   conf_in << "/cuts/setHighEdge " << CutHighEdge_MeV << " MeV" << endl;
+  conf_in << "/mcPhysics/rangeCuts " << RangeCuts << " mm" << endl;
+  conf_in << "/mcPhysics/rangeCutForElectron " << RangeCutForElectron << " km" << endl;
+  conf_in << "/mcDet/setIsUserMaxStep 1" << endl;
   conf_in.close();
 }
 
@@ -259,6 +271,7 @@ void CreateLog()
   log << "Physics List     " << G4PhysicsList << endl;
   log << "G4 Constrols     " << G4Controls    << endl;
   log << "----------------------------------------------------" << endl;
+  /*
   log << "Process PAIR     " << Process_PAIR << endl;
   log << "Process COMP     " << Process_COMP << endl;
   log << "Process PHOT     " << Process_PHOT << endl;
@@ -277,10 +290,13 @@ void CreateLog()
   log << "CUT CUTELE       " << CUT_E << endl;
   log << "CUT PPCUTM       " << CUT_P << endl;
   log << "CUT TOFMAX       " << TOFMAX << endl;
+  */
   log << "----------------------------------------------------" << endl;
-  log << "/mcPhysics/rangeCuts " << RangeCuts << " mm" << endl;
   log << "/cuts/setLowEdge     " << CutLowEdge_eV << " eV" << endl;
   log << "/cuts/setHighEdge    " << CutHighEdge_MeV << " MeV" << endl;
+  log << "/mcPhysics/rangeCuts " << RangeCuts << " mm" << endl;
+  log << "/mcPhysics/rangeCutForElectron " << RangeCutForElectron << " km" << endl;
+  log << "/mcDet/setIsUserMaxStep 1" << endl;
   log << "----------------------------------------------------" << endl;
   log << "MC  File Name    " << gMCFileName      << endl;
   log << "Par File Name    " << gParFileName     << endl;
