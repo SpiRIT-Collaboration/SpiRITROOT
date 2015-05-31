@@ -13,51 +13,42 @@ ClassImp(STSimpleEventGenerator);
 
 STSimpleEventGenerator::STSimpleEventGenerator()
 : FairGenerator(),
-  fGenFileName(""),
-  fGenFile(NULL),
+  fPDG(0),
   fV3Vertex(TVector3(0,0,0)),
-  fNEvents(0)
+  fPDirection(TVector3(0,0,0)),
+  fNEvents(0),
+  fCurrentEvent(0),
+  fMultiplicity(0),
+  fPList(0)
 {
 }
 
-STSimpleEventGenerator::STSimpleEventGenerator(TString fileName)
-: FairGenerator("STEventGen",fileName),
-  fGenFileName(fileName),
-  fGenFile(NULL),
-  fV3Vertex(TVector3(0,0,0)),
-  fNEvents(0)
+STSimpleEventGenerator:: STSimpleEventGenerator(Int_t pdg, Int_t numP, Double_t *listP, Int_t mult, Double_t x0, Double_t y0, Double_t z0, Double_t vx, Double_t vy, Double_t vz)
+: FairGenerator("STSimpleEventGenerator"),
+  fPDG(pdg),
+  fV3Vertex(TVector3(x0,y0,z0)),
+  fCurrentEvent(0),
+  fMultiplicity(mult),
+  fNEvents(numP*mult)
 {
-  TString input_dir = gSystem->Getenv("VMCWORKDIR");
-  fGenFileName = input_dir+"/input/"+fGenFileName;
+  SetMomentumDirection(vx,vy,vz);
 
-  LOG(INFO)<<"-I Opening EventGen file "<<fGenFileName<<FairLogger::endl;
-  fGenFile.open(fGenFileName.Data());
-  if(!fGenFile.is_open())
-    LOG(FATAL)<<"Cannont open EventGen file."<<fGenFileName<<FairLogger::endl;
-  fGenFile>>fNEvents;
+  fPList = new Double_t[numP];
+  for (Int_t iP = 0; iP < numP; iP++)
+    fPList[iP] = listP[iP];
 }
 
 STSimpleEventGenerator::~STSimpleEventGenerator()
 {
-  if(fGenFile) fGenFile.close();
 }
 
 Bool_t
 STSimpleEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 {
-  Int_t pdg;
-  Double_t px;
-  Double_t py;
-  Double_t pz;
-  Int_t nTracks;
+  Double_t pMag = fPList[fCurrentEvent++/fMultiplicity];
+  TVector3 p(pMag*fPDirection);
 
-  if(!(fGenFile>>pdg>>px>>py>>pz>>nTracks)){
-    LOG(INFO)<<"End of Events."<<FairLogger::endl;
-    return kFALSE;
-  }
-
-  for(Int_t i=0; i<nTracks; i++)
-    primGen->AddTrack(pdg,px,py,pz,fV3Vertex.X(),fV3Vertex.Y(),fV3Vertex.Z());
+  primGen->AddTrack(fPDG,p.X(),p.Y(),p.Z(),fV3Vertex.X(),fV3Vertex.Y(),fV3Vertex.Z());
 
   return kTRUE;
 }

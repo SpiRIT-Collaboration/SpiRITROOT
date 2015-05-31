@@ -22,9 +22,9 @@ class STSimpleEventGenerator : public FairGenerator
 
     /** 
      * Standard constructor.
-     * @param fileName The input EventGen file name
+     * @param 
      **/
-    STSimpleEventGenerator(TString fileName);
+    STSimpleEventGenerator(Int_t pdg, Int_t numP, Double_t *listP, Int_t mult, Double_t x0 = 0, Double_t y0 = 0, Double_t z0 = 0, Double_t vx = 0, Double_t vy = 0, Double_t vz = 1);
 
     /** Destructor. **/
     virtual ~STSimpleEventGenerator();
@@ -40,17 +40,22 @@ class STSimpleEventGenerator : public FairGenerator
     void SetPrimaryVertex(Double_t x, Double_t y, Double_t z)
     { fV3Vertex.SetXYZ(x,y,z); };
 
+    /** Set momentum direction vector **/
+    void SetMomentumDirection(Double_t vx, Double_t vy, Double_t vz)
+    { fPDirection.SetXYZ(vx,vy,vz); fPDirection = fPDirection.Unit(); };
+
     /** Get number of events written in EventGen file **/
     Int_t GetNEvents() { return fNEvents; };
 
   private :
+    Int_t     fPDG;            ///< Particle number
+    TVector3  fV3Vertex;       ///< Position of primary vertex
+    TVector3  fPDirection;     ///< Momentum direction vector
+    Int_t     fNEvents;        ///< Total number of events
+    Int_t     fCurrentEvent;   ///< Current event number
+    Int_t     fMultiplicity;   ///< Multiplicity of a momentum value
 
-    TString  fGenFileName; //!< EventGen file name
-    ifstream fGenFile;     //!< EventGen file
-
-    TVector3 fV3Vertex;    //!< Position of primary vertex
-    Int_t    fNEvents;     //!< Total number of events
-
+    Double_t *fPList;      ///< Momentum list
 
 
   STSimpleEventGenerator(const STSimpleEventGenerator&);
