@@ -5,10 +5,11 @@
 
 /** GLOBALS **/
 
-const TString gTag = "VMCG4";
+const Int_t gSelection = 0;
 
-const Bool_t gFlagCreateGen = 0;
-const Bool_t gFlagRunMC     = 0;
+const TString gTag = Form("VMCG4_%s", (gSelection == 0 ? "proton" : "alpha"));
+
+const Bool_t gFlagRunMC     = 1;
 const Bool_t gFlagRunAna    = 1;
 
 //const TString gGeoFileName   = "spirit_v03.1.root";
@@ -22,8 +23,8 @@ const TString gGeomDir       = gSPiRITDir+"/geometry/";
 const TString gConfDir       = gSPiRITDir+"/macros/eloss/gconfig/";
 const TString gELossFileName = "data/eloss_"+gTag+".dat";
 
-const Int_t gPDG  = 2212;
-const Double_t gMass = 0.938272;
+const Int_t gPDG[] = {2212, 1000020040};
+const Double_t gMass[] = {0.938272, 3.728401};
 
 const Double_t gKE[] = {0.01,0.011,0.012,0.013,0.014,0.015,0.016,0.017,0.018,
                         0.02,0.0225,0.025,0.0275,0.030,0.0325,0.035,0.0375,
@@ -38,7 +39,7 @@ const Int_t gNRunKE = gNKE;
 const Int_t gNRunEvents = gNRunKE*gNEventPerEnergy;
 
 const TString G4PhysicsList = "FTFP_BERT_EMY";
-const TString G4Controls    = "stepLimiter+specialCuts";
+const TString G4Controls    = "stepLimiter";
 //const TString G4Controls    = "stepLimiter+specialCuts+specialControls";
 
 /*
@@ -74,7 +75,6 @@ void eloss()
 {
   CreateG4Configure();
 
-  if(gFlagCreateGen) CreateGen();
   if(gFlagRunMC)     RunMC();
   if(gFlagRunAna)    RunAna();
 
@@ -83,18 +83,6 @@ void eloss()
 
 /************************************************************************/
 Double_t CalMomentum(Double_t e, Double_t m) { return sqrt((e+m)*(e+m)-m*m); }
-
-void CreateGen()
-{
-  std::ofstream file(gGenFileName);
-
-  for(Int_t iKE=0; iKE<gNKE; iKE++)
-  {
-    Double_t momentum = CalMomentum(gKE[iKE],gMass);
-    for(Int_t iTrack=0; iTrack<gNEventPerEnergy; iTrack++)
-       file<<gPDG<<" "<<0<<" "<<0<<" "<<momentum<<" "<<1<<endl;
-  }
-}
 
 /************************************************************************/
 void RunMC()
@@ -117,9 +105,9 @@ void RunMC()
 
   Double_t *listP = new Double_t[gNKE];
   for (Int_t iKE = 0; iKE < gNKE; iKE++)
-    listP[iKE] = CalMomentum(gKE[iKE], gMass);
+    listP[iKE] = CalMomentum(gKE[iKE], gMass[gSelection]);
 
-  STSimpleEventGenerator* gen = new STSimpleEventGenerator(gPDG, gNKE, listP, gNEventPerEnergy, 0, -25, 1);
+  STSimpleEventGenerator* gen = new STSimpleEventGenerator(gPDG[gSelection], gNKE, listP, gNEventPerEnergy, 0, -25, 1);
   FairPrimaryGenerator* primGen = new FairPrimaryGenerator();
   primGen->AddGenerator(gen);
 
@@ -162,8 +150,10 @@ void RunAna()
   tree->SetBranchAddress("STMCPoint",&pointArray);
   tree->SetBranchAddress("PrimaryTrack",&trackArray);
 
-  TH1D* hist = new TH1D("dEdx","",2,0,0.01);
+  TH1D* hist = new TH1D("dEdx","",2,0,0.1);
   for(Int_t iKE=0; iKE<gNRunKE; iKE++) {
+    Double_t pPrimTrack = 0;
+    Double_t kEPrimTrack = 0;
     for(Int_t iTracks=0; iTracks<gNEventPerEnergy; iTracks++) 
     {
       Double_t lMax=0;
@@ -173,8 +163,8 @@ void RunAna()
       tree -> GetEntry(iEvent);
 
       track = (STMCTrack*) trackArray->At(0);
-      Double_t pPrimTrack  = track->GetP();
-      Double_t kEPrimTrack = track->GetEnergy() - track->GetMass();
+      pPrimTrack  = track->GetP();
+      kEPrimTrack = track->GetEnergy() - track->GetMass();
 
       Int_t nPoints = pointArray->GetEntries();
       for(Int_t iPoint=0; iPoint<nPoints; iPoint++) 
@@ -187,6 +177,8 @@ void RunAna()
 
         if(parentID==0&&lMax<lPenetration) lMax=lPenetration;
         energyLossSum += energyLoss;
+
+        if (lMax > 5.) break;
       }
       hist->Fill(energyLossSum/lMax);
       energyLossSum=0;
@@ -250,7 +242,6 @@ void CreateLog()
 {
   std::ofstream log("data/LOG_"+gTag+".log");
 
-  log << "Flag CreateGen   " << gFlagCreateGen   << endl;
   log << "Flag RunMC       " << gFlagRunMC       << endl;
   log << "Flag RunAna      " << gFlagRunAna      << endl;
   log << "----------------------------------------------------" << endl;
@@ -258,8 +249,8 @@ void CreateLog()
   log << "Gen File Name    " << gGenFileName     << endl;
   log << "Geo File Name    " << gGeoFileName     << endl;
   log << "----------------------------------------------------" << endl;
-  log << "PDG              " << gPDG             << endl;
-  log << "Mass (GeV)       " << gMass            << endl;
+  log << "PDG              " << gPDG[gSelection]  << endl;
+  log << "Mass (GeV)       " << gMass[gSelection] << endl;
   log << "----------------------------------------------------" << endl;
   for(Int_t i=0; i<gNRunKE; i++)
   log << "KinE (GeV)       " << gKE[i]           << endl;
