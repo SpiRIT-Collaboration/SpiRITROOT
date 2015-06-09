@@ -46,7 +46,7 @@ void STPad::Initialize()
 // setters
 void STPad::SetLayer(Int_t val)               { fLayer = val; }
 void STPad::SetRow(Int_t val)                 { fRow = val; }
-void STPad::SetRawADC(Int_t *val)             { memcpy(val, fRawAdc, sizeof(fRawAdc)); }
+void STPad::SetRawADC(Int_t *val)             { memcpy(fRawAdc, val, sizeof(fRawAdc)); }
 void STPad::SetRawADC(Int_t idx, Int_t val)   { fRawAdc[idx] = val; }
 void STPad::SetPedestalSubtracted(Bool_t val) { fIsPedestalSubtracted = val; }
 void STPad::SetGainCalibrated(Bool_t val)     { fIsGainCalibrated = val; }
