@@ -42,7 +42,6 @@ const TString G4PhysicsList = "FTFP_BERT_EMY";
 const TString G4Controls    = "stepLimiter";
 //const TString G4Controls    = "stepLimiter+specialCuts+specialControls";
 
-/*
 const Int_t Process_PAIR = 1; //!< pair production
 const Int_t Process_COMP = 1; //!< Compton scattering
 const Int_t Process_PHOT = 1; //!< photo electric effect
@@ -61,7 +60,6 @@ const Double_t CUT_B  = 1.0E4;  //!< BCUT* [GeV]
 const Double_t CUT_E  = 1.0E-3; //!< CUTELE [GeV]
 const Double_t CUT_P  = 1.0E4;  //!< PPCUTM [GeV]
 const Double_t TOFMAX = 1.E10;  //!< TOFMAX [GeV]
-*/
 
 const Int_t    CutLowEdge_eV   = 1; // eV
 const Int_t    CutHighEdge_MeV = 1000;   // MeV
@@ -204,7 +202,6 @@ void CreateG4Configure()
   conf << G4Controls.Data()    << endl;
   conf.close();
 
-/*
   std::ofstream cut("gconfig/SetCuts.dat");
   cut << Process_PAIR << endl;
   cut << Process_COMP << endl;
@@ -224,7 +221,6 @@ void CreateG4Configure()
   cut << CUT_P << endl;
   cut << TOFMAX << endl;
   cut.close();
-*/
 
   std::ofstream conf_in("gconfig/g4config.in");
   conf_in << "/cuts/setLowEdge  " << CutLowEdge_eV << " eV" << endl;
@@ -262,7 +258,6 @@ void CreateLog()
   log << "Physics List     " << G4PhysicsList << endl;
   log << "G4 Constrols     " << G4Controls    << endl;
   log << "----------------------------------------------------" << endl;
-  /*
   log << "Process PAIR     " << Process_PAIR << endl;
   log << "Process COMP     " << Process_COMP << endl;
   log << "Process PHOT     " << Process_PHOT << endl;
@@ -281,7 +276,6 @@ void CreateLog()
   log << "CUT CUTELE       " << CUT_E << endl;
   log << "CUT PPCUTM       " << CUT_P << endl;
   log << "CUT TOFMAX       " << TOFMAX << endl;
-  */
   log << "----------------------------------------------------" << endl;
   log << "/cuts/setLowEdge     " << CutLowEdge_eV << " eV" << endl;
   log << "/cuts/setHighEdge    " << CutHighEdge_MeV << " MeV" << endl;

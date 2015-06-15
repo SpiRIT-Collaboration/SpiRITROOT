@@ -1,28 +1,32 @@
 void plot_all()
 {
   gStyle -> SetPadTopMargin(0.05);      
-  gStyle -> SetPadBottomMargin(0.16);   
-  gStyle -> SetPadLeftMargin(0.13);     
+  gStyle -> SetPadBottomMargin(0.13);   
+  gStyle -> SetPadLeftMargin(0.17);     
   gStyle -> SetPadRightMargin(0.04);    
   gStyle -> SetTitleSize(0.06, "x");    
   gStyle -> SetTitleSize(0.06, "y");    
   gStyle -> SetTitleOffset(1.10, "x");  
-  gStyle -> SetTitleOffset(0.85, "y");  
+  gStyle -> SetTitleOffset(1.35, "y");  
   gStyle -> SetTitleFont(132, "t");     
   gStyle -> SetTitleFont(132, "x");     
   gStyle -> SetTitleFont(132, "y");     
   gStyle -> SetLabelFont(132, "x");     
   gStyle -> SetLabelFont(132, "y");     
-  gStyle -> SetTitleSize(0.07, "x");    
-  gStyle -> SetTitleSize(0.07, "y");    
-  gStyle -> SetLabelSize(0.07, "x");    
-  gStyle -> SetLabelSize(0.07, "y");    
-  gStyle -> SetLabelSize(0.07, "z");    
+  gStyle -> SetTitleSize(0.06, "x");    
+  gStyle -> SetTitleSize(0.06, "y");    
+  gStyle -> SetLabelSize(0.06, "x");    
+  gStyle -> SetLabelSize(0.06, "y");    
+  gStyle -> SetLabelSize(0.06, "z");    
+  gStyle -> SetOptStat(0);
   gStyle -> SetLegendFillColor(0);      
+  gStyle -> SetLegendFont(132);      
   gStyle -> SetEndErrorSize(4);         
 
   TH1D* hist = new TH1D("hist",";Energy (MeV);dEdx (MeV/mm)",450,0,410);
   hist -> SetMaximum(0.055);
+  hist -> GetXaxis() -> CenterTitle();
+  hist -> GetYaxis() -> CenterTitle();
   TGraph* graphTRIM_proton = new TGraph();
   graphTRIM_proton -> SetMarkerStyle(20);
   graphTRIM_proton -> SetMarkerColor(kBlack);
@@ -72,7 +76,7 @@ void plot_all()
   graphTRIM_alpha -> Draw("samepl");
   graphG4_alpha -> Draw("samepl");
 
-  TLegend *legend = new TLegend(0.4, 0.64, 0.85, 0.88);
+  TLegend *legend = new TLegend(0.35, 0.60, 0.95, 0.88);
   legend -> AddEntry(graphTRIM_alpha, "alpha (TRIM/LISE++)", "pl");
   legend -> AddEntry(graphG4_alpha, "alpha (S#piRITROOT)", "pl");
   legend -> AddEntry(graphTRIM_proton, "proton (TRIM/LISE++)", "pl");
