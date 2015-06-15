@@ -41,7 +41,6 @@ Set(DEPENDENCIES
   STMC
   STPar
   STFormat
-  STReco
   STUtil
 )
 

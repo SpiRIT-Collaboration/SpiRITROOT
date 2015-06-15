@@ -4,10 +4,7 @@ set(INCLUDE_DIRECTORIES
 ${ROOT_INCLUDE_DIR} 
 ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
-${CMAKE_SOURCE_DIR}/mc
 ${CMAKE_SOURCE_DIR}/field
-${CMAKE_SOURCE_DIR}/stack
-${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/par
 )
 
@@ -41,10 +38,7 @@ Set(DEPENDENCIES
     Stack
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
-   STMC
-   STDigi
    STPar
-   STFormat
 )
 
 GENERATE_LIBRARY()
