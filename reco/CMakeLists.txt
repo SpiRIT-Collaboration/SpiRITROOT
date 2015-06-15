@@ -18,6 +18,7 @@ ${CMAKE_SOURCE_DIR}/reco/PulseShapeAnalyzer
 ${CMAKE_SOURCE_DIR}/reco/SystemManipulator
 ${CMAKE_SOURCE_DIR}/reco/RiemannTracking
 ${CMAKE_SOURCE_DIR}/reco/HoughTracking
+${CMAKE_SOURCE_DIR}/reco/Genfit
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -69,6 +70,8 @@ RiemannTracking/STHelixHTCorrelator.cc
 HoughTracking/STHoughSpaceLine.cc
 HoughTracking/STHoughSpaceHelix.cc
 
+Genfit/STSpacepointMeasurement.cc
+
 STDecoderTask.cc
 STPSATask.cc
 STHitClusteringTask.cc
@@ -90,6 +93,7 @@ Set(DEPENDENCIES
     STPar
     STUtil
     Spectrum
+    genfit2
 )
 
 GENERATE_LIBRARY()

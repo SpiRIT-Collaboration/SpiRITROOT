@@ -39,6 +39,8 @@
 #pragma link C++ class STHoughSpaceLine+;
 #pragma link C++ class STHoughSpaceHelix+;
 
+#pragma link C++ class genfit::STSpacepointMeasurement+;
+
 #pragma link C++ class STUnitTestTask+;
 
 #endif
