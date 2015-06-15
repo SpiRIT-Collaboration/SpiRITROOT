@@ -63,10 +63,10 @@ void STHit::SetCharge(Double_t charge)                                  { fCharg
 void STHit::SetIsClustered(Bool_t value)                                { fIsClustered = value; }
 void STHit::SetClusterID(Int_t clusterID)                               { fClusterID = clusterID; fIsClustered = kTRUE; }
 
-Int_t STHit::GetTrackID()                                               { return fTrackID; }
-Int_t STHit::GetHitID()                                                 { return fHitID; }
-TVector3 STHit::GetPosition()                                           { return fPosition; }
-TVector3 STHit::GetPosSigma()                                           { return fPositionSigma; }
-Double_t STHit::GetCharge()                                             { return fCharge; }
-Bool_t STHit::IsClustered()                                             { return fIsClustered; }
-Int_t STHit::GetClusterID()                                             { return (fIsClustered ? fClusterID : -1); }
+Int_t STHit::GetTrackID() const                                         { return fTrackID; }
+Int_t STHit::GetHitID() const                                           { return fHitID; }
+TVector3 STHit::GetPosition() const                                     { return fPosition; }
+TVector3 STHit::GetPosSigma() const                                     { return fPositionSigma; }
+Double_t STHit::GetCharge() const                                       { return fCharge; }
+Bool_t STHit::IsClustered() const                                       { return fIsClustered; }
+Int_t STHit::GetClusterID() const                                       { return (fIsClustered ? fClusterID : -1); }

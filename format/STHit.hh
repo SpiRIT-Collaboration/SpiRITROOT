@@ -49,19 +49,19 @@ class STHit : public TObject {
     void SetClusterID(Int_t clusterID);
 
     //!< Track ID getter
-    Int_t GetTrackID();
+    Int_t GetTrackID() const;
     //!< Hit ID getter
-    Int_t GetHitID();
+    Int_t GetHitID() const;
     //!< Position getter
-    TVector3 GetPosition();
+    TVector3 GetPosition() const;
     //!< Position sigma getter
-    TVector3 GetPosSigma();
+    TVector3 GetPosSigma() const;
     //!< Charge getter
-    Double_t GetCharge();
+    Double_t GetCharge() const;
     //!< Clustered flag getter
-    Bool_t IsClustered();
+    Bool_t IsClustered() const;
     //!< Cluster ID getter
-    Int_t GetClusterID();
+    Int_t GetClusterID() const;
 
   private:
     //!< Track ID having this hit
@@ -79,7 +79,7 @@ class STHit : public TObject {
     //!< Cluster ID having this hit
     Int_t fClusterID;
 
-  ClassDef(STHit, 1);
+  ClassDef(STHit, 2);
 };
 
 #endif
