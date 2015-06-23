@@ -454,9 +454,11 @@ STRiemannTrackingTask::Exec(Option_t *opt)
     std::cerr << "Pattern Reco finished, found tracks: " << foundTracks << "\n";
     std::cerr << "used  " << numUsedCluster << " of " << numCluster << " Clusters \n";
 
-    if ((foundTracks != 0 || numUsedCluster != 0) && fVerbose)
-      fLogger -> Info(MESSAGE_ORIGIN, Form("FoundTracks: %d and usedCluster: %d", foundTracks, numUsedCluster));
   }
+
+  fLogger -> Info(MESSAGE_ORIGIN, 
+                  Form("Event #%d : Found %d tracks, used %d clusters.", 
+                       eventHCM -> GetEventID(), foundTracks, numUsedCluster));
 }
 
 

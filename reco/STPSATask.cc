@@ -46,7 +46,7 @@ void STPSATask::SetPSAMode(Int_t value)          { fPSAMode = value; }
 void STPSATask::SetPersistence(Bool_t value)     { fIsPersistence = value; }
 void STPSATask::SetThreshold(Double_t threshold) { fThreshold = threshold; }
 
-STPSA* GetPSA() { return fPSA; }
+STPSA* STPSATask::GetPSA() { return fPSA; }
 
 InitStatus
 STPSATask::Init()
@@ -117,15 +117,19 @@ STPSATask::Exec(Option_t *opt)
     return;
 
   STRawEvent *rawEvent = (STRawEvent *) fRawEventArray -> At(0);
-  std::cout << rawEvent -> GetEventID() << " " << rawEvent -> GetNumPads() << std::endl;  
 
   STEvent *event = (STEvent *) new ((*fEventHArray)[0]) STEvent();
   event -> SetEventID(rawEvent -> GetEventID());
 
-  if (!(rawEvent -> IsGood()))
+  if (!(rawEvent -> IsGood())) {
     event -> SetIsGood(kFALSE);
+    fLogger->Info(MESSAGE_ORIGIN, Form("Event #%d : Bad event!", rawEvent -> GetEventID()));
+  }
   else {
     fPSA -> Analyze(rawEvent, event);
     event -> SetIsGood(kTRUE);
+    fLogger->Info(MESSAGE_ORIGIN, 
+                  Form("Event #%d : Reconstructed %d hits and %d clusters.",
+                       rawEvent -> GetEventID(), event -> GetNumHits(), event -> GetNumClusters()));
   }
 }

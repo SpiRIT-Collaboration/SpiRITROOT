@@ -90,9 +90,19 @@ STSMTask::Exec(Option_t *opt)
 
   STEvent *eventHCM = NULL;
   if (fSMMode == kChange)
+  {
     eventHCM = fManipulator -> Change(eventHC);
+    fLogger->Info(MESSAGE_ORIGIN, 
+                  Form("Event #%d : Found %d clusters and manipulated coordinates.",
+                       eventHCM -> GetEventID(), eventHCM -> GetNumClusters()));
+  }
   else if (fSMMode == kRestore)
+  {
     eventHCM = fManipulator -> Restore(eventHC);
+    fLogger->Info(MESSAGE_ORIGIN, 
+                  Form("Event #%d : Found %d clusters and restored coordinates.",
+                       eventHCM -> GetEventID(), eventHCM -> GetNumClusters()));
+  }
 
   new ((*fEventHCMArray)[0]) STEvent(eventHCM);
   delete eventHCM;
