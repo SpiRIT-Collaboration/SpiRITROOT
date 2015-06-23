@@ -37,6 +37,8 @@ class STPSATask : public FairTask {
     virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
 
+    STPSA* GetPSA();
+
   private:
     FairLogger *fLogger;
     

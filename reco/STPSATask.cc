@@ -15,6 +15,7 @@
 #include "STPSASimple.hh"
 #include "STPSASimple2.hh"
 #include "STPSALayer.hh"
+#include "STPSALayerOPTICS.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -45,6 +46,8 @@ void STPSATask::SetPSAMode(Int_t value)          { fPSAMode = value; }
 void STPSATask::SetPersistence(Bool_t value)     { fIsPersistence = value; }
 void STPSATask::SetThreshold(Double_t threshold) { fThreshold = threshold; }
 
+STPSA* GetPSA() { return fPSA; }
+
 InitStatus
 STPSATask::Init()
 {
@@ -72,11 +75,19 @@ STPSATask::Init()
     fLogger -> Info(MESSAGE_ORIGIN, "Use STPSALayer!");
 
     fPSA = new STPSALayer();
+  } else if (fPSAMode == 3) {
+    fLogger -> Info(MESSAGE_ORIGIN, "Use STPSALayerOPTICS!");
+
+    fPSA = new STPSALayerOPTICS();
   }
+
 
   fPSA -> SetThreshold((Int_t)fThreshold);
 
-  ioMan -> Register("STEventH", "SPiRIT", fEventHArray, fIsPersistence);
+  if (fPSAMode == 3)
+    ioMan -> Register("STEventHC", "SPiRIT", fEventHArray, fIsPersistence);
+  else
+    ioMan -> Register("STEventH", "SPiRIT", fEventHArray, fIsPersistence);
 
   return kSUCCESS;
 }
