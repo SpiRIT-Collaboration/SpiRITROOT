@@ -33,7 +33,7 @@ class STPSA
 {
   public:
     STPSA();
-    ~STPSA();
+    virtual ~STPSA();
 
     //! Setting threshold
     void SetThreshold(Int_t threshold);
