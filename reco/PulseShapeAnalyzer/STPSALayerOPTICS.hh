@@ -4,6 +4,17 @@
 #include "TSpectrum.h"
 #include <vector>
 
+//#define DEBUG_PLOT
+//#define DEBUG_TIME
+
+#include "TStopwatch.h"
+
+#include "TCanvas.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TGraph.h"
+#include "TStyle.h"
+
 /**
  * @brief Data point container for OPTICS Run.
  */
@@ -74,7 +85,6 @@ class OPTICSPointStatus
     {
       kQueue,
       kCore,
-      kNoise
     };
 
     //! Status
@@ -99,11 +109,11 @@ class OPTICSPointStatus
 /**
  * @brief OPTICSPoint status
  */
-class STClusterizerOPTICS : public STPSA
+class STPSALayerOPTICS : public STPSA
 {
   public :
-    STClusterizerOPTICS();
-    ~STClusterizerOPTICS();
+    STPSALayerOPTICS();
+    ~STPSALayerOPTICS();
 
     void Analyze(STRawEvent *rawEvent, STEvent *event);
 
@@ -135,6 +145,8 @@ class STClusterizerOPTICS : public STPSA
     void RunOPTICS(Int_t rowCenter, Int_t tbCenter);
     Bool_t GetNbBin(Int_t rBox, Int_t index, Int_t row0, Int_t tb0, Int_t &row, Int_t &tb);
 
+    FairLogger* fLogger;
+
     Int_t fCurrentLayer; 
 
     TSpectrum* fPeakFinder; //!< TSpectrum 
@@ -161,17 +173,28 @@ class STClusterizerOPTICS : public STPSA
     Double_t fThresholdADC; //!< Adc threshold
     Double_t fThresholdEps; //!< Epsilon threshold
 
-    // Debug eps
-    TCanvas* fCvsEps;    //!< Canvas for fHistEps
-    TH1D* fHistEps;      //!< n - Epsilon histotram
-
-    TCanvas* fCvsFrame;    //!< Canvas for fHistEps
-    TH2D* fHistDataSet;    //!< n - Epsilon histotram
-    TGraph* fGraphCluster; //!< n - Epsilon histotram
-    TMarker* fMarkerCenter; //!< center of cluster
-
     vector<OPTICSPoint> fPeakPointArray; //!< Array of OPTICSPoint for peak points.
     OPTICSPointStatus fStatus[108][512]; //!< Status of all bins.
+
+    void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope);
+
+#ifdef DEBUG_PLOT
+    TCanvas* fCvsFrame;
+    TH2D* fHistDataSet;
+    TGraph* fGraphCluster;
+    Int_t fIdxGraphCluster;
+
+    TGraph* fGraphClusterPeaks;
+    TGraph* fGraphClusterPoints;
+
+    TCanvas* fCvsEps;
+    TH1D* fHistEps;
+    TH1D* fHistEpsAll;
+
+    TCanvas* fCvsFrameXY;
+    TH2D* fHistXY;
+    TGraph* fGraphClusterXY;
+#endif
 
   ClassDef(STPSALayerOPTICS, 1)
 };
