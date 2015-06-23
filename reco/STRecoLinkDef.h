@@ -25,8 +25,11 @@
 #pragma link C++ class STPSASimple+;
 #pragma link C++ class STPSASimple2+;
 #pragma link C++ class STPSALayer+;
+#pragma link C++ class STPSALayerOPTICS+;
 
 #pragma link C++ class STHitClusteringTask+;
+#pragma link C++ class STClusterizer+;
+#pragma link C++ class STClusterizerScan+;
 
 #pragma link C++ class STSMTask+;
 #pragma link C++ class STSystemManipulator+;

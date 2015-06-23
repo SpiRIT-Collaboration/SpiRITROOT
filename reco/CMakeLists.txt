@@ -15,6 +15,7 @@ ${CMAKE_SOURCE_DIR}/reco
 ${CMAKE_SOURCE_DIR}/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/reco/STConverter
 ${CMAKE_SOURCE_DIR}/reco/PulseShapeAnalyzer
+${CMAKE_SOURCE_DIR}/reco/HitClustering
 ${CMAKE_SOURCE_DIR}/reco/SystemManipulator
 ${CMAKE_SOURCE_DIR}/reco/RiemannTracking
 ${CMAKE_SOURCE_DIR}/reco/HoughTracking
@@ -54,8 +55,10 @@ PulseShapeAnalyzer/STPSA.cc
 PulseShapeAnalyzer/STPSASimple.cc
 PulseShapeAnalyzer/STPSASimple2.cc
 PulseShapeAnalyzer/STPSALayer.cc
+PulseShapeAnalyzer/STPSALayerOPTICS.cc
 
-#HitClusterizer/STHitClusteringSimple.cc
+HitClustering/STClusterizer.cc
+HitClustering/STClusterizerScan.cc
 
 SystemManipulator/STSystemManipulator.cc
 
