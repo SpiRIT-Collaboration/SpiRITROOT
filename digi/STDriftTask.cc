@@ -125,6 +125,7 @@ STDriftTask::Exec(Option_t* option)
   Int_t nMCPoints = fMCPointArray->GetEntries();
   if(nMCPoints<10){
     fLogger->Warning(MESSAGE_ORIGIN, "Not enough hits for digitization! (<10)");
+    fEventID++;
     return;
   }
 
