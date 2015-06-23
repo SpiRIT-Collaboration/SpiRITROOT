@@ -55,10 +55,10 @@ STEventDrawTask::STEventDrawTask()
   fHitClusterSet(0),
   fHitClusterColor(kGray+3),
   fHitClusterSize(1),
-  fHitClusterStyle(6),
+  fHitClusterStyle(7),
   fRiemannSetArray(0),
   fRiemannColor(kBlue),
-  fRiemannSize(1.5),
+  fRiemannSize(2.0),
   fRiemannStyle(kOpenCircle),
   fCvsPadPlane(0),
   fPadPlane(0),
@@ -92,6 +92,7 @@ STEventDrawTask::SetParContainers()
 InitStatus 
 STEventDrawTask::Init()
 {
+  fLogger->Debug(MESSAGE_ORIGIN,"Init()");
   FairRootManager* ioMan = FairRootManager::Instance();
   fEventManager = STEventManager::Instance();
 
@@ -99,13 +100,22 @@ STEventDrawTask::Init()
   if(fHitArray) LOG(INFO)<<"Hit Found."<<FairLogger::endl;
 
   fHitClusterArray = (TClonesArray*) ioMan -> GetObject("STEventHC");
-  if(fHitClusterArray) LOG(INFO)<<"Hit Cluster Found."<<FairLogger::endl;
+  if(fHitClusterArray) 
+    LOG(INFO)<<"Hit Cluster Found."<<FairLogger::endl;
+  else
+    LOG(INFO)<<"Hit Cluster Not Found."<<FairLogger::endl;
 
   fRiemannTrackArray = (TClonesArray*) ioMan -> GetObject("STRiemannTrack");
-  if(fRiemannTrackArray) LOG(INFO)<<"Riemann Track Found."<<FairLogger::endl;
+  if(fRiemannTrackArray) 
+    LOG(INFO)<<"Riemann Track Found."<<FairLogger::endl;
+  else
+    LOG(INFO)<<"Riemann Track Not Found."<<FairLogger::endl;
 
   fKalmanArray = (TClonesArray*) ioMan -> GetObject("STKalmanTrack");
-  if(fKalmanArray) LOG(INFO)<<"Kalman Track Found."<<FairLogger::endl;
+  if(fKalmanArray) 
+    LOG(INFO)<<"Kalman Track Found."<<FairLogger::endl;
+  else
+    LOG(INFO)<<"Kalman Track Not Found."<<FairLogger::endl;
 
   gStyle -> SetPalette(55);
   fCvsPadPlane = fEventManager -> GetCvsPadPlane();
@@ -128,6 +138,7 @@ STEventDrawTask::Init()
 void 
 STEventDrawTask::Exec(Option_t* option)
 {
+  fLogger->Debug(MESSAGE_ORIGIN,"Exec()");
   Reset();
 
   if(fHitArray) DrawHitPoints();
@@ -141,6 +152,7 @@ STEventDrawTask::Exec(Option_t* option)
 void 
 STEventDrawTask::DrawHitPoints()
 {
+  fLogger->Debug(MESSAGE_ORIGIN,"DrawPoints()");
   STEvent* event = (STEvent*) fHitArray -> At(0);
   Int_t nHits = event -> GetNumHits();
 
@@ -161,12 +173,14 @@ STEventDrawTask::DrawHitPoints()
     fPadPlane -> Fill(-position.X(), position.Z(), hit.GetCharge());
     //fPadPlane -> Fill(position.Z(), position.X(), hit.GetCharge());
   }
+  fHitSet -> SetRnrSelf(kFALSE);
   gEve -> AddElement(fHitSet);
 }
 
 void 
 STEventDrawTask::DrawHitClusterPoints()
 {
+  fLogger->Debug(MESSAGE_ORIGIN,"DrawHitClusterPoints()");
   STEvent* event = (STEvent*) fHitClusterArray -> At(0);
   Int_t nClusters = event -> GetNumClusters();
 
@@ -190,6 +204,7 @@ STEventDrawTask::DrawHitClusterPoints()
 void 
 STEventDrawTask::DrawRiemannHits()
 {
+  fLogger->Debug(MESSAGE_ORIGIN,"DrawRiemannHits()");
   STRiemannTrack* track = 0;
   STHitCluster* rCluster = 0;
   TEvePointSet* riemannClusterSet = 0;
@@ -197,8 +212,10 @@ STEventDrawTask::DrawRiemannHits()
   STEvent* event = (STEvent*) fHitClusterArray -> At(0);
 
   Int_t nTracks = fRiemannTrackArray -> GetEntries();
+  fLogger->Debug(MESSAGE_ORIGIN,Form("Number of tracks: %d",nTracks));
   for(Int_t iTrack=0; iTrack<nTracks; iTrack++) 
   {
+    fLogger->Debug(MESSAGE_ORIGIN,Form("  Track %d",iTrack));
     track = (STRiemannTrack*) fRiemannTrackArray -> At(iTrack);
 
     Int_t nClusters = track -> GetNumHits();
@@ -206,11 +223,13 @@ STEventDrawTask::DrawRiemannHits()
     riemannClusterSet -> SetMarkerColor(GetRiemannColor(iTrack));
     riemannClusterSet -> SetMarkerSize(fRiemannSize);
     riemannClusterSet -> SetMarkerStyle(fRiemannStyle);
+    fLogger->Debug(MESSAGE_ORIGIN,Form("  Number of clusters %d",nClusters));
     for(Int_t iCluster=0; iCluster<nClusters; iCluster++)
     {
       rCluster = track -> GetHit(iCluster) -> GetCluster();
       if((rCluster -> GetCharge())<fThreshold) continue;
       Int_t id = rCluster -> GetClusterID();
+      fLogger->Debug(MESSAGE_ORIGIN,Form("    Cluster %d : %d",iCluster,id));
       STHitCluster oCluster = event -> GetClusterArray() -> at(id);
 
       TVector3 position = oCluster.GetPosition();
