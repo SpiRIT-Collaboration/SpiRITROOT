@@ -4,7 +4,7 @@ void run_reco_mc(TString tag = "test", Int_t threshold = 1)
   logger -> SetLogFileName("log/reco_mc.log");
   logger -> SetLogToFile(kFALSE);
   logger -> SetLogToScreen(kTRUE);
-  //logger -> SetLogVerbosityLevel("MEDIUM");
+  logger -> SetLogVerbosityLevel("LOW");
 
   FairRunAna* run = new FairRunAna();
   run -> SetInputFile("data/spirit_" + tag + ".raw.root");
@@ -23,12 +23,13 @@ void run_reco_mc(TString tag = "test", Int_t threshold = 1)
   STPSATask *psaTask = new STPSATask();
   psaTask -> SetPersistence();
   psaTask -> SetThreshold(threshold);
-  psaTask -> SetPSAMode(2);
+  psaTask -> SetPSAMode(1);
   run -> AddTask(psaTask);
 
   STHitClusteringTask *hcTask = new STHitClusteringTask();
   hcTask -> SetPersistence();
-  //hcTask -> SetVerbose(2);
+  hcTask -> SetClusterizerMode(1);
+  hcTask -> SetVerbose(2);
   run -> AddTask(hcTask);
 
   STSMTask* smTask = new STSMTask();
@@ -39,11 +40,15 @@ void run_reco_mc(TString tag = "test", Int_t threshold = 1)
   STRiemannTrackingTask* rmTask = new STRiemannTrackingTask();
   rmTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ,0);
   rmTask -> SetPersistence();
-//  rmTask -> SetVerbose(kTRUE);
+  //rmTask -> SetVerbose(kTRUE);
   rmTask -> SetMergeTracks(kTRUE);
+//rmTask -> SetTrkFinderParameters(100, 100, 3, 1.0);
+  rmTask -> SetTrkFinderParameters(40, 10, 3, 1.0); //rmTask -> SetTrkFinderParameters(proxcut, helixcut, minpointsforfit, zStretch);
+  rmTask -> SetTrkMergerParameters(40, 50, 40, 40); //rmTask -> SetTrkMergerParameters(TTproxcut, TTdipcut, TThelixcut, TTplanecut); 
   run -> AddTask(rmTask);
 
   run->Init();
 
-  run->Run(0, 0);
+  run->Run(0, 4);
+  //run->Run(0, 0);
 }
