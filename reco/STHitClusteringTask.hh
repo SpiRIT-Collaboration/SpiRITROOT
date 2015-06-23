@@ -17,6 +17,7 @@
 #include "STHit.hh"
 #include "STHitCluster.hh"
 #include "STDigiPar.hh"
+#include "STClusterizer.hh"
 
 // FairROOT classes
 #include "FairTask.h"
@@ -44,6 +45,9 @@ class STHitClusteringTask : public FairTask
     virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
 
+    STClusterizer* GetClusterizer();
+    void SetClusterizerMode(Int_t mode);
+
   private:
     FairLogger *fLogger;           //!< FairLogger singleton
 
@@ -52,6 +56,14 @@ class STHitClusteringTask : public FairTask
     STDigiPar *fPar;               //!< STDigiPar singleton
 
     Bool_t fIsPersistence;         //!< Persistancy setter
+
+    STClusterizer *fClusterizer;  //!< Clusterizer pointer
+    /**
+     * Clusterizer Mode
+     * - 0 : No Clusterizing
+     * - 1 : STClusterizerScan
+     */
+    Int_t fClusterizerMode;
 
     Double_t fDriftLength;         //!< DriftLength parameter defined in ST.parameters.par [cm/ns]
     Int_t fYDivider;               //!< Space divider along y direction

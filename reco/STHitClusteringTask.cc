@@ -12,6 +12,7 @@
 // SpiRITROOT classes
 #include "STHitClusteringTask.hh"
 #include "STEvent.hh"
+#include "STClusterizerScan.hh"
 
 // FairROOT classes
 #include "FairRun.h"
@@ -43,6 +44,9 @@ STHitClusteringTask::~STHitClusteringTask()
 
 void STHitClusteringTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
 void STHitClusteringTask::SetVerbose(Int_t value)      { fVerbose = value; }
+void STHitClusteringTask::SetClusterizerMode(Int_t mode) {fClusterizerMode = mode; }
+
+STClusterizer* STHitClusteringTask::GetClusterizer() { return fClusterizer; }
 
 InitStatus
 STHitClusteringTask::Init()
@@ -59,6 +63,12 @@ STHitClusteringTask::Init()
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEventH array!");
 
     return kERROR;
+  }
+
+  if (fClusterizerMode == 1) {
+    fLogger -> Info(MESSAGE_ORIGIN, "Use STClusterizerScan!");
+
+    fClusterizer = new STClusterizerScan();
   }
 
   ioMan -> Register("STEventHC", "SPiRIT", fEventHCArray, fIsPersistence);
@@ -99,55 +109,77 @@ STHitClusteringTask::Exec(Option_t *opt)
   if (!(eventH -> IsGood())) {
     eventHC -> SetIsGood(kFALSE);
 
+    fLogger->Info(MESSAGE_ORIGIN, Form("Event #%d : Bad event!", eventH -> GetEventID()));
+
     return;
   }
 
-  Double_t sliceY = fDriftLength/fYDivider;
+  eventHC -> SetEventID(eventH -> GetEventID());
 
-  vector<STHit> *hitArray = eventH -> GetHitArray();
-  std::sort(hitArray -> begin(), hitArray -> end(), STHitSortY());
+  if (fClusterizerMode != 0) 
+  {
+    fClusterizer -> Analyze(eventH, eventHC);
 
-/*
-  vector<STHit> slicedSpace;
-  for (Int_t iSlice = 0, currentPosInVector = 0; iSlice < fYDivider; iSlice++) {
-    Double_t bottomY = -fDriftLength + iSlice*sliceY;
-    Double_t topY = bottomY + sliceY;
+    eventHC -> SetIsClustered(kTRUE);
 
-    slicedSpace.clear();
-    while (currentPosInVector < hitArray -> size()) {
-      Double_t yPos = (hitArray -> at(currentPosInVector)).GetPosition().Y();
+    fLogger->Info(MESSAGE_ORIGIN, 
+                  Form("Event #%d : Reconstructed %d clusters.",
+                       eventH -> GetEventID(), eventHC -> GetNumClusters()));
+  }
 
-      if (yPos >= bottomY && yPos < topY) {
-        slicedSpace.push_back(hitArray -> at(currentPosInVector));
+  else
+  {
+    Double_t sliceY = fDriftLength/fYDivider;
 
-        currentPosInVector++;
-      } else
-        break;
+    vector<STHit> *hitArray = eventH -> GetHitArray();
+    std::sort(hitArray -> begin(), hitArray -> end(), STHitSortY());
+
+  /*
+    vector<STHit> slicedSpace;
+    for (Int_t iSlice = 0, currentPosInVector = 0; iSlice < fYDivider; iSlice++) {
+      Double_t bottomY = -fDriftLength + iSlice*sliceY;
+      Double_t topY = bottomY + sliceY;
+
+      slicedSpace.clear();
+      while (currentPosInVector < hitArray -> size()) {
+        Double_t yPos = (hitArray -> at(currentPosInVector)).GetPosition().Y();
+
+        if (yPos >= bottomY && yPos < topY) {
+          slicedSpace.push_back(hitArray -> at(currentPosInVector));
+
+          currentPosInVector++;
+        } else
+          break;
+      }
+
+      if (slicedSpace.empty())
+        continue;
+      
+      FindCluster(slicedSpace, eventHC); 
     }
+    */
 
-    if (slicedSpace.empty())
-      continue;
-    
-    FindCluster(slicedSpace, eventHC); 
+  ////////////////////// Delete this
+    for (Int_t iHit = 0; iHit < hitArray -> size(); iHit++) {
+      STHitCluster *cluster = new STHitCluster();
+      STHit *hit = &(hitArray -> at(iHit));
+      hit -> SetIsClustered(kTRUE);
+      hit -> SetClusterID(eventHC -> GetNumClusters());
+
+      cluster -> AddHit(hit);
+      eventHC -> AddHit(hit);
+      cluster -> SetClusterID(eventHC -> GetNumClusters());
+      eventHC -> AddCluster(cluster);
+      delete cluster;
+    }
+  ////////////////////// Delete this
+
+    eventHC -> SetIsClustered(kTRUE);
+
+    fLogger->Info(MESSAGE_ORIGIN, 
+                  Form("Event #%d : Reconstructed %d clusters.",
+                       eventH -> GetEventID(), eventHC -> GetNumClusters()));
   }
-  */
-
-////////////////////// Delete this
-  for (Int_t iHit = 0; iHit < hitArray -> size(); iHit++) {
-    STHitCluster *cluster = new STHitCluster();
-    STHit *hit = &(hitArray -> at(iHit));
-    hit -> SetIsClustered(kTRUE);
-    hit -> SetClusterID(eventHC -> GetNumClusters());
-
-    cluster -> AddHit(hit);
-    eventHC -> AddHit(hit);
-    cluster -> SetClusterID(eventHC -> GetNumClusters());
-    eventHC -> AddCluster(cluster);
-    delete cluster;
-  }
-////////////////////// Delete this
-
-  eventHC -> SetIsClustered(kTRUE);
 }
 
 void
