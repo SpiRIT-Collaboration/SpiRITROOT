@@ -10,6 +10,7 @@
 #include "FairLogger.h"
 
 // ROOT classes
+#include "TEveBoxSet.h"
 #include "TEvePointSet.h"
 #include "TClonesArray.h"
 #include "TVector3.h"
@@ -51,7 +52,7 @@ class STEventDrawTask : public FairTask
     void SetRiemannAttributes(Color_t, Size_t, Style_t);
     void SetSelfRiemannSet(Int_t iRiemannSet = -1, Bool_t offElse = kTRUE);
 
-    void SetDigiFile(TString name);
+    //void SetDigiFile(TString name);
     static void ClickSelectedPadPlane();
     void DrawPad(Int_t row, Int_t layer);
     void DrawPadByPosition(Double_t x, Double_t z);
@@ -87,9 +88,6 @@ class STEventDrawTask : public FairTask
     Double_t fTBTime;
     Double_t fDriftVelocity;
 
-    TTree* fDigiTree;
-    TClonesArray* fRawEventArray;
-    STRawEvent* fRawEvent;
     TH1D* fHistPad;
     TGraph* fGraphHitTb[20];
 
@@ -97,6 +95,9 @@ class STEventDrawTask : public FairTask
     TClonesArray* fHitClusterArray;
     TClonesArray* fRiemannTrackArray;
     TClonesArray* fKalmanArray;
+    TClonesArray* fRawEventArray;
+
+    STRawEvent* fRawEvent;
 
     STEventManager* fEventManager;
     STEventManagerEditor* fEventManagerEditor;
@@ -107,6 +108,10 @@ class STEventDrawTask : public FairTask
     Color_t fHitColor;
     Size_t  fHitSize;
     Style_t fHitStyle;
+
+    TEveBoxSet* fBoxClusterSet;
+    Color_t fBoxClusterColor;
+    Int_t fBoxClusterTransparency;
 
     TEvePointSet* fHitClusterSet;
     Color_t fHitClusterColor;
