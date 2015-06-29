@@ -39,7 +39,7 @@ STPSASimple2::Analyze(STRawEvent *rawEvent, STEvent *event)
     
     Double_t xPos = CalculateX(pad -> GetRow());
     Double_t zPos = CalculateZ(pad -> GetLayer());
-    Double_t yPos = 0;
+    Double_t yHit = 0;
     Double_t charge = 0;
 
     if (!(pad -> IsPedestalSubtracted())) {
@@ -60,22 +60,66 @@ STPSASimple2::Analyze(STRawEvent *rawEvent, STEvent *event)
       continue;
 
     for (Int_t iPeak = 0; iPeak < numPeaks; iPeak++) {
-      Int_t maxAdcIdx = (Int_t)(ceil((fPeakFinder -> GetPositionX())[iPeak]));
+      Int_t tbPeak = (Int_t)(ceil((fPeakFinder -> GetPositionX())[iPeak]));
 
-      yPos = CalculateY(maxAdcIdx);
-      charge = adc[maxAdcIdx];
+      charge = adc[tbPeak];
 
       if (fThreshold > 0 && charge < fThreshold)
         continue;
 
-      if (yPos > 0 || yPos < -fMaxDriftLength)
+
+      Double_t tbArray[10] = {0};
+      Double_t adcArray[10] = {0};
+      
+      Int_t countPoints = 0;
+      for(Int_t iTb=tbPeak; iTb>tbPeak-10; iTb--) 
+      {
+        Double_t adcTemp = adc[iTb];
+
+        //if (adcTemp < charge*fPercPeakMin/100. || adcTemp > charge*fPercPeakMax/100.) // TODO
+        if (adcTemp < charge*10./100. || adcTemp > charge*90./100.)
+          continue;
+
+        tbArray[countPoints] = iTb;
+        adcArray[countPoints] = adcTemp;
+        countPoints++;
+      }
+
+      // if (countPoints < fMinPointsForFit) // TODO
+      if (countPoints < 4) 
         continue;
 
-      STHit *hit = new STHit(hitNum, xPos, yPos, zPos, charge);
+      Double_t fitConst = 0;
+      Double_t fitSlope = 0;
+      LSLFit(countPoints, tbArray, adcArray, fitConst, fitSlope);
+      Double_t tbHit = -fitConst/fitSlope;
+      Double_t yHit = CalculateY(tbHit);
+      if (yHit > 0 || yHit < -fMaxDriftLength)
+        continue;
+
+      if (yHit > 0 || yHit < -fMaxDriftLength)
+        continue;
+
+      STHit *hit = new STHit(hitNum, xPos, yHit, zPos, charge);
       event -> AddHit(hit);
       delete hit;
 
       hitNum++;
     }
   }
+}
+
+void
+STPSASimple2::LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope)
+{
+  Double_t sumXY = 0, sumX = 0, sumY = 0, sumX2 = 0;
+  for (Int_t iPoint = 0; iPoint < numPoints; iPoint++) {
+    sumXY += x[iPoint]*y[iPoint];
+    sumX += x[iPoint];
+    sumY += y[iPoint];
+    sumX2 += x[iPoint]*x[iPoint];
+  }
+
+  slope = (numPoints*sumXY - sumX*sumY)/(numPoints*sumX2 - sumX*sumX);
+  constant = (sumX2*sumY - sumX*sumXY)/(numPoints*sumX2 - sumX*sumX);
 }

@@ -26,6 +26,7 @@ class STPSASimple2 : public STPSA
     ~STPSASimple2();
 
     void Analyze(STRawEvent *rawEvent, STEvent *event);
+    void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope);
 
   private:
     TSpectrum *fPeakFinder;  /// TSpectrum object
