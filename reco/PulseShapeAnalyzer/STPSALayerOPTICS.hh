@@ -15,6 +15,8 @@
 #include "TGraph.h"
 #include "TStyle.h"
 
+#include <algorithm>
+
 /**
  * @brief Data point container for OPTICS Run.
  */
