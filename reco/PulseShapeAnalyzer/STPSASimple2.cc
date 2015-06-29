@@ -39,7 +39,6 @@ STPSASimple2::Analyze(STRawEvent *rawEvent, STEvent *event)
     
     Double_t xPos = CalculateX(pad -> GetRow());
     Double_t zPos = CalculateZ(pad -> GetLayer());
-    Double_t yHit = 0;
     Double_t charge = 0;
 
     if (!(pad -> IsPedestalSubtracted())) {
