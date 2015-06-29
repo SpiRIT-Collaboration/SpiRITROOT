@@ -4,7 +4,7 @@ void run_reco()
   logger -> SetLogFileName("genieLog.log");
   logger -> SetLogToFile(kTRUE);
   logger -> SetLogToScreen(kTRUE);
-  logger -> SetLogVerbosityLevel("MEDIUM");
+  //logger -> SetLogVerbosityLevel("MEDIUM");
 
   TString workDir = gSystem->Getenv("VMCWORKDIR");
   TString geoDir  = workDir + "/geometry/";
@@ -37,13 +37,24 @@ void run_reco()
 
   STPSATask *psaTask = new STPSATask();
   psaTask -> SetPersistence();
-  psaTask -> SetThreshold(20);
-  psaTask -> SetPSAMode(2);
+  psaTask -> SetThreshold(15);
+  psaTask -> SetPSAMode(1);
   run -> AddTask(psaTask);
 
   STHitClusteringTask *hcTask = new STHitClusteringTask();
   hcTask -> SetPersistence();
-//  hcTask -> SetVerbose(2);
+  hcTask -> SetClusterizerMode(1);
+  hcTask -> SetVerbose(2);
+  /** 
+   * i-th par: explanation
+   * 0: z-reach cut in z-padsize unit
+   * 1: x-reach cut in x-padsize unit
+   * 2: y-reach cut in timebucket unit
+   * 3: x-sigma cut in x-padsize unit
+   * 4: y-sigma cut in timebucket unit
+   */
+  Double_t par[5] = {1.5, 4.5, 2.5, 1.8, 1};
+  hcTask -> SetParameters(par);
   run -> AddTask(hcTask);
 
   STSMTask* smTask = new STSMTask();
@@ -54,11 +65,9 @@ void run_reco()
   STRiemannTrackingTask* rmTask = new STRiemannTrackingTask();
   rmTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ,0);
   rmTask -> SetPersistence();
-//  rmTask -> SetVerbose(kTRUE);
-//rmTask -> SetTrkFinderParameters(proxcut, helixcut, minpointsforfit, zStretch);
-  rmTask -> SetTrkFinderParameters(40, 10, 3, 1.6);
-//rmTask -> SetTrkMergerParameters(TTproxcut, TTdipcut, TThelixcut, TTplanecut); 
-  rmTask -> SetTrkMergerParameters(40, 50, 40, 40); 
+  //rmTask -> SetVerbose(kTRUE);
+  rmTask -> SetTrkFinderParameters(40, 10, 3, 1.0); //rmTask -> SetTrkFinderParameters(proxcut, helixcut, minpointsforfit, zStretch);
+  rmTask -> SetTrkMergerParameters(40, 50, 40, 40); //rmTask -> SetTrkMergerParameters(TTproxcut, TTdipcut, TThelixcut, TTplanecut); 
   rmTask -> SetMergeTracks(kTRUE);
   run -> AddTask(rmTask);
 

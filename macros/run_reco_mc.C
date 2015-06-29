@@ -30,6 +30,16 @@ void run_reco_mc(TString tag = "test", Int_t threshold = 1)
   hcTask -> SetPersistence();
   hcTask -> SetClusterizerMode(1);
   hcTask -> SetVerbose(2);
+  /** 
+   * i-th par: explanation
+   * 0: z-reach cut in z-padsize unit
+   * 1: x-reach cut in x-padsize unit
+   * 2: y-reach cut in timebucket unit
+   * 3: x-sigma cut in x-padsize unit
+   * 4: y-sigma cut in timebucket unit
+   */
+  Double_t par[5] = {1.5, 4.5, 2.5, 1.8, 1};
+  hcTask -> SetParameters(par);
   run -> AddTask(hcTask);
 
   STSMTask* smTask = new STSMTask();
@@ -42,13 +52,12 @@ void run_reco_mc(TString tag = "test", Int_t threshold = 1)
   rmTask -> SetPersistence();
   //rmTask -> SetVerbose(kTRUE);
   rmTask -> SetMergeTracks(kTRUE);
-//rmTask -> SetTrkFinderParameters(100, 100, 3, 1.0);
   rmTask -> SetTrkFinderParameters(40, 10, 3, 1.0); //rmTask -> SetTrkFinderParameters(proxcut, helixcut, minpointsforfit, zStretch);
   rmTask -> SetTrkMergerParameters(40, 50, 40, 40); //rmTask -> SetTrkMergerParameters(TTproxcut, TTdipcut, TThelixcut, TTplanecut); 
   run -> AddTask(rmTask);
 
   run->Init();
 
-  run->Run(0, 4);
+  run->Run(0, 0);
   //run->Run(0, 0);
 }
