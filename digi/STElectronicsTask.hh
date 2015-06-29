@@ -33,6 +33,7 @@ class STElectronicsTask : public FairTask
     virtual void Exec(Option_t* opt); //!< Executed for each event.
     virtual void SetParContainers();  //!< Load the parameter container from the runtime database.
 
+    void SetADCConstant(Double_t val);
     /**
      * Set dynamic range of ADC. Unit in [Coulomb].
      * Default value is 120 fC.
@@ -60,6 +61,7 @@ class STElectronicsTask : public FairTask
 
     Double_t fPulser[100]; //!< Pulser shape data.
 
+    Double_t fADCConstant;
     Double_t fADCDynamicRange;    //!< Dynamic range of ADC [Coulomb]
     Double_t fADCMax;             //!< ADC maximum value [ADC-Ch]
     Double_t fADCMaxUseable;      //!< Actual useable ADC maximum value [ADC-Ch]

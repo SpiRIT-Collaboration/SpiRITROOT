@@ -26,6 +26,7 @@ using namespace std;
 STElectronicsTask::STElectronicsTask()
 :FairTask("STElectronicsTask"),
  fEventID(0),
+ fADCConstant(0.2),
  fADCDynamicRange(120.e-15),
  fADCMax(4095),
  fADCMaxUseable(4095),
@@ -74,7 +75,7 @@ STElectronicsTask::Init()
   ifstream pulserFile(pulserFileName.Data());
 
   Double_t coulombToEV = 6.241e18; 
-  Double_t pulserConstant = (fADCMaxUseable-fPedestalMean)/(fADCDynamicRange*coulombToEV);
+  Double_t pulserConstant = fADCConstant*(fADCMaxUseable-fPedestalMean)/(fADCDynamicRange*coulombToEV);
   while(pulserFile >> val) fPulser[fNBinPulser++] = pulserConstant*val;
 
   return kSUCCESS;
@@ -145,11 +146,12 @@ STElectronicsTask::Exec(Option_t* option)
 
   fLogger->Info(MESSAGE_ORIGIN, 
                 Form("Event #%d : Raw Event created.",
-                     fEventID++, nPads));
+                     fEventID++));
 
   return;
 }
 
+void STElectronicsTask::SetADCConstant(Double_t val)       {       fADCConstant  = val; }
 void STElectronicsTask::SetDynamicRange(Double_t val)      {    fADCDynamicRange = val; }
 void STElectronicsTask::SetPedestalMean(Double_t val)      {       fPedestalMean = val; }
 void STElectronicsTask::SetPedestalSigma(Double_t val)     {      fPedestalSigma = val; }
