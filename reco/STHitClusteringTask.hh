@@ -47,6 +47,7 @@ class STHitClusteringTask : public FairTask
 
     STClusterizer* GetClusterizer();
     void SetClusterizerMode(Int_t mode);
+    void SetParameters(Double_t *par);
 
   private:
     FairLogger *fLogger;           //!< FairLogger singleton
@@ -67,6 +68,8 @@ class STHitClusteringTask : public FairTask
 
     Double_t fDriftLength;         //!< DriftLength parameter defined in ST.parameters.par [cm/ns]
     Int_t fYDivider;               //!< Space divider along y direction
+
+    Double_t *fClusterizerPar;
 
     TClonesArray *fEventHArray;    //!< Array that is containing events having only hits
     TClonesArray *fEventHCArray;   //!< Array that will contain events having hits and hit clusters

@@ -28,6 +28,7 @@ class STClusterizer
     virtual ~STClusterizer();
 
     virtual void Analyze(STEvent* eventH, STEvent* eventHC) = 0;
+    virtual void SetParameters(Double_t *par) = 0;
 
   protected:
     FairLogger *fLogger;      //!< logger

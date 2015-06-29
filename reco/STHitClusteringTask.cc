@@ -42,9 +42,10 @@ STHitClusteringTask::~STHitClusteringTask()
 {
 }
 
-void STHitClusteringTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
-void STHitClusteringTask::SetVerbose(Int_t value)      { fVerbose = value; }
-void STHitClusteringTask::SetClusterizerMode(Int_t mode) {fClusterizerMode = mode; }
+void STHitClusteringTask::SetPersistence(Bool_t value)   { fIsPersistence = value; }
+void STHitClusteringTask::SetVerbose(Int_t value)        { fVerbose = value; }
+void STHitClusteringTask::SetClusterizerMode(Int_t mode) { fClusterizerMode = mode; }
+void STHitClusteringTask::SetParameters(Double_t *par)   { fClusterizerPar = par; }
 
 STClusterizer* STHitClusteringTask::GetClusterizer() { return fClusterizer; }
 
@@ -65,11 +66,15 @@ STHitClusteringTask::Init()
     return kERROR;
   }
 
+  fClusterizer = NULL;
   if (fClusterizerMode == 1) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use STClusterizerScan!");
 
     fClusterizer = new STClusterizerScan();
   }
+
+  if (fClusterizer)
+    fClusterizer -> SetParameters(fClusterizerPar);
 
   ioMan -> Register("STEventHC", "SPiRIT", fEventHCArray, fIsPersistence);
 
