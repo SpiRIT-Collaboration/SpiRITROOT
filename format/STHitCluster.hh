@@ -38,9 +38,9 @@ class STHitCluster : public TObject
 
     Double_t Phi();
 
-    TVector3 GetPosition();
-    TVector3 GetPosSigma();
-    TMatrixD GetCovMatrix();
+    TVector3 GetPosition() const;
+    TVector3 GetPosSigma() const;
+    TMatrixD GetCovMatrix() const;
     Double_t GetCharge();
 
     Int_t GetNumHits();
@@ -63,7 +63,7 @@ class STHitCluster : public TObject
     void CalculatePhi(TVector3 hitPos, Double_t charge);
     void CalculateCovMatrix(TVector3 hitPos, Double_t charge);
 
-  ClassDef(STHitCluster, 2);
+  ClassDef(STHitCluster, 3);
 };
 
 #endif

@@ -63,9 +63,9 @@ void STHitCluster::SetCharge(Double_t charge)    { fCharge = charge; }
 
 Double_t STHitCluster::Phi()                     { return fPhi; } 
 
-TVector3 STHitCluster::GetPosition()             { return fPosition; }
-TVector3 STHitCluster::GetPosSigma()             { return fPosSigma; }
-TMatrixD STHitCluster::GetCovMatrix()            { return fCovMatrix; }
+TVector3 STHitCluster::GetPosition() const       { return fPosition; }
+TVector3 STHitCluster::GetPosSigma() const       { return fPosSigma; }
+TMatrixD STHitCluster::GetCovMatrix() const      { return fCovMatrix; }
 Double_t STHitCluster::GetCharge()               { return fCharge; }
 
 Int_t STHitCluster::GetNumHits()                 { return fHitIDArray.size(); }
