@@ -2,7 +2,6 @@
 
 set(INCLUDE_DIRECTORIES
 ${ROOT_INCLUDE_DIR} 
-${RAVE_INCLUDE_DIR}
 ${GENFIT2_INCLUDE_DIR}
 ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
@@ -28,7 +27,6 @@ include_directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
 
 set(LINK_DIRECTORIES
 ${ROOT_LIBRARY_DIR}
-${RAVE_LIBRARY_DIR}
 ${GENFIT2_LIBRARY_DIR}
 ${FAIRROOT_LIBRARY_DIR}
 ) 
@@ -80,6 +78,7 @@ STPSATask.cc
 STHitClusteringTask.cc
 STSMTask.cc
 STRiemannTrackingTask.cc
+STGenfitTask.cc
 STUnitTestTask.cc
 )
 

@@ -17,6 +17,10 @@
    along with GENFIT.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+Rearranged by: Genie Jhang (geniejhang@nuclear.korea.ac.kr, Korea University)
+*/
+
 #include "STSpacepointMeasurement.hh"
 
 ClassImp(genfit::STSpacepointMeasurement)
@@ -27,7 +31,7 @@ STSpacepointMeasurement::STSpacepointMeasurement()
 :SpacepointMeasurement()
 {}
 
-STSpacepointMeasurement::STSpacepointMeasurement(const STHit *detHit, const TrackCandHit *hit)
+STSpacepointMeasurement::STSpacepointMeasurement(const STHitCluster *detHit, const TrackCandHit *hit)
 :SpacepointMeasurement()
 {
   TVector3 pos = detHit -> GetPosition();

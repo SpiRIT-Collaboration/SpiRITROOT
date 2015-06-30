@@ -24,12 +24,12 @@
 #include "SpacepointMeasurement.h"
 #include "TrackCandHit.h"
 
-#include "STHit.hh"
+#include "STHitCluster.hh"
 
 namespace genfit {
 
 /** @brief Class for a spacepoint measurement which can be created
- *         from STHit via the MeasurementFactory.
+ *         from STHitCluster via the MeasurementFactory.
  *
  *  @author Johannes Rauch  (Technische Universit&auml;t M&uuml;nchen, original author)
  *  @author Genie Jhang (Korea University, modifier for S\piRITTPC)
@@ -37,7 +37,7 @@ namespace genfit {
 class STSpacepointMeasurement : public SpacepointMeasurement {
   public:
     STSpacepointMeasurement();
-    STSpacepointMeasurement(const STHit* detHit, const TrackCandHit* hit);
+    STSpacepointMeasurement(const STHitCluster* detHit, const TrackCandHit* hit);
 
     virtual AbsMeasurement* clone() const;
 
