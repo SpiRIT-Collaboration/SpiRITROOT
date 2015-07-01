@@ -22,10 +22,6 @@ class STClusterizerScan : public STClusterizer
     void SetParameters(Double_t *par);
 
     void SetPrimaryVertex(TVector3 vertex);
-    void SetYCut(Double_t yCut);
-    void SetYCutTbUnit(Double_t tbCut);
-    void SetPerpCut(Double_t perpCut);
-    void SetPerpCutPadUnit(Double_t xCut, Double_t zCut);
 
     void SetZCut(Double_t zCut);
     void SetZCutPadUnit(Double_t zCut);
