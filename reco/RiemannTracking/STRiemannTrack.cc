@@ -465,10 +465,13 @@ STRiemannTrack::FitAndSort() {
   // sort by z so that angle calculation in refit() is possible
   if (fDoSort) {
     // keep rough sorting!
+    /*
     if ((fHits.front()) -> GetZ() < (fHits.back()) -> GetZ())
       std::sort(fHits.begin(), fHits.end(), SortByZ());
     else
       std::sort(fHits.begin(), fHits.end(), SortByZInv());
+      */
+    std::sort(fHits.begin(), fHits.end(), SortByZ());
   }
 
   Refit(); // fit plane and dip

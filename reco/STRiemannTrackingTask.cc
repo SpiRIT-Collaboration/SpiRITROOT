@@ -331,8 +331,10 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   std::vector<STRiemannTrack *> riemannTemp; // temporary storage, reused for every sector
 
   // first loop over sectors
+  /*
   if (fClusterBuffer -> size() == 0)
     return;
+    */
 
   if (fVerbose)
     std::cout << "\n... building tracks from " << fClusterBuffer -> size() << " clusters" << std::endl;
@@ -352,8 +354,10 @@ STRiemannTrackingTask::Exec(Option_t *opt)
       std::cerr << " done - created " << fRiemannList.size() << " merged tracks" << std::endl;
   }
 
+  /*
   if (fClusterBuffer -> size() == 0)
     return;
+    */
 
   if (fVerbose)
     std::cerr << "\n... building tracks from " << fClusterBuffer -> size() << " clusters" << std::endl;
@@ -377,8 +381,10 @@ STRiemannTrackingTask::Exec(Option_t *opt)
       std::cerr << " done - created " << fRiemannList.size() << " merged tracks" <<std::endl;
   }
 
+  /*
   if (fClusterBuffer -> size() == 0)
     return;
+    */
 
   if (fVerbose)
     std::cerr << "\n... building tracks from " << fClusterBuffer -> size() << " clusters" << std::endl;

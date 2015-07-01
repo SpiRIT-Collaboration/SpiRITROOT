@@ -83,8 +83,8 @@ const TVector3 &STRiemannHit::GetX()             const        { return fX; }
       Double_t  STRiemannHit::GetAngleOnHelix()  const        { return fAngleOnHelix; }
       Double_t  STRiemannHit::GetRiemannScale()  const        { return fRiemannScale; }
 
-      Double_t  STRiemannHit::SetS(Double_t value)            { fS = value; }
-      Double_t  STRiemannHit::SetAngleOnHelix(Double_t value) { fAngleOnHelix = value; }
+      void      STRiemannHit::SetS(Double_t value)            { fS = value; }
+      void      STRiemannHit::SetAngleOnHelix(Double_t value) { fAngleOnHelix = value; }
 // --------------------------------------------------------------------------------------------
 
 Double_t

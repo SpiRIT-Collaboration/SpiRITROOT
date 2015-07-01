@@ -39,8 +39,8 @@ class STRiemannHit : public TObject
     Double_t GetRiemannScale() const;
     Double_t GetZ() const;
 
-    Double_t SetS(Double_t value);
-    Double_t SetAngleOnHelix(Double_t value);
+    void SetS(Double_t value);
+    void SetAngleOnHelix(Double_t value);
 
   private:
     void InitVariables(Double_t r, Double_t phi, Double_t riemannScale = 86.1);
