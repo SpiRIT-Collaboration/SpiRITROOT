@@ -11,8 +11,6 @@ STClusterizerScan::STClusterizerScan()
   fHitClusterArray = new std::vector<STHitCluster *>;
   fHitClusterArray -> reserve(100);
 
-  fYTb = fTBTime*fDriftVelocity/100.;
-
   fPrimaryVertex = TVector3(0., -213.3, -35.2);
 
   SetZCutPadUnit(0.5);
@@ -274,7 +272,7 @@ STClusterizerScan::Analyze(STEvent* eventH, STEvent* eventHC)
 Bool_t 
 STClusterizerScan::CorrelateHC(STHit* hit, STHitCluster* cluster)
 {
-  Double_t phi = cluster -> Phi();
+  Double_t phi = 0;
 
   Double_t xHit = (hit -> GetPosition()).X();
   Double_t yHit = (hit -> GetPosition()).Y();

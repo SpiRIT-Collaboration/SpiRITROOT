@@ -39,8 +39,6 @@ class STClusterizerScan : public STClusterizer
     std::vector<STHit *> *fHitArray;
     std::vector<STHitCluster *> *fHitClusterArray;
 
-    Double_t fYTb; // 1 timebucket length;
-
     TVector3 fPrimaryVertex; // primary vertex position
 
     /**
@@ -49,12 +47,8 @@ class STClusterizerScan : public STClusterizer
      */
     Bool_t CorrelateHC(STHit* hit, STHitCluster* cluster);
 
-    Double_t fZCut;
     Double_t fVerticalCut;
     Double_t fHorizontalCut;
-
-    Double_t fSigmaXCut;
-    Double_t fSigmaYCut;
 
     void AddClusterToEvent(STEvent* eventHC, STHitCluster* cluster);
 

@@ -13,6 +13,7 @@
 #include "STHitClusteringTask.hh"
 #include "STEvent.hh"
 #include "STClusterizerScan.hh"
+#include "STClusterizerScan2.hh"
 
 // FairROOT classes
 #include "FairRun.h"
@@ -36,6 +37,9 @@ STHitClusteringTask::STHitClusteringTask()
   fIsPersistence = kFALSE;
 
   fEventHCArray = new TClonesArray("STEvent");
+
+  fXCut = -1;
+  fSigmaXCut = -1;
 }
 
 STHitClusteringTask::~STHitClusteringTask()
@@ -45,7 +49,18 @@ STHitClusteringTask::~STHitClusteringTask()
 void STHitClusteringTask::SetPersistence(Bool_t value)   { fIsPersistence = value; }
 void STHitClusteringTask::SetVerbose(Int_t value)        { fVerbose = value; }
 void STHitClusteringTask::SetClusterizerMode(Int_t mode) { fClusterizerMode = mode; }
-void STHitClusteringTask::SetParameters(Double_t *par)   { fClusterizerPar = par; }
+void STHitClusteringTask::SetProximityCut(Double_t x, Double_t y, Double_t z)
+{
+  fXCut = x;
+  fYCut = y;
+  fZCut = z;
+}
+void STHitClusteringTask::SetSigmaCut(Double_t x, Double_t y, Double_t z)
+{
+  fSigmaXCut = x;
+  fSigmaYCut = y;
+  fSigmaZCut = z;
+}
 
 STClusterizer* STHitClusteringTask::GetClusterizer() { return fClusterizer; }
 
@@ -73,8 +88,19 @@ STHitClusteringTask::Init()
     fClusterizer = new STClusterizerScan();
   }
 
+  else if (fClusterizerMode == 2) {
+    fLogger -> Info(MESSAGE_ORIGIN, "Use STClusterizerScan2!");
+
+    fClusterizer = new STClusterizerScan2();
+  }
+
   if (fClusterizer)
-    fClusterizer -> SetParameters(fClusterizerPar);
+  {
+    if (fXCut != -1)
+      fClusterizer -> SetProximityCut(fXCut, fYCut, fZCut);
+    if (fSigmaXCut != -1)
+      fClusterizer -> SetSigmaCut(fSigmaXCut, fSigmaYCut, fSigmaZCut);
+  }
 
   ioMan -> Register("STEventHC", "SPiRIT", fEventHCArray, fIsPersistence);
 

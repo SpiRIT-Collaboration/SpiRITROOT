@@ -47,29 +47,34 @@ class STHitClusteringTask : public FairTask
 
     STClusterizer* GetClusterizer();
     void SetClusterizerMode(Int_t mode);
-    void SetParameters(Double_t *par);
+
+    void SetProximityCut(Double_t x, Double_t y, Double_t z);
+    void SetSigmaCut(Double_t x, Double_t y, Double_t z);
 
   private:
     FairLogger *fLogger;           //!< FairLogger singleton
-
     Int_t fVerbose;                //!< Verbosity level
-
     STDigiPar *fPar;               //!< STDigiPar singleton
-
     Bool_t fIsPersistence;         //!< Persistancy setter
 
-    STClusterizer *fClusterizer;  //!< Clusterizer pointer
     /**
      * Clusterizer Mode
      * - 0 : No Clusterizing
      * - 1 : STClusterizerScan
+     * - 2 : STClusterizerScan2
      */
     Int_t fClusterizerMode;
+    STClusterizer *fClusterizer;  //!< Clusterizer pointer
+
+    Double_t fXCut;
+    Double_t fYCut;
+    Double_t fZCut;
+    Double_t fSigmaXCut;
+    Double_t fSigmaYCut;
+    Double_t fSigmaZCut;
 
     Double_t fDriftLength;         //!< DriftLength parameter defined in ST.parameters.par [cm/ns]
     Int_t fYDivider;               //!< Space divider along y direction
-
-    Double_t *fClusterizerPar;
 
     TClonesArray *fEventHArray;    //!< Array that is containing events having only hits
     TClonesArray *fEventHCArray;   //!< Array that will contain events having hits and hit clusters

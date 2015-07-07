@@ -28,7 +28,9 @@ class STClusterizer
     virtual ~STClusterizer();
 
     virtual void Analyze(STEvent* eventH, STEvent* eventHC) = 0;
-    virtual void SetParameters(Double_t *par) = 0;
+
+    void SetProximityCut(Double_t x, Double_t y, Double_t z);
+    void SetSigmaCut(Double_t x, Double_t y, Double_t z);
 
   protected:
     FairLogger *fLogger;      //!< logger
@@ -44,6 +46,16 @@ class STClusterizer
     Int_t fTBTime;            //!< time duration of a time bucket in ns
     Double_t fDriftVelocity;  //!< drift velocity of electron in cm/us
     Double_t fMaxDriftLength; //!< maximum drift length in mm
+
+    Double_t fYTb;            //!< 1 timebucket length;
+
+    Double_t fXCut;
+    Double_t fYCut;
+    Double_t fZCut;
+    Double_t fSigmaXCut;
+    Double_t fSigmaYCut;
+    Double_t fSigmaZCut;
+
 
   ClassDef(STClusterizer, 1)
 };

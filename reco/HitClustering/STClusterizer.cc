@@ -34,6 +34,21 @@ STClusterizer::STClusterizer()
   fTBTime = fPar -> GetTBTime();
   fDriftVelocity = fPar -> GetDriftVelocity();
   fMaxDriftLength = fPar -> GetDriftLength();
+
+  fYTb = fTBTime*fDriftVelocity/100.;
+}
+
+void STClusterizer::SetProximityCut(Double_t x, Double_t y, Double_t z)
+{
+  fXCut = x;
+  fYCut = y;
+  fZCut = z;
+}
+void STClusterizer::SetSigmaCut(Double_t x, Double_t y, Double_t z)
+{
+  fSigmaXCut = x;
+  fSigmaYCut = y;
+  fSigmaZCut = z;
 }
 
 STClusterizer::~STClusterizer()

@@ -57,6 +57,7 @@ PulseShapeAnalyzer/STPSALayerOPTICS.cc
 
 HitClustering/STClusterizer.cc
 HitClustering/STClusterizerScan.cc
+HitClustering/STClusterizerScan2.cc
 
 SystemManipulator/STSystemManipulator.cc
 
