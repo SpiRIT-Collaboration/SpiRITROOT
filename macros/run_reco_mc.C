@@ -28,18 +28,10 @@ void run_reco_mc(TString tag = "test", Int_t threshold = 1)
 
   STHitClusteringTask *hcTask = new STHitClusteringTask();
   hcTask -> SetPersistence();
-  hcTask -> SetClusterizerMode(1);
+  hcTask -> SetClusterizerMode(2);
   hcTask -> SetVerbose(2);
-  /** 
-   * i-th par: explanation
-   * 0: z-reach cut in z-padsize unit
-   * 1: x-reach cut in x-padsize unit
-   * 2: y-reach cut in timebucket unit
-   * 3: x-sigma cut in x-padsize unit
-   * 4: y-sigma cut in timebucket unit
-   */
-  Double_t par[5] = {1.5, 4.5, 2.5, 1.8, 1};
-  hcTask -> SetParameters(par);
+  //hcTask -> SetProximityCut(...);
+  //hcTask -> SetSigmaCut(...);
   run -> AddTask(hcTask);
 
   STSMTask* smTask = new STSMTask();
@@ -48,7 +40,7 @@ void run_reco_mc(TString tag = "test", Int_t threshold = 1)
   run -> AddTask(smTask);
 
   STRiemannTrackingTask* rmTask = new STRiemannTrackingTask();
-  rmTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ,0);
+  rmTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortR,0);
   rmTask -> SetPersistence();
   //rmTask -> SetVerbose(kTRUE);
   rmTask -> SetMergeTracks(kTRUE);
@@ -59,5 +51,4 @@ void run_reco_mc(TString tag = "test", Int_t threshold = 1)
   run->Init();
 
   run->Run(0, 0);
-  //run->Run(0, 0);
 }
