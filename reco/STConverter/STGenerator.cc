@@ -19,7 +19,6 @@
 #include "TSystem.h"
 #include "TFile.h"
 #include "TTree.h"
-#include "TSpectrum.h"
 #include "TH1D.h"
 #include "TGraphErrors.h"
 #include "TF1.h"
@@ -490,15 +489,21 @@ STGenerator::GenerateGainCalibrationData()
   Int_t numVoltages = fVoltageArray.size();
 
   Int_t iRow, iLayer;
-  Double_t constant, slope;
+  // Normal linear fit
+  Double_t constantPol1, slopePol1;
+  // Fit with exponent as a variable. Exponent is stored in exponent.
+  Double_t constantExp, slopeExp, exponent;
   
   TFile *outFile = new TFile(fOutputFile, "recreate");
   
   TTree *outTree = new TTree("GainCalibrationData", "Gain Calibration Data Tree");
   outTree -> Branch("padRow", &iRow, "padRow/I");
   outTree -> Branch("padLayer", &iLayer, "padLayer/I");
-  outTree -> Branch("constant", &constant, "constant/D");
-  outTree -> Branch("slope", &slope, "slope/D");
+  outTree -> Branch("constantPol1", &constantPol1, "constantPol1/D");
+  outTree -> Branch("slopePol1", &slopePol1, "slopePol1/D");
+  outTree -> Branch("constantExp", &constantExp, "constantExp/D");
+  outTree -> Branch("slopeExp", &slopeExp, "slopeExp/D");
+  outTree -> Branch("exponent", &exponent, "exponent/D");
 
   TH1D ****padHist = new TH1D***[fRows];
   for (iRow = 0; iRow < fRows; iRow++) {
@@ -510,10 +515,6 @@ STGenerator::GenerateGainCalibrationData()
       }
     }
   }
-
-  TSpectrum *peakFinder = new TSpectrum(5);
-  Float_t *adcTemp = new Float_t[fNumTbs];
-  Float_t *dummy = new Float_t[fNumTbs];
 
   fCore -> SetNoAutoReload();
 
@@ -531,34 +532,19 @@ STGenerator::GenerateGainCalibrationData()
         STPad *pad = event -> GetPad(iPad);
         Double_t *adc = pad -> GetADC();
 
-        for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-          adcTemp[iTb] = adc[iTb];
-
         Int_t row = pad -> GetRow();
         Int_t layer = pad -> GetLayer();
 
-        Int_t numPeaks = peakFinder -> SearchHighRes(adcTemp, dummy, fNumTbs, 4.7, 90, kFALSE, 3, kTRUE, 3);
-
-        if (numPeaks != 1)
-          cout << row << " " << layer << " " << numPeaks << " " << (Int_t)ceil((peakFinder -> GetPositionX())[0]) << " " << adc[(Int_t)ceil((peakFinder -> GetPositionX())[0])] << endl;
-        Double_t max = adc[(Int_t)ceil((peakFinder -> GetPositionX())[0])];
+        Double_t max = -10;
+        for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+          if (adc[iTb] > max)
+            max = adc[iTb];
+        }
 
         padHist[row][layer][iVoltage] -> Fill(max);
       }
 
       cout << "Done voltage: " << fVoltageArray.at(iVoltage) << " event: " << event -> GetEventID() << endl;
-    }
-  }
-
-  // C: Constant(0), S: Slope(1) 
-  Double_t ***fCS = new Double_t**[fRows];
-  for (iRow = 0; iRow < fRows; iRow++) {
-    fCS[iRow] = new Double_t*[fLayers];
-    for (iLayer = 0; iLayer < fLayers; iLayer++) {
-      fCS[iRow][iLayer] = new Double_t[2];
-
-      fCS[iRow][iLayer][0] = 0;
-      fCS[iRow][iLayer][1] = 0;
     }
   }
 
@@ -568,6 +554,9 @@ STGenerator::GenerateGainCalibrationData()
 
   Double_t *means = new Double_t[numVoltages];
   Double_t *sigmas = new Double_t[numVoltages];
+
+  TF1 *expoFit = new TF1("expoFit", "[0]*pow(x, [1])+[2]", 0, 6);
+  expoFit -> SetParameters(600., 1., 5.);
 
   for (iRow = 0; iRow < fRows; iRow++) {
     for (iLayer = 0; iLayer < fLayers; iLayer++) {
@@ -583,17 +572,8 @@ STGenerator::GenerateGainCalibrationData()
           break;
         }
 
-        TSpectrum spectrum;
-        spectrum.Search(thisHist, 30, "goff", 0.7);
-        Double_t min = (spectrum.GetPositionX())[0] - 80; 
-        Double_t max = (spectrum.GetPositionX())[0] + 80; 
-
-        thisHist -> Fit("gaus", "0Q", "", min, max);
-        if (!(thisHist -> GetFunction("gaus")))
-          continue;
-
-        means[iVoltage] = ((TF1 *) thisHist -> GetFunction("gaus")) -> GetParameter(1);
-        sigmas[iVoltage] = ((TF1 *) thisHist -> GetFunction("gaus")) -> GetParameter(2);
+        means[iVoltage] = thisHist -> GetMean();
+        sigmas[iVoltage] = thisHist -> GetRMS();
       }
 
       if (empty)
@@ -606,14 +586,28 @@ STGenerator::GenerateGainCalibrationData()
         aPad -> SetName(Form("pad_%d_%d", iRow, iLayer));
         aPad -> Fit("pol1", "0Q");
 
-        fCS[iRow][iLayer][0] = ((TF1 *) aPad -> GetFunction("pol1")) -> GetParameter(0);
-        fCS[iRow][iLayer][1] = ((TF1 *) aPad -> GetFunction("pol1")) -> GetParameter(1);
+        constantPol1 = ((TF1 *) aPad -> GetFunction("pol1")) -> GetParameter(0);
+        slopePol1 = ((TF1 *) aPad -> GetFunction("pol1")) -> GetParameter(1);
+
+        aPad -> Fit(expoFit, "0Q+");
+        slopeExp = expoFit -> GetParameter(0);
+        exponent = expoFit -> GetParameter(1);
+        constantExp = expoFit -> GetParameter(2);
 
         isFail = kFALSE;
         aPad -> Write();
+
+        outTree -> Fill();
       } else {
         TGraphErrors aPad(numVoltages, voltages, means, 0, sigmas);
-        aPad.LeastSquareLinearFit(numVoltages, fCS[iRow][iLayer][0], fCS[iRow][iLayer][1], isFail);
+        aPad.LeastSquareLinearFit(numVoltages, constantPol1, slopePol1, isFail);
+
+        aPad.Fit(expoFit, "0QN");
+        slopeExp = expoFit -> GetParameter(0);
+        exponent = expoFit -> GetParameter(1);
+        constantExp = expoFit -> GetParameter(2);
+
+        outTree -> Fill();
       }
 
       if (isFail) {
@@ -626,17 +620,6 @@ STGenerator::GenerateGainCalibrationData()
 
   delete means;
   delete sigmas;
-
-  cout << "== Creating gain calibration data: " << fOutputFile << endl;
-
-  for (iRow = 0; iRow < fRows; iRow++) {
-    for (iLayer = 0; iLayer < fLayers; iLayer++) {
-      constant = fCS[iRow][iLayer][0];
-      slope = fCS[iRow][iLayer][1];
-
-      outTree -> Fill();
-    }
-  }
 
   if (!fIsPersistence)
     delete padHist;
