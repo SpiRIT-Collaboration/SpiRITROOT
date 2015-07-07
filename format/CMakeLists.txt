@@ -26,6 +26,7 @@ STPad.cc
 STEvent.cc
 STHit.cc
 STHitCluster.cc
+STHitClusterRich.cc
 STDriftedElectron.cc
 )
 

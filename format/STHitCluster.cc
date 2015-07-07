@@ -23,8 +23,6 @@ STHitCluster::STHitCluster()
   fPosition = TVector3(0, 0, -1000);
   fPosSigma = TVector3(0., 0., 0.);
 
-  fPhi = 0;
-
   fCovMatrix.ResizeTo(3, 3);
   for (Int_t iElem = 0; iElem < 9; iElem++)
     fCovMatrix(iElem/3, iElem%3) = 0;
@@ -38,8 +36,6 @@ STHitCluster::STHitCluster(STHitCluster *cluster)
 
   fPosition = cluster -> GetPosition();
   fPosSigma = cluster -> GetPosSigma();
-
-  fPhi = cluster -> Phi();
 
   fCovMatrix.ResizeTo(3, 3);
   fCovMatrix = cluster -> GetCovMatrix();
@@ -61,8 +57,6 @@ void STHitCluster::SetPosSigma(TVector3 vector)  { fPosSigma = vector; }
 void STHitCluster::SetCovMatrix(TMatrixD matrix) { fCovMatrix = matrix; } 
 void STHitCluster::SetCharge(Double_t charge)    { fCharge = charge; } 
 
-Double_t STHitCluster::Phi()                     { return fPhi; } 
-
 TVector3 STHitCluster::GetPosition() const       { return fPosition; }
 TVector3 STHitCluster::GetPosSigma() const       { return fPosSigma; }
 TMatrixD STHitCluster::GetCovMatrix() const      { return fCovMatrix; }
@@ -75,9 +69,6 @@ void STHitCluster::AddHit(STHit *hit)
 {
   TVector3 hitPos = hit -> GetPosition();
   Double_t charge = hit -> GetCharge();
-
-  if (GetNumHits() > 0)
-    CalculatePhi(hitPos, charge);
 
   CalculatePosition(hitPos, charge);
 
@@ -99,28 +90,6 @@ void STHitCluster::CalculatePosition(TVector3 hitPos, Double_t charge)
 
   for (Int_t iPos = 0; iPos < 3; iPos++)
     fPosition[iPos] += charge*(hitPos[iPos] - fPosition[iPos])/(fCharge + charge);
-}
-
-void STHitCluster::CalculatePhi(TVector3 hitPos, Double_t charge)
-{
-  if(TMath::Abs(hitPos.Z() - fPosition.Z()) > 10) 
-    return;
-
-  if(TMath::Abs(hitPos.X() - fPosition.X()) < 1) 
-    return;
-
-  Double_t phi = TMath::ATan2(hitPos.Y() - fPosition.Y(),hitPos.X() - fPosition.X());
-
-  if (phi > TMath::Pi()/2.)
-    phi -= TMath::Pi();
-
-  if (phi < -TMath::Pi()/2.)
-    phi += TMath::Pi();
-
-  if (phi > TMath::Pi()/4. || phi < -TMath::Pi()/4.)
-    return;
-
-  fPhi += charge*(phi - fPhi)/(fCharge + charge);
 }
 
 void STHitCluster::CalculateCovMatrix(TVector3 hitPos, Double_t charge)

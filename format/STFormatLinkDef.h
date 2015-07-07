@@ -10,6 +10,7 @@
 #pragma link C++ class STEvent+;
 #pragma link C++ class STHit+;
 #pragma link C++ class STHitCluster+;
+#pragma link C++ class STHitClusterRich+;
 #pragma link C++ class STDriftedElectron+;
 
 #endif

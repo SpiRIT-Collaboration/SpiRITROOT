@@ -36,8 +36,6 @@ class STHitCluster : public TObject
     void SetCovMatrix(TMatrixD matrix);
     void SetCharge(Double_t charge);
 
-    Double_t Phi();
-
     TVector3 GetPosition() const;
     TVector3 GetPosSigma() const;
     TMatrixD GetCovMatrix() const;
@@ -46,24 +44,21 @@ class STHitCluster : public TObject
     Int_t GetNumHits();
     vector<Int_t> *GetHitIDs();
 
-    void AddHit(STHit *hit);
+    virtual void AddHit(STHit *hit);
 
-  private:
+  protected:
     Int_t fClusterID;     ///< Cluster ID
     TVector3 fPosition;   ///< Cluster position
     TVector3 fPosSigma;   ///< Cluster position uncertainty
     TMatrixD fCovMatrix;  ///< Cluster covariance matrix
     Double_t fCharge;     ///< Cluster Charge
 
-    Double_t fPhi;        ///< Cluster angle phi
-
     vector<Int_t> fHitIDArray;
 
     void CalculatePosition(TVector3 hitPos, Double_t charge);
-    void CalculatePhi(TVector3 hitPos, Double_t charge);
     void CalculateCovMatrix(TVector3 hitPos, Double_t charge);
 
-  ClassDef(STHitCluster, 3);
+  ClassDef(STHitCluster, 4);
 };
 
 #endif
