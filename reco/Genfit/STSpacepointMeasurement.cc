@@ -48,6 +48,8 @@ STSpacepointMeasurement::STSpacepointMeasurement(const STHitCluster *detHit, con
   rawHitCov_ = cov;
   detId_ = hit -> getDetId();
   hitId_ = hit -> getHitId();
+
+  this -> initG();
 }
 
 AbsMeasurement *STSpacepointMeasurement::clone() const
