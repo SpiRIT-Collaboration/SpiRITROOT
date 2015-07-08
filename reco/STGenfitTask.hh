@@ -18,7 +18,7 @@
 // SPiRITROOT classes
 #include "STDigiPar.hh"
 #include "STHitCluster.hh"
-#include "STSpacePointMeasurement.hh"
+#include "STSpacepointMeasurement.hh"
 
 // GENFIT2 classes
 #include "AbsKalmanFitter.h"
@@ -51,11 +51,11 @@ class STGenfitTask : public FairTask {
 
     STDigiPar *fPar;
     
-    TClonesArray *fGFTrackArray;
+    TClonesArray *fTrackArray;
+    TClonesArray *fVertexArray;
     TClonesArray *fRiemannTrackArray;
     TClonesArray *fHitClusterArray;
-
-    Bool_t fIsPersistence;
+    TClonesArray *fEventArray;
 
     Int_t fTPCDetID;
 

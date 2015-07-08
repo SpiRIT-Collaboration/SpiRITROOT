@@ -10,6 +10,7 @@
 //-----------------------------------------------------------
 
 // SPiRITROOT classes
+#include "STEvent.hh"
 #include "STGenfitTask.hh"
 #include "STRiemannTrack.hh"
 #include "STRiemannHit.hh"
@@ -31,6 +32,9 @@
 // ROOT classes
 #include "TMatrixDSym.h"
 #include "TMatrixD.h"
+#include "TMath.h"
+
+#define DEBUG
 
 ClassImp(STGenfitTask);
 
@@ -39,11 +43,11 @@ STGenfitTask::STGenfitTask()
   fLogger = FairLogger::GetLogger();
   fPar = NULL;
 
-  fIsPersistence = kFALSE;
-  
-  fGFTrackArray = new TClonesArray("GENFIT TRACK ARRAY WILL BE HERE");
+  fTrackArray = new TClonesArray("genfit::Track");
+  fVertexArray = new TClonesArray("genfit::GFRaveVertex");
   fRiemannTrackArray = NULL;
   fHitClusterArray = new TClonesArray("STHitCluster");
+  fEventArray = new TClonesArray("STEvent");
 
   fTPCDetID = 0;
 
@@ -76,7 +80,13 @@ STGenfitTask::Init()
     return kERROR;
   }
 
-  ioMan -> Register("STGenfitTrack", "SPiRIT", fGFTrackArray, fIsPersistence);
+  fEventArray = (TClonesArray *) ioMan -> GetObject("STEventHC");
+  if (fEventArray == 0) {
+    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEvent array!");
+    return kERROR;
+  }
+
+  ioMan -> Register("STTrack", "SPiRIT", fTrackArray, fInputPersistance);
 
   // GENFIT initialization
   fFitter = new genfit::KalmanFitterRefTrack();
@@ -85,6 +95,8 @@ STGenfitTask::Init()
   if (fIsFindVertex == kTRUE) {
     fVertexFactory = new genfit::GFRaveVertexFactory(/* verbosity */ 2, /* useVacuumPropagator */ kFALSE);
     fVertexFactory -> setMethod("kalman-smoothing:1");
+
+    ioMan -> Register("STVertex", "SPiRIT", fVertexArray, fInputPersistance);
   }
 
   genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.)); // 0.5 T = 5 kGauss
@@ -112,7 +124,10 @@ STGenfitTask::SetParContainers()
 void
 STGenfitTask::Exec(Option_t *opt)
 {
-  fGFTrackArray -> Delete();
+#ifdef DEBUG
+  fLogger -> Info(MESSAGE_ORIGIN, "Start STGenfitTask!");
+#endif
+  fTrackArray -> Delete();
 
   if (fRiemannTrackArray -> GetEntriesFast() == 0)
     return;
@@ -125,9 +140,17 @@ STGenfitTask::Exec(Option_t *opt)
   TVector3 posSeed;
   TMatrixDSym covSeed(6);
 
+  STEvent *event = (STEvent *) fEventArray -> At(0);
+
   Int_t numTrackCand = fRiemannTrackArray -> GetEntriesFast();
   for (Int_t iTrackCand = 0; iTrackCand < numTrackCand; iTrackCand++) {
+
+#ifdef DEBUG
+  fLogger -> Info(MESSAGE_ORIGIN, Form("Track Candidate: %d/%d!", iTrackCand, numTrackCand));
+#endif
+
     STRiemannTrack *riemannTrack = (STRiemannTrack *) fRiemannTrackArray -> At(iTrackCand);
+    if (!(riemannTrack -> IsFitted())) continue;
 
     fHitClusterArray -> Delete();
     genfit::TrackCand trackCand;
@@ -135,47 +158,59 @@ STGenfitTask::Exec(Option_t *opt)
     UInt_t numHits = riemannTrack -> GetNumHits();
 
     // First hit position is used as starting position of the initial track
-    STRiemannHit *hit = riemannTrack -> GetHit(0);
-    posSeed = hit -> GetCluster() -> GetPosition();
+    STRiemannHit *hit = riemannTrack -> GetFirstHit();
+    STHitCluster *cluster = event -> GetCluster(hit -> GetCluster() -> GetClusterID());
+    posSeed = cluster -> GetPosition();
+    posSeed.SetMag(posSeed.Mag()/10.);
 
     // First hit covariance matrix is used as covariance matrix seed of the initial track
-    TMatrixD covMatrix = hit -> GetCluster() -> GetCovMatrix();
+    TMatrixD covMatrix = cluster -> GetCovMatrix();
     for (Int_t iComp = 0; iComp < 3; iComp++)
-      covSeed(iComp, iComp) = covMatrix(iComp, iComp);
+      covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
     for (Int_t iComp = 3; iComp < 6; iComp++)
-      covSeed(iComp, iComp) = covMatrix(iComp - 3, iComp - 3)/(numHits*numHits)/3.;
+      covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3)/(numHits*numHits)/3.;
 
-    for (UInt_t iHit = 1; iHit < numHits; iHit++) {
+    for (UInt_t iHit = 0; iHit < numHits; iHit++) {
       hit = riemannTrack -> GetHit(iHit);
+      cluster = event -> GetCluster(hit -> GetCluster() -> GetClusterID());
 
-      new ((*fHitClusterArray)[iHit]) STHitCluster(*(hit -> GetCluster()));
+      new ((*fHitClusterArray)[iHit]) STHitCluster(*(cluster));
       trackCand.addHit(fTPCDetID, iHit);
     }
 
     Double_t dip = riemannTrack -> GetDip();
-    Double_t momSeedMag = riemannTrack -> GetMom(5.);
+    Double_t momSeedMag = riemannTrack -> GetMom(5.)*1000.;
     TVector3 momSeed(0., 0., momSeedMag);
-    momSeed.SetTheta(dip);
-    momSeed.SetXYZ(momSeed.Y(), momSeed.Z(), momSeed.X());
+    momSeed.SetTheta(TMath::Pi()/2. - dip);
 
     trackCand.setPosMomSeedAndPdgCode(posSeed, momSeed, 2212);
     trackCand.setCovSeed(covSeed);
 
+    posSeed.Print();
+    momSeed.Print();
+    covSeed.Print();
+
     genfit::Track trackFit(trackCand, fMeasurementFactory, new genfit::RKTrackRep(2212));
-    try{
+    try {
       fFitter -> processTrack(&trackFit);
-    }
-    catch (genfit::Exception &e){
+    } catch (genfit::Exception &e) {
       std::cerr << e.what();
       std::cerr << "Exception, next track" << std::endl;
       continue;
     }
-    
+
     tracks.push_back(&trackFit);
+    new ((*fTrackArray)[iTrackCand]) genfit::Track(trackFit);
   }
 
   vector<genfit::GFRaveVertex *> vertices;
   if (fIsFindVertex == kTRUE) {
     fVertexFactory -> findVertices(&vertices, tracks);
+
+    for (UInt_t iVert = 0; iVert < vertices.size(); iVert++) {
+      genfit::GFRaveVertex* vtx = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
+
+      new ((*fVertexArray)[iVert]) genfit::GFRaveVertex(*vtx);
+    }
   }
 }
