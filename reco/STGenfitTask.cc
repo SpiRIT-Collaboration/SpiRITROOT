@@ -33,8 +33,9 @@
 #include "TMatrixDSym.h"
 #include "TMatrixD.h"
 #include "TMath.h"
+#include "TGeoManager.h"
 
-#define DEBUG
+//#define DEBUG
 
 ClassImp(STGenfitTask);
 
@@ -99,6 +100,9 @@ STGenfitTask::Init()
     ioMan -> Register("STVertex", "SPiRIT", fVertexArray, fInputPersistance);
   }
 
+  new TGeoManager("Genfit Geom", "");
+  TGeoManager::Import("../geometry/geomSPiRIT_gf.root");
+
   genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.)); // 0.5 T = 5 kGauss
   genfit::MaterialEffects::getInstance() -> init(new genfit::TGeoMaterialInterface());
 
@@ -152,7 +156,7 @@ STGenfitTask::Exec(Option_t *opt)
     STRiemannTrack *riemannTrack = (STRiemannTrack *) fRiemannTrackArray -> At(iTrackCand);
     if (!(riemannTrack -> IsFitted())) continue;
 
-    fHitClusterArray -> Delete();
+    fHitClusterArray -> Clear();
     genfit::TrackCand trackCand;
 
     UInt_t numHits = riemannTrack -> GetNumHits();
@@ -174,7 +178,7 @@ STGenfitTask::Exec(Option_t *opt)
       hit = riemannTrack -> GetHit(iHit);
       cluster = event -> GetCluster(hit -> GetCluster() -> GetClusterID());
 
-      new ((*fHitClusterArray)[iHit]) STHitCluster(*(cluster));
+      new ((*fHitClusterArray)[iHit]) STHitCluster(*cluster);
       trackCand.addHit(fTPCDetID, iHit);
     }
 
@@ -185,10 +189,6 @@ STGenfitTask::Exec(Option_t *opt)
 
     trackCand.setPosMomSeedAndPdgCode(posSeed, momSeed, 2212);
     trackCand.setCovSeed(covSeed);
-
-    posSeed.Print();
-    momSeed.Print();
-    covSeed.Print();
 
     genfit::Track trackFit(trackCand, fMeasurementFactory, new genfit::RKTrackRep(2212));
     try {
