@@ -27,7 +27,8 @@ void run_reco()
 //  STDigiPar *digiPar = (STDigiPar *) rtdb -> getContainer("STDigiPar");
 
   STDecoderTask *decoderTask = new STDecoderTask();
-  decoderTask -> AddData("Sr90_veto_20140919_820events.graw");
+  //decoderTask -> AddData("Sr90_veto_20140919_820events.graw");
+  decoderTask -> AddData("/Users/ejungwoo/data/run_0334.dat");
   decoderTask -> SetFPNPedestal();
   decoderTask -> SetOldData(kTRUE);
 //  decoderTask -> SetPedestal("../../../cosmic_RIKEN_20140715/CoBo_AsAd0-2014-07-11T18-56-57.670_0000.graw.root");
@@ -43,18 +44,8 @@ void run_reco()
 
   STHitClusteringTask *hcTask = new STHitClusteringTask();
   hcTask -> SetPersistence();
-  hcTask -> SetClusterizerMode(1);
+  hcTask -> SetClusterizerMode(2);
   hcTask -> SetVerbose(2);
-  /** 
-   * i-th par: explanation
-   * 0: z-reach cut in z-padsize unit
-   * 1: x-reach cut in x-padsize unit
-   * 2: y-reach cut in timebucket unit
-   * 3: x-sigma cut in x-padsize unit
-   * 4: y-sigma cut in timebucket unit
-   */
-  Double_t par[5] = {1.5, 4.5, 2.5, 1.8, 1};
-  hcTask -> SetParameters(par);
   run -> AddTask(hcTask);
 
   STSMTask* smTask = new STSMTask();
@@ -68,11 +59,11 @@ void run_reco()
   //rmTask -> SetVerbose(kTRUE);
   rmTask -> SetTrkFinderParameters(40, 10, 3, 1.0); //rmTask -> SetTrkFinderParameters(proxcut, helixcut, minpointsforfit, zStretch);
   rmTask -> SetTrkMergerParameters(40, 50, 40, 40); //rmTask -> SetTrkMergerParameters(TTproxcut, TTdipcut, TThelixcut, TTplanecut); 
-  rmTask -> SetMergeTracks(kTRUE);
+  //rmTask -> SetMergeTracks(kTRUE);
   run -> AddTask(rmTask);
 
   run->Init();
 
-  run->Run(249, 250);
-//  run->Run(0, 194);
+  run->Run(0, 10);
+  //run->Run(0, 194);
 }
