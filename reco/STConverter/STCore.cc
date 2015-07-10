@@ -185,7 +185,7 @@ Bool_t STCore::SetGainCalibrationData(TString filename, TString dataType)
   return fIsGainCalibrationData;
 }
 
-void STCore::SetGainBase(Int_t row, Int_t layer)
+void STCore::SetGainReference(Int_t row, Int_t layer)
 {
   if (!fIsGainCalibrationData) {
     std::cout << "== [STCore] Set gain calibration data first!" << std::endl;
@@ -193,10 +193,10 @@ void STCore::SetGainBase(Int_t row, Int_t layer)
     return;
   }
 
-  fGainCalibrationPtr -> SetGainBase(row, layer);
+  fGainCalibrationPtr -> SetGainReference(row, layer);
 }
 
-void STCore::SetGainBase(Double_t constant, Double_t slope)
+void STCore::SetGainReference(Double_t constant, Double_t slope, Double_t exponent)
 {
   if (!fIsGainCalibrationData) {
     std::cout << "== [STCore] Set gain calibration data first!" << std::endl;
@@ -204,7 +204,7 @@ void STCore::SetGainBase(Double_t constant, Double_t slope)
     return;
   }
 
-  fGainCalibrationPtr -> SetGainBase(constant, slope);
+  fGainCalibrationPtr -> SetGainReference(constant, slope, exponent);
 }
 
 Bool_t STCore::SetSignalDelayData(TString filename)

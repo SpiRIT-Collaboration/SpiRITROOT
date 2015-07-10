@@ -45,8 +45,8 @@ class STCore : public TObject {
     void SetFPNPedestal(Double_t sigmaThreshold = 5);
 
     Bool_t SetGainCalibrationData(TString filename, TString dataType = "f");
-    void SetGainBase(Int_t row, Int_t layer);
-    void SetGainBase(Double_t constant, Double_t slope);
+    void SetGainReference(Int_t row, Int_t layer);
+    void SetGainReference(Double_t constant, Double_t slope, Double_t exponent = 1.);
 
     Bool_t SetSignalDelayData(TString filename);
 

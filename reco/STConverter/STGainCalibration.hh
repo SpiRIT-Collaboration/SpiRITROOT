@@ -30,8 +30,8 @@ class STGainCalibration : public TObject {
     Bool_t SetGainCalibrationData(TString gainCalibrationData, TString dataType);
 
     Bool_t IsSetGainCalibrationData();
-    void SetGainBase(Int_t row, Int_t layer);
-    void SetGainBase(Double_t constant, Double_t slope);
+    void SetGainReference(Int_t row, Int_t layer);
+    void SetGainReference(Double_t constant, Double_t slope, Double_t exponent = 1.);
     Bool_t CalibrateADC(Int_t padRow, Int_t padLayer, Int_t numTbs, Double_t *adc);
 
   private:
@@ -40,19 +40,23 @@ class STGainCalibration : public TObject {
 
     Bool_t fIsSetGainCalibrationData;
 
-    Double_t fConstant[108][112];
-    Double_t fSlope[108][112];
+    Double_t fConstantPol1[108][112];
+    Double_t fSlopePol1[108][112];
+    Double_t fConstantExp[108][112];
+    Double_t fSlopeExp[108][112];
+    Double_t fExponent[108][112];
 
-    Double_t fBaseConstant;
-    Double_t fBaseSlope;
+    Double_t fReferenceConstant;
+    Double_t fReferenceSlope;
+    Double_t fReferenceExponent;
 
     TString fDataType;
 
     TGraphErrors *fGraph[108][112];
     TGraphErrors *fGraphR[108][112];
 
-    Int_t fBaseRow;
-    Int_t fBaseLayer;
+    Int_t fReferenceRow;
+    Int_t fReferenceLayer;
 
   ClassDef(STGainCalibration, 1);
 };
