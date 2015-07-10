@@ -33,15 +33,13 @@ void STGainCalibration::Initialize()
   fOpenFile = NULL;
   fGainCalibrationTree = NULL;
   fReferenceConstant = -9999;
-  fReferenceSlope = -9999;
-  fReferenceExponent = 1.;
+  fReferenceLinear = -9999;
+  fReferenceQuadratic = 0.;
   fIsSetGainCalibrationData = kFALSE;
 
-  memset(fConstantPol1, 0, sizeof(Double_t)*108*112);
-  memset(fSlopePol1, 0, sizeof(Double_t)*108*112);
-  memset(fConstantExp, 0, sizeof(Double_t)*108*112);
-  memset(fSlopeExp, 0, sizeof(Double_t)*108*112);
-  memset(fExponent, 0, sizeof(Double_t)*108*112);
+  memset(fConstant, 0, sizeof(Double_t)*108*112);
+  memset(fLinear, 0, sizeof(Double_t)*108*112);
+  memset(fQuadratic, 0, sizeof(Double_t)*108*112);
 
   fDataType = "f";
 
@@ -63,29 +61,23 @@ Bool_t STGainCalibration::SetGainCalibrationData(TString gainCalibrationData, TS
     if (fDataType.EqualTo("f")) {
       Int_t padRow = -2; 
       Int_t padLayer = -2; 
-      Double_t constantPol1 = -9999; 
-      Double_t slopePol1 = -9999;
-      Double_t constantExp = -9999; 
-      Double_t slopeExp = -9999;
-      Double_t exponent = 1.;
+      Double_t constant = -9999; 
+      Double_t linear = -9999;
+      Double_t quadratic = 0;
       fGainCalibrationTree = (TTree *) fOpenFile -> Get("GainCalibrationData");
       fGainCalibrationTree -> SetBranchAddress("padRow", &padRow);
       fGainCalibrationTree -> SetBranchAddress("padLayer", &padLayer);
-      fGainCalibrationTree -> SetBranchAddress("constantPol1", &constantPol1);
-      fGainCalibrationTree -> SetBranchAddress("slopePol1", &slopePol1);
-      fGainCalibrationTree -> SetBranchAddress("constantExp", &constantExp);
-      fGainCalibrationTree -> SetBranchAddress("slopeExp", &slopeExp);
-      fGainCalibrationTree -> SetBranchAddress("exponent", &exponent);
+      fGainCalibrationTree -> SetBranchAddress("constant", &constant);
+      fGainCalibrationTree -> SetBranchAddress("linear", &linear);
+      fGainCalibrationTree -> SetBranchAddress("quadratic", &quadratic);
 
       Int_t numEntries = fGainCalibrationTree -> GetEntries();
       for (Int_t iEntry = 0; iEntry < numEntries; iEntry++) {
         fGainCalibrationTree -> GetEntry(iEntry);
         
-        fConstantPol1[padRow][padLayer] = constantPol1;
-        fSlopePol1[padRow][padLayer] = slopePol1;
-        fConstantExp[padRow][padLayer] = constantExp;
-        fSlopeExp[padRow][padLayer] = slopeExp;
-        fExponent[padRow][padLayer] = exponent;
+        fConstant[padRow][padLayer] = constant;
+        fLinear[padRow][padLayer] = linear;
+        fQuadratic[padRow][padLayer] = quadratic;
       }
 
       delete fOpenFile;
@@ -116,11 +108,11 @@ void STGainCalibration::SetGainReference(Int_t row, Int_t layer)
   fReferenceLayer = layer;
 }
 
-void STGainCalibration::SetGainReference(Double_t constant, Double_t slope, Double_t exponent)
+void STGainCalibration::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)
 {
   fReferenceConstant = constant;
-  fReferenceSlope = slope;
-  fReferenceExponent = exponent;
+  fReferenceLinear = linear;
+  fReferenceQuadratic = quadratic;
 }
 
 Bool_t STGainCalibration::IsSetGainCalibrationData()
@@ -133,7 +125,7 @@ Bool_t STGainCalibration::CalibrateADC(Int_t padRow, Int_t padLayer, Int_t numTb
     std::cerr << "[STGainCalibration] Gain calibration data is not set!" << std::endl;
 
     return kFALSE;
-  } else if ((fDataType.EqualTo("f") && (fReferenceConstant == -9999 || fReferenceSlope == -9999)) &&
+  } else if ((fDataType.EqualTo("f") && (fReferenceConstant == -9999 || fReferenceLinear == -9999)) &&
              (fDataType.EqualTo("nf") && (fReferenceRow == -9999 || fReferenceLayer == -9999))) {
     std::cerr << "[STGainCalibration] Gain calibration base is not set!" << std::endl;
 
@@ -141,14 +133,15 @@ Bool_t STGainCalibration::CalibrateADC(Int_t padRow, Int_t padLayer, Int_t numTb
   }
 
   if (fDataType.EqualTo("f")) {
-    if (fReferenceExponent == 1.) {
+    if (fReferenceQuadratic == 0.) {
       for (Int_t iTb = 0; iTb < numTbs; iTb++) {
-        Double_t newAdc = ((adc[iTb] - fConstantPol1[padRow][padLayer])/fSlopePol1[padRow][padLayer])*fReferenceSlope + fReferenceConstant;
+        Double_t newAdc = ((adc[iTb] - fConstant[padRow][padLayer])/fLinear[padRow][padLayer])*fReferenceLinear + fReferenceConstant;
         adc[iTb] = newAdc;
       }
     } else {
       for (Int_t iTb = 0; iTb < numTbs; iTb++) {
-        Double_t newAdc = pow((adc[iTb] - fConstantExp[padRow][padLayer])/fSlopeExp[padRow][padLayer], fReferenceExponent/fExponent[padRow][padLayer])*fReferenceSlope + fReferenceConstant;
+        Double_t voltage = (-fLinear[padRow][padLayer]+sqrt(fLinear[padRow][padLayer]*fLinear[padRow][padLayer] - 4*fQuadratic[padRow][padLayer]*(fConstant[padRow][padLayer] - adc[iTb])))/(2.*fQuadratic[padRow][padLayer]);
+        Double_t newAdc = fReferenceConstant + fReferenceLinear*voltage + fReferenceQuadratic*voltage*voltage;
         adc[iTb] = newAdc;
       }
     }
