@@ -64,9 +64,9 @@ STGainCheck::SetUAIndex(Int_t uaIdx)
 }
 
 void
-STGainCheck::SetGainReference(Double_t constant, Double_t slope)
+STGainCheck::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)
 {
-  fCore -> SetGainReference(constant, slope);
+  fCore -> SetGainReference(constant, linear, quadratic);
 }
 
 void
@@ -144,10 +144,6 @@ STGainCheck::DrawSpectra()
 
   fSpectra -> Reset();
 
-  TSpectrum *peakFinder = new TSpectrum(5);
-  Float_t *adcTemp = new Float_t[fNumTbs];
-  Float_t *dummy = new Float_t[fNumTbs];
-
   fCore -> SetNoAutoReload();
 
   Int_t numVoltages = fCore -> GetNumData();
@@ -173,14 +169,11 @@ STGainCheck::DrawSpectra()
 
         Double_t *adc = pad -> GetADC();
 
-        for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-          adcTemp[iTb] = adc[iTb];
-
-        Int_t numPeaks = peakFinder -> SearchHighRes(adcTemp, dummy, fNumTbs, 4.7, 90, kFALSE, 3, kTRUE, 3);
-
-        if (numPeaks != 1)
-          cout << row << " " << layer << " " << numPeaks << " " << (Int_t)ceil((peakFinder -> GetPositionX())[0]) << " " << adc[(Int_t)ceil((peakFinder -> GetPositionX())[0])] << endl;
-        Double_t max = adc[(Int_t)ceil((peakFinder -> GetPositionX())[0])];
+        Double_t max = -10;
+        for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+          if (adc[iTb] > max)
+            max = adc[iTb];
+        }
 
         Int_t padIdx = GetPadIndex(row, layer);
 

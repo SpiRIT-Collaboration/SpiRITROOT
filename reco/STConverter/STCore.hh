@@ -46,7 +46,7 @@ class STCore : public TObject {
 
     Bool_t SetGainCalibrationData(TString filename, TString dataType = "f");
     void SetGainReference(Int_t row, Int_t layer);
-    void SetGainReference(Double_t constant, Double_t slope, Double_t exponent = 1.);
+    void SetGainReference(Double_t constant, Double_t linear, Double_t quadratic = 0.);
 
     Bool_t SetSignalDelayData(TString filename);
 

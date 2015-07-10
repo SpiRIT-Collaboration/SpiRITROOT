@@ -196,7 +196,7 @@ void STCore::SetGainReference(Int_t row, Int_t layer)
   fGainCalibrationPtr -> SetGainReference(row, layer);
 }
 
-void STCore::SetGainReference(Double_t constant, Double_t slope, Double_t exponent)
+void STCore::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)
 {
   if (!fIsGainCalibrationData) {
     std::cout << "== [STCore] Set gain calibration data first!" << std::endl;
@@ -204,7 +204,7 @@ void STCore::SetGainReference(Double_t constant, Double_t slope, Double_t expone
     return;
   }
 
-  fGainCalibrationPtr -> SetGainReference(constant, slope, exponent);
+  fGainCalibrationPtr -> SetGainReference(constant, linear, quadratic);
 }
 
 Bool_t STCore::SetSignalDelayData(TString filename)
