@@ -64,15 +64,15 @@ STGainCheck::SetUAIndex(Int_t uaIdx)
 }
 
 void
-STGainCheck::SetGainBase(Double_t constant, Double_t slope)
+STGainCheck::SetGainReference(Double_t constant, Double_t slope)
 {
-  fCore -> SetGainBase(constant, slope);
+  fCore -> SetGainReference(constant, slope);
 }
 
 void
-STGainCheck::SetGainBase(Int_t row, Int_t layer)
+STGainCheck::SetGainReference(Int_t row, Int_t layer)
 {
-  fCore -> SetGainBase(row, layer);
+  fCore -> SetGainReference(row, layer);
 }
 
 void

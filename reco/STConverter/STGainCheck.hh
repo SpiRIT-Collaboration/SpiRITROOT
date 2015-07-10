@@ -28,8 +28,8 @@ class STGainCheck : public TObject
     ~STGainCheck();
 
     void SetUAIndex(Int_t uaIdx);
-    void SetGainBase(Double_t constant, Double_t slope);
-    void SetGainBase(Int_t row, Int_t layer);
+    void SetGainReference(Double_t constant, Double_t slope);
+    void SetGainReference(Int_t row, Int_t layer);
     Bool_t AddPulserData(TString filename);
     void SetInternalPedestal(Int_t startTb, Int_t numTbs);
     void SetFPNPedestal(Double_t sigmaThreshold = 5);
