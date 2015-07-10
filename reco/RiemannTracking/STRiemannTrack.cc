@@ -467,11 +467,11 @@ STRiemannTrack::FitAndSort() {
     // keep rough sorting!
     /*
     if ((fHits.front()) -> GetZ() < (fHits.back()) -> GetZ())
-      std::sort(fHits.begin(), fHits.end(), SortByZ());
+      std::sort(fHits.begin(), fHits.end(), SortByX());
     else
-      std::sort(fHits.begin(), fHits.end(), SortByZInv());
+      std::sort(fHits.begin(), fHits.end(), SortByXInv());
       */
-    std::sort(fHits.begin(), fHits.end(), SortByZ());
+    std::sort(fHits.begin(), fHits.end(), SortByX());
   }
 
   Refit(); // fit plane and dip

@@ -159,16 +159,16 @@ class STRiemannTrack : public TObject
   ClassDef(STRiemannTrack, 1);
 };
 
-class SortByZ {
+class SortByX {
   public:
-    SortByZ() {}
-    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetZ() < hit2 -> GetZ()); }
+    SortByX() {}
+    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetCluster() -> GetPosition().X() < hit2 -> GetCluster() -> GetPosition().X()); }
 };
 
-class SortByZInv {
+class SortByXInv {
   public:
-    SortByZInv() {}
-    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetZ() > hit2 -> GetZ()); }
+    SortByXInv() {}
+    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetCluster() -> GetPosition().X() > hit2 -> GetCluster() -> GetPosition().X()); }
 };
 
 class SortByAngle {
