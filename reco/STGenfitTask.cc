@@ -100,8 +100,10 @@ STGenfitTask::Init()
     ioMan -> Register("STVertex", "SPiRIT", fVertexArray, fInputPersistance);
   }
 
-  new TGeoManager("Genfit Geom", "");
-  TGeoManager::Import("../geometry/geomSPiRIT_gf.root");
+  fMeasurementProducer = new genfit::MeasurementProducer<STHitCluster, genfit::STSpacepointMeasurement>(fHitClusterArray);
+
+  fMeasurementFactory = new genfit::MeasurementFactory<genfit::AbsMeasurement>();
+  fMeasurementFactory -> addProducer(fTPCDetID, fMeasurementProducer); // detector ID of TPC is 0
 
   genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.)); // 0.5 T = 5 kGauss
   genfit::MaterialEffects::getInstance() -> init(new genfit::TGeoMaterialInterface());
@@ -136,10 +138,6 @@ STGenfitTask::Exec(Option_t *opt)
   if (fRiemannTrackArray -> GetEntriesFast() == 0)
     return;
 
-  genfit::MeasurementFactory<genfit::AbsMeasurement> fMeasurementFactory;
-  genfit::MeasurementProducer<STHitCluster, genfit::STSpacepointMeasurement> fMeasurementProducer(fHitClusterArray);
-  fMeasurementFactory.addProducer(fTPCDetID, &fMeasurementProducer); // detector ID of TPC is 0
-
   vector<genfit::Track *> tracks;
   TVector3 posSeed;
   TMatrixDSym covSeed(6);
@@ -150,7 +148,7 @@ STGenfitTask::Exec(Option_t *opt)
   for (Int_t iTrackCand = 0; iTrackCand < numTrackCand; iTrackCand++) {
 
 #ifdef DEBUG
-  fLogger -> Info(MESSAGE_ORIGIN, Form("Track Candidate: %d/%d!", iTrackCand, numTrackCand));
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Track Candidate: %d/%d!", iTrackCand, numTrackCand));
 #endif
 
     STRiemannTrack *riemannTrack = (STRiemannTrack *) fRiemannTrackArray -> At(iTrackCand);
@@ -190,7 +188,7 @@ STGenfitTask::Exec(Option_t *opt)
     trackCand.setPosMomSeedAndPdgCode(posSeed, momSeed, 2212);
     trackCand.setCovSeed(covSeed);
 
-    genfit::Track trackFit(trackCand, fMeasurementFactory, new genfit::RKTrackRep(2212));
+    genfit::Track trackFit(trackCand, *fMeasurementFactory, new genfit::RKTrackRep(2212));
     try {
       fFitter -> processTrack(&trackFit);
     } catch (genfit::Exception &e) {

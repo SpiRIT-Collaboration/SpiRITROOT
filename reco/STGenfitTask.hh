@@ -59,6 +59,9 @@ class STGenfitTask : public FairTask {
 
     Int_t fTPCDetID;
 
+    genfit::MeasurementProducer<STHitCluster, genfit::STSpacepointMeasurement> *fMeasurementProducer;
+    genfit::MeasurementFactory<genfit::AbsMeasurement> *fMeasurementFactory;
+
     Int_t fMaxIterations;
     genfit::AbsKalmanFitter *fFitter;
 
