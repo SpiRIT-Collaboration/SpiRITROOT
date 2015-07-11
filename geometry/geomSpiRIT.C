@@ -26,10 +26,8 @@
  * TODO : check overlabs
 */
 
-void geomSPiRIT()
+void geomSpiRIT()
 {
-  new TGeoManager("SPiRIT","The SPiRIT Geometry");
-
   // ----------------------------------------------------
   //  Dimensions (cm)
   // ----------------------------------------------------
@@ -59,12 +57,38 @@ void geomSPiRIT()
   // ----------------------------------------------------
   //  Mediums
   // ----------------------------------------------------
-  TGeoMedium *vacuum    = new TGeoMedium("vacuum"   ,1, new TGeoMaterial("vacuum"));
-  TGeoMedium *p10       = new TGeoMedium("p10"      ,1, new TGeoMaterial("p10"));
-  TGeoMedium *kapton    = new TGeoMedium("kapton"   ,1, new TGeoMaterial("kapton"));
-  TGeoMedium *pcb       = new TGeoMedium("pcb"      ,1, new TGeoMaterial("pcb"));
-  TGeoMedium *aluminium = new TGeoMedium("aluminium",1, new TGeoMaterial("aluminium"));
-  TGeoMedium *copper    = new TGeoMedium("copper"   ,1, new TGeoMaterial("copper"));
+  FairGeoLoader *geoLoader = new FairGeoLoader("TGeo", "FairGeoLoader");
+  FairGeoInterface *geoIF = geoLoader -> getGeoInterface();
+  geoIF -> setMediaFile("media.geo");
+  geoIF -> readMedia();
+
+  FairGeoMedia *media = geoIF -> getMedia();
+  FairGeoBuilder *geoBuilder = geoLoader -> getGeoBuilder();
+  
+  FairGeoMedium *FGMvacuum = media -> getMedium("vacuum");
+  FairGeoMedium *FGMp10 = media -> getMedium("p10");
+  FairGeoMedium *FGMkapton = media -> getMedium("kapton");
+  FairGeoMedium *FGMpcb = media -> getMedium("pcb");
+  FairGeoMedium *FGMaluminium = media -> getMedium("aluminium");
+  FairGeoMedium *FGMcopper = media -> getMedium("copper");
+
+  geoBuilder -> createMedium(FGMvacuum);
+  geoBuilder -> createMedium(FGMp10);
+  geoBuilder -> createMedium(FGMkapton);
+  geoBuilder -> createMedium(FGMpcb);
+  geoBuilder -> createMedium(FGMaluminium);
+  geoBuilder -> createMedium(FGMcopper);
+  
+  gGeoManager = (TGeoManager *) gROOT -> FindObject("FAIRGeom");
+  gGeoManager -> SetName("SpiRIT");
+
+  TGeoMedium *vacuum = gGeoManager -> GetMedium("vacuum");
+  TGeoMedium *p10 = gGeoManager -> GetMedium("p10");
+  TGeoMedium *kapton = gGeoManager -> GetMedium("kapton");
+  TGeoMedium *pcb = gGeoManager -> GetMedium("pcb");
+  TGeoMedium *aluminium = gGeoManager -> GetMedium("aluminium");
+  TGeoMedium *copper = gGeoManager -> GetMedium("copper");
+  
 
   // ----------------------------------------------------
   //  TOP
@@ -742,7 +766,7 @@ void geomSPiRIT()
   // ----------------------------------------------------
   //  Visual Attributes 
   // ----------------------------------------------------
-  Int_t transparency = 80;
+  Int_t transparency = 70;
   Int_t transparencyActive = 70 + transparency; if(transparencyActive>100) transparencyActive = 100;
   Int_t transparencyWindow = 50 + transparency; if(transparencyWindow>100) transparencyWindow = 100;
   Int_t transparencyWire   = 50 + transparency; if(transparencyWire  >100) transparencyWire   = 100;
@@ -788,10 +812,12 @@ void geomSPiRIT()
   //top->Draw("ogl");
 
   TString dir = gSystem->Getenv("VMCWORKDIR");
-  TString geoFileName = dir + "/geometry/geomSPiRIT.root";
+//  TString geoFileName = dir + "/geometry/geomSPiRIT.root";
+  TString geoFileName = dir + "/geometry/geomSPiRIT_test.root";
 
   cout << geoFileName << endl;
   TFile *geoFile = new TFile(geoFileName,"recreate"); 
   top -> Write(); 
+//  gGeoManager -> Write();
   geoFile -> Close(); 
 }
