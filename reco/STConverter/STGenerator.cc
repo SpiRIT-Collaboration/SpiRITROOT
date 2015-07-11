@@ -489,21 +489,17 @@ STGenerator::GenerateGainCalibrationData()
   Int_t numVoltages = fVoltageArray.size();
 
   Int_t iRow, iLayer;
-  // Normal linear fit
-  Double_t constantPol1, slopePol1;
-  // Fit with exponent as a variable. Exponent is stored in exponent.
-  Double_t constantExp, slopeExp, exponent;
+  // Quadratic fit
+  Double_t constant, linear, quadratic;
   
   TFile *outFile = new TFile(fOutputFile, "recreate");
   
   TTree *outTree = new TTree("GainCalibrationData", "Gain Calibration Data Tree");
-  outTree -> Branch("padRow", &iRow, "padRow/I");
-  outTree -> Branch("padLayer", &iLayer, "padLayer/I");
-  outTree -> Branch("constantPol1", &constantPol1, "constantPol1/D");
-  outTree -> Branch("slopePol1", &slopePol1, "slopePol1/D");
-  outTree -> Branch("constantExp", &constantExp, "constantExp/D");
-  outTree -> Branch("slopeExp", &slopeExp, "slopeExp/D");
-  outTree -> Branch("exponent", &exponent, "exponent/D");
+  outTree -> Branch("padRow", &iRow);
+  outTree -> Branch("padLayer", &iLayer);
+  outTree -> Branch("constant", &constant);
+  outTree -> Branch("linear", &linear);
+  outTree -> Branch("quadratic", &quadratic);
 
   TH1D ****padHist = new TH1D***[fRows];
   for (iRow = 0; iRow < fRows; iRow++) {
@@ -555,9 +551,6 @@ STGenerator::GenerateGainCalibrationData()
   Double_t *means = new Double_t[numVoltages];
   Double_t *sigmas = new Double_t[numVoltages];
 
-  TF1 *expoFit = new TF1("expoFit", "[0]*pow(x, [1])+[2]", 0, 6);
-  expoFit -> SetParameters(600., 1., 5.);
-
   for (iRow = 0; iRow < fRows; iRow++) {
     for (iLayer = 0; iLayer < fLayers; iLayer++) {
       Bool_t empty = kFALSE;
@@ -584,15 +577,11 @@ STGenerator::GenerateGainCalibrationData()
       if (fIsPersistence) {
         TGraphErrors *aPad = new TGraphErrors(numVoltages, voltages, means, 0, sigmas);
         aPad -> SetName(Form("pad_%d_%d", iRow, iLayer));
-        aPad -> Fit("pol1", "0Q");
+        aPad -> Fit("pol2", "0Q");
 
-        constantPol1 = ((TF1 *) aPad -> GetFunction("pol1")) -> GetParameter(0);
-        slopePol1 = ((TF1 *) aPad -> GetFunction("pol1")) -> GetParameter(1);
-
-        aPad -> Fit(expoFit, "0Q+");
-        slopeExp = expoFit -> GetParameter(0);
-        exponent = expoFit -> GetParameter(1);
-        constantExp = expoFit -> GetParameter(2);
+        constant = ((TF1 *) aPad -> GetFunction("pol2")) -> GetParameter(0);
+        linear = ((TF1 *) aPad -> GetFunction("pol2")) -> GetParameter(1);
+        quadratic = ((TF1 *) aPad -> GetFunction("pol2")) -> GetParameter(2);
 
         isFail = kFALSE;
         aPad -> Write();
@@ -600,12 +589,11 @@ STGenerator::GenerateGainCalibrationData()
         outTree -> Fill();
       } else {
         TGraphErrors aPad(numVoltages, voltages, means, 0, sigmas);
-        aPad.LeastSquareLinearFit(numVoltages, constantPol1, slopePol1, isFail);
+        aPad.Fit("pol2", "0Q");
 
-        aPad.Fit(expoFit, "0QN");
-        slopeExp = expoFit -> GetParameter(0);
-        exponent = expoFit -> GetParameter(1);
-        constantExp = expoFit -> GetParameter(2);
+        constant = ((TF1 *) aPad.GetFunction("pol2")) -> GetParameter(0);
+        linear = ((TF1 *) aPad.GetFunction("pol2")) -> GetParameter(1);
+        quadratic = ((TF1 *) aPad.GetFunction("pol2")) -> GetParameter(2);
 
         outTree -> Fill();
       }
