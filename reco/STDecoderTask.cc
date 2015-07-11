@@ -37,7 +37,8 @@ STDecoderTask::STDecoderTask()
 
   fGainCalibrationFile = "";
   fGainConstant = -9999;
-  fGainSlope = -9999;
+  fGainLinear = -9999;
+  fGainQuadratic = 0;
 
   fSignalDelayFile = "";
 
@@ -53,17 +54,17 @@ STDecoderTask::~STDecoderTask()
 {
 }
 
-void STDecoderTask::SetPersistence(Bool_t value)                           { fIsPersistence = value; }
-void STDecoderTask::SetNumTbs(Int_t numTbs)                                { fNumTbs = numTbs; }
-void STDecoderTask::AddData(TString filename)                              { fDataList.push_back(filename); }
-void STDecoderTask::SetData(Int_t value)                                   { fDataNum = value; }
-void STDecoderTask::SetInternalPedestal(Int_t startTb, Int_t averageTbs)   { fUseInternalPedestal = kTRUE; fStartTb = startTb; fAverageTbs = averageTbs; } 
-void STDecoderTask::SetFPNPedestal()                                       { fUseFPNPedestal = kTRUE; fUseInternalPedestal = kFALSE; fPedestalFile = ""; }
-void STDecoderTask::SetPedestalData(TString filename, Double_t rmsFactor)  { fPedestalFile = filename; fPedestalRMSFactor = rmsFactor; }
-void STDecoderTask::SetGainCalibrationData(TString filename)               { fGainCalibrationFile = filename; }
-void STDecoderTask::SetGainBase(Double_t constant, Double_t slope)         { fGainConstant = constant; fGainSlope = slope; }
-void STDecoderTask::SetSignalDelayData(TString filename)                   { fSignalDelayFile = filename; }
-void STDecoderTask::SetOldData(Bool_t oldData)                             { fOldData = oldData; }
+void STDecoderTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }
+void STDecoderTask::SetNumTbs(Int_t numTbs)                                                   { fNumTbs = numTbs; }
+void STDecoderTask::AddData(TString filename)                                                 { fDataList.push_back(filename); }
+void STDecoderTask::SetData(Int_t value)                                                      { fDataNum = value; }
+void STDecoderTask::SetInternalPedestal(Int_t startTb, Int_t averageTbs)                      { fUseInternalPedestal = kTRUE; fStartTb = startTb; fAverageTbs = averageTbs; } 
+void STDecoderTask::SetFPNPedestal()                                                          { fUseFPNPedestal = kTRUE; fUseInternalPedestal = kFALSE; fPedestalFile = ""; }
+void STDecoderTask::SetPedestalData(TString filename, Double_t rmsFactor)                     { fPedestalFile = filename; fPedestalRMSFactor = rmsFactor; }
+void STDecoderTask::SetGainCalibrationData(TString filename)                                  { fGainCalibrationFile = filename; }
+void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)  { fGainConstant = constant; fGainLinear = linear; fGainQuadratic = quadratic; }
+void STDecoderTask::SetSignalDelayData(TString filename)                                      { fSignalDelayFile = filename; }
+void STDecoderTask::SetOldData(Bool_t oldData)                                                { fOldData = oldData; }
 
 InitStatus
 STDecoderTask::Init()
@@ -113,13 +114,13 @@ STDecoderTask::Init()
       return kERROR;
     }
 
-    if (fGainConstant == -9999 || fGainSlope == -9999) {
+    if (fGainConstant == -9999 || fGainLinear == -9999) {
       fLogger -> Error(MESSAGE_ORIGIN, "Cannot find gain calibration data file!");
 
       return kERROR;
     }
 
-    fDecoder -> SetGainBase(fGainConstant, fGainSlope);
+    fDecoder -> SetGainReference(fGainConstant, fGainLinear, fGainQuadratic);
     fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set!");
   }
 

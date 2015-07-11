@@ -61,8 +61,8 @@ class STDecoderTask : public FairTask {
     void SetFPNPedestal();
     /// Setting gain calibration data file. If not set, gain is not calibrated.
     void SetGainCalibrationData(TString filename);
-    /// Setting gain calibration base.
-    void SetGainBase(Double_t constant, Double_t slope);
+    /// Setting gain calibration reference.
+    void SetGainReference(Double_t constant, Double_t linear, Double_t quadratic = 0.);
     /// Setting signal delay data file. If not set, signal is not delayed.
     void SetSignalDelayData(TString filename);
     /// Setting to decode old data file
@@ -94,8 +94,9 @@ class STDecoderTask : public FairTask {
     Bool_t fUseFPNPedestal;       /// Flas for using FPN channel as pedestal
 
     TString fGainCalibrationFile; /// Gain calibration data file name
-    Double_t fGainConstant;       /// Gain calibration base constant
-    Double_t fGainSlope;          /// Gain calibration base slope
+    Double_t fGainConstant;       /// Gain calibration reference constant
+    Double_t fGainLinear;         /// Gain calibration reference coefficient of linear term
+    Double_t fGainQuadratic;      /// Gain calibration reference coefficient of quadratic term
 
     TString fSignalDelayFile;     /// Signal Delay data file name
     Int_t fNumTbs;                /// The number of time buckets
