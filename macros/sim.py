@@ -36,7 +36,7 @@ for imode in modeList :
 
 
 print
-print "======== SPiRIT Simulation Macro ========"
+print "======== SpiRIT Simulation Macro ========"
 print 
 print "Tag name :", name
 print "Run mode :", mode
@@ -55,21 +55,21 @@ if not runFlag :
 
 
 
-dirSPiRIT = os.environ["VMCWORKDIR"]
-dirGeom   = dirSPiRIT + "/geometry/"
-dirConf   = dirSPiRIT + "/gconfig/"
+dirSpiRIT = os.environ["VMCWORKDIR"]
+dirGeom   = dirSpiRIT + "/geometry/"
+dirConf   = dirSpiRIT + "/gconfig/"
 os.environ["GEOMPATH"] = dirGeom
 os.environ["CONFIG_DIR"] = dirConf
 
-pathGeomSPiRIT      = dirGeom + "geomSPiRIT.root"
-pathGeomSPiRITMacro = dirGeom + "geomSPiRIT.C"
-existGeom = os.path.exists(pathGeomSPiRIT)
-print "Checking SPiRIT geometry file ..." , existGeom
+pathGeomSpiRIT      = dirGeom + "geomSpiRIT.root"
+pathGeomSpiRITMacro = dirGeom + "geomSpiRIT.C"
+existGeom = os.path.exists(pathGeomSpiRIT)
+print "Checking SpiRIT geometry file ..." , existGeom
 if not existGeom : 
   print "  Creating geometry file ..."
-  print "  Running macro file :" , pathGeomSPiRITMacro
+  print "  Running macro file :" , pathGeomSpiRITMacro
   print
-  os.system("root -q -l " + pathGeomSPiRITMacro)
+  os.system("root -q -l " + pathGeomSpiRITMacro)
   print
 
 existData = os.path.exists("data")
