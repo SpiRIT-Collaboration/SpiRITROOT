@@ -42,6 +42,13 @@ Bool_t STMap::GetRowNLayer(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t ch
   }
 
   Int_t UAIdx = GetUAIdx(coboIdx, asadIdx);
+  if (UAIdx == -1) {
+    padLayer = -2;
+    padRow = -2;
+
+    return kFALSE;
+  }
+
   if (UAIdx%100 < 6) {
     padRow = (UAIdx%100)*9 + fPadRowOfCh[chIdx];
     padLayer = (UAIdx/100)*28 + (3 - agetIdx)*7 + fPadLayerOfCh[chIdx];
@@ -49,6 +56,7 @@ Bool_t STMap::GetRowNLayer(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t ch
     padRow = (UAIdx%100)*9 + (8 - fPadRowOfCh[chIdx]); 
     padLayer = (UAIdx/100)*28 + agetIdx*7 + (6 - fPadLayerOfCh[chIdx]);
   }
+
 
   return kTRUE;
 }
@@ -166,8 +174,6 @@ Bool_t STMap::SetAGETMap(TString filename)
 Int_t STMap::GetUAIdx(Int_t coboIdx, Int_t asadIdx)
 {
   return fUAMap[coboIdx][asadIdx];
-
-  return -1;
 }
 
 Int_t STMap::GetCoboIdx(Int_t uaIdx)
