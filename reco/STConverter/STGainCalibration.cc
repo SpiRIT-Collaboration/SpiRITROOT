@@ -135,14 +135,14 @@ Bool_t STGainCalibration::CalibrateADC(Int_t padRow, Int_t padLayer, Int_t numTb
   if (fDataType.EqualTo("f")) {
     if (fReferenceQuadratic == 0.) {
       for (Int_t iTb = 0; iTb < numTbs; iTb++) {
-        Bool_t sign = -(((Int_t)std::signbit(adc[iTb])) - 0.5)*2;
+        Int_t sign = -(((Int_t)std::signbit(adc[iTb])) - 0.5)*2;
         adc[iTb] = sign*adc[iTb];
         Double_t newAdc = ((adc[iTb] - fConstant[padRow][padLayer])/fLinear[padRow][padLayer])*fReferenceLinear + fReferenceConstant;
         adc[iTb] = sign*newAdc;
       }
     } else {
       for (Int_t iTb = 0; iTb < numTbs; iTb++) {
-        Bool_t sign = -(((Int_t)std::signbit(adc[iTb])) - 0.5)*2;
+        Int_t sign = -(((Int_t)std::signbit(adc[iTb])) - 0.5)*2;
         adc[iTb] = sign*adc[iTb];
         Double_t voltage = (-fLinear[padRow][padLayer]+sqrt(fLinear[padRow][padLayer]*fLinear[padRow][padLayer] - 4*fQuadratic[padRow][padLayer]*(fConstant[padRow][padLayer] - adc[iTb])))/(2.*fQuadratic[padRow][padLayer]);
         Double_t newAdc = fReferenceConstant + fReferenceLinear*voltage + fReferenceQuadratic*voltage*voltage;
