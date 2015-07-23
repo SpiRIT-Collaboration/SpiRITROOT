@@ -49,6 +49,8 @@ STEventDrawTask::STEventDrawTask()
   fEventManager(0),
   fEventManagerEditor(0),
   fThreshold(0),
+  fRangeMin(0),
+  fRangeMax(0),
   fHitSet(0),
   fHitColor(kPink),
   fHitSize(1),
@@ -176,6 +178,7 @@ STEventDrawTask::DrawHitPoints()
   {
     STHit hit = event -> GetHitArray() -> at(iHit);
     if(hit.GetCharge()<fThreshold) continue;
+    if(hit.GetCharge()<fRangeMin||hit.GetCharge()>fRangeMax) continue;
     TVector3 position = hit.GetPosition();
     fHitSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
     fHitSet -> SetPointId(new TNamed(Form("Hit %d",iHit),""));
@@ -211,6 +214,7 @@ STEventDrawTask::DrawHitClusterPoints()
   {
     STHitCluster cluster = event -> GetClusterArray() -> at(iCluster);
     if(cluster.GetCharge()<fThreshold) continue;
+    if(cluster.GetCharge()<fRangeMin||cluster.GetCharge()>fRangeMax) continue;
     TVector3 position = cluster.GetPosition();
     TVector3 sigma = cluster.GetPosSigma();
     fHitClusterSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);

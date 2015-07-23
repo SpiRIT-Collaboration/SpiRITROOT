@@ -46,6 +46,7 @@ class STEventDrawTask : public FairTask
 
     void Set2DPlotRange(Int_t uaIdx);
     void SetThreshold(Int_t val) { fThreshold=val; }
+    void SetRange(Double_t min, Double_t max) { fRangeMin = min; fRangeMax = max; }
 
     void SetHitAttributes(Color_t, Size_t, Style_t);
     void SetHitClusterAttributes(Color_t, Size_t, Style_t);
@@ -103,6 +104,8 @@ class STEventDrawTask : public FairTask
     STEventManagerEditor* fEventManagerEditor;
 
     Int_t fThreshold;
+    Double_t fRangeMin;
+    Double_t fRangeMax;
 
     TEvePointSet* fHitSet;
     Color_t fHitColor;
