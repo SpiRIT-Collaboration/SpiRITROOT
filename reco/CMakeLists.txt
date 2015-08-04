@@ -43,7 +43,6 @@ GETDecoder/GETPlot.cc
 STConverter/STCore.cc
 STConverter/STPedestal.cc
 STConverter/STGainCalibration.cc
-STConverter/STSignalDelay.cc
 STConverter/STGenerator.cc
 STConverter/STGainCheck.cc
 STConverter/STMap.cc

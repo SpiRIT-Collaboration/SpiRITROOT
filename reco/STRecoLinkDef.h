@@ -14,7 +14,6 @@
 #pragma link C++ class STMapTest+;
 #pragma link C++ class STPedestal+;
 #pragma link C++ class STGainCalibration+;
-#pragma link C++ class STSignalDelay+;
 #pragma link C++ class STGenerator+;
 #pragma link C++ class STGainCheck+;
 
