@@ -30,7 +30,7 @@ STClusterizer::STClusterizer()
   fPadRows = fPar -> GetPadRows();
   fPadLayers = fPar -> GetPadLayers();
 
-  fNumTbs = fPar -> GetNumTbs();
+  fNumTbs = fPar -> GetWindowNumTbs();
   fTBTime = fPar -> GetTBTime();
   fDriftVelocity = fPar -> GetDriftVelocity();
   fMaxDriftLength = fPar -> GetDriftLength();
