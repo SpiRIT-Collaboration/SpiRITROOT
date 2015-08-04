@@ -18,7 +18,6 @@
 #include "STMap.hh"
 #include "STPedestal.hh"
 #include "STGainCalibration.hh"
-#include "STSignalDelay.hh"
 #include "GETDecoder.hh"
 #include "GETFrame.hh"
 
@@ -26,7 +25,7 @@ class STCore : public TObject {
   public:
     STCore();
     STCore(TString filename);
-    STCore(TString filename, Int_t numTbs);
+    STCore(TString filename, Int_t numTbs, Int_t windowNumTbs = 512, Int_t windowStartTb = 0);
     ~STCore();
 
     void Initialize();
@@ -40,15 +39,14 @@ class STCore : public TObject {
     Int_t GetNumData();
     TString GetDataName(Int_t index);
     void SetNumTbs(Int_t value);
-    void SetInternalPedestal(Int_t startTb = 10, Int_t averageTbs = 20);
+    void SetWindow(Int_t numTbs, Int_t startTb);
+    void SetInternalPedestal(Int_t pedestalStartTb = 10, Int_t averageTbs = 20);
     Bool_t SetPedestalData(TString filename, Double_t rmsFactor = 0);
     void SetFPNPedestal(Double_t sigmaThreshold = 5);
 
     Bool_t SetGainCalibrationData(TString filename, TString dataType = "f");
     void SetGainReference(Int_t row, Int_t layer);
     void SetGainReference(Double_t constant, Double_t linear, Double_t quadratic = 0.);
-
-    Bool_t SetSignalDelayData(TString filename);
 
     Bool_t SetUAMap(TString filename);
     Bool_t SetAGETMap(TString filename);
@@ -66,6 +64,9 @@ class STCore : public TObject {
 
     Int_t fNumTbs;
 
+    Int_t fWindowNumTbs;
+    Int_t fWindowStartTb;
+
     GETDecoder *fDecoderPtr;
     Bool_t fIsData;
 
@@ -77,14 +78,11 @@ class STCore : public TObject {
     Double_t fFPNSigmaThreshold;
     EPedestalMode fPedestalMode;
     Double_t fPedestalRMSFactor;
-    Int_t fStartTb;
+    Int_t fPedestalStartTb;
     Int_t fAverageTbs;
 
     STGainCalibration *fGainCalibrationPtr;
     Bool_t fIsGainCalibrationData;
-
-    STSignalDelay *fSignalDelayPtr;
-    Bool_t fIsSignalDelayData;
 
     STRawEvent *fRawEventPtr;
 
