@@ -27,21 +27,24 @@ STDecoderTask::STDecoderTask()
   fDataNum = 0;
 
   fUseInternalPedestal = kFALSE;
-  fStartTb = 3;
+  fPedestalStartTb = 3;
   fAverageTbs = 20;
   fPedestalFile = "";
   fPedestalRMSFactor = 0;
   fUseFPNPedestal = kFALSE;
   fFPNPedestalRMS = 5;
 
+  fExternalNumTbs = kFALSE;
   fNumTbs = 512;
+
+  fExternalWindow = kFALSE;
+  fWindowNumTbs = 512;
+  fWindowStartTb = 0;
 
   fGainCalibrationFile = "";
   fGainConstant = -9999;
   fGainLinear = -9999;
   fGainQuadratic = 0;
-
-  fSignalDelayFile = "";
 
   fIsPersistence = kFALSE;
 
@@ -56,15 +59,15 @@ STDecoderTask::~STDecoderTask()
 }
 
 void STDecoderTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }
-void STDecoderTask::SetNumTbs(Int_t numTbs)                                                   { fNumTbs = numTbs; }
+void STDecoderTask::SetNumTbs(Int_t numTbs)                                                   { fNumTbs = numTbs; fExternalNumTbs = kTRUE; }
+void STDecoderTask::SetWindow(Int_t numTbs, Int_t startTb)                                    { fWindowNumTbs = numTbs; fWindowStartTb = startTb; fExternalWindow = kTRUE; }
 void STDecoderTask::AddData(TString filename)                                                 { fDataList.push_back(filename); }
 void STDecoderTask::SetData(Int_t value)                                                      { fDataNum = value; }
-void STDecoderTask::SetInternalPedestal(Int_t startTb, Int_t averageTbs)                      { fUseInternalPedestal = kTRUE; fStartTb = startTb; fAverageTbs = averageTbs; } 
+void STDecoderTask::SetInternalPedestal(Int_t startTb, Int_t averageTbs)                      { fUseInternalPedestal = kTRUE; fPedestalStartTb = startTb; fAverageTbs = averageTbs; } 
 void STDecoderTask::SetFPNPedestal(Double_t pedestalRMS)                                      { fUseFPNPedestal = kTRUE; fUseInternalPedestal = kFALSE; fPedestalFile = ""; fFPNPedestalRMS = pedestalRMS; }
 void STDecoderTask::SetPedestalData(TString filename, Double_t rmsFactor)                     { fPedestalFile = filename; fPedestalRMSFactor = rmsFactor; }
 void STDecoderTask::SetGainCalibrationData(TString filename)                                  { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)  { fGainConstant = constant; fGainLinear = linear; fGainQuadratic = quadratic; }
-void STDecoderTask::SetSignalDelayData(TString filename)                                      { fSignalDelayFile = filename; }
 void STDecoderTask::SetOldData(Bool_t oldData)                                                { fOldData = oldData; }
 
 InitStatus
@@ -83,13 +86,23 @@ STDecoderTask::Init()
   for (Int_t iFile = 0; iFile < fDataList.size(); iFile++)
     fDecoder -> AddData(fDataList.at(iFile));
   fDecoder -> SetData(fDataNum);
-  fDecoder -> SetNumTbs(fNumTbs);
+
+  if (fExternalNumTbs)
+    fDecoder -> SetNumTbs(fNumTbs);
+  else
+    fDecoder -> SetNumTbs(fPar -> GetNumTbs());
+
+  if (fExternalWindow)
+    fDecoder -> SetWindow(fWindowNumTbs, fWindowStartTb);
+  else
+    fDecoder -> SetWindow(fPar -> GetWindowNumTbs(), fPar -> GetWindowStartTb());
+
   fDecoder -> SetOldData(fOldData);
   fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
   fDecoder -> SetAGETMap((fPar -> GetFile(1)).Data());
 
   if (fUseInternalPedestal)
-    fDecoder -> SetInternalPedestal(fStartTb, fAverageTbs);
+    fDecoder -> SetInternalPedestal(fPedestalStartTb, fAverageTbs);
 
   if (!fPedestalFile.EqualTo("")) {
     Bool_t isSetPedestalData = fDecoder -> SetPedestalData(fPedestalFile, fPedestalRMSFactor);
@@ -123,19 +136,6 @@ STDecoderTask::Init()
 
     fDecoder -> SetGainReference(fGainConstant, fGainLinear, fGainQuadratic);
     fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set!");
-  }
-
-  if (fSignalDelayFile.EqualTo(""))
-    fLogger -> Info(MESSAGE_ORIGIN, "Signal not delayed!");
-  else {
-    Bool_t isSetSignalDelayData = fDecoder -> SetSignalDelayData(fSignalDelayFile);
-    if (!isSetSignalDelayData) {
-      fLogger -> Error(MESSAGE_ORIGIN, "Cannot find signal delay data file!");
-      
-      return kERROR;
-    }
-
-    fLogger -> Info(MESSAGE_ORIGIN, "Signal delay data is set!");
   }
 
   return kSUCCESS;

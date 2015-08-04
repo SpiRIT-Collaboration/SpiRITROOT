@@ -49,6 +49,8 @@ class STDecoderTask : public FairTask {
 
     /// Setting the number of time buckets used when taking data
     void SetNumTbs(Int_t numTbs);
+    /// Setting the time window to see
+    void SetWindow(Int_t numTbs, Int_t startTb);
     /// Adding raw data file to the list
     void AddData(TString filename);
     /// Setting which data to be decoded
@@ -63,8 +65,6 @@ class STDecoderTask : public FairTask {
     void SetGainCalibrationData(TString filename);
     /// Setting gain calibration reference.
     void SetGainReference(Double_t constant, Double_t linear, Double_t quadratic = 0.);
-    /// Setting signal delay data file. If not set, signal is not delayed.
-    void SetSignalDelayData(TString filename);
     /// Setting to decode old data file
     void SetOldData(Bool_t oldData = kTRUE);
 
@@ -79,35 +79,38 @@ class STDecoderTask : public FairTask {
     virtual void Exec(Option_t *opt);
 
   private:
-    FairLogger *fLogger;          /// FairLogger singleton
+    FairLogger *fLogger;                ///< FairLogger singleton
 
-    STCore *fDecoder;             /// STConverter pointer
+    STCore *fDecoder;                   ///< STConverter pointer
 
-    vector<TString> fDataList;    /// Raw data file list
-    Int_t fDataNum;               /// Set which number in data list to be decoded
+    vector<TString> fDataList;          ///< Raw data file list
+    Int_t fDataNum;                     ///< Set which number in data list to be decoded
 
-    Bool_t fUseInternalPedestal;  /// Flag for using internal pedestal calculation
-    Int_t fStartTb;               /// Starting time bucket number for internal pedestal calculation
-    Int_t fAverageTbs;            /// The number of time buckets for internal pedestal calculation
-    TString fPedestalFile;        /// Pedestal data file name
-    Double_t fPedestalRMSFactor;  /// Pedestal RMS factor that will be multiplied to external pedestal RMS value
-    Bool_t fUseFPNPedestal;       /// Flas for using FPN channel as pedestal
-    Double_t fFPNPedestalRMS;     /// RMS cut of baseline matching part selection
+    Bool_t fUseInternalPedestal;        ///< Flag for using internal pedestal calculation
+    Int_t fPedestalStartTb;             ///< Starting time bucket number for internal pedestal calculation
+    Int_t fAverageTbs;                  ///< The number of time buckets for internal pedestal calculation
+    TString fPedestalFile;              ///< Pedestal data file name
+    Double_t fPedestalRMSFactor;        ///< Pedestal RMS factor that will be multiplied to external pedestal RMS value
+    Bool_t fUseFPNPedestal;             ///< Flas for using FPN channel as pedestal
+    Double_t fFPNPedestalRMS;           ///< RMS cut of baseline matching part selection
 
-    TString fGainCalibrationFile; /// Gain calibration data file name
-    Double_t fGainConstant;       /// Gain calibration reference constant
-    Double_t fGainLinear;         /// Gain calibration reference coefficient of linear term
-    Double_t fGainQuadratic;      /// Gain calibration reference coefficient of quadratic term
+    TString fGainCalibrationFile;       ///< Gain calibration data file name
+    Double_t fGainConstant;             ///< Gain calibration reference constant
+    Double_t fGainLinear;               ///< Gain calibration reference coefficient of linear term
+    Double_t fGainQuadratic;            ///< Gain calibration reference coefficient of quadratic term
 
-    TString fSignalDelayFile;     /// Signal Delay data file name
-    Int_t fNumTbs;                /// The number of time buckets
+    Bool_t fExternalNumTbs;             ///< Flag for checking if the number of time buckets is set by the user.
+    Int_t fNumTbs;                      ///< The number of time buckets
+    Bool_t fExternalWindow;             ///< Flag for checking if the number of window-starting time bucket is set by the user.
+    Int_t fWindowNumTbs;                ///< The number of time buckets of the window
+    Int_t fWindowStartTb;               ///< The window-starting time bucket number
 
-    Bool_t fIsPersistence;        /// Persistence check variable
+    Bool_t fIsPersistence;              ///< Persistence check variable
 
-    STDigiPar *fPar;              /// Parameter read-out class pointer
-    TClonesArray *fRawEventArray; /// STRawEvent container
+    STDigiPar *fPar;                    ///< Parameter read-out class pointer
+    TClonesArray *fRawEventArray;       ///< STRawEvent container
 
-    Bool_t fOldData;              /// Set to decode old data
+    Bool_t fOldData;              ///< Set to decode old data
 
   ClassDef(STDecoderTask, 1);
 };
