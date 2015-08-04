@@ -320,7 +320,8 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
                 maxADCIdx = iTb;
               }
             }
-          }
+          } else
+            maxADCIdx -= fWindowStartTb;
 
           pad -> SetMaxADCIdx(maxADCIdx);
           pad -> SetPedestalSubtracted(kTRUE);
@@ -366,7 +367,8 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
                 maxADCIdx = iTb;
               }
             }
-          }
+          } else
+            maxADCIdx -= fWindowStartTb;
 
           pad -> SetMaxADCIdx(maxADCIdx);
           pad -> SetPedestalSubtracted(kTRUE);
