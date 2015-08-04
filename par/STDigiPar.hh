@@ -42,7 +42,9 @@ class STDigiPar : public FairParGenericSet
     Double_t GetGroundWirePlaneY();
     Double_t GetGatingWirePlaneY();
     STGas *GetGas();
-    Int_t GetNumTbs();
+    Int_t GetNumTbs();              ///< returns the number of time buckets that the data actually has
+    Int_t GetWindowNumTbs();        ///< returns the number of time buckets of the time window
+    Int_t GetWindowStartTb();       ///< returns the time bucket number of the starting point of time window
     Int_t GetTBTime();              ///< returns the time duration of a time bucket in given sampling time in ns.
     Double_t GetDriftVelocity();    ///< returns the drift velocity in cm/us.
     Double_t GetDriftLength();      ///< returns the drift length in mm
@@ -75,6 +77,8 @@ class STDigiPar : public FairParGenericSet
     Double_t fGatingWirePlaneY;
     Double_t fEField;
     Int_t fNumTbs;
+    Int_t fWindowNumTbs;
+    Int_t fWindowStartTb;
     Int_t fSamplingRate;
     Double_t fDriftVelocity;
     Double_t fDriftLength;

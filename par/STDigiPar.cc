@@ -37,6 +37,8 @@ Double_t  STDigiPar::GetAnodeWirePlaneY()  { return fAnodeWirePlaneY; }
 Double_t  STDigiPar::GetGroundWirePlaneY() { return fGroundWirePlaneY; }
 Double_t  STDigiPar::GetGatingWirePlaneY() { return fGatingWirePlaneY; }
    Int_t  STDigiPar::GetNumTbs()           { return fNumTbs; }
+   Int_t  STDigiPar::GetWindowNumTbs()     { return fWindowNumTbs; }
+   Int_t  STDigiPar::GetWindowStartTb()    { return fWindowStartTb; }
 Double_t  STDigiPar::GetDriftVelocity()    { return fDriftVelocity; }
 Double_t  STDigiPar::GetDriftLength()      { return fDriftLength; }
    Int_t  STDigiPar::GetYDivider()         { return fYDivider; }
@@ -116,6 +118,14 @@ Bool_t STDigiPar::getParams(FairParamList *paramList)
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find NumTbs parameter!");
       return kFALSE;
     }
+    if (!(paramList -> fill("WindowNumTbs", &fWindowNumTbs))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find WindowNumTbs parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("WindowStartTb", &fWindowStartTb))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find WindowStartTb parameter!");
+      return kFALSE;
+    }
     if (!(paramList -> fill("SamplingRate", &fSamplingRate))) {
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find SamplingRate parameter!");
       return kFALSE;
@@ -169,6 +179,8 @@ void STDigiPar::putParams(FairParamList *paramList)
   paramList -> add("GatingWirePlaneY", fGatingWirePlaneY);
   paramList -> add("EField", fEField);
   paramList -> add("NumTbs", fNumTbs);
+  paramList -> add("WindowNumTbs", fWindowNumTbs);
+  paramList -> add("WindowStartTb", fWindowStartTb);
   paramList -> add("SamplingRate", fSamplingRate);
   paramList -> add("DriftVelocity", fDriftVelocity);
   paramList -> add("DriftLength", fDriftLength);
