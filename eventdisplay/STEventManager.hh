@@ -10,8 +10,11 @@
 #include "FairRunAna.h"
 #include "FairRootManager.h"
 #include "FairTask.h"
+#include "FairLogger.h"
 
 #include "TCanvas.h"
+
+#include "STEventManagerEditor.hh"
 
 class TGListTreeItem;
 
@@ -27,7 +30,7 @@ class STEventManager : public TEveEventManager
     virtual void PrevEvent();            ///< *MENU*
 
     void AddTask(FairTask* task);
-    virtual void InitRiemann(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
+    //virtual void InitRiemann(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
     virtual void Init(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
 
     void SetSelfRiemannSet(Int_t val) {}
@@ -40,9 +43,15 @@ class STEventManager : public TEveEventManager
 
     void RunEvent();
 
+    void SetEventManagerEditor(STEventManagerEditor*);
+    void InitByEditor();
+
   private :
     FairRootManager* fRootManager;
     FairRunAna* fRunAna;
+    FairLogger* fLogger;
+
+    STEventManagerEditor* fEditor;
 
     Int_t fEntry;
     TGListTreeItem* fEvent;
@@ -51,6 +60,7 @@ class STEventManager : public TEveEventManager
     TCanvas* fCvsPad;
 
     Int_t fTransparency;
+
 
     static STEventManager* fInstance;
 

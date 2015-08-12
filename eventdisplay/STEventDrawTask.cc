@@ -3,81 +3,87 @@
  * @author JungWoo Lee (Korea Univ.)
  */
 
-#include "FairRootManager.h"
-#include "FairRunAna.h"
-#include "FairRuntimeDb.h"
-
 #include "STEventDrawTask.hh"
-#include "STPad.hh"
-
-#include "TEveManager.h"
-#include "TPaletteAxis.h"
-#include "TStyle.h"
-
-#include <iostream>
-
-using namespace std;
 
 ClassImp(STEventDrawTask);
 
 STEventDrawTask* STEventDrawTask::fInstance=0;
-STEventDrawTask* STEventDrawTask::Instance()
-{
-  return fInstance;
-}
+STEventDrawTask* STEventDrawTask::Instance() { return fInstance; }
 
 STEventDrawTask::STEventDrawTask()
-: fCurrentEvent(-1),
-  fCurrentRow(-1),
-  fCurrentLayer(-1),
-  fSet2dPlotRangeFlag(kFALSE),
-  fSetDigiFileFlag(kFALSE),
-  fPar(0),
-  fNTbs(0),
-  fXPadPlane(0),
-  fTBTime(0),
-  fDriftVelocity(0),
-  //fDigiTree(0),
-  //fRawEventArray(0),
-  fRawEvent(0),
-  fHistPad(0),
-  fHitArray(0),
-  fHitClusterArray(0),
-  fRiemannTrackArray(0),
-  fRawEventArray(0),
-  fKalmanArray(0),
-  fEventManager(0),
-  fEventManagerEditor(0),
-  fThreshold(0),
-  fRangeMin(0),
-  fRangeMax(0),
-  fHitSet(0),
-  fHitColor(kPink),
-  fHitSize(1),
-  fHitStyle(6),
-  fBoxClusterSet(0),
-  fBoxClusterColor(kBlue),
-  fBoxClusterTransparency(30),
-  fHitClusterSet(0),
-  fHitClusterColor(kGray+3),
-  fHitClusterSize(1),
-  fHitClusterStyle(7),
-  fRiemannSetArray(0),
-  fRiemannColor(kBlue),
-  fRiemannSize(2.0),
-  fRiemannStyle(kOpenCircle),
-  fCvsPadPlane(0),
-  fPadPlane(0),
-  fMinZ(0),
-  fMaxZ(1344),
-  fMinX(432),
-  fMaxX(-432),
-  fCvsPad(0)
 {
-  fInstance = this;
+  fEventManager = NULL;
+  fEventManagerEditor = NULL;
 
-  for(Int_t i=0; i<20; i++)
-    fGraphHitTb[i] = new TGraph();
+  fMCHitArray           = NULL;
+  fDriftedElectronArray = NULL;
+  fHitArray             = NULL;
+  fHitClusterArray      = NULL;
+  fRiemannTrackArray    = NULL;
+  fRawEventArray        = NULL;
+  fKalmanArray          = NULL;
+
+  fRawEvent = NULL;
+
+  fSet2dPlotRangeFlag = kFALSE;
+  fSetDigiFileFlag = kFALSE;
+
+  fCurrentEvent = -1;
+  fCurrentRow   = -1;
+  fCurrentLayer = -1;
+
+  fHistPad = NULL;
+  fCvsPad  = NULL;
+  fRangeMin = 0;
+  fRangeMax = 0;
+
+  fCvsPadPlane = NULL;
+  fPadPlane    = NULL;
+  fMinZ = 0;
+  fMaxZ = 1344;
+  fMinX = 432;
+  fMaxX = -432;
+
+  for (Int_t i=0; i<10; i++)
+  {
+    fPointSet[i] = NULL;
+    fThresholdMin[i] = 0;
+    fThresholdMax[i] = 1.E10;
+  }
+
+  // MC
+  fPointStyle[0] = kFullCircle;
+  fPointSize[0]  = 1;
+  fPointColor[0] = kGray+2;
+  fRnrSelf[0]    = kFALSE;
+
+  // Digi
+  fPointStyle[1] = 1;
+  fPointSize[1]  = 1.;
+  fPointColor[1] = kAzure-5;
+  fRnrSelf[1]    = kFALSE;
+
+  // Hit
+  fPointStyle[2] = kFullCircle;
+  fPointSize[2]  = 0.5;
+  fPointColor[2] = kRed-7;
+  fRnrSelf[2]    = kFALSE;
+
+  // Cluster
+  fPointStyle[3] = kFullCircle;
+  fPointSize[3]  = 1.;
+  fPointColor[3] = kBlack;
+  fRnrSelf[3]    = kFALSE;
+  fRnrSelf[9]    = kFALSE;
+
+  // Riemann
+  fPointStyle[4] = kFullCircle;
+  fPointSize[4]  = 1.;
+  fPointColor[4] = 0;
+  fRnrSelf[4]    = kTRUE;
+
+  fBoxClusterSet = NULL;
+fInstance = this;
 }
 
 STEventDrawTask::~STEventDrawTask()
@@ -87,59 +93,39 @@ STEventDrawTask::~STEventDrawTask()
 void 
 STEventDrawTask::SetParContainers()
 {
-  fLogger->Debug(MESSAGE_ORIGIN,"SetParContainers of STEventDrawTask");
+  fLogger -> Debug(MESSAGE_ORIGIN,"SetParContainers of STEventDrawTask");
 
   FairRunAna* ana = FairRunAna::Instance();
-  FairRuntimeDb* rtdb = ana->GetRuntimeDb();
-  fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
+  FairRuntimeDb* rtdb = ana -> GetRuntimeDb();
+  fPar = (STDigiPar*) rtdb -> getContainer("STDigiPar");
 }
-
 
 InitStatus 
 STEventDrawTask::Init()
 {
-  fLogger->Debug(MESSAGE_ORIGIN,"Init()");
+  fLogger -> Debug(MESSAGE_ORIGIN,"Init()");
+
   FairRootManager* ioMan = FairRootManager::Instance();
   fEventManager = STEventManager::Instance();
 
-  fHitArray = (TClonesArray*) ioMan -> GetObject("STEventH");
-  if(fHitArray) LOG(INFO)<<"Hit Found."<<FairLogger::endl;
-
-  fHitClusterArray = (TClonesArray*) ioMan -> GetObject("STEventHC");
-  if(fHitClusterArray) 
-    LOG(INFO)<<"Hit Cluster Found."<<FairLogger::endl;
-  else
-    LOG(INFO)<<"Hit Cluster Not Found."<<FairLogger::endl;
-
-  fRiemannTrackArray = (TClonesArray*) ioMan -> GetObject("STRiemannTrack");
-  if(fRiemannTrackArray) 
-    LOG(INFO)<<"Riemann Track Found."<<FairLogger::endl;
-  else
-    LOG(INFO)<<"Riemann Track Not Found."<<FairLogger::endl;
-
-  fKalmanArray = (TClonesArray*) ioMan -> GetObject("STKalmanTrack");
-  if(fKalmanArray) 
-    LOG(INFO)<<"Kalman Track Found."<<FairLogger::endl;
-  else
-    LOG(INFO)<<"Kalman Track Not Found."<<FairLogger::endl;
-
-  fRawEventArray = (TClonesArray*) ioMan -> GetObject("STRawEvent");
-  if(fRawEventArray) 
-    LOG(INFO)<<"Raw Event Found."<<FairLogger::endl;
-  else
-    LOG(INFO)<<"Raw Event Not Found."<<FairLogger::endl;
+  fMCHitArray           = (TClonesArray*) ioMan -> GetObject("STMCPoint");
+  fDriftedElectronArray = (TClonesArray*) ioMan -> GetObject("STDriftedElectron");
+  fHitArray             = (TClonesArray*) ioMan -> GetObject("STEventH");
+  fHitClusterArray      = (TClonesArray*) ioMan -> GetObject("STEventHC");
+  fRiemannTrackArray    = (TClonesArray*) ioMan -> GetObject("STRiemannTrack");
+  fKalmanArray          = (TClonesArray*) ioMan -> GetObject("STKalmanTrack");
+  fRawEventArray        = (TClonesArray*) ioMan -> GetObject("STRawEvent");
 
   gStyle -> SetPalette(55);
   fCvsPadPlane = fEventManager -> GetCvsPadPlane();
-  fCvsPadPlane -> AddExec("ex","STEventDrawTask::ClickSelectedPadPlane()");
+  fCvsPadPlane -> AddExec("ex", "STEventDrawTask::ClickSelectedPadPlane()");
   DrawPadPlane();
 
-  fNTbs = fPar -> GetWindowNumTbs();
-  fXPadPlane = fPar -> GetPadPlaneX();
-
-  fTBTime = fPar -> GetTBTime();
-  fDriftVelocity  = fPar -> GetGas() -> GetDriftVelocity();
-  fDriftVelocity  = fDriftVelocity/100;
+  fNTbs          = fPar -> GetWindowNumTbs();
+  fXPadPlane     = fPar -> GetPadPlaneX();
+  fTBTime        = fPar -> GetTBTime();
+  fDriftVelocity = fPar -> GetGas() -> GetDriftVelocity();
+  fDriftVelocity = fDriftVelocity/100.;
 
   fCvsPad = fEventManager -> GetCvsPad();
   SetHistPad();
@@ -150,75 +136,136 @@ STEventDrawTask::Init()
 void 
 STEventDrawTask::Exec(Option_t* option)
 {
-  fLogger->Debug(MESSAGE_ORIGIN,"Exec()");
+  fLogger -> Debug(MESSAGE_ORIGIN,"Exec()");
+
   Reset();
 
-  if(fHitArray) DrawHitPoints();
-  if(fHitClusterArray) DrawHitClusterPoints();
-  if(fRiemannTrackArray) DrawRiemannHits();
+  if (fMCHitArray) DrawMCPoints();
+  if (fDriftedElectronArray) DrawDriftedElectrons();
+  if (fHitArray) DrawHitPoints();
+  if (fHitClusterArray) DrawHitClusterPoints();
+  if (fRiemannTrackArray) DrawRiemannHits();
 
   gEve -> Redraw3D(kFALSE);
   UpdateCvsPadPlane();
 }
 
 void 
+STEventDrawTask::DrawMCPoints()
+{
+  fLogger -> Debug(MESSAGE_ORIGIN,"Draw MC Points");
+
+  Int_t nPoints = fMCHitArray -> GetEntries();
+
+  fPointSet[0] = new TEvePointSet("MC", nPoints, TEvePointSelectorConsumer::kTVT_XYZ);
+  fPointSet[0] -> SetOwnIds(kTRUE);
+  fPointSet[0] -> SetMarkerColor(fPointColor[0]);
+  fPointSet[0] -> SetMarkerSize(fPointSize[0]);
+  fPointSet[0] -> SetMarkerStyle(fPointStyle[0]);
+
+  for (Int_t iPoint=0; iPoint<nPoints; iPoint++)
+  {
+    STMCPoint *point = (STMCPoint*) fMCHitArray -> At(iPoint);
+              
+    fPointSet[0] -> SetNextPoint(point -> GetX(), point -> GetY(), point -> GetZ());
+    fPointSet[0] -> SetPointId(new TNamed(Form("MC %d",iPoint),""));
+  }
+
+  fPointSet[0] -> SetRnrSelf(fRnrSelf[0]);
+  gEve -> AddElement(fPointSet[0]);
+}
+
+void 
+STEventDrawTask::DrawDriftedElectrons()
+{
+  fLogger -> Debug(MESSAGE_ORIGIN,"Draw Drifted Electrons");
+
+  Int_t nPoints = fDriftedElectronArray -> GetEntries();
+
+  fPointSet[1] = new TEvePointSet("DriftedElectron", nPoints, TEvePointSelectorConsumer::kTVT_XYZ);
+  fPointSet[1] -> SetOwnIds(kTRUE);
+  fPointSet[1] -> SetMarkerColor(fPointColor[1]);
+  fPointSet[1] -> SetMarkerSize(fPointSize[1]);
+  fPointSet[1] -> SetMarkerStyle(fPointStyle[1]);
+
+  for(Int_t iPoint=0; iPoint<nPoints; iPoint++)
+  {
+    STDriftedElectron *electron = (STDriftedElectron*) fDriftedElectronArray -> At(iPoint);
+
+    Double_t x = electron -> GetX() + electron -> GetDiffusedX();
+    Double_t y = electron -> GetHitY() + fDriftVelocity*(electron -> GetDiffusedTime() + electron -> GetDriftTime());
+    Double_t z = electron -> GetZ() + electron -> GetDiffusedZ();
+
+    fPointSet[1] -> SetNextPoint(x/10.,y/10.,z/10.);
+    fPointSet[1] -> SetPointId(new TNamed(Form("DrftEl %d",iPoint),""));
+  }
+  fPointSet[1] -> SetRnrSelf(fRnrSelf[1]);
+  gEve -> AddElement(fPointSet[1]);
+}
+
+void 
 STEventDrawTask::DrawHitPoints()
 {
-  fLogger->Debug(MESSAGE_ORIGIN,"DrawPoints()");
+  fLogger -> Debug(MESSAGE_ORIGIN,"DrawPoints()");
+
   STEvent* event = (STEvent*) fHitArray -> At(0);
   Int_t nHits = event -> GetNumHits();
 
-  fHitSet = new TEvePointSet("Hit",nHits, TEvePointSelectorConsumer::kTVT_XYZ);
-  fHitSet -> SetOwnIds(kTRUE);
-  fHitSet -> SetMarkerColor(fHitColor);
-  fHitSet -> SetMarkerSize(fHitSize);
-  fHitSet -> SetMarkerStyle(fHitStyle);
+  fPointSet[2] = new TEvePointSet("Hit",nHits, TEvePointSelectorConsumer::kTVT_XYZ);
+  fPointSet[2] -> SetOwnIds(kTRUE);
+  fPointSet[2] -> SetMarkerColor(fPointColor[2]);
+  fPointSet[2] -> SetMarkerSize(fPointSize[2]);
+  fPointSet[2] -> SetMarkerStyle(fPointStyle[2]);
 
-  for(Int_t iHit=0; iHit<nHits; iHit++)
+  for (Int_t iHit=0; iHit<nHits; iHit++)
   {
     STHit hit = event -> GetHitArray() -> at(iHit);
-    if(hit.GetCharge()<fThreshold) continue;
-    if(hit.GetCharge()<fRangeMin||hit.GetCharge()>fRangeMax) continue;
+
+    if (hit.GetCharge() < fThresholdMin[2] || hit.GetCharge() > fThresholdMax[2])
+      continue;
+
     TVector3 position = hit.GetPosition();
-    fHitSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
-    fHitSet -> SetPointId(new TNamed(Form("Hit %d",iHit),""));
+    fPointSet[2] -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
+    fPointSet[2] -> SetPointId(new TNamed(Form("Hit %d",iHit),""));
 
     fPadPlane -> Fill(-position.X(), position.Z(), hit.GetCharge());
-    //fPadPlane -> Fill(position.Z(), position.X(), hit.GetCharge());
   }
-  fHitSet -> SetRnrSelf(kFALSE);
-  gEve -> AddElement(fHitSet);
+
+  fPointSet[2] -> SetRnrSelf(fRnrSelf[2]);
+  gEve -> AddElement(fPointSet[2]);
 }
 
 void 
 STEventDrawTask::DrawHitClusterPoints()
 {
-  fLogger->Debug(MESSAGE_ORIGIN,"DrawHitClusterPoints()");
+  fLogger -> Debug(MESSAGE_ORIGIN,"DrawHitClusterPoints()");
   STEvent* event = (STEvent*) fHitClusterArray -> At(0);
   Int_t nClusters = event -> GetNumClusters();
 
   fBoxClusterSet = new TEveBoxSet("BoxCluster");
   fBoxClusterSet -> UseSingleColor();
-  fBoxClusterSet -> SetMainColor(fBoxClusterColor);
-  fBoxClusterSet -> SetMainTransparency(fBoxClusterTransparency);
-  fBoxClusterSet ->Reset(TEveBoxSet::kBT_AABox, kFALSE, 64);
+  fBoxClusterSet -> SetMainColor(kBlue);
+  fBoxClusterSet -> SetMainTransparency(30);
+  fBoxClusterSet -> Reset(TEveBoxSet::kBT_AABox, kFALSE, 64);
 
-  fHitClusterSet = new TEvePointSet("HitCluster",nClusters, TEvePointSelectorConsumer::kTVT_XYZ);
-  fHitClusterSet -> SetOwnIds(kTRUE);
-  fHitClusterSet -> SetMarkerColor(fHitClusterColor);
-  fHitClusterSet -> SetMarkerSize(fHitClusterSize);
-  fHitClusterSet -> SetMarkerStyle(fHitClusterStyle);
+  fPointSet[3] = new TEvePointSet("HitCluster", nClusters, TEvePointSelectorConsumer::kTVT_XYZ);
+  fPointSet[3] -> SetOwnIds(kTRUE);
+  fPointSet[3] -> SetMarkerColor(fPointColor[3]);
+  fPointSet[3] -> SetMarkerSize(fPointSize[3]);
+  fPointSet[3] -> SetMarkerStyle(fPointStyle[3]);
 
-  fLogger->Debug(MESSAGE_ORIGIN,Form("Number of clusters: %d",nClusters));
-  for(Int_t iCluster=0; iCluster<nClusters; iCluster++)
+  fLogger -> Debug(MESSAGE_ORIGIN,Form("Number of clusters: %d",nClusters));
+  for (Int_t iCluster=0; iCluster<nClusters; iCluster++)
   {
     STHitCluster cluster = event -> GetClusterArray() -> at(iCluster);
-    if(cluster.GetCharge()<fThreshold) continue;
-    if(cluster.GetCharge()<fRangeMin||cluster.GetCharge()>fRangeMax) continue;
+
+    if (cluster.GetCharge() < fThresholdMin[3] || cluster.GetCharge() > fThresholdMax[3])
+      continue;
+
     TVector3 position = cluster.GetPosition();
     TVector3 sigma = cluster.GetPosSigma();
-    fHitClusterSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
-    fHitClusterSet -> SetPointId(new TNamed(Form("HitCluster %d",iCluster),""));
+    fPointSet[3] -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
+    fPointSet[3] -> SetPointId(new TNamed(Form("HitCluster %d",iCluster),""));
 
     Double_t xS =  sigma.X()/10.;
     Double_t yS =  sigma.Y()/10.;
@@ -231,43 +278,54 @@ STEventDrawTask::DrawHitClusterPoints()
     fBoxClusterSet -> AddBox(xP, yP, zP, xS, yS, zS);
     fBoxClusterSet -> DigitValue(cluster.GetCharge());
   }
-  gEve -> AddElement(fHitClusterSet);
+
+  fPointSet[3] -> SetRnrSelf(fRnrSelf[3]);
+  fBoxClusterSet -> SetRnrSelf(fRnrSelf[9]);
+
+  gEve -> AddElement(fPointSet[3]);
   gEve -> AddElement(fBoxClusterSet);
 }
 
 void 
 STEventDrawTask::DrawRiemannHits()
 {
-  fLogger->Debug(MESSAGE_ORIGIN,"DrawRiemannHits()");
-  STRiemannTrack* track = 0;
-  STHitCluster* rCluster = 0;
-  TEvePointSet* riemannClusterSet = 0;
+  fLogger -> Debug(MESSAGE_ORIGIN,"DrawRiemannHits()");
+
+  STRiemannTrack* track = NULL;
+  STHitCluster* rCluster = NULL;
+  TEvePointSet* riemannPointSet = NULL;
 
   STEvent* event = (STEvent*) fHitClusterArray -> At(0);
 
   Int_t nTracks = fRiemannTrackArray -> GetEntries();
-  for(Int_t iTrack=0; iTrack<nTracks; iTrack++) 
+  for (Int_t iTrack=0; iTrack<nTracks; iTrack++) 
   {
     track = (STRiemannTrack*) fRiemannTrackArray -> At(iTrack);
 
     Int_t nClusters = track -> GetNumHits();
-    riemannClusterSet = new TEvePointSet(Form("RiemannTrack_%d",iTrack),nClusters,TEvePointSelectorConsumer::kTVT_XYZ);
-    riemannClusterSet -> SetMarkerColor(GetRiemannColor(iTrack));
-    riemannClusterSet -> SetMarkerSize(fRiemannSize);
-    riemannClusterSet -> SetMarkerStyle(fRiemannStyle);
-    for(Int_t iCluster=0; iCluster<nClusters; iCluster++)
+    riemannPointSet = new TEvePointSet(Form("RiemannTrack_%d", iTrack), nClusters, TEvePointSelectorConsumer::kTVT_XYZ);
+    riemannPointSet -> SetMarkerColor(GetRiemannColor(iTrack));
+    riemannPointSet -> SetMarkerSize(fPointSize[4]);
+    riemannPointSet -> SetMarkerStyle(fPointStyle[4]);
+
+    for (Int_t iCluster=0; iCluster<nClusters; iCluster++)
     {
       rCluster = track -> GetHit(iCluster) -> GetCluster();
-      //if((rCluster -> GetCharge()) < fThreshold) continue;
+
+      if (rCluster -> GetCharge() < fThresholdMin[4] || rCluster -> GetCharge() > fThresholdMax[4])
+        continue;
+
       Int_t id = rCluster -> GetClusterID();
       STHitCluster oCluster = event -> GetClusterArray() -> at(id);
 
       TVector3 position = oCluster.GetPosition();
-      riemannClusterSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
-      riemannClusterSet -> SetPointId(new TNamed(Form("RiemanCluster %d",iCluster),""));
+      riemannPointSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
+      riemannPointSet -> SetPointId(new TNamed(Form("RiemanCluster %d",iCluster),""));
     }
-    gEve -> AddElement(riemannClusterSet);
-    fRiemannSetArray.push_back(riemannClusterSet);
+
+    riemannPointSet -> SetRnrSelf(fRnrSelf[4]);
+    gEve -> AddElement(riemannPointSet);
+    fRiemannSetArray.push_back(riemannPointSet);
   }
 }
 
@@ -276,11 +334,11 @@ STEventDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
 {
   Int_t nRiemannSets = fRiemannSetArray.size();
 
-  if(iRiemannSet==-1) 
+  if (iRiemannSet==-1) 
   {
-    if(!offElse)
+    if (!offElse)
     {
-      for(Int_t i=0; i<nRiemannSets; i++)
+      for (Int_t i=0; i<nRiemannSets; i++)
       {
         TEvePointSet* pointSet = fRiemannSetArray[i];
         pointSet -> SetRnrSelf(kTRUE);
@@ -288,7 +346,7 @@ STEventDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
     }
     else
     {
-      for(Int_t i=0; i<nRiemannSets; i++)
+      for (Int_t i=0; i<nRiemannSets; i++)
       {
         TEvePointSet* pointSet = fRiemannSetArray[i];
         pointSet -> SetRnrSelf(kFALSE);
@@ -298,52 +356,83 @@ STEventDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
 
   else 
   {
-    for(Int_t i=0; i<nRiemannSets; i++)
+    for (Int_t i=0; i<nRiemannSets; i++)
     {
       TEvePointSet* pointSet = fRiemannSetArray[i];
-      if(i==iRiemannSet) pointSet -> SetRnrSelf(kTRUE);
-      else if(offElse) pointSet -> SetRnrSelf(kFALSE);
+      if (i==iRiemannSet) pointSet -> SetRnrSelf(kTRUE);
+      else if (offElse) pointSet -> SetRnrSelf(kFALSE);
     }
   }
+}
 
+void 
+STEventDrawTask::SetRendering(STEveObject eveObj, Bool_t rnr, Double_t thresholdMin, Double_t thresholdMax)
+{
+  fRnrSelf[eveObj] = rnr;
+
+  if (thresholdMin != -1) 
+    fThresholdMin[eveObj] = thresholdMin;
+
+  if (thresholdMin != -1) 
+    fThresholdMax[eveObj] = thresholdMax;
+}
+
+
+void 
+STEventDrawTask::SetAttributes(STEveObject eveObj, Style_t style, Size_t size, Color_t color)
+{
+  if (style != -1) 
+    fPointStyle[eveObj] = style;
+
+  if (size != -1) 
+    fPointSize[eveObj] = size;
+
+  if (color != -1) 
+    fPointColor[eveObj] = color;
 }
 
 void
 STEventDrawTask::Reset()
 {
-  if(fHitSet) {
-    fHitSet -> Reset();
-    gEve -> RemoveElement(fHitSet, fEventManager);
+  fLogger -> Debug(MESSAGE_ORIGIN,"Reset PointSets");
+
+  for(Int_t i=0; i<10; i++)
+  {
+    if(fPointSet[i]) 
+    {
+      fPointSet[i] -> Reset();
+      gEve -> RemoveElement(fPointSet[i], fEventManager);
+    }
   }
 
-  if(fHitClusterSet) {
-    fHitClusterSet -> Reset();
-    gEve -> RemoveElement(fHitClusterSet, fEventManager);
-  }
-
-  if(fBoxClusterSet) {
+  if (fBoxClusterSet) {
     fBoxClusterSet -> Reset();
     gEve -> RemoveElement(fBoxClusterSet, fEventManager);
   }
 
-  Int_t nRiemannTracks = fRiemannSetArray.size();
+  fLogger -> Debug(MESSAGE_ORIGIN,"Reset RiemannTracks");
+
   TEvePointSet* pointSet;
-  if(nRiemannTracks!=0) {
-    for(Int_t i=0; i<nRiemannTracks; i++){
+  Int_t nRiemannTracks = fRiemannSetArray.size();
+
+  if (nRiemannTracks != 0) 
+  {
+    for (Int_t i=0; i<nRiemannTracks; i++)
+    {
       pointSet = fRiemannSetArray[i];
       gEve -> RemoveElement(pointSet, fEventManager);
     }
     fRiemannSetArray.clear();
   }
 
-  if(fPadPlane!=NULL)
-    fPadPlane -> Reset();
+  if (fPadPlane != NULL)
+    fPadPlane -> Reset("");
 }
 
 void
 STEventDrawTask::Set2DPlotRange(Int_t uaIdx)
 {
-  if(uaIdx%100<0 || uaIdx%100>11 || uaIdx/100<0 || uaIdx/100>3) 
+  if (uaIdx%100<0 || uaIdx%100>11 || uaIdx/100<0 || uaIdx/100>3) 
   {
     fLogger -> Error(MESSAGE_ORIGIN, 
       "2DPlotRange should be ABB ( A = [0, 3], BB = [00, 11] )!");
@@ -361,7 +450,7 @@ STEventDrawTask::Set2DPlotRange(Int_t uaIdx)
 void 
 STEventDrawTask::SetHistPad()
 {
-  if(fHistPad)
+  if (fHistPad)
   {
     fHistPad -> Reset();
     return;
@@ -393,7 +482,7 @@ STEventDrawTask::SetHistPad()
 void
 STEventDrawTask::DrawPadPlane()
 {
-  if(fPadPlane) 
+  if (fPadPlane) 
   {
     fPadPlane -> Reset();
     return;
@@ -452,7 +541,7 @@ STEventDrawTask::UpdateCvsPadPlane()
     = (TPaletteAxis *) fPadPlane -> GetListOfFunctions() -> FindObject("palette");
 
   if (paxis) {
-    if(fSet2dPlotRangeFlag) {
+    if (fSet2dPlotRangeFlag) {
       paxis -> SetX1NDC(0.940);
       paxis -> SetX2NDC(0.955);
       paxis -> SetLabelSize(0.08);
@@ -465,30 +554,6 @@ STEventDrawTask::UpdateCvsPadPlane()
     fCvsPadPlane -> Modified();
     fCvsPadPlane -> Update();
   }
-}
-
-void 
-STEventDrawTask::SetHitAttributes(Color_t color, Size_t size, Style_t style)
-{
-  fHitColor = color;
-  fHitSize = size;
-  fHitStyle = style;
-}
-
-void 
-STEventDrawTask::SetHitClusterAttributes(Color_t color, Size_t size, Style_t style)
-{
-  fHitClusterColor = color;
-  fHitClusterSize = size;
-  fHitClusterStyle = style;
-}
-
-void 
-STEventDrawTask::SetRiemannAttributes(Color_t color, Size_t size, Style_t style)
-{
-  fRiemannColor = color;
-  fRiemannSize = size;
-  fRiemannStyle = style;
 }
 
 Color_t 
@@ -507,64 +572,32 @@ STEventDrawTask::GetRiemannColor(Int_t index)
   return color;
 }
 
-/*
-void
-STEventDrawTask::SetDigiFile(TString name)
-{
-  TFile* digiFile = new TFile(name,"read");
-  if(!digiFile) return;
-
-  fDigiTree = (TTree*) digiFile -> Get("cbmsim");
-  fDigiTree -> SetBranchAddress("STRawEvent", &fRawEventArray);
-
-  fSetDigiFileFlag = kTRUE;
-}
-*/
-
 void
 STEventDrawTask::DrawPad(Int_t row, Int_t layer)
 {
-  if(!fRawEventArray) return;
-  if(row==fCurrentRow && layer==fCurrentLayer) return;
+  if (!fRawEventArray) return;
+  if (row==fCurrentRow && layer==fCurrentLayer) return;
 
   fCurrentRow = row;
   fCurrentLayer = layer;
   fEventManagerEditor -> SetRowLayer(row, layer);
   Int_t currentEvent = fEventManager -> GetCurrentEvent();
-  if(currentEvent!=fCurrentEvent) 
+  if (currentEvent!=fCurrentEvent) 
   {
-    /*
-    fDigiTree -> GetEntry(currentEvent);
     fCurrentEvent = currentEvent;
-    */
     fRawEvent = (STRawEvent*) fRawEventArray -> At(0);
   }
   STPad* pad = fRawEvent -> GetPad(row, layer);
-  if(!pad) return;
+  if (!pad) return;
   Double_t* adc = pad -> GetADC();
 
   fHistPad -> SetTitle(Form("row: %d, layer: %d",row, layer));
-  for(Int_t tb=0; tb<fNTbs; tb++)
+  for (Int_t tb=0; tb<fNTbs; tb++)
     fHistPad -> SetBinContent(tb+1, adc[tb]);
 
 
   STEvent* event = (STEvent*) fHitArray -> At(0);
   Int_t nHits = event -> GetNumHits();
-
-  /*
-  for(Int_t i=0; i<20; i++)
-    fGraphHitTb[i] -> Set(0);
-
-  for(Int_t iHit=0; iHit<nHits; iHit++)
-  {
-    STHit hit = event -> GetHitArray() -> at(iHit);
-    if(hit.GetCharge()<fThreshold) continue;
-    TVector3 position = hit.GetPosition();
-    Double_t tb = position.Z()/fDriftVelocity/fTBTime;
-    //...
-  }
-  */
-
 
   fCvsPad -> cd();
   fHistPad -> Draw();
@@ -585,9 +618,9 @@ void
 STEventDrawTask::ClickSelectedPadPlane()
 {
   TObject* select = ((TCanvas*)gPad) -> GetClickSelected();
-  if(!select) return;
+  if (!select) return;
 
-  if(select -> InheritsFrom(TH1::Class()))
+  if (select -> InheritsFrom(TH1::Class()))
   {
     TH2D* hist = (TH2D*) select;
 
@@ -610,3 +643,23 @@ STEventDrawTask::ClickSelectedPadPlane()
 
   ((TCanvas*)gPad) -> SetClickSelected(0);
 }
+
+void 
+STEventDrawTask::SetRange(Double_t min, Double_t max) 
+{ 
+  fLogger -> Warning(MESSAGE_ORIGIN, "This method will be removed in next version. Please use SetRendering() instead.");
+
+  fThresholdMin[2] = min;
+  fThresholdMax[2] = max;
+
+  fThresholdMin[3] = min;
+  fThresholdMax[3] = max;
+}
+
+void 
+STEventDrawTask::SetEventManagerEditor(STEventManagerEditor* pointer)
+{ 
+  fEventManagerEditor = pointer; 
+} 
+
+Int_t STEventDrawTask::GetNRiemannSet() { return fRiemannSetArray.size(); }

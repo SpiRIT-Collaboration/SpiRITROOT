@@ -44,25 +44,40 @@ STEventManagerEditor::STEventManagerEditor
 {
   fDrawTask = STEventDrawTask::Instance();
   fDrawTask -> SetEventManagerEditor(this);
+  fManager -> SetEventManagerEditor(this);
+
+  fLogger = FairLogger::GetLogger();
+
   Init();
 }
 
 void 
 STEventManagerEditor::Init()
 {
-  FairRootManager* fRootManager=FairRootManager::Instance();
+  fLogger -> Debug(MESSAGE_ORIGIN, "STEventManagerEditor Init().");
+
+  FairRootManager* fRootManager = FairRootManager::Instance();
   TChain* chain = fRootManager -> GetInChain();
-  Int_t Entries= chain -> GetEntriesFast();
+  fEntries= chain -> GetEntriesFast();
 
   MakeTitle("STEventManager Editor");
-  TGVerticalFrame* fEventFrame = CreateEditorTabSubFrame("Event");
-  TGCompositeFrame* title = new TGCompositeFrame(fEventFrame, 230, 10,
+  fEditorTabSubFrame = CreateEditorTabSubFrame("Event");
+  FillFrameContent(fEditorTabSubFrame);
+
+  fManager -> InitByEditor();
+  fLogger -> Debug(MESSAGE_ORIGIN, "STEventManagerEditor End of Init().");
+}
+
+void 
+STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
+{
+  TGCompositeFrame* eventFrame = new TGCompositeFrame(frame, 230, 10,
       kVerticalFrame | kLHintsExpandX |
       kFixedWidth    | kOwnBackground);
 
   /********************************************************************/
 
-  TGGroupFrame* frameInfo = new TGGroupFrame(title,"Info",kVerticalFrame);
+  TGGroupFrame* frameInfo = new TGGroupFrame(eventFrame,"Info",kVerticalFrame);
   frameInfo -> SetTitlePos(TGGroupFrame::kCenter);
 
   TFile* file = FairRootManager::Instance() -> GetInChain() -> GetFile();
@@ -70,17 +85,17 @@ STEventManagerEditor::Init()
 
   TGLabel* labelFileName = new TGLabel(frameInfo, TString("Input file : ")+file->GetName());
   TGLabel* labelRunID    = new TGLabel(frameInfo, TString("Run Id : ")+Form("%d",RunId));
-  TGLabel* labelEventID  = new TGLabel(frameInfo, TString("No. of events : ")+Form("%d",Entries));
+  TGLabel* labelEventID  = new TGLabel(frameInfo, TString("No. of events : ")+Form("%d",fEntries));
 
   frameInfo -> AddFrame(labelFileName,new TGLayoutHints (kLHintsLeft));
   frameInfo -> AddFrame(labelRunID ,new TGLayoutHints (kLHintsLeft));
   frameInfo -> AddFrame(labelEventID);
 
-  title -> AddFrame(frameInfo, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
+  eventFrame -> AddFrame(frameInfo, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
 
   /********************************************************************/
 
-  TGGroupFrame* frameEvent = new TGGroupFrame(title,"Event",kVerticalFrame);
+  TGGroupFrame* frameEvent = new TGGroupFrame(eventFrame,"Event",kVerticalFrame);
   frameEvent -> SetTitlePos(TGGroupFrame::kLeft);
 
   TGCheckButton* checkAutoUpdate = new TGCheckButton(frameEvent, "Auto Update");
@@ -91,7 +106,7 @@ STEventManagerEditor::Init()
   TGLabel* labelEvent = new TGLabel(frameEvent1, "Current Event : ");
   fCurrentEvent = new TGNumberEntry(frameEvent1, 0., 6, -1,
                                     TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
-                                    TGNumberFormat::kNELLimitMinMax, 0, Entries);
+                                    TGNumberFormat::kNELLimitMinMax, 0, fEntries);
   fCurrentEvent -> Connect("ValueSet(Long_t)","STEventManagerEditor", this, "SelectEventIf()");
   frameEvent1 -> AddFrame(labelEvent, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
   frameEvent1 -> AddFrame(fCurrentEvent, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
@@ -103,11 +118,11 @@ STEventManagerEditor::Init()
   frameEvent -> AddFrame(frameEvent1, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
   frameEvent -> AddFrame(buttonUpdate, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,3));
 
-  title -> AddFrame(frameEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
+  eventFrame -> AddFrame(frameEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
 
   /********************************************************************/
 
-  TGGroupFrame* frameRiemann = new TGGroupFrame(title,"Riemann Tracklet");
+  TGGroupFrame* frameRiemann = new TGGroupFrame(eventFrame,"Riemann Tracklet");
   frameRiemann -> SetTitlePos(TGGroupFrame::kLeft);
 
   TGHorizontalFrame* frameRiemann1 = new TGHorizontalFrame(frameRiemann);
@@ -143,11 +158,11 @@ STEventManagerEditor::Init()
   frameRiemann -> AddFrame(buttonVisAll, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,2));
   frameRiemann -> AddFrame(buttonVisOff, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,2,3));
 
-  title -> AddFrame(frameRiemann, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
+  eventFrame -> AddFrame(frameRiemann, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
 
   /********************************************************************/
 
-  TGGroupFrame* framePad = new TGGroupFrame(title,"Pad");
+  TGGroupFrame* framePad = new TGGroupFrame(eventFrame,"Pad");
   framePad -> SetTitlePos(TGGroupFrame::kLeft);
 
   TGCheckButton* checkAutoUpdatePad = new TGCheckButton(framePad, "Auto Update");
@@ -180,11 +195,11 @@ STEventManagerEditor::Init()
   framePad -> AddFrame(framePadLayer, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
   framePad -> AddFrame(buttonUpdatePad, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,3));
 
-  title -> AddFrame(framePad, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
+  eventFrame -> AddFrame(framePad, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
 
   /********************************************************************/
 
-  fEventFrame -> AddFrame(title, new TGLayoutHints(kLHintsTop, 0, 0, 2, 0));
+  frame -> AddFrame(eventFrame, new TGLayoutHints(kLHintsTop, 0, 0, 2, 0));
 }
 
 void
@@ -275,3 +290,5 @@ STEventManagerEditor::SetRowLayer(Int_t row, Int_t layer)
   fCurrentRow -> SetNumber(row);
   fCurrentLayer -> SetNumber(layer);
 }
+
+TGVerticalFrame* STEventManagerEditor::GetEditorTabSubFrame() { return fEditorTabSubFrame; }

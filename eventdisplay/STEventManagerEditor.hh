@@ -4,6 +4,7 @@
 #include "GuiTypes.h"
 #include "Rtypes.h"
 #include "TGFrame.h"
+#include "FairLogger.h"
 
 class STEventManager;
 class STEventDrawTask;
@@ -30,6 +31,8 @@ class STEventManagerEditor : public TGedFrame
     TGNumberEntry*   fCurrentLayer;
     TGLabel*         fEventTime;
 
+    TGVerticalFrame* fEditorTabSubFrame;
+
   public:
     STEventManagerEditor(const TGWindow* p=0, Int_t width=170, Int_t height=30,
                            UInt_t options = kChildFrame, Pixel_t back=GetDefaultFrameBackground());
@@ -52,9 +55,17 @@ class STEventManagerEditor : public TGedFrame
 
     void SetRowLayer(Int_t row, Int_t layer);
 
+    TGVerticalFrame* GetEditorTabSubFrame();
+
+    void FillFrameContent(TGCompositeFrame* frame);
+
   private:
     Bool_t fAutoUpdateFlag;
     Bool_t fAutoUpdatePadFlag;
+
+    FairLogger* fLogger;
+
+    Int_t fEntries;
 
     ClassDef(STEventManagerEditor, 0); // Specialization of TGedEditor for proper update propagation to TEveManager.
 };
