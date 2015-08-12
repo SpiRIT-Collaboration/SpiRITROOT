@@ -35,8 +35,6 @@ STPSASimple2::Analyze(STRawEvent *rawEvent, STEvent *event)
   for (Int_t iPad = 0; iPad < numPads; iPad++) {
     STPad *pad = rawEvent -> GetPad(iPad);
 
-    if (pad -> GetLayer() < 10) continue;
-    
     Double_t xPos = CalculateX(pad -> GetRow());
     Double_t zPos = CalculateZ(pad -> GetLayer());
     Double_t charge = 0;
