@@ -813,10 +813,15 @@ void geomSpiRIT()
 
   TString dir = gSystem->Getenv("VMCWORKDIR");
   TString geoFileName = dir + "/geometry/geomSpiRIT.root";
+  TString geoManFileName = dir + "/geometry/geomSpiRIT.man.root";
 
-  cout << geoFileName << endl;
   TFile *geoFile = new TFile(geoFileName,"recreate"); 
   top -> Write(); 
-//  gGeoManager -> Write();
   geoFile -> Close(); 
+  cout << geoFileName << " created." << endl;
+
+  TFile *geoManFile = new TFile(geoManFileName,"recreate"); 
+  gGeoManager -> Write();
+  geoManFile -> Close(); 
+  cout << geoManFileName << " created." << endl;
 }
