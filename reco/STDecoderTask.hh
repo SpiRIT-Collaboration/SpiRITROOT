@@ -112,6 +112,8 @@ class STDecoderTask : public FairTask {
 
     Bool_t fOldData;              ///< Set to decode old data
 
+    Int_t fEventID;
+
   ClassDef(STDecoderTask, 1);
 };
 

@@ -52,6 +52,8 @@ STDecoderTask::STDecoderTask()
   fRawEventArray = new TClonesArray("STRawEvent");
 
   fOldData = kFALSE;
+
+  fEventID = 0;
 }
 
 STDecoderTask::~STDecoderTask()
@@ -162,7 +164,8 @@ STDecoderTask::Exec(Option_t *opt)
 {
   fRawEventArray -> Delete();
 
-  STRawEvent *rawEvent = fDecoder -> GetRawEvent(FairRootManager::Instance() -> GetEntryNr());
+  STRawEvent *rawEvent = fDecoder -> GetRawEvent(fEventID++);
+  //STRawEvent *rawEvent = fDecoder -> GetRawEvent(FairRootManager::Instance() -> GetEntryNr());
 
   if (rawEvent != NULL)
     new ((*fRawEventArray)[0]) STRawEvent(rawEvent);
