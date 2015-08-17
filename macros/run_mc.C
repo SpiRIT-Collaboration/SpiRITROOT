@@ -32,7 +32,7 @@ void run_mc(TString tag = "test")
   FairModule* cave= new FairCave("CAVE");
   cave -> SetGeometryFileName("cave_vacuum.geo"); 
   FairDetector* spirit = new STDetector("STDetector", kTRUE);
-  spirit -> SetGeometryFileName("geomSPiRIT.root");
+  spirit -> SetGeometryFileName("geomSpiRIT.root");
 
 
   // -----   Create and set magnetic field   --------------------------------
