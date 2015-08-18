@@ -1,42 +1,51 @@
-void run_eve(TString name = "test") 
+/**
+ * Event display macro.
+ * See following link for detail.
+ * https://github.com/SpiRIT-Collaboration/SpiRITROOT/wiki/Event-Display-Macro
+ */
+
+void run_eve(TString name = "single")
 {
-  // Name
-  TString workDir    = gSystem -> Getenv("VMCWORKDIR");
+  //Name
+  TString workDir     = gSystem -> Getenv("VMCWORKDIR");
+  TString inputName   = workDir + "/macros/data/spirit_" + name + ".reco.root";
+  TString rawName    = workDir + "/macros/data/spirit_" + name + ".raw.root";
+  TString outputName  = workDir + "/macros/data/spirit_" + name + ".eve.root";
+  TString digiParName = workDir + "/parameters/ST.parameters.par";
+  TString geomName    = workDir + "/geometry/geomSpiRIT.man.root";
 
-  TString inputName  = "data/spirit_" + name + ".reco.root";
-  TString outputName = "data/spirit_" + name + ".eve.root";
-  TString parName    = "data/spirit_" + name + ".params.root";
-  TString digiName   = "data/spirit_" + name + ".raw.root";
-  TString digiParFile = workDir + "/parameters/ST.parameters.par";
-
-  // Logger
-  FairLogger *fLogger = FairLogger::GetLogger();
-  fLogger -> SetLogToScreen(kTRUE);
-  fLogger -> SetLogVerbosityLevel("HIGH");
-  //fLogger -> SetLogScreenLevel("DEBUG");
+  //Logger
+  FairLogger *logger = FairLogger::GetLogger();
+  logger -> SetLogToScreen(kTRUE);
+  logger -> SetLogVerbosityLevel("HIGH");
+  logger -> SetLogScreenLevel("DEBUG");
 
   // Run
-  FairRunAna *fRun= new FairRunAna();
-  fRun -> SetInputFile(inputName);
-  fRun -> SetOutputFile(outputName);
+  FairRunAna *run= new FairRunAna();
+  FairRuntimeDb* db = run -> GetRuntimeDb();
+  FairParAsciiFileIo* par = new FairParAsciiFileIo();
+  par -> open(digiParName);
+  db -> setSecondInput(par);
 
-  // Data base 
-  FairParRootFileIo* mcParInput = new FairParRootFileIo();
-  mcParInput->open(parName);
-  FairParAsciiFileIo* digiParInput = new FairParAsciiFileIo();
-  digiParInput -> open(digiParFile);
-
-  FairRuntimeDb* fDb = fRun->GetRuntimeDb();
-  fDb -> setFirstInput(mcParInput);
-  fDb -> setSecondInput(digiParInput);
+  run -> SetInputFile(inputName);
+  run -> AddFriend(rawName);
+  run -> SetOutputFile(outputName);
+  run -> SetGeomFile(geomName);
 
   // Event display
   STEventManager *eveMan = new STEventManager();
   eveMan -> SetVolumeTransparency(80);
+
+  // Draw
   STEventDrawTask* eve = new STEventDrawTask();
-  eve -> SetDigiFile(digiName);
-  eveMan->AddTask(eve);
+  eve -> SetRendering(STEventDrawTask::kHit,        kFALSE, 0, 4095);
+  eve -> SetRendering(STEventDrawTask::kCluster,    kFALSE, 0, 4095*20);
+  eve -> SetRendering(STEventDrawTask::kClusterBox, kFALSE, 0, 4095*20);
+  eve -> SetRendering(STEventDrawTask::kRiemann,    kTRUE,  0, 4095*20);      
+  //eve -> SetAttributes(STEventDrawTask::kHit,     kFullCircle, 0.5,  kRed-7);
+  //eve -> SetAttributes(STEventDrawTask::kCluster, kFullCircle, 1, kBlack);
+  //eve -> SetAttributes(STEventDrawTask::kRiemann, kFullCircle, 1);
 
-
-  eveMan->Init();                    
+  eveMan -> AddTask(eve);
+  eveMan -> Init();
 }
