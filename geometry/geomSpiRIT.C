@@ -203,13 +203,13 @@ void geomSpiRIT()
   // ----------------------------------------------------
   //  Front Widow & Front Window Frame (from Mike's macro)
   // ----------------------------------------------------
-  Double_t fwindowz=1.111;
+  Double_t fwindowz=0.005;
   Double_t fwindowy=7.0;
   Double_t fwindowx1=5.73;
   Double_t fwindowx2=7.0;
   Double_t fwinframesidex=1.45;
   Double_t fwinframesidey=16.9;
-  Double_t fwinframez=1.111;
+  Double_t fwinframez=0.005;
   Double_t fwinframetopx=7.0;
   Double_t fwinframetopy=1.45;
   Double_t fwinframebotx=7.0;
