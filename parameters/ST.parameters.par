@@ -8,8 +8,8 @@
 [STDigiPar]
 PadPlaneX:Int_t                864   # mm
 PadPlaneZ:Int_t               1344   # mm
-PadSizeX:Int_t                   8   # mm
-PadSizeZ:Int_t                  12   # mm
+PadSizeX:Double_t                8   # mm
+PadSizeZ:Double_t               12   # mm
 PadRows:Int_t                  108   #
 PadLayers:Int_t                112   #
 AnodeWirePlaneY:Double_t     -4.05   # mm
