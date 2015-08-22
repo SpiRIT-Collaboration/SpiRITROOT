@@ -37,9 +37,9 @@ class STClusterizer
     FairLogger *fLogger;      //!< logger
     STDigiPar *fPar;          //!< parameter
 
-    Int_t fPadPlaneX;         //!< pad plane size x in mm
-    Int_t fPadSizeX;          //!< pad size x in mm
-    Int_t fPadSizeZ;          //!< pad size y in mm
+    Double_t fPadPlaneX;      //!< pad plane size x in mm
+    Double_t fPadSizeX;       //!< pad size x in mm
+    Double_t fPadSizeZ;       //!< pad size y in mm
     Int_t fPadRows;           //!< number of total pad rows
     Int_t fPadLayers;         //!< number of total pad layers
 

@@ -32,10 +32,10 @@ class STDigiPar : public FairParGenericSet
     // Operators
     
     // Getters
-    Int_t GetPadPlaneX();
-    Int_t GetPadPlaneZ();
-    Int_t GetPadSizeX();
-    Int_t GetPadSizeZ();
+    Double_t GetPadPlaneX();
+    Double_t GetPadPlaneZ();
+    Double_t GetPadSizeX();
+    Double_t GetPadSizeZ();
     Int_t GetPadRows();
     Int_t GetPadLayers();
     Double_t GetAnodeWirePlaneY();
@@ -66,10 +66,10 @@ class STDigiPar : public FairParGenericSet
 
     Bool_t fInitialized;
 
-    Int_t fPadPlaneX;
-    Int_t fPadPlaneZ;
-    Int_t fPadSizeX;
-    Int_t fPadSizeZ;
+    Double_t fPadPlaneX;
+    Double_t fPadPlaneZ;
+    Double_t fPadSizeX;
+    Double_t fPadSizeZ;
     Int_t fPadRows;
     Int_t fPadLayers;
     Double_t fAnodeWirePlaneY;

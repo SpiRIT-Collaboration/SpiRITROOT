@@ -27,10 +27,10 @@ STDigiPar::~STDigiPar()
 }
 
 // Getters
-   Int_t  STDigiPar::GetPadPlaneX()        { return fPadPlaneX; }
-   Int_t  STDigiPar::GetPadPlaneZ()        { return fPadPlaneZ; }
-   Int_t  STDigiPar::GetPadSizeX()         { return fPadSizeX; }
-   Int_t  STDigiPar::GetPadSizeZ()         { return fPadSizeZ; }
+Double_t  STDigiPar::GetPadPlaneX()        { return fPadPlaneX; }
+Double_t  STDigiPar::GetPadPlaneZ()        { return fPadPlaneZ; }
+Double_t  STDigiPar::GetPadSizeX()         { return fPadSizeX; }
+Double_t  STDigiPar::GetPadSizeZ()         { return fPadSizeZ; }
    Int_t  STDigiPar::GetPadRows()          { return fPadRows; }
    Int_t  STDigiPar::GetPadLayers()        { return fPadLayers; }
 Double_t  STDigiPar::GetAnodeWirePlaneY()  { return fAnodeWirePlaneY; }

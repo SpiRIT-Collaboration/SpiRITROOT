@@ -88,10 +88,10 @@ class STPadResponseTask : public FairTask
 
     Int_t    fTBTime;       //!< One time bucket time [ns]
     Int_t    fNTbs;         //!< Number of time buckets.
-    Int_t    fXPadPlane;    //!< Pad plane x-axis size. [mm]
-    Int_t    fZPadPlane;    //!< Pad plane z-axis size. [mm]
-    Int_t    fPadSizeLayer; //!< Pad size through layer. [mm]
-    Int_t    fPadSizeRow;   //!< Pad size through row. [mm]
+    Double_t fXPadPlane;    //!< Pad plane x-axis size. [mm]
+    Double_t fZPadPlane;    //!< Pad plane z-axis size. [mm]
+    Double_t fPadSizeLayer; //!< Pad size through layer. [mm]
+    Double_t fPadSizeRow;   //!< Pad size through row. [mm]
     Int_t    fNRows;        //!< Number of row.
     Int_t    fNLayers;      //!< Number of layer.
 

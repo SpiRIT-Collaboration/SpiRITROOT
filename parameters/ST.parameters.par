@@ -6,8 +6,8 @@
 # Description of parameters
 ################################################################################
 [STDigiPar]
-PadPlaneX:Int_t                864   # mm
-PadPlaneZ:Int_t               1344   # mm
+PadPlaneX:Double_t             864   # mm
+PadPlaneZ:Double_t            1344   # mm
 PadSizeX:Double_t                8   # mm
 PadSizeZ:Double_t               12   # mm
 PadRows:Int_t                  108   #
