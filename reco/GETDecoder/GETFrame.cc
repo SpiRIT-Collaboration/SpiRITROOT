@@ -303,6 +303,8 @@ Double_t GETFrame::GetPedestal(Int_t agetIdx, Int_t chIdx, Int_t buckIdx, Double
     else
       return fPedestalData[index + buckIdx] + rmsFactor*fPedestalSigmaData[index + buckIdx];
   }
+
+  return -1;
 }
 
 Int_t GETFrame::GetIndex(Int_t agetIdx, Int_t chIdx, Int_t buckIdx)
