@@ -9,7 +9,9 @@
 //   Genie Jhang     Korea University     (original author)
 //-----------------------------------------------------------
 
-#pragma once
+#ifndef STSMTASK
+#define STSMTASK
+
 
 // SpiRITROOT classes
 #include "STSystemManipulator.hh"
@@ -50,3 +52,5 @@ class STSMTask : public FairTask {
 
   ClassDef(STSMTask, 1);
 };
+
+#endif

@@ -3,7 +3,8 @@
  * @author JungWoo Lee (Korea Univ.)
  */
 
-#pragma once
+#ifndef STSIMPLEEVENTGENERATOR
+#define STSIMPLEEVENTGENERATOR
 
 #include "FairGenerator.h"
 #include "FairPrimaryGenerator.h"
@@ -63,3 +64,5 @@ class STSimpleEventGenerator : public FairGenerator
 
   ClassDef(STSimpleEventGenerator,1);
 };
+
+#endif

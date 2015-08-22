@@ -11,7 +11,8 @@
 //   Genie Jhang     Korea University     (original author)
 //-----------------------------------------------------------
 
-#pragma once
+#ifndef STPSALAYER
+#define STPSALAYER
 
 // SpiRITROOT classes
 #include "STPSA.hh"
@@ -75,3 +76,5 @@ class STPSALayer : public STPSA
 
   ClassDef(STPSALayer, 1)
 };
+
+#endif

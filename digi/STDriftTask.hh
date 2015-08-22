@@ -21,7 +21,8 @@
  * Thus z-component of STDriftedElectron is z-position of corresponding wire 
  */
 
-#pragma once
+#ifndef STDRIFTTASK
+#define STDRIFTTASK
 
 // Fair class header
 #include "FairTask.h"
@@ -84,3 +85,5 @@ class STDriftTask : public FairTask
 
   ClassDef(STDriftTask,1);
 };
+
+#endif

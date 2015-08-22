@@ -3,7 +3,8 @@
  * @author JungWoo Lee (Korea Univ.)
  */
 
-#pragma once
+#ifndef STCLUSTERIZER
+#define STCLUSTERIZER
 
 // SpiRITROOT classes
 #include "STEvent.hh"
@@ -59,3 +60,5 @@ class STClusterizer
 
   ClassDef(STClusterizer, 1)
 };
+
+#endif

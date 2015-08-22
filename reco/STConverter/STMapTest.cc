@@ -10,7 +10,6 @@
 
 #include "STMapTest.hh"
 
-#include "Riostream.h"
 #include "TStyle.h"
 #include "TCanvas.h"
 #include "TH2D.h"
@@ -18,6 +17,9 @@
 #include "TList.h"
 #include "TLine.h"
 #include "TString.h"
+
+#include <iostream>
+#include <iomanip>
 
 ClassImp(STMapTest);
 
@@ -61,13 +63,13 @@ void STMapTest::SetAGETMap(TString filename)
 void STMapTest::ShowAGETMap(Int_t UAIdx)
 {
   if (!fIsAGETMap || !fIsUAMap) {
-    cout << "== Either AGETMap or UAMap file is not set!" << endl;
+    std::cout << "== Either AGETMap or UAMap file is not set!" << std::endl;
 
     return;
   }
 
   if (UAIdx%100 < 0 || UAIdx%100 > 11 || UAIdx/100 < 0 || UAIdx/100 > 3) {
-    cout << "== UnitAsAd index range: ABB (A = [0, 3], BB = [00, 11])!" << endl;
+    std::cout << "== UnitAsAd index range: ABB (A = [0, 3], BB = [00, 11])!" << std::endl;
 
     return;
   }
@@ -117,7 +119,7 @@ void STMapTest::ShowAGETMap(Int_t UAIdx)
 void STMapTest::ShowUAMap()
 {
   if (!fIsUAMap) {
-    cout << "== AGETMap file is not set!" << endl;
+    std::cout << "== AGETMap file is not set!" << std::endl;
 
     return;
   }
@@ -198,14 +200,14 @@ void STMapTest::PrintMap(Int_t padRow, Int_t padLayer)
   Int_t uaIdx, coboIdx, asadIdx, agetIdx, chIdx;
   map -> GetMapData(padRow, padLayer, uaIdx, coboIdx, asadIdx, agetIdx, chIdx);
 
-  cout << "============" << endl;
-  cout << "   row: " << setw(3) << padRow << endl;
-  cout << " layer: " << setw(3) << padLayer << endl;
-  cout << endl;
-  cout << "    UA: " << setw(3) << Form("%03d", uaIdx) << endl;
-  cout << "  CoBo: " << setw(3) << coboIdx << endl;
-  cout << "  AsAd: " << setw(3) << asadIdx << endl;
-  cout << "  AGET: " << setw(3) << agetIdx << endl;
-  cout << "    Ch: " << setw(3) << chIdx << endl;
-  cout << "============" << endl;
+  std::cout << "============" << std::endl;
+  std::cout << "   row: " << std::setw(3) << padRow << std::endl;
+  std::cout << " layer: " << std::setw(3) << padLayer << std::endl;
+  std::cout << std::endl;
+  std::cout << "    UA: " << std::setw(3) << Form("%03d", uaIdx) << std::endl;
+  std::cout << "  CoBo: " << std::setw(3) << coboIdx << std::endl;
+  std::cout << "  AsAd: " << std::setw(3) << asadIdx << std::endl;
+  std::cout << "  AGET: " << std::setw(3) << agetIdx << std::endl;
+  std::cout << "    Ch: " << std::setw(3) << chIdx << std::endl;
+  std::cout << "============" << std::endl;
 }

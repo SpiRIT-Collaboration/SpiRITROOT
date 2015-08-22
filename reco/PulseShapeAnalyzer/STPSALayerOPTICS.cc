@@ -6,6 +6,9 @@
 #include <cstdlib>
 #include <iostream>
 
+// ROOT
+#include "RVersion.h"
+
 ClassImp(STPSALayerOPTICS)
 
 STPSALayerOPTICS::STPSALayerOPTICS()
@@ -187,7 +190,6 @@ STPSALayerOPTICS::SetLayer(STRawEvent* rawEvent)
 
     Double_t *adcDouble = pad -> GetADC(); 
     Float_t adcFloat[512] = {0};
-    Float_t dummy[512]    = {0};
 
     for(Int_t iTb=0; iTb<fNumTbs; iTb++) 
     {
@@ -202,7 +204,15 @@ STPSALayerOPTICS::SetLayer(STRawEvent* rawEvent)
 #ifdef DEBUG_TIME
     timer.Start();
 #endif
+
+#if ROOT_VERSION_CODE < ROOT_VERSION(6,0,0)
+    Float_t dummy[512]    = {0};
     Int_t nPeaks = fPeakFinder -> SearchHighRes(adcFloat, dummy, fNumTbs, 4.7, 5, kFALSE, 3, kTRUE, 3);
+#else
+    Double_t dummy[512]    = {0};
+    Int_t nPeaks = fPeakFinder -> SearchHighRes(adcDouble, dummy, fNumTbs, 4.7, 5, kFALSE, 3, kTRUE, 3);
+#endif
+
 #ifdef DEBUG_TIME
     timer.Stop();
     std::cout << "[TIME]   Find Peak: " << iRow << " " << timer.RealTime() << std::endl;

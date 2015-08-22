@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STEVENTMANAGEREDITOR
+#define STEVENTMANAGEREDITOR
 
 #include "TGedFrame.h"
 #include "GuiTypes.h"
@@ -69,3 +70,5 @@ class STEventManagerEditor : public TGedFrame
 
     ClassDef(STEventManagerEditor, 0); // Specialization of TGedEditor for proper update propagation to TEveManager.
 };
+
+#endif

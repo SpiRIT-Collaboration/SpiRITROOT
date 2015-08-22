@@ -58,7 +58,8 @@
  *
  */
 
-#pragma once
+#ifndef STEVENTGENGENERATOR
+#define STEVENTGENGENERATOR
 
 #include "FairGenerator.h"
 #include "FairPrimaryGenerator.h"
@@ -100,11 +101,11 @@ class STEventGenGenerator : public FairGenerator
 
   private :
 
-    TString  fGenFileName; //!< EventGen file name
-    ifstream fGenFile;     //!< EventGen file
+    TString  fGenFileName;   //!< EventGen file name
+    std::ifstream fGenFile;  //!< EventGen file
 
-    TVector3 fV3Vertex;    //!< Position of primary vertex
-    Int_t    fNEvents;     //!< Total number of events
+    TVector3 fV3Vertex;      //!< Position of primary vertex
+    Int_t    fNEvents;       //!< Total number of events
 
 
   STEventGenGenerator(const STEventGenGenerator&);
@@ -112,3 +113,5 @@ class STEventGenGenerator : public FairGenerator
 
   ClassDef(STEventGenGenerator,1);
 };
+
+#endif

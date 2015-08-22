@@ -214,7 +214,7 @@ Int_t STHoughSpaceLine::EncodeMapKey(Float_t d, Float_t ang){
      HMapKey = HMapKey + ((ang_enc&0x0000ffff)<<16);
      
      // Debugging info
-     if(fDebugMode > 1){
+     if(fDebugMode == 1){
      std::cout<<" Distance of approach : "<<d<<" Angle : "<<ang<<std::endl;
      std::cout<<" Distance of approach (dec) : "<<std::dec<<d_enc<<std::endl;
      std::cout<<" Angle (dec) : "<<std::dec<<ang_enc<<std::endl;

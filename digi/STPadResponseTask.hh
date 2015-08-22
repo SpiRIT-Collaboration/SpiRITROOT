@@ -15,7 +15,8 @@
  * Pad with no signal is neglected from STRawEvent.
  */
 
-#pragma once 
+#ifndef STPADRESPONSETASK
+#define STPADRESPONSETASK
 
 // Fair class header
 #include "FairTask.h"
@@ -113,3 +114,5 @@ class STPadResponseTask : public FairTask
 
   ClassDef(STPadResponseTask,1);
 };
+
+#endif

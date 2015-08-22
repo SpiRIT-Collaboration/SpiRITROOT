@@ -19,7 +19,8 @@
 
 // Modified for SpiRITROOT by Genie Jhang (2015/06/15)
 
-#pragma once
+#ifndef STSPACEPOINTMEASUREMENT
+#define STSPACEPOINTMEASUREMENT
 
 #include "SpacepointMeasurement.h"
 #include "TrackCandHit.h"
@@ -45,3 +46,5 @@ class STSpacepointMeasurement : public SpacepointMeasurement {
 };
 
 } /* End of namespace genfit */
+
+#endif

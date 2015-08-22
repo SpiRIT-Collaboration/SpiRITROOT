@@ -8,7 +8,8 @@
 //  2014. 09. 07
 // =================================================
 
-#pragma once
+#ifndef STGAINCHECK
+#define STGAINCHECK
 
 #include "TObject.h"
 #include "TString.h"
@@ -69,3 +70,5 @@ class STGainCheck : public TObject
 
   ClassDef(STGainCheck, 1)
 };
+
+#endif

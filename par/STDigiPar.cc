@@ -192,7 +192,7 @@ void STDigiPar::putParams(FairParamList *paramList)
 
 TString STDigiPar::GetFile(Int_t fileNum)
 {
-  ifstream fileList;
+  std::ifstream fileList;
   TString sysFile = gSystem -> Getenv("VMCWORKDIR");
   TString parFile = sysFile + "/parameters/ST.files.par";
   fileList.open(parFile.Data());

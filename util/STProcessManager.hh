@@ -1,4 +1,5 @@
-#pragma once 
+#ifndef STPROCESSMANAGER
+#define STPROCESSMANAGER
 
 #include "TString.h"
 
@@ -24,3 +25,5 @@ class STProcessManager
 
    ClassDef(STProcessManager, 1);
 };
+
+#endif

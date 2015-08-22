@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STDETECTOR
+#define STDETECTOR
 
 #include "FairDetector.h"
 
@@ -101,3 +102,5 @@ class STDetector: public FairDetector
 
     ClassDef(STDetector,1)
 };
+
+#endif

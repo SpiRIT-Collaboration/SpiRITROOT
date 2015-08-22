@@ -4,7 +4,8 @@
  * @author JungWoo Lee (Korea Univ.)
  */
 
-#pragma once 
+#ifndef STDRIFTEDELECTRON
+#define STDRIFTEDELECTRON
 
 #include "TObject.h"
 
@@ -62,3 +63,5 @@ class STDriftedElectron : public TObject
 
   ClassDef(STDriftedElectron, 2)
 };
+
+#endif

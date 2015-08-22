@@ -9,7 +9,8 @@
 //   Genie Jhang     Korea University     (original author)
 //-----------------------------------------------------------
 
-#pragma once
+#ifndef STGENFITTASK
+#define STGENFITTASK
 
 // FAIRROOT classes
 #include "FairTask.h"
@@ -70,3 +71,5 @@ class STGenfitTask : public FairTask {
 
   ClassDef(STGenfitTask, 1);
 };
+
+#endif

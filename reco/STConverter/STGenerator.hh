@@ -10,7 +10,8 @@
 //  2014. 09. 05
 // =================================================
 
-#pragma once
+#ifndef STGENERATOR
+#define STGENERATOR
 
 #include "TObject.h"
 #include "TString.h"
@@ -81,3 +82,5 @@ class STGenerator : public TObject {
 
   ClassDef(STGenerator, 1)
 };
+
+#endif

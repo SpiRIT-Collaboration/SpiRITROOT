@@ -27,7 +27,7 @@ STMCTrack.cxx
 Set(HEADERS )
 Set(LINKDEF MCStackLinkDef.h)
 Set(LIBRARY_NAME Stack)
-Set(DEPENDENCIES Base EG Physics Cint Core)
+Set(DEPENDENCIES Base EG Physics Core)
 
 GENERATE_LIBRARY()
 

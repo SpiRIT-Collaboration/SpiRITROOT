@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STCLUSTERIZERSCAN
+#define STCLUSTERIZERSCAN
 
 #include "STClusterizer.hh"
 
@@ -72,3 +73,5 @@ class STHitSortR
     Bool_t operator() (STHit* hit1, STHit* hit2)
     { return (hit1 -> GetPosition()).Mag() < (hit2 -> GetPosition()).Mag(); }
 };
+
+#endif

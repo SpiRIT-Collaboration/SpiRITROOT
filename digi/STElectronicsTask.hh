@@ -10,7 +10,8 @@
  * the output signal will be proportional to input signal magnitude.
  */ 
 
-#pragma once
+#ifndef STELECTRONICSTASK
+#define STELECTRONICSTASK
 
 #include "FairTask.h"
 
@@ -75,3 +76,5 @@ class STElectronicsTask : public FairTask
 
     ClassDef(STElectronicsTask,1);
 };
+
+#endif

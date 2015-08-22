@@ -9,7 +9,8 @@
 //   Genie Jhang     Korea University     (original author)
 //-----------------------------------------------------------
 
-#pragma once
+#ifndef STPSASIMPLE
+#define STPSASIMPLE
 
 #include "STPSA.hh"
 
@@ -23,3 +24,5 @@ class STPSASimple : public STPSA
 
   ClassDef(STPSASimple, 1)
 };
+
+#endif

@@ -3,7 +3,8 @@
  * @author JungWoo Lee (Korea Univ.)
  */
 
-#pragma once
+#ifndef STEVENTDRAWTASK
+#define STEVENTDRAWTASK
 
 // FairRoot class headers
 #include "FairTask.h"
@@ -152,3 +153,5 @@ class STEventDrawTask : public FairTask
 
   ClassDef(STEventDrawTask,2);
 };
+
+#endif

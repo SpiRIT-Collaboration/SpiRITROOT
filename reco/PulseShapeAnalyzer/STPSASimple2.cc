@@ -15,6 +15,9 @@
 // STL
 #include <cmath>
 
+// ROOT
+#include "RVersion.h"
+
 ClassImp(STPSASimple2)
 
 STPSASimple2::STPSASimple2()
@@ -46,12 +49,19 @@ STPSASimple2::Analyze(STRawEvent *rawEvent, STEvent *event)
     }
 
     Double_t *adc = pad -> GetADC();
+
+#if ROOT_VERSION_CODE < ROOT_VERSION(6,0,0)
     Float_t floatADC[512] = {0};
     Float_t dummy[512] = {0};
     for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
       floatADC[iTb] = adc[iTb];
 
     Int_t numPeaks = fPeakFinder -> SearchHighRes(floatADC, dummy, fNumTbs, 4.7, 5, kFALSE, 3, kTRUE, 3);
+#else
+    Double_t dummy[512] = {0};
+
+    Int_t numPeaks = fPeakFinder -> SearchHighRes(adc, dummy, fNumTbs, 4.7, 5, kFALSE, 3, kTRUE, 3);
+#endif
 
     if (numPeaks == 0)
       continue;

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STHITCLUSTERRICH
+#define STHITCLUSTERRICH
 
 #include "STHit.hh"
 
@@ -39,3 +40,5 @@ class STHitClusterRich : public STHitCluster
 
   ClassDef(STHitClusterRich, 0);
 };
+
+#endif

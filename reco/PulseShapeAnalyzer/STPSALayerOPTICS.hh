@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STPSALAYEROPTICS
+#define STPSALAYEROPTICS
 
 #include "STPSA.hh"
 #include "TSpectrum.h"
@@ -200,3 +201,5 @@ class STPSALayerOPTICS : public STPSA
 
   ClassDef(STPSALayerOPTICS, 1)
 };
+
+#endif

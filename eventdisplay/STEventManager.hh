@@ -3,7 +3,8 @@
  * @author JungWoo Lee (Korea Univ.)
  */
 
-#pragma once
+#ifndef STEVENTMANAGER
+#define STEVENTMANAGER
 
 #include "TEveEventManager.h"
 
@@ -70,3 +71,5 @@ class STEventManager : public TEveEventManager
 
   ClassDef(STEventManager,1);
 };
+
+#endif

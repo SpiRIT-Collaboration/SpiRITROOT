@@ -11,7 +11,8 @@
 //   Genie Jhang     Korea University     (original author)
 //-----------------------------------------------------------
 
-#pragma once
+#ifndef STPSASIMPLE2
+#define STPSASIMPLE2
 
 // SpiRITROOT classes
 #include "STPSA.hh"
@@ -33,3 +34,5 @@ class STPSASimple2 : public STPSA
 
   ClassDef(STPSASimple2, 1)
 };
+
+#endif
