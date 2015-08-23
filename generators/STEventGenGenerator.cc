@@ -5,16 +5,12 @@
 
 #include "STEventGenGenerator.hh"
 #include "TSystem.h"
-#include <iostream>
-
-using namespace std;
 
 ClassImp(STEventGenGenerator);
 
 STEventGenGenerator::STEventGenGenerator()
 : FairGenerator(),
   fGenFileName(""),
-  fGenFile(NULL),
   fV3Vertex(TVector3(0,0,0)),
   fNEvents(0)
 {
@@ -23,7 +19,6 @@ STEventGenGenerator::STEventGenGenerator()
 STEventGenGenerator::STEventGenGenerator(TString fileName)
 : FairGenerator("STEventGen",fileName),
   fGenFileName(fileName),
-  fGenFile(NULL),
   fV3Vertex(TVector3(0,0,0)),
   fNEvents(0)
 {
@@ -39,7 +34,7 @@ STEventGenGenerator::STEventGenGenerator(TString fileName)
 
 STEventGenGenerator::~STEventGenGenerator()
 {
-  if(fGenFile) fGenFile.close();
+  if(fGenFile.is_open()) fGenFile.close();
 }
 
 Bool_t

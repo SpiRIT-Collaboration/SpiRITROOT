@@ -102,7 +102,7 @@ class STEventGenGenerator : public FairGenerator
   private :
 
     TString  fGenFileName;   //!< EventGen file name
-    std::ifstream fGenFile;  //!< EventGen file
+    std::ifstream fGenFile;  //! < EventGen file
 
     TVector3 fV3Vertex;      //!< Position of primary vertex
     Int_t    fNEvents;       //!< Total number of events
