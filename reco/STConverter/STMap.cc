@@ -81,7 +81,7 @@ Bool_t STMap::GetMapData(Int_t padRow, Int_t padLayer, Int_t &UAIdx, Int_t &cobo
     Int_t agetRow = padRow%9;
     Int_t uaLayer = padLayer%28;
 
-    agetIdx = uaLayer/7;
+    agetIdx = 3 - uaLayer/7;
     Int_t agetLayer = uaLayer%7;
 
     for (Int_t iCh = 0; iCh < 68; iCh++) {
@@ -92,10 +92,10 @@ Bool_t STMap::GetMapData(Int_t padRow, Int_t padLayer, Int_t &UAIdx, Int_t &cobo
     }
   } else {
     Int_t agetRow = (8 - padRow%9);
-    Int_t uaLayer = (27 - padLayer%28);
+    Int_t uaLayer = padLayer%28;
 
     agetIdx = uaLayer/7;
-    Int_t agetLayer = uaLayer%7;
+    Int_t agetLayer = 6 - uaLayer%7;
 
     for (Int_t iCh = 0; iCh < 68; iCh++)
       if (fPadRowOfCh[iCh] == agetRow && fPadLayerOfCh[iCh] == agetLayer) {
