@@ -211,3 +211,21 @@ void STMapTest::PrintMap(Int_t padRow, Int_t padLayer)
   std::cout << "    Ch: " << std::setw(3) << chIdx << std::endl;
   std::cout << "============" << std::endl;
 }
+
+void STMapTest::PrintMap(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx)
+{
+  Int_t padRow, padLayer;
+  Int_t uaIdx = map -> GetUAIdx(coboIdx, asadIdx);
+  map -> GetRowNLayer(coboIdx, asadIdx, agetIdx, chIdx, padRow, padLayer);
+
+  std::cout << "============" << std::endl;
+  std::cout << "   row: " << std::setw(3) << padRow << std::endl;
+  std::cout << " layer: " << std::setw(3) << padLayer << std::endl;
+  std::cout << std::endl;
+  std::cout << "    UA: " << std::setw(3) << Form("%03d", uaIdx) << std::endl;
+  std::cout << "  CoBo: " << std::setw(3) << coboIdx << std::endl;
+  std::cout << "  AsAd: " << std::setw(3) << asadIdx << std::endl;
+  std::cout << "  AGET: " << std::setw(3) << agetIdx << std::endl;
+  std::cout << "    Ch: " << std::setw(3) << chIdx << std::endl;
+  std::cout << "============" << std::endl;
+}

@@ -32,6 +32,7 @@ class STMapTest : public TObject
     void ShowAGETMap(Int_t UAIdx = 0);
     void ShowUAMap();
     void PrintMap(Int_t padRow, Int_t padLayer);
+    void PrintMap(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx);
 
   private:
     STMap *map;
