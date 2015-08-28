@@ -30,8 +30,7 @@ void run_reco()
   //decoderTask -> AddData("Sr90_veto_20140919_820events.graw");
   decoderTask -> AddData("/Users/ejungwoo/data/run_0334.dat");
   decoderTask -> SetFPNPedestal();
-  decoderTask -> SetOldData(kTRUE);
-//  decoderTask -> SetPedestal("../../../cosmic_RIKEN_20140715/CoBo_AsAd0-2014-07-11T18-56-57.670_0000.graw.root");
+  decoderTask -> SetWindow(512, 0);
   decoderTask -> SetNumTbs(512);
   decoderTask -> SetPersistence();
   run -> AddTask(decoderTask);
