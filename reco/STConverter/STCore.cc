@@ -58,6 +58,7 @@ void STCore::Initialize()
 
   fMapPtr = new STMap();
   fPedestalPtr = new STPedestal();
+  fPlotPtr = NULL;
 
   fDecoderPtr = new GETDecoder();
 //  fDecoderPtr -> SetDebugMode(1);
@@ -403,4 +404,12 @@ Int_t STCore::GetNumTbs()
 void STCore::SetOldData(Bool_t oldData)
 {
   fOldData = oldData;
+}
+
+STPlot *STCore::GetSTPlot()
+{
+  if (fPlotPtr == NULL)
+    fPlotPtr = new STPlot(this);
+
+  return fPlotPtr;
 }

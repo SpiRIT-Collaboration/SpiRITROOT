@@ -18,8 +18,12 @@
 #include "STMap.hh"
 #include "STPedestal.hh"
 #include "STGainCalibration.hh"
+#include "STPlot.hh"
+
 #include "GETDecoder.hh"
 #include "GETFrame.hh"
+
+class STPlot;
 
 class STCore : public TObject {
   public:
@@ -57,10 +61,13 @@ class STCore : public TObject {
     STRawEvent *GetRawEvent(Int_t eventID = -1);
     Int_t GetNumTbs();
 
+    STPlot *GetSTPlot();
+
     enum EPedestalMode { kNoPedestal, kPedestalInternal, kPedestalExternal, kPedestalFPN, kPedestalBothIE };
 
   private:
     STMap *fMapPtr;
+    STPlot *fPlotPtr;
 
     Int_t fNumTbs;
 
