@@ -71,9 +71,11 @@ void STPlot::SetNumTbs(Int_t numTbs)
   fNumTbs = numTbs;
 }
 
-void STPlot::DrawPadplane()
+void STPlot::DrawPadplane(Int_t eventID)
 {
-  if (CheckEvent())
+  if (fCore != NULL)
+    fEvent = fCore -> GetRawEvent(eventID);
+  else if (CheckEvent())
     return;
 
   if (padplaneHist)
@@ -100,6 +102,9 @@ void STPlot::DrawPadplane()
   }
 
   padplaneHist -> SetMaximum(max);
+
+  padplaneCvs -> Modified();
+  padplaneCvs -> Update();
 }
 
 void STPlot::DrawPad(Int_t row, Int_t layer)
@@ -172,62 +177,65 @@ void STPlot::DrawLayer(Int_t layerNo)
 void STPlot::PreparePadplaneHist()
 {
 //    cvs = new TCanvas("Event Display", "", 1600, 1000); // For large monitor
-    padplaneCvs = new TCanvas("Event Display", "", 1200, 750);
-    padplaneCvs -> Draw();
+  gStyle -> SetOptStat(0000);
+  gStyle -> SetPadRightMargin(0.10);
+  gStyle -> SetPadLeftMargin(0.06);
+  gStyle -> SetPadTopMargin(0.04);
+  gStyle -> SetPadBottomMargin(0.08);
+  gStyle -> SetTitleOffset(1.0, "X");
+  gStyle -> SetTitleOffset(0.85, "Y");
 
-    gStyle -> SetOptStat(0000);
-    gStyle -> SetPadRightMargin(0.08);
-    gStyle -> SetPadLeftMargin(0.06);
-    gStyle -> SetPadTopMargin(0.04);
-    gStyle -> SetPadBottomMargin(0.08);
-    gStyle -> SetTitleOffset(1.0, "X");
-    gStyle -> SetTitleOffset(0.85, "Y");
+  padplaneCvs = new TCanvas("Event Display", "", 1200, 750);
+  padplaneCvs -> Draw();
 
-    padplaneCvs -> cd();
-    padplaneHist = new TH2D("padplaneHist", ";x (mm);z (mm)", 112, 0, 1344, 108, -432, 432);
-    padplaneHist -> GetXaxis() -> SetTickLength(0.01);
-    padplaneHist -> GetXaxis() -> CenterTitle();
-    padplaneHist -> GetYaxis() -> SetTickLength(0.01);
-    padplaneHist -> GetYaxis() -> CenterTitle();
-    padplaneHist -> Draw("colz");
+  padplaneCvs -> cd();
+  padplaneHist = new TH2D("padplaneHist", ";x (mm);z (mm)", 112, 0, 1344, 108, -432, 432);
+  padplaneHist -> GetXaxis() -> SetTickLength(0.01);
+  padplaneHist -> GetXaxis() -> CenterTitle();
+  padplaneHist -> GetYaxis() -> SetTickLength(0.01);
+  padplaneHist -> GetYaxis() -> CenterTitle();
+  padplaneHist -> Draw("colz");
 
-    Double_t padLX = 8; // mm
-    Double_t padLZ = 12; // mm
+  Double_t padLX = 8; // mm
+  Double_t padLZ = 12; // mm
 
-    Double_t x[2], y[2];
-    for (Int_t i = 0; i < 107; i++) {
-      x[0] = 0;
-      x[1] = 1344;
-      y[0] = -432 + (i + 1)*padLX;
-      y[1] = -432 + (i + 1)*padLX;
+  Double_t x[2], y[2];
+  for (Int_t i = 0; i < 108; i++) {
+    x[0] = 0;
+    x[1] = 1344;
+    y[0] = -432 + (i + 1)*padLX;
+    y[1] = -432 + (i + 1)*padLX;
 
-      TGraph *graph = new TGraph(2, x, y);
-      graph -> SetEditable(kFALSE);
+    TGraph *graph = new TGraph(2, x, y);
+    graph -> SetEditable(kFALSE);
 
-      if ((i + 1)%9 == 0)
+    if ((i + 1)%9 == 0)
+      graph -> SetLineStyle(1);
+    else
+      graph -> SetLineStyle(3);
+
+    graph -> Draw("L SAME");
+  }
+
+  for (Int_t i = 0; i < 111; i++) {
+    x[0] = (i + 1)*padLZ;
+    x[1] = (i + 1)*padLZ;
+    y[0] = -432;
+    y[1] = 432;
+
+    TGraph *graph = new TGraph(2, x, y);
+    graph -> SetEditable(kFALSE);
+
+    if ((i + 1)%7 == 0)
         graph -> SetLineStyle(1);
-      else
+    else
         graph -> SetLineStyle(3);
 
-      graph -> Draw("L SAME");
-    }
+    graph -> Draw("L SAME");
+  }
 
-    for (Int_t i = 0; i < 111; i++) {
-      x[0] = (i + 1)*padLZ;
-      x[1] = (i + 1)*padLZ;
-      y[0] = -432;
-      y[1] = -432;
-
-      TGraph *graph = new TGraph(2, x, y);
-      graph -> SetEditable(kFALSE);
-
-      if ((i + 1)%7 == 0)
-          graph -> SetLineStyle(1);
-      else
-          graph -> SetLineStyle(3);
-
-      graph -> Draw("L SAME");
-    }
+  padplaneCvs -> Modified();
+  padplaneCvs -> Update();
 }
 
 void STPlot::PreparePadCanvas()

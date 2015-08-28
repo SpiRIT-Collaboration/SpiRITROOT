@@ -31,7 +31,7 @@ class STPlot : public TObject
     STPlot(STCore *core);
     ~STPlot() {};
 
-    void DrawPadplane();
+    void DrawPadplane(Int_t eventID = -1);
     void DrawPad(Int_t row, Int_t layer);
     void DrawLayer(Int_t layer);
 
