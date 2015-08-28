@@ -16,6 +16,7 @@
 #pragma link C++ class STGainCalibration+;
 #pragma link C++ class STGenerator+;
 #pragma link C++ class STGainCheck+;
+#pragma link C++ class STPlot+;
 
 #pragma link C++ class STDecoderTask+;
 
