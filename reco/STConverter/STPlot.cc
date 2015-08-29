@@ -179,6 +179,8 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
   padGraph[0] -> SetLineColor(2);
   padGraph[0] -> GetHistogram() -> GetXaxis() -> SetTitle("Time bucket");
   padGraph[0] -> GetHistogram() -> GetXaxis() -> CenterTitle();
+  padGraph[0] -> GetHistogram() -> GetXaxis() -> SetLimits(-10, fNumTbs + 10);
+  padGraph[0] -> GetHistogram() -> GetXaxis() -> SetRangeUser(-10, fNumTbs + 10);
   padGraph[0] -> GetHistogram() -> GetYaxis() -> SetTitle("ADC");
   padGraph[0] -> GetHistogram() -> GetYaxis() -> CenterTitle();
   padGraph[0] -> GetHistogram() -> GetYaxis() -> SetLimits(-10, 4106);
@@ -193,6 +195,8 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
   padGraph[1] -> SetLineColor(2);
   padGraph[1] -> GetHistogram() -> GetXaxis() -> SetTitle("Time bucket");
   padGraph[1] -> GetHistogram() -> GetXaxis() -> CenterTitle();
+  padGraph[0] -> GetHistogram() -> GetXaxis() -> SetLimits(-10, fNumTbs + 10);
+  padGraph[0] -> GetHistogram() -> GetXaxis() -> SetRangeUser(-10, fNumTbs + 10);
   padGraph[1] -> GetHistogram() -> GetYaxis() -> SetTitle("ADC");
   padGraph[1] -> GetHistogram() -> GetYaxis() -> CenterTitle();
   padGraph[1] -> GetHistogram() -> GetYaxis() -> SetLimits(-10, 4106);
