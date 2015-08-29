@@ -31,8 +31,12 @@ class STPlot : public TObject
     STPlot(STCore *core);
     ~STPlot() {};
 
+    static STPlot *Instance();
+
+    void SetSTCore(STCore *core);
+
     void DrawPadplane(Int_t eventID = -1);
-    void DrawPad(Int_t row, Int_t layer);
+    void ClickPad();
     void DrawLayer(Int_t layer);
 
     // Setters
@@ -42,11 +46,13 @@ class STPlot : public TObject
     // Getters
 
   private:
+    static STPlot *fInstance;
     STCore *fCore;
 
     void Clear();
     void PreparePadplaneHist();
     void PreparePadCanvas();
+    void DrawPad(Int_t row, Int_t layer);
     Bool_t CheckEvent();
 
     STRawEvent *fEvent;

@@ -22,6 +22,15 @@
 
 ClassImp(STPlot)
 
+STPlot *STPlot::fInstance = NULL;
+STPlot *STPlot::Instance()
+{
+  if (fInstance == NULL)
+    fInstance = new STPlot();
+
+  return fInstance;
+}
+
 STPlot::STPlot()
 {
   Clear();
@@ -31,6 +40,11 @@ STPlot::STPlot(STCore *core)
 {
   Clear();
 
+  SetSTCore(core);
+}
+
+void STPlot::SetSTCore(STCore *core)
+{
   fCore = core;
   SetNumTbs(fCore -> GetNumTbs());
 }
@@ -46,6 +60,8 @@ void STPlot::Clear()
   padCvs = NULL;
   padGraph[0] = NULL;
   padGraph[1] = NULL;
+
+  fInstance = this;
 }
 
 Bool_t STPlot::CheckEvent()
@@ -107,6 +123,34 @@ void STPlot::DrawPadplane(Int_t eventID)
   padplaneCvs -> Update();
 }
 
+void STPlot::ClickPad()
+{
+  TObject *select = gPad -> GetCanvas() -> GetClickSelected();
+
+  if (select == NULL ||
+      (!(select -> InheritsFrom(TH2::Class())) && !(select -> InheritsFrom(TGraph::Class()))))
+    return;
+
+  Int_t xEvent = gPad -> GetEventX();
+  Int_t yEvent = gPad -> GetEventY();
+
+  Double_t xAbs = gPad -> AbsPixeltoX(xEvent);
+  Double_t yAbs = gPad -> AbsPixeltoY(yEvent);
+
+  Double_t xOnClick = gPad -> PadtoX(xAbs);
+  Double_t yOnClick = gPad -> PadtoY(yAbs);
+
+  Int_t bin = padplaneHist -> FindBin(xOnClick, yOnClick);
+
+  gPad -> SetUniqueID(bin);
+  gPad -> GetCanvas() -> SetClickSelected(NULL);
+
+  Int_t row = (yOnClick + 432)/8;
+  Int_t layer = xOnClick/12;
+
+  DrawPad(row, layer);
+}
+
 void STPlot::DrawPad(Int_t row, Int_t layer)
 {
   if (padCvs == NULL)
@@ -115,9 +159,6 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
     padGraph[0] -> Set(0);
     padGraph[1] -> Set(0);
   }
-
-  if (CheckEvent())
-    return;
 
   STPad *pad = fEvent -> GetPad(row, layer);
   if (!pad) {
@@ -159,6 +200,9 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
 
   padCvs -> cd(2);
   padGraph[1] -> Draw("AL");
+
+  padCvs -> Modified();
+  padCvs -> Update();
 }
 
 void STPlot::DrawLayer(Int_t layerNo)
@@ -186,10 +230,11 @@ void STPlot::PreparePadplaneHist()
   gStyle -> SetTitleOffset(0.85, "Y");
 
   padplaneCvs = new TCanvas("Event Display", "", 1200, 750);
+  padplaneCvs -> AddExec("DrawPad", "STPlot::Instance() -> ClickPad()");
   padplaneCvs -> Draw();
 
   padplaneCvs -> cd();
-  padplaneHist = new TH2D("padplaneHist", ";x (mm);z (mm)", 112, 0, 1344, 108, -432, 432);
+  padplaneHist = new TH2D("padplaneHist", ";z (mm);x (mm)", 112, 0, 1344, 108, -432, 432);
   padplaneHist -> GetXaxis() -> SetTickLength(0.01);
   padplaneHist -> GetXaxis() -> CenterTitle();
   padplaneHist -> GetYaxis() -> SetTickLength(0.01);
