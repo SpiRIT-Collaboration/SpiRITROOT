@@ -189,7 +189,7 @@ Bool_t GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor
       startTb += fFPNAverageTbs;
 
       if (startTb > fNumTbs - fFPNAverageTbs - 3) {
-        std::cout << "There's no part satisfying sigma threshold " << fFPNSigmaThreshold << "!" << std::endl;
+        std::cout << "= [GETFrame] There's no part satisfying sigma threshold " << fFPNSigmaThreshold << "!" << std::endl;
         return kFALSE;
       }
     }
