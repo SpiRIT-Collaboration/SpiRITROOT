@@ -111,6 +111,9 @@ Bool_t GETDecoder::AddData(TString filename)
     * Check if there is a file named `filename`. If exists, add it to the list.
    **/
 
+  if (filename(0, 1) == "~")
+    filename.Replace(0, 1, gSystem -> HomeDirectory());
+
   TString nextData = filename;
 
   TObjArray *pathElements = 0;
