@@ -57,7 +57,7 @@ void STPlot::Clear()
 Bool_t STPlot::CheckEvent()
 {
   if (fEvent == NULL) {
-    std::cerr << "= [STPlot] Event is not set!" << std::endl;
+    std::cerr << "== [STPlot] Event is not set!" << std::endl;
     return 1;
   }
 
@@ -69,7 +69,7 @@ void STPlot::SetEvent(STRawEvent *anEvent)
 {
   fEvent = anEvent;
 
-  std::cerr << "= [STPlot] Default number of time buckets is 512." << std::endl;
+  std::cerr << "== [STPlot] Default number of time buckets is 512." << std::endl;
 }
 
 void STPlot::SetNumTbs(Int_t numTbs)
@@ -152,7 +152,7 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
 
   STPad *pad = fEvent -> GetPad(row, layer);
   if (!pad) {
-    std::cerr << "= [STPlot] There's no pad (" << row << ", " << layer << ")!" << std::endl;
+    std::cerr << "== [STPlot] There's no pad (" << row << ", " << layer << ")!" << std::endl;
     return;
   }
 
@@ -201,7 +201,7 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
 
 void STPlot::DrawLayer(Int_t layerNo)
 {
-  std::cerr << "= [STPlot] Not Implemented!" << std::endl;
+  std::cerr << "== [STPlot] Not Implemented!" << std::endl;
 
   if (layerHist != NULL)
     delete layerHist;
