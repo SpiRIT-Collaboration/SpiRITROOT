@@ -15,15 +15,13 @@
 #include <cmath>
 #include <arpa/inet.h>
 
-#include "TSystem.h"
-#include "TObjArray.h"
-#include "TObjString.h"
 #include "TString.h"
 
 #include "GETDecoder.hh"
 #include "GETFrame.hh"
 #include "GETPlot.hh"
 #include "GETMath.hh"
+#include "GETFileChecker.hh"
 
 ClassImp(GETDecoder);
 
@@ -111,6 +109,7 @@ Bool_t GETDecoder::AddData(TString filename)
     * Check if there is a file named `filename`. If exists, add it to the list.
    **/
 
+/* The commented lines are migrated to GETFileChecker class
   if (filename(0, 1) == "~")
     filename.Replace(0, 1, gSystem -> HomeDirectory());
 
@@ -137,9 +136,9 @@ Bool_t GETDecoder::AddData(TString filename)
   TString tempDataFile = ((TObjString *) pathElements -> Last()) -> GetString();
 
   nextData = gSystem -> Which(path, tempDataFile);
+*/
+  TString nextData = GETFileChecker::CheckFile(filename);
   if (!nextData.EqualTo("")) {
-    std::cout << "== [GETDecoder] Data file found: " << filename << std::endl;
-
     Bool_t isExist = 0;
     for (Int_t iIdx = 0; iIdx < fDataList.size(); iIdx++) {
       if (fDataList.at(0) == nextData) {
@@ -150,15 +149,10 @@ Bool_t GETDecoder::AddData(TString filename)
 
     if (!isExist)
       fDataList.push_back(nextData);
-  } else {
-    std::cout << "== [GETDecoder] Data file not found: " << filename << std::endl;
-
-    return kFALSE;
   }
 
-  delete pathElements;
-
-  return kTRUE;
+  return kFALSE;
+//  delete pathElements;
 }
 
 Bool_t GETDecoder::SetData(Int_t index)
