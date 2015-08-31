@@ -8,6 +8,7 @@
 #pragma link C++ class GETFrame+;
 #pragma link C++ class GETMath+;
 #pragma link C++ class GETPlot+;
+#pragma link C++ class GETFileChecker+;
 
 #pragma link C++ class STCore+;
 #pragma link C++ class STMap+;

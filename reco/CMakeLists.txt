@@ -39,6 +39,7 @@ GETDecoder/GETDecoder.cc
 GETDecoder/GETFrame.cc
 GETDecoder/GETMath.cc
 GETDecoder/GETPlot.cc
+GETDecoder/GETFileChecker.cc
 
 STConverter/STCore.cc
 STConverter/STPedestal.cc
