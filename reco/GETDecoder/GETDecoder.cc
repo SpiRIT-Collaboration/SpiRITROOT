@@ -109,34 +109,6 @@ Bool_t GETDecoder::AddData(TString filename)
     * Check if there is a file named `filename`. If exists, add it to the list.
    **/
 
-/* The commented lines are migrated to GETFileChecker class
-  if (filename(0, 1) == "~")
-    filename.Replace(0, 1, gSystem -> HomeDirectory());
-
-  TString nextData = filename;
-
-  TObjArray *pathElements = 0;
-  pathElements = nextData.Tokenize("/");
-
-  Int_t numElements = pathElements -> GetLast();
-
-  TString path = "";
-  if (numElements == 0)
-    path = gSystem -> pwd();
-  else {
-    if (filename(0, 1) == "/")
-      path.Append("/");
-
-    for (Int_t i = 0; i < numElements; i++) {
-      path.Append(((TObjString *) pathElements -> At(i)) -> GetString());
-      path.Append("/");
-    }
-  }
-
-  TString tempDataFile = ((TObjString *) pathElements -> Last()) -> GetString();
-
-  nextData = gSystem -> Which(path, tempDataFile);
-*/
   TString nextData = GETFileChecker::CheckFile(filename);
   if (!nextData.EqualTo("")) {
     Bool_t isExist = 0;
@@ -152,7 +124,6 @@ Bool_t GETDecoder::AddData(TString filename)
   }
 
   return kFALSE;
-//  delete pathElements;
 }
 
 Bool_t GETDecoder::SetData(Int_t index)
