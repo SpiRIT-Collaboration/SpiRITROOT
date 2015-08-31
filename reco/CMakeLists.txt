@@ -49,6 +49,7 @@ STConverter/STGainCheck.cc
 STConverter/STMap.cc
 STConverter/STMapTest.cc
 STConverter/STPlot.cc
+STConverter/STParReader.cc
 
 PulseShapeAnalyzer/STPSA.cc
 PulseShapeAnalyzer/STPSASimple.cc
