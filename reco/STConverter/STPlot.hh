@@ -31,8 +31,6 @@ class STPlot : public TObject
     STPlot(STCore *core);
     ~STPlot() {};
 
-    static STPlot *Instance();
-
     void SetSTCore(STCore *core);
 
     void DrawPadplane(Int_t eventID = -1);
@@ -43,10 +41,7 @@ class STPlot : public TObject
     void SetEvent(STRawEvent *anEvent);
     void SetNumTbs(Int_t numTbs);
 
-    // Getters
-
   private:
-    static STPlot *fInstance;
     STCore *fCore;
 
     void Clear();

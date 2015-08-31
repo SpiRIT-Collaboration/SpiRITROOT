@@ -11,6 +11,7 @@
 #include "STPlot.hh"
 #include "STRawEvent.hh"
 #include "STPad.hh"
+#include "STStatic.hh"
 
 #include "TCanvas.h"
 #include "TStyle.h"
@@ -21,15 +22,6 @@
 #include <iostream>
 
 ClassImp(STPlot)
-
-STPlot *STPlot::fInstance = NULL;
-STPlot *STPlot::Instance()
-{
-  if (fInstance == NULL)
-    fInstance = new STPlot();
-
-  return fInstance;
-}
 
 STPlot::STPlot()
 {
@@ -60,8 +52,6 @@ void STPlot::Clear()
   padCvs = NULL;
   padGraph[0] = NULL;
   padGraph[1] = NULL;
-
-  fInstance = this;
 }
 
 Bool_t STPlot::CheckEvent()
@@ -234,11 +224,13 @@ void STPlot::PreparePadplaneHist()
   gStyle -> SetTitleOffset(0.85, "Y");
 
   padplaneCvs = new TCanvas("Event Display", "", 1200, 750);
-  padplaneCvs -> AddExec("DrawPad", "STPlot::Instance() -> ClickPad()");
+  padplaneCvs -> SetName(Form("EventDisplay_%lx", (Long_t)padplaneCvs));
+  padplaneCvs -> AddExec("DrawPad", Form("((STPlot *) STStatic::MakePointer(%ld)) -> ClickPad()", (Long_t)this));
   padplaneCvs -> Draw();
 
   padplaneCvs -> cd();
   padplaneHist = new TH2D("padplaneHist", ";z (mm);x (mm)", 112, 0, 1344, 108, -432, 432);
+  padplaneHist -> SetName(Form("padplaneHist_%lx", (Long_t)padplaneHist));
   padplaneHist -> GetXaxis() -> SetTickLength(0.01);
   padplaneHist -> GetXaxis() -> CenterTitle();
   padplaneHist -> GetYaxis() -> SetTickLength(0.01);
@@ -302,6 +294,7 @@ void STPlot::PreparePadCanvas()
   gStyle -> SetLabelSize(0.05, "Y");
 
   padCvs = new TCanvas("padCvs", "", 1100, 550);
+  padCvs -> SetName(Form("padCvs_%lx", (Long_t)padCvs));
   padCvs -> Divide(2, 1);
   padCvs -> Draw();
 }
