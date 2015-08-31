@@ -35,6 +35,8 @@ STGainCheck::STGainCheck()
 
   fIsGainCalibrationData = kFALSE;
   fUAIdx = 0;
+
+  fParReader = NULL;
 }
 
 STGainCheck::~STGainCheck()
@@ -208,106 +210,44 @@ STGainCheck::SetParameterDir(TString dir)
   TString parameterFile = dir;
   parameterFile.Append("/ST.parameters.par");
 
-  TObjArray *pathElements = 0;
-  pathElements = parameterFile.Tokenize("/");
+  if (fParReader != NULL)
+    delete fParReader;
 
-  Int_t numElements = pathElements -> GetLast();
+  fParReader = new STParReader(parameterFile);
+  if (!(fParReader -> IsGood()))
+    return kFALSE;
 
-  TString path = "";
-  if (numElements == 0)
-    path = gSystem -> pwd();
+  fNumTbs = fParReader -> GetIntPar("NumTbs");
+  fCore -> SetNumTbs(fNumTbs);
+
+  fRows = fParReader -> GetIntPar("PadRows");
+  fLayers = fParReader -> GetIntPar("PadLayers");
+  fPadX = fParReader -> GetDoublePar("PadSizeX");
+  fPadZ = fParReader -> GetDoublePar("PadSizeZ");
+
+  Int_t uaMapIndex = fParReader -> GetIntPar("UAMapFile");
+  TString uaMapFile = fParReader -> GetFilePar(uaMapIndex);
+  Bool_t okay = fCore -> SetUAMap(uaMapFile);
+  if (okay)
+    cout << "== [STGainCheck] Unit AsAd mapping file set: " << uaMapFile << endl;
   else {
-    for (Int_t i = 0; i < numElements; i++) {
-      path.Append(((TObjString *) pathElements -> At(i)) -> GetString());
-      path.Append("/");
-    }
-  }
-
-  TString tempParameterFile = ((TObjString *) pathElements -> Last()) -> GetString();
-  delete pathElements;
-
-  parameterFile = gSystem -> Which(path, tempParameterFile);
-  if (!parameterFile.EqualTo("")) {
-    cout << "== [STGainCheck] Parameter file set: " << parameterFile << endl;
-
-    fParameterFile = parameterFile;
-
-    fNumTbs = GetIntParameter("NumTbs");
-    fCore -> SetNumTbs(fNumTbs);
-
-    fRows = GetIntParameter("PadRows");
-    fLayers = GetIntParameter("PadLayers");
-    fPadX = GetIntParameter("PadSizeX");
-    fPadZ = GetIntParameter("PadSizeZ");
-
-    Int_t uaMapIndex = GetIntParameter("UAMapFile");
-    TString uaMapFile = GetFileParameter(uaMapIndex);
-    Bool_t okay = fCore -> SetUAMap(uaMapFile);
-    if (okay)
-      cout << "== [STGainCheck] Unit AsAd mapping file set: " << uaMapFile << endl;
-    else {
-      cout << "== [STGainCheck] Cannot find Unit AsAd mapping file!" << endl;
-
-      return kFALSE;
-    }
-
-    Int_t agetMapIndex = GetIntParameter("AGETMapFile");
-    TString agetMapFile = GetFileParameter(agetMapIndex);
-    okay = fCore -> SetAGETMap(agetMapFile);
-    if (okay)
-      cout << "== [STGainCheck] AGET mapping file set: " << agetMapFile << endl;
-    else {
-      cout << "== [STGainCheck] Cannot find AGET mapping file!" << endl;
-
-      return kFALSE;
-    }
-
-    return kTRUE;
-  } else {
-    cout << "== [STGainCheck] Parameter file not found: " << parameterFile << endl;
+    cout << "== [STGainCheck] Cannot find Unit AsAd mapping file!" << endl;
 
     return kFALSE;
   }
-}
 
-Int_t
-STGainCheck::GetIntParameter(TString parameter)
-{
-  ifstream parameters(fParameterFile);
-  while (kTRUE) {
-    TString value;
-    value.ReadToken(parameters);
-    if (value.EqualTo(Form("%s:Int_t", parameter.Data()))) {
-      value.ReadToken(parameters);
-      parameters.close();
-      return value.Atoi();
-    }
-  }
-  parameters.close();
-}
+  Int_t agetMapIndex = fParReader -> GetIntPar("AGETMapFile");
+  TString agetMapFile = fParReader -> GetFilePar(agetMapIndex);
+  okay = fCore -> SetAGETMap(agetMapFile);
+  if (okay)
+    cout << "== [STGainCheck] AGET mapping file set: " << agetMapFile << endl;
+  else {
+    cout << "== [STGainCheck] Cannot find AGET mapping file!" << endl;
 
-TString
-STGainCheck::GetFileParameter(Int_t index)
-{
-  TString listFile = fParameterFile;
-  listFile.ReplaceAll("ST.parameters.par", "ST.files.par");
-
-  ifstream fileList(listFile.Data());
-
-  Char_t buffer[256];
-  for (Int_t iFileNum = 0; iFileNum < index + 1; iFileNum++) {
-    if (fileList.eof()) {
-      cout << "== [STGenerator] Cannot find string #" << iFileNum << endl;
-
-      return "";
-    }
-
-    fileList.getline(buffer, 256);
+    return kFALSE;
   }
 
-  fileList.close();
-
-  return listFile.ReplaceAll("parameters/ST.files.par", buffer);
+  return kTRUE;
 }
 
 Int_t
