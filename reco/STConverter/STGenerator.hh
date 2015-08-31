@@ -17,6 +17,7 @@
 #include "TString.h"
 
 #include "STCore.hh"
+#include "STParReader.hh"
 
 #include <vector>
 
@@ -53,17 +54,13 @@ class STGenerator : public TObject {
     void GenerateGainCalibrationData();
     void GenerateSignalDelayData();
 
-    Int_t GetIntParameter(TString parameter);
-    Double_t GetDoubleParameter(TString parameter);
-    TString GetFileParameter(Int_t index);
-
     enum EMode { kError, kPedestal, kGain, kSignalDelay };
     Int_t fMode;
 
     vector<Double_t> fVoltageArray;
 
     STCore *fCore;
-    TString fParameterFile;
+    STParReader *fParReader;
     TString fOutputFile;
 
     Bool_t fIsPersistence;

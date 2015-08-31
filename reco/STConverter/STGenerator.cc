@@ -40,6 +40,8 @@ STGenerator::STGenerator()
   fIsPersistence = kFALSE;
   fIsStoreRMS = kFALSE;
   fIsPositivePolarity = kFALSE;
+
+  fParReader = NULL;
 }
 
 STGenerator::STGenerator(TString mode)
@@ -49,6 +51,8 @@ STGenerator::STGenerator(TString mode)
   fIsPersistence = kFALSE;
   fIsStoreRMS = kFALSE;
   fIsPositivePolarity = kFALSE;
+
+  fParReader = NULL;
 }
 
 STGenerator::~STGenerator()
@@ -115,66 +119,44 @@ STGenerator::SetParameterDir(TString dir)
   TString parameterFile = dir;
   parameterFile.Append("/ST.parameters.par");
 
-  TObjArray *pathElements = 0;
-  pathElements = parameterFile.Tokenize("/");
+  if (fParReader != NULL)
+    delete fParReader;
 
-  Int_t numElements = pathElements -> GetLast();
+  fParReader = new STParReader(parameterFile);
+  if (!(fParReader -> IsGood()))
+    return kFALSE;
 
-  TString path = "";
-  if (numElements == 0)
-    path = gSystem -> pwd();
+  fNumTbs = fParReader -> GetIntPar("NumTbs");
+  fCore -> SetNumTbs(fNumTbs);
+
+  fRows = fParReader -> GetIntPar("PadRows");
+  fLayers = fParReader -> GetIntPar("PadLayers");
+  fPadX = fParReader -> GetDoublePar("PadSizeX");
+  fPadZ = fParReader -> GetDoublePar("PadSizeZ");
+
+  Int_t uaMapIndex = fParReader -> GetIntPar("UAMapFile");
+  TString uaMapFile = fParReader -> GetFilePar(uaMapIndex);
+  Bool_t okay = fCore -> SetUAMap(uaMapFile);
+  if (okay)
+    cout << "== [STGenerator] Unit AsAd mapping file set: " << uaMapFile << endl;
   else {
-    for (Int_t i = 0; i < numElements; i++) {
-      path.Append(((TObjString *) pathElements -> At(i)) -> GetString());
-      path.Append("/");
-    }
-  }
-
-  TString tempParameterFile = ((TObjString *) pathElements -> Last()) -> GetString();
-  delete pathElements;
-
-  parameterFile = gSystem -> Which(path, tempParameterFile);
-  if (!parameterFile.EqualTo("")) {
-    cout << "== [STGenerator] Parameter file set: " << parameterFile << endl;
-
-    fParameterFile = parameterFile;
-
-    fNumTbs = GetIntParameter("NumTbs");
-    fCore -> SetNumTbs(fNumTbs);
-
-    fRows = GetIntParameter("PadRows");
-    fLayers = GetIntParameter("PadLayers");
-    fPadX = GetDoubleParameter("PadSizeX");
-    fPadZ = GetDoubleParameter("PadSizeZ");
-
-    Int_t uaMapIndex = GetIntParameter("UAMapFile");
-    TString uaMapFile = GetFileParameter(uaMapIndex);
-    Bool_t okay = fCore -> SetUAMap(uaMapFile);
-    if (okay)
-      cout << "== [STGenerator] Unit AsAd mapping file set: " << uaMapFile << endl;
-    else {
-      cout << "== [STGenerator] Cannot find Unit AsAd mapping file!" << endl;
-
-      return kFALSE;
-    }
-
-    Int_t agetMapIndex = GetIntParameter("AGETMapFile");
-    TString agetMapFile = GetFileParameter(agetMapIndex);
-    okay = fCore -> SetAGETMap(agetMapFile);
-    if (okay)
-      cout << "== [STGenerator] AGET mapping file set: " << agetMapFile << endl;
-    else {
-      cout << "== [STGenerator] Cannot find AGET mapping file!" << endl;
-
-      return kFALSE;
-    }
-
-    return kTRUE;
-  } else {
-    cout << "== [STGenerator] Parameter file not found: " << parameterFile << endl;
+    cout << "== [STGenerator] Cannot find Unit AsAd mapping file!" << endl;
 
     return kFALSE;
   }
+
+  Int_t agetMapIndex = fParReader -> GetIntPar("AGETMapFile");
+  TString agetMapFile = fParReader -> GetFilePar(agetMapIndex);
+  okay = fCore -> SetAGETMap(agetMapFile);
+  if (okay)
+    cout << "== [STGenerator] AGET mapping file set: " << agetMapFile << endl;
+  else {
+    cout << "== [STGenerator] Cannot find AGET mapping file!" << endl;
+
+    return kFALSE;
+  }
+
+  return kTRUE;
 }
 
 void
@@ -619,65 +601,6 @@ STGenerator::GenerateGainCalibrationData()
 void
 STGenerator::GenerateSignalDelayData()
 {
-}
-
-Int_t
-STGenerator::GetIntParameter(TString parameter)
-{
-  ifstream parameters(fParameterFile);
-  while (kTRUE) {
-    TString value;
-    value.ReadToken(parameters);
-    if (value.EqualTo(Form("%s:Int_t", parameter.Data()))) {
-      value.ReadToken(parameters);
-      parameters.close();
-      return value.Atoi();
-    }
-  }
-  parameters.close();
-}
-
-Double_t
-STGenerator::GetDoubleParameter(TString parameter)
-{
-  ifstream parameters(fParameterFile);
-  while (kTRUE) {
-    TString value;
-    value.ReadToken(parameters);
-    if (value.EqualTo(Form("%s:Double_t", parameter.Data()))) {
-      value.ReadToken(parameters);
-      parameters.close();
-      return value.Atof();
-    }
-  }
-  parameters.close();
-}
-
-TString
-STGenerator::GetFileParameter(Int_t index)
-{
-  TString listFile = fParameterFile;
-  listFile.ReplaceAll("ST.parameters.par", "ST.files.par");
-
-  ifstream fileList(listFile.Data());
-
-  Char_t buffer[256];
-  for (Int_t iFileNum = 0; iFileNum < index + 1; iFileNum++) {
-    if (fileList.eof()) {
-      cout << "== [STGenerator] Cannot find string #" << iFileNum << endl;
-
-      return "";
-    }
-
-    fileList.getline(buffer, 256);
-  }
-
-  fileList.close();
-
-  TString newFilename = buffer;
-  newFilename.ReplaceAll("parameters/", "");
-
-  return listFile.ReplaceAll("ST.files.par", newFilename.Data());
 }
 
 void
