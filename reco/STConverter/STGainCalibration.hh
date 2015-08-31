@@ -50,8 +50,8 @@ class STGainCalibration : public TObject {
 
     TString fDataType;
 
-    TGraphErrors *fGraph[108][112];
-    TGraphErrors *fGraphR[108][112];
+    TGraphErrors ***fGraph;
+    TGraphErrors ***fGraphR;
 
     Int_t fReferenceRow;
     Int_t fReferenceLayer;
