@@ -47,11 +47,9 @@ GETFileChecker::CheckFile(TString filename)
   }
 
   TString tempDataFile = ((TObjString *) pathElements -> Last()) -> GetString();
-
-  nextData = gSystem -> Which(path, tempDataFile);
-
   delete pathElements;
 
+  nextData = gSystem -> Which(path, tempDataFile);
   if (!nextData.EqualTo("")) {
     std::cout << "== [GETFileChecker] File exist: " << filename << std::endl;
 
