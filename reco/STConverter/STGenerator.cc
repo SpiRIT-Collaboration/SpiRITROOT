@@ -501,7 +501,7 @@ STGenerator::GenerateGainCalibrationData()
     fCore -> SetData(iVoltage);
     STRawEvent *event = NULL;
     while ((event = fCore -> GetRawEvent())) {
-//    for (Int_t iEvent = 0; iEvent < 400; iEvent++) {
+//    for (Int_t iEvent = 0; iEvent < 10; iEvent++) {
 //      STRawEvent *event = fCore -> GetRawEvent();
 
       cout << "Start voltage: " << fVoltageArray.at(iVoltage) << " event: " << event -> GetEventID() << endl;
@@ -559,7 +559,11 @@ STGenerator::GenerateGainCalibrationData()
 
       if (fIsPersistence) {
 #ifdef VVSADC
-        TGraphErrors *aPad = new TGraphErrors(numVoltages, means, voltages, sigmas, 0);
+        Double_t *dummyError = new Double_t[numVoltages];
+        for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++)
+          dummyError[iVoltage] = 1.E-5;
+
+        TGraphErrors *aPad = new TGraphErrors(numVoltages, means, voltages, sigmas, dummyError);
 #else
         TGraphErrors *aPad = new TGraphErrors(numVoltages, voltages, means, 0, sigmas);
 #endif
@@ -576,7 +580,11 @@ STGenerator::GenerateGainCalibrationData()
         outTree -> Fill();
       } else {
 #ifdef VVSADC
-        TGraphErrors aPad(numVoltages, means, voltages, sigmas, 0);
+        Double_t *dummyError = new Double_t[numVoltages];
+        for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++)
+          dummyError[iVoltage] = 1.E-5;
+
+        TGraphErrors aPad(numVoltages, means, voltages, sigmas, dummyError);
 #else
         TGraphErrors aPad(numVoltages, voltages, means, 0, sigmas);
 #endif
