@@ -46,12 +46,13 @@ void STPlot::Clear()
   fEvent = NULL;
   fNumTbs = 512;
 
-  padplaneCvs = NULL;
-  padplaneHist = NULL;
+  fPadplaneCvs = NULL;
+  fPadplaneHist = NULL;
+  fPadplaneTitle = "Event display - Event ID: %d";
 
-  padCvs = NULL;
-  padGraph[0] = NULL;
-  padGraph[1] = NULL;
+  fPadCvs = NULL;
+  fPadGraph[0] = NULL;
+  fPadGraph[1] = NULL;
 }
 
 Bool_t STPlot::CheckEvent()
@@ -77,6 +78,11 @@ void STPlot::SetNumTbs(Int_t numTbs)
   fNumTbs = numTbs;
 }
 
+void STPlot::SetPadplaneTitle(TString title)
+{
+  fPadplaneTitle = title;
+}
+
 void STPlot::DrawPadplane(Int_t eventID)
 {
   if (fCore != NULL)
@@ -84,8 +90,8 @@ void STPlot::DrawPadplane(Int_t eventID)
   else if (CheckEvent())
     return;
 
-  if (padplaneHist)
-    padplaneHist -> Reset();
+  if (fPadplaneHist)
+    fPadplaneHist -> Reset();
   else
     PreparePadplaneHist();
 
@@ -103,14 +109,15 @@ void STPlot::DrawPadplane(Int_t eventID)
         maxADC = aPad -> GetADC(i);
     }
 
-    padplaneHist -> SetBinContent(aPad -> GetLayer() + 1, aPad -> GetRow() + 1, maxADC);
+    fPadplaneHist -> SetBinContent(aPad -> GetLayer() + 1, aPad -> GetRow() + 1, maxADC);
     if (maxADC > max) max = maxADC;
   }
 
-  padplaneHist -> SetMaximum(max);
+  fPadplaneHist -> SetTitle(Form(Form("%s", fPadplaneTitle.Data()), fEvent -> GetEventID()));
+  fPadplaneHist -> SetMaximum(max);
 
-  padplaneCvs -> Modified();
-  padplaneCvs -> Update();
+  fPadplaneCvs -> Modified();
+  fPadplaneCvs -> Update();
 }
 
 void STPlot::ClickPad()
@@ -130,7 +137,7 @@ void STPlot::ClickPad()
   Double_t xOnClick = gPad -> PadtoX(xAbs);
   Double_t yOnClick = gPad -> PadtoY(yAbs);
 
-  Int_t bin = padplaneHist -> FindBin(xOnClick, yOnClick);
+  Int_t bin = fPadplaneHist -> FindBin(xOnClick, yOnClick);
 
   gPad -> SetUniqueID(bin);
   gPad -> GetCanvas() -> SetClickSelected(NULL);
@@ -143,11 +150,11 @@ void STPlot::ClickPad()
 
 void STPlot::DrawPad(Int_t row, Int_t layer)
 {
-  if (padCvs == NULL)
+  if (fPadCvs == NULL)
     PreparePadCanvas();
   else {
-    padGraph[0] -> Set(0);
-    padGraph[1] -> Set(0);
+    fPadGraph[0] -> Set(0);
+    fPadGraph[1] -> Set(0);
   }
 
   STPad *pad = fEvent -> GetPad(row, layer);
@@ -164,47 +171,47 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
     rawAdc[iTb] = tempRawAdc[iTb];
   }
 
-  padGraph[0] = new TGraph(fNumTbs, tb, rawAdc);
-  padGraph[0] -> SetTitle(Form("Raw ADC - (%d, %d)", row, layer));
-  padGraph[0] -> SetLineColor(2);
-  padGraph[0] -> GetHistogram() -> GetXaxis() -> SetTitle("Time bucket");
-  padGraph[0] -> GetHistogram() -> GetXaxis() -> CenterTitle();
-  padGraph[0] -> GetHistogram() -> GetXaxis() -> SetLimits(-10, fNumTbs + 10);
-  padGraph[0] -> GetHistogram() -> GetXaxis() -> SetRangeUser(-10, fNumTbs + 10);
-  padGraph[0] -> GetHistogram() -> GetYaxis() -> SetTitle("ADC");
-  padGraph[0] -> GetHistogram() -> GetYaxis() -> CenterTitle();
-  padGraph[0] -> GetHistogram() -> GetYaxis() -> SetLimits(-10, 4106);
-  padGraph[0] -> GetHistogram() -> GetYaxis() -> SetRangeUser(-10, 4106);
+  fPadGraph[0] = new TGraph(fNumTbs, tb, rawAdc);
+  fPadGraph[0] -> SetTitle(Form("Raw ADC - (%d, %d)", row, layer));
+  fPadGraph[0] -> SetLineColor(2);
+  fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetTitle("Time bucket");
+  fPadGraph[0] -> GetHistogram() -> GetXaxis() -> CenterTitle();
+  fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetLimits(-10, fNumTbs + 10);
+  fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetRangeUser(-10, fNumTbs + 10);
+  fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetTitle("ADC");
+  fPadGraph[0] -> GetHistogram() -> GetYaxis() -> CenterTitle();
+  fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetLimits(-10, 4106);
+  fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetRangeUser(-10, 4106);
 
-  padCvs -> cd(1);
-  padGraph[0] -> Draw("AL");
+  fPadCvs -> cd(1);
+  fPadGraph[0] -> Draw("AL");
 
   Double_t *adc = pad -> GetADC();
-  padGraph[1] = new TGraph(fNumTbs, tb, adc);
-  padGraph[1] -> SetTitle(Form("ADC(FPN pedestal subtracted) - (%d, %d)", row, layer));
-  padGraph[1] -> SetLineColor(2);
-  padGraph[1] -> GetHistogram() -> GetXaxis() -> SetTitle("Time bucket");
-  padGraph[1] -> GetHistogram() -> GetXaxis() -> CenterTitle();
-  padGraph[0] -> GetHistogram() -> GetXaxis() -> SetLimits(-10, fNumTbs + 10);
-  padGraph[0] -> GetHistogram() -> GetXaxis() -> SetRangeUser(-10, fNumTbs + 10);
-  padGraph[1] -> GetHistogram() -> GetYaxis() -> SetTitle("ADC");
-  padGraph[1] -> GetHistogram() -> GetYaxis() -> CenterTitle();
-  padGraph[1] -> GetHistogram() -> GetYaxis() -> SetLimits(-10, 4106);
-  padGraph[1] -> GetHistogram() -> GetYaxis() -> SetRangeUser(-10, 4106);
+  fPadGraph[1] = new TGraph(fNumTbs, tb, adc);
+  fPadGraph[1] -> SetTitle(Form("ADC(FPN pedestal subtracted) - (%d, %d)", row, layer));
+  fPadGraph[1] -> SetLineColor(2);
+  fPadGraph[1] -> GetHistogram() -> GetXaxis() -> SetTitle("Time bucket");
+  fPadGraph[1] -> GetHistogram() -> GetXaxis() -> CenterTitle();
+  fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetLimits(-10, fNumTbs + 10);
+  fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetRangeUser(-10, fNumTbs + 10);
+  fPadGraph[1] -> GetHistogram() -> GetYaxis() -> SetTitle("ADC");
+  fPadGraph[1] -> GetHistogram() -> GetYaxis() -> CenterTitle();
+  fPadGraph[1] -> GetHistogram() -> GetYaxis() -> SetLimits(-10, 4106);
+  fPadGraph[1] -> GetHistogram() -> GetYaxis() -> SetRangeUser(-10, 4106);
 
-  padCvs -> cd(2);
-  padGraph[1] -> Draw("AL");
+  fPadCvs -> cd(2);
+  fPadGraph[1] -> Draw("AL");
 
-  padCvs -> Modified();
-  padCvs -> Update();
+  fPadCvs -> Modified();
+  fPadCvs -> Update();
 }
 
 void STPlot::DrawLayer(Int_t layerNo)
 {
   std::cerr << "== [STPlot] Not Implemented!" << std::endl;
 
-  if (layerHist != NULL)
-    delete layerHist;
+  if (fLayerHist != NULL)
+    delete fLayerHist;
 
   if (CheckEvent())
     return;
@@ -218,24 +225,24 @@ void STPlot::PreparePadplaneHist()
   gStyle -> SetOptStat(0000);
   gStyle -> SetPadRightMargin(0.10);
   gStyle -> SetPadLeftMargin(0.06);
-  gStyle -> SetPadTopMargin(0.04);
+  gStyle -> SetPadTopMargin(0.08);
   gStyle -> SetPadBottomMargin(0.08);
   gStyle -> SetTitleOffset(1.0, "X");
   gStyle -> SetTitleOffset(0.85, "Y");
 
-  padplaneCvs = new TCanvas("Event Display", "", 1200, 750);
-  padplaneCvs -> SetName(Form("EventDisplay_%lx", (Long_t)padplaneCvs));
-  padplaneCvs -> AddExec("DrawPad", Form("((STPlot *) STStatic::MakePointer(%ld)) -> ClickPad()", (Long_t)this));
-  padplaneCvs -> Draw();
+  fPadplaneCvs = new TCanvas("Event Display", "", 1200, 750);
+  fPadplaneCvs -> SetName(Form("EventDisplay_%lx", (Long_t)fPadplaneCvs));
+  fPadplaneCvs -> AddExec("DrawPad", Form("((STPlot *) STStatic::MakePointer(%ld)) -> ClickPad()", (Long_t)this));
+  fPadplaneCvs -> Draw();
 
-  padplaneCvs -> cd();
-  padplaneHist = new TH2D("padplaneHist", ";z (mm);x (mm)", 112, 0, 1344, 108, -432, 432);
-  padplaneHist -> SetName(Form("padplaneHist_%lx", (Long_t)padplaneHist));
-  padplaneHist -> GetXaxis() -> SetTickLength(0.01);
-  padplaneHist -> GetXaxis() -> CenterTitle();
-  padplaneHist -> GetYaxis() -> SetTickLength(0.01);
-  padplaneHist -> GetYaxis() -> CenterTitle();
-  padplaneHist -> Draw("colz");
+  fPadplaneCvs -> cd();
+  fPadplaneHist = new TH2D("fPadplaneHist", ";z (mm);x (mm)", 112, 0, 1344, 108, -432, 432);
+  fPadplaneHist -> SetName(Form("fPadplaneHist_%lx", (Long_t)fPadplaneHist));
+  fPadplaneHist -> GetXaxis() -> SetTickLength(0.01);
+  fPadplaneHist -> GetXaxis() -> CenterTitle();
+  fPadplaneHist -> GetYaxis() -> SetTickLength(0.01);
+  fPadplaneHist -> GetYaxis() -> CenterTitle();
+  fPadplaneHist -> Draw("colz");
 
   Double_t padLX = 8; // mm
   Double_t padLZ = 12; // mm
@@ -275,8 +282,8 @@ void STPlot::PreparePadplaneHist()
     graph -> Draw("L SAME");
   }
 
-  padplaneCvs -> Modified();
-  padplaneCvs -> Update();
+  fPadplaneCvs -> Modified();
+  fPadplaneCvs -> Update();
 }
 
 void STPlot::PreparePadCanvas()
@@ -293,8 +300,8 @@ void STPlot::PreparePadCanvas()
   gStyle -> SetLabelSize(0.05, "X");
   gStyle -> SetLabelSize(0.05, "Y");
 
-  padCvs = new TCanvas("padCvs", "", 1100, 550);
-  padCvs -> SetName(Form("padCvs_%lx", (Long_t)padCvs));
-  padCvs -> Divide(2, 1);
-  padCvs -> Draw();
+  fPadCvs = new TCanvas("fPadCvs", "", 1100, 550);
+  fPadCvs -> SetName(Form("fPadCvs_%lx", (Long_t)fPadCvs));
+  fPadCvs -> Divide(2, 1);
+  fPadCvs -> Draw();
 }

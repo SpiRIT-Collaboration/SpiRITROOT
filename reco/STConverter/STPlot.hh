@@ -21,6 +21,7 @@
 #include "TH2D.h"
 #include "TH1D.h"
 #include "TGraph.h"
+#include "TString.h"
 
 class STCore;
 
@@ -40,6 +41,7 @@ class STPlot : public TObject
     // Setters
     void SetEvent(STRawEvent *anEvent);
     void SetNumTbs(Int_t numTbs);
+    void SetPadplaneTitle(TString title);
 
   private:
     STCore *fCore;
@@ -53,13 +55,14 @@ class STPlot : public TObject
     STRawEvent *fEvent;
     Int_t fNumTbs;
 
-    TCanvas *padplaneCvs;
-    TH2D *padplaneHist;
+    TCanvas *fPadplaneCvs;
+    TH2D *fPadplaneHist;
+    TString fPadplaneTitle;
 
-    TCanvas *padCvs;
-    TGraph *padGraph[2];
+    TCanvas *fPadCvs;
+    TGraph *fPadGraph[2];
 
-    TH2D *layerHist;
+    TH2D *fLayerHist;
 
   ClassDef(STPlot, 1);
 };
