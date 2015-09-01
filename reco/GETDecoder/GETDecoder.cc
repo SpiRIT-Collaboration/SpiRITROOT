@@ -119,8 +119,11 @@ Bool_t GETDecoder::AddData(TString filename)
       }
     }
 
-    if (!isExist)
+    if (!isExist) {
       fDataList.push_back(nextData);
+
+      return kTRUE;
+    }
   }
 
   return kFALSE;
