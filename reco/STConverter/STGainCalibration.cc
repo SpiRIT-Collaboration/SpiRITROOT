@@ -8,6 +8,7 @@
 //  2014. 08. 25
 // =================================================
 
+#include "STGlobal.hh"
 #include "STGainCalibration.hh"
 
 #include "TMath.h"
@@ -145,15 +146,25 @@ Bool_t STGainCalibration::CalibrateADC(Int_t padRow, Int_t padLayer, Int_t numTb
       for (Int_t iTb = 0; iTb < numTbs; iTb++) {
         Int_t sign = -(((Int_t)std::signbit(adc[iTb])) - 0.5)*2;
         adc[iTb] = sign*adc[iTb];
+#ifdef VVSADC
+        Double_t voltage = fConstant[padRow][padLayer] + fLinear[padRow][padLayer]*adc[iTb];
+        Double_t newAdc = (voltage - fReferenceConstant)/fReferenceLinear;
+#else
         Double_t newAdc = ((adc[iTb] - fConstant[padRow][padLayer])/fLinear[padRow][padLayer])*fReferenceLinear + fReferenceConstant;
+#endif
         adc[iTb] = sign*newAdc;
       }
     } else {
       for (Int_t iTb = 0; iTb < numTbs; iTb++) {
         Int_t sign = -(((Int_t)std::signbit(adc[iTb])) - 0.5)*2;
         adc[iTb] = sign*adc[iTb];
+#ifdef VVSADC
+        Double_t voltage= fConstant[padRow][padLayer] + fLinear[padRow][padLayer]*adc[iTb] + fQuadratic[padRow][padLayer]*adc[iTb]*adc[iTb];
+        Double_t newAdc = (-fLinear[padRow][padLayer] + sqrt(fLinear[padRow][padLayer]*fLinear[padRow][padLayer] - 4*fQuadratic[padRow][padLayer]*(fConstant[padRow][padLayer] - voltage)))/(2.*fQuadratic[padRow][padLayer]);
+#else
         Double_t voltage = (-fLinear[padRow][padLayer]+sqrt(fLinear[padRow][padLayer]*fLinear[padRow][padLayer] - 4*fQuadratic[padRow][padLayer]*(fConstant[padRow][padLayer] - adc[iTb])))/(2.*fQuadratic[padRow][padLayer]);
         Double_t newAdc = fReferenceConstant + fReferenceLinear*voltage + fReferenceQuadratic*voltage*voltage;
+#endif
         adc[iTb] = sign*newAdc;
       }
     }

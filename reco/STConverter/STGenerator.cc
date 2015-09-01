@@ -10,6 +10,7 @@
 //  2014. 09. 05
 // =================================================
 
+#include "STGlobal.hh"
 #include "STGenerator.hh"
 #include "STRawEvent.hh"
 #include "STPad.hh"
@@ -557,7 +558,11 @@ STGenerator::GenerateGainCalibrationData()
       Int_t isFail = kTRUE;
 
       if (fIsPersistence) {
+#ifdef VVSADC
+        TGraphErrors *aPad = new TGraphErrors(numVoltages, means, voltages, sigmas, 0);
+#else
         TGraphErrors *aPad = new TGraphErrors(numVoltages, voltages, means, 0, sigmas);
+#endif
         aPad -> SetName(Form("pad_%d_%d", iRow, iLayer));
         aPad -> Fit("pol2", "0Q");
 
@@ -570,7 +575,11 @@ STGenerator::GenerateGainCalibrationData()
 
         outTree -> Fill();
       } else {
+#ifdef VVSADC
+        TGraphErrors aPad(numVoltages, means, voltages, sigmas, 0);
+#else
         TGraphErrors aPad(numVoltages, voltages, means, 0, sigmas);
+#endif
         aPad.Fit("pol2", "0Q");
 
         constant = ((TF1 *) aPad.GetFunction("pol2")) -> GetParameter(0);
