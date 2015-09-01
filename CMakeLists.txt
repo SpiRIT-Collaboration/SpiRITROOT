@@ -111,6 +111,13 @@ find_package(CLHEP)
 find_package(GENFIT2 REQUIRED)
 find_package(RAVE REQUIRED)
 find_package(OpenMP)
+If(NOT APPLE)
+  find_package(PythonInterp 2.7 REQUIRED)
+  set(PYTHON_LIBRARY ${PYTHON_EXECUTABLE})
+  string(REGEX REPLACE "bin(.)+" "lib64" PYTHON_LIBRARY ${PYTHON_LIBRARY})
+  execute_process(COMMAND echo ${PYTHON_LIBRARY})
+  find_package(PythonLibs 2.7 REQUIRED)
+EndIf(NOT APPLE)
 
 Set(Boost_NO_SYSTEM_PATHS TRUE)
 Set(Boost_NO_BOOST_CMAKE TRUE)
@@ -161,7 +168,7 @@ EndIf()
 Generate_Version_Info()
 
 SET(_LIBDIR ${CMAKE_BINARY_DIR}/lib)
-SET(LD_LIBRARY_PATH  ${_LIBDIR} ${LD_LIBRARY_PATH})
+SET(LD_LIBRARY_PATH  ${_LIBDIR} ${LD_LIBRARY_PATH} ${PYTHON_LIBRARY})
 
 # OpenMP configuration
 If(OPENMP_FOUND)
