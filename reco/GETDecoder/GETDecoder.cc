@@ -414,13 +414,15 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     }
 
     if (fFrame != 0)
-      delete fFrame;
+      fFrame -> Clear();
+    else 
+      fFrame = new GETFrame();
 
-    fFrame = new GETFrame();
     fFrame -> SetEventID(eventIdx);
     fFrame -> SetCoboID(coboIdx);
     fFrame -> SetAsadID(asadIdx);
     fFrame -> SetFrameID(frameNo);
+    fFrame -> SetNumTbs(fNumTbs);
     fFrame -> SetPolarity((fIsPositivePolarity ? +1 : -1));
 
     fData.seekg((ULong64_t) fData.tellg() - 28 + headerSize);
