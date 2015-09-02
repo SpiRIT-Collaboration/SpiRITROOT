@@ -21,7 +21,7 @@ class STPad : public TObject
     STPad(Int_t row, Int_t layer);
     ~STPad();
 
-    void Initialize();
+    void Clear();
 
     // setters
     void SetLayer(Int_t val);
@@ -63,7 +63,7 @@ class STPad : public TObject
     Bool_t fIsGainCalibrated;
     Double_t fAdc[512];
 
-  ClassDef(STPad, 2);
+  ClassDef(STPad, 3);
 };
 
 #endif
