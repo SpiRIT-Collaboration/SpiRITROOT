@@ -38,6 +38,14 @@ STRawEvent::~STRawEvent()
 {
 }
 
+void STRawEvent::Clear()
+{
+  fEventID = 0;
+  fPadArray.clear();
+
+  fIsGood = kTRUE;
+}
+
 void STRawEvent::PrintPads()
 {
   for (Int_t iPad = 0; iPad < fPadArray.size(); iPad++) {
