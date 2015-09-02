@@ -29,6 +29,8 @@ class GETFrame : public TObject
     //! Destructor
     ~GETFrame();
 
+    /// Clear contents
+    void Clear();
     /// Set the number of time buckets
     void SetNumTbs(Int_t value);
 
@@ -126,7 +128,7 @@ class GETFrame : public TObject
     Int_t fFPNAverageTbs;             /// The number of time buckets used to calculate FPN mean
 
   //! Added for making dictionary by ROOT
-  ClassDef(GETFrame, 1);
+  ClassDef(GETFrame, 2);
 };
 
 #endif
