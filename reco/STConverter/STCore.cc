@@ -406,6 +406,11 @@ void STCore::SetOldData(Bool_t oldData)
   fOldData = oldData;
 }
 
+STMap *STCore::GetSTMap()
+{
+  return fMapPtr;
+}
+
 STPlot *STCore::GetSTPlot()
 {
   if (fPlotPtr == NULL)
