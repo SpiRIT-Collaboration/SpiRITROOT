@@ -45,6 +45,7 @@ class STPlot : public TObject
 
   private:
     STCore *fCore;
+    STMap *fMap;
 
     void Clear();
     void PreparePadplaneHist();

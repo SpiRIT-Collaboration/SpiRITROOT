@@ -12,12 +12,13 @@
 #include "STRawEvent.hh"
 #include "STPad.hh"
 #include "STStatic.hh"
+#include "STMap.hh"
 
 #include "TCanvas.h"
 #include "TStyle.h"
 #include "TH1D.h"
 #include "TH2D.h"
-#include "TLine.h"
+#include "TLatex.h"
 
 #include <iostream>
 
@@ -38,11 +39,15 @@ STPlot::STPlot(STCore *core)
 void STPlot::SetSTCore(STCore *core)
 {
   fCore = core;
+  fMap = core -> GetSTMap();
   SetNumTbs(fCore -> GetNumTbs());
 }
 
 void STPlot::Clear()
 {
+  fCore = NULL;
+  fMap = NULL;
+
   fEvent = NULL;
   fNumTbs = 512;
 
@@ -172,7 +177,7 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
   }
 
   fPadGraph[0] = new TGraph(fNumTbs, tb, rawAdc);
-  fPadGraph[0] -> SetTitle(Form("Raw ADC - (%d, %d)", row, layer));
+  fPadGraph[0] -> SetTitle(Form("Raw ADC - (row=%d, layer=%d)", row, layer));
   fPadGraph[0] -> SetLineColor(2);
   fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetTitle("Time bucket");
   fPadGraph[0] -> GetHistogram() -> GetXaxis() -> CenterTitle();
@@ -180,15 +185,22 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
   fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetRangeUser(-10, fNumTbs + 10);
   fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetTitle("ADC");
   fPadGraph[0] -> GetHistogram() -> GetYaxis() -> CenterTitle();
-  fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetLimits(-10, 4106);
-  fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetRangeUser(-10, 4106);
+  fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetLimits(-10, 4306);
+  fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetRangeUser(-10, 4306);
 
   fPadCvs -> cd(1);
   fPadGraph[0] -> Draw("AL");
+  if (fMap != NULL) {
+    Int_t uaIdx, coboIdx, asadIdx, agetIdx, chIdx;
+    fMap -> GetMapData(row, layer, uaIdx, coboIdx, asadIdx, agetIdx, chIdx);
+
+    TLatex *text = new TLatex();
+    text -> DrawLatexNDC(0.27, 0.85, Form("UA%03d, C%02d, As%d, Ag%d, Ch%d", uaIdx, coboIdx, asadIdx, agetIdx, chIdx));
+  }
 
   Double_t *adc = pad -> GetADC();
   fPadGraph[1] = new TGraph(fNumTbs, tb, adc);
-  fPadGraph[1] -> SetTitle(Form("ADC(FPN pedestal subtracted) - (%d, %d)", row, layer));
+  fPadGraph[1] -> SetTitle(Form("ADC(FPN subtracted) - (row=%d, layer=%d)", row, layer));
   fPadGraph[1] -> SetLineColor(2);
   fPadGraph[1] -> GetHistogram() -> GetXaxis() -> SetTitle("Time bucket");
   fPadGraph[1] -> GetHistogram() -> GetXaxis() -> CenterTitle();
