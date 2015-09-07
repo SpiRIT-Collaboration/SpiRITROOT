@@ -92,7 +92,8 @@ void STPlot::DrawPadplane(Int_t eventID)
 {
   if (fCore != NULL)
     fEvent = fCore -> GetRawEvent(eventID);
-  else if (CheckEvent())
+  
+  if (CheckEvent())
     return;
 
   if (fPadplaneHist)
