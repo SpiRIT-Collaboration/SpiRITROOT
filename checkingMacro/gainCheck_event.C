@@ -48,7 +48,7 @@ void gainCheck_event() {
   fCore -> SetData(0);
 
   fPlot[0] = fCore -> GetSTPlot();
-  fPlot[0] -> SetPadplaneTitle("Before gain calibration - Event ID: %d");
+  fPlot[0] -> SetPadplaneTitle("Event ID: %d (Gain calibrated)");
   fPlot[0] -> DrawPadplane();
 
   if (!fGainCalibrationData.EqualTo("")) {
@@ -61,7 +61,7 @@ void gainCheck_event() {
     fCore -> SetData(0);
 
     fPlot[1] = fCore -> GetSTPlot();
-    fPlot[0] -> SetPadplaneTitle("Aefore gain calibration - Event ID: %d");
+    fPlot[1] -> SetPadplaneTitle("Event ID: %d (Gain not calibrated)");
     fPlot[1] -> DrawPadplane();
   }
 
