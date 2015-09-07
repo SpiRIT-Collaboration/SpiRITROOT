@@ -269,6 +269,7 @@ void STPlot::PreparePadplaneHist()
     y[1] = -432 + (i + 1)*padLX;
 
     TGraph *graph = new TGraph(2, x, y);
+    graph -> SetLineColorAlpha(kBlack, 0.3);
     graph -> SetEditable(kFALSE);
 
     if ((i + 1)%9 == 0)
@@ -286,6 +287,7 @@ void STPlot::PreparePadplaneHist()
     y[1] = 432;
 
     TGraph *graph = new TGraph(2, x, y);
+    graph -> SetLineColorAlpha(kBlack, 0.3);
     graph -> SetEditable(kFALSE);
 
     if ((i + 1)%7 == 0)
