@@ -120,7 +120,8 @@ void STPlot::DrawPadplane(Int_t eventID)
   }
 
   fPadplaneHist -> SetTitle(Form(Form("%s", fPadplaneTitle.Data()), fEvent -> GetEventID()));
-  fPadplaneHist -> SetMaximum(max);
+  fPadplaneHist -> SetMinimum(1.E-10);
+  fPadplaneHist -> SetMaximum(4096.);
 
   fPadplaneCvs -> Modified();
   fPadplaneCvs -> Update();
