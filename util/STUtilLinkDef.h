@@ -5,5 +5,6 @@
 #pragma link off all functions;
 
 #pragma link C++ class STProcessManager+;
+#pragma link C++ class STDebugLogger+;
 
 #endif
