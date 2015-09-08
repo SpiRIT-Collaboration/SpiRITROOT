@@ -28,6 +28,9 @@
 
 void geomSpiRIT()
 {
+  TString dir = gSystem -> Getenv("VMCWORKDIR");
+  TString dirGeom = dir + "/geometry/";
+
   // ----------------------------------------------------
   //  Dimensions (cm)
   // ----------------------------------------------------
@@ -59,7 +62,7 @@ void geomSpiRIT()
   // ----------------------------------------------------
   FairGeoLoader *geoLoader = new FairGeoLoader("TGeo", "FairGeoLoader");
   FairGeoInterface *geoIF = geoLoader -> getGeoInterface();
-  geoIF -> setMediaFile("media.geo");
+  geoIF -> setMediaFile(dirGeom + "media.geo");
   geoIF -> readMedia();
 
   FairGeoMedia *media = geoIF -> getMedia();
@@ -809,11 +812,10 @@ void geomSpiRIT()
   //  End of Building Geometry
   // ----------------------------------------------------
   gGeoManager -> CloseGeometry();
-  //top->Draw("ogl");
+  top->Draw("ogl");
 
-  TString dir = gSystem->Getenv("VMCWORKDIR");
-  TString geoFileName = dir + "/geometry/geomSpiRIT.root";
-  TString geoManFileName = dir + "/geometry/geomSpiRIT.man.root";
+  TString geoFileName    = dirGeom + "geomSpiRIT.root";
+  TString geoManFileName = dirGeom + "geomSpiRIT.man.root";
 
   TFile *geoFile = new TFile(geoFileName,"recreate"); 
   top -> Write(); 
