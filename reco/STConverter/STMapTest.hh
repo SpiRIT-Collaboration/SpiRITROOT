@@ -29,7 +29,7 @@ class STMapTest : public TObject
     void SetUAMap(TString filename);
     void SetAGETMap(TString filename);
 
-    void ShowAGETMap(Int_t UAIdx = 0);
+    void ShowAGETMap();
     void ShowUAMap();
     void PrintMap(Int_t padRow, Int_t padLayer);
     void PrintMap(Int_t coboIdx, Int_t asadIdx, Int_t agetIdx, Int_t chIdx);
@@ -37,8 +37,8 @@ class STMapTest : public TObject
   private:
     STMap *map;
 
-    TCanvas *agetCvs;
-    TH2D *agetHist;
+    TCanvas *agetCvs[2];
+    TH2D *agetHist[2];
 
     TCanvas *uaCvs;
     TH2D *uaHist;
