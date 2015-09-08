@@ -22,8 +22,9 @@
 #include "TVector3.h"
 #include "TMath.h"
 
-//#include "DebugLogger.h"
 #include "Riostream.h"
+
+#include "STDebugLogger.hh"
 
 STHelixHTCorrelator::STHelixHTCorrelator(Double_t hdistcut)
 {
@@ -33,24 +34,30 @@ STHelixHTCorrelator::STHelixHTCorrelator(Double_t hdistcut)
 Bool_t
 STHelixHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bool_t &survive, Double_t &matchQuality)
 {
-  // check if we have a fit:
   if (!(track -> IsFitted()))
     return kFALSE;
 
   Double_t d = track -> DistHelix(rhit);
-  //std::cout<<"distance to plane: "<< d<<std::endl;
-//  DebugLogger::Instance() -> Histo("HT_helix_dist",d,0,0.2,100);
+#ifdef DEBUGRIEMANNCUTS
+  STDebugLogger::Instance() -> FillHist1Step("helix_all",d,1000,0,1000);
+#endif
   d = TMath::Abs(d);
   matchQuality = d;
 
   Double_t stat = 2. - track -> GetQuality(); // tighten cut for better defined tracks
 
-//  cout << "d: " << d << "fHDistCut*stat: " << fHDistCut*stat << endl;
-  if (d > fHDistCut*stat) { // for best track: fHDistCut < d, for worst track: 2*fHDistCut < d, then die
-//    DebugLogger::Instance() -> Histo("HT_riemanncuts",8,0,20,20);
+  if (d > fHDistCut*stat) // for best track: fHDistCut < d, for worst track: 2*fHDistCut < d, then die
+  {
     survive = kFALSE;
+#ifdef DEBUGRIEMANNCUTS
+  STDebugLogger::Instance() -> FillHist1Step("helix_fail",d,1000,0,1000);
+#endif
     return kTRUE;
   }
+#ifdef DEBUGRIEMANNCUTS
+  STDebugLogger::Instance() -> FillHist1("helix",d,100,0,200);
+  STDebugLogger::Instance() -> FillHist1Step("helix_step",d,1000,0,1000);
+#endif
 
   survive = kTRUE;
   return kTRUE;

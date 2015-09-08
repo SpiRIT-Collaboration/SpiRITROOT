@@ -24,9 +24,8 @@
 #include "TVector3.h"
 #include "TMath.h"
 
-//#include "DebugLogger.h" // This is located in tpc/tools in fopiroot package. I just commented out all DebugLogger.
+#include "STDebugLogger.hh"
 
-// Class Member definitions -----------
 
 STDipTTCorrelator::STDipTTCorrelator(Double_t proxcut, Double_t dipcut, Double_t helixcut)
 {
@@ -66,13 +65,13 @@ STDipTTCorrelator::Correlate(STRiemannTrack* track1, STRiemannTrack* track2, Boo
     if (dphi2 < dphi1)
       dphi1 = dphi2;
 
-
-    // check if tracks have equal dip
     if (dphi1 > fDipCut*scaling) {
-//      DebugLogger::Instance() -> Histo("TT_riemanncuts", 3, 0, 20, 20);
       survive = kFALSE;
       return kTRUE;
     }
+#ifdef DEBUGRIEMANNCUTS
+    STDebugLogger::Instance() -> FillHist1("dipTT",dphi1,100,0,100);
+#endif
   }
 
   // check distance
@@ -98,6 +97,9 @@ STDipTTCorrelator::Correlate(STRiemannTrack* track1, STRiemannTrack* track2, Boo
     survive = kFALSE;
     return kTRUE;
   }
+#ifdef DEBUGRIEMANNCUTS
+  STDebugLogger::Instance() -> FillHist1("proxTT",dist,100,0,100);
+#endif
 
   if (track2 -> IsFitted()) {
     TVector3 pos2, dir2;
@@ -118,8 +120,6 @@ STDipTTCorrelator::Correlate(STRiemannTrack* track1, STRiemannTrack* track2, Boo
     delete testHit;
     delete testCluster;
 
-//    DebugLogger::Instance() -> Histo("TT_dip_hDist", hDist, -10, 10, 100);
-
     // check if sz distace small enough
     Double_t scaling2 = scaling * dist/30.;
 
@@ -130,10 +130,12 @@ STDipTTCorrelator::Correlate(STRiemannTrack* track1, STRiemannTrack* track2, Boo
 
 
     if (hDist > fHelixCut*scaling) {
-//      DebugLogger::Instance() -> Histo("TT_riemanncuts", 4, 0, 20, 20);
       survive = kFALSE;
       return kTRUE;
     }
+#ifdef DEBUGRIEMANNCUTS
+  STDebugLogger::Instance() -> FillHist1("helixTT",hDist,100,0,100);
+#endif
 
     survive = kTRUE;
     return kTRUE;
@@ -151,12 +153,9 @@ STDipTTCorrelator::Correlate(STRiemannTrack* track1, STRiemannTrack* track2, Boo
       break; // track did not survive!
   }
 
-//  DebugLogger::Instance() -> Histo("TT_dip_hDist", maxhDist, -10, 10, 100);
-  
   matchQuality = maxhDist;
 
   if (maxhDist > fHelixCut) {
-//    DebugLogger::Instance() -> Histo("TT_riemanncuts", 4, 0, 20, 20);
     survive = kFALSE;
     return kTRUE;
   }

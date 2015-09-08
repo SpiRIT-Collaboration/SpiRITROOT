@@ -698,9 +698,9 @@ STRiemannTrack::DistHelix(STRiemannHit *hit, Bool_t calcPos, Bool_t TwoPiCheck, 
     Double_t zWeigh = 0.5*(TMath::Cos(2.*fDip) + 1.);
     hit_angle = hit_angleR*(1 - zWeigh) + hit_angleZ*zWeigh;
 
-    hit_angle = 0;
-    if (TMath::Abs(fM) > 1.E-22)
-      hit_angle = (hitZ - fT)/fM;
+    //hit_angle = 0;
+    //if (TMath::Abs(fM) > 1.E-22)
+      //hit_angle = (hitZ - fT)/fM;
   } // end recalcPos
 
 
@@ -736,14 +736,14 @@ STRiemannTrack::DistHelix(STRiemannHit *hit, Bool_t calcPos, Bool_t TwoPiCheck, 
     // hit_angle -= f/f1;
 
     // simplified:
-    // delta = (-1.* xHelix*sinphi*fRadius + yHelix*cosphi*fRadius + zHelix*fM);
-    // delta = delta / (delta/(distance*distance) + fRadius*fRadius - xHelix*cosphi*fRadius - yHelix*sinphi*fRadius + 2.*fM*fM);
-    // hit_angle -= delta;
-
-    // corrected:
     delta = (-1.* xHelix*sinphi*fRadius + yHelix*cosphi*fRadius + zHelix*fM);
-    delta = delta / (-delta*delta/(distance*distance) + fRadius*fRadius - xHelix*cosphi*fRadius - yHelix*sinphi*fRadius + fM*fM);
+    delta = delta / (delta/(distance*distance) + fRadius*fRadius - xHelix*cosphi*fRadius - yHelix*sinphi*fRadius + 2.*fM*fM);
     hit_angle -= delta;
+
+    // corrected: (original neuton's method)
+    //delta = (-1.* xHelix*sinphi*fRadius + yHelix*cosphi*fRadius + zHelix*fM);
+    //delta = delta / (-delta*delta/(distance*distance) + fRadius*fRadius - xHelix*cosphi*fRadius - yHelix*sinphi*fRadius + fM*fM);
+    //hit_angle -= delta;
 
     i++;
   }

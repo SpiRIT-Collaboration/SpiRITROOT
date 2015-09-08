@@ -22,6 +22,8 @@
 #include "TVector3.h"
 #include "TMath.h"
 
+#include "STDebugLogger.hh"
+
 #define SPEEDUP 5
 
 //#include "Riostream.h"
@@ -48,12 +50,18 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
   if (track -> IsFitted()) {
     Double_t circDist = TMath::Abs((posX - track -> GetCenter()).Perp() - track -> GetR());
 
-//    cout << "circDist: " << circDist << " fHelixCut: " << fHelixCut << endl;
     if (circDist > fHelixCut) {
       matchQuality = circDist;
       survive = kFALSE;
+#ifdef DEBUGRIEMANNCUTS
+      STDebugLogger::Instance() -> FillHist1Step("helixC_fail",circDist,10000,0,1000);
+#endif
       return kTRUE;
     }
+#ifdef DEBUGRIEMANNCUTS
+    STDebugLogger::Instance() -> FillHist1("helixC",circDist,100,0,20);
+    STDebugLogger::Instance() -> FillHist1Step("helixC_step",circDist,1000,0,1000);
+#endif
   }
 
   UInt_t numHits = track -> GetNumHits();
@@ -66,23 +74,43 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
   TVector3 pos, dis3;
   Double_t dis;
     
+#ifdef DEBUGRIEMANNCUTS
+   Double_t disMin = 1000000.;
+   Bool_t survive_debug = kFALSE;
+#endif
+
   // Check last and first hit for match
   for (UInt_t iHit = numHits - 1; kTRUE; iHit -= iHit) {
     pos = track -> GetHit(iHit) -> GetCluster() -> GetPosition();
     dis3 = posX - pos;
     dis3.SetZ(dis3.Z()/fZStretch); // What's this fZStretch for?
     dis = dis3.Mag();
+#ifdef DEBUGRIEMANNCUTS
+    if (dis < disMin) disMin = dis;
+#endif
 
 //    cout << "dis: " << dis << " proxcut: " << proxcut << endl;
     if (dis < proxcut) {
       matchQuality = dis;
       survive = kTRUE;
+#ifdef DEBUGRIEMANNCUTS
+      survive_debug = kTRUE;
+#else
       return kTRUE;
+#endif
     }
 
     if (iHit == 0)
       break;
   }
+#ifdef DEBUGRIEMANNCUTS
+  STDebugLogger::Instance() -> FillHist1("prox",disMin,100,0,30);
+  STDebugLogger::Instance() -> FillHist1Step("prox_step",disMin,1000,0,1000);
+  if (survive_debug == kTRUE)
+    return kTRUE;
+  else
+    STDebugLogger::Instance() -> FillHist1Step("prox_fail",disMin,1000,0,1000);
+#endif
 
   // The hit (numHits = 1), resp. both hits  (numHits = 2) have been checked and did not survive
   if (numHits < 3) {

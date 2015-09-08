@@ -22,7 +22,7 @@
 #include "TVector3.h"
 #include "TMath.h"
 
-//#include "DebugLogger.h"
+#include "STDebugLogger.hh"
 
 STRiemannTTCorrelator::STRiemannTTCorrelator(Double_t planecut, Int_t minHitsForFit)
 {
@@ -76,6 +76,10 @@ STRiemannTTCorrelator::Correlate(STRiemannTrack *track1, STRiemannTrack *track2,
     survive = kFALSE;
     return kTRUE;
   }
+#ifdef DEBUGRIEMANNCUTS
+  STDebugLogger::Instance() -> FillHist1("planeTT",rms,100,0,100);
+  STDebugLogger::Instance() -> FillHist1("planeTTCut",fPlaneCut*scaling,100,0,100);
+#endif
 
   survive = kTRUE;
   return kTRUE;
