@@ -1,3 +1,8 @@
+/**
+  * This macro provides only one 2D pad plane with signal plots on clicked pad.
+  * (Either gain not calibrated or calibrated plot.)
+ **/
+
 ////////////////////////////
 //                        //
 //   Configuration part   //
