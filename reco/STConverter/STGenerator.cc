@@ -38,7 +38,6 @@ ClassImp(STGenerator)
 STGenerator::STGenerator()
 {
   fMode = kError;
-  fIsPersistence = kFALSE;
   fIsStoreRMS = kFALSE;
   fIsPositivePolarity = kFALSE;
 
@@ -49,7 +48,6 @@ STGenerator::STGenerator(TString mode)
 {
   fMode = kError;
   SetMode(mode);
-  fIsPersistence = kFALSE;
   fIsStoreRMS = kFALSE;
   fIsPositivePolarity = kFALSE;
 
@@ -109,16 +107,19 @@ void
 STGenerator::SetOutputFile(TString filename)
 {
   cout << "== [STGenerator] Output file is set to " << filename << "!" << endl;
+  if (fMode == kGain) {
+    filename.ReplaceAll(".root", ".checking.root");
+    cout << "== [STGenerator] Checking file is generated with " << filename << "!" << endl;
+  }
   cout << "== [STGenerator] Existing file will be overwritten after StartProcess() called!" << endl;
 
   fOutputFile = filename;
 }
 
 Bool_t
-STGenerator::SetParameterDir(TString dir)
+STGenerator::SetParameterFile(TString filename)
 {
-  TString parameterFile = dir;
-  parameterFile.Append("/ST.parameters.par");
+  TString parameterFile = filename;
 
   if (fParReader != NULL)
     delete fParReader;
@@ -176,12 +177,6 @@ void
 STGenerator::SetFPNPedestal(Double_t fpnThreshold)
 {
   return fCore -> SetFPNPedestal(fpnThreshold);
-}
-
-void
-STGenerator::SetPersistence(Bool_t value)
-{
-  fIsPersistence = value;
 }
 
 void
@@ -484,6 +479,10 @@ STGenerator::GenerateGainCalibrationData()
   outTree -> Branch("linear", &linear);
   outTree -> Branch("quadratic", &quadratic);
 
+  TString checkingFilename = fOutputFile;
+  checkingFilename.ReplaceAll(".root", ".checking.root");
+  TFile *checkingFile = new TFile(checkingFilename, "recreate");
+
   TH1D ****padHist = new TH1D***[fRows];
   for (iRow = 0; iRow < fRows; iRow++) {
     padHist[iRow] = new TH1D**[fLayers];
@@ -557,45 +556,28 @@ STGenerator::GenerateGainCalibrationData()
 
       Int_t isFail = kTRUE;
 
-      if (fIsPersistence) {
 #ifdef VVSADC
-        Double_t *dummyError = new Double_t[numVoltages];
-        for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++)
-          dummyError[iVoltage] = 1.E-5;
+      Double_t *dummyError = new Double_t[numVoltages];
+      for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++)
+        dummyError[iVoltage] = 1.E-5;
 
-        TGraphErrors *aPad = new TGraphErrors(numVoltages, means, voltages, sigmas, dummyError);
+      TGraphErrors *aPad = new TGraphErrors(numVoltages, means, voltages, sigmas, dummyError);
 #else
-        TGraphErrors *aPad = new TGraphErrors(numVoltages, voltages, means, 0, sigmas);
+      TGraphErrors *aPad = new TGraphErrors(numVoltages, voltages, means, 0, sigmas);
 #endif
-        aPad -> SetName(Form("pad_%d_%d", iRow, iLayer));
-        aPad -> Fit("pol2", "0Q");
+      aPad -> SetName(Form("pad_%d_%d", iRow, iLayer));
+      aPad -> Fit("pol2", "0Q");
 
-        constant = ((TF1 *) aPad -> GetFunction("pol2")) -> GetParameter(0);
-        linear = ((TF1 *) aPad -> GetFunction("pol2")) -> GetParameter(1);
-        quadratic = ((TF1 *) aPad -> GetFunction("pol2")) -> GetParameter(2);
+      constant = ((TF1 *) aPad -> GetFunction("pol2")) -> GetParameter(0);
+      linear = ((TF1 *) aPad -> GetFunction("pol2")) -> GetParameter(1);
+      quadratic = ((TF1 *) aPad -> GetFunction("pol2")) -> GetParameter(2);
 
-        isFail = kFALSE;
-        aPad -> Write();
+      isFail = kFALSE;
 
-        outTree -> Fill();
-      } else {
-#ifdef VVSADC
-        Double_t *dummyError = new Double_t[numVoltages];
-        for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++)
-          dummyError[iVoltage] = 1.E-5;
+      outTree -> Fill();
 
-        TGraphErrors aPad(numVoltages, means, voltages, sigmas, dummyError);
-#else
-        TGraphErrors aPad(numVoltages, voltages, means, 0, sigmas);
-#endif
-        aPad.Fit("pol2", "0Q");
-
-        constant = ((TF1 *) aPad.GetFunction("pol2")) -> GetParameter(0);
-        linear = ((TF1 *) aPad.GetFunction("pol2")) -> GetParameter(1);
-        quadratic = ((TF1 *) aPad.GetFunction("pol2")) -> GetParameter(2);
-
-        outTree -> Fill();
-      }
+      checkingFile -> cd(); 
+      aPad -> Write();
 
       if (isFail) {
         cerr << "Error when fit!" << endl;
@@ -607,11 +589,10 @@ STGenerator::GenerateGainCalibrationData()
 
   delete means;
   delete sigmas;
-
-  if (!fIsPersistence)
-    delete padHist;
+  delete padHist;
 
   outFile -> Write();
+  checkingFile -> Write();
   cout << "== Gain calibration data " << fOutputFile << " Created!" << endl;
 }
 
