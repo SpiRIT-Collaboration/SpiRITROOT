@@ -10,8 +10,8 @@
 //   JungWoo Lee     korea University
 //-----------------------------------------------------------
 
-#ifndef STPSA
-#define STPSA
+#ifndef STPSA_HH
+#define STPSA_HH
 
 // SpiRITROOT classes
 #include "STRawEvent.hh"
