@@ -75,8 +75,6 @@ STGenerator::SetMode(TString mode)
       cerr << "Pedestal!";
     else if (fMode == kGain)
       cerr << "Gain!";
-    else if (fMode == kSignalDelay)
-      cerr << "Signal Delay!";
     cout << endl;
     cerr << "== [STGenerator] Create another instance to use the other mode!" << endl;
 
@@ -90,12 +88,10 @@ STGenerator::SetMode(TString mode)
     fSumRMSCut = 0;
   } else if (mode.EqualTo("gain"))
     fMode = kGain;
-  else if (mode.EqualTo("signaldelay"))
-    fMode = kSignalDelay;
   else {
     fMode = kError;
 
-    cerr << "== [STGenerator] Use \"Gain\", \"Pedestal\" or \"SignalDelay\" as an argument!" << endl;
+    cerr << "== [STGenerator] Use \"Gain\" or \"Pedestal\" as an argument!" << endl;
 
     return;
   }
@@ -182,7 +178,7 @@ STGenerator::SetFPNPedestal(Double_t fpnThreshold)
 void
 STGenerator::SetStoreRMS(Bool_t value)
 {
-  if (fMode == kGain || fMode == kSignalDelay) {
+  if (fMode == kGain) {
     cout << "== [STGenerator::SetStoreRMS()] This method only valid with Pedestal data generation mode!" << endl;
 
     return;
@@ -214,8 +210,8 @@ STGenerator::AddData(TString filename)
 Bool_t
 STGenerator::AddData(Double_t voltage, TString filename)
 {
-  if (fMode == kPedestal || fMode == kSignalDelay) {
-    cout << "== [STGenerator] Use AddData(file) method in Pedestal or SignalDelay mode!" << endl;
+  if (fMode == kPedestal) {
+    cout << "== [STGenerator] Use AddData(file) method in Pedestal mode!" << endl;
 
     return kFALSE;
   }
@@ -237,7 +233,7 @@ STGenerator::SetData(Int_t index)
 void
 STGenerator::SelectEvents(Int_t numEvents, Int_t *eventList)
 {
-  if (fMode == kGain || fMode == kSignalDelay) {
+  if (fMode == kGain) {
     cout << "== [STGenerator::SelectEvents()] This method only valid with Pedestal data generation mode!" << endl;
 
     return;
@@ -277,8 +273,6 @@ STGenerator::StartProcess()
   }
   else if (fMode == kGain)
     GenerateGainCalibrationData();
-  else if (fMode == kSignalDelay)
-    GenerateSignalDelayData();
   else
     cout << "== [STGenerator] Notning to do!" << endl;
 }
@@ -600,11 +594,6 @@ STGenerator::GenerateGainCalibrationData()
 }
 
 void
-STGenerator::GenerateSignalDelayData()
-{
-}
-
-void
 STGenerator::Print()
 {
   if (fMode == kError) {
@@ -617,12 +606,8 @@ STGenerator::Print()
 
   cout << "============================================" << endl;
   cout << " Mode: ";
-  if (fMode == kPedestal || fMode == kSignalDelay) {
-    if (fMode == kPedestal)
-      cout << "Pedetal";
-    else if (fMode == kSignalDelay)
-      cout << "Signal delay ";
-    cout << "data generator mode" << endl;
+  if (fMode == kPedestal) {
+    cout << "Pedetal data generator mode" << endl;
     cout << " Output File: " << fOutputFile << endl;
     cout << " Data list:" << endl;
     for (Int_t iData = 0; iData < numData; iData++)

@@ -51,9 +51,8 @@ class STGenerator : public TObject {
   private:
     void GeneratePedestalData();
     void GenerateGainCalibrationData();
-    void GenerateSignalDelayData();
 
-    enum EMode { kError, kPedestal, kGain, kSignalDelay };
+    enum EMode { kError, kPedestal, kGain };
     Int_t fMode;
 
     vector<Double_t> fVoltageArray;
