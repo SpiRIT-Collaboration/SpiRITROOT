@@ -1,3 +1,11 @@
+/**
+  * This macro provides the following features.
+  * - Display event in 2D pad plane and show raw and pedestal subtracted signals when the pad clicked.
+  * - When gain calibration data is set, this gives two 2D pad plane canvases of gain not calibrated and calibrated event display.
+  * - One can check how the pulse changes by the gain calibration process by setting pulser data and gain calibration data.
+  * - One can check the pedestal subtraction is properly done pad by pad in an event by setting pedestal data.
+ **/
+
 ////////////////////////////
 //                        //
 //   Configuration part   //
@@ -8,7 +16,8 @@
 TString fParameterFile = "ST.parameters.par";
 
 // Set the raw data file with path
-TString fDataFile = "";
+TString fDataFile = "anEvent_0421.dat";
+//TString fDataFile = "";
 
 // Set the gain calibration data file. If not, assign "".
 TString fGainCalibrationData = "";
@@ -35,7 +44,7 @@ void next(Int_t eventID = -1) {
     fPlot[1] -> DrawPadplane(eventID);
 }
 
-void pedestalCheck_event() {
+void eventCheck() {
   TString workDir = gSystem -> Getenv("VMCWORKDIR");
   TString parameterDir = workDir + "/parameters/";
 
@@ -48,7 +57,7 @@ void pedestalCheck_event() {
   fCore -> SetData(0);
 
   fPlot[0] = fCore -> GetSTPlot();
-  fPlot[0] -> SetPadplaneTitle("Pedestal data (Gain calibrated) - Event ID: %d");
+  fPlot[0] -> SetPadplaneTitle("Event ID: %d (Gain calibrated)");
   fPlot[0] -> DrawPadplane();
 
   if (!fGainCalibrationData.EqualTo("")) {
@@ -61,7 +70,7 @@ void pedestalCheck_event() {
     fCore -> SetData(0);
 
     fPlot[1] = fCore -> GetSTPlot();
-    fPlot[1] -> SetPadplaneTitle("Pedestal data (Gain not calibrated) - Event ID: %d");
+    fPlot[1] -> SetPadplaneTitle("Event ID: %d (Gain not calibrated)");
     fPlot[1] -> DrawPadplane();
   }
 
