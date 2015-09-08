@@ -12,9 +12,9 @@
 
 #include "TStyle.h"
 #include "TCanvas.h"
+#include "TGraph.h"
 #include "TH2D.h"
 #include "TLatex.h"
-#include "TList.h"
 #include "TLine.h"
 #include "TString.h"
 
@@ -27,14 +27,13 @@ STMapTest::STMapTest()
 {
   map = new STMap();
 
-  agetCvs = NULL;
-  agetHist = NULL;
+  agetCvs[0] = NULL;
+  agetCvs[1] = NULL;
+  agetHist[0] = NULL;
+  agetHist[1] = NULL;
 
   uaCvs = NULL;
   uaHist = NULL;
-  uaList = NULL;
-  uaMapList = NULL;
-  uaLineList = NULL;
 
   fIsUAMap = 0;
   fIsAGETMap = 0;
@@ -42,8 +41,6 @@ STMapTest::STMapTest()
 
 STMapTest::~STMapTest()
 {
-  if (agetHist != NULL)
-    delete agetHist;
 }
 
 void STMapTest::SetUAMap(TString filename)
@@ -60,7 +57,7 @@ void STMapTest::SetAGETMap(TString filename)
   fIsAGETMap = map -> IsSetAGETMap();
 }
 
-void STMapTest::ShowAGETMap(Int_t UAIdx)
+void STMapTest::ShowAGETMap()
 {
   if (!fIsAGETMap || !fIsUAMap) {
     std::cout << "== Either AGETMap or UAMap file is not set!" << std::endl;
@@ -68,26 +65,21 @@ void STMapTest::ShowAGETMap(Int_t UAIdx)
     return;
   }
 
-  if (UAIdx%100 < 0 || UAIdx%100 > 11 || UAIdx/100 < 0 || UAIdx/100 > 3) {
-    std::cout << "== UnitAsAd index range: ABB (A = [0, 3], BB = [00, 11])!" << std::endl;
-
-    return;
-  }
-
-  if (agetHist != NULL) delete agetHist;
-
   gStyle -> SetOptStat(0);
-  agetCvs = new TCanvas("agetCvs", "", 600, 500);
-  agetHist = new TH2D("agetHist", Form("AGET Map Test (Top View) - UA%03d", UAIdx), 7, -0.5, 6.5, 9, -0.5, 8.5);
-  agetHist -> GetXaxis() -> SetTitle("Local Layer Number");
-  agetHist -> SetTitleOffset(1.35, "X");
-  agetHist -> GetXaxis() -> CenterTitle();
-  agetHist -> GetYaxis() -> SetTitle("Local Row Number");
-  agetHist -> GetYaxis() -> CenterTitle();
-  agetHist -> Draw("colz");
+  gStyle -> SetTitleSize(0.05, "x");
+  gStyle -> SetTitleSize(0.05, "y");
+  gStyle -> SetTitleOffset(0.90, "x");
+  gStyle -> SetTitleOffset(0.85, "y");
+  agetCvs[0] = new TCanvas("agetCvsLeft", "", 900, 0, 600, 500);
+  agetHist[0] = new TH2D("agetHistLeft", "AGET Mapping (Beam left half)", 7, -0.5, 6.5, 9, -0.5, 8.5);
+  agetHist[0] -> GetXaxis() -> SetTitle("Layer Number in AGET (Upstream)");
+  agetHist[0] -> GetXaxis() -> CenterTitle();
+  agetHist[0] -> GetYaxis() -> SetTitle("Row Number in AGET (Beam right)");
+  agetHist[0] -> GetYaxis() -> CenterTitle();
+  agetHist[0] -> Draw("colz");
 
-  Int_t coboIdx = map -> GetCoboIdx(UAIdx);
-  Int_t asadIdx = map -> GetAsadIdx(UAIdx);
+  Int_t coboIdx = map -> GetCoboIdx(0);
+  Int_t asadIdx = map -> GetAsadIdx(0);
 
   for (Int_t iCh = 0; iCh < 68; iCh++) {
     Int_t row, layer;
@@ -103,96 +95,139 @@ void STMapTest::ShowAGETMap(Int_t UAIdx)
       textCh = new TLatex(layer%28%7 - 0.19, row%9 - 0.16, Form("%d", iCh));
 
     textCh -> Draw("same");
-    textCh = NULL;
   }
 
   for (Int_t iLine = 0; iLine < 6; iLine++) {
-    TLine *line = new TLine(iLine + 0.5, -0.5, iLine + 0.5, 8.5);
+    TGraph *line = new TGraph();
+    line -> SetPoint(0, iLine + 0.5, -0.5);
+    line -> SetPoint(1, iLine + 0.5, 8.5);
     line -> Draw("same");
   }
+
   for (Int_t iLine = 0; iLine < 8; iLine++) {
-    TLine *line = new TLine(-0.5, iLine + 0.5, 6.5, iLine + 0.5);
+    TGraph *line = new TGraph();
+    line -> SetPoint(0, -0.5, iLine + 0.5);
+    line -> SetPoint(1, 6.5, iLine + 0.5);
     line -> Draw("same");
   }
+
+  agetCvs[0] -> SetEditable(kFALSE);
+
+  agetCvs[1] = new TCanvas("agetCvsRight", "", 900, 545, 600, 500);
+  agetHist[1] = new TH2D("agetHistRight", "AGET Mapping (Beam right half)", 7, -0.5, 6.5, 9, -0.5, 8.5);
+  agetHist[1] -> GetXaxis() -> SetTitle("Layer Number in AGET (Upstream)");
+  agetHist[1] -> GetXaxis() -> CenterTitle();
+  agetHist[1] -> GetYaxis() -> SetTitle("Row Number in AGET (Beam right)");
+  agetHist[1] -> GetYaxis() -> CenterTitle();
+  agetHist[1] -> Draw("colz");
+
+  coboIdx = map -> GetCoboIdx(6);
+  asadIdx = map -> GetAsadIdx(6);
+
+  for (Int_t iCh = 0; iCh < 68; iCh++) {
+    Int_t row, layer;
+    map -> GetRowNLayer(coboIdx, asadIdx, 0, iCh, row, layer);
+
+    if (row == -2 || layer == -2)
+      continue;
+
+    TLatex *textCh = NULL;
+    if (iCh < 10)
+      textCh = new TLatex(layer%28%7 - 0.07, row%9 - 0.16, Form("%d", iCh));
+    else 
+      textCh = new TLatex(layer%28%7 - 0.19, row%9 - 0.16, Form("%d", iCh));
+
+    textCh -> Draw("same");
+  }
+
+  for (Int_t iLine = 0; iLine < 6; iLine++) {
+    TGraph *line = new TGraph();
+    line -> SetPoint(0, iLine + 0.5, -0.5);
+    line -> SetPoint(1, iLine + 0.5, 8.5);
+    line -> Draw("same");
+  }
+
+  for (Int_t iLine = 0; iLine < 8; iLine++) {
+    TGraph *line = new TGraph();
+    line -> SetPoint(0, -0.5, iLine + 0.5);
+    line -> SetPoint(1, 6.5, iLine + 0.5);
+    line -> Draw("same");
+  }
+
+  agetCvs[1] -> SetEditable(kFALSE);
 }
 
 void STMapTest::ShowUAMap()
 {
   if (!fIsUAMap) {
-    std::cout << "== AGETMap file is not set!" << std::endl;
+    std::cout << "== UAMap file is not set!" << std::endl;
 
     return;
   }
 
-  if (uaHist == NULL) {
-    gStyle -> SetOptStat(0);
-    uaCvs = new TCanvas("uaCvs", "", 900, 530);
-    uaHist = new TH2D("uaHist", "UnitAsAd Map Test (Top View)", 4, -0.5, 3.5, 12, -0.5, 11.5);
-    uaHist -> GetXaxis() -> SetTitle("Beam Right");
-    uaHist -> GetXaxis() -> CenterTitle();
-    uaHist -> GetYaxis() -> SetTitle("Upstream");
-    uaHist -> GetYaxis() -> CenterTitle();
-    uaHist -> SetTickLength(0, "x");
-    uaHist -> SetLabelColor(0, "x");
-    uaHist -> SetTickLength(0, "y");
-    uaHist -> SetLabelColor(0, "y");
-    uaHist -> Draw("colz");
+  gStyle -> SetOptStat(0);
+  gStyle -> SetTitleSize(0.05, "x");
+  gStyle -> SetTitleSize(0.05, "y");
+  gStyle -> SetTitleOffset(0.55, "x");
+  gStyle -> SetTitleOffset(0.4, "y");
+  gStyle -> SetPadLeftMargin(0.05);
+  gStyle -> SetPadRightMargin(0.05);
+  gStyle -> SetPadTopMargin(0.08);
+  gStyle -> SetPadBottomMargin(0.08);
+  gStyle -> SetLabelOffset(9999., "x");
+  gStyle -> SetLabelOffset(9999., "y");
 
-    uaMapList = new TList();
-    uaList = new TList();
-    for (Int_t iCobo = 0; iCobo < 12; iCobo++) {
-      for (Int_t iAsad = 0; iAsad < 4; iAsad++) {
-        Int_t uaIdx = map -> GetUAIdx(iCobo, iAsad);
+  uaCvs = new TCanvas("uaCvs", "", 900, 530);
+  uaHist = new TH2D("uaHist", "AsAd Mapping (Top View)", 4, -0.5, 3.5, 12, -0.5, 11.5);
+  uaHist -> GetXaxis() -> SetTitle("Beam Right");
+  uaHist -> GetXaxis() -> CenterTitle();
+  uaHist -> GetYaxis() -> SetTitle("Upstream");
+  uaHist -> GetYaxis() -> CenterTitle();
+  uaHist -> SetTickLength(0, "x");
+  uaHist -> SetLabelColor(0, "x");
+  uaHist -> SetTickLength(0, "y");
+  uaHist -> SetLabelColor(0, "y");
+  uaHist -> Draw("colz");
 
-        Int_t row = uaIdx%100;
-        Int_t layer = uaIdx/100;
-        TLatex *textUAMap = NULL;
-        if (iCobo < 10)
-          textUAMap = new TLatex(layer + 0.13, row - 0.24, Form("C%dA%d", iCobo, iAsad));
-        else
-          textUAMap = new TLatex(layer + 0.06, row - 0.24, Form("C%dA%d", iCobo, iAsad));
+  for (Int_t iCobo = 0; iCobo < 12; iCobo++) {
+    for (Int_t iAsad = 0; iAsad < 4; iAsad++) {
+      Int_t uaIdx = map -> GetUAIdx(iCobo, iAsad);
 
-        TLatex *textUA = new TLatex(layer - 0.45, row - 0.24, Form("UA%03d", uaIdx));
-        textUA -> Draw("same");
-        uaList -> Add(textUA);
-        textUA = NULL;
+      if (uaIdx == -1)
+        continue;
 
-        textUAMap -> Draw("same");
-        uaMapList -> Add(textUAMap);
-        textUAMap = NULL;
-      }
+      Int_t row = uaIdx%100;
+      Int_t layer = uaIdx/100;
+      TLatex *textUAMap = NULL;
+      if (iCobo < 10)
+        textUAMap = new TLatex(layer + 0.13, row - 0.24, Form("C%dA%d", iCobo, iAsad));
+      else
+        textUAMap = new TLatex(layer + 0.06, row - 0.24, Form("C%dA%d", iCobo, iAsad));
+
+      TLatex *textUA = new TLatex(layer - 0.45, row - 0.24, Form("UA%03d", uaIdx));
+      textUA -> Draw("same");
+
+      textUAMap -> Draw("same");
     }
-
-    uaLineList = new TList();
-    for (Int_t iLine = 0; iLine < 3; iLine++) {
-      TLine *line = new TLine(iLine + 0.5, -0.5, iLine + 0.5, 11.5);
-      line -> Draw("same");
-      uaLineList -> Add(line);
-    }
-    for (Int_t iLine = 0; iLine < 11; iLine++) {
-      TLine *line = new TLine(-0.5, iLine + 0.5, 3.5, iLine + 0.5);
-      line -> Draw("same");
-      uaLineList -> Add(line);
-    }
-  } else {
-    gStyle -> SetOptStat(0);
-    uaCvs = new TCanvas("uaCvs", "", 800, 530);
-    uaHist -> Draw("colz");
- 
-    TIter nextUA(uaList);
-    TLatex *text = NULL;
-    while ((text = (TLatex *) nextUA()))
-      text -> Draw("same");
-
-    TIter nextUAMap(uaMapList);
-    while ((text = (TLatex *) nextUAMap()))
-      text -> Draw("same");
-
-    TIter nextLine(uaLineList);
-    TLine *line = NULL;
-    while ((line = (TLine *) nextLine()))
-      line -> Draw("same");
   }
+
+  for (Int_t iLine = 0; iLine < 3; iLine++) {
+    TGraph *line = new TGraph();
+    line -> SetPoint(0, iLine + 0.5, -0.5);
+    line -> SetPoint(1, iLine + 0.5, 11.5);
+    line -> Draw("same");
+  }
+
+  for (Int_t iLine = 0; iLine < 11; iLine++) {
+    TGraph *line = new TGraph();
+    line -> SetPoint(0, -0.5, iLine + 0.5);
+    line -> SetPoint(1,  3.5, iLine + 0.5);
+    if (iLine == 5)
+      line -> SetLineWidth(3);
+    line -> Draw("same");
+  }
+
+  uaCvs -> SetEditable(kFALSE);
 }
 
 void STMapTest::PrintMap(Int_t padRow, Int_t padLayer)
