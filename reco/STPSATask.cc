@@ -29,6 +29,8 @@ ClassImp(STPSATask);
 
 STPSATask::STPSATask()
 {
+  fLogger = FairLogger::GetLogger();
+
   fIsPersistence = kFALSE;
   fEventHArray = new TClonesArray("STEvent");
 
