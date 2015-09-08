@@ -54,7 +54,7 @@ STConverter/STStatic.cc
 
 PulseShapeAnalyzer/STPSA.cc
 PulseShapeAnalyzer/STPSASimple.cc
-PulseShapeAnalyzer/STPSASimple2.cc
+PulseShapeAnalyzer/STPSAAll.cc
 PulseShapeAnalyzer/STPSALayer.cc
 PulseShapeAnalyzer/STPSALayerOPTICS.cc
 

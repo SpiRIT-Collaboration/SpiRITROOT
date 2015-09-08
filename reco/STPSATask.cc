@@ -7,13 +7,14 @@
 //
 // Author List:
 //   Genie Jhang     Korea University     (original author)
+//   JungWoo Lee     Korea University
 //-----------------------------------------------------------
 
 // SPiRITROOT classes
 #include "STPSATask.hh"
 #include "STPSA.hh"
 #include "STPSASimple.hh"
-#include "STPSASimple2.hh"
+#include "STPSAAll.hh"
 #include "STPSALayer.hh"
 #include "STPSALayerOPTICS.hh"
 
@@ -28,23 +29,22 @@ ClassImp(STPSATask);
 
 STPSATask::STPSATask()
 {
-  fLogger = FairLogger::GetLogger();
-  fPar = NULL;
-
   fIsPersistence = kFALSE;
-  
   fEventHArray = new TClonesArray("STEvent");
 
-  fPSAMode = 0;
+  fPSAMode = kAll;
+  fThreshold = 0;
+  fLayerCut = 0;
 }
 
 STPSATask::~STPSATask()
 {
 }
 
-void STPSATask::SetPSAMode(Int_t value)          { fPSAMode = value; }
+void STPSATask::SetPSAMode(STPSAMode mode)       { fPSAMode = mode; }
 void STPSATask::SetPersistence(Bool_t value)     { fIsPersistence = value; }
 void STPSATask::SetThreshold(Double_t threshold) { fThreshold = threshold; }
+void STPSATask::SetLayerCut(Double_t layerCut)   { fLayerCut = layerCut; }
 
 STPSA* STPSATask::GetPSA() { return fPSA; }
 
@@ -63,28 +63,31 @@ STPSATask::Init()
     return kERROR;
   }
 
-  if (fPSAMode == 0) {
+  if (fPSAMode == kSimple) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use STPSASimple!");
-
     fPSA = new STPSASimple();
-  } else if (fPSAMode == 1) {
-    fLogger -> Info(MESSAGE_ORIGIN, "Use STPSASimple2!");
-
-    fPSA = new STPSASimple2();
-  } else if (fPSAMode == 2) {
+  } 
+  else if (fPSAMode == kAll) {
+    fLogger -> Info(MESSAGE_ORIGIN, "Use STPSAAll!");
+    fPSA = new STPSAAll();
+  } 
+  else if (fPSAMode == kLayer) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use STPSALayer!");
-
     fPSA = new STPSALayer();
-  } else if (fPSAMode == 3) {
+  } 
+  else if (fPSAMode == kOPTICS) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use STPSALayerOPTICS!");
-
     fPSA = new STPSALayerOPTICS();
+  }
+  else {
+    fLogger -> Fatal(MESSAGE_ORIGIN, "No Matching PSAMode!");
   }
 
 
   fPSA -> SetThreshold((Int_t)fThreshold);
+  fPSA -> SetLayerCut(fLayerCut);
 
-  if (fPSAMode == 3)
+  if (fPSAMode == kOPTICS)
     ioMan -> Register("STEventHC", "SPiRIT", fEventHArray, fIsPersistence);
   else
     ioMan -> Register("STEventH", "SPiRIT", fEventHArray, fIsPersistence);

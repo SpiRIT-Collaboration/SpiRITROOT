@@ -613,19 +613,3 @@ STPSALayerOPTICS::GetNbBin(Int_t rBox, Int_t index, Int_t row0, Int_t tb0, Int_t
 
   return kTRUE;
 }
-
-
-void
-STPSALayerOPTICS::LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope)
-{
-  Double_t sumXY = 0, sumX = 0, sumY = 0, sumX2 = 0;
-  for (Int_t iPoint = 0; iPoint < numPoints; iPoint++) {
-    sumXY += x[iPoint]*y[iPoint];
-    sumX += x[iPoint];
-    sumY += y[iPoint];
-    sumX2 += x[iPoint]*x[iPoint];
-  }
-
-  slope = (numPoints*sumXY - sumX*sumY)/(numPoints*sumX2 - sumX*sumX);
-  constant = (sumX2*sumY - sumX*sumXY)/(numPoints*sumX2 - sumX*sumX);
-}

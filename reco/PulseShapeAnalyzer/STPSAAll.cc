@@ -1,16 +1,5 @@
-//-----------------------------------------------------------
-// Description:
-//   Simple version of analyzing pulse shape of raw signal.
-//
-// Environment:
-//   Software developed for the SPiRIT-TPC at RIKEN
-//
-// Author List:
-//   Genie Jhang     Korea University     (original author)
-//-----------------------------------------------------------
-
 // SpiRITROOT classes
-#include "STPSASimple2.hh"
+#include "STPSAAll.hh"
 
 // STL
 #include <cmath>
@@ -18,19 +7,19 @@
 // ROOT
 #include "RVersion.h"
 
-ClassImp(STPSASimple2)
+ClassImp(STPSAAll)
 
-STPSASimple2::STPSASimple2()
+STPSAAll::STPSAAll()
 {
   fPeakFinder = new TSpectrum();
 }
 
-STPSASimple2::~STPSASimple2()
+STPSAAll::~STPSAAll()
 {
 }
 
 void
-STPSASimple2::Analyze(STRawEvent *rawEvent, STEvent *event)
+STPSAAll::Analyze(STRawEvent *rawEvent, STEvent *event)
 {
   Int_t numPads = rawEvent -> GetNumPads();
   Int_t hitNum = 0;
@@ -38,8 +27,12 @@ STPSASimple2::Analyze(STRawEvent *rawEvent, STEvent *event)
   for (Int_t iPad = 0; iPad < numPads; iPad++) {
     STPad *pad = rawEvent -> GetPad(iPad);
 
+    Int_t layer = pad -> GetLayer();
+    if (layer <= fLayerCut)
+      continue;
+
     Double_t xPos = CalculateX(pad -> GetRow());
-    Double_t zPos = CalculateZ(pad -> GetLayer());
+    Double_t zPos = CalculateZ(layer);
     Double_t charge = 0;
 
     if (!(pad -> IsPedestalSubtracted())) {
@@ -114,19 +107,4 @@ STPSASimple2::Analyze(STRawEvent *rawEvent, STEvent *event)
       hitNum++;
     }
   }
-}
-
-void
-STPSASimple2::LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope)
-{
-  Double_t sumXY = 0, sumX = 0, sumY = 0, sumX2 = 0;
-  for (Int_t iPoint = 0; iPoint < numPoints; iPoint++) {
-    sumXY += x[iPoint]*y[iPoint];
-    sumX += x[iPoint];
-    sumY += y[iPoint];
-    sumX2 += x[iPoint]*x[iPoint];
-  }
-
-  slope = (numPoints*sumXY - sumX*sumY)/(numPoints*sumX2 - sumX*sumX);
-  constant = (sumX2*sumY - sumX*sumXY)/(numPoints*sumX2 - sumX*sumX);
 }

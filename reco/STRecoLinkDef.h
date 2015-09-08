@@ -26,7 +26,7 @@
 #pragma link C++ class STPSATask+;
 #pragma link C++ class STPSA+;
 #pragma link C++ class STPSASimple+;
-#pragma link C++ class STPSASimple2+;
+#pragma link C++ class STPSAAll+;
 #pragma link C++ class STPSALayer+;
 #pragma link C++ class STPSALayerOPTICS+;
 

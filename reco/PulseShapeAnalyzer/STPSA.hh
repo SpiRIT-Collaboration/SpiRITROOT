@@ -7,10 +7,11 @@
 //
 // Author List:
 //   Genie Jhang     Korea University     (original author)
+//   JungWoo Lee     korea University
 //-----------------------------------------------------------
 
-#ifndef STPSASIMPLE_H
-#define STPSASIMPLE_H
+#ifndef STPSA_HH
+#define STPSA_HH
 
 // SpiRITROOT classes
 #include "STRawEvent.hh"
@@ -36,9 +37,11 @@ class STPSA
     virtual ~STPSA();
 
     //! Setting threshold
-    void SetThreshold(Int_t threshold);
+    void SetThreshold(Double_t threshold);
+    void SetLayerCut(Int_t layerCut);
 
     virtual void Analyze(STRawEvent *rawEvent, STEvent *event) = 0;
+    virtual void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope);
 
   protected:
     FairLogger *fLogger;      ///< logger pointer
@@ -55,7 +58,8 @@ class STPSA
     Double_t fDriftVelocity;  ///< drift velocity of electron in cm/us
     Double_t fMaxDriftLength; ///< maximum drift length in mm
 
-    Int_t fThreshold;         ///< threshold of ADC value
+    Double_t fThreshold;         ///< threshold of ADC value
+    Int_t fLayerCut;
 
     Double_t CalculateX(Double_t row);      ///< Calculate x position in mm. This returns the center position of given pad row.
     Double_t CalculateY(Double_t peakIdx);  ///< Calculate y position in mm using the peak index.
