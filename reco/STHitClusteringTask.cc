@@ -33,7 +33,6 @@ STHitClusteringTask::STHitClusteringTask()
 :FairTask("SpiRIT Hit Clusterint Task")
 {
   fLogger = FairLogger::GetLogger();
-
   fIsPersistence = kFALSE;
 
   fEventHCArray = new TClonesArray("STEvent");
@@ -41,6 +40,8 @@ STHitClusteringTask::STHitClusteringTask()
   fSetProxCut  = kFALSE;
   fSetSigmaCut = kFALSE;
   fSetEdgeCut  = kFALSE;
+
+  fClusterizerMode = 2;
 }
 
 STHitClusteringTask::~STHitClusteringTask()
