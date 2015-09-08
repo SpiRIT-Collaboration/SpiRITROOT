@@ -106,14 +106,14 @@ STGenerator::SetMode(TString mode)
 void
 STGenerator::SetOutputFile(TString filename)
 {
+  fOutputFile = filename;
+
   cout << "== [STGenerator] Output file is set to " << filename << "!" << endl;
   if (fMode == kGain) {
     filename.ReplaceAll(".root", ".checking.root");
     cout << "== [STGenerator] Checking file is generated with " << filename << "!" << endl;
   }
   cout << "== [STGenerator] Existing file will be overwritten after StartProcess() called!" << endl;
-
-  fOutputFile = filename;
 }
 
 Bool_t
@@ -594,6 +594,9 @@ STGenerator::GenerateGainCalibrationData()
   outFile -> Write();
   checkingFile -> Write();
   cout << "== Gain calibration data " << fOutputFile << " Created!" << endl;
+
+  fOutputFile.ReplaceAll(".root", ".checking.root");
+  cout << "== Gain calibration checking data " << fOutputFile << " Created!" << endl;
 }
 
 void
