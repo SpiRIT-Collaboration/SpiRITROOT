@@ -331,9 +331,13 @@ void STClusterizerScan2::MergeCC(STEvent* eventH,
 
 void STClusterizerScan2::AddClusterToEvent(STEvent* eventHC, STHitClusterRich* clusterRich)
 {
+  Double_t x = (clusterRich -> GetPosition()).X();
+  if (x > fXHighCut || x < fXLowCut)
+    return;
+
   STHitCluster* cluster = new STHitCluster();
 
-  cluster -> SetPosition(clusterRich -> GetPosition()+ fPrimaryVertex);
+  cluster -> SetPosition(clusterRich -> GetPosition() + fPrimaryVertex);
   cluster -> SetPosSigma(clusterRich -> GetPosSigma());
   cluster -> SetCovMatrix(clusterRich -> GetCovMatrix());
   cluster -> SetCharge(clusterRich -> GetCharge());

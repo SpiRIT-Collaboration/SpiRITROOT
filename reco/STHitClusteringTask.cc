@@ -38,8 +38,9 @@ STHitClusteringTask::STHitClusteringTask()
 
   fEventHCArray = new TClonesArray("STEvent");
 
-  fXCut = -1;
-  fSigmaXCut = -1;
+  fSetProxCut  = kFALSE;
+  fSetSigmaCut = kFALSE;
+  fSetEdgeCut  = kFALSE;
 }
 
 STHitClusteringTask::~STHitClusteringTask()
@@ -51,15 +52,23 @@ void STHitClusteringTask::SetVerbose(Int_t value)        { fVerbose = value; }
 void STHitClusteringTask::SetClusterizerMode(Int_t mode) { fClusterizerMode = mode; }
 void STHitClusteringTask::SetProximityCut(Double_t x, Double_t y, Double_t z)
 {
+  fSetProxCut = kTRUE;
   fXCut = x;
   fYCut = y;
   fZCut = z;
 }
 void STHitClusteringTask::SetSigmaCut(Double_t x, Double_t y, Double_t z)
 {
+  fSetSigmaCut = kTRUE;
   fSigmaXCut = x;
   fSigmaYCut = y;
   fSigmaZCut = z;
+}
+void STHitClusteringTask::SetEdgeCut(Double_t low, Double_t high)
+{
+  fSetEdgeCut = kTRUE;
+  fXLowCut  = low;
+  fXHighCut = high;
 }
 
 STClusterizer* STHitClusteringTask::GetClusterizer() { return fClusterizer; }
@@ -96,10 +105,9 @@ STHitClusteringTask::Init()
 
   if (fClusterizer)
   {
-    if (fXCut != -1)
-      fClusterizer -> SetProximityCut(fXCut, fYCut, fZCut);
-    if (fSigmaXCut != -1)
-      fClusterizer -> SetSigmaCut(fSigmaXCut, fSigmaYCut, fSigmaZCut);
+    if (fSetProxCut)  fClusterizer -> SetProximityCut(fXCut, fYCut, fZCut);
+    if (fSetSigmaCut) fClusterizer -> SetSigmaCut(fSigmaXCut, fSigmaYCut, fSigmaZCut);
+    if (fSetEdgeCut)  fClusterizer -> SetEdgeCut(fXLowCut, fXHighCut);
   }
 
   ioMan -> Register("STEventHC", "SPiRIT", fEventHCArray, fIsPersistence);

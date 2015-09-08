@@ -32,6 +32,7 @@ class STClusterizer
 
     void SetProximityCut(Double_t x, Double_t y, Double_t z);
     void SetSigmaCut(Double_t x, Double_t y, Double_t z);
+    void SetEdgeCut(Double_t low, Double_t high);
 
   protected:
     FairLogger *fLogger;      //!< logger
@@ -56,6 +57,9 @@ class STClusterizer
     Double_t fSigmaXCut;
     Double_t fSigmaYCut;
     Double_t fSigmaZCut;
+
+    Double_t fXLowCut;
+    Double_t fXHighCut;
 
 
   ClassDef(STClusterizer, 1)

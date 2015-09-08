@@ -50,6 +50,7 @@ class STHitClusteringTask : public FairTask
 
     void SetProximityCut(Double_t x, Double_t y, Double_t z);
     void SetSigmaCut(Double_t x, Double_t y, Double_t z);
+    void SetEdgeCut(Double_t low, Double_t high);
 
   private:
     FairLogger *fLogger;           //!< FairLogger singleton
@@ -66,12 +67,19 @@ class STHitClusteringTask : public FairTask
     Int_t fClusterizerMode;
     STClusterizer *fClusterizer;  //!< Clusterizer pointer
 
+    Bool_t fSetProxCut;
     Double_t fXCut;
     Double_t fYCut;
     Double_t fZCut;
+
+    Bool_t fSetSigmaCut;
     Double_t fSigmaXCut;
     Double_t fSigmaYCut;
     Double_t fSigmaZCut;
+
+    Bool_t fSetEdgeCut;
+    Double_t fXLowCut;
+    Double_t fXHighCut;
 
     Double_t fDriftLength;         //!< DriftLength parameter defined in ST.parameters.par [cm/ns]
     Int_t fYDivider;               //!< Space divider along y direction
