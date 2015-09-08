@@ -61,6 +61,7 @@ class STCore : public TObject {
     STRawEvent *GetRawEvent(Int_t eventID = -1);
     Int_t GetNumTbs();
 
+    STMap *GetSTMap();
     STPlot *GetSTPlot();
 
     enum EPedestalMode { kNoPedestal, kPedestalInternal, kPedestalExternal, kPedestalFPN, kPedestalBothIE };
