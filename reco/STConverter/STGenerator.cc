@@ -21,6 +21,7 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TH1D.h"
+#include "TGraph.h"
 #include "TGraphErrors.h"
 #include "TF1.h"
 
@@ -555,7 +556,7 @@ STGenerator::GenerateGainCalibrationData()
       for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++)
         dummyError[iVoltage] = 1.E-5;
 
-      TGraphErrors *aPad = new TGraphErrors(numVoltages, means, voltages, sigmas, dummyError);
+      TGraph *aPad = new TGraph(numVoltages, means, voltages);
 #else
       TGraphErrors *aPad = new TGraphErrors(numVoltages, voltages, means, 0, sigmas);
 #endif
