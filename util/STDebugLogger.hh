@@ -2,7 +2,7 @@
 #define STDEBUGLOGGER
 
 // Debug List
-#define DEBUGRIEMANNCUTS
+//#define DEBUGRIEMANNCUTS
 
 #include "TFile.h"
 #include "TH1D.h"
