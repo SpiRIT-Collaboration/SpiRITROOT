@@ -1,3 +1,8 @@
+/**
+  * This macro reads parameter file and set the mapping file selected in it
+  * and displays AsAd mapping and channel mapping in an AGET chip.
+ **/
+
 ////////////////////////////
 //                        //
 //   Configuration part   //
