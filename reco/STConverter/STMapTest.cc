@@ -66,16 +66,17 @@ void STMapTest::ShowAGETMap()
   }
 
   gStyle -> SetOptStat(0);
-  gStyle -> SetTitleSize(0.05, "x");
-  gStyle -> SetTitleSize(0.05, "y");
-  gStyle -> SetTitleOffset(0.90, "x");
-  gStyle -> SetTitleOffset(0.85, "y");
+
   agetCvs[0] = new TCanvas("agetCvsLeft", "", 900, 0, 600, 500);
   agetHist[0] = new TH2D("agetHistLeft", "AGET Mapping (Beam left half)", 7, -0.5, 6.5, 9, -0.5, 8.5);
-  agetHist[0] -> GetXaxis() -> SetTitle("Layer Number in AGET (Upstream)");
+  agetHist[0] -> GetXaxis() -> SetTitle("Layer Number in AGET (Beam right)");
   agetHist[0] -> GetXaxis() -> CenterTitle();
-  agetHist[0] -> GetYaxis() -> SetTitle("Row Number in AGET (Beam right)");
+  agetHist[0] -> GetXaxis() -> SetTitleSize(0.05);
+  agetHist[0] -> GetXaxis() -> SetTitleOffset(0.90);
+  agetHist[0] -> GetYaxis() -> SetTitle("Row Number in AGET (Upstream)");
   agetHist[0] -> GetYaxis() -> CenterTitle();
+  agetHist[0] -> GetYaxis() -> SetTitleSize(0.05);
+  agetHist[0] -> GetYaxis() -> SetTitleOffset(0.85);
   agetHist[0] -> Draw("colz");
 
   Int_t coboIdx = map -> GetCoboIdx(0);
@@ -115,10 +116,14 @@ void STMapTest::ShowAGETMap()
 
   agetCvs[1] = new TCanvas("agetCvsRight", "", 900, 545, 600, 500);
   agetHist[1] = new TH2D("agetHistRight", "AGET Mapping (Beam right half)", 7, -0.5, 6.5, 9, -0.5, 8.5);
-  agetHist[1] -> GetXaxis() -> SetTitle("Layer Number in AGET (Upstream)");
+  agetHist[1] -> GetXaxis() -> SetTitle("Layer Number in AGET (Beam right)");
   agetHist[1] -> GetXaxis() -> CenterTitle();
-  agetHist[1] -> GetYaxis() -> SetTitle("Row Number in AGET (Beam right)");
+  agetHist[1] -> GetXaxis() -> SetTitleSize(0.05);
+  agetHist[1] -> GetXaxis() -> SetTitleOffset(0.90);
+  agetHist[1] -> GetYaxis() -> SetTitle("Row Number in AGET (Upstream)");
   agetHist[1] -> GetYaxis() -> CenterTitle();
+  agetHist[1] -> GetYaxis() -> SetTitleSize(0.05);
+  agetHist[1] -> GetYaxis() -> SetTitleOffset(0.85);
   agetHist[1] -> Draw("colz");
 
   coboIdx = map -> GetCoboIdx(6);
@@ -166,23 +171,24 @@ void STMapTest::ShowUAMap()
   }
 
   gStyle -> SetOptStat(0);
-  gStyle -> SetTitleSize(0.05, "x");
-  gStyle -> SetTitleSize(0.05, "y");
-  gStyle -> SetTitleOffset(0.55, "x");
-  gStyle -> SetTitleOffset(0.4, "y");
-  gStyle -> SetPadLeftMargin(0.05);
-  gStyle -> SetPadRightMargin(0.05);
-  gStyle -> SetPadTopMargin(0.08);
-  gStyle -> SetPadBottomMargin(0.08);
-  gStyle -> SetLabelOffset(9999., "x");
-  gStyle -> SetLabelOffset(9999., "y");
 
   uaCvs = new TCanvas("uaCvs", "", 900, 530);
+  gPad -> SetLeftMargin(0.05);
+  gPad -> SetRightMargin(0.05);
+  gPad -> SetTopMargin(0.08);
+  gPad -> SetBottomMargin(0.08);
+
   uaHist = new TH2D("uaHist", "AsAd Mapping (Top View)", 4, -0.5, 3.5, 12, -0.5, 11.5);
   uaHist -> GetXaxis() -> SetTitle("Beam Right");
   uaHist -> GetXaxis() -> CenterTitle();
+  uaHist -> GetXaxis() -> SetTitleSize(0.05);
+  uaHist -> GetXaxis() -> SetTitleOffset(0.55);
+  uaHist -> GetXaxis() -> SetLabelOffset(9999.);
   uaHist -> GetYaxis() -> SetTitle("Upstream");
   uaHist -> GetYaxis() -> CenterTitle();
+  uaHist -> GetYaxis() -> SetTitleSize(0.05);
+  uaHist -> GetYaxis() -> SetTitleOffset(0.4);
+  uaHist -> GetYaxis() -> SetLabelOffset(9999.);
   uaHist -> SetTickLength(0, "x");
   uaHist -> SetLabelColor(0, "x");
   uaHist -> SetTickLength(0, "y");
