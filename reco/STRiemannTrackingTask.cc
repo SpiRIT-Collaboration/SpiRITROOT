@@ -13,6 +13,7 @@
 //
 // Redesigned by:
 //      Genie Jhang          Korea University
+//      JungWoo Lee          Korea University
 //-----------------------------------------------------------
 
 // SpiRITROOT classes
@@ -20,6 +21,7 @@
 #include "STHitCluster.hh"
 #include "STRiemannTrackFinder.hh"
 #include "STRiemannHit.hh"
+#include "STDebugLogger.hh"
 
 #include "STProximityHTCorrelator.hh"
 #include "STHelixHTCorrelator.hh"
@@ -47,25 +49,6 @@
 #include "TClonesArray.h"
 #include "TDatabasePDG.h"
 
-/*
-#include "GFTrackCand.h"
-#include "GFTrack.h"
-#include "RKTrackRep.h"
-
-#include "GFDetPlane.h"
-#include "TDatabasePDG.h"
-#include "PndConstField.h"
-#include "PndMultiField.h"
-#include "PndFieldAdaptor.h"
-#include "GFFieldManager.h"
-#include "PndTrackCand.h"
-#include "PndTrack.h"
-#include "PndMCTrack.h"
-*/
-
-// Class Member definitions -----------
-
-#define MINHITS 2
 
 ClassImp(STRiemannTrackingTask);
 
@@ -104,8 +87,6 @@ STRiemannTrackingTask::STRiemannTrackingTask()
   fMinHitsZ = 2;
   fMinHitsR = 2;
   fMinHitsPhi = 2;
-
-  fVerbose = kFALSE;
 
   /*
   // PANDA settings
@@ -147,7 +128,6 @@ STRiemannTrackingTask::~STRiemannTrackingTask()
 }
 
 // Simple setter methods ----------------------------------------------------------------------------------------------------------
-void STRiemannTrackingTask::SetVerbose(Bool_t value) { fVerbose = value; }
 void STRiemannTrackingTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
 void STRiemannTrackingTask::SetMaxRMS(Double_t value) { fMaxRMS = value; }
 void STRiemannTrackingTask::SetMergeTracks(Bool_t mergeTracks) { fMergeTracks = mergeTracks; }
@@ -190,25 +170,18 @@ void STRiemannTrackingTask::SetMergeCurlers(Bool_t mergeCurlers, Double_t blowUp
   fMergeCurlers = mergeCurlers;
   fBlowUp = blowUp;
 }
-// --------------------------------------------------------------------------------------------------------------------------------
 
 InitStatus
 STRiemannTrackingTask::Init()
 {
   FairRootManager *ioMan = FairRootManager::Instance();
 
-  if(ioMan == 0){
+  if (ioMan == 0){
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find FairRootManager!");
 
     return kERROR;
   }
   
-  /*fMvdArray = (TClonesArray *) ioman -> GetObject("MVDPoint");
-    if(fMvdArray == 0) {
-    Error("STRiemannTrackingTask::Init", "mvd-array not found!");
-    }
-  */
-
   fEventHCMArray = (TClonesArray *) ioMan -> GetObject("STEventHCM");
   if (fEventHCMArray == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEventHCM array!");
@@ -220,7 +193,7 @@ STRiemannTrackingTask::Init()
   ioMan -> Register("STRiemannTrack", "SPiRIT", fRiemannTrackArray, fIsPersistence);
 
   fRiemannHitArray = new TClonesArray("STRiemannHit");
-  ioMan -> Register("STRiemannHit", "SPiRIT", fRiemannHitArray, 0);//fIsPersistence);
+  ioMan -> Register("STRiemannHit", "SPiRIT", fRiemannHitArray, 0);
 
   fTrackFinder = new STRiemannTrackFinder();
   fTrackFinder -> SetSorting(fSorting);
@@ -270,16 +243,13 @@ void
 STRiemannTrackingTask::SetParContainers()
 {
   FairRun *run = FairRun::Instance();
-  if (!run)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find analysis run!");
+  if (!run) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find analysis run!");
 
   FairRuntimeDb *db = run -> GetRuntimeDb();
-  if (!db)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find runtime database!");
+  if (!db) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find runtime database!");
 
   fPar = (STDigiPar *) db -> getContainer("STDigiPar");
-  if (!fPar)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find STDigiPar!");
+  if (!fPar) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find STDigiPar!");
 }
 
 
@@ -287,10 +257,7 @@ STRiemannTrackingTask::SetParContainers()
 void
 STRiemannTrackingTask::Exec(Option_t *opt)
 {
-//  if (fVerbose)
-//    fLogger -> Info(MESSAGE_ORIGIN, "Event Number?");
-
-  // Reset output Arrays
+  // Clear buffers ----------------------------------------------------------------------------------------------------
   if (fRiemannTrackArray == 0)
     fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find RiemannTrackArray!");
   fRiemannTrackArray -> Delete();
@@ -302,169 +269,110 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   if (fEventHCMArray -> GetEntriesFast() == 0)
     return;
 
-  STEvent *eventHCM = (STEvent *) fEventHCMArray -> At(0);
-
-  // clean up fRiemannList!
   for (Int_t i = 0; i < fRiemannList.size(); ++i){
     if (fRiemannList[i] != NULL) {
       fRiemannList[i] -> DeleteHits();
-
       delete fRiemannList[i];
     }
   }
   fRiemannList.clear();
-
   fClusterBuffer -> clear();
 
-  if (fVerbose)
-    std::cout << "Fetching clusters from cluster branch..." << std::endl;
+
+
+  // Initialize -------------------------------------------------------------------------------------------------------
+  STEvent *eventHCM = (STEvent *) fEventHCMArray -> At(0);
+  fLogger -> Debug(MESSAGE_ORIGIN, "Fetching clusters from cluster branch...");
 
   UInt_t numCluster = eventHCM -> GetNumClusters();
-  for(UInt_t iCluster = 0; iCluster < numCluster; iCluster++){
+  if (numCluster == 0)
+    fLogger -> Info(MESSAGE_ORIGIN, "Event #%d : Bad event. No clusters to build tracks.");
+
+  for (UInt_t iCluster = 0; iCluster < numCluster; iCluster++) {
     STHitCluster *cluster = (STHitCluster *) eventHCM -> GetCluster(iCluster);
     fClusterBuffer -> push_back(cluster);
   }
 
-  if (fVerbose)
-    std::cout << "Starting Pattern Reco..." << std::endl;
+  std::vector<STRiemannTrack *> riemannTemp; // temporary storage
+  fLogger -> Debug(MESSAGE_ORIGIN, "Starting Pattern Reco...");
 
-  std::vector<STRiemannTrack *> riemannTemp; // temporary storage, reused for every sector
 
-  // first loop over sectors
-  /*
-  if (fClusterBuffer -> size() == 0)
-    return;
-    */
 
-  if (fVerbose)
-    std::cout << "\n... building tracks from " << fClusterBuffer -> size() << " clusters" << std::endl;
-
+  // 1st Build & Merge ------------------------------------------------------------------------------------------------
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortR, fMinHitsR, fMaxRMS);
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinHitsZ, 0.7*fMaxRMS);
-
   riemannTemp.clear();
 
-  if (fMergeTracks) {
-    if (fVerbose)
-      std::cerr << "\n merge of fRiemannList: merge " << fRiemannList.size() << " tracks ... ";
-      
-    fTrackFinder -> MergeTracks(fRiemannList);
+  MergeTracks();
 
-    if (fVerbose)
-      std::cerr << " done - created " << fRiemannList.size() << " merged tracks" << std::endl;
-  }
 
-  /*
-  if (fClusterBuffer -> size() == 0)
-    return;
-    */
 
-  if (fVerbose)
-    std::cerr << "\n... building tracks from " << fClusterBuffer -> size() << " clusters" << std::endl;
-
-  // fill riemannTemp with tracks lying in the sector
-  for (UInt_t iTrack = 0; iTrack < fRiemannList.size(); iTrack++)
+  // 2nd Build & Merge ------------------------------------------------------------------------------------------------
+  UInt_t nTracks = fRiemannList.size();
+  for (UInt_t iTrack = 0; iTrack < nTracks; iTrack++)
     riemannTemp.push_back(fRiemannList[iTrack]);
 
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortPhi, fMinHitsPhi, fMaxRMS);
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortReversePhi, fMinHitsPhi, fMaxRMS);
-
   riemannTemp.clear();
 
-  if (fMergeTracks) {
-    if (fVerbose)
-      std::cerr << "\n merge of fRiemannList: merge " << fRiemannList.size() << " tracks ... ";
+  MergeTracks();
 
-    fTrackFinder -> MergeTracks(fRiemannList);
 
-    if (fVerbose)
-      std::cerr << " done - created " << fRiemannList.size() << " merged tracks" <<std::endl;
-  }
 
-  /*
-  if (fClusterBuffer -> size() == 0)
-    return;
-    */
-
-  if (fVerbose)
-    std::cerr << "\n... building tracks from " << fClusterBuffer -> size() << " clusters" << std::endl;
-
-  for (UInt_t iTrack = 0; iTrack < fRiemannList.size(); iTrack++)
+  // 3rd Build & Merge ------------------------------------------------------------------------------------------------
+  nTracks = fRiemannList.size();
+  for (UInt_t iTrack = 0; iTrack < nTracks; iTrack++)
     riemannTemp.push_back(fRiemannList[iTrack]);
 
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortR, fMinPoints+3, fMaxRMS);
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinPoints+1, fMaxRMS*1.5);
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortPhi, fMinPoints+1, fMaxRMS*1.5);
   BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortReversePhi, fMinPoints+1, fMaxRMS*1.5);
-
   riemannTemp.clear();
 
-  if (fMergeTracks) {
-    if (fVerbose)
-      std::cerr << "\nfinal merge of fRiemannList: merge " << fRiemannList.size() << " tracks ... ";
+  MergeTracks();
 
-    fTrackFinder -> MergeTracks(fRiemannList);
-    if (fVerbose)
-      std::cerr << " done - created " << fRiemannList.size() << " merged tracks" <<std::endl;
-  }
 
-  if(fMergeCurlers) {
-    std::vector<STRiemannTrack *> riemannTempCurl;
-    for (UInt_t iTrack = 0; iTrack < fRiemannList.size(); iTrack++) {
-      if (fRiemannList[iTrack] -> IsFitted() && fRiemannList[iTrack] -> GetNumHits() > 5
-          && fRiemannList[iTrack] -> GetR() < 30. && fabs(fRiemannList[iTrack] -> GetM()*1.57) < 120) { // Pi/2
-        riemannTempCurl.push_back(fRiemannList[iTrack]);
-        fRiemannList.erase(fRiemannList.begin() + iTrack);
-        iTrack--;
-      }
-    }
 
-    if (fVerbose)
-      std::cerr << "\nmerge curlers: merge " << riemannTempCurl.size() << " tracks ... ";
+  // Merge Curlers ----------------------------------------------------------------------------------------------------
+  MergeCurlers();
 
-    fTrackFinderCurl -> MergeTracks(riemannTempCurl);
 
-    if (fVerbose)
-      std::cerr << " done - created " << riemannTempCurl.size() << " merged tracks" <<std::endl;
 
-    for (UInt_t iTrack = 0; iTrack < riemannTempCurl.size(); iTrack++)
-      fRiemannList.push_back(riemannTempCurl[iTrack]);
-  }// end merge curlers
 
-  // clear small tracklets with < MINHITS hits
+  // Clear small tracklets with < 2 hits ------------------------------------------------------------------------------
   for (UInt_t iTrack = 0; iTrack < fRiemannList.size(); iTrack++) {
-    if (fRiemannList[iTrack] -> GetNumHits() < MINHITS){
+    if (fRiemannList[iTrack] -> GetNumHits() < 2){
       fRiemannList.erase(fRiemannList.begin() + iTrack);
       iTrack++;
     }
   }
 
-  UInt_t foundTracks = fRiemannList.size();
 
-  // store STRiemannTracks and Hits in output array
+
+  // Store ------------------------------------------------------------------------------------------------------------
   STRiemannTrack *track;
-  UInt_t numUsedCluster = 0, numHits;
+  UInt_t foundTracks = fRiemannList.size();
+  UInt_t numUsedCluster = 0;
+  UInt_t numHits;
+
   for (UInt_t iTrack = 0; iTrack < foundTracks; iTrack++){
     track = fRiemannList[iTrack];
     numHits = track -> GetNumHits();
     numUsedCluster += numHits;
 
     new((*fRiemannTrackArray)[fRiemannTrackArray -> GetEntriesFast()]) STRiemannTrack(*track);
-    for(UInt_t iHit = 0; iHit < numHits; iHit++){
+    for (UInt_t iHit = 0; iHit < numHits; iHit++){
       STRiemannHit *hit = track -> GetHit(iHit);
       new ((*fRiemannHitArray)[fRiemannHitArray -> GetEntriesFast()]) STRiemannHit(*hit);
     }
   }
 
-  if (fVerbose) {
-    std::cerr << "Pattern Reco finished, found tracks: " << foundTracks << "\n";
-    std::cerr << "used  " << numUsedCluster << " of " << numCluster << " Clusters \n";
 
-  }
 
-  fLogger -> Info(MESSAGE_ORIGIN, 
-                  Form("Event #%d : Found %d tracks, used %d clusters.", 
-                       eventHCM -> GetEventID(), foundTracks, numUsedCluster));
+  fLogger -> Info(MESSAGE_ORIGIN, Form("Event #%d : Found %d tracks, used %d(/%d) clusters.", 
+                       eventHCM -> GetEventID(), foundTracks, numUsedCluster, numCluster));
 }
 
 
@@ -477,6 +385,13 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
                                         Bool_t skipCrossingAreas,
                                         Bool_t skipAndDelete)
 {
+  Int_t nClIn = clusterBuffer -> size();
+  if (nClIn == 0)
+    return;
+
+  Int_t nTracksIn = trackletList -> size();
+
+  fLogger -> Debug(MESSAGE_ORIGIN, Form("... building tracks from %d clusters", clusterBuffer -> size()));
 
   trackfinder -> SetSorting(sorting);
   trackfinder -> SetMinHits(minHits);
@@ -485,12 +400,8 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
 
   std::vector<STRiemannTrack *> trackletListCopy = *trackletList;
 
-  Int_t nTracksIn = trackletList -> size();
-  Int_t nClIn = clusterBuffer -> size();
-
-
   STRiemannTrack *LastTrackIn;
-  if(nTracksIn > 0)
+  if (nTracksIn > 0)
     LastTrackIn = trackletList -> back();
 
   trackfinder -> BuildTracks(*clusterBuffer, *trackletList);
@@ -498,14 +409,18 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
   UInt_t nGoodTrks = 0, nErasedCl = 0, nHits;
   STRiemannTrack *trk;
 
-  for (UInt_t i = 0; i < trackletList -> size(); i++) {
+  for (UInt_t i = 0; i < trackletList -> size(); i++) 
+  {
     trk = (*trackletList)[i];
 
     nHits = trk -> GetNumHits();
-    if (fVerbose)
-      std::cout << "   " << nHits << " hits in tracklet." << std::endl;
+    fLogger -> Debug(MESSAGE_ORIGIN, Form("   %d hits in tracklet.", nHits));
 
-    if (trk -> DistRMS() < maxRMS && (nHits >= minHits || trk -> IsGood())) {
+    if (trk -> DistRMS() < maxRMS && (nHits >= minHits || trk -> IsGood())) 
+    {
+#ifdef DEBUGRIEMANNCUTS // STDebugLogger.hh
+      STDebugLogger::Instance() -> FillHist1("rms", trk -> DistRMS(), 100, 0, 30);
+#endif
       trk -> SetFinished(kFALSE);
       trk -> SetGood();
 
@@ -514,17 +429,21 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
         clusterBuffer -> erase(remove(clusterBuffer -> begin(), clusterBuffer -> end(), trk -> GetHit(iCl) -> GetCluster()), clusterBuffer -> end());
      
       nGoodTrks++;
-      if (fVerbose)
-        fLogger -> Info(MESSAGE_ORIGIN, "================================================================================ good Track!");
+      fLogger -> Debug(MESSAGE_ORIGIN, "================================================================================ good Track!");
 
       //push back unique track to riemannlist
       if (std::find(trackletListCopy.begin(), trackletListCopy.end(), trk) == trackletListCopy.end()) 
         fRiemannList.push_back(trk);
 
-    } else { // delete bad tracklets
-      if (trk -> IsGood()) // track has been found before ( -> clusters were taken out) but does not pass quality criteria anymore  ->  fill clusters back into buffer
-        for (UInt_t iCl = 0; iCl < nHits; iCl++)
+    } 
+    else // delete bad tracklets 
+    {
+      if (trk -> IsGood()) {
+      // track has been found before ( -> clusters were taken out) but does not pass quality criteria anymore  ->  fill clusters back into buffer
+        for (UInt_t iCl = 0; iCl < nHits; iCl++) {
           clusterBuffer -> push_back(trk -> GetHit(iCl) -> GetCluster());
+        }
+      }
 
       // delete hits and track
       trk -> DeleteHits();
@@ -537,8 +456,48 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
     }
   }
 
-  if (fVerbose) {
-    std::cout << "   nGoodTrks: " << nGoodTrks << "  nTracksIn: " << nTracksIn << "   nClIn: " << nClIn << "   clusterBuffer -> size(): " << clusterBuffer -> size() << std::endl;
-    std::cout << "   found good tracks: " << nGoodTrks - nTracksIn << ", reduced nCl by " << nClIn - clusterBuffer -> size() << std::endl;
+  fLogger -> Debug(MESSAGE_ORIGIN, Form("   nGoodTrks: %d,  nTracksIn: %d,  nClIn: %d, clusterBufferSize: %d", nTracksIn, nClIn, clusterBuffer -> size()));
+  fLogger -> Debug(MESSAGE_ORIGIN, Form("   found good tracks: %d, reuduced nCl by %d", nGoodTrks - nTracksIn, nClIn - clusterBuffer -> size()));
+}
+
+void STRiemannTrackingTask::MergeTracks()
+{
+  if (!fMergeTracks) 
+   return;
+
+  fLogger -> Debug(MESSAGE_ORIGIN, Form("merge of fRiemannList: merge %d tracks ...", fRiemannList.size()));
+
+  fTrackFinder -> MergeTracks(fRiemannList);
+
+  fLogger -> Debug(MESSAGE_ORIGIN, Form(" done - created %d merged tracks", fRiemannList.size()));
+}
+
+void STRiemannTrackingTask::MergeCurlers()
+{
+  if (!fMergeCurlers) 
+    return;
+
+  std::vector<STRiemannTrack *> riemannTempCurl;
+
+  for (UInt_t iTrack = 0; iTrack < fRiemannList.size(); iTrack++) 
+  {
+    if (   fRiemannList[iTrack] -> IsFitted() 
+        && fRiemannList[iTrack] -> GetNumHits() > 5
+        && fRiemannList[iTrack] -> GetR() < 30. 
+        && fabs(fRiemannList[iTrack] -> GetM()*1.57) < 120)  // Pi/2
+    {
+      riemannTempCurl.push_back(fRiemannList[iTrack]);
+      fRiemannList.erase(fRiemannList.begin() + iTrack);
+      iTrack--;
+    }
   }
+
+  fLogger -> Debug(MESSAGE_ORIGIN, Form("merge curlers: merge %d tracks ... ", riemannTempCurl.size()));
+
+  fTrackFinderCurl -> MergeTracks(riemannTempCurl);
+
+  fLogger -> Debug(MESSAGE_ORIGIN, Form(" done - created %d merged tracks", riemannTempCurl.size()));
+
+  for (UInt_t iTrack = 0; iTrack < riemannTempCurl.size(); iTrack++)
+    fRiemannList.push_back(riemannTempCurl[iTrack]);
 }
