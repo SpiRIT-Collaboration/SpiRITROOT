@@ -99,7 +99,7 @@ void STPlot::DrawPadplane(Int_t eventID)
   if (fPadplaneHist)
     fPadplaneHist -> Reset();
   else
-    PreparePadplaneHist();
+    PreparePadplaneHist(kDrawPad);
 
   Int_t numPads = fEvent -> GetNumPads();
   Double_t max = 0;
@@ -127,7 +127,7 @@ void STPlot::DrawPadplane(Int_t eventID)
   fPadplaneCvs -> Update();
 }
 
-void STPlot::ClickPad()
+void STPlot::ClickPad(EClickEvent mode)
 {
   TObject *select = gPad -> GetCanvas() -> GetClickSelected();
 
@@ -152,7 +152,8 @@ void STPlot::ClickPad()
   Int_t row = (yOnClick + 432)/8;
   Int_t layer = xOnClick/12;
 
-  DrawPad(row, layer);
+  if (mode == kDrawPad)
+    DrawPad(row, layer);
 }
 
 void STPlot::DrawPad(Int_t row, Int_t layer)
@@ -230,10 +231,18 @@ void STPlot::DrawLayer(Int_t layerNo)
   if (CheckEvent())
     return;
 }
+
+TCanvas *STPlot::GetPadplaneCanvas()
+{
+  PreparePadplaneHist();
+
+  return fPadplaneCvs;
+}
+
 // Getters
 
 // -------------------------
-void STPlot::PreparePadplaneHist()
+void STPlot::PreparePadplaneHist(EClickEvent mode)
 {
 //    cvs = new TCanvas("Event Display", "", 1600, 1000); // For large monitor
   gStyle -> SetOptStat(0000);
@@ -246,12 +255,14 @@ void STPlot::PreparePadplaneHist()
 
   fPadplaneCvs = new TCanvas("Event Display", "", 1200, 750);
   fPadplaneCvs -> SetName(Form("EventDisplay_%lx", (Long_t)fPadplaneCvs));
-  fPadplaneCvs -> AddExec("DrawPad", Form("((STPlot *) STStatic::MakePointer(%ld)) -> ClickPad()", (Long_t)this));
+  if (mode == kDrawPad)
+    fPadplaneCvs -> AddExec("DrawPad", Form("((STPlot *) STStatic::MakePointer(%ld)) -> ClickPad(STPlot::kDrawPad)", (Long_t)this));
   fPadplaneCvs -> Draw();
 
   fPadplaneCvs -> cd();
   fPadplaneHist = new TH2D("fPadplaneHist", ";z (mm);x (mm)", 112, 0, 1344, 108, -432, 432);
   fPadplaneHist -> SetName(Form("fPadplaneHist_%lx", (Long_t)fPadplaneHist));
+  fPadplaneHist -> SetTitle(Form("%s", fPadplaneTitle.Data()));
   fPadplaneHist -> GetXaxis() -> SetTickLength(0.01);
   fPadplaneHist -> GetXaxis() -> CenterTitle();
   fPadplaneHist -> GetYaxis() -> SetTickLength(0.01);

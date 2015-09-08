@@ -32,11 +32,15 @@ class STPlot : public TObject
     STPlot(STCore *core);
     ~STPlot() {};
 
+    enum EClickEvent { kNothing, kDrawPad };
+
     void SetSTCore(STCore *core);
 
     void DrawPadplane(Int_t eventID = -1);
-    void ClickPad();
+    void ClickPad(EClickEvent mode = kNothing);
     void DrawLayer(Int_t layer);
+
+    TCanvas *GetPadplaneCanvas();
 
     // Setters
     void SetEvent(STRawEvent *anEvent);
@@ -48,7 +52,7 @@ class STPlot : public TObject
     STMap *fMap;
 
     void Clear();
-    void PreparePadplaneHist();
+    void PreparePadplaneHist(EClickEvent mode = kNothing);
     void PreparePadCanvas();
     void DrawPad(Int_t row, Int_t layer);
     Bool_t CheckEvent();
