@@ -1,18 +1,10 @@
-//-----------------------------------------------------------
-// Description:
-//   Simple version 2 of analyzing pulse shape of raw signal.
-//   This version uses TSpectrum class in ROOT to find
-//   peaks in pads.
-//
-// Environment:
-//   Software developed for the SPiRIT-TPC at RIKEN
-//
-// Author List:
-//   Genie Jhang     Korea University     (original author)
-//-----------------------------------------------------------
+/**
+ * @brief Find all peaks and make each of them into hits.
+ * @author JungWoo Lee (Korea Univ.)
+ */
 
-#ifndef STPSASIMPLE2
-#define STPSASIMPLE2
+#ifndef STPSAALL
+#define STPSAALL
 
 // SpiRITROOT classes
 #include "STPSA.hh"
@@ -20,19 +12,18 @@
 // ROOT classes
 #include "TSpectrum.h"
 
-class STPSASimple2 : public STPSA
+class STPSAAll : public STPSA
 {
   public:
-    STPSASimple2();
-    ~STPSASimple2();
+    STPSAAll();
+    ~STPSAAll();
 
     void Analyze(STRawEvent *rawEvent, STEvent *event);
-    void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope);
 
   private:
     TSpectrum *fPeakFinder;  /// TSpectrum object
 
-  ClassDef(STPSASimple2, 1)
+  ClassDef(STPSAAll, 2)
 };
 
 #endif

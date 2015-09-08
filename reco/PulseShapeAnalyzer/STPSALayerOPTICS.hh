@@ -179,8 +179,6 @@ class STPSALayerOPTICS : public STPSA
     vector<OPTICSPoint> fPeakPointArray; //!< Array of OPTICSPoint for peak points.
     OPTICSPointStatus fStatus[108][512]; //!< Status of all bins.
 
-    void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope);
-
 #ifdef DEBUG_PLOT
     TCanvas* fCvsFrame;
     TH2D* fHistDataSet;

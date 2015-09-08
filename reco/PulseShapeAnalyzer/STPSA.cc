@@ -7,6 +7,7 @@
 //
 // Author List:
 //   Genie Jhang     Korea University     (original author)
+//   JungWoo Lee     korea University
 //-----------------------------------------------------------
 
 // SpiRITROOT classes
@@ -60,10 +61,22 @@ STPSA::~STPSA()
 }
 
 void
-STPSA::SetThreshold(Int_t threshold)
+STPSA::LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope)
 {
-  fThreshold = threshold;
+  Double_t sumXY = 0, sumX = 0, sumY = 0, sumX2 = 0;
+  for (Int_t iPoint = 0; iPoint < numPoints; iPoint++) {
+    sumXY += x[iPoint]*y[iPoint];
+    sumX += x[iPoint];
+    sumY += y[iPoint];
+    sumX2 += x[iPoint]*x[iPoint];
+  }
+
+  slope = (numPoints*sumXY - sumX*sumY)/(numPoints*sumX2 - sumX*sumX);
+  constant = (sumX2*sumY - sumX*sumXY)/(numPoints*sumX2 - sumX*sumX);
 }
+
+void STPSA::SetThreshold(Double_t threshold) { fThreshold = threshold; }
+void STPSA::SetLayerCut(Int_t layerCut)      { fLayerCut = layerCut; }
 
 Double_t
 STPSA::CalculateX(Double_t row)

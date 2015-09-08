@@ -49,7 +49,6 @@ class STPSALayer : public STPSA
     Int_t GetUnusedPadIdx();
     void PreAnalyze();
     void DeletePeakInfo(Int_t row, Int_t layer, Int_t peakNum);
-    void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope);
 
     TSpectrum *fPeakFinder;                    ///< TSpectrum object
 
