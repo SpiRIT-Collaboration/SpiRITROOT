@@ -173,9 +173,15 @@ Bool_t STGainCalibration::CalibrateADC(Int_t padRow, Int_t padLayer, Int_t numTb
       return kTRUE;
 
     for (Int_t iTb = 0; iTb < numTbs; iTb++) {
+#ifdef VVSADC
+      Double_t rawADCtoV = fGraph[padRow][padLayer] -> Eval(adc[iTb]);
+      Double_t VtoCalibADC = fGraphR[fReferenceRow][fReferenceLayer] -> Eval(rawADCtoV);
+      adc[iTb] = VtoCalibADC;
+#else
       Double_t rawADCtoV = fGraphR[padRow][padLayer] -> Eval(adc[iTb]);
       Double_t VtoCalibADC = fGraph[fReferenceRow][fReferenceLayer] -> Eval(rawADCtoV);
       adc[iTb] = VtoCalibADC;
+#endif
     }
   }
 
