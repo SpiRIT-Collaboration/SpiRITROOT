@@ -13,7 +13,7 @@
 TString fParameterFile = "ST.parameters.par";
 
 // Set the raw data file with path
-TString fDataFile = "";
+TString fDataFile = "anEvent_0421.dat";
 
 // Set the gain calibration data file. If not, assign "".
 TString fGainCalibrationData = "";
@@ -56,9 +56,9 @@ void quickViewer() {
 
   fPlot = fCore -> GetSTPlot();
   if (!fGainCalibrationData.EqualTo(""))
-    fPlot -> SetPadplaneTitle("Event ID: %d (Gain not calibrated)");
-  else
     fPlot -> SetPadplaneTitle("Event ID: %d (Gain calibrated)");
+  else
+    fPlot -> SetPadplaneTitle("Event ID: %d (Gain not calibrated)");
   fPlot -> DrawPadplane();
 
   cout << endl;
