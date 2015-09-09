@@ -127,7 +127,7 @@ void STPlot::DrawPadplane(Int_t eventID)
   fPadplaneCvs -> Update();
 }
 
-void STPlot::ClickPad(EClickEvent mode)
+void STPlot::ClickPad()
 {
   TObject *select = gPad -> GetCanvas() -> GetClickSelected();
 
@@ -152,8 +152,7 @@ void STPlot::ClickPad(EClickEvent mode)
   Int_t row = (yOnClick + 432)/8;
   Int_t layer = xOnClick/12;
 
-  if (mode == kDrawPad)
-    DrawPad(row, layer);
+  DrawPad(row, layer);
 }
 
 void STPlot::DrawPad(Int_t row, Int_t layer)
@@ -264,7 +263,7 @@ void STPlot::PreparePadplaneHist(EClickEvent mode)
   fPadplaneCvs -> SetBottomMargin(0.08);
   fPadplaneCvs -> SetName(Form("EventDisplay_%lx", (Long_t)fPadplaneCvs));
   if (mode == kDrawPad)
-    fPadplaneCvs -> AddExec("DrawPad", Form("((STPlot *) STStatic::MakePointer(%ld)) -> ClickPad(STPlot::kDrawPad)", (Long_t)this));
+    fPadplaneCvs -> AddExec("DrawPad", Form("((STPlot *) STStatic::MakePointer(%ld)) -> ClickPad();", (Long_t)this));
   fPadplaneCvs -> Draw();
 
   fPadplaneCvs -> cd();

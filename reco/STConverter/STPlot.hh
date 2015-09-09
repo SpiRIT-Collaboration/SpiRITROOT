@@ -37,7 +37,7 @@ class STPlot : public TObject
     void SetSTCore(STCore *core);
 
     void DrawPadplane(Int_t eventID = -1);
-    void ClickPad(EClickEvent mode = kNothing);
+    void ClickPad();
     void DrawLayer(Int_t layer);
 
     TCanvas *GetPadplaneCanvas();
