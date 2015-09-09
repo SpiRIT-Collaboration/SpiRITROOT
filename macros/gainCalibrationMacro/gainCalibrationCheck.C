@@ -1,10 +1,32 @@
-//TString *gainCalibrationFile = "";
-//TString *gainCalibrationCheckingFile = "";
-//TString fGainCalibrationFile = "gainCalibration_pulser_ground_20150820.root.ROOT6.20150908";
-TString fGainCalibrationFile = "gainCalibration_pulser_ground_20150820.root.ROOT6.reverse";
-TString fGainCalibrationCheckingFile = "gainCalibration_pulser_ground_20150820.checking.root.ROOT6.20150908";
+/**
+  * This macro generates the following plots for fitting parameters A, B, and C 
+  * - 1D distributions
+  * - 2D map 
+  * 
+  * By clicking a pad on 2D map it will draw detailed information about the calibration
+  * when gain calibration checking file is set with turning on pad plane.
+ **/
 
-Bool_t fIsTurnOffPadplane = kTRUE;
+////////////////////////////
+//                        //
+//   Configuration part   //
+//                        //
+////////////////////////////
+
+// Gain calibration file
+TString fGainCalibrationFile = "";
+
+// Gain calibration checking file generated simultaneousely with calibration file. It contains chcecking in the filename.
+TString fGainCalibrationCheckingFile = "";
+
+// If kFALSE is set, 2D maps are not generated.
+Bool_t fIsTurnOnPadplane = kTRUE;
+
+//////////////////////////////////////////////////////////
+//                                                      //
+//   Don't edit the below if you don't know about it.   //
+//                                                      //
+//////////////////////////////////////////////////////////
 
 TCanvas *fParCanvas = NULL;
 TH1D *fParHist[3] = {NULL};
@@ -16,6 +38,8 @@ Double_t fParMin[3] = {1.E100, 1.E100, 1.E100};
 Double_t fParMax[3] = {-1.E100, -1.E100, -1.E100};
 
 Bool_t fLog = kFALSE;
+
+TFile *fGCCFile = NULL;
 
 void ToggleLog() {
   fLog = !fLog;
@@ -37,7 +61,7 @@ void ToggleLog() {
     fParCanvas -> cd(iCvs + 1) -> Update();
   }
 
-  if (!fIsTurnOffPadplane) {
+  if (fIsTurnOnPadplane) {
     for (Int_t iCvs = 0; iCvs < 3; iCvs++) {
       fPadplaneCvs[iCvs] -> SetLogz(fLog);
 
@@ -98,14 +122,19 @@ void gainCalibrationCheck() {
     fParHist[iCvs] -> GetYaxis() -> CenterTitle();
   }
 
-  if (!fIsTurnOffPadplane) {
+  if (fIsTurnOnPadplane) {
+    if (!fGainCalibrationCheckingFile.EqualTo(""))
+      fGCCFile = new TFile(fGainCalibrationCheckingFile);
+
     Int_t fExponent[3] = {3, 3, 6};
 
     STPlot *fPlot = new STPlot();
 
     for (Int_t iCvs = 0; iCvs < 3; iCvs++) {
-      fPlot -> SetPadplaneTitle(Form("%s in y = A + Bx + Cx^{2} (color axis #times 10^{%d})", fName[iCvs].Data(), fExponent[iCvs]));
+      fPlot -> SetPadplaneTitle(Form("%s in y = A + Bx + Cx^{2} (color axis #times 10^{-%d})", fName[iCvs].Data(), fExponent[iCvs]));
       fPadplaneCvs[iCvs] = fPlot -> GetPadplaneCanvas();
+      if (!fGainCalibrationCheckingFile.EqualTo(""))
+        fPadplaneCvs[iCvs] -> AddExec("DrawPad", ".x DrawPadHelper.C");
 
       TIter next(fPadplaneCvs[iCvs] -> GetListOfPrimitives());
       while (TObject *obj = next()) {
@@ -140,6 +169,12 @@ void gainCalibrationCheck() {
   }
 
   ToggleLog();
-  
-  TFile *fGCCFile = new TFile(fGainCalibrationCheckingFile);
+
+  cout << endl;
+  cout << "///////////////////////////////////////////////////////////////////" << endl;
+  cout << "//                                                               //" << endl;
+  cout << "//  == Type \033[1;31mToggleLog()\033[0m to turn on and off logarithmic scaling.  //" << endl;
+  cout << "//                                                               //" << endl;
+  cout << "///////////////////////////////////////////////////////////////////" << endl;
+  cout << endl;
 }
