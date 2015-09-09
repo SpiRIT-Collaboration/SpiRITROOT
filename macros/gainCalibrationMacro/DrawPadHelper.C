@@ -104,9 +104,14 @@ void DrawPad(Int_t row, Int_t layer) {
 
   fPadCvs -> cd(2);
 
-  for (Int_t iVoltage = 0; iVoltage < 10; iVoltage++) {
+  Int_t iVoltage = 0;
+  while (kTRUE) {
     name = Form("hist_%d_%d_%d", row, layer, iVoltage);
     TH2D *hist = (TH2D *) fGCCFile -> Get(name);
+
+    if (hist == NULL)
+      break;
+
     hist -> SetStats(0);
     hist -> GetXaxis() -> SetTitle("Amplitude (ADC)");
     hist -> GetXaxis() -> CenterTitle();
@@ -117,10 +122,13 @@ void DrawPad(Int_t row, Int_t layer) {
     hist -> GetYaxis() -> CenterTitle();
     hist -> GetYaxis() -> SetTitleSize(0.05);
     hist -> GetYaxis() -> SetTitleOffset(1.05);
+
     if (iVoltage == 0)
       hist -> Draw();
     else
       hist -> Draw("same");
+
+    iVoltage++;
   }
 
   fPadCvs -> cd(1);
