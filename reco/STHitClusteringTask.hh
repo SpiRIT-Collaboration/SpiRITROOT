@@ -7,6 +7,7 @@
 //
 // Author List:
 //   Genie Jhang     Korea University     (original author)
+//   JungWoo Lee     Korea University
 //-----------------------------------------------------------
 
 #ifndef _STCLUSTERINGTASK_H_
@@ -38,6 +39,8 @@ class STHitClusteringTask : public FairTask
     STHitClusteringTask();
     ~STHitClusteringTask();
 
+    enum STClusterizerMode { kX, kScan, kScan2 };
+
     void SetPersistence(Bool_t value = kTRUE);
     void SetVerbose(Int_t value = 1);
     
@@ -46,7 +49,7 @@ class STHitClusteringTask : public FairTask
     virtual void Exec(Option_t *opt);
 
     STClusterizer* GetClusterizer();
-    void SetClusterizerMode(Int_t mode);
+    void SetClusterizerMode(STClusterizerMode mode);
 
     void SetProximityCut(Double_t x, Double_t y, Double_t z);
     void SetSigmaCut(Double_t x, Double_t y, Double_t z);
@@ -58,13 +61,7 @@ class STHitClusteringTask : public FairTask
     STDigiPar *fPar;               //!< STDigiPar singleton
     Bool_t fIsPersistence;         //!< Persistancy setter
 
-    /**
-     * Clusterizer Mode
-     * - 0 : No Clusterizing
-     * - 1 : STClusterizerScan
-     * - 2 : STClusterizerScan2
-     */
-    Int_t fClusterizerMode;
+    STClusterizerMode fClusterizerMode;
     STClusterizer *fClusterizer;  //!< Clusterizer pointer
 
     Bool_t fSetProxCut;

@@ -7,6 +7,7 @@
 //
 // Author List:
 //   Genie Jhang     Korea University     (original author)
+//   JungWoo Lee     Korea University
 //-----------------------------------------------------------
 
 // SpiRITROOT classes
@@ -41,7 +42,7 @@ STHitClusteringTask::STHitClusteringTask()
   fSetSigmaCut = kFALSE;
   fSetEdgeCut  = kFALSE;
 
-  fClusterizerMode = 2;
+  fClusterizerMode = kScan2;
 }
 
 STHitClusteringTask::~STHitClusteringTask()
@@ -50,7 +51,7 @@ STHitClusteringTask::~STHitClusteringTask()
 
 void STHitClusteringTask::SetPersistence(Bool_t value)   { fIsPersistence = value; }
 void STHitClusteringTask::SetVerbose(Int_t value)        { fVerbose = value; }
-void STHitClusteringTask::SetClusterizerMode(Int_t mode) { fClusterizerMode = mode; }
+void STHitClusteringTask::SetClusterizerMode(STClusterizerMode mode) { fClusterizerMode = mode; }
 void STHitClusteringTask::SetProximityCut(Double_t x, Double_t y, Double_t z)
 {
   fSetProxCut = kTRUE;
@@ -92,13 +93,13 @@ STHitClusteringTask::Init()
   }
 
   fClusterizer = NULL;
-  if (fClusterizerMode == 1) {
+  if (fClusterizerMode == kScan) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use STClusterizerScan!");
 
     fClusterizer = new STClusterizerScan();
   }
 
-  else if (fClusterizerMode == 2) {
+  else if (fClusterizerMode == kScan2) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use STClusterizerScan2!");
 
     fClusterizer = new STClusterizerScan2();
@@ -156,7 +157,7 @@ STHitClusteringTask::Exec(Option_t *opt)
 
   eventHC -> SetEventID(eventH -> GetEventID());
 
-  if (fClusterizerMode != 0) 
+  if (fClusterizerMode != kX) 
   {
     fClusterizer -> Analyze(eventH, eventHC);
 
