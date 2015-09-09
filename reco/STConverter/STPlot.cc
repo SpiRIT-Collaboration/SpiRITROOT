@@ -184,10 +184,16 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
   fPadGraph[0] -> SetLineColor(2);
   fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetTitle("Time bucket");
   fPadGraph[0] -> GetHistogram() -> GetXaxis() -> CenterTitle();
+  fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetTitleOffset(1.05);
+  fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetTitleSize(0.05);
+  fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetLabelSize(0.05);
   fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetLimits(-10, fNumTbs + 10);
   fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetRangeUser(-10, fNumTbs + 10);
   fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetTitle("ADC");
   fPadGraph[0] -> GetHistogram() -> GetYaxis() -> CenterTitle();
+  fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetTitleOffset(1.75);
+  fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetTitleSize(0.05);
+  fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetLabelSize(0.05);
   fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetLimits(-10, 4306);
   fPadGraph[0] -> GetHistogram() -> GetYaxis() -> SetRangeUser(-10, 4306);
 
@@ -207,10 +213,16 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
   fPadGraph[1] -> SetLineColor(2);
   fPadGraph[1] -> GetHistogram() -> GetXaxis() -> SetTitle("Time bucket");
   fPadGraph[1] -> GetHistogram() -> GetXaxis() -> CenterTitle();
-  fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetLimits(-10, fNumTbs + 10);
-  fPadGraph[0] -> GetHistogram() -> GetXaxis() -> SetRangeUser(-10, fNumTbs + 10);
+  fPadGraph[1] -> GetHistogram() -> GetXaxis() -> SetTitleOffset(1.05);
+  fPadGraph[1] -> GetHistogram() -> GetXaxis() -> SetTitleSize(0.05);
+  fPadGraph[1] -> GetHistogram() -> GetXaxis() -> SetLabelSize(0.05);
+  fPadGraph[1] -> GetHistogram() -> GetXaxis() -> SetLimits(-10, fNumTbs + 10);
+  fPadGraph[1] -> GetHistogram() -> GetXaxis() -> SetRangeUser(-10, fNumTbs + 10);
   fPadGraph[1] -> GetHistogram() -> GetYaxis() -> SetTitle("ADC");
   fPadGraph[1] -> GetHistogram() -> GetYaxis() -> CenterTitle();
+  fPadGraph[1] -> GetHistogram() -> GetYaxis() -> SetTitleOffset(1.75);
+  fPadGraph[1] -> GetHistogram() -> GetYaxis() -> SetTitleSize(0.05);
+  fPadGraph[1] -> GetHistogram() -> GetYaxis() -> SetLabelSize(0.05);
   fPadGraph[1] -> GetHistogram() -> GetYaxis() -> SetLimits(-10, 4106);
   fPadGraph[1] -> GetHistogram() -> GetYaxis() -> SetRangeUser(-10, 4106);
 
@@ -245,15 +257,11 @@ TCanvas *STPlot::GetPadplaneCanvas()
 void STPlot::PreparePadplaneHist(EClickEvent mode)
 {
 //    cvs = new TCanvas("Event Display", "", 1600, 1000); // For large monitor
-  gStyle -> SetOptStat(0000);
-  gStyle -> SetPadRightMargin(0.10);
-  gStyle -> SetPadLeftMargin(0.06);
-  gStyle -> SetPadTopMargin(0.08);
-  gStyle -> SetPadBottomMargin(0.08);
-  gStyle -> SetTitleOffset(1.0, "X");
-  gStyle -> SetTitleOffset(0.85, "Y");
-
   fPadplaneCvs = new TCanvas("Event Display", "", 1200, 750);
+  fPadplaneCvs -> SetRightMargin(0.10);
+  fPadplaneCvs -> SetLeftMargin(0.06);
+  fPadplaneCvs -> SetTopMargin(0.08);
+  fPadplaneCvs -> SetBottomMargin(0.08);
   fPadplaneCvs -> SetName(Form("EventDisplay_%lx", (Long_t)fPadplaneCvs));
   if (mode == kDrawPad)
     fPadplaneCvs -> AddExec("DrawPad", Form("((STPlot *) STStatic::MakePointer(%ld)) -> ClickPad(STPlot::kDrawPad)", (Long_t)this));
@@ -261,10 +269,13 @@ void STPlot::PreparePadplaneHist(EClickEvent mode)
 
   fPadplaneCvs -> cd();
   fPadplaneHist = new TH2D("fPadplaneHist", ";z (mm);x (mm)", 112, 0, 1344, 108, -432, 432);
+  fPadplaneHist -> SetStats(0);
   fPadplaneHist -> SetName(Form("fPadplaneHist_%lx", (Long_t)fPadplaneHist));
   fPadplaneHist -> SetTitle(Form("%s", fPadplaneTitle.Data()));
+  fPadplaneHist -> GetXaxis() -> SetTitleOffset(1.0);
   fPadplaneHist -> GetXaxis() -> SetTickLength(0.01);
   fPadplaneHist -> GetXaxis() -> CenterTitle();
+  fPadplaneHist -> GetYaxis() -> SetTitleOffset(0.85);
   fPadplaneHist -> GetYaxis() -> SetTickLength(0.01);
   fPadplaneHist -> GetYaxis() -> CenterTitle();
   fPadplaneHist -> Draw("colz");
@@ -315,19 +326,11 @@ void STPlot::PreparePadplaneHist(EClickEvent mode)
 
 void STPlot::PreparePadCanvas()
 {
-  gStyle -> SetOptStat(0000);
-  gStyle -> SetPadRightMargin(0.03);
-  gStyle -> SetPadLeftMargin(0.16);
-  gStyle -> SetPadTopMargin(0.09);
-  gStyle -> SetPadBottomMargin(0.11);
-  gStyle -> SetTitleOffset(1.05, "X");
-  gStyle -> SetTitleOffset(1.75, "Y");
-  gStyle -> SetTitleSize(0.05, "X");
-  gStyle -> SetTitleSize(0.05, "Y");
-  gStyle -> SetLabelSize(0.05, "X");
-  gStyle -> SetLabelSize(0.05, "Y");
-
   fPadCvs = new TCanvas("fPadCvs", "", 1100, 550);
+  fPadCvs -> SetRightMargin(0.03);
+  fPadCvs -> SetLeftMargin(0.16);
+  fPadCvs -> SetTopMargin(0.09);
+  fPadCvs -> SetBottomMargin(0.11);
   fPadCvs -> SetName(Form("fPadCvs_%lx", (Long_t)fPadCvs));
   fPadCvs -> Divide(2, 1);
   fPadCvs -> Draw();
