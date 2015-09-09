@@ -31,13 +31,7 @@ class STPSATask : public FairTask
     STPSATask();
     ~STPSATask();
 
-    enum STPSAMode
-    {
-      kSimple = 0,
-      kAll    = 1,
-      kLayer  = 2,
-      kOPTICS = 3
-    };
+    enum STPSAMode { kSimple, kAll, kLayer, kOPTICS };
 
     void SetPSAMode(STPSAMode mode);
     void SetPersistence(Bool_t value = kTRUE);

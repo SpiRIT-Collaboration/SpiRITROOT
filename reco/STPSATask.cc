@@ -128,17 +128,17 @@ STPSATask::Exec(Option_t *opt)
 
   if (!(rawEvent -> IsGood())) {
     event -> SetIsGood(kFALSE);
-    fLogger->Info(MESSAGE_ORIGIN, Form("Event #%d : Bad event!", rawEvent -> GetEventID()));
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Event #%d : Bad event!", rawEvent -> GetEventID()));
   }
   else {
     fPSA -> Analyze(rawEvent, event);
     if (event -> GetNumHits() == 0) {
       event -> SetIsGood(kFALSE);
-      fLogger->Info(MESSAGE_ORIGIN, Form("Event #%d : No hits found!", rawEvent -> GetEventID()));
+      fLogger -> Info(MESSAGE_ORIGIN, Form("Event #%d : No hits found!", rawEvent -> GetEventID()));
     }
     else {
       event -> SetIsGood(kTRUE);
-      fLogger->Info(MESSAGE_ORIGIN, 
+      fLogger -> Info(MESSAGE_ORIGIN, 
                     Form("Event #%d : Reconstructed %d hits and %d clusters.",
                          rawEvent -> GetEventID(), event -> GetNumHits(), event -> GetNumClusters()));
     }
