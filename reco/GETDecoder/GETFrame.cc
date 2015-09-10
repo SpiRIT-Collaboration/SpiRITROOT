@@ -27,7 +27,6 @@ GETFrame::GETFrame()
 
   memset(fRawAdc, 0, sizeof(Int_t)*4*68*512);
 
-  memset(fMaxAdcIdx, 0, sizeof(Int_t)*4*68);
   memset(fAdc, 0, sizeof(Double_t)*4*68*512);
 
   memset(fIsPedestalSubtracted, kFALSE, sizeof(Bool_t)*4*68);
@@ -218,36 +217,9 @@ Bool_t GETFrame::SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor
     }
   }
 
-  FindMaxIdx(agetIdx, chIdx);
-
   fIsPedestalSubtracted[index/512] = kTRUE;
 
   return kTRUE;
-}
-
-void GETFrame::FindMaxIdx(Int_t agetIdx, Int_t chIdx) {
-  Int_t index = GetIndex(agetIdx, chIdx, 0);
-
-  // Discard the first and the last bins
-  for (Int_t iTb = 3; iTb < fNumTbs - 3; iTb++) {
-    if (fAdc[index + iTb] > fAdc[index + fMaxAdcIdx[index/512]])
-      fMaxAdcIdx[index/512] = iTb;
-  }
-}
-
-Int_t GETFrame::GetMaxADCIdx(Int_t agetIdx, Int_t chIdx)
-{
-  //! \note This method is enabled after CalcPedestal() method.
-
-  Int_t index = GetIndex(agetIdx, chIdx, 0)/512;
-
-  if (!fIsPedestalSubtracted[index]) {
-    std::cout << "== [GETFrame] Run SubtractPedestal() first!" << std::endl;
-
-    return -1;
-  }
-
-  return fMaxAdcIdx[index];
 }
 
 Double_t *GETFrame::GetADC(Int_t agetIdx, Int_t chIdx)

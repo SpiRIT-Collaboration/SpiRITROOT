@@ -76,8 +76,6 @@ class GETFrame : public TObject
     void SetFPNPedestal(Double_t sigmaThreshold = 5);
     //! Subtract pedestal using internal, external or both.
     Bool_t SubtractPedestal(Int_t agetIdx, Int_t chIdx, Double_t rmsFactor = 0);
-    //! Return the time bucket index of the maximum ADC value.
-    Int_t GetMaxADCIdx(Int_t agetIdx, Int_t chIdx);
     //! Return the pedestal-subtracted ADC values array with the number of time buckets specified in GETConfig of the channel, **chIdx**, in the AGET, **agetIdx**.
     Double_t *GetADC(Int_t agetIdx, Int_t chIdx);
     //! Return the pedestal-subtracted ADC value of the specific time bucket, **buckIdx**, of the channel, **chIdx**, in the AGET, **agetIdx**.
@@ -92,8 +90,6 @@ class GETFrame : public TObject
     Int_t GetFPNChannel(Int_t agetIdx, Int_t chIdx);
     //! Internally used method to get the index of corresponding FPN array index from the given channel number
     Int_t GetFPNArrayIndex(Int_t agetIdx, Int_t chIdx);
-    //! Find the maximum point in signal and store it in fMaxAdcIdx[] array
-    void FindMaxIdx(Int_t agetIdx, Int_t chIdx);
 
     Int_t fNumTbs;                 /// The number of time buckets
 
@@ -106,7 +102,6 @@ class GETFrame : public TObject
     Int_t fPolarity;               /// signal polarity
     Int_t fRawAdc[4*68*512];       /// An array containing raw ADC values
 
-    Int_t fMaxAdcIdx[4*68];        /// An array containing indices of maximum ADC value in each channel
     Double_t fAdc[4*68*512];       /// An array containing pedestal-subtracted ADC values
 
     Bool_t fIsPedestalSubtracted[4*68];  /// Flag for checking if pedestal is subtracted
