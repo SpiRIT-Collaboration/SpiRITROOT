@@ -132,7 +132,17 @@ TCanvas *GETPlot::ShowSummarySpectra(Int_t startTb, Int_t numTbs, Int_t notConne
         fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
         fFrame -> SubtractPedestal(iAget, iCh);
 
-        Int_t maxADCIdx = fFrame -> GetMaxADCIdx(iAget, iCh);
+        Int_t maxADCIdx = 0;
+        Double_t maxADC = -1000;
+
+        Double_t *adc = fFrame -> GetADC(iAget, iCh);
+        for (Int_t iTb = 1; iTb < fDecoder -> GetNumTbs() - 1; iTb++) {
+          if (adc[iTb] > maxADC) {
+            maxADC = adc[iTb];
+            maxADCIdx = iTb;
+          }
+        }
+
         fAsad -> Fill(iAget*68 + iCh, fFrame -> GetADC(iAget, iCh, maxADCIdx));
       }
     }
@@ -508,7 +518,17 @@ TCanvas *GETPlot::PrintMax(Int_t eventNo, Int_t innerFrameNo, Int_t startTb, Int
       fFrame -> CalcPedestal(iAget, iCh, startTb, numTbs);
       fFrame -> SubtractPedestal(iAget, iCh);
 
-      Int_t maxADCIdx = fFrame -> GetMaxADCIdx(iAget, iCh);
+      Int_t maxADCIdx = 0;
+      Int_t maxADC = -1000;
+
+      Int_t *adc = fFrame -> GetRawADC(iAget, iCh);
+      for (Int_t iTb = 1; iTb < fDecoder -> GetNumTbs() - 1; iTb++) {
+        if (adc[iTb] > maxADC) {
+          maxADC = adc[iTb];
+          maxADCIdx = iTb;
+        }
+      }
+
       fAsad -> Fill(iAget*68 + iCh, fFrame -> GetRawADC(iAget, iCh, maxADCIdx));
       std::cout << "   " << std::setw(10) << iAget << std::setw(10) << iCh;
       std::cout << std::setw(10) << fFrame -> GetPedestal(iAget, iCh, 0);
