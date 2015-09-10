@@ -29,7 +29,6 @@ class STPad : public TObject
 
     void SetRawADC(Int_t *val);
     void SetRawADC(Int_t idx, Int_t val);
-    void SetMaxADCIdx(Int_t val);
     
     void SetPedestalSubtracted(Bool_t val = kTRUE);
     void SetGainCalibrated(Bool_t val = kTRUE);
@@ -47,7 +46,6 @@ class STPad : public TObject
 
     Int_t *GetRawADC();
     Int_t GetRawADC(Int_t idx);
-    Int_t GetMaxADCIdx();
 
     Double_t *GetADC();
     Double_t GetADC(Int_t idx);
@@ -63,7 +61,7 @@ class STPad : public TObject
     Bool_t fIsGainCalibrated;
     Double_t fAdc[512];
 
-  ClassDef(STPad, 2);
+  ClassDef(STPad, 3);
 };
 
 #endif
