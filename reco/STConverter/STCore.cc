@@ -311,20 +311,6 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           for (Int_t iTb = 0; iTb < fWindowNumTbs; iTb++)
             pad -> SetADC(iTb, adc[fWindowStartTb + iTb]);
 
-          Int_t maxADCIdx = frame -> GetMaxADCIdx(iAget, iCh);
-
-          if (maxADCIdx < fWindowStartTb || maxADCIdx > fWindowStartTb + fWindowNumTbs) {
-            Double_t maxADC = -9999;
-            for (Int_t iTb = 0; iTb < fWindowNumTbs; iTb++) {
-              if (maxADC < adc[iTb + fWindowStartTb]) {
-                maxADC = adc[iTb + fWindowStartTb];
-                maxADCIdx = iTb;
-              }
-            }
-          } else
-            maxADCIdx -= fWindowStartTb;
-
-          pad -> SetMaxADCIdx(maxADCIdx);
           pad -> SetPedestalSubtracted(kTRUE);
         } else if (fPedestalMode != kNoPedestal) {
           if (fPedestalMode == kPedestalBothIE)
@@ -358,20 +344,6 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           for (Int_t iTb = 0; iTb < fWindowNumTbs; iTb++)
             pad -> SetADC(iTb, adc[fWindowStartTb + iTb]);
 
-          Int_t maxADCIdx = frame -> GetMaxADCIdx(iAget, iCh);
-
-          if (maxADCIdx < fWindowStartTb || maxADCIdx > fWindowStartTb + fWindowNumTbs) {
-            Double_t maxADC = -9999;
-            for (Int_t iTb = 0; iTb < fWindowNumTbs; iTb++) {
-              if (maxADC < adc[iTb + fWindowStartTb]) {
-                maxADC = adc[iTb + fWindowStartTb];
-                maxADCIdx = iTb;
-              }
-            }
-          } else
-            maxADCIdx -= fWindowStartTb;
-
-          pad -> SetMaxADCIdx(maxADCIdx);
           pad -> SetPedestalSubtracted(kTRUE);
         }
 
