@@ -13,7 +13,7 @@
 TString fParameterFile = "ST.parameters.par";
 
 // Set the raw data file with path
-TString fDataFile = "anEvent_0421.dat";
+TString fDataFile = "";
 
 // Set the gain calibration data file. If not, assign "".
 TString fGainCalibrationData = "";
@@ -67,6 +67,8 @@ void quickViewer() {
   cout << "//  == Type \033[1;31mnext()\033[0m for displaying the next event.                     //" << endl;
   cout << "//     You can put the event ID as an argument to spectfy the event.  //" << endl;
   cout << "//     ex) \033[1;31mnext()\033[0m or \033[1;31mnext(\033[1;33m5\033[1;31m)\033[0m                                          //" << endl;
+  cout << "//                                                                    //" << endl;
+  cout << "//  == Click the pad if you want to investigate the signal shape.     //" << endl;
   cout << "//                                                                    //" << endl;
   cout << "////////////////////////////////////////////////////////////////////////" << endl;
   cout << endl;
