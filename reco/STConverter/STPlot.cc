@@ -120,8 +120,8 @@ void STPlot::DrawPadplane(Int_t eventID)
   }
 
   fPadplaneHist -> SetTitle(Form(Form("%s", fPadplaneTitle.Data()), fEvent -> GetEventID()));
-  fPadplaneHist -> SetMinimum(1.E-10);
-  fPadplaneHist -> SetMaximum(4096.);
+  fPadplaneHist -> GetZaxis() -> SetRangeUser(0.1, fPadplaneHist -> GetBinContent(fPadplaneHist -> GetMaximumBin()) + 100);
+  fPadplaneHist -> SetContour(50);
 
   fPadplaneCvs -> Modified();
   fPadplaneCvs -> Update();
@@ -255,9 +255,11 @@ TCanvas *STPlot::GetPadplaneCanvas()
 // -------------------------
 void STPlot::PreparePadplaneHist(EClickEvent mode)
 {
+//  gStyle -> SetPalette(55); // Rainbow palette - not that good
+
 //    cvs = new TCanvas("Event Display", "", 1600, 1000); // For large monitor
   fPadplaneCvs = new TCanvas("Event Display", "", 1200, 750);
-  fPadplaneCvs -> SetRightMargin(0.10);
+  fPadplaneCvs -> SetRightMargin(0.11);
   fPadplaneCvs -> SetLeftMargin(0.06);
   fPadplaneCvs -> SetTopMargin(0.08);
   fPadplaneCvs -> SetBottomMargin(0.08);
