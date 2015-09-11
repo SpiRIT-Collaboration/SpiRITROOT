@@ -25,6 +25,7 @@ class STRawEvent : public TNamed {
     ~STRawEvent();
 
     void PrintPads();
+    void Clear();
 
     // setters
     void SetEventID(Int_t evtid);
@@ -49,7 +50,7 @@ class STRawEvent : public TNamed {
 
     Bool_t fIsGood;
 
-  ClassDef(STRawEvent, 2);
+  ClassDef(STRawEvent, 3);
 };
 
 #endif

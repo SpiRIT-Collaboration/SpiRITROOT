@@ -18,6 +18,15 @@ ClassImp(GETFrame);
 
 GETFrame::GETFrame()
 {
+  fMath = new GETMath();
+
+  Clear();
+}
+
+GETFrame::~GETFrame() {}
+
+void GETFrame::Clear()
+{
   fNumTbs = 512;
 
   fEventIdx = 0;
@@ -47,8 +56,6 @@ GETFrame::GETFrame()
 
   fMath = new GETMath();
 }
-
-GETFrame::~GETFrame() {}
 
 void GETFrame::SetNumTbs(Int_t value)    { fNumTbs = value; }
 void GETFrame::SetEventID(UInt_t value)  { fEventIdx = value; }

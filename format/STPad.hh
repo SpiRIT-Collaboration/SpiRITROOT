@@ -21,7 +21,7 @@ class STPad : public TObject
     STPad(Int_t row, Int_t layer);
     ~STPad();
 
-    void Initialize();
+    void Clear();
 
     // setters
     void SetLayer(Int_t val);

@@ -62,6 +62,7 @@ void STCore::Initialize()
 
   fDecoderPtr = new GETDecoder();
 //  fDecoderPtr -> SetDebugMode(1);
+  fPadArray = new TClonesArray("STPad", 12096);
 
   fIsData = kFALSE;
   fIsPedestalGenerationMode = kFALSE;
@@ -241,9 +242,11 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
   fPrevEventNo = eventID;
 
   if (fRawEventPtr != NULL)
-    delete fRawEventPtr;
+    fRawEventPtr -> Clear();
+  else
+    fRawEventPtr = new STRawEvent();
 
-  fRawEventPtr = new STRawEvent();
+  fPadArray -> Clear("C");
 
   GETFrame *frame = NULL;
   while ((frame = fDecoderPtr -> GetFrame(fCurrFrameNo))) {
@@ -298,7 +301,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
         if (row == -2 || layer == -2)
           continue;
 
-        STPad *pad = new STPad(row, layer);
+        STPad *pad = new ((*fPadArray)[row*112 + layer]) STPad(row, layer);
         Int_t *rawadc = frame -> GetRawADC(iAget, iCh);
         for (Int_t iTb = 0; iTb < fWindowNumTbs; iTb++)
           pad -> SetRawADC(iTb, rawadc[fWindowStartTb + iTb]);
@@ -328,7 +331,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           Bool_t good = frame -> SubtractPedestal(iAget, iCh, fPedestalRMSFactor);
           fRawEventPtr -> SetIsGood(good);
           if (!good) {
-            delete pad;
+//            delete pad;
 
             iAget = 4;
             iCh = 68;
@@ -348,7 +351,7 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
         }
 
         fRawEventPtr -> SetPad(pad);
-        delete pad;
+//        delete pad;
       }
     }
 

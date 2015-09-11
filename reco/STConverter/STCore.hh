@@ -13,6 +13,7 @@
 
 #include "TObject.h"
 #include "TString.h"
+#include "TClonesArray.h"
 
 #include "STRawEvent.hh"
 #include "STMap.hh"
@@ -93,6 +94,7 @@ class STCore : public TObject {
     Bool_t fIsGainCalibrationData;
 
     STRawEvent *fRawEventPtr;
+    TClonesArray *fPadArray;
 
     UInt_t fPrevEventNo;
     UInt_t fCurrEventNo;

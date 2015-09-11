@@ -16,12 +16,12 @@ ClassImp(STPad);
 
 STPad::STPad()
 {
-  Initialize();
+  Clear();
 }
 
 STPad::STPad(Int_t row, Int_t layer)
 {
-  Initialize();
+  Clear();
 
   fRow = row;
   fLayer = layer;
@@ -31,7 +31,7 @@ STPad::~STPad()
 {
 }
 
-void STPad::Initialize()
+void STPad::Clear()
 {
  fIsPedestalSubtracted = 0;
 
@@ -54,7 +54,7 @@ void STPad::SetADC(Int_t idx, Double_t val)   { fAdc[idx] = val; }
 
 STPad &STPad::operator= (STPad right)
 {
-  Initialize();
+  Clear();
 
   fRow = right.GetRow();
   fLayer = right.GetLayer();
