@@ -39,7 +39,6 @@ ClassImp(STGenerator)
 STGenerator::STGenerator()
 {
   fMode = kError;
-  fIsStoreRMS = kFALSE;
   fIsPositivePolarity = kFALSE;
 
   fParReader = NULL;
@@ -49,7 +48,6 @@ STGenerator::STGenerator(TString mode)
 {
   fMode = kError;
   SetMode(mode);
-  fIsStoreRMS = kFALSE;
   fIsPositivePolarity = kFALSE;
 
   fParReader = NULL;
@@ -85,8 +83,6 @@ STGenerator::SetMode(TString mode)
   mode.ToLower();
   if (mode.EqualTo("pedestal")) {
     fMode = kPedestal;
-    fNumEvents = 0;
-    fSumRMSCut = 0;
   } else if (mode.EqualTo("gain"))
     fMode = kGain;
   else {
@@ -176,24 +172,6 @@ STGenerator::SetFPNPedestal(Double_t fpnThreshold)
   return fCore -> SetFPNPedestal(fpnThreshold);
 }
 
-void
-STGenerator::SetStoreRMS(Bool_t value)
-{
-  if (fMode == kGain) {
-    cout << "== [STGenerator::SetStoreRMS()] This method only valid with Pedestal data generation mode!" << endl;
-
-    return;
-  }
-
-  fIsStoreRMS = value;
-}
-
-void
-STGenerator::SetSumRMSCut(Int_t value)
-{
-  fSumRMSCut = value;
-}
-
 Bool_t
 STGenerator::AddData(TString filename)
 {
@@ -232,30 +210,6 @@ STGenerator::SetData(Int_t index)
 }
 
 void
-STGenerator::SelectEvents(Int_t numEvents, Int_t *eventList)
-{
-  if (fMode == kGain) {
-    cout << "== [STGenerator::SelectEvents()] This method only valid with Pedestal data generation mode!" << endl;
-
-    return;
-  }
-
-  fNumEvents = numEvents;
-
-  if (fNumEvents < 0)
-    cout << "== [STGenerator] Events in passed event list will be excluded until event ID " << -fNumEvents << "!" << endl;
-  else if (fNumEvents > 0)
-    cout << "== [STGenerator] Events in passed event list are processed!" << endl;
-  else {
-    cout << "== [STGenerator] All events are processed!" << endl;
-
-    return;
-  }
-
-  fEventList = eventList;
-}
-
-void
 STGenerator::StartProcess()
 {
   if (fOutputFile.EqualTo("")) {
@@ -283,170 +237,77 @@ STGenerator::GeneratePedestalData()
 {
   TFile *outFile = new TFile(fOutputFile, "recreate");
 
-  Int_t iRow, iLayer;
-  Double_t pedestal[2][512] = {{0}};
+  Int_t iRow = 0, iLayer = 0;
+  Double_t meanBS = 0, sigmaBS = 0, meanAS = 0, sigmaAS = 0;
 
-  Int_t ***numValues = new Int_t**[fRows];
-  Double_t ***mean = new Double_t**[fRows];
-  Double_t ***rms2 = new Double_t**[fRows];
-
-  Double_t **padMean = new Double_t*[fRows];
-  Double_t **padRMS2 = new Double_t*[fRows];
-
+  TH1D ***beforeSubtractionMean = new TH1D**[fRows];
+  TH1D ***beforeSubtractionSigma = new TH1D**[fRows];
+  TH1D ***afterSubtractionMean = new TH1D**[fRows];
+  TH1D ***afterSubtractionSigma = new TH1D**[fRows];
   for (iRow = 0; iRow < fRows; iRow++) {
-    numValues[iRow] = new Int_t*[fLayers];
-    mean[iRow] = new Double_t*[fLayers];
-    rms2[iRow] = new Double_t*[fLayers];
+    beforeSubtractionMean[iRow] = new TH1D*[fLayers];
+    beforeSubtractionSigma[iRow] = new TH1D*[fLayers];
+    afterSubtractionMean[iRow] = new TH1D*[fLayers];
+    afterSubtractionSigma[iRow] = new TH1D*[fLayers];
 
-    padMean[iRow] = new Double_t[fLayers];
-    padRMS2[iRow] = new Double_t[fLayers];
     for (iLayer = 0; iLayer < fLayers; iLayer++) {
-      numValues[iRow][iLayer] = new Int_t[fNumTbs];
-      mean[iRow][iLayer] = new Double_t[fNumTbs];
-      rms2[iRow][iLayer] = new Double_t[fNumTbs];
-
-      padMean[iRow][iLayer] = 0;
-      padRMS2[iRow][iLayer] = 0;
-      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
-        numValues[iRow][iLayer][iTb] = 0;
-        mean[iRow][iLayer][iTb] = 0;
-        rms2[iRow][iLayer][iTb] = 0;
-      }
+      beforeSubtractionMean[iRow][iLayer] = new TH1D(Form("mean_bs_%d_%d", iRow, iLayer), "", 4000, 3300, 4100);
+      beforeSubtractionSigma[iRow][iLayer] = new TH1D(Form("sigma_bs_%d_%d", iRow, iLayer), "", 1000, 0, 100);
+      afterSubtractionMean[iRow][iLayer] = new TH1D(Form("mean_as_%d_%d", iRow, iLayer), "", 4000, -400, 400);
+      afterSubtractionSigma[iRow][iLayer] = new TH1D(Form("sigma_as_%d_%d", iRow, iLayer), "", 1000, 0, 100);
     }
   }
-  
-  GETMath *math = new GETMath();
 
-  /*
-  GETMath ****math = new GETMath***[fRows];
-  for (iRow = 0; iRow < fRows; iRow++) {
-    math[iRow] = new GETMath**[fLayers];
-    for (iLayer = 0; iLayer < fLayers; iLayer++) {
-      math[iRow][iLayer] = new GETMath*[fNumTbs];
-      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
-        math[iRow][iLayer][iTb] = new GETMath();
-      }
-    }
-  }
-  */
+  TTree *outTree = new TTree("PedestalData", "Pedestal Data Tree");
+  outTree -> Branch("row", &iRow);
+  outTree -> Branch("layer", &iLayer);
+  outTree -> Branch("meanBS", &meanBS);
+  outTree -> Branch("sigmaBS", &sigmaBS);
+  outTree -> Branch("meanAS", &meanAS);
+  outTree -> Branch("sigmaAS", &sigmaAS);
 
-  Double_t rmsSum = 0;
-  Int_t storeEventID = 0;
-  Int_t excluded = 0;
-
-  TTree *rmsTree = NULL;
-  if (fIsStoreRMS) {
-    rmsTree = new TTree("rmsSumTree", "");
-    rmsTree -> Branch("eventID", &storeEventID, "eventID/I");
-    rmsTree -> Branch("rmsSum", &rmsSum, "rmsSum/D");
-    rmsTree -> Branch("excluded", &excluded, "excluded/I");
-  }
-
+  GETMath *mathRA = new GETMath();
+  GETMath *mathA = new GETMath();
   STRawEvent *event = NULL;
-  Int_t eventID = 0;
-  Int_t numExcluded = 0;
   while ((event = fCore -> GetRawEvent())) {
-    if (fNumEvents == 0) {}
-    else if (fNumEvents > 0) {
-      if (eventID == fNumEvents)
-        break;
-      else if (fEventList[eventID] != event -> GetEventID())
-        continue;
-    } else if (fNumEvents < 0) {
-      if (numExcluded < -fNumEvents && fEventList[numExcluded] == event -> GetEventID()) {
-        numExcluded++;
-        continue;
-      }
-    }
-
-    rmsSum = 0;
-    excluded = 0;
-
     Int_t numPads = event -> GetNumPads();
 
+    Int_t eventid = event -> GetEventID();
+    if (eventid%100 == 0) 
+      cout << "Processing event ID: " << eventid << endl;
+
     for (Int_t iPad = 0; iPad < numPads; iPad++) {
       STPad *pad = event -> GetPad(iPad);
-      Int_t *adc = pad -> GetRawADC();
 
       Int_t row = pad -> GetRow();
       Int_t layer = pad -> GetLayer();
 
-      Int_t numTbs = 0;
-      for (Int_t iTb = 3; iTb < fNumTbs - 3; iTb++) {
-        math -> Reset();
-        math -> Set(numTbs++, padMean[row][layer], padRMS2[row][layer]);
-        math -> Add(adc[iTb]);
-        padMean[row][layer] = math -> GetMean();
-        padRMS2[row][layer] = math -> GetRMS2();
+      Int_t *rawadc = pad -> GetRawADC();
+      Double_t *adc = pad -> GetADC();
+
+      mathRA -> Reset();
+      mathA -> Reset();
+      for (Int_t iTb = 1; iTb < fNumTbs - 1; iTb++) {
+        mathRA -> Add(rawadc[iTb]);
+        mathA -> Add(adc[iTb]);
       }
 
-      rmsSum += sqrt(padRMS2[row][layer]);
+      beforeSubtractionMean[row][layer] -> Fill(mathRA -> GetMean());
+      beforeSubtractionSigma[row][layer] -> Fill(mathRA -> GetRMS());
+      afterSubtractionMean[row][layer] -> Fill(mathA -> GetMean());
+      afterSubtractionSigma[row][layer] -> Fill(mathA -> GetRMS());
     }
-
-    if (fSumRMSCut != 0 && rmsSum > fSumRMSCut)
-      excluded = 1;
-
-    if (fIsStoreRMS) {
-      storeEventID = event -> GetEventID();
-      rmsTree -> Fill();
-    }
-
-    if (excluded) {
-      if (event -> GetEventID()%200 == 0)
-        cout << "[STGenerator] Skip event: " << event -> GetEventID() << endl;
-
-      continue;
-    }
-
-    if (event -> GetEventID()%200 == 0)
-      cout << "[STGenerator] Start processing event: " << event -> GetEventID() << endl;
-
-    for (Int_t iPad = 0; iPad < numPads; iPad++) {
-      STPad *pad = event -> GetPad(iPad);
-      Int_t *adc = pad -> GetRawADC();
-
-      Int_t row = pad -> GetRow();
-      Int_t layer = pad -> GetLayer();
-
-      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
-        math -> Reset();
-        math -> Set(numValues[row][layer][iTb]++, mean[row][layer][iTb], rms2[row][layer][iTb]);
-        math -> Add(adc[iTb]);
-        mean[row][layer][iTb] = math -> GetMean();
-        rms2[row][layer][iTb] = math -> GetRMS2();
-
-        /*
-        math[row][layer][iTb] -> Add(adc[iTb]);
-        */
-      }
-    }
-
-    if (event -> GetEventID()%200 == 0)
-      cout << "[STGenerator] Done processing event: " << event -> GetEventID() << endl;
-
-    eventID++;
   }
 
   cout << "== [STGenerator] Creating pedestal data: " << fOutputFile << endl;
-  TTree *tree = new TTree("PedestalData", "Pedestal Data Tree");
-  tree -> Branch("padRow", &iRow, "padRow/I");
-  tree -> Branch("padLayer", &iLayer, "padLayer/I");
-  tree -> Branch("pedestal", &pedestal[0], Form("pedestal[%d]/D", fNumTbs));
-  tree -> Branch("pedestalSigma", &pedestal[1], Form("pedestalSigma[%d]/D", fNumTbs));
-
   for (iRow = 0; iRow < fRows; iRow++) {
     for (iLayer = 0; iLayer < fLayers; iLayer++) {
-      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
-        pedestal[0][iTb] = mean[iRow][iLayer][iTb];
-        pedestal[1][iTb] = sqrt(rms2[iRow][iLayer][iTb]);
-        
-        /*
-        pedestal[0][iTb] = math[iRow][iLayer][iTb] -> GetMean();
-        pedestal[1][iTb] = math[iRow][iLayer][iTb] -> GetRMS();
-        */
-      }
+      meanBS = beforeSubtractionMean[iRow][iLayer] -> GetMean();
+      sigmaBS = beforeSubtractionSigma[iRow][iLayer] -> GetMean();
+      meanAS = afterSubtractionMean[iRow][iLayer] -> GetMean();
+      sigmaAS = afterSubtractionSigma[iRow][iLayer] -> GetMean();
 
-      tree -> Fill();
+      outTree -> Fill();
     }
   }
 
@@ -498,7 +359,9 @@ STGenerator::GenerateGainCalibrationData()
 //    for (Int_t iEvent = 0; iEvent < 10; iEvent++) {
 //      STRawEvent *event = fCore -> GetRawEvent();
 
-      cout << "Start voltage: " << fVoltageArray.at(iVoltage) << " event: " << event -> GetEventID() << endl;
+      Int_t eventid = event -> GetEventID();
+      if (eventid%100 == 0) 
+        cout << "Start voltage: " << fVoltageArray.at(iVoltage) << " event: " << eventid << endl;
 
       Int_t numPads = event -> GetNumPads();
       for (Int_t iPad = 0; iPad < numPads; iPad++) {
@@ -517,7 +380,7 @@ STGenerator::GenerateGainCalibrationData()
         padHist[row][layer][iVoltage] -> Fill(max);
       }
 
-      cout << "Done voltage: " << fVoltageArray.at(iVoltage) << " event: " << event -> GetEventID() << endl;
+//      cout << "Done voltage: " << fVoltageArray.at(iVoltage) << " event: " << event -> GetEventID() << endl;
     }
   }
 

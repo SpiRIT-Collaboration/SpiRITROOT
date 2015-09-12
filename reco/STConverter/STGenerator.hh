@@ -35,15 +35,12 @@ class STGenerator : public TObject {
     void SetInternalPedestal(Int_t startTb = 3, Int_t numTbs = 20);
     Bool_t SetPedestalData(TString filename, Double_t rmsFactor = 0);
     void SetFPNPedestal(Double_t fpnThreshold = 5);
-    void SetStoreRMS(Bool_t value = kTRUE);
-    void SetSumRMSCut(Int_t value = 0);
     void SetPositivePolarity(Bool_t value = kTRUE);
 
     Bool_t AddData(TString filename);
     Bool_t AddData(Double_t voltage, TString filename);
     Bool_t SetData(Int_t index);
 
-    void SelectEvents(Int_t numEvents = 0, Int_t *eventList = NULL);
     void StartProcess();
 
     void Print();
