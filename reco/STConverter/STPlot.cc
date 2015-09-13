@@ -58,6 +58,8 @@ void STPlot::Clear()
   fPadCvs = NULL;
   fPadGraph[0] = NULL;
   fPadGraph[1] = NULL;
+
+  fMarker = new TMarker();
 }
 
 Bool_t STPlot::CheckEvent()
@@ -151,6 +153,20 @@ void STPlot::ClickPad()
 
   Int_t row = (yOnClick + 432)/8;
   Int_t layer = xOnClick/12;
+
+  Double_t padCenterX = (row + 0.5)*8. - 432;
+  Double_t padCenterZ = (layer + 0.5)*12.;
+
+  fMarker -> SetMarkerStyle(4);
+  fMarker -> SetX(padCenterZ);
+  fMarker -> SetY(padCenterX);
+  fMarker -> SetMarkerSize(2);
+  fMarker -> Draw("same");
+
+  for (Int_t iCvs = 0; iCvs < gROOT -> GetListOfCanvases() -> GetEntries(); iCvs++) {
+    ((TCanvas *) gROOT -> GetListOfCanvases() -> At(iCvs)) -> Modified();
+    ((TCanvas *) gROOT -> GetListOfCanvases() -> At(iCvs)) -> Update();
+  }
 
   DrawPad(row, layer);
 }

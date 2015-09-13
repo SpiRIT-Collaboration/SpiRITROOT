@@ -22,6 +22,7 @@
 #include "TH1D.h"
 #include "TGraph.h"
 #include "TString.h"
+#include "TMarker.h"
 
 class STCore;
 
@@ -66,6 +67,8 @@ class STPlot : public TObject
 
     TCanvas *fPadCvs;
     TGraph *fPadGraph[2];
+
+    TMarker *fMarker;
 
     TH2D *fLayerHist;
 
