@@ -65,16 +65,16 @@ STRiemannTrackingTask::STRiemannTrackingTask()
 
   // SPiRIT Settings
   fMinPoints = 3;
-  fProxCut = 40;
-  fProxZStretch = 1.6; // 1.6;
-  fHelixCut = 10;
+  fProxCut = 20;
+  fProxZStretch = 1.0;
+  fHelixCut = 5;
   fMaxRMS = 5;
 
   fMergeTracks = kTRUE;
-  fTTProxCut = 40;
-  fTTDipCut = 50;
-  fTTHelixCut = 40;
-  fTTPlaneCut = 40;
+  fTTProxCut = 20;
+  fTTDipCut = 5;
+  fTTHelixCut = 5;
+  fTTPlaneCut = 5;
 
   fRiemannScale = 25.0;
 
