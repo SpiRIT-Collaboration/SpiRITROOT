@@ -1,12 +1,40 @@
 /**
- * Geant4 simulation macro
+ * Geant4 Simulation Macro
+ *
+ * - Geant4 settings can be found in SpiRITROOT/gconfig directory.
+ *   By default, QGSP_BERT_HP_EMY physics list is used.
+ *
+ * - Geometry and material files can be found in SpiRITROOT/geometry
+ *   directory. Make sure you run geomSpiRIT.C to create geometry
+ *   file. Materials and Geant4 cuts are defined in media.geo. 
+ *
+ * - Default Field map is constant field. If you want to use field map
+ *   file, 1) put SamuraiMap_0.5T.dat in SpiRIT/input directory and 
+ *   2) set varialble 'useFieldMapFile' kTRUE. This setting may 
+ *   cause longer simulation time.
+ *
+ * - By default, STEventGenGenerator is used for event generator.
+ *   You may use other classes, but you will have to modify this code
+ *   and it is not recommanded. The format of event generator file
+ *   is described in STEventGenGenerator.hh.
+ *
+ * - How To Run
+ *   In bash,
+ *   > root 'run_mc.C("name", "event", kFALSE)'
+ *   You do not need to open this file to change variables.
+ *
+ * - Varialbles
+ *   @ name : Name of simulation. Just for indication.
+ *   @ event : Name of event file name. 
+ *   @ event : kTRUE to use constant field, with 0.5T. 
+ *             kFALSE to use field map file 'SamuraiMap_0.5T.dat'.
  */
 
 void run_mc
 (
   TString name  = "urqmd_short",
   TString event = "UrQMD_300AMeV_short.egen",
-  Bool_t  useFieldMapFile = kFALSE
+   Bool_t useFieldMapFile = kFALSE
 )
 {
   //////////////////////////////////////////////////////////

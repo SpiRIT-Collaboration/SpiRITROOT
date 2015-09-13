@@ -1,51 +1,62 @@
 /**
- * Event display macro.
- * See following link for detail.
- * https://github.com/SpiRIT-Collaboration/SpiRITROOT/wiki/Event-Display-Macro
+ * Event display macro
+ *
+ * - For detail description, see following link:
+ *   https://github.com/SpiRIT-Collaboration/SpiRITROOT/wiki/Event-Display-Macro
  */
 
-void run_eve(TString name = "single")
+void run_eve(TString name = "urqmd_short")
 {
-  //Name
+  // -----------------------------------------------------------------
+  // FairRun
+  FairRunAna* fRun = new FairRunAna();
+
+
+  // -----------------------------------------------------------------
+  // Set file names
   TString workDir     = gSystem -> Getenv("VMCWORKDIR");
-  TString inputName   = workDir + "/macros/data/spirit_" + name + ".reco.root";
-  TString rawName    = workDir + "/macros/data/spirit_" + name + ".raw.root";
-  TString outputName  = workDir + "/macros/data/spirit_" + name + ".eve.root";
-  TString digiParName = workDir + "/parameters/ST.parameters.par";
-  TString geomName    = workDir + "/geometry/geomSpiRIT.man.root";
+  TString inputFile   = workDir + "/macros/data/" + name + ".reco.root";
+  TString outputFile  = workDir + "/macros/data/" + name + ".eve.root";
+  TString digiParFile = workDir + "/parameters/ST.parameters.par";
+  TString geomFile    = workDir + "/geometry/geomSpiRIT.man.root";
 
-  //Logger
-  FairLogger *logger = FairLogger::GetLogger();
-  logger -> SetLogToScreen(kTRUE);
-  logger -> SetLogVerbosityLevel("HIGH");
-  logger -> SetLogScreenLevel("DEBUG");
 
-  // Run
-  FairRunAna *run= new FairRunAna();
-  FairRuntimeDb* db = run -> GetRuntimeDb();
-  FairParAsciiFileIo* par = new FairParAsciiFileIo();
-  par -> open(digiParName);
-  db -> setSecondInput(par);
+  // -----------------------------------------------------------------
+  // Logger
+  FairLogger *fLogger = FairLogger::GetLogger();
+  fLogger -> SetLogToScreen(kTRUE);
 
-  run -> SetInputFile(inputName);
-  run -> AddFriend(rawName);
-  run -> SetOutputFile(outputName);
-  run -> SetGeomFile(geomName);
 
-  // Event display
-  STEventManager *eveMan = new STEventManager();
-  eveMan -> SetVolumeTransparency(80);
+  // -----------------------------------------------------------------
+  // Set data base
+  FairParAsciiFileIo* fDigiPar = new FairParAsciiFileIo();
+  fDigiPar -> open(digiParFile);
 
-  // Draw
-  STEventDrawTask* eve = new STEventDrawTask();
-  eve -> SetRendering(STEventDrawTask::kHit,        kFALSE, 0, 4095);
-  eve -> SetRendering(STEventDrawTask::kCluster,    kFALSE, 0, 4095*20);
-  eve -> SetRendering(STEventDrawTask::kClusterBox, kFALSE, 0, 4095*20);
-  eve -> SetRendering(STEventDrawTask::kRiemann,    kTRUE,  0, 4095*20);      
-  //eve -> SetAttributes(STEventDrawTask::kHit,     kFullCircle, 0.5,  kRed-7);
-  //eve -> SetAttributes(STEventDrawTask::kCluster, kFullCircle, 1, kBlack);
-  //eve -> SetAttributes(STEventDrawTask::kRiemann, kFullCircle, 1);
+  FairRuntimeDb* fDb = fRun -> GetRuntimeDb();
+  fDb -> setSecondInput(fDigiPar);
 
-  eveMan -> AddTask(eve);
-  eveMan -> Init();
+
+  // -----------------------------------------------------------------
+  // Set FairRun
+  fRun -> SetInputFile(inputFile);
+  fRun -> SetOutputFile(outputFile);
+  fRun -> SetGeomFile(geomFile);
+
+
+  // -----------------------------------------------------------------
+  // Event display manager
+  STEventManager *fEveManager = new STEventManager();
+  fEveManager -> SetVolumeTransparency(80);
+
+
+  // -----------------------------------------------------------------
+  // Event draw task
+  STEventDrawTask* fEve = new STEventDrawTask();
+  fEve -> SetRendering(STEventDrawTask::kRiemann, kTRUE);
+
+
+  // -----------------------------------------------------------------
+  // Run initialization and run
+  fEveManager -> AddTask(fEve);
+  fEveManager -> Init();
 }

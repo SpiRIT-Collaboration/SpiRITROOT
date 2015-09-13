@@ -1,12 +1,33 @@
 /**
- * Reconstruction macro
+ * Reconstruction Macro
+ *
+ * - This macro can be used to reconstruct both MC simulation data
+ *   and experiment data. For MC data reconstruction, set variable
+ *   'dataFile' to blanck("") - default. 
+ *
+ * - Number of events (varialbe 'nEvents') should be set in case 
+ *   of using experiment data. It will be updated in feature to 
+ *   set it automatically - TODO
+ *
+ * - See headers of each tasks for more information.
+ *
+ * - How To Run
+ *   In bash,
+ *   > root 'run_reco.C("name", "dataFile", 0)'
+ *   You do not need to open this file to change variables.
+ *
+ * - Varialbles
+ *   @ name : Name of simulation.
+ *   @ dataFile : Full path of data file
+ *   @ nEvents : Number of events. Set to 0 for full reconstruction 
+ *               of MC simulation. Will be removed in feature.
  */
 
 void run_reco
 (
   TString name     = "urqmd_short",
-  TString dataFile = "",         // blank("") for MC simulation
-  Int_t   nEvents  = 0           // 0 for MC simulation
+  TString dataFile = "",
+    Int_t nEvents  = 0
 )
 {
   // -----------------------------------------------------------------
@@ -90,8 +111,8 @@ void run_reco
   // -----------------------------------------------------------------
   // Set FairRun
   if (fUseDecorderTask == kFALSE)
-    fRun -> SetInputFile(inputFile.Data());
-  fRun -> SetOutputFile(outputFile.Data());
+    fRun -> SetInputFile(inputFile);
+  fRun -> SetOutputFile(outputFile);
 
 
   // -----------------------------------------------------------------

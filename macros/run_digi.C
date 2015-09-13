@@ -1,5 +1,15 @@
 /**
- * Digitization simulation macro
+ * Digitization Simulation Macro
+ *
+ * - Modifying this macro is not recommanded.
+ *
+ * - How To Run
+ *   In bash,
+ *   > root 'run_digi.C("name")'
+ *   You do not need to open this file to change variables.
+ *
+ * - Varialbles
+ *   @ name : Name of simulation. Should be same with MC simulation.
  */
 
 void run_digi(TString name = "urqmd_short")
