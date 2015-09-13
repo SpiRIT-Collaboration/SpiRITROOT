@@ -77,6 +77,7 @@ class STEventDrawTask : public FairTask
     void SetSelfRiemannSet(Int_t iRiemannSet = -1, Bool_t offElse = kTRUE);
     void SetRendering(STEveObject eveObj, Bool_t rnr, Double_t thresholdMin = -1, Double_t thresholdMax = -1);
     void SetAttributes(STEveObject eveObj, Style_t style = -1, Size_t size = -1, Color_t color = -1);
+    void SetObject(STEveObject eveObj, Bool_t set);
 
     static void ClickSelectedPadPlane();
     void DrawPad(Int_t row, Int_t layer);
@@ -139,6 +140,7 @@ class STEventDrawTask : public FairTask
     Int_t fMaxX;
 
     TEvePointSet* fPointSet[10];
+    Bool_t   fSetObject[10];
     Bool_t   fRnrSelf[10];
     Color_t  fPointColor[10];
     Size_t   fPointSize[10];
