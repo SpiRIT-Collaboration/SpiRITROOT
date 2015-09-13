@@ -58,13 +58,15 @@ STEventManagerEditor::Init()
 
   FairRootManager* fRootManager = FairRootManager::Instance();
   TChain* chain = fRootManager -> GetInChain();
-  fEntries= chain -> GetEntriesFast();
+  fEntries = chain -> GetEntriesFast();
 
   MakeTitle("STEventManager Editor");
   fEditorTabSubFrame = CreateEditorTabSubFrame("Event");
-  FillFrameContent(fEditorTabSubFrame);
 
+  //Choose only one, between below two lines
+  //FillFrameContent(fEditorTabSubFrame);
   fManager -> InitByEditor();
+
   fLogger -> Debug(MESSAGE_ORIGIN, "STEventManagerEditor End of Init().");
 }
 
@@ -78,14 +80,18 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   /********************************************************************/
 
   TGGroupFrame* frameInfo = new TGGroupFrame(eventFrame,"Info",kVerticalFrame);
-  frameInfo -> SetTitlePos(TGGroupFrame::kCenter);
+  frameInfo -> SetTitlePos(TGGroupFrame::kLeft);
 
   TFile* file = FairRootManager::Instance() -> GetInChain() -> GetFile();
   UInt_t RunId= FairRunAna::Instance() -> getRunId();
 
-  TGLabel* labelFileName = new TGLabel(frameInfo, TString("Input file : ")+file->GetName());
-  TGLabel* labelRunID    = new TGLabel(frameInfo, TString("Run Id : ")+Form("%d",RunId));
-  TGLabel* labelEventID  = new TGLabel(frameInfo, TString("No. of events : ")+Form("%d",fEntries));
+  TString name = file -> GetName();
+  TObjString *last = (TObjString*) name.Tokenize("/") -> Last();
+  name = last -> GetString();
+
+  TGLabel* labelFileName = new TGLabel(frameInfo, name);
+  TGLabel* labelRunID    = new TGLabel(frameInfo, TString("Run Id : ") + Form("%d",RunId));
+  TGLabel* labelEventID  = new TGLabel(frameInfo, TString("No. of events : ") + Form("%d", fEntries));
 
   frameInfo -> AddFrame(labelFileName,new TGLayoutHints (kLHintsLeft));
   frameInfo -> AddFrame(labelRunID ,new TGLayoutHints (kLHintsLeft));
@@ -106,16 +112,24 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   TGLabel* labelEvent = new TGLabel(frameEvent1, "Current Event : ");
   fCurrentEvent = new TGNumberEntry(frameEvent1, 0., 6, -1,
                                     TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
-                                    TGNumberFormat::kNELLimitMinMax, 0, fEntries);
+                                    TGNumberFormat::kNELLimitMinMax, 0, fEntries - 1);
   fCurrentEvent -> Connect("ValueSet(Long_t)","STEventManagerEditor", this, "SelectEventIf()");
   frameEvent1 -> AddFrame(labelEvent, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
   frameEvent1 -> AddFrame(fCurrentEvent, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
+
+  TGTextButton* buttonNextEvent = new TGTextButton(frameEvent, "Next");
+  buttonNextEvent -> Connect("Clicked()", "STEventManagerEditor", this, "NextEvent()");
+
+  TGTextButton* buttonBeforeEvent = new TGTextButton(frameEvent, "Before");
+  buttonBeforeEvent -> Connect("Clicked()", "STEventManagerEditor", this, "BeforeEvent()");
 
   TGTextButton* buttonUpdate = new TGTextButton(frameEvent, "Update");
   buttonUpdate -> Connect("Clicked()", "STEventManagerEditor", this, "SelectEvent()");
 
   frameEvent -> AddFrame(checkAutoUpdate, new TGLayoutHints(kLHintsLeft, 1,1,5,3));
   frameEvent -> AddFrame(frameEvent1, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
+  frameEvent -> AddFrame(buttonNextEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,1));
+  frameEvent -> AddFrame(buttonBeforeEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,1,3));
   frameEvent -> AddFrame(buttonUpdate, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,3));
 
   eventFrame -> AddFrame(frameEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
@@ -217,7 +231,7 @@ STEventManagerEditor::SelectPadIf()
 void 
 STEventManagerEditor::SelectPad()
 {
-  fDrawTask -> DrawPad(fCurrentRow->GetIntNumber(), fCurrentLayer->GetIntNumber());
+  fDrawTask -> DrawPad(fCurrentRow -> GetIntNumber(), fCurrentLayer -> GetIntNumber());
 }
 
 void 
@@ -229,13 +243,54 @@ STEventManagerEditor::SelectEventIf()
 void 
 STEventManagerEditor::SelectEvent()
 {
-  fManager -> GotoEvent(fCurrentEvent->GetIntNumber());
+  fManager -> GotoEvent(fCurrentEvent -> GetIntNumber());
+
   if(fCurrentRiemannSet)
     fCurrentRiemannSet -> SetLimitValues(0,GetNRiemannSet()-1);
   if(fTempRiemannSet)
     fTempRiemannSet -> SetLimitValues(0,GetNRiemannSet()-1);
 
   Update();
+}
+
+void 
+STEventManagerEditor::NextEvent()
+{
+  Int_t eventID = fCurrentEvent -> GetIntNumber();
+  if (eventID != fEntries - 1)
+  {
+    Int_t updatedEventID = eventID + 1;
+    fCurrentEvent -> SetNumber(updatedEventID);
+
+    fManager -> GotoEvent(fCurrentEvent -> GetIntNumber());
+
+    if(fCurrentRiemannSet)
+      fCurrentRiemannSet -> SetLimitValues(0,GetNRiemannSet()-1);
+    if(fTempRiemannSet)
+      fTempRiemannSet -> SetLimitValues(0,GetNRiemannSet()-1);
+
+    Update();
+  }
+}
+
+void 
+STEventManagerEditor::BeforeEvent()
+{
+  Int_t eventID = fCurrentEvent -> GetIntNumber();
+  if (eventID != 0)
+  {
+    Int_t updatedEventID = eventID - 1;
+    fCurrentEvent -> SetNumber(updatedEventID);
+
+    fManager -> GotoEvent(fCurrentEvent -> GetIntNumber());
+
+    if(fCurrentRiemannSet)
+      fCurrentRiemannSet -> SetLimitValues(0,GetNRiemannSet()-1);
+    if(fTempRiemannSet)
+      fTempRiemannSet -> SetLimitValues(0,GetNRiemannSet()-1);
+
+    Update();
+  }
 }
 
 void 

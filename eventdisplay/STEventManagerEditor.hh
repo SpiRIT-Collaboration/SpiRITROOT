@@ -39,6 +39,8 @@ class STEventManagerEditor : public TGedFrame
                            UInt_t options = kChildFrame, Pixel_t back=GetDefaultFrameBackground());
     virtual ~STEventManagerEditor() {}
     void SetModel(TObject* obj);
+    virtual void NextEvent();
+    virtual void BeforeEvent();
     virtual void SelectEvent();
     virtual void SelectEventIf();
     virtual void SelectPad();
