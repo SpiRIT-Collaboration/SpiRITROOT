@@ -35,7 +35,9 @@ class STEventManager : public TEveEventManager
     virtual void Init(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
 
     void SetSelfRiemannSet(Int_t val) {}
-    void SetVolumeTransparency(Int_t val) { fTransparency = val; }
+    void SetVolumeTransparency(Int_t val);
+    void SetClearColor(Color_t color);
+    void SetViwerPoint(Double_t hRotate, Double_t vRotate);
 
     virtual Int_t GetCurrentEvent() { return fEntry; }
 
@@ -62,6 +64,11 @@ class STEventManager : public TEveEventManager
 
     Int_t fTransparency;
 
+    Bool_t fUseUserViewerPoint;
+    Double_t fHRotate;
+    Double_t fVRotate;
+
+    Color_t fClearColor;
 
     static STEventManager* fInstance;
 

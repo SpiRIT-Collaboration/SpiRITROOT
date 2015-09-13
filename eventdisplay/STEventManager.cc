@@ -8,14 +8,17 @@
 #include "TEveGeoNode.h"
 #include "TEveManager.h"
 #include "TEveProjectionManager.h"
+#include "TEveWindowManager.h"
 #include "TEveScene.h"
 #include "TEveViewer.h"
 #include "TEveWindow.h"
 #include "TEveBrowser.h"
+#include "TEveGedEditor.h"
 #include "TRootEmbeddedCanvas.h"
 #include "TObjArray.h"
 #include "TGString.h"
 
+#include "TGedEditor.h"
 #include "TGTab.h"
 #include "TGLViewer.h"
 #include "TGeoManager.h"
@@ -30,24 +33,34 @@ using namespace std;
 
 ClassImp(STEventManager);
 
-STEventManager* STEventManager::fInstance=0;
+STEventManager* STEventManager::fInstance = 0;
 STEventManager* STEventManager::Instance()
 {
   return fInstance;
 }
 
 STEventManager::STEventManager()
-: TEveEventManager("STEventManager",""),
-  fRootManager(FairRootManager::Instance()),
-  fRunAna(FairRunAna::Instance()),
-  fEntry(0),
-  fEvent(0),
-  fCvsPadPlane(0),
-  fCvsPad(0),
-  fTransparency(80)
+: TEveEventManager("STEventManager","")
 {
+  fRootManager = FairRootManager::Instance();
+  fRunAna = FairRunAna::Instance();
+
+  fEntry = 0;
+
+  fEvent = NULL;
+  fCvsPadPlane = NULL;
+  fCvsPad = NULL;
+
+  fTransparency = 80;
+
+  fClearColor = kWhite;
+
+  fUseUserViewerPoint = kFALSE;
+  fHRotate = 0;
+  fVRotate = 0;
+
   fLogger = FairLogger::GetLogger();
-  fInstance=this;
+  fInstance = this;
 }
 
 STEventManager::~STEventManager()
@@ -69,7 +82,7 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 {
   fLogger -> Debug(MESSAGE_ORIGIN, "STEventManager Init().");
 
-  TEveManager::Create(kTRUE, "FV");
+  TEveManager::Create(kTRUE, "FIV");
 
   Int_t  dummy;
   UInt_t width, height;
@@ -83,6 +96,7 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
   /**************************************************************************/
 
   TEveWindowSlot* slotOverview = NULL;
+  TEveWindowSlot* slot3D = NULL;
   TEveWindowPack* packOverview = NULL;
   TEveWindowPack* packLeft = NULL;
   TEveWindowSlot* slotPadPlane = NULL;
@@ -96,38 +110,36 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
   gEve -> GetBrowser() -> SetTabTitle("Full 3D", TRootBrowser::kRight);
 
   slotOverview = TEveWindow::CreateWindowInTab(gEve -> GetBrowser() -> GetTabRight());
-  slotOverview -> SetElementName("Overview");
   slotOverview -> SetShowTitleBar(kFALSE);
+  slotOverview -> SetElementName("Overview");
   packOverview = slotOverview -> MakePack();
+  packOverview -> SetShowTitleBar(kFALSE);
   packOverview -> SetElementName("Overview");
-  //packOverview -> SetShowTitleBar(kFALSE);
   packOverview -> SetHorizontal();
 
   packLeft = packOverview -> NewSlot() -> MakePack();
-  packLeft -> SetElementName("left pack");
   packLeft -> SetShowTitleBar(kFALSE);
+  packLeft -> SetElementName("left pack");
   packLeft -> SetVertical();
-  packLeft -> NewSlot() -> MakeCurrent();
-  TEveViewer* viwer3D = gEve -> SpawnNewViewer("3D View", "");
-  viwer3D -> AddScene(gEve->GetGlobalScene());
-  viwer3D -> AddScene(gEve->GetEventScene());
+
+  slot3D = packLeft -> NewSlot();
+  slot3D -> SetShowTitleBar(kFALSE);
+  slot3D -> MakeCurrent();
+  TEveViewer* viewer3D = gEve -> SpawnNewViewer("3D View", "");
+  viewer3D -> SetShowTitleBar(kFALSE);
+  viewer3D -> AddScene(gEve -> GetGlobalScene());
+  viewer3D -> AddScene(gEve -> GetEventScene());
 
   slotPadPlane = packOverview -> NewSlot();
-  //slotPadPlane -> SetElementName("pad plane");
-  //slotPadPlane -> SetShowTitleBar(kFALSE);
+  slotPadPlane -> SetShowTitleBar(kFALSE);
   framePadPlane = slotPadPlane -> MakeFrame(ecvsPadPlane);
   framePadPlane -> SetElementName("SpiRIT Pad Plane");
-  framePadPlane -> SetShowTitleBar(kFALSE);
-  //packOverview -> GetEveFrame() -> SetShowTitleBar(kFALSE);
   fCvsPadPlane = ecvsPadPlane -> GetCanvas();
 
   slotPad = packLeft -> NewSlotWithWeight(.6);
-  //slotPad -> SetElementName("pad");
-  //slotPad -> SetShowTitleBar(kFALSE);
+  slotPad -> SetShowTitleBar(kFALSE);
   framePad = slotPad -> MakeFrame(ecvsPad);
   framePad -> SetElementName("pad");
-  framePad -> SetShowTitleBar(kFALSE);
-  //packLeft -> GetEveFrame() -> SetShowTitleBar(kFALSE);
   fCvsPad = ecvsPad -> GetCanvas();
 
   /**************************************************************************/
@@ -155,16 +167,31 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 
   /**************************************************************************/
 
-  TGLViewer *dfViewer = gEve->GetDefaultGLViewer();
-
   gEve -> GetBrowser() -> GetTabRight() -> SetTab(1);
-  gEve -> Redraw3D(kTRUE, kTRUE);
+  gEve -> GetBrowser() -> Resize();
+  gEve -> GetBrowser() -> HideBottomTab();
+  gEve -> GetWindowManager() -> HideAllEveDecorations();
 
-  dfViewer -> CurrentCamera().RotateRad(-.7, 2.3);
-  dfViewer -> DoDraw();
+  TGLViewer *dfViewer3D = viewer3D -> GetGLViewer();
+  dfViewer3D -> SetClearColor(fClearColor);
+  if (fUseUserViewerPoint)
+    dfViewer3D -> CurrentCamera().RotateRad(fHRotate, fVRotate);
+  else
+    dfViewer3D -> CurrentCamera().RotateRad(-0.7, -1.1);
+  dfViewer3D -> DoDraw(kFALSE);
+
+  TGLViewer *dfViewer = gEve -> GetDefaultGLViewer();
+  dfViewer -> SetClearColor(fClearColor);
+  if (fUseUserViewerPoint)
+    dfViewer -> CurrentCamera().RotateRad(fHRotate, fVRotate);
+  else
+    dfViewer -> CurrentCamera().RotateRad(-0.7, -1.1);
+  dfViewer -> DoDraw(kFALSE);
 
   gEve -> ElementSelect(gEve -> GetCurrentEvent());
+  gEve -> GetBrowser() -> GetTabLeft() -> SetTab(2);
   fLogger -> Debug(MESSAGE_ORIGIN, "STEventManager End of Init().");
+  GotoEvent(fEntry);
 }
 
 void 
@@ -172,7 +199,6 @@ STEventManager::InitByEditor()
 {
   fLogger -> Debug(MESSAGE_ORIGIN, "STEventManager InitByEditor().");
 
-  /*
   gEve -> GetBrowser() -> StartEmbedding(TRootBrowser::kLeft);
 
   {
@@ -199,27 +225,26 @@ STEventManager::InitByEditor()
 
   gEve -> GetBrowser() -> StopEmbedding();
   gEve -> GetBrowser() -> SetTabTitle("Event control", TRootBrowser::kLeft);
-  */
 }
 
 void 
 STEventManager::GotoEvent(Int_t event)
 {
-  fEntry=event;
+  fEntry = event;
   fRunAna -> Run((Long64_t)event);
 }
 
 void 
 STEventManager::NextEvent()
 {
-  fEntry+=1;
+  fEntry += 1;
   fRunAna -> Run((Long64_t)fEntry);
 }
 
 void 
 STEventManager::PrevEvent()
 {
-  fEntry-=1;
+  fEntry -= 1;
   fRunAna -> Run((Long64_t)fEntry);
 }
 
@@ -239,4 +264,13 @@ void
 STEventManager::SetEventManagerEditor(STEventManagerEditor* editor)
 {
   fEditor = editor;
+}
+
+void STEventManager::SetVolumeTransparency(Int_t val) { fTransparency = val; }
+void STEventManager::SetClearColor(Color_t color)     { fClearColor = color; }
+void STEventManager::SetViwerPoint(Double_t hRotate, Double_t vRotate)
+{
+  fUseUserViewerPoint = kTRUE;
+  fHRotate = hRotate;
+  fVRotate = vRotate;
 }
