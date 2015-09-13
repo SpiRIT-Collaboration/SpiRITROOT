@@ -1,64 +1,85 @@
-void run_digi(TString tag = "test")
+/**
+ * Digitization simulation macro
+ */
+
+void run_digi(TString name = "urqmd_short")
 {
-  TStopwatch timer;
-  timer.Start();
+  // -----------------------------------------------------------------
+  // FairRun
+  FairRunAna* fRun = new FairRunAna();
 
-  Int_t nEvents = 10;
 
-  TString workDir     = gSystem -> Getenv("VMCWORKDIR");
-  TString geomDir     = workDir + "/geometry";
-  TString confDir     = workDir + "/gconfig";
-  TString dataDir     = "data";
-  TString mcFile      = dataDir + "/spirit_" + tag + ".mc.root"; 
-  TString mcParFile   = dataDir + "/spirit_" + tag + ".params.root"; 
-  TString digiFile    = dataDir + "/spirit_" + tag + ".raw.root"; 
+  // -----------------------------------------------------------------
+  // Set digitization tasks
+  STDriftTask* fDriftTask = new STDriftTask(); 
+  fDriftTask -> SetInputPersistance(kFALSE);
+  fRun -> AddTask(fDriftTask);
+
+  STPadResponseTask* fPadResponseTask = new STPadResponseTask(); 
+  fPadResponseTask -> SetInputPersistance(kFALSE);
+  fPadResponseTask -> AssumeGausPRF();
+  fRun -> AddTask(fPadResponseTask);
+
+  STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
+  fElectronicsTask -> SetInputPersistance(kTRUE);
+  fRun -> AddTask(fElectronicsTask);
+
+
+  //////////////////////////////////////////////////////////
+  //                                                      //
+  //   In general, the below parts need not be touched.   //
+  //                                                      //
+  //////////////////////////////////////////////////////////
+
+
+  // -----------------------------------------------------------------
+  // Set enveiroment
+  TString workDir   = gSystem -> Getenv("VMCWORKDIR");
+  TString dataDir   = workDir + "/macros/data/";
+
+
+  // -----------------------------------------------------------------
+  // Set file names
+  TString inputFile   = dataDir + name + ".mc.root"; 
+  TString outputFile  = dataDir + name + ".digi.root"; 
+  TString mcParFile   = dataDir + name + ".params.root";
+  TString loggerFile  = dataDir + "log_" + name + ".digi.txt";
   TString digiParFile = workDir + "/parameters/ST.parameters.par";
 
-  gSystem->Setenv("GEOMPATH",geomDir.Data());
-  gSystem->Setenv("CONFIG_DIR",confDir.Data());
+
+  // -----------------------------------------------------------------
+  // Set FairRun
+  fRun -> SetInputFile(inputFile.Data());
+  fRun -> SetOutputFile(outputFile.Data());
 
 
+  // -----------------------------------------------------------------
+  // Logger
+  FairLogger *fLogger = FairLogger::GetLogger();
+  fLogger -> SetLogFileName(loggerFile);
+  fLogger -> SetLogToScreen(kTRUE);
+  fLogger -> SetLogToFile(kTRUE);
+  fLogger -> SetLogVerbosityLevel("LOW");
 
-  FairLogger *logger = FairLogger::GetLogger();
-              logger -> SetLogFileName("log/digi.log");
-              logger -> SetLogToScreen(kTRUE);
-              logger -> SetLogToFile(kTRUE);
-              logger -> SetLogVerbosityLevel("LOW");
 
-  FairRunAna* fRun = new FairRunAna();
-              fRun -> SetInputFile(mcFile.Data());
-              fRun -> SetOutputFile(digiFile.Data());
-
-  FairParRootFileIo*  mcParInput = new FairParRootFileIo();
-                      mcParInput -> open(mcParFile);
-  FairParAsciiFileIo* digiParInput = new FairParAsciiFileIo();
-                      digiParInput -> open(digiParFile);
+  // -----------------------------------------------------------------
+  // Set data base
+  FairParRootFileIo* fMCPar = new FairParRootFileIo();
+  fMCPar -> open(mcParFile);
+  FairParAsciiFileIo* fDigiPar = new FairParAsciiFileIo();
+  fDigiPar -> open(digiParFile);
   
   FairRuntimeDb* fDb = fRun -> GetRuntimeDb();
-                 fDb -> setFirstInput(mcParInput);
-                 fDb -> setSecondInput(digiParInput);
-
-  STDriftTask* drift = new STDriftTask(); 
-               drift -> SetInputPersistance(kTRUE);
-  STPadResponseTask* padResponse = new STPadResponseTask(); 
-                     padResponse -> SetInputPersistance(kTRUE);
-                     padResponse -> AssumeGausPRF();
-  STElectronicsTask* electronics = new STElectronicsTask(); 
-                     electronics -> SetInputPersistance(kTRUE);
+  fDb -> setFirstInput(fMCPar);
+  fDb -> setSecondInput(fDigiPar);
 
 
-
-
-  fRun -> AddTask(drift);
-  fRun -> AddTask(padResponse);
-  fRun -> AddTask(electronics);
+  // -----------------------------------------------------------------
+  // Run initialization
   fRun -> Init();
-  fRun -> Run(0,0);
 
-  timer.Stop();
-  cout << endl << endl;
-  cout << "Digi macro finished succesfully." << endl;
-  cout << "Output file : " << digiFile       << endl;
-  cout << "Real time " << timer.RealTime()   << " s" << endl;
-  cout << "CPU  time " << timer.CpuTime()    << " s" << endl << endl;
+
+  // -----------------------------------------------------------------
+  // Run
+  fRun -> Run(0,0);
 }

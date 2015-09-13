@@ -1,68 +1,119 @@
-void run_reco()
+/**
+ * Reconstruction macro
+ */
+
+void run_reco
+(
+  TString name     = "urqmd_short",
+  TString dataFile = "",         // blank("") for MC simulation
+  Int_t   nEvents  = 0           // 0 for MC simulation
+)
 {
-  FairLogger *logger = FairLogger::GetLogger();
-  logger -> SetLogFileName("genieLog.log");
-  logger -> SetLogToFile(kTRUE);
-  logger -> SetLogToScreen(kTRUE);
-  //logger -> SetLogVerbosityLevel("MEDIUM");
+  // -----------------------------------------------------------------
+  // FairRun
+  FairRunAna* fRun = new FairRunAna();
 
-  TString workDir = gSystem->Getenv("VMCWORKDIR");
-  TString geoDir  = workDir + "/geometry/";
-  gSystem -> Setenv("GEOMPATH",   geoDir.Data());
 
-  FairRunAna* run = new FairRunAna();
-  run -> SetInputFile("mc.dummy.root");
-  run -> SetOutputFile("output.root");
+  // -----------------------------------------------------------------
+  // Settings
+  Bool_t fUseDecorderTask = kTRUE;
+  if (dataFile.IsNull() == kTRUE)
+    fUseDecorderTask = kFALSE;
 
-  TString file = "../parameters/ST.parameters.par";
 
-  FairRuntimeDb* rtdb = run->GetRuntimeDb();
-  FairParAsciiFileIo* parIo1 = new FairParAsciiFileIo();
-  parIo1 -> open(file.Data(), "in");
-  FairParRootFileIo* parIo2 = new FairParRootFileIo();
-  parIo2 -> open("param.dummy.root");
-  rtdb -> setFirstInput(parIo2);
-  rtdb -> setSecondInput(parIo1);
+  // -----------------------------------------------------------------
+  // Set reconstruction tasks
+  STDecoderTask *fDecorderTask = new STDecoderTask();
+  fDecorderTask -> SetPersistence();
+  fDecorderTask -> AddData(dataFile);
+  fDecorderTask -> SetFPNPedestal(100);
+  fDecorderTask -> SetWindow(512, 0);
+  fDecorderTask -> SetNumTbs(512);
+  if (fUseDecorderTask)
+    fRun -> AddTask(fDecorderTask);
 
-//  STDigiPar *digiPar = (STDigiPar *) rtdb -> getContainer("STDigiPar");
+  STPSATask *fPSATask = new STPSATask();
+  fPSATask -> SetPersistence();
+  fPSATask -> SetThreshold(15);
+  fRun -> AddTask(fPSATask);
 
-  STDecoderTask *decoderTask = new STDecoderTask();
-  //decoderTask -> AddData("Sr90_veto_20140919_820events.graw");
-  decoderTask -> AddData("/Users/ejungwoo/data/run_0334.dat");
-  decoderTask -> SetFPNPedestal();
-  decoderTask -> SetWindow(512, 0);
-  decoderTask -> SetNumTbs(512);
-  decoderTask -> SetPersistence();
-  run -> AddTask(decoderTask);
+  STHitClusteringTask *fClusteringTask = new STHitClusteringTask();
+  fClusteringTask -> SetPersistence();
+  fRun -> AddTask(fClusteringTask);
 
-  STPSATask *psaTask = new STPSATask();
-  psaTask -> SetPersistence();
-  psaTask -> SetThreshold(15);
-  psaTask -> SetPSAMode(1);
-  run -> AddTask(psaTask);
+  STSMTask* fSMTask = new STSMTask();
+  fSMTask -> SetPersistence();
+  fSMTask -> SetMode(STSMTask::kChange);
+  fRun -> AddTask(fSMTask);
 
-  STHitClusteringTask *hcTask = new STHitClusteringTask();
-  hcTask -> SetPersistence();
-  hcTask -> SetClusterizerMode(2);
-  hcTask -> SetVerbose(2);
-  run -> AddTask(hcTask);
+  STRiemannTrackingTask* fRiemannTrackingTask = new STRiemannTrackingTask();
+  fRiemannTrackingTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ, 0);
+  fRiemannTrackingTask -> SetPersistence();
+  fRiemannTrackingTask -> SetMergeTracks(kTRUE);
+  fRun -> AddTask(fRiemannTrackingTask);
 
-  STSMTask* smTask = new STSMTask();
-  smTask -> SetPersistence();
-  smTask -> SetMode(STSMTask::kChange);
-  run -> AddTask(smTask);
 
-  STRiemannTrackingTask* rmTask = new STRiemannTrackingTask();
-  rmTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ,0);
-  rmTask -> SetPersistence();
-  //rmTask -> SetVerbose(kTRUE);
-  rmTask -> SetTrkFinderParameters(40, 10, 3, 1.0); //rmTask -> SetTrkFinderParameters(proxcut, helixcut, minpointsforfit, zStretch);
-  rmTask -> SetTrkMergerParameters(40, 50, 40, 40); //rmTask -> SetTrkMergerParameters(TTproxcut, TTdipcut, TThelixcut, TTplanecut); 
-  //rmTask -> SetMergeTracks(kTRUE);
-  run -> AddTask(rmTask);
+  //////////////////////////////////////////////////////////
+  //                                                      //
+  //   In general, the below parts need not be touched.   //
+  //                                                      //
+  //////////////////////////////////////////////////////////
 
-  run->Init();
 
-  run->Run(0, 10);
-  //run->Run(0, 194);
+  // -----------------------------------------------------------------
+  // Set enveiroment
+  TString workDir = gSystem -> Getenv("VMCWORKDIR");
+  TString dataDir = workDir + "/macros/data/";
+  TString geomDir = workDir + "/geometry/";
+  gSystem -> Setenv("GEOMPATH", geomDir.Data());
+
+
+  // -----------------------------------------------------------------
+  // Set file names
+  TString inputFile   = dataDir + name + ".digi.root"; 
+  TString outputFile  = dataDir + name + ".reco.root"; 
+  TString mcParFile   = dataDir + name + ".params.root";
+  TString loggerFile  = dataDir + "log_" + name + ".reco.txt";
+  TString digiParFile = workDir + "/parameters/ST.parameters.par";
+  TString geoManFile  = workDir + "/geometry/geomSpiRIT.man.root";
+
+
+  // -----------------------------------------------------------------
+  // Logger
+  FairLogger *fLogger = FairLogger::GetLogger();
+  fLogger -> SetLogFileName(loggerFile);
+  fLogger -> SetLogToScreen(kTRUE);
+  fLogger -> SetLogToFile(kTRUE);
+  fLogger -> SetLogVerbosityLevel("LOW");
+
+
+  // -----------------------------------------------------------------
+  // Set FairRun
+  if (fUseDecorderTask == kFALSE)
+    fRun -> SetInputFile(inputFile.Data());
+  fRun -> SetOutputFile(outputFile.Data());
+
+
+  // -----------------------------------------------------------------
+  // Geometry
+  fRun -> SetGeomFile(geoManFile);
+
+
+  // -----------------------------------------------------------------
+  // Set data base
+  FairParAsciiFileIo* fDigiPar = new FairParAsciiFileIo();
+  fDigiPar -> open(digiParFile);
+  
+  FairRuntimeDb* fDb = fRun -> GetRuntimeDb();
+  fDb -> setSecondInput(fDigiPar);
+
+
+  // -----------------------------------------------------------------
+  // Run initialization
+  fRun -> Init();
+
+
+  // -----------------------------------------------------------------
+  // Run
+  fRun -> Run(0, 0);
 }

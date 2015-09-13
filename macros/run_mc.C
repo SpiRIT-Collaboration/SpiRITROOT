@@ -1,118 +1,119 @@
-void run_mc(TString tag = "test")
+/**
+ * Geant4 simulation macro
+ */
+
+void run_mc
+(
+  TString name  = "urqmd_short",
+  TString event = "UrQMD_300AMeV_short.egen",
+  Bool_t  useFieldMapFile = kFALSE
+)
 {
-  TStopwatch timer;
-  timer.Start();
+  //////////////////////////////////////////////////////////
+  //                                                      //
+  //   In general, the below parts need not be touched.   //
+  //                                                      //
+  //////////////////////////////////////////////////////////
 
+
+  // -----------------------------------------------------------------
+  // Set enveiroment
+  TString workDir   = gSystem -> Getenv("VMCWORKDIR");
+  TString dataDir   = workDir + "/macros/data/";
+  TString geomDir   = workDir + "/geometry";
+  TString g4ConfDir = workDir + "/gconfig";
+
+
+  // -----------------------------------------------------------------
+  // Set file names
+  TString outputFile = dataDir + name + ".mc.root"; 
+  TString outParFile = dataDir + name + ".params.root";
+  TString loggerFile = dataDir + "log_" + name + ".mc.txt";
+
+
+  // -----------------------------------------------------------------
+  // MC initialization
   gRandom -> SetSeed(time(0));
-  gDebug = 0;
-
-  // -- Inviroment Setting -------------------------------------------------
-  TString workDir = gSystem->Getenv("VMCWORKDIR");
-  TString geoDir  = workDir + "/geometry";
-  TString confDir = workDir + "/gconfig";
-  TString outFile = "data/spirit_" + tag + ".mc.root"; 
-  TString parFile = "data/spirit_" + tag + ".params.root"; 
-  gSystem -> Setenv("GEOMPATH",   geoDir.Data());
-  gSystem -> Setenv("CONFIG_DIR", confDir.Data());
+  gSystem -> Setenv("GEOMPATH",   geomDir.Data());
+  gSystem -> Setenv("CONFIG_DIR", g4ConfDir.Data());
 
 
-  // -----   Logger  --------------------------------------------------------
-  FairLogger *logger = FairLogger::GetLogger();
-  logger->SetLogFileName("data/LOG_"+tag+".log"); // define log file name
-  logger->SetLogToScreen(kTRUE); // log to screen and to file 
-  logger->SetLogToFile(kTRUE);
-  logger->SetLogVerbosityLevel("HIGH"); //(LOW, MEDIUM, HIGH)
+  // -----------------------------------------------------------------
+  // Set FairRunSim
+  FairRunSim* fRun = new FairRunSim();
+  fRun -> SetName("TGeant4");
+  fRun -> SetOutputFile(outputFile);
+  fRun -> SetWriteRunInfoFile(kFALSE);
+  fRun -> SetMaterials("media.geo");
 
 
-  // -----   Create simulation run   ----------------------------------------
-  FairRunSim* run = new FairRunSim();
+  // -----------------------------------------------------------------
+  // Logger
+  FairLogger *fLogger = FairLogger::GetLogger();
+  fLogger -> SetLogFileName(loggerFile); 
+  fLogger -> SetLogToScreen(kTRUE); 
+  fLogger -> SetLogToFile(kTRUE);
+  fLogger -> SetLogVerbosityLevel("LOW");
 
 
-  // -----   Create geometry   ----------------------------------------------
-  FairModule* cave= new FairCave("CAVE");
-  cave -> SetGeometryFileName("cave_vacuum.geo"); 
-  FairDetector* spirit = new STDetector("STDetector", kTRUE);
-  spirit -> SetGeometryFileName("geomSpiRIT.root");
+  // -----------------------------------------------------------------
+  // Geometry
+  FairModule* fCave= new FairCave("CAVE");
+  fCave -> SetGeometryFileName("cave_vacuum.geo"); 
+  fRun -> AddModule(fCave);
+
+  FairDetector* fSpiRIT = new STDetector("STDetector", kTRUE);
+  fSpiRIT -> SetGeometryFileName("geomSpiRIT.root");
+  fRun -> AddModule(fSpiRIT); 
 
 
-  // -----   Create and set magnetic field   --------------------------------
-  FairConstField *fMagField = new FairConstField();
-  fMagField -> SetField(0., 5., 0.); // in kG
-  //fMagField -> SetFieldRegion(-90.275,90.2752,-95.55/2,95.55/2,-104.82/2,104.82/2);
-  fMagField -> SetFieldRegion(-150,150,-150,150,-150,150);
-
-  /** 
-   * Use field map 
-   * Samurai Field Map implimentation, 
-   * SamuraiMap_0.5T.dat file should be placed in the "input" directory
-   **/
-  //STFieldMap *fMagField = new STFieldMap("SamuraiMap_0.5T","A");
-  //fMagField->SetPosition(-130.55/2,-51.10/2,-159.64/2);
-
-
-  // -----   Create PrimaryGenerator   --------------------------------------
-  STEventGenGenerator* gen = new STEventGenGenerator("UrQMD_300AMeV_short.egen");
-  //STSimpleEventGenerator* gen = new STSimpleEventGenerator("../input/GEN_singleTrack.sgen");
-  gen->SetPrimaryVertex(0,-21.33,-3.52);
-
-  Int_t nEvents = gen->GetNEvents();
-  cout << "Number of events : " << nEvents << endl;
-  FairPrimaryGenerator* primGen = new FairPrimaryGenerator();
-  primGen->AddGenerator(gen);
+  // -----------------------------------------------------------------
+  // Field
+  if (useFieldMapFile) {
+    STFieldMap *fField = new STFieldMap("SamuraiMap_0.5T","A");
+    fField -> SetPosition(-130.55/2,-51.10/2,-159.64/2);
+    fRun -> SetField(fField);
+  }
+  else {
+    FairConstField *fField = new FairConstField();
+    fField -> SetField(0., 5., 0.);
+    fField -> SetFieldRegion(-150, 150, -150, 150, -150, 150);
+    fRun -> SetField(fField);
+  }
 
 
-  // -----   Run initialisation   -------------------------------------------
-  run -> SetName("TGeant4");              // Transport engine
-  run -> SetOutputFile(outFile);          // Output file
-  run -> SetWriteRunInfoFile(kFALSE);  
-  run -> SetMaterials("media.geo");      
-  run -> AddModule(cave);
-  run -> AddModule(spirit);
-  run -> SetField(fMagField);
-  run -> SetGenerator(primGen);  
-  run -> SetStoreTraj(kTRUE);
-  run -> Init();
- 
+  // -----------------------------------------------------------------
+  // Event generator
+  STEventGenGenerator* fEvent = new STEventGenGenerator(event);
+  fEvent -> SetPrimaryVertex(0, -21.33, -3.52);
 
-  /**
-   * Set cuts for storing the trajectories.
-   * Switch this on only if trajectories are stored.
-   * Choose this cuts according to your needs, but be aware
-   * that the file size of the output file depends on these cuts
-   *
-   * Ok so if we see the line four lines above this it says 
-   * Switch this on only if trajectories are stored. 
-   * What that means is that there actually must be a 
-   * FairTrajFilter in order to store them. 
-   * It does not appear to need the SetStorePrimaries 
-   * or SetStoreSecondaries to NEED to be true 
-   * but I'm leaving those lines uncommented so as to make sure.
-   *
-   **/
+  FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();
+  fGenerator -> AddGenerator(fEvent);
+  fRun -> SetGenerator(fGenerator);  
+
+
+  // -----------------------------------------------------------------
+  // Set data base
+  FairParRootFileIo* fMCPar = new FairParRootFileIo(kTRUE);
+  fMCPar -> open(outParFile.Data());
+
+  FairRuntimeDb* fDb = fRun -> GetRuntimeDb();
+  fDb -> setOutput(fMCPar);
+  fDb -> saveOutput();
+  fDb -> print();
+
+
+  // -----------------------------------------------------------------
+  // Run initialization
+  fRun -> SetStoreTraj(kTRUE);
+  fRun -> Init();
+
   FairTrajFilter* trajFilter = FairTrajFilter::Instance();
   trajFilter -> SetStorePrimaries(kTRUE);
   trajFilter -> SetStoreSecondaries(kTRUE);
 
 
-  // -----   Runtime database   ---------------------------------------------
-  Bool_t kParameterMerged = kTRUE;
-  FairParRootFileIo* parOut = new FairParRootFileIo(kParameterMerged);
-                     parOut -> open(parFile.Data());
-
-  FairRuntimeDb* rtdb = run -> GetRuntimeDb();
-                 rtdb -> setOutput(parOut);
-                 rtdb -> saveOutput();
-                 rtdb -> print();
-
-
-  // -----   Start run   ----------------------------------------------------
-  run -> Run(nEvents);
-  delete run;
-
-  timer.Stop();
-  cout << endl << endl;
-  cout << "MC macro finished succesfully." << endl;
-  cout << "Output file : " << outFile      << endl;
-  cout << "Real time " << timer.RealTime()   << " s" << endl;
-  cout << "CPU  time " << timer.CpuTime()    << " s" << endl << endl;
+  // -----------------------------------------------------------------
+  // Run
+  fRun -> Run(fEvent -> GetNEvents());
 }
