@@ -268,7 +268,7 @@ void STFieldMap::WriteAsciiFile(const char* fileName) {
   fLogger->Info(MESSAGE_ORIGIN, "STFieldMap: Writing field map to ASCII file %s ",fileName);
   ofstream mapFile(fileName);
   if ( ! mapFile.is_open() ) {
-    fLogger->Error(MESSAGE_ORIGIN, "STFieldMap:ReadAsciiFile: Could not open file! ");
+    fLogger->Fatal(MESSAGE_ORIGIN, "STFieldMap:ReadAsciiFile: Could not open file! ");
     return;
   }
 
