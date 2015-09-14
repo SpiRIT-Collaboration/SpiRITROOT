@@ -16,6 +16,7 @@
 // Gain calibration file
 TString fGainCalibrationFile = "";
 
+
 // Gain calibration checking file generated simultaneousely with calibration file. It contains chcecking in the filename.
 TString fGainCalibrationCheckingFile = "";
 
@@ -37,7 +38,7 @@ TH2D *fPadplaneHist[3] = {NULL};
 Double_t fParMin[3] = {1.E100, 1.E100, 1.E100};
 Double_t fParMax[3] = {-1.E100, -1.E100, -1.E100};
 
-Bool_t fLog = kFALSE;
+Bool_t fLog = kTRUE;
 
 TFile *fGCCFile = NULL;
 
@@ -65,8 +66,8 @@ void ToggleLog() {
     for (Int_t iCvs = 0; iCvs < 3; iCvs++) {
       fPadplaneCvs[iCvs] -> SetLogz(fLog);
 
-      fPadplaneHist[iCvs] -> SetMinimum(fParMin[iCvs]);
-      fPadplaneHist[iCvs] -> SetMaximum(fParMax[iCvs]);
+      fPadplaneHist[iCvs] -> GetZaxis() -> SetLimits(fParMin[iCvs], fParMax[iCvs]);
+      fPadplaneHist[iCvs] -> GetZaxis() -> SetRangeUser(fParMin[iCvs], fParMax[iCvs]);
 
       fPadplaneCvs[iCvs] -> Modified();
       fPadplaneCvs[iCvs] -> Update();
@@ -126,12 +127,10 @@ void gainCalibrationCheck() {
     if (!fGainCalibrationCheckingFile.EqualTo(""))
       fGCCFile = new TFile(fGainCalibrationCheckingFile);
 
-    Int_t fExponent[3] = {3, 3, 6};
-
     STPlot *fPlot = new STPlot();
 
     for (Int_t iCvs = 0; iCvs < 3; iCvs++) {
-      fPlot -> SetPadplaneTitle(Form("%s in y = A + Bx + Cx^{2} (color axis #times 10^{-%d})", fName[iCvs].Data(), fExponent[iCvs]));
+      fPlot -> SetPadplaneTitle(Form("%s in y = A + Bx + Cx^{2}", fName[iCvs].Data()));
       fPadplaneCvs[iCvs] = fPlot -> GetPadplaneCanvas();
       if (!fGainCalibrationCheckingFile.EqualTo(""))
         fPadplaneCvs[iCvs] -> AddExec("DrawPad", ".x DrawPadHelper.C");
@@ -159,11 +158,10 @@ void gainCalibrationCheck() {
       fGCFile -> GetEntry(iEntry);
       
       for (Int_t iCvs = 0; iCvs < 3; iCvs++) {
-        Double_t weightedPar = par[iCvs]*pow(10., fExponent[iCvs]);
-        fPadplaneHist[iCvs] -> SetBinContent(layer + 1, row + 1, weightedPar);
+        fPadplaneHist[iCvs] -> SetBinContent(layer + 1, row + 1, par[iCvs]);
 
-        if (weightedPar < fParMin[iCvs]) fParMin[iCvs] = weightedPar;
-        if (weightedPar > fParMax[iCvs]) fParMax[iCvs] = weightedPar;
+        if (par[iCvs] < fParMin[iCvs]) fParMin[iCvs] = par[iCvs];
+        if (par[iCvs] > fParMax[iCvs]) fParMax[iCvs] = par[iCvs];
       }
     }
   }
