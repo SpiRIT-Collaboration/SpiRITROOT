@@ -5,10 +5,6 @@
  *   and experiment data. For MC data reconstruction, set variable
  *   'dataFile' to blanck("") - default. 
  *
- * - Number of events (varialbe 'nEvents') should be set in case 
- *   of using experiment data. It will be updated in feature to 
- *   set it automatically - TODO
- *
  * - See headers of each tasks for more information.
  *
  * - How To Run
@@ -18,16 +14,14 @@
  *
  * - Varialbles
  *   @ name : Name of simulation.
- *   @ dataFile : Full path of data file
- *   @ nEvents : Number of events. Set to 0 for full reconstruction 
- *               of MC simulation. Will be removed in feature.
+ *   @ dataFile : Full path of data file. Blanck("") for MC reconstruction.
+ *   
  */
 
 void run_reco
 (
   TString name     = "urqmd_short",
-  TString dataFile = "",
-    Int_t nEvents  = 0
+  TString dataFile = ""
 )
 {
   // -----------------------------------------------------------------
@@ -136,5 +130,8 @@ void run_reco
 
   // -----------------------------------------------------------------
   // Run
-  fRun -> Run(0, 0);
+  if (fUseDecorderTask)
+    fRun -> RunOnTBData();
+  else
+    fRun -> Run(0, 0);
 }

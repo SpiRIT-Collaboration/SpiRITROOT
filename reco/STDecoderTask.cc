@@ -15,6 +15,7 @@
 // FAIRROOT classes
 #include "FairRootManager.h"
 #include "FairRun.h"
+#include "FairRunAna.h"
 #include "FairRuntimeDb.h"
 
 ClassImp(STDecoderTask);
@@ -169,4 +170,8 @@ STDecoderTask::Exec(Option_t *opt)
 
   if (rawEvent != NULL)
     new ((*fRawEventArray)[0]) STRawEvent(rawEvent);
+  else {
+    fLogger -> Info(MESSAGE_ORIGIN, "End of file. Terminating FairRun.");
+    FairRootManager::Instance() -> SetFinishRun();
+  }
 }
