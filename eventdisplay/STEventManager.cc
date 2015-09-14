@@ -84,13 +84,21 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 
   TEveManager::Create(kTRUE, "FIV");
 
-  Int_t  dummy;
+  Int_t dummy;
   UInt_t width, height;
-  UInt_t widthMax = 1400, heightMax = 850;
+  UInt_t widthMax  = 1400;
+  UInt_t heightMax = 850;
   Double_t ratio = (Double_t)widthMax/heightMax;
+
   gVirtualX -> GetWindowSize(gClient -> GetRoot() -> GetId(), dummy, dummy, width, height);
-  if(width>widthMax){ width = widthMax; height = heightMax; } 
-  else height = (Int_t)(width/ratio);
+
+  if (width > widthMax ) { 
+    width  = widthMax; 
+    height = heightMax; 
+  } 
+  else 
+    height = (Int_t)(width/ratio);
+
   gEve -> GetMainWindow() -> Resize(width,height);
 
   /**************************************************************************/
@@ -168,7 +176,7 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
   /**************************************************************************/
 
   gEve -> GetBrowser() -> GetTabRight() -> SetTab(1);
-  gEve -> GetBrowser() -> Resize();
+  //gEve -> GetBrowser() -> Resize();
   gEve -> GetBrowser() -> HideBottomTab();
   gEve -> GetWindowManager() -> HideAllEveDecorations();
 
