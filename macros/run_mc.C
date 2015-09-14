@@ -34,7 +34,7 @@ void run_mc
 (
   TString name  = "urqmd_short",
   TString event = "UrQMD_300AMeV_short.egen",
-   Bool_t useFieldMapFile = kFALSE
+  Bool_t  useFieldMapFile = kFALSE
 )
 {
   //////////////////////////////////////////////////////////
@@ -71,7 +71,7 @@ void run_mc
   FairRunSim* fRun = new FairRunSim();
   fRun -> SetName("TGeant4");
   fRun -> SetOutputFile(outputFile);
-  fRun -> SetWriteRunInfoFile(kFALSE);
+  fRun -> SetGenerateRunInfo(kFALSE);
   fRun -> SetMaterials("media.geo");
 
 
