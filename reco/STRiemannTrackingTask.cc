@@ -71,10 +71,10 @@ STRiemannTrackingTask::STRiemannTrackingTask()
   fMaxRMS = 5;
 
   fMergeTracks = kTRUE;
-  fTTProxCut = 20;
-  fTTDipCut = 5;
-  fTTHelixCut = 5;
-  fTTPlaneCut = 5;
+  fTTProxCut = 30;
+  fTTDipCut = 20;
+  fTTHelixCut = 20;
+  fTTPlaneCut = 20;
 
   fRiemannScale = 25.0;
 
