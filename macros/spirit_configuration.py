@@ -267,7 +267,7 @@ print
 print " - MC Reconstruction Test"
 print "  ",
 print bcolors.YELLOW + "[Q]" + bcolors.ENDC,
-print "Run MC reconstruction test? (~ 3 min.) (y/n):"
+print "Run MC reconstruction test? (~ 3 min.) (y/n):",
 kbInput = raw_input('')
 if(kbInput == 'y' or kbInput == 'Y') : 
 
