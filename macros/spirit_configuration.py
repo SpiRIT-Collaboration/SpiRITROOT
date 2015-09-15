@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
+
 import os
 import sys
 import subprocess as sub
 import urllib2
 import time
-
+import re
 
 
 class bcolors:
@@ -14,43 +15,21 @@ class bcolors:
   RED    = '\033[91m'
   ENDC   = '\033[0m'
 
+
 print 
 print "  ===================================="
 print "        SpiRITROOT Configuration      "
 print "  ===================================="
 print 
-#print "  < Check List >"
-#print """  1. FairSoft environment settings and version
-#  2. FairROOT environment settings and version
-#  3. SpiRITROOT environment setting and version.
-#  4. Geometry.
-#  5. Link of mapping files.
-#  6. Directories."""
-#print 
-#print "  < Test List >"
-#print """  7. Reconstruction of MC.
-#  8. Reconstruction of cosmic data.
-#  9. Speed issue.  
-#  """
-#print
-
-checkList = []
-testList  = []
-
-pop = os.popen('pwd',"r")
-pwd = pop.readline()
-pwd = pwd.replace('\n','')
-
 
 
 # ------------------------------------------------
-# 1. FairSoft environment settings and version
-
-print " - Checking FairSoft...    ",
-checkList.append("SIMPATH" in os.environ)
-if checkList[0] == False: 
+#  FairSoft environment settings and version
+# ------------------------------------------------
+print " - Checking FairSoft       ",
+if ("SIMPATH" in os.environ) == False: 
   print
-  print bcolors.RED + "  [ERROR]" + bcolors.ENDC + """ FairSoft not found!
+  print bcolors.RED + "   [ERROR]" + bcolors.ENDC + """ FairSoft not found!
           Please set environments for FairSoft."
           See https://github.com/SpiRIT-Collaboration/SpiRITROOT/wiki/How-to-install-packages for detail.
   """ 
@@ -63,11 +42,10 @@ print "your FairSoft version is", bcolors.GREEN + FairSoft_version + bcolors.END
 
 
 # ------------------------------------------------
-# 2. FairROOT environment settings and version
-
-print " - Checking FairROOT...    ",
-checkList.append("FAIRROOTPATH" in os.environ)
-if checkList[1] == False: 
+#  FairROOT environment settings and version
+# ------------------------------------------------
+print " - Checking FairROOT       ",
+if ("FAIRROOTPATH" in os.environ) == False: 
   print
   print bcolors.RED + "  [ERROR]" + bcolors.ENDC + """ FairROOT not found!
           Please set environments for FairROOT.
@@ -82,11 +60,10 @@ print "your FairROOT version is", bcolors.GREEN + FairROOT_version + bcolors.END
 
 
 # ------------------------------------------------
-# 3. SpiRITROOT environment setting and version.
-
-print " - Checking SpiRITROOT...  ",
-checkList.append("VMCWORKDIR" in os.environ)
-if checkList[2] == False: 
+#  SpiRITROOT environment setting and version.
+# ------------------------------------------------
+print " - Checking SpiRITROOT     ",
+if ("VMCWORKDIR" in os.environ) == False: 
   print
   print bcolors.RED + "  [ERROR]" + bcolors.ENDC + " SpiRITROOT not found!"
   print """          Please build SpiRITROOT.
@@ -98,10 +75,103 @@ print "your SpiRITROOT version is", bcolors.GREEN + "-" + bcolors.ENDC #SpiRITRO
 
 
 # ------------------------------------------------
-# 4. Geometry
-
-print " - Checking Geometry...    ",
+#  Define functions for reading parameters
+# ------------------------------------------------
 dirWork = os.environ["VMCWORKDIR"]
+
+def GetParameterValue(parameter_file, parameter_name) :
+  path = dirWork + "/parameters/" + parameter_file
+  file = open(path, 'r')
+
+  for line in file :
+    line = line.rstrip()
+    if line[0] == '[' : continue
+    if line[0] == '#' : continue
+
+    token  = line.split('#')
+    token0 = token[0]
+    token1 = re.split('\s+', token0)
+    token2 = token1[0].split(':')
+    name   = token2[0]
+    value  = token1[1]
+
+    if name == parameter_name :
+      file.close()
+      return value
+
+  file.close()
+  return -1
+
+
+def GetFileName(input) :
+  path = dirWork + "/parameters/ST.files.par"
+  file = open(path, 'r')
+
+  count_line = 0
+  for line in file :
+    line = line.rstrip()
+    if count_line == input :
+      count_line = count_line + 1 
+      file.close()
+      return line
+    count_line = count_line + 1 
+
+  file.close()
+  return -1
+
+
+# ------------------------------------------------
+#  Mapping Files
+# ------------------------------------------------
+print
+#print " - Checking Map..."
+exist_file = False
+while exist_file == False :
+  print "  ",
+  print bcolors.YELLOW + "[Q]" + bcolors.ENDC,
+  print "Please enter name of the parameter file without the path. ex) ST.parameters.par"
+  print "      ", "The file should be inside the SpiRITROOT/parameters directory."
+  print "      ", "For ST.parameter.par, just press [Enter] :",
+  kbInput = raw_input('')
+  if(kbInput == '') : 
+    exist_file = True
+    name_parfile = "ST.parameters.par"
+  else :
+    name_parfile      = kbInput
+    name_parfile_full = dirWork + "/parameters/" + kbInput
+    exist_file = os.path.exists(name_parameter_full)
+    if exist_file == False :
+      print "  ",
+      print bcolors.RED + "   [ERROR]" + bcolors.ENDC + " File does not exist! Please enter again:"
+
+  UA_mapfile   = GetFileName(int(GetParameterValue(name_parfile, 'UAMapFile')))
+  AGET_mapfile = GetFileName(int(GetParameterValue(name_parfile, 'AGETMapFile')))
+
+  print
+  print " - Checking Map            ", "AGET.map     ->", bcolors.GREEN + UA_mapfile + bcolors.ENDC
+  print "                           ", "UnitAsAd.map ->", bcolors.GREEN + AGET_mapfile + bcolors.ENDC
+
+
+# Below method reads soft link of the file
+#if(kbInput == 'y' or kbInput == 'Y') : 
+#pop = os.popen('readlink -f $VMCWORKDIR/parameters/AGET.map',"r")
+#AGET_map = pop.readline()
+#AGET_map = AGET_map.replace('\n','')
+#listAGET = AGET_map.split('/')
+#print "AGET.map     ->", bcolors.GREEN + listAGET[len(listAGET)-1] + bcolors.ENDC
+#pop = os.popen('readlink -f $VMCWORKDIR/parameters/UnitAsAd.map',"r")
+#UnitAsAd_map = pop.readline()
+#UnitAsAd_map = UnitAsAd_map.replace('\n','')
+#listUnitAsAd = UnitAsAd_map.split('/')
+#print "                           ", 
+#print "UnitAsAd.map ->", bcolors.GREEN + listUnitAsAd[len(listUnitAsAd)-1] + bcolors.ENDC
+
+
+
+# ------------------------------------------------
+#  Geometry
+# ------------------------------------------------
+print " - Checking Geometry       ",
 dirGeom = dirWork + "/geometry/"
 pathGeomTop = dirGeom + "geomSpiRIT.root"
 pathGeomMgr = dirGeom + "geomSpiRIT.man.root"
@@ -109,10 +179,10 @@ pathGeomMcr = dirGeom + "geomSpiRIT.C"
 listTop = pathGeomTop.split('/')
 listMgr = pathGeomMgr.split('/')
 if (os.path.exists(pathGeomTop) == False) or (os.path.exists(pathGeomMgr) == False) :
-  checkList.append(False)
+  geomFlag = False
 else :
-  checkList.append(True)
-if checkList[3] == False: 
+  geomFlag = True
+if geomFlag == False: 
   print
   print bcolors.YELLOW + "   [INFO]" + bcolors.ENDC + " Geometry not found!"
   print "            Creating geometry file... running macro" , pathGeomMcr
@@ -124,32 +194,11 @@ else:
   print "Manager :", bcolors.GREEN + listMgr[len(listMgr)-1] + bcolors.ENDC
 
 
-  
 # ------------------------------------------------
-# 5. Mapping Files
-
-print " - Checking Map...         ",
-checkList.append(True)
-pop = os.popen('readlink -f $VMCWORKDIR/parameters/AGET.map',"r")
-AGET_map = pop.readline()
-AGET_map = AGET_map.replace('\n','')
-listAGET = AGET_map.split('/')
-print "AGET.map     ->", bcolors.GREEN + listAGET[len(listAGET)-1] + bcolors.ENDC
-pop = os.popen('readlink -f $VMCWORKDIR/parameters/UnitAsAd.map',"r")
-UnitAsAd_map = pop.readline()
-UnitAsAd_map = UnitAsAd_map.replace('\n','')
-listUnitAsAd = UnitAsAd_map.split('/')
-print "                           ", 
-print "UnitAsAd.map ->", bcolors.GREEN + listUnitAsAd[len(listUnitAsAd)-1] + bcolors.ENDC
-
-
-
+#  Directories
 # ------------------------------------------------
-# 6. Directories
-
-print " - Checking Directories... ",
-checkList.append(os.path.exists("data"))
-if checkList[5] == False : 
+print " - Checking Directories    ",
+if os.path.exists("data") == False : 
   print
   print bcolors.YELLOW + "   [INFO]" + bcolors.ENDC + " data directory not found!",
   print "Creating data directory..."
@@ -162,12 +211,12 @@ print
 
 
 # ------------------------------------------------
-# 7. Cosmic
-
+#  Cosmic reconstruction test
+# ------------------------------------------------
 print " - Cosmics Reconstruction Test"
 print "  ",
 print bcolors.YELLOW + "[Q]" + bcolors.ENDC,
-print "Run cosmics reconstruction test? (y/n):",
+print "Run cosmics reconstruction test? (~ 30 sec.) (y/n):",
 kbInput = raw_input('')
 if(kbInput == 'y' or kbInput == 'Y') : 
   nameCosmicShort = 'run_0457_event4n10.dat'
@@ -183,6 +232,7 @@ if(kbInput == 'y' or kbInput == 'Y') :
     if (file_size == 0) :
       print bcolors.YELLOW + "   [INFO] " + bcolors.ENDC + nameCosmicShort + " is empty!"
       existCosmicShort = False
+    file.close()
 
   if (existCosmicShort == False) :
     url = urllib2.urlopen(urlCosmicShort)
@@ -191,6 +241,7 @@ if(kbInput == 'y' or kbInput == 'Y') :
     file_size = int(meta.getheaders("Content-Length")[0])
     print "          " + "Downloading " + nameCosmicShort + " (" + str(file_size) + " Bytes) from " + urlCosmicShort
     file.write(url.read())
+    file.close()
     print "          Complete."
   sim_name = '"cosmic_short"'
   event_name = '"%s"' % pathCosmicShort
@@ -211,12 +262,12 @@ print
 
 
 # ------------------------------------------------
-# 8. MC
-
+#  MC simulation test
+# ------------------------------------------------
 print " - MC Reconstruction Test"
 print "  ",
 print bcolors.YELLOW + "[Q]" + bcolors.ENDC,
-print "Run MC reconstruction test? (y/n):",
+print "Run MC reconstruction test? (~ 3 min.) (y/n):"
 kbInput = raw_input('')
 if(kbInput == 'y' or kbInput == 'Y') : 
 
@@ -249,6 +300,8 @@ if(kbInput == 'y' or kbInput == 'Y') :
   print "   - Geant4 simulation time : %.2f seconds  (%.2f seconds per event)" % (time_diff_mc,   time_diff_digi / 10.)
   print "   - Digitization      time : %.2f seconds  (%.2f seconds per event)" % (time_diff_digi, time_diff_digi / 10.)
   print "   - Reconstruction    time : %.2f seconds  (%.2f seconds per event)" % (time_diff_reco, time_diff_digi / 10.)
+
+
 
 print
 print "  Ending configuration."
