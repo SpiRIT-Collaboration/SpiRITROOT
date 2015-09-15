@@ -42,14 +42,14 @@ void run_reco
   fDecorderTask -> SetPersistence();
   fDecorderTask -> AddData(dataFile);
   fDecorderTask -> SetFPNPedestal(100);
-  fDecorderTask -> SetWindow(512, 0);
+  fDecorderTask -> SetWindow(256, 300);
   fDecorderTask -> SetNumTbs(512);
   if (fUseDecorderTask)
     fRun -> AddTask(fDecorderTask);
 
   STPSATask *fPSATask = new STPSATask();
   fPSATask -> SetPersistence();
-  fPSATask -> SetThreshold(15);
+  fPSATask -> SetThreshold(25);
   fRun -> AddTask(fPSATask);
 
   STHitClusteringTask *fClusteringTask = new STHitClusteringTask();
@@ -64,7 +64,6 @@ void run_reco
   STRiemannTrackingTask* fRiemannTrackingTask = new STRiemannTrackingTask();
   fRiemannTrackingTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ, 0);
   fRiemannTrackingTask -> SetPersistence();
-  fRiemannTrackingTask -> SetMergeTracks(kTRUE);
   fRun -> AddTask(fRiemannTrackingTask);
 
 
@@ -134,4 +133,11 @@ void run_reco
     fRun -> RunOnTBData();
   else
     fRun -> Run(0, 0);
+
+
+  // -----------------------------------------------------------------
+  // Summary
+  cout << endl << endl;
+  cout << "Macro finished succesfully."  << endl << endl;
+  cout << "- Output file : " << outputFile << endl << endl;
 }

@@ -92,4 +92,11 @@ void run_digi(TString name = "urqmd_short")
   // -----------------------------------------------------------------
   // Run
   fRun -> Run(0,0);
+
+
+  // -----------------------------------------------------------------
+  // Summary
+  cout << endl << endl;
+  cout << "Macro finished succesfully."  << endl << endl;
+  cout << "- Output file : " << outputFile << endl << endl;
 }

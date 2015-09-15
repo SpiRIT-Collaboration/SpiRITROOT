@@ -144,4 +144,11 @@ void run_mc
   // -----------------------------------------------------------------
   // Run
   fRun -> Run(fEvent -> GetNEvents());
+
+
+  // -----------------------------------------------------------------
+  // Summary
+  cout << endl << endl;
+  cout << "Macro finished succesfully."  << endl << endl;
+  cout << "- Output file : " << outputFile << endl << endl;
 }
