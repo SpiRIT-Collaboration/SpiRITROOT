@@ -68,11 +68,20 @@ void ToggleLog() {
 
       fPadplaneHist[iCvs] -> GetZaxis() -> SetLimits(fParMin[iCvs], fParMax[iCvs]);
       fPadplaneHist[iCvs] -> GetZaxis() -> SetRangeUser(fParMin[iCvs], fParMax[iCvs]);
+      fPadplaneHist[iCvs] -> SetContour(50);
+      ((TPaletteAxis *) fPadplaneHist[iCvs] -> FindObject("palette")) -> GetAxis() -> SetMaxDigits(2);
 
       fPadplaneCvs[iCvs] -> Modified();
       fPadplaneCvs[iCvs] -> Update();
     }
   }
+}
+
+void SaveAll() {
+  fParCanvas -> SaveAs("parameters.png");
+  fPadplaneCvs[0] -> SaveAs("parameterA.png");
+  fPadplaneCvs[1] -> SaveAs("parameterB.png");
+  fPadplaneCvs[2] -> SaveAs("parameterC.png");
 }
 
 void gainCalibrationCheck() {
@@ -172,6 +181,8 @@ void gainCalibrationCheck() {
   cout << "///////////////////////////////////////////////////////////////////" << endl;
   cout << "//                                                               //" << endl;
   cout << "//  == Type \033[1;31mToggleLog()\033[0m to turn on and off logarithmic scaling.  //" << endl;
+  cout << "//                                                               //" << endl;
+  cout << "//  == Type \033[1;31mSaveAll()\033[0m to save all canvases except for a pad.     //" << endl;
   cout << "//                                                               //" << endl;
   cout << "///////////////////////////////////////////////////////////////////" << endl;
   cout << endl;
