@@ -13,7 +13,7 @@
 ////////////////////////////
 
 // Pedestal checking file
-TString fPedestalCheckingFile = "PedestalData.root";
+TString fPedestalCheckingFile = "";
 
 // If kFALSE is set, 2D maps are not generated.
 Bool_t fIsTurnOnPadplane = kTRUE;
@@ -68,6 +68,14 @@ void ToggleLog() {
       fPadplaneCvs[iCvs] -> Update();
     }
   }
+}
+
+void SaveAll() {
+  fSummaryCanvas -> SaveAs("summary.png");
+  fPadplaneCvs[0] -> SaveAs("ADCmean_bs.png");
+  fPadplaneCvs[1] -> SaveAs("ADCRMS_bs.png");
+  fPadplaneCvs[2] -> SaveAs("ADCmean_as.png");
+  fPadplaneCvs[3] -> SaveAs("ADCRMS_as.png");
 }
 
 void pedestalCheck() {
@@ -168,6 +176,8 @@ void pedestalCheck() {
   cout << "///////////////////////////////////////////////////////////////////" << endl;
   cout << "//                                                               //" << endl;
   cout << "//  == Type \033[1;31mToggleLog()\033[0m to turn on and off logarithmic scaling.  //" << endl;
+  cout << "//                                                               //" << endl;
+  cout << "//  == Type \033[1;31mSaveAll()\033[0m to save all canvases except for a pad.     //" << endl;
   cout << "//                                                               //" << endl;
   cout << "///////////////////////////////////////////////////////////////////" << endl;
   cout << endl;
