@@ -245,7 +245,7 @@ if(kbInput == 'y' or kbInput == 'Y') :
     print "          Complete."
   sim_name = '"cosmic_short"'
   event_name = '"%s"' % pathCosmicShort
-  command_reco = "root -l -q -b 'run_reco.C(" + sim_name + "," + event_name + ")'"
+  command_reco = "source " + dirWork + "/build/config.sh > /dev/null; root -l -q -b 'run_reco.C(" + sim_name + "," + event_name + ")'"
 
   time_start = time.time()
   os.system(command_reco)
@@ -275,9 +275,9 @@ if(kbInput == 'y' or kbInput == 'Y') :
   gen_name = '"UrQMD_300AMeV_short.egen"'
   use_map  = 'kFALSE'
 
-  command_mc   = "root -l -q -b 'run_mc.C("   + sim_name + ',' + gen_name + ',' + use_map + ")'"
-  command_digi = "root -l -q -b 'run_digi.C(" + sim_name + ")'"
-  command_reco = "root -l -q -b 'run_reco.C(" + sim_name + ")'"
+  command_mc   = "source " + dirWork + "/build/config.sh > /dev/null; root -l -q -b 'run_mc.C("   + sim_name + ',' + gen_name + ',' + use_map + ")'"
+  command_digi = "source " + dirWork + "/build/config.sh > /dev/null; root -l -q -b 'run_digi.C(" + sim_name + ")'"
+  command_reco = "source " + dirWork + "/build/config.sh > /dev/null; root -l -q -b 'run_reco.C(" + sim_name + ")'"
 
   time_start = time.time()
   os.system(command_mc)
