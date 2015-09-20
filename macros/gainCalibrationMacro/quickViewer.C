@@ -24,7 +24,7 @@ Double_t fReferenceLinear = 1.69946E-3;
 Double_t fReferenceQuadratic = -3.05356E-8;
 
 // FPN pedestal range selection threshold
-Int_t fFPNThreshold = 5;
+Int_t fFPNThreshold = 100;
 
 //////////////////////////////////////////////////////////
 //                                                      //
@@ -32,10 +32,12 @@ Int_t fFPNThreshold = 5;
 //                                                      //
 //////////////////////////////////////////////////////////
 
+STCore *fCore = NULL;
 STPlot *fPlot = NULL;
 
 void next(Int_t eventID = -1) {
   fPlot -> DrawPadplane(eventID);
+  fPlot -> DrawSideview(fCore -> GetEventID());
 }
 
 void quickViewer() {
@@ -44,7 +46,7 @@ void quickViewer() {
 
   STParReader *fPar = new STParReader(parameterDir + fParameterFile);
 
-  STCore *fCore = new STCore(fDataFile);
+  fCore = new STCore(fDataFile);
   if (!fGainCalibrationData.EqualTo("")) {
     fCore -> SetGainCalibrationData(fGainCalibrationData);
     fCore -> SetGainReference(fReferenceConstant, fReferenceLinear, fReferenceQuadratic);
@@ -55,11 +57,15 @@ void quickViewer() {
   fCore -> SetData(0);
 
   fPlot = fCore -> GetSTPlot();
-  if (!fGainCalibrationData.EqualTo(""))
+  if (!fGainCalibrationData.EqualTo("")) {
     fPlot -> SetPadplaneTitle("Event ID: %d (Gain calibrated)");
-  else
+    fPlot -> SetSideviewTitle("Event ID: %d (Gain calibrated)");
+  } else {
     fPlot -> SetPadplaneTitle("Event ID: %d (Gain not calibrated)");
+    fPlot -> SetSideviewTitle("Event ID: %d (Gain not calibrated)");
+  }
   fPlot -> DrawPadplane();
+  fPlot -> DrawSideview(fCore -> GetEventID());
 
   cout << endl;
   cout << "////////////////////////////////////////////////////////////////////////" << endl;
