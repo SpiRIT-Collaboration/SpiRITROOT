@@ -59,8 +59,9 @@ class STCore : public TObject {
     void SetOldData(Bool_t oldData = kTRUE);
 
     // getters
-    STRawEvent *GetRawEvent(Int_t eventID = -1);
-    Int_t GetNumTbs();
+    STRawEvent *GetRawEvent(Int_t eventID = -1);          ///< Returns STRawEvent object filled with the data
+    Int_t GetEventID();                                   ///< Returns the current event ID
+    Int_t GetNumTbs();                                    ///< Returns the number of time buckets of the data
 
     STMap *GetSTMap();
     STPlot *GetSTPlot();
@@ -96,8 +97,8 @@ class STCore : public TObject {
     STRawEvent *fRawEventPtr;
     TClonesArray *fPadArray;
 
-    UInt_t fPrevEventNo;
-    UInt_t fCurrEventNo;
+    Long64_t fPrevEventNo;
+    Long64_t fCurrEventNo;
 
     Int_t fCurrFrameNo;
 

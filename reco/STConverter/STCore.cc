@@ -371,6 +371,14 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
   return NULL;
 }
 
+Int_t STCore::GetEventID()
+{
+  if (fRawEventPtr == NULL)
+    return -2;
+
+  return fRawEventPtr -> GetEventID();
+}
+
 Int_t STCore::GetNumTbs()
 {
   return fDecoderPtr -> GetNumTbs();
