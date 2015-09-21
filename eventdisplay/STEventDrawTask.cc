@@ -46,7 +46,7 @@ STEventDrawTask::STEventDrawTask()
   fMinX = 432;
   fMaxX = -432;
 
-  for (Int_t i=0; i<10; i++)
+  for (Int_t i=0; i<6; i++)
   {
     fPointSet[i] = NULL;
     fThresholdMin[i] = 0;
@@ -66,7 +66,7 @@ STEventDrawTask::STEventDrawTask()
 
   fPointStyle[kHit] = kFullCircle;
   fPointSize[kHit]  = 0.5;
-  fPointColor[kHit] = kRed-7;
+  fPointColor[kHit] = kRed;
   fRnrSelf[kHit]    = kFALSE;
   fSetObject[kHit]  = kTRUE;
 
@@ -76,8 +76,9 @@ STEventDrawTask::STEventDrawTask()
   fRnrSelf[kCluster]    = kFALSE;
   fRnrSelf[kClusterBox] = kFALSE;
 
+
   fPointStyle[kRiemann] = kFullCircle;
-  fPointSize[kRiemann]  = 1.3;
+  fPointSize[kRiemann]  = 1.0;
   fPointColor[kRiemann] = 0;
   fRnrSelf[kRiemann]    = kTRUE;
   fSetObject[kRiemann]  = kTRUE;
@@ -165,7 +166,7 @@ STEventDrawTask::DrawMCPoints()
 
   Int_t nPoints = fMCHitArray -> GetEntries();
 
-  fPointSet[kMC] = new TEvePointSet("MC", nPoints, TEvePointSelectorConsumer::kTVT_XYZ);
+  fPointSet[kMC] = new TEvePointSet("MC", nPoints);
   fPointSet[kMC] -> SetOwnIds(kTRUE);
   fPointSet[kMC] -> SetMarkerColor(fPointColor[kMC]);
   fPointSet[kMC] -> SetMarkerSize(fPointSize[kMC]);
@@ -176,7 +177,6 @@ STEventDrawTask::DrawMCPoints()
     STMCPoint *point = (STMCPoint*) fMCHitArray -> At(iPoint);
               
     fPointSet[kMC] -> SetNextPoint(point -> GetX(), point -> GetY(), point -> GetZ());
-    fPointSet[kMC] -> SetPointId(new TNamed(Form("MC %d",iPoint),""));
   }
 
   fPointSet[kMC] -> SetRnrSelf(fRnrSelf[kMC]);
@@ -190,7 +190,7 @@ STEventDrawTask::DrawDriftedElectrons()
 
   Int_t nPoints = fDriftedElectronArray -> GetEntries();
 
-  fPointSet[kDigi] = new TEvePointSet("DriftedElectron", nPoints, TEvePointSelectorConsumer::kTVT_XYZ);
+  fPointSet[kDigi] = new TEvePointSet("DriftedElectron", nPoints);
   fPointSet[kDigi] -> SetOwnIds(kTRUE);
   fPointSet[kDigi] -> SetMarkerColor(fPointColor[kDigi]);
   fPointSet[kDigi] -> SetMarkerSize(fPointSize[kDigi]);
@@ -205,8 +205,8 @@ STEventDrawTask::DrawDriftedElectrons()
     Double_t z = electron -> GetZ() + electron -> GetDiffusedZ();
 
     fPointSet[kDigi] -> SetNextPoint(x/10.,y/10.,z/10.);
-    fPointSet[kDigi] -> SetPointId(new TNamed(Form("DrftEl %d",iPoint),""));
   }
+
   fPointSet[kDigi] -> SetRnrSelf(fRnrSelf[kDigi]);
   gEve -> AddElement(fPointSet[kDigi]);
 }
@@ -214,12 +214,16 @@ STEventDrawTask::DrawDriftedElectrons()
 void 
 STEventDrawTask::DrawHitPoints()
 {
-  fLogger -> Debug(MESSAGE_ORIGIN,"DrawPoints()");
+  fLogger -> Debug(MESSAGE_ORIGIN,"DrawHitPoints()");
 
   STEvent* event = (STEvent*) fHitArray -> At(0);
+
+  if (event == NULL) 
+    return;
+
   Int_t nHits = event -> GetNumHits();
 
-  fPointSet[kHit] = new TEvePointSet("Hit",nHits, TEvePointSelectorConsumer::kTVT_XYZ);
+  fPointSet[kHit] = new TEvePointSet("Hit", nHits);
   fPointSet[kHit] -> SetOwnIds(kTRUE);
   fPointSet[kHit] -> SetMarkerColor(fPointColor[kHit]);
   fPointSet[kHit] -> SetMarkerSize(fPointSize[kHit]);
@@ -234,7 +238,6 @@ STEventDrawTask::DrawHitPoints()
 
     TVector3 position = hit.GetPosition();
     fPointSet[kHit] -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
-    fPointSet[kHit] -> SetPointId(new TNamed(Form("Hit %d",iHit),""));
 
     fPadPlane -> Fill(-position.X(), position.Z(), hit.GetCharge());
   }
@@ -247,7 +250,12 @@ void
 STEventDrawTask::DrawHitClusterPoints()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"DrawHitClusterPoints()");
+
   STEvent* event = (STEvent*) fHitClusterArray -> At(0);
+
+  if (event == NULL) 
+    return;
+
   Int_t nClusters = event -> GetNumClusters();
 
   if (fSetObject[kClusterBox]) {
@@ -259,7 +267,7 @@ STEventDrawTask::DrawHitClusterPoints()
   }
 
   if (fSetObject[kCluster]) {
-    fPointSet[kCluster] = new TEvePointSet("HitCluster", nClusters, TEvePointSelectorConsumer::kTVT_XYZ);
+    fPointSet[kCluster] = new TEvePointSet("HitCluster", nClusters);
     fPointSet[kCluster] -> SetOwnIds(kTRUE);
     fPointSet[kCluster] -> SetMarkerColor(fPointColor[kCluster]);
     fPointSet[kCluster] -> SetMarkerSize(fPointSize[kCluster]);
@@ -278,7 +286,6 @@ STEventDrawTask::DrawHitClusterPoints()
     TVector3 sigma = cluster.GetPosSigma();
     if (fSetObject[kCluster]) {
       fPointSet[kCluster] -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
-      fPointSet[kCluster] -> SetPointId(new TNamed(Form("HitCluster %d",iCluster),""));
     }
 
     Double_t xS =  sigma.X()/10.;
@@ -317,13 +324,17 @@ STEventDrawTask::DrawRiemannHits()
 
   STEvent* event = (STEvent*) fHitClusterArray -> At(0);
 
+  if (event == NULL) 
+    return;
+
   Int_t nTracks = fRiemannTrackArray -> GetEntries();
+
   for (Int_t iTrack=0; iTrack<nTracks; iTrack++) 
   {
     track = (STRiemannTrack*) fRiemannTrackArray -> At(iTrack);
-
     Int_t nClusters = track -> GetNumHits();
-    riemannPointSet = new TEvePointSet(Form("RiemannTrack_%d", iTrack), nClusters, TEvePointSelectorConsumer::kTVT_XYZ);
+
+    riemannPointSet = new TEvePointSet(Form("RiemannTrack_%d", iTrack), 1, TEvePointSelectorConsumer::kTVT_XYZ);
     riemannPointSet -> SetMarkerColor(GetRiemannColor(iTrack));
     riemannPointSet -> SetMarkerSize(fPointSize[kRiemann]);
     riemannPointSet -> SetMarkerStyle(fPointStyle[kRiemann]);
@@ -340,7 +351,6 @@ STEventDrawTask::DrawRiemannHits()
 
       TVector3 position = oCluster.GetPosition();
       riemannPointSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
-      riemannPointSet -> SetPointId(new TNamed(Form("RiemanCluster %d",iCluster),""));
     }
 
     riemannPointSet -> SetRnrSelf(fRnrSelf[kRiemann]);
@@ -425,34 +435,34 @@ STEventDrawTask::Reset()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"Reset PointSets");
 
-  for(Int_t i=0; i<10; i++)
+  for(Int_t i=0; i<6; i++) 
   {
-    if(fPointSet[i]) 
-    {
+    fLogger -> Debug(MESSAGE_ORIGIN,Form("Reset Object %d", i));
+    if(fPointSet[i]) {
       fPointSet[i] -> Reset();
       gEve -> RemoveElement(fPointSet[i], fEventManager);
+      fPointSet[i] = NULL;
     }
   }
+
+
+  fLogger -> Debug(MESSAGE_ORIGIN, "Reset BoxClusters");
 
   if (fBoxClusterSet) {
     fBoxClusterSet -> Reset();
     gEve -> RemoveElement(fBoxClusterSet, fEventManager);
   }
 
-  fLogger -> Debug(MESSAGE_ORIGIN,"Reset RiemannTracks");
 
-  TEvePointSet* pointSet;
+  fLogger -> Debug(MESSAGE_ORIGIN, "Reset RiemannTracks");
+
   Int_t nRiemannTracks = fRiemannSetArray.size();
-
-  if (nRiemannTracks != 0) 
+  for (Int_t i=0; i<nRiemannTracks; i++) 
   {
-    for (Int_t i=0; i<nRiemannTracks; i++)
-    {
-      pointSet = fRiemannSetArray[i];
-      gEve -> RemoveElement(pointSet, fEventManager);
-    }
-    fRiemannSetArray.clear();
+    TEvePointSet* pointSet = fRiemannSetArray[i];
+    gEve -> RemoveElement(pointSet, fEventManager);
   }
+  fRiemannSetArray.clear();
 
   if (fPadPlane != NULL)
     fPadPlane -> Reset("");

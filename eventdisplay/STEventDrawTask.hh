@@ -44,8 +44,6 @@
 #include <vector>
 #include <iostream>
 
-using namespace std;
-
 
 class STEventDrawTask : public FairTask
 {
@@ -67,8 +65,8 @@ class STEventDrawTask : public FairTask
       kDigi    = 1,
       kHit     = 2,
       kCluster = 3,
-      kRiemann = 4,
-      kClusterBox = 9
+      kClusterBox = 4,
+      kRiemann = 5
     };
 
     void Set2DPlotRange(Int_t uaIdx);
@@ -139,14 +137,14 @@ class STEventDrawTask : public FairTask
     Int_t fMinX;
     Int_t fMaxX;
 
-    TEvePointSet* fPointSet[10];
-    Bool_t   fSetObject[10];
-    Bool_t   fRnrSelf[10];
-    Color_t  fPointColor[10];
-    Size_t   fPointSize[10];
-    Style_t  fPointStyle[10];
-    Double_t fThresholdMin[10];
-    Double_t fThresholdMax[10];
+    TEvePointSet* fPointSet[6];
+    Bool_t   fSetObject[6];
+    Bool_t   fRnrSelf[6];
+    Color_t  fPointColor[6];
+    Size_t   fPointSize[6];
+    Style_t  fPointStyle[6];
+    Double_t fThresholdMin[6];
+    Double_t fThresholdMax[6];
 
     TEveBoxSet* fBoxClusterSet;
     vector<TEvePointSet*> fRiemannSetArray;
