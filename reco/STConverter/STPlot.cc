@@ -19,6 +19,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TLatex.h"
+#include "TGaxis.h"
 
 #include <iostream>
 
@@ -53,11 +54,11 @@ void STPlot::Clear()
 
   fPadplaneCvs = NULL;
   fPadplaneHist = NULL;
-  fPadplaneTitle = "Event display - Event ID: %d";
+  fPadplaneTitle = "Event display - Event ID: %d - Top view";
 
   fSideviewCvs = NULL;
   fSideviewHist = NULL;
-  fSideviewTitle = "Event display - Event ID: %d";
+  fSideviewTitle = "Event display - Event ID: %d - Beamright view";
 
   fPadCvs = NULL;
   fPadGraph[0] = NULL;
@@ -370,7 +371,7 @@ void STPlot::DrawLayer(Int_t layerNo)
       fLayerHist -> SetBinContent(108 - aPad -> GetRow(), fNumTbs - iTb, aPad -> GetADC(iTb));
   }
 
-  fLayerHist -> SetTitle(Form("Event ID: %d - Layer: %d", fEvent -> GetEventID(), layerNo));
+  fLayerHist -> SetTitle(Form("Event ID: %d - Layer: %d - Upstream view", fEvent -> GetEventID(), layerNo));
   fLayerHist -> GetYaxis() -> SetRangeUser(0, -fNumTbs);
 
   fLayerCvs -> Modified();
@@ -558,7 +559,7 @@ void STPlot::PrepareLayerHist()
   fLayerCvs -> Draw();
 
   fLayerCvs -> cd();
-  fLayerHist = new TH2D("fLayerHist", "; x (mm); y (-tb)", 108, -432, 432, 512, -512, 0);
+  fLayerHist = new TH2D("fLayerHist", "; x (-mm); y (-tb)", 108, -432, 432, 512, -512, 0);
   fLayerHist -> SetStats(0);
   fLayerHist -> SetName(Form("fLayerHist_%lx", (Long_t)fLayerHist));
   fLayerHist -> GetXaxis() -> SetTitleOffset(1.0);
@@ -567,6 +568,7 @@ void STPlot::PrepareLayerHist()
   fLayerHist -> GetYaxis() -> SetTitleOffset(0.85);
   fLayerHist -> GetYaxis() -> SetTickLength(0.01);
   fLayerHist -> GetYaxis() -> CenterTitle();
+
   fLayerHist -> Draw("colz");
 
   Double_t padLX = 8; // mm
