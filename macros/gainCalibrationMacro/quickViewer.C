@@ -58,11 +58,11 @@ void quickViewer() {
 
   fPlot = fCore -> GetSTPlot();
   if (!fGainCalibrationData.EqualTo("")) {
-    fPlot -> SetPadplaneTitle("Event ID: %d (Gain calibrated)");
-    fPlot -> SetSideviewTitle("Event ID: %d (Gain calibrated)");
+    fPlot -> SetPadplaneTitle("Event ID: %d (Gain calibrated) - Top view");
+    fPlot -> SetSideviewTitle("Event ID: %d (Gain calibrated) - Beamright view");
   } else {
-    fPlot -> SetPadplaneTitle("Event ID: %d (Gain not calibrated)");
-    fPlot -> SetSideviewTitle("Event ID: %d (Gain not calibrated)");
+    fPlot -> SetPadplaneTitle("Event ID: %d (Gain not calibrated) - Top view");
+    fPlot -> SetSideviewTitle("Event ID: %d (Gain not calibrated) - Beamright view");
   }
   fPlot -> DrawPadplane();
   fPlot -> DrawSideview(fCore -> GetEventID());
