@@ -297,9 +297,9 @@ if(kbInput == 'y' or kbInput == 'Y') :
   print 
   print "   " + bcolors.GREEN + "[Summary]" + bcolors.ENDC + " MC reconstruction test"
   print "   - Number of events : 10"
-  print "   - Geant4 simulation time : %.2f seconds  (%.2f seconds per event)" % (time_diff_mc,   time_diff_digi / 10.)
+  print "   - Geant4 simulation time : %.2f seconds  (%.2f seconds per event)" % (time_diff_mc,   time_diff_mc   / 10.)
   print "   - Digitization      time : %.2f seconds  (%.2f seconds per event)" % (time_diff_digi, time_diff_digi / 10.)
-  print "   - Reconstruction    time : %.2f seconds  (%.2f seconds per event)" % (time_diff_reco, time_diff_digi / 10.)
+  print "   - Reconstruction    time : %.2f seconds  (%.2f seconds per event)" % (time_diff_reco, time_diff_reco / 10.)
 
 
 
