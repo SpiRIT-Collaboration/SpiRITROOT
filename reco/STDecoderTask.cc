@@ -51,6 +51,7 @@ STDecoderTask::STDecoderTask()
 
   fPar = NULL;
   fRawEventArray = new TClonesArray("STRawEvent");
+  fRawEvent = NULL;
 
   fOldData = kFALSE;
 
@@ -165,14 +166,21 @@ STDecoderTask::Exec(Option_t *opt)
 {
   fRawEventArray -> Delete();
 
-  STRawEvent *rawEvent = fDecoder -> GetRawEvent();
-  //STRawEvent *rawEvent = fDecoder -> GetRawEvent(FairRootManager::Instance() -> GetEntryNr());
+  if (fRawEvent == NULL)
+    fRawEvent = fDecoder -> GetRawEvent();
 
-  //fEventID++;
+  new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
 
-  if (rawEvent != NULL)
-    new ((*fRawEventArray)[0]) STRawEvent(rawEvent);
-  else {
+  fRawEvent == NULL;
+}
+
+void
+STDecoderTask::FinishEvent()
+{
+  fRawEvent = fDecoder -> GetRawEvent();
+
+  if (fRawEvent == NULL)
+  {
     fLogger -> Info(MESSAGE_ORIGIN, "End of file. Terminating FairRun.");
     FairRootManager::Instance() -> SetFinishRun();
   }

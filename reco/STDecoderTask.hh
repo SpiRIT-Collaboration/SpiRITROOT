@@ -77,6 +77,8 @@ class STDecoderTask : public FairTask {
     virtual void SetParContainers();
     /// Running the task. This will be called when Run() method invoked from FairRun.
     virtual void Exec(Option_t *opt);
+    /// Finishing the event.
+    virtual void FinishEvent();
 
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
@@ -109,6 +111,7 @@ class STDecoderTask : public FairTask {
 
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fRawEventArray;       ///< STRawEvent container
+    STRawEvent *fRawEvent;              ///< Current raw event for run
 
     Bool_t fOldData;              ///< Set to decode old data
 
