@@ -120,6 +120,7 @@ filePar.write(
 # STDigiPar
 # Description of parameters
 ################################################################################ 
+[STDigiPar]
 """
 )
 

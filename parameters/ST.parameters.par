@@ -5,6 +5,7 @@
 # STDigiPar
 # Description of parameters
 ################################################################################ 
+[STDigiPar]
 PadPlaneX:Double_t              864.0             # mm
 PadPlaneZ:Double_t              1344.0            # mm
 PadSizeX:Double_t               8.0               # mm
