@@ -139,17 +139,17 @@ while exist_file == False :
   else :
     name_parfile      = kbInput
     name_parfile_full = dirWork + "/parameters/" + kbInput
-    exist_file = os.path.exists(name_parameter_full)
+    exist_file = os.path.exists(name_parfile_full)
     if exist_file == False :
       print "  ",
       print bcolors.RED + "   [ERROR]" + bcolors.ENDC + " File does not exist! Please enter again:"
 
-  UA_mapfile   = GetFileName(int(GetParameterValue(name_parfile, 'UAMapFile')))
-  AGET_mapfile = GetFileName(int(GetParameterValue(name_parfile, 'AGETMapFile')))
+UA_mapfile   = GetFileName(int(GetParameterValue(name_parfile, 'UAMapFile')))
+AGET_mapfile = GetFileName(int(GetParameterValue(name_parfile, 'AGETMapFile')))
 
-  print
-  print " - Checking Map            ", "AGET.map     ->", bcolors.GREEN + UA_mapfile + bcolors.ENDC
-  print "                           ", "UnitAsAd.map ->", bcolors.GREEN + AGET_mapfile + bcolors.ENDC
+print
+print " - Checking Map            ", "AGET.map     ->", bcolors.GREEN + UA_mapfile + bcolors.ENDC
+print "                           ", "UnitAsAd.map ->", bcolors.GREEN + AGET_mapfile + bcolors.ENDC
 
 
 # Below method reads soft link of the file
@@ -280,12 +280,12 @@ if(kbInput == 'y' or kbInput == 'Y') :
   command_reco = "source " + dirWork + "/build/config.sh > /dev/null; root -l -q -b 'run_reco.C(" + sim_name + ")'"
 
   time_start = time.time()
-  os.system(command_mc)
+  #os.system(command_mc)
   time_end = time.time()
   time_diff_mc = time_end - time_start
 
   time_start = time.time()
-  os.system(command_digi)
+  #os.system(command_digi)
   time_end = time.time()
   time_diff_digi = time_end - time_start
 
