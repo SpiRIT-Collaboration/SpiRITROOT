@@ -74,6 +74,12 @@ void STHitCluster::AddHit(STHit *hit)
 
   if (GetNumHits() > 0)
     CalculateCovMatrix(hitPos, charge);
+  else {
+    TVector3 posSigma = hit -> GetPosSigma();
+    fCovMatrix(0, 0) = posSigma.X();
+    fCovMatrix(1, 1) = posSigma.Y();
+    fCovMatrix(2, 2) = posSigma.Z();
+  }
 
   fCharge += charge;
 
