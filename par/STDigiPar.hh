@@ -1,22 +1,14 @@
-//---------------------------------------------------------------------
-// Description:
-//      STDigiPar reads in parameters and stores them for later use.
-//
-// Author List:
-//      Genie Jhang     Korea Univ.            (original author)
-//      JungWoo Lee     Korea Univ.
-//----------------------------------------------------------------------
+/**
+* @brief Store parameters from ST.parameters.par for later use.
+*/
 
-#ifndef _STDIGIPAR_H_
-#define _STDIGIPAR_H_
+#ifndef STDIGIPAR_HH
+#define STDIGIPAR_HH
 
 // FAIRROOT classes
 #include "FairParGenericSet.h"
 #include "FairParamList.h"
 #include "FairLogger.h"
-
-// SPiRITROOT classes
-#include "STGas.hh"
 
 // ROOT classes
 #include "TString.h"
@@ -24,68 +16,80 @@
 
 class STDigiPar : public FairParGenericSet
 {
-  public:
-    // Constructors and Destructors
+  public :
     STDigiPar(const Char_t *name, const Char_t *title, const Char_t *context);
     ~STDigiPar();
 
-    // Operators
-    
-    // Getters
+    virtual Bool_t getParams(FairParamList *paramList);
+    virtual void putParams(FairParamList *paramList);
+    TString GetFile(Int_t fileNum);
+
     Double_t GetPadPlaneX();
     Double_t GetPadPlaneZ();
     Double_t GetPadSizeX();
     Double_t GetPadSizeZ();
-    Int_t GetPadRows();
-    Int_t GetPadLayers();
+       Int_t GetPadRows();
+       Int_t GetPadLayers();
     Double_t GetAnodeWirePlaneY();
     Double_t GetGroundWirePlaneY();
     Double_t GetGatingWirePlaneY();
-    STGas *GetGas();
-    Int_t GetNumTbs();              ///< returns the number of time buckets that the data actually has
-    Int_t GetWindowNumTbs();        ///< returns the number of time buckets of the time window
-    Int_t GetWindowStartTb();       ///< returns the time bucket number of the starting point of time window
-    Int_t GetTBTime();              ///< returns the time duration of a time bucket in given sampling time in ns.
-    Double_t GetDriftVelocity();    ///< returns the drift velocity in cm/us.
-    Double_t GetDriftLength();      ///< returns the drift length in mm
-    Int_t GetYDivider();            ///< returns the slice divider
-    virtual Bool_t getParams(FairParamList *paramList);
+    Double_t GetEField();
+    /// returns the number of time buckets that the data actually has
+       Int_t GetNumTbs();
+    /// returns the number of time buckets of the time window
+       Int_t GetWindowNumTbs();
+    /// returns the time bucket number of the starting point of time window
+       Int_t GetWindowStartTb();
+       Int_t GetSamplingRate();
+    /// returns the drift length in mm
+    Double_t GetDriftLength();
+    /// returns the slice divider
+       Int_t GetYDivider();
+    Double_t GetEIonize();
+    /// returns the drift velocity in cm/us.
+    Double_t GetDriftVelocity();
+    Double_t GetCoefDiffusionLong();
+    Double_t GetCoefDiffusionTrans();
+    Double_t GetCoefAttachment();
+       Int_t GetGain();
 
-    TString GetFile(Int_t fileNum);
+     TString GetUAMapFileName();
+     TString GetAGETMapFileName();
 
-    // Setters
-    virtual void putParams(FairParamList *paramList);
+    /// returns the time duration of a time bucket in given sampling time in ns.
+       Int_t GetTBTime();
 
-    // Main methods
-
-  private:
+  private :
     FairLogger *fLogger;
-
-    STGas *fGas;
-    TString fGasFileName;
-
     Bool_t fInitialized;
 
     Double_t fPadPlaneX;
     Double_t fPadPlaneZ;
     Double_t fPadSizeX;
     Double_t fPadSizeZ;
-    Int_t fPadRows;
-    Int_t fPadLayers;
+       Int_t fPadRows;
+       Int_t fPadLayers;
     Double_t fAnodeWirePlaneY;
     Double_t fGroundWirePlaneY;
     Double_t fGatingWirePlaneY;
     Double_t fEField;
-    Int_t fNumTbs;
-    Int_t fWindowNumTbs;
-    Int_t fWindowStartTb;
-    Int_t fSamplingRate;
-    Double_t fDriftVelocity;
+       Int_t fNumTbs;
+       Int_t fWindowNumTbs;
+       Int_t fWindowStartTb;
+       Int_t fSamplingRate;
     Double_t fDriftLength;
-    Int_t fYDivider;
-    Int_t fGasFile;
-    Int_t fPadPlaneFile;
-    Int_t fPadShapeFile;
+       Int_t fYDivider;
+    Double_t fEIonize;
+    Double_t fDriftVelocity;
+    Double_t fCoefDiffusionLong;
+    Double_t fCoefDiffusionTrans;
+    Double_t fCoefAttachment;
+       Int_t fGain;
+
+    TString  fUAMapFileName;
+      Int_t  fUAMapFile;
+    TString  fAGETMapFileName;
+      Int_t  fAGETMapFile;
 
   ClassDef(STDigiPar, 1);
 };

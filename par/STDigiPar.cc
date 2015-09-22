@@ -1,24 +1,17 @@
-//---------------------------------------------------------------------
-// Description:
-//      STDigiPar reads in parameters and stores them for later use.
-//
-// Author List:
-//      Genie Jhang     Korea Univ.            (original author)
-//      JungWoo Lee     Korea Univ.
-//----------------------------------------------------------------------
+/**
+* @brief Store parameters from ST.parameters.par for later use.
+*/
 
 #include "STDigiPar.hh"
-
 #include <iostream>
+#include <fstream>
 
 ClassImp(STDigiPar)
 
 STDigiPar::STDigiPar(const Char_t *name, const Char_t *title, const Char_t *context)
-:FairParGenericSet("STDigiPar", "SPiRIT Parameter Container", ""),
- fGas(NULL)
+: FairParGenericSet("STDigiPar", "LAMPS TPC Parameter Container", "")
 {
   fInitialized = kFALSE;
-
   fLogger = FairLogger::GetLogger();
 }
 
@@ -26,47 +19,34 @@ STDigiPar::~STDigiPar()
 {
 }
 
-// Getters
-Double_t  STDigiPar::GetPadPlaneX()        { return fPadPlaneX; }
-Double_t  STDigiPar::GetPadPlaneZ()        { return fPadPlaneZ; }
-Double_t  STDigiPar::GetPadSizeX()         { return fPadSizeX; }
-Double_t  STDigiPar::GetPadSizeZ()         { return fPadSizeZ; }
-   Int_t  STDigiPar::GetPadRows()          { return fPadRows; }
-   Int_t  STDigiPar::GetPadLayers()        { return fPadLayers; }
-Double_t  STDigiPar::GetAnodeWirePlaneY()  { return fAnodeWirePlaneY; }
-Double_t  STDigiPar::GetGroundWirePlaneY() { return fGroundWirePlaneY; }
-Double_t  STDigiPar::GetGatingWirePlaneY() { return fGatingWirePlaneY; }
-   Int_t  STDigiPar::GetNumTbs()           { return fNumTbs; }
-   Int_t  STDigiPar::GetWindowNumTbs()     { return fWindowNumTbs; }
-   Int_t  STDigiPar::GetWindowStartTb()    { return fWindowStartTb; }
-Double_t  STDigiPar::GetDriftVelocity()    { return fDriftVelocity; }
-Double_t  STDigiPar::GetDriftLength()      { return fDriftLength; }
-   Int_t  STDigiPar::GetYDivider()         { return fYDivider; }
+Double_t STDigiPar::GetPadPlaneX()                 { return fPadPlaneX; }
+Double_t STDigiPar::GetPadPlaneZ()                 { return fPadPlaneZ; }
+Double_t STDigiPar::GetPadSizeX()                  { return fPadSizeX; }
+Double_t STDigiPar::GetPadSizeZ()                  { return fPadSizeZ; }
+Int_t    STDigiPar::GetPadRows()                   { return fPadRows; }
+Int_t    STDigiPar::GetPadLayers()                 { return fPadLayers; }
+Double_t STDigiPar::GetAnodeWirePlaneY()           { return fAnodeWirePlaneY; }
+Double_t STDigiPar::GetGroundWirePlaneY()          { return fGroundWirePlaneY; }
+Double_t STDigiPar::GetGatingWirePlaneY()          { return fGatingWirePlaneY; }
+Double_t STDigiPar::GetEField()                    { return fEField; }
+Int_t    STDigiPar::GetNumTbs()                    { return fNumTbs; }
+Int_t    STDigiPar::GetWindowNumTbs()              { return fWindowNumTbs; }
+Int_t    STDigiPar::GetWindowStartTb()             { return fWindowStartTb; }
+Int_t    STDigiPar::GetSamplingRate()              { return fSamplingRate; }
+Double_t STDigiPar::GetDriftLength()               { return fDriftLength; }
+Int_t    STDigiPar::GetYDivider()                  { return fYDivider; }
+Double_t STDigiPar::GetEIonize()                   { return fEIonize; }
+Double_t STDigiPar::GetDriftVelocity()             { return fDriftVelocity; }
+Double_t STDigiPar::GetCoefDiffusionLong()         { return fCoefDiffusionLong; }
+Double_t STDigiPar::GetCoefDiffusionTrans()        { return fCoefDiffusionTrans; }
+Double_t STDigiPar::GetCoefAttachment()            { return fCoefAttachment; }
+Int_t    STDigiPar::GetGain()                      { return fGain; }
+TString  STDigiPar::GetUAMapFileName()             { return fUAMapFileName; }
+TString  STDigiPar::GetAGETMapFileName()           { return fAGETMapFileName; }
 
-STGas *STDigiPar::GetGas()
-{ 
-  if(fGas==NULL){
-    std::cerr << "Initializing gas file with " << fGasFileName.Data() << std::endl;
-    fGas = new STGas(fGasFileName.Data());
-  }
-  return fGas;
-  //return new STGas(*fGas); 
-}
 
-Int_t STDigiPar::GetTBTime() {
-  switch (fSamplingRate) {
-    case 25:
-      return 40;
-    case 50:
-      return 20;
-    case 100:
-      return 10;
-    default:
-      return -1;
-  }
-}
-
-Bool_t STDigiPar::getParams(FairParamList *paramList)
+Bool_t 
+STDigiPar::getParams(FairParamList *paramList)
 {
   if (!paramList) {
     fLogger -> Fatal(MESSAGE_ORIGIN, "Parameter list doesn't exist!");
@@ -95,7 +75,7 @@ Bool_t STDigiPar::getParams(FairParamList *paramList)
       return kFALSE;
     }
     if (!(paramList -> fill("PadLayers", &fPadLayers))) {
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadRows parameter!");
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadLayers parameter!");
       return kFALSE;
     }
     if (!(paramList -> fill("AnodeWirePlaneY", &fAnodeWirePlaneY))) {
@@ -130,10 +110,6 @@ Bool_t STDigiPar::getParams(FairParamList *paramList)
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find SamplingRate parameter!");
       return kFALSE;
     }
-    if (!(paramList -> fill("DriftVelocity", &fDriftVelocity))) {
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find DriftVelocity parameter!");
-      return kFALSE;
-    }
     if (!(paramList -> fill("DriftLength", &fDriftLength))) {
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find DriftLength parameter!");
       return kFALSE;
@@ -142,26 +118,62 @@ Bool_t STDigiPar::getParams(FairParamList *paramList)
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find YDivider parameter!");
       return kFALSE;
     }
-    if (!(paramList -> fill("GasFile", &fGasFile))) {
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GasFile parameter!");
+    if (!(paramList -> fill("EIonize", &fEIonize))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find EIonize parameter!");
       return kFALSE;
     }
-    if (!(paramList -> fill("PadPlaneFile", &fPadPlaneFile))) {
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadPlaneFile parameter!");
+    if (!(paramList -> fill("DriftVelocity", &fDriftVelocity))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find DriftVelocity parameter!");
       return kFALSE;
     }
-    if (!(paramList -> fill("PadShapeFile", &fPadShapeFile))) {
-      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find PadShapeFile parameter!");
+    if (!(paramList -> fill("CoefDiffusionLong", &fCoefDiffusionLong))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find CoefDiffusionLong parameter!");
       return kFALSE;
     }
+    if (!(paramList -> fill("CoefDiffusionTrans", &fCoefDiffusionTrans))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find CoefDiffusionTrans parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("CoefAttachment", &fCoefAttachment))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find CoefAttachment parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("Gain", &fGain))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find Gain parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("UAMapFile", &fUAMapFile))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find UAMapFile parameter!");
+      return kFALSE;
+    }
+    fUAMapFileName = GetFile(fUAMapFile);
+    if (!(paramList -> fill("AGETMapFile", &fAGETMapFile))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find AGETMapFile parameter!");
+      return kFALSE;
+    }
+    fAGETMapFileName = GetFile(fAGETMapFile);
 
-    fGasFileName = GetFile(fGasFile);
   }
 
   return kTRUE;
 }
 
-void STDigiPar::putParams(FairParamList *paramList)
+Int_t STDigiPar::GetTBTime() {
+  switch (fSamplingRate) {
+    case 25:
+      return 40;
+    case 50:
+      return 20;
+    case 100:
+      return 10;
+    default:
+      return -1;
+  }
+}
+
+
+void 
+STDigiPar::putParams(FairParamList *paramList)
 {
   if (!paramList) {
     fLogger -> Fatal(MESSAGE_ORIGIN, "Parameter list doesn't exist!");
@@ -182,23 +194,28 @@ void STDigiPar::putParams(FairParamList *paramList)
   paramList -> add("WindowNumTbs", fWindowNumTbs);
   paramList -> add("WindowStartTb", fWindowStartTb);
   paramList -> add("SamplingRate", fSamplingRate);
-  paramList -> add("DriftVelocity", fDriftVelocity);
   paramList -> add("DriftLength", fDriftLength);
   paramList -> add("YDivider", fYDivider);
-  paramList -> add("GasFile", fGasFile);
-  paramList -> add("PadPlaneFile", fPadPlaneFile);
-  paramList -> add("PadShapeFile", fPadShapeFile);
+  paramList -> add("EIonize", fEIonize);
+  paramList -> add("DriftVelocity", fDriftVelocity);
+  paramList -> add("CoefDiffusionLong", fCoefDiffusionLong);
+  paramList -> add("CoefDiffusionTrans", fCoefDiffusionTrans);
+  paramList -> add("CoefAttachment", fCoefAttachment);
+  paramList -> add("Gain", fGain);
+  paramList -> add("UAMapFile", fUAMapFile);
+  paramList -> add("AGETMapFile", fAGETMapFile);
 }
 
-TString STDigiPar::GetFile(Int_t fileNum)
+TString 
+STDigiPar::GetFile(Int_t fileNum)
 {
   std::ifstream fileList;
   TString sysFile = gSystem -> Getenv("VMCWORKDIR");
   TString parFile = sysFile + "/parameters/ST.files.par";
   fileList.open(parFile.Data());
 
-  if(!fileList) { fLogger -> Fatal(MESSAGE_ORIGIN, Form("File %s not found!", parFile.Data()));
-
+  if(!fileList) { 
+    fLogger -> Fatal(MESSAGE_ORIGIN, Form("File %s not found!", parFile.Data()));
     throw;
   }
 
@@ -206,13 +223,10 @@ TString STDigiPar::GetFile(Int_t fileNum)
   for(Int_t iFileNum = 0; iFileNum < fileNum + 1; ++iFileNum){
     if(fileList.eof()) {
       fLogger -> Fatal(MESSAGE_ORIGIN, Form("Did not find string #%d in file %s.", fileNum, parFile.Data()));
-
       throw;
     }
-
     fileList.getline(buffer, 256);
   }
-
   fileList.close();
 
   return TString(sysFile + "/" + buffer);
