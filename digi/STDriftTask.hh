@@ -31,7 +31,6 @@
 #include "STMCPoint.hh"
 #include "STDriftedElectron.hh"
 #include "STDigiPar.hh"
-#include "STGas.hh"
 
 // ROOT class headers
 #include "TClonesArray.h"
@@ -57,7 +56,6 @@ class STDriftTask : public FairTask
     TClonesArray* fElectronArray;    //!< [OUTPUT] Array of STDriftedElectron.
 
     STDigiPar* fPar; //!< Base parameter container.
-    STGas*     fGas; //!< Gas parameter container.
 
     Double_t fYAnodeWirePlane; //!< y-position of anode wire plane. [mm]
     Double_t fZWidthPadPlane;  //!< z-width of pad plane.

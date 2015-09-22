@@ -61,8 +61,6 @@ STDriftTask::Init()
   fElectronArray = new TClonesArray("STDriftedElectron");
   ioman->Register("STDriftedElectron","ST",fElectronArray,fInputPersistance);
 
-  fGas = fPar->GetGas();
-
   fYAnodeWirePlane = fPar->GetAnodeWirePlaneY(); // [mm]
   fZWidthPadPlane  = fPar->GetPadPlaneZ(); // [mm]
   fNumWires        = 363;
@@ -104,11 +102,11 @@ STDriftTask::Init()
   fIFirstWire  = (fZFirstWire-fZOffsetWire)/fZSpacingWire;
   fILastWire   = (fZLastWire-fZOffsetWire)/fZSpacingWire;
 
-  fEIonize  = fGas->GetEIonize()*1.E6; // [MeV] to [eV]
-  fVelDrift = fGas->GetDriftVelocity()/100.; // [cm/us] to [mm/ns]
-  fCoefT    = fGas->GetCoefDiffusionTrans()*sqrt(10.); // [cm^(-1/2)] to [mm^(-1/2)]
-  fCoefL    = fGas->GetCoefDiffusionLong()*sqrt(10.);  // [cm^(-1/2)] to [mm^(-1/2)]
-  fGain     = fGas->GetGain();
+  fEIonize  = fPar->GetEIonize()*1.E6; // [MeV] to [eV]
+  fVelDrift = fPar->GetDriftVelocity()/100.; // [cm/us] to [mm/ns]
+  fCoefT    = fPar->GetCoefDiffusionTrans()*sqrt(10.); // [cm^(-1/2)] to [mm^(-1/2)]
+  fCoefL    = fPar->GetCoefDiffusionLong()*sqrt(10.);  // [cm^(-1/2)] to [mm^(-1/2)]
+  fGain     = fPar->GetGain();
 
   return kSUCCESS;
 }
