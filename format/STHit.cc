@@ -18,7 +18,7 @@ STHit::STHit()
   fIsClustered = kFALSE;
   fClusterID = -1;
 
-  fPosSigma = TVector3(0.8, 0.22, 1.2);
+  fPositionSigma = TVector3(0.8, 0.22, 1.2);
 }
 
 STHit::STHit(Int_t hitID, TVector3 vec, Double_t charge)
@@ -29,7 +29,7 @@ STHit::STHit(Int_t hitID, TVector3 vec, Double_t charge)
   fIsClustered = kFALSE;
   fClusterID = -1;
 
-  fPosSigma = TVector3(0.8, 0.22, 1.2);
+  fPositionSigma = TVector3(0.8, 0.22, 1.2);
 }
 
 STHit::STHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge)
@@ -40,7 +40,7 @@ STHit::STHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge)
   fIsClustered = kFALSE;
   fClusterID = -1;
 
-  fPosSigma = TVector3(0.8, 0.22, 1.2);
+  fPositionSigma = TVector3(0.8, 0.22, 1.2);
 }
 
 STHit::STHit(STHit *hit)
@@ -51,7 +51,7 @@ STHit::STHit(STHit *hit)
   fIsClustered = hit -> IsClustered();
   fClusterID = hit -> GetClusterID();
 
-  fPosSigma = TVector3(0.8, 0.22, 1.2);
+  fPositionSigma = TVector3(0.8, 0.22, 1.2);
 }
 
 STHit::~STHit()
