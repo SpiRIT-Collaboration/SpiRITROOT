@@ -23,7 +23,6 @@ set(SRCS
 STContFact.cc
 STGeoPar.cc
 STDigiPar.cc
-STGas.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

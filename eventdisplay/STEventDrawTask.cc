@@ -124,7 +124,7 @@ STEventDrawTask::Init()
   fNTbs          = fPar -> GetWindowNumTbs();
   fXPadPlane     = fPar -> GetPadPlaneX();
   fTBTime        = fPar -> GetTBTime();
-  fDriftVelocity = fPar -> GetGas() -> GetDriftVelocity();
+  fDriftVelocity = fPar -> GetDriftVelocity();
   fDriftVelocity = fDriftVelocity/100.;
 
   fCvsPad = fEventManager -> GetCvsPad();

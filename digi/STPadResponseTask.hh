@@ -24,7 +24,6 @@
 // SPiRIT-TPC class headers
 #include "STDriftedElectron.hh"
 #include "STDigiPar.hh"
-#include "STGas.hh"
 #include "STRawEvent.hh"
 #include "STPad.hh"
 

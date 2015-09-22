@@ -7,6 +7,5 @@
 #pragma link C++ class STContFact+;
 #pragma link C++ class STGeoPar+;
 #pragma link C++ class STDigiPar+;
-#pragma link C++ class STGas+;
 
 #endif

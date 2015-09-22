@@ -38,7 +38,6 @@
 #include "STDriftedElectron.hh"
 #include "STHit.hh"
 #include "STPad.hh"
-#include "STGas.hh"
 
 // STL class headers
 #include <vector>
