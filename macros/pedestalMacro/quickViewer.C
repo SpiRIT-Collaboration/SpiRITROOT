@@ -35,6 +35,7 @@ Int_t fFPNThreshold = 100;
 STCore *fCore = NULL;
 STPlot *fPlot = NULL;
 
+  TStopwatch timer;
 void next(Int_t eventID = -1) {
   fPlot -> DrawPadplane(eventID);
   fPlot -> DrawSideview(fCore -> GetEventID());
@@ -59,10 +60,10 @@ void quickViewer() {
   fPlot = fCore -> GetSTPlot();
   if (!fGainCalibrationData.EqualTo("")) {
     fPlot -> SetPadplaneTitle("Event ID: %d (Gain calibrated) - Top view");
-    fPlot -> SetSideviewTitle("Event ID: %d (Gain calibrated) - Beamright view");
+    fPlot -> SetSideviewTitle("Event ID: %d (Gain calibrated) - Beam right view");
   } else {
     fPlot -> SetPadplaneTitle("Event ID: %d (Gain not calibrated) - Top view");
-    fPlot -> SetSideviewTitle("Event ID: %d (Gain not calibrated) - Beamright view");
+    fPlot -> SetSideviewTitle("Event ID: %d (Gain not calibrated) - Beam right view");
   }
   fPlot -> DrawPadplane();
   fPlot -> DrawSideview(fCore -> GetEventID());
@@ -79,4 +80,3 @@ void quickViewer() {
   cout << "////////////////////////////////////////////////////////////////////////" << endl;
   cout << endl;
 }
-
