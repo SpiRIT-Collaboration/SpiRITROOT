@@ -58,7 +58,7 @@ void STPlot::Clear()
 
   fSideviewCvs = NULL;
   fSideviewHist = NULL;
-  fSideviewTitle = "Event display - Event ID: %d - Beamright view";
+  fSideviewTitle = "Event display - Event ID: %d - Beam right view";
 
   fPadCvs = NULL;
   fPadGraph[0] = NULL;
@@ -568,6 +568,7 @@ void STPlot::PrepareLayerHist()
   fLayerHist -> GetYaxis() -> SetTitleOffset(0.85);
   fLayerHist -> GetYaxis() -> SetTickLength(0.01);
   fLayerHist -> GetYaxis() -> CenterTitle();
+  fLayerHist -> SetContour(50);
 
   fLayerHist -> Draw("colz");
 
