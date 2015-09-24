@@ -57,6 +57,8 @@ PulseShapeAnalyzer/STPSASimple.cc
 PulseShapeAnalyzer/STPSAAll.cc
 PulseShapeAnalyzer/STPSALayer.cc
 PulseShapeAnalyzer/STPSALayerOPTICS.cc
+PulseShapeAnalyzer/STPSADF.cc
+PulseShapeAnalyzer/STPSAFast.cc
 
 HitClustering/STClusterizer.cc
 HitClustering/STClusterizerScan.cc
@@ -64,8 +66,6 @@ HitClustering/STClusterizerScan2.cc
 
 SystemManipulator/STSystemManipulator.cc
 
-RiemannTracking/STRiemannHit.cc
-RiemannTracking/STRiemannTrack.cc
 RiemannTracking/STRiemannTrackFinder.cc
 RiemannTracking/STDipTTCorrelator.cc
 RiemannTracking/STRiemannTTCorrelator.cc

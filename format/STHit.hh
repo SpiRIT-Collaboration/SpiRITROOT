@@ -1,26 +1,20 @@
-// =================================================
-//  STHit Class
-//
-//  Description:
-//    Container for a hit data
-//
-//  Genie Jhang ( geniejhang@majimak.com )
-//  2014. 05. 19
-// ================================================= 
+/**
+ *  @brief STHit Class
+ *
+ *  @author Genie Jhang ( geniejhang@majimak.com )
+ *  @author JungWoo Lee
+ *
+ *  @detail container for a hit data
+ */
 
-#ifndef _STHIT_H_
-#define _STHIT_H_
+#ifndef STHIT_HH
+#define STHIT_HH
 
-#include "TROOT.h"
 #include "TObject.h"
 #include "TVector3.h"
 
-/**
-  * This class contains hit information
-  * processed from STPad class data.
- **/
-
-class STHit : public TObject {
+class STHit : public TObject 
+{
   public:
     STHit();
     STHit(STHit *hit);
@@ -28,58 +22,39 @@ class STHit : public TObject {
     STHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge);
     ~STHit();
 
-    //!< Track ID setter
-    void SetTrackID(Int_t trackID);
-    //!< Hit ID setter
-    void SetHitID(Int_t hitID);
-    //!< Hit setter
+    /// Hit setter
     void SetHit(Int_t hitID, TVector3 vec, Double_t charge);
+    /// Hit setter
     void SetHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge);
-    //!< Position setter
-    void SetPosition(TVector3 vec);
-    void SetPosition(Double_t x, Double_t y, Double_t z);
-    //!< Position sigma setter
-    void SetPosSigma(TVector3 vec);
-    void SetPosSigma(Double_t dx, Double_t dy, Double_t dz);
-    //!< Charge setter
-    void SetCharge(Double_t charge);
-    //!< Clustered flag setter
-    void SetIsClustered(Bool_t value = kTRUE);
-    //!< Cluster stter
-    void SetClusterID(Int_t clusterID);
 
-    //!< Track ID getter
-    Int_t GetTrackID() const;
-    //!< Hit ID getter
-    Int_t GetHitID() const;
-    //!< Position getter
-    TVector3 GetPosition() const;
-    //!< Position sigma getter
-    TVector3 GetPosSigma() const;
-    //!< Charge getter
-    Double_t GetCharge() const;
-    //!< Clustered flag getter
-    Bool_t IsClustered() const;
-    //!< Cluster ID getter
-    Int_t GetClusterID() const;
+    void SetIsClustered(Bool_t value = kTRUE);               ///< Clustered flag setter
+    void SetHitID(Int_t hitID);                              ///< Hit ID setter
+    void SetClusterID(Int_t clusterID);                      ///< Cluster stter
+    void SetTrackID(Int_t trackID);                          ///< Track ID setter
+    void SetPosition(TVector3 vec);                          ///< Position setter
+    void SetPosition(Double_t x, Double_t y, Double_t z);    ///< Position setter
+    void SetPosSigma(TVector3 vec);                          ///< Position sigma setter
+    void SetPosSigma(Double_t dx, Double_t dy, Double_t dz); ///< Position sigma setter
+    void SetCharge(Double_t charge);                         ///< Charge setter
 
-  private:
-    //!< Track ID having this hit
-    Int_t fTrackID;
-    //!< Hit ID
-    Int_t fHitID;
-    //!< Position
-    TVector3 fPosition;
-    //!< Position error
-    TVector3 fPositionSigma;
-    //!< Charge
-    Double_t fCharge;
-    //!< Clustered flag
-    Bool_t fIsClustered;
-    //!< Cluster ID having this hit
-    Int_t fClusterID;
+      Bool_t IsClustered()  const; ///< Clustered flag getter
+       Int_t GetHitID()     const; ///< Hit ID getter
+       Int_t GetClusterID() const; ///< Cluster ID getter
+       Int_t GetTrackID()   const; ///< Track ID getter
+    TVector3 GetPosition()  const; ///< Position getter
+    TVector3 GetPosSigma()  const; ///< Position sigma getter
+    Double_t GetCharge()    const; ///< Charge getter
 
-  ClassDef(STHit, 2);
+  protected:
+      Bool_t fIsClustered; ///< Clustered flag
+       Int_t fHitID;       ///< Hit ID
+       Int_t fClusterID;   ///< Cluster ID having this hit
+       Int_t fTrackID;     ///< Track ID having this hit
+    TVector3 fPosition;    ///< Position
+    TVector3 fPosSigma;    ///< Position error
+    Double_t fCharge;      ///< Charge
+
+  ClassDef(STHit, 3);
 };
 
 #endif

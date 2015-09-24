@@ -27,6 +27,8 @@ STEvent.cc
 STHit.cc
 STHitCluster.cc
 STHitClusterRich.cc
+STRiemannHit.cc
+STRiemannTrack.cc
 STDriftedElectron.cc
 )
 

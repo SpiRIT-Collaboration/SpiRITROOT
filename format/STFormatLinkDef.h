@@ -11,6 +11,8 @@
 #pragma link C++ class STHit+;
 #pragma link C++ class STHitCluster+;
 #pragma link C++ class STHitClusterRich+;
+#pragma link C++ class STRiemannHit+;
+#pragma link C++ class STRiemannTrack+;
 #pragma link C++ class STDriftedElectron+;
 
 #endif

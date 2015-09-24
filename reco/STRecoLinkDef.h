@@ -27,8 +27,10 @@
 #pragma link C++ class STPSA+;
 #pragma link C++ class STPSASimple+;
 #pragma link C++ class STPSAAll+;
+#pragma link C++ class STPSADF+;
 #pragma link C++ class STPSALayer+;
 #pragma link C++ class STPSALayerOPTICS+;
+#pragma link C++ class STPSAFast+;
 
 #pragma link C++ class STHitClusteringTask+;
 #pragma link C++ class STClusterizer+;
@@ -38,9 +40,7 @@
 #pragma link C++ class STSMTask+;
 #pragma link C++ class STSystemManipulator+;
 
-#pragma link C++ class STRiemannHit+;
 #pragma link C++ class STRiemannSort+;
-#pragma link C++ class STRiemannTrack+;
 #pragma link C++ class STRiemannTrackingTask+;
 
 #pragma link C++ class STHoughSpaceLine+;

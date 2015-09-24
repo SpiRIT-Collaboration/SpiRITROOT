@@ -1,12 +1,9 @@
-// =================================================
-//  STHit Class
-//
-//  Description:
-//    Container for a hit data
-//
-//  Genie Jhang ( geniejhang@majimak.com )
-//  2014. 05. 19
-// ================================================= 
+/**
+ *  @brief STHit Class
+ *
+ *  @author Genie Jhang ( geniejhang@majimak.com )
+ *  @author JungWoo Lee
+ */
 
 #include "STHit.hh"
 
@@ -18,7 +15,7 @@ STHit::STHit()
   fIsClustered = kFALSE;
   fClusterID = -1;
 
-  fPositionSigma = TVector3(0.8, 0.22, 1.2);
+  fPosSigma = TVector3(0.8, 0.22, 1.2);
 }
 
 STHit::STHit(Int_t hitID, TVector3 vec, Double_t charge)
@@ -29,7 +26,7 @@ STHit::STHit(Int_t hitID, TVector3 vec, Double_t charge)
   fIsClustered = kFALSE;
   fClusterID = -1;
 
-  fPositionSigma = TVector3(0.8, 0.22, 1.2);
+  fPosSigma = TVector3(0.8, 0.22, 1.2);
 }
 
 STHit::STHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge)
@@ -40,7 +37,7 @@ STHit::STHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge)
   fIsClustered = kFALSE;
   fClusterID = -1;
 
-  fPositionSigma = TVector3(0.8, 0.22, 1.2);
+  fPosSigma = TVector3(0.8, 0.22, 1.2);
 }
 
 STHit::STHit(STHit *hit)
@@ -51,30 +48,41 @@ STHit::STHit(STHit *hit)
   fIsClustered = hit -> IsClustered();
   fClusterID = hit -> GetClusterID();
 
-  fPositionSigma = TVector3(0.8, 0.22, 1.2);
+  fPosSigma = TVector3(0.8, 0.22, 1.2);
 }
 
 STHit::~STHit()
-{}
+{
+}
 
-void STHit::SetTrackID(Int_t trackID)                                   { fTrackID = trackID; }
-void STHit::SetHitID(Int_t hitID)                                       { fHitID = hitID; }
-void STHit::SetHit(Int_t hitID, TVector3 vec, Double_t charge)                       { fHitID = hitID; fPosition = vec; fCharge = charge; }
-void STHit::SetHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge) { fHitID = hitID; fPosition = TVector3(x, y, z); fCharge = charge; }
+void STHit::SetHit(Int_t hitID, TVector3 vec, Double_t charge) 
+{ 
+  fHitID    = hitID; 
+  fPosition = vec; 
+  fCharge   = charge; 
+}
 
-void STHit::SetPosition(TVector3 vec)                                   { fPosition = vec; }
-void STHit::SetPosition(Double_t x, Double_t y, Double_t z)             { fPosition = TVector3(x, y, z); }
-void STHit::SetPosSigma(TVector3 vec)                                   { fPositionSigma = vec; }
-void STHit::SetPosSigma(Double_t dx, Double_t dy, Double_t dz)          { fPositionSigma = TVector3(dx, dy, dz); }
-void STHit::SetCharge(Double_t charge)                                  { fCharge = charge; }
+void STHit::SetHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge) 
+{ 
+  fHitID    = hitID; 
+  fPosition = TVector3(x, y, z); 
+  fCharge   = charge; 
+}
 
-void STHit::SetIsClustered(Bool_t value)                                { fIsClustered = value; }
-void STHit::SetClusterID(Int_t clusterID)                               { fClusterID = clusterID; fIsClustered = kTRUE; }
+void STHit::SetIsClustered(Bool_t value)                        { fIsClustered = value; }
+void STHit::SetHitID(Int_t hitID)                               { fHitID = hitID; }
+void STHit::SetClusterID(Int_t clusterID)                       { fClusterID = clusterID; fIsClustered = kTRUE; }
+void STHit::SetTrackID(Int_t trackID)                           { fTrackID = trackID; }
+void STHit::SetPosition(TVector3 vec)                           { fPosition = vec; }
+void STHit::SetPosition(Double_t x, Double_t y, Double_t z)     { fPosition = TVector3(x, y, z); }
+void STHit::SetPosSigma(TVector3 vec)                           { fPosSigma = vec; }
+void STHit::SetPosSigma(Double_t dx, Double_t dy, Double_t dz)  { fPosSigma = TVector3(dx, dy, dz); }
+void STHit::SetCharge(Double_t charge)                          { fCharge = charge; }
 
-Int_t STHit::GetTrackID() const                                         { return fTrackID; }
-Int_t STHit::GetHitID() const                                           { return fHitID; }
-TVector3 STHit::GetPosition() const                                     { return fPosition; }
-TVector3 STHit::GetPosSigma() const                                     { return fPositionSigma; }
-Double_t STHit::GetCharge() const                                       { return fCharge; }
-Bool_t STHit::IsClustered() const                                       { return fIsClustered; }
-Int_t STHit::GetClusterID() const                                       { return (fIsClustered ? fClusterID : -1); }
+   Int_t STHit::GetHitID()     const   { return fHitID; }
+   Int_t STHit::GetClusterID() const   { return (fIsClustered ? fClusterID : -1); }
+   Int_t STHit::GetTrackID()   const   { return fTrackID; }
+TVector3 STHit::GetPosition()  const   { return fPosition; }
+TVector3 STHit::GetPosSigma()  const   { return fPosSigma; }
+Double_t STHit::GetCharge()    const   { return fCharge; }
+  Bool_t STHit::IsClustered()  const   { return fIsClustered; }

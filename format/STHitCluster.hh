@@ -1,15 +1,12 @@
-// =================================================
-//  STHitCluster Class                          
-//                                                  
-//  Description:                                    
-//    Container for a cluster of hits
-//                                                  
-//  Genie Jhang ( geniejhang@majimak.com )          
-//  2014. 07. 15                                    
-// =================================================
+/**
+ *  @brief STHit Class
+ *
+ *  @author Genie Jhang ( geniejhang@majimak.com )
+ *  @author JungWoo Lee
+ */
 
-#ifndef STHITCLUSTER_H
-#define STHITCLUSTER_H
+#ifndef STHITCLUSTER_HH
+#define STHITCLUSTER_HH
 
 #include "STHit.hh"
 
@@ -21,44 +18,39 @@
 
 using std::vector;
 
-class STHitCluster : public TObject 
+class STHitCluster : public STHit
 {
   public:
     STHitCluster();
     STHitCluster(STHitCluster *cluster);
     ~STHitCluster();
 
-    void SetClusterID(Int_t clusterID);
-    Int_t GetClusterID();
+    void SetCovMatrix(TMatrixD matrix);  ///< Set covariance matrix
 
-    void SetPosition(TVector3 vector);
-    void SetPosSigma(TVector3 vector);
-    void SetCovMatrix(TMatrixD matrix);
-    void SetCharge(Double_t charge);
+         TMatrixD  GetCovMatrix() const; ///< Get covariance matrix
+            Int_t  GetNumHits();         ///< Get number of hits
+    vector<Int_t> *GetHitIDs();          ///< Get vector array hit IDs
 
-    TVector3 GetPosition() const;
-    TVector3 GetPosSigma() const;
-    TMatrixD GetCovMatrix() const;
-    Double_t GetCharge();
-
-    Int_t GetNumHits();
-    vector<Int_t> *GetHitIDs();
-
-    virtual void AddHit(STHit *hit);
+    virtual void AddHit(STHit *hit);             ///< Add hit to cluster
 
   protected:
-    Int_t fClusterID;     ///< Cluster ID
-    TVector3 fPosition;   ///< Cluster position
-    TVector3 fPosSigma;   ///< Cluster position uncertainty
-    TMatrixD fCovMatrix;  ///< Cluster covariance matrix
-    Double_t fCharge;     ///< Cluster Charge
+    TMatrixD fCovMatrix;                 ///< Cluster covariance matrix
+    vector<Int_t> fHitIDArray;           ///< Vector array of hit IDs
 
-    vector<Int_t> fHitIDArray;
-
+    /**
+     * Calculate weighted mean for cluster position. (Weight = charge) <br>
+     * Weighted mean: \f$ \mu_{n+1} = \mu_n + \displaystyle\frac{a_{n+1} - \mu_n}{W_n+w_{n+1}},\quad(n\geq0). \f$
+     */
     void CalculatePosition(TVector3 hitPos, Double_t charge);
-    void CalculateCovMatrix(TVector3 hitPos, Double_t charge);
 
-  ClassDef(STHitCluster, 4);
+    /**
+     * Calculate weighted covariance matrix for each variable. (Weight = charge) <br>
+     * Cluster position uncertainty is also calculated here by taking the square root of diagonal components. <br>
+     * Weighted covariance matrix: \f$\sigma(a,b)_{n+1}=\displaystyle\frac{W_n}{W_n+w_{n+1}}\sigma(a,b)_{n}+\displaystyle\frac{(\mu_{n+1}-a_{n+1})(\nu_{n+1}-b_{n+1})}{W_n},\quad(n\geq1).\f$
+     */
+    void CalculateCovMatrix(TVector3 hitPos, Double_t charge); 
+
+  ClassDef(STHitCluster, 5);
 };
 
 #endif
