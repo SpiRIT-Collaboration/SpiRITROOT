@@ -1,30 +1,23 @@
-//-----------------------------------------------------------
-// Description:
-//      Hit-Track-Correlator using Helix fit
-//
-// Environment:
-//      Software developed for the SpiRIT-TPC at RIBF-RIKEN
-//
-// Original Author List:
-//      Johanness Rauch    TUM            (original author)
-//
-// Author List:
-//      Genie Jhang          Korea University
-//-----------------------------------------------------------
+/**
+ * @brief Hit-Track-Correlator using Helix fit
+ *
+ * @author Johannes Rauch (TUM) -- original author
+ * @author Genie Jhang (Korea University)
+ * @author JungWoo Lee (Korea University)
+ */
 
 // SpiRITROOT classes
 #include "STHitCluster.hh"
 #include "STRiemannHit.hh"
 #include "STRiemannTrack.hh"
 #include "STHelixHTCorrelator.hh"
+#include "STDebugLogger.hh"
 
 // ROOT classes
 #include "TVector3.h"
 #include "TMath.h"
 
 #include "Riostream.h"
-
-#include "STDebugLogger.hh"
 
 STHelixHTCorrelator::STHelixHTCorrelator(Double_t hdistcut)
 {
@@ -37,26 +30,24 @@ STHelixHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bool_t
   if (!(track -> IsFitted()))
     return kFALSE;
 
-  Double_t d = track -> DistHelix(rhit);
-#ifdef DEBUGRIEMANNCUTS
-  STDebugLogger::Instance() -> FillHist1Step("helix_all",d,1000,0,1000);
-#endif
-  d = TMath::Abs(d);
-  matchQuality = d;
+  Double_t distHelix = track -> DistHelix(rhit);
+  distHelix = TMath::Abs(distHelix);
+  matchQuality = distHelix;
 
   Double_t stat = 2. - track -> GetQuality(); // tighten cut for better defined tracks
 
-  if (d > fHDistCut*stat) // for best track: fHDistCut < d, for worst track: 2*fHDistCut < d, then die
+  // for best track:  fHDistCut < distHelix, 
+  // for worst track: 2*fHDistCut < distHelix, then die
+  if (distHelix > fHDistCut*stat) 
   {
     survive = kFALSE;
 #ifdef DEBUGRIEMANNCUTS
-  STDebugLogger::Instance() -> FillHist1Step("helix_fail",d,1000,0,1000);
+  STDebugLogger::Instance() -> FillHist1Step("helix_fail", distHelix, 1000, 0, 1000);
 #endif
     return kTRUE;
   }
 #ifdef DEBUGRIEMANNCUTS
-  STDebugLogger::Instance() -> FillHist1("helix",d,100,0,200);
-  STDebugLogger::Instance() -> FillHist1Step("helix_step",d,1000,0,1000);
+  STDebugLogger::Instance() -> FillHist1("helix", distHelix, 100, 0, 20);
 #endif
 
   survive = kTRUE;

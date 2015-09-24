@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STRIEMANNSORT_HH
+#define STRIEMANNSORT_HH
 
 class STRiemannSort {
   public:
@@ -13,3 +14,5 @@ class STRiemannSort {
       kSortReversePhi = -5
     };
 };
+
+#endif

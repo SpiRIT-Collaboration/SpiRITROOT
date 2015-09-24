@@ -1,17 +1,11 @@
-//-----------------------------------------------------------
-// Description:
-//      Track-Track-Correlator using riemann fit
-//
-// Environment:
-//      Software developed for the SpiRIT-TPC at RIBF-RIKEN
-//
-// Original Author List:
-//      Sebastian Neubert    TUM            (original author)
-//      Johannes Rauch       TUM
-//
-// Author List:
-//      Genie Jhang          Korea University
-//-----------------------------------------------------------
+/**
+ * @brief Track-Track-Correlator using riemann fit
+ *
+ * @author Sebastian Neubert (TUM) -- original author
+ * @author Johannes Rauch    (TUM)
+ * @author Genie Jhang (Korea University)
+ * @author JungWoo Lee (Korea University)
+ */
 
 // SpiRITROOT classes
 #include "STRiemannHit.hh"
@@ -31,7 +25,10 @@ STRiemannTTCorrelator::STRiemannTTCorrelator(Double_t planecut, Int_t minHitsFor
 }
 
 Bool_t
-STRiemannTTCorrelator::Correlate(STRiemannTrack *track1, STRiemannTrack *track2, Bool_t &survive, Double_t &matchQuality)
+STRiemannTTCorrelator::Correlate(STRiemannTrack *track1, 
+                                 STRiemannTrack *track2, 
+                                 Bool_t &survive, 
+                                 Double_t &matchQuality)
 {
   // check scale
   if (track1 -> GetRiemannScale() != track2 -> GetRiemannScale()) {
@@ -49,6 +46,7 @@ STRiemannTTCorrelator::Correlate(STRiemannTrack *track1, STRiemannTrack *track2,
   // fill hits into new RiemannTrack and refit
   STRiemannTrack *mergedTrack = new STRiemannTrack(track1 -> GetRiemannScale());
   mergedTrack -> SetSort(kFALSE); // it's faster and we don't need it anyway
+
   for (UInt_t iHit = 0; iHit < numHits1; iHit++) {
     STRiemannHit *hit = new STRiemannHit(*(track1 -> GetHit(iHit)));
     mergedTrack -> AddHit(hit);
@@ -69,16 +67,17 @@ STRiemannTTCorrelator::Correlate(STRiemannTrack *track1, STRiemannTrack *track2,
   delete mergedTrack;
 
   matchQuality = rms;
-//  DebugLogger::Instance() -> Histo("TT_riem_rms",rms,0,0.005,100);
 
-  if (rms > fPlaneCut*scaling) {
-//    DebugLogger::Instance() -> Histo("TT_riemanncuts",6,0,20,20);
+  if (rms > fPlaneCut*scaling) 
+  {
     survive = kFALSE;
+#ifdef DEBUGRIEMANNCUTS
+    STDebugLogger::Instance() -> FillHist1Step("plane_fail",rms,200,0,200);
+#endif
     return kTRUE;
   }
 #ifdef DEBUGRIEMANNCUTS
-  STDebugLogger::Instance() -> FillHist1("planeTT",rms,100,0,100);
-  STDebugLogger::Instance() -> FillHist1("planeTTCut",fPlaneCut*scaling,100,0,100);
+  STDebugLogger::Instance() -> FillHist1("plane",rms,200,0,20);
 #endif
 
   survive = kTRUE;

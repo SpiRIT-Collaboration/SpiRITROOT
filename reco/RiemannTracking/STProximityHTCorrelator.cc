@@ -1,32 +1,23 @@
-//-----------------------------------------------------------
-// Description:
-//      Hit-Track-Correlator using proximity arguments
-//
-// Environment:
-//      Software developed for the SpiRIT-TPC at RIBF-RIKEN
-//
-// Original Author List:
-//      Sebastian Neubert    TUM            (original author)
-//
-// Author List:
-//      Genie Jhang          Korea University
-//-----------------------------------------------------------
+/**
+ * @brief Hit-Track-Correlator using proximity arguments* 
+ *
+ * @atrhor Sebastian Neubert (TUM) -- original author
+ * @author Genie Jhang (Korea University)
+ * @author JungWoo Lee (Korea University)
+ */
 
 // SpiRITROOT classes
 #include "STProximityHTCorrelator.hh"
 #include "STHitCluster.hh"
 #include "STRiemannHit.hh"
 #include "STRiemannTrack.hh"
+#include "STDebugLogger.hh"
 
 // ROOT classes
 #include "TVector3.h"
 #include "TMath.h"
 
-#include "STDebugLogger.hh"
-
 #define SPEEDUP 5
-
-//#include "Riostream.h"
 
 STProximityHTCorrelator::STProximityHTCorrelator(Double_t cut, Double_t zStretch, Double_t helixcut)
 {
@@ -37,18 +28,31 @@ STProximityHTCorrelator::STProximityHTCorrelator(Double_t cut, Double_t zStretch
 }
 
 Bool_t
-STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bool_t &survive, Double_t &matchQuality)
+STProximityHTCorrelator::Correlate(STRiemannTrack *track, 
+                                   STRiemannHit *rhit, 
+                                   Bool_t &survive, 
+                                   Double_t &matchQuality)
 {
-  // Get the position of the cluster of the given Riemann hit, rhit.
-  // That is the position of the hit in TPC.
-  // Riemann hit is the hit on Riemann sphere.
+  /**
+   * Get the position of the cluster of the given Riemann hit, rhit.
+   * That is the position of the hit in TPC.
+   * Riemann hit is the hit on Riemann sphere.
+   */
   TVector3 posX = rhit -> GetCluster() -> GetPosition();
 
-  // When the track is already fitted, just check if the difference between the helical radius and
-  // the distance from the helical center to hit position is bigger than fHelixCut.
-  // In this case, matchQuality is the difference and the hit doesn't survive.
-  if (track -> IsFitted()) {
+  /**
+   * When the track is already fitted, just check if the difference between the helical radius and
+   * the distance from the helical center to hit position is bigger than fHelixCut.
+   * In this case, matchQuality is the difference and the hit doesn't survive.
+   */
+  if (track -> IsFitted()) 
+  {
     Double_t circDist = TMath::Abs((posX - track -> GetCenter()).Perp() - track -> GetR());
+#ifdef DEBUGRIEMANNCUTS
+    STDebugLogger::Instance() -> FillHist1Step("perp",(posX - track -> GetCenter()).Perp(),200,0,200);
+    STDebugLogger::Instance() -> FillHist1Step("radius",track -> GetR(),200,0,200);
+    STDebugLogger::Instance() -> FillHist1Step("diff",circDist,200,0,200);
+#endif
 
     if (circDist > fHelixCut) {
       matchQuality = circDist;
@@ -80,7 +84,8 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
 #endif
 
   // Check last and first hit for match
-  for (UInt_t iHit = numHits - 1; kTRUE; iHit -= iHit) {
+  for (UInt_t iHit = numHits - 1; kTRUE; iHit -= iHit) 
+  {
     pos = track -> GetHit(iHit) -> GetCluster() -> GetPosition();
     dis3 = posX - pos;
     dis3.SetZ(dis3.Z()/fZStretch); // What's this fZStretch for?
@@ -89,7 +94,6 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
     if (dis < disMin) disMin = dis;
 #endif
 
-//    cout << "dis: " << dis << " proxcut: " << proxcut << endl;
     if (dis < proxcut) {
       matchQuality = dis;
       survive = kTRUE;
@@ -125,7 +129,8 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
   Double_t largecut = 0.6*SPEEDUP*fMeanDist + proxcut*fZStretch;
   Double_t mindis = 1.E10;
   
-  for (UInt_t iHit = 2; iHit < numHits - 1; iHit += SPEEDUP){
+  for (UInt_t iHit = 2; iHit < numHits - 1; iHit += SPEEDUP)
+  {
     pos = track -> GetHit(iHit) -> GetCluster() -> GetPosition();
     dis = (posX - pos).Mag();
     if (dis < mindis) {
@@ -133,7 +138,6 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
       if (mindis < largecut)
         closest = iHit;
 
-//      cout << "mindis: " << mindis << " proxcut: " << proxcut << endl;
       if (mindis < proxcut && track -> IsFitted()) {
         matchQuality = mindis;
         survive = kTRUE;
@@ -157,7 +161,6 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track, STRiemannHit *rhit, Bo
   dist.SetZ(dist.Z()/fZStretch);
   l = dist.Mag();
 
-//  cout << "l: " << l << " proxcut: " << proxcut << endl;
   if (l > proxcut) {
     survive = kFALSE;
     return kTRUE;

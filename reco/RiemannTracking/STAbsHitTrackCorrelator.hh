@@ -1,18 +1,3 @@
-//-----------------------------------------------------------
-// Description:
-//      Abstract interface for a hit-track correlator
-//      for the Riemann track finder
-//
-// Environment:
-//      Software developed for the SpiRIT-TPC at RIBF-RIKEN
-//
-// Original Author:
-//      Sebastian Neubert    TUM            (original author)
-//
-// Author List:
-//      Genie Jhang          Korea University
-//-----------------------------------------------------------
-
 #ifndef STABSHITTRACKCORRELATOR_HH
 #define STABSHITTRACKCORRELATOR_HH
 
@@ -23,7 +8,17 @@
 class STRiemannTrack;
 class STRiemannHit;
 
-class STAbsHitTrackCorrelator {
+/**
+ * Abstract interface for a hit-track correlator
+ * for the Riemann track finder
+ *
+ * @author Johannes Rauch (TUM) -- original author
+ * @author Genie Jhang    (Korea University)
+ * @author JungWoo Lee (Korea University)
+ */
+
+class STAbsHitTrackCorrelator 
+{
   public:
     STAbsHitTrackCorrelator(){}
     virtual ~STAbsHitTrackCorrelator(){}
@@ -35,7 +30,10 @@ class STAbsHitTrackCorrelator {
       *   In this case matchQuality is a measure of how well the hit lies
       *   on the track with restpect to this correlator.
      **/
-    virtual Bool_t Correlate(STRiemannTrack *track, STRiemannHit *hit, Bool_t &survive, Double_t &matchQuality) = 0;
+    virtual Bool_t Correlate(STRiemannTrack *track, 
+                             STRiemannHit *hit, 
+                             Bool_t &survive, 
+                             Double_t &matchQuality) = 0;
 };
 
 #endif

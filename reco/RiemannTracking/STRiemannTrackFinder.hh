@@ -1,30 +1,3 @@
-//-----------------------------------------------------------
-// Description:
-//      Track finder using the riemann circle fit
-//
-//      The algorithm can be configured with correlators 
-//      (see STAbsHitTrackCorrelator)
-//      For each hit all track candidates are tested
-//      For each track the algorithm is stepping through the 
-//      correlators which are in a hirarchical order. 
-//      A correlator can be applicable or not. 
-//      If it is applicalble to the hit/track combination and
-//      the track survives, then the correlator delivers a matchQuality.
-//      Finally the hit is added to the track candidate that 
-//      reached the deepest correlator level and 
-//      if there are ambiguities achieved the best machtQuality
-//
-// Environment:
-//      Software developed for the SpiRIT-TPC at RIBF-RIKEN
-//
-// Original Author List:
-//      Sebastian Neubert    TUM            (original author)
-//      Johannes Rauch       TUM
-//
-// Author List:
-//      Genie Jhang          Korea University
-//-----------------------------------------------------------
-
 #ifndef STRIEMANNTRACKFINDER_HH
 #define STRIEMANNTRACKFINDER_HH
 
@@ -38,7 +11,30 @@ class STAbsHitTrackCorrelator;
 class STAbsTrackTrackCorrelator;
 class STRiemannTrack;
 
-class STRiemannTrackFinder {
+/**
+ * @brief Track finder using the riemann circle fit
+ *
+ * @author Sebastian Neubert (TUM) -- original author
+ * @author Johannes Rauch    (TUM)
+ * @author Genie Jhang (Korea University)
+ * @author JungWoo Lee (Korea University)
+ *
+ * @detail 
+ *    The algorithm can be configured with correlators 
+ *    (see STAbsHitTrackCorrelator)
+ *    For each hit all track candidates are tested
+ *    For each track the algorithm is stepping through the 
+ *    correlators which are in a hirarchical order. 
+ *    A correlator can be applicable or not. 
+ *    If it is applicalble to the hit/track combination and
+ *    track survives, then the correlator delivers a matchQuality.
+ *    Finally the hit is added to the track candidate that 
+ *    reached the deepest correlator level and 
+ *    if there are ambiguities achieved the best machtQuality
+ */
+
+class STRiemannTrackFinder 
+{
   public:
     STRiemannTrackFinder();
     STRiemannTrackFinder(Double_t scale);
@@ -56,15 +52,29 @@ class STRiemannTrackFinder {
     // Modifiers -----------------------
     void SetMinHitsForFit(UInt_t numHits);
 
-    void SetSorting(Int_t sorting);  /// -1: no sorting, 0: sort Clusters by X, 1: Y, 2: Z, 3: R, 4: Distance to interaction point, 5: Phi
-    void SetSortingMode(Bool_t sortingMode); /// false: sort only according to fSorting; kTRUE: use internal sorting when adding hits to trackcands
+    /** 
+     * @param sorting
+     *        -1: no sorting, 
+     *         0: sort Clusters by X, 
+     *         1: Y, 
+     *         2: Z, 
+     *         3: R, 
+     *         4: Distance to interaction point, 
+     *         5: Phi
+     */
+    void SetSorting(Int_t sorting);  
+    /** 
+     * false: sort only according to fSorting; 
+     * true:  use internal sorting when adding hits to trackcands
+     */
+    void SetSortingMode(Bool_t sortingMode);
     void SetInteractionZ(Double_t z);
-    void SetMaxNumHitsForPR(Double_t maxHits); /// for debugging
+    void SetMaxNumHitsForPR(Double_t maxHits); ///< for debugging
 
     void SkipCrossingAreas(Bool_t value = kTRUE);
-    void SetTTProxCut(Double_t cut); /// needed for speeding up the merging
-    void SetProxCut(Double_t cut); /// needed for speeding up the initialized trackbuilding
-    void SetHelixCut(Double_t cut); /// needed for excluding hits in crossing areas
+    void SetTTProxCut(Double_t cut); ///< needed for speeding up the merging
+    void SetProxCut(Double_t cut);   ///< needed for speeding up the initialized trackbuilding
+    void SetHelixCut(Double_t cut);  ///< needed for excluding hits in crossing areas
 
     void InitTracks(Bool_t initTracks = kTRUE, Double_t dip = 0, Double_t curv = 0);
     void SetMaxR(Double_t r);
@@ -88,7 +98,7 @@ class STRiemannTrackFinder {
   private:
     // Private Data Members ------------
     vector<STAbsHitTrackCorrelator *> fHTCorrelators;
-    vector<Bool_t> fFound; // flags which correlator fired
+    vector<Bool_t> fFound; ///< flags which correlator fired
     vector<Double_t> fBestMatchQuality;
     vector<UInt_t> fBestMatchIndex;
 
@@ -97,12 +107,12 @@ class STRiemannTrackFinder {
     Int_t fSorting;
     Bool_t fSortingMode;
     Double_t fInteractionZ;
-    Int_t fMaxNumHitsForPR; // for debugging
+    Int_t fMaxNumHitsForPR; ///< for debugging
 
     Bool_t fSkipCrossingAreas;
 
     Bool_t fInitTracks;
-    Bool_t fSkipAndDelete; // skip hits far away from boundary and delete incomplete tracks!
+    Bool_t fSkipAndDelete; ///< skip hits far away from boundary and delete incomplete tracks!
     Double_t fInitDip;
     Double_t fInitCurv;
     Double_t fMaxR;
@@ -121,7 +131,7 @@ class STRiemannTrackFinder {
 
 };
 
-// sorting algorithm for clusters
+/// Sorting algorithm for clusters
 class SortClusterClass
 {
   public:
@@ -135,7 +145,7 @@ class SortClusterClass
     Double_t fInteractionZ;
 };
 
-// sorting algorithm for tracklets
+/// Sorting algorithm for tracklets
 class SortTrackletsClass
 {
   public:

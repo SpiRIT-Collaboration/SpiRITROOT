@@ -1,29 +1,24 @@
-//-----------------------------------------------------------
-// Description:
-//      Track finder using the riemann circle fit
-//
-//      The algorithm can be configured with correlators 
-//      (see STAbsHitTrackCorrelator)
-//      For each hit all track candidates are tested
-//      For each track the algorithm is stepping through the 
-//      correlators which are in a hirarchical order. 
-//      A correlator can be applicable or not. 
-//      If it is applicalble to the hit/track combination and
-//      the track survives, then the correlator delivers a matchQuality.
-//      Finally the hit is added to the track candidate that 
-//      reached the deepest correlator level and 
-//      if there are ambiguities achieved the best machtQuality
-//
-// Environment:
-//      Software developed for the SpiRIT-TPC at RIBF-RIKEN
-//
-// Original Author List:
-//      Sebastian Neubert    TUM            (original author)
-//      Johannes Rauch       TUM
-//
-// Author List:
-//      Genie Jhang          Korea University
-//-----------------------------------------------------------
+/**
+ * @brief Track finder using the riemann circle fit
+ *
+ * @author Sebastian Neubert (TUM) -- original author
+ * @author Johannes Rauch    (TUM)
+ * @author Genie Jhang (Korea University)
+ * @author JungWoo Lee (Korea University)
+ *
+ * @detail 
+ *    The algorithm can be configured with correlators 
+ *    (see STAbsHitTrackCorrelator)
+ *    For each hit all track candidates are tested
+ *    For each track the algorithm is stepping through the 
+ *    correlators which are in a hirarchical order. 
+ *    A correlator can be applicable or not. 
+ *    If it is applicalble to the hit/track combination and
+ *    track survives, then the correlator delivers a matchQuality.
+ *    Finally the hit is added to the track candidate that 
+ *    reached the deepest correlator level and 
+ *    if there are ambiguities achieved the best machtQuality
+ */
 
 // SpiRITROOT classes
 #include "STHitCluster.hh"
