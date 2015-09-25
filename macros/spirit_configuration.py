@@ -280,12 +280,12 @@ if(kbInput == 'y' or kbInput == 'Y') :
   command_reco = "source " + dirWork + "/build/config.sh > /dev/null; root -l -q -b 'run_reco.C(" + sim_name + ")'"
 
   time_start = time.time()
-  #os.system(command_mc)
+  os.system(command_mc)
   time_end = time.time()
   time_diff_mc = time_end - time_start
 
   time_start = time.time()
-  #os.system(command_digi)
+  os.system(command_digi)
   time_end = time.time()
   time_diff_digi = time_end - time_start
 
