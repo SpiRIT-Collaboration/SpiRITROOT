@@ -36,8 +36,6 @@ STHitClusteringTask::STHitClusteringTask()
   fLogger = FairLogger::GetLogger();
   fIsPersistence = kFALSE;
 
-  fEventHCArray = new TClonesArray("STEvent");
-
   fSetProxCut  = kFALSE;
   fSetSigmaCut = kFALSE;
   fSetEdgeCut  = kFALSE;
@@ -85,9 +83,9 @@ STHitClusteringTask::Init()
     return kERROR;
   }
 
-  fEventHArray = (TClonesArray *) ioMan -> GetObject("STEventH");
+  fEventHArray = (TClonesArray *) ioMan -> GetObject("STEvent");
   if (fEventHArray == 0) {
-    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEventH array!");
+    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEvent array!");
 
     return kERROR;
   }
@@ -111,8 +109,6 @@ STHitClusteringTask::Init()
     if (fSetSigmaCut) fClusterizer -> SetSigmaCut(fSigmaXCut, fSigmaYCut, fSigmaZCut);
     if (fSetEdgeCut)  fClusterizer -> SetEdgeCut(fXLowCut, fXHighCut);
   }
-
-  ioMan -> Register("STEventHC", "SPiRIT", fEventHCArray, fIsPersistence);
 
   fDriftLength = fPar -> GetDriftLength();
   fYDivider = fPar -> GetYDivider();
@@ -139,13 +135,7 @@ STHitClusteringTask::SetParContainers()
 void
 STHitClusteringTask::Exec(Option_t *opt)
 {
-  fEventHCArray -> Delete();
-
-  if (fEventHArray -> GetEntriesFast() == 0)
-    return;
-
   STEvent *eventH = (STEvent *) fEventHArray -> At(0);
-  //STEvent *eventHC = (STEvent *) new ((*fEventHCArray)[0]) STEvent(eventH);
   STEvent *eventHC = eventH;
 
   if (!(eventH -> IsGood())) {

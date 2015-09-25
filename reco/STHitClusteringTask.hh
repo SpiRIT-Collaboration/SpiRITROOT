@@ -82,7 +82,6 @@ class STHitClusteringTask : public FairTask
     Int_t fYDivider;               //!< Space divider along y direction
 
     TClonesArray *fEventHArray;    //!< Array that is containing events having only hits
-    TClonesArray *fEventHCArray;   //!< Array that will contain events having hits and hit clusters
 
     void FindCluster(vector<STHit> &slicedSpace, STEvent *event);
     STHit *FindLargestHitAndCloseHits(vector<STHit> &slicedSpace, STHit *centerHit, vector<Int_t> &clusteredHits);

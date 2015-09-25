@@ -99,10 +99,7 @@ STPSATask::Init()
   fPSA -> SetThreshold((Int_t)fThreshold);
   fPSA -> SetLayerCut(fLayerCut);
 
-  if (fPSAMode == kOPTICS)
-    ioMan -> Register("STEventHC", "SPiRIT", fEventHArray, fIsPersistence);
-  else
-    ioMan -> Register("STEventH", "SPiRIT", fEventHArray, fIsPersistence);
+  ioMan -> Register("STEvent", "SPiRIT", fEventHArray, fIsPersistence);
 
   return kSUCCESS;
 }

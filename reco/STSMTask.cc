@@ -50,9 +50,9 @@ STSMTask::Init()
     return kERROR;
   }
 
-  fEventHCArray = (TClonesArray *) ioMan -> GetObject("STEventH");
+  fEventHCArray = (TClonesArray *) ioMan -> GetObject("STEvent");
   if (fEventHCArray == 0) {
-    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEventH array!");
+    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEvent array!");
 
     return kERROR;
   }

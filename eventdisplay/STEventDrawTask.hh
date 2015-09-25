@@ -100,12 +100,12 @@ class STEventDrawTask : public FairTask
     STEventManager* fEventManager;
     STEventManagerEditor* fEventManagerEditor;
 
+    STEvent* fEvent;
+
     TClonesArray* fMCHitArray;
     TClonesArray* fDriftedElectronArray;
-    TClonesArray* fHitArray;
-    TClonesArray* fHitClusterArray;
+    TClonesArray* fEventArray;
     TClonesArray* fRiemannTrackArray;
-    TClonesArray* fKalmanArray;
     TClonesArray* fRawEventArray;
 
     STRawEvent* fRawEvent;

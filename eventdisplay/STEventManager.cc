@@ -67,16 +67,6 @@ STEventManager::~STEventManager()
 {
 }
 
-/*
-void
-STEventManager::InitRiemann(Int_t option, Int_t level, Int_t nNodes)
-{
-  TEveManager::Create();
-  fRunAna -> Init();
-  fEvent= gEve -> AddEvent(this);
-}
-*/
-
 void 
 STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 {
@@ -154,7 +144,7 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 
   fRunAna -> Init();
 
-  if(gGeoManager) {
+   if (gGeoManager) {
     TGeoNode* geoNode = gGeoManager -> GetTopNode();
     TEveGeoTopNode* topNode
       = new TEveGeoTopNode(gGeoManager, geoNode, option, level, nNodes);
@@ -162,21 +152,18 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 
     TObjArray* listVolume = gGeoManager -> GetListOfVolumes();
     Int_t nVolumes = listVolume -> GetEntries();
-    for(Int_t i=0; i<nVolumes; i++)
-    {
+    for (Int_t i=0; i<nVolumes; i++)
       ((TGeoVolume*) listVolume -> At(i)) -> SetTransparency(fTransparency);
-    }
 
     gEve -> FullRedraw3D(kTRUE);
 
     fLogger -> Debug(MESSAGE_ORIGIN, "Adding STEventManager to TEveManager.");
-    fEvent= gEve -> AddEvent(this);
+    fEvent = gEve -> AddEvent(this);
   }
 
   /**************************************************************************/
 
   gEve -> GetBrowser() -> GetTabRight() -> SetTab(1);
-  //gEve -> GetBrowser() -> Resize();
   gEve -> GetBrowser() -> HideBottomTab();
   gEve -> GetWindowManager() -> HideAllEveDecorations();
 
@@ -198,8 +185,8 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 
   gEve -> ElementSelect(gEve -> GetCurrentEvent());
   gEve -> GetBrowser() -> GetTabLeft() -> SetTab(2);
+
   fLogger -> Debug(MESSAGE_ORIGIN, "STEventManager End of Init().");
-  GotoEvent(fEntry);
 }
 
 void 
@@ -209,27 +196,11 @@ STEventManager::InitByEditor()
 
   gEve -> GetBrowser() -> StartEmbedding(TRootBrowser::kLeft);
 
-  {
-    //TGMainFrame* mainFrame = new TGMainFrame(gClient -> GetRoot(), 1024, 600); 
-    //mainFrame -> SetWindowName("GUI control");
-    //mainFrame -> SetCleanup(kDeepCleanup);
+  TGMainFrame* mainFrame = new TGMainFrame(gClient -> GetRoot(), 1000, 600);
+  fEditor -> FillFrameContent(mainFrame);
 
-    //mainFrame -> AddFrame(fEditor -> GetEventFrame());
-    //mainFrame -> AddFrame(fEditor -> GetEditorTabSubFrame());
-
-    //mainFrame -> MapSubwindows();
-    //mainFrame -> MapWindow();
-
-    //fEditor -> GetEditorTabSubFrame() -> MapSubwindows();
-    //fEditor -> GetEditorTabSubFrame() -> MapWindow();
-
-    TGMainFrame* mainFrame = new TGMainFrame(gClient -> GetRoot(), 1000, 600);
-    fEditor -> FillFrameContent(mainFrame);
-    //mainFrame -> SetFrameElement(fEditor -> GetEditorTabSubFrame());
-    //mainFrame -> SetFrameElement(fEditor -> GetEventFrame());
-    mainFrame -> MapSubwindows();
-    mainFrame -> MapWindow();
-  }
+  mainFrame -> MapSubwindows();
+  mainFrame -> MapWindow();
 
   gEve -> GetBrowser() -> StopEmbedding();
   gEve -> GetBrowser() -> SetTabTitle("Event control", TRootBrowser::kLeft);

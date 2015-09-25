@@ -17,13 +17,13 @@ STEventDrawTask::STEventDrawTask()
   fEventManager = NULL;
   fEventManagerEditor = NULL;
 
+  fEvent = NULL;
+
   fMCHitArray           = NULL;
   fDriftedElectronArray = NULL;
-  fHitArray             = NULL;
-  fHitClusterArray      = NULL;
+  fEventArray           = NULL;
   fRiemannTrackArray    = NULL;
   fRawEventArray        = NULL;
-  fKalmanArray          = NULL;
 
   fRawEvent = NULL;
 
@@ -110,10 +110,8 @@ STEventDrawTask::Init()
 
   fMCHitArray           = (TClonesArray*) ioMan -> GetObject("STMCPoint");
   fDriftedElectronArray = (TClonesArray*) ioMan -> GetObject("STDriftedElectron");
-  fHitArray             = (TClonesArray*) ioMan -> GetObject("STEventH");
-  fHitClusterArray      = (TClonesArray*) ioMan -> GetObject("STEventHC");
+  fEventArray           = (TClonesArray*) ioMan -> GetObject("STEvent");
   fRiemannTrackArray    = (TClonesArray*) ioMan -> GetObject("STRiemannTrack");
-  fKalmanArray          = (TClonesArray*) ioMan -> GetObject("STKalmanTrack");
   fRawEventArray        = (TClonesArray*) ioMan -> GetObject("STRawEvent");
 
   gStyle -> SetPalette(55);
@@ -140,16 +138,18 @@ STEventDrawTask::Exec(Option_t* option)
 
   Reset();
 
+  fEvent = (STEvent*) fEventArray -> At(0);
+
   if (fMCHitArray != NULL && fSetObject[kMC]) 
     DrawMCPoints();
 
   if (fDriftedElectronArray != NULL && fSetObject[kDigi]) 
     DrawDriftedElectrons();
 
-  if (fHitArray != NULL && fSetObject[kHit])
+  if (fSetObject[kHit])
     DrawHitPoints();
 
-  if (fHitClusterArray != NULL && (fSetObject[kCluster] || fSetObject[kClusterBox]))
+  if (fSetObject[kCluster] || fSetObject[kClusterBox])
     DrawHitClusterPoints();
 
   if (fRiemannTrackArray != NULL && fSetObject[kRiemann])
@@ -216,12 +216,10 @@ STEventDrawTask::DrawHitPoints()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"DrawHitPoints()");
 
-  STEvent* event = (STEvent*) fHitArray -> At(0);
-
-  if (event == NULL) 
+  if (fEvent == NULL) 
     return;
 
-  Int_t nHits = event -> GetNumHits();
+  Int_t nHits = fEvent -> GetNumHits();
 
   fPointSet[kHit] = new TEvePointSet("Hit", nHits);
   fPointSet[kHit] -> SetOwnIds(kTRUE);
@@ -231,7 +229,7 @@ STEventDrawTask::DrawHitPoints()
 
   for (Int_t iHit=0; iHit<nHits; iHit++)
   {
-    STHit hit = event -> GetHitArray() -> at(iHit);
+    STHit hit = fEvent -> GetHitArray() -> at(iHit);
 
     if (hit.GetCharge() < fThresholdMin[kHit] || hit.GetCharge() > fThresholdMax[kHit])
       continue;
@@ -251,12 +249,10 @@ STEventDrawTask::DrawHitClusterPoints()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"DrawHitClusterPoints()");
 
-  STEvent* event = (STEvent*) fHitClusterArray -> At(0);
-
-  if (event == NULL) 
+  if (fEvent == NULL) 
     return;
 
-  Int_t nClusters = event -> GetNumClusters();
+  Int_t nClusters = fEvent -> GetNumClusters();
 
   if (fSetObject[kClusterBox]) {
     fBoxClusterSet = new TEveBoxSet("BoxCluster");
@@ -277,7 +273,7 @@ STEventDrawTask::DrawHitClusterPoints()
   fLogger -> Debug(MESSAGE_ORIGIN,Form("Number of clusters: %d",nClusters));
   for (Int_t iCluster=0; iCluster<nClusters; iCluster++)
   {
-    STHitCluster cluster = event -> GetClusterArray() -> at(iCluster);
+    STHitCluster cluster = fEvent -> GetClusterArray() -> at(iCluster);
 
     if (cluster.GetCharge() < fThresholdMin[kCluster] || cluster.GetCharge() > fThresholdMax[kCluster])
       continue;
@@ -322,9 +318,7 @@ STEventDrawTask::DrawRiemannHits()
   STHit* rHit = NULL;
   TEvePointSet* riemannPointSet = NULL;
 
-  STEvent* event = (STEvent*) fHitClusterArray -> At(0);
-
-  if (event == NULL) 
+  if (fEvent == NULL) 
     return;
 
   Int_t nTracks = fRiemannTrackArray -> GetEntries();
@@ -347,7 +341,7 @@ STEventDrawTask::DrawRiemannHits()
         continue;
 
       Int_t id = rHit -> GetClusterID();
-      STHitCluster oCluster = event -> GetClusterArray() -> at(id);
+      STHitCluster oCluster = fEvent -> GetClusterArray() -> at(id);
 
       TVector3 position = oCluster.GetPosition();
       riemannPointSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
@@ -634,9 +628,7 @@ STEventDrawTask::DrawPad(Int_t row, Int_t layer)
   for (Int_t tb=0; tb<fNTbs; tb++)
     fHistPad -> SetBinContent(tb+1, adc[tb]);
 
-
-  STEvent* event = (STEvent*) fHitArray -> At(0);
-  Int_t nHits = event -> GetNumHits();
+  Int_t nHits = fEvent -> GetNumHits();
 
   fCvsPad -> cd();
   fHistPad -> Draw();

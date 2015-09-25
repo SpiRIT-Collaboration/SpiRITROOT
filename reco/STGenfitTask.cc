@@ -81,7 +81,7 @@ STGenfitTask::Init()
     return kERROR;
   }
 
-  fEventArray = (TClonesArray *) ioMan -> GetObject("STEventHC");
+  fEventArray = (TClonesArray *) ioMan -> GetObject("STEvent");
   if (fEventArray == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEvent array!");
     return kERROR;
