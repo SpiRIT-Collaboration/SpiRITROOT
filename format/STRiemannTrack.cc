@@ -1,18 +1,14 @@
-//-----------------------------------------------------------------
-// Description:
-//      Track on Riemann Sphere
-//      Circle parameters can be calculated from plane parameters
-//      plane(c,nx,ny,nz);
-//
-// Environment:
-//      Software developed for the SpiRIT-TPC at RIBF-RIKEN
-//
-// Original Author List:
-//      Sebastian Neubert    TUM
-//
-// Author List:
-//      Genie Jhang          Korea University
-//-----------------------------------------------------------------
+/**
+ * @brief  STRiemann Track
+ *
+ * @author Sebastian Neubert (TUM) -- original author for FOPIROOT
+ * @author Genie Jhang (Korea University) -- implementation for SpiRITROOT
+ * @author JungWoo Lee (Korea University) -- implementation for SpiRITROOT
+ *
+ * @detail Track on Riemann Sphere
+ *         Circle parameters can be calculated from plane parameters
+ *         plane(c,nx,ny,nz);
+ */
 
 // SpiRITROOT classes
 #include "STEvent.hh"

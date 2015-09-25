@@ -1,17 +1,13 @@
-//-----------------------------------------------------------------
-// Description:
-//      Conformal Mapping of a hit
-//      (x,y) -> (r,phi)-> riemann sphere
-//
-// Environment:
-//      Software developed for the SpiRIT-TPC at RIBF-RIKEN
-//
-// Original Author:
-//      Sebastian Neubert    TUM
-//
-// Author List:
-//      Genie Jhang          Korea University
-//-----------------------------------------------------------------
+/**
+ * @brief  STRiemann Track
+ *
+ * @author Sebastian Neubert (TUM) -- original author for FOPIROOT
+ * @author Genie Jhang (Korea University) -- implementation for SpiRITROOT
+ * @author JungWoo Lee (Korea University) -- implementation for SpiRITROOT
+ *
+ * @detail Conformal Mapping of a hit
+ *         (x,y) -> (r,phi)-> riemann sphere
+ */
 
 // SpiRITROOT classes
 #include "STRiemannHit.hh"

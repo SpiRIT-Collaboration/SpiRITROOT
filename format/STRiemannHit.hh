@@ -1,14 +1,13 @@
-//-----------------------------------------------------------------
-// Description:
-//      Conformal Mapping of a hit
-//      (x,y) -> (r,phi)-> riemann sphere
-//
-// Environment:
-//      Software developed for the SpiRIT-TPC at RIBF-RIKEN
-//
-// Author List:
-//      Genie Jhang          Korea University
-//-----------------------------------------------------------------
+/**
+ * @brief  STRiemann Track
+ *
+ * @author Sebastian Neubert (TUM) -- original author for FOPIROOT
+ * @author Genie Jhang (Korea University) -- implementation for SpiRITROOT
+ * @author JungWoo Lee (Korea University) -- implementation for SpiRITROOT
+ *
+ * @detail Conformal Mapping of a hit
+ *         (x,y) -> (r,phi)-> riemann sphere
+ */
 
 #ifndef STRIEMANNHIT_HH
 #define STRIEMANNHIT_HH
@@ -45,13 +44,13 @@ class STRiemannHit : public TObject
   private:
     void InitVariables(Double_t r, Double_t phi, Double_t riemannScale = 86.1);
 
-    TVector3 fX;            /// Position on Riemann sphere in cartesian coordinates
-    STHit *fHit;            /// STHit pointer, no ownership over this pointer!
-    Double_t fS;            /// Pathlength along track
-    Double_t fAngleOnHelix; /// Angle on helix
-    Double_t fRiemannScale; /// Scaling in xy plane: 8.7 for prototype, 24.6 for panda. What about our case?
+    TVector3 fX;            ///< Position on Riemann sphere in cartesian coordinates
+    STHit *fHit;            ///< STHit pointer, no ownership over this pointer!
+    Double_t fS;            ///< Pathlength along track
+    Double_t fAngleOnHelix; ///< Angle on helix
+    Double_t fRiemannScale; ///< Scaling in xy plane: 8.7 for prototype, 24.6 for panda. What about our case?
 
-    FairLogger *fLogger;    //!
+    FairLogger *fLogger;    //!<
 
   ClassDef(STRiemannHit, 1);
 };
