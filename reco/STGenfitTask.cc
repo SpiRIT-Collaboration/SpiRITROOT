@@ -161,20 +161,21 @@ STGenfitTask::Exec(Option_t *opt)
 
     // First hit position is used as starting position of the initial track
     STRiemannHit *hit = riemannTrack -> GetFirstHit();
-    STHitCluster *cluster = event -> GetCluster(hit -> GetCluster() -> GetClusterID());
+    STHitCluster *cluster = event -> GetCluster(hit -> GetHit() -> GetClusterID());
     posSeed = cluster -> GetPosition();
     posSeed.SetMag(posSeed.Mag()/10.);
 
     // First hit covariance matrix is used as covariance matrix seed of the initial track
     TMatrixD covMatrix = cluster -> GetCovMatrix();
     for (Int_t iComp = 0; iComp < 3; iComp++)
-      covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
+      //covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
+      covSeed(iComp, iComp) = 0.08*0.08;
     for (Int_t iComp = 3; iComp < 6; iComp++)
       covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3)/(numHits*numHits)/3.;
 
     for (UInt_t iHit = 0; iHit < numHits; iHit++) {
       hit = riemannTrack -> GetHit(iHit);
-      cluster = event -> GetCluster(hit -> GetCluster() -> GetClusterID());
+      cluster = event -> GetCluster(hit -> GetHit() -> GetClusterID());
 
       new ((*fHitClusterArray)[iHit]) STHitCluster(*cluster);
       trackCand.addHit(fTPCDetID, iHit);

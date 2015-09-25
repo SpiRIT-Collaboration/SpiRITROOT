@@ -11,7 +11,6 @@
 
 // SpiRITROOT classes
 #include "STRiemannTrackingTask.hh"
-#include "STHitCluster.hh"
 #include "STRiemannHit.hh"
 #include "STDebugLogger.hh"
 #include "STProximityHTCorrelator.hh"
@@ -244,7 +243,7 @@ STRiemannTrackingTask::Init()
   else
     fLogger -> Debug(MESSAGE_ORIGIN, "No matching riemann track model!");
 
-  fClusterBuffer = new std::vector<STHitCluster *>;
+  fHitBuffer = new std::vector<STHit *>;
 
   return kSUCCESS;
 }
@@ -286,21 +285,21 @@ STRiemannTrackingTask::Exec(Option_t *opt)
     }
   }
   fRiemannList.clear();
-  fClusterBuffer -> clear();
+  fHitBuffer -> clear();
 
 
 
   // Initialize -----------------------------------------------------------------------------------------
   STEvent *eventHCM = (STEvent *) fEventHCMArray -> At(0);
-  fLogger -> Debug(MESSAGE_ORIGIN, "Fetching clusters from cluster branch...");
+  fLogger -> Debug(MESSAGE_ORIGIN, "Fetching hits from hit branch...");
 
-  UInt_t numCluster = eventHCM -> GetNumClusters();
-  if (numCluster == 0)
-    fLogger -> Info(MESSAGE_ORIGIN, "Event #%d : Bad event. No clusters to build tracks.");
+  UInt_t numHit = eventHCM -> GetNumClusters(); // TODO
+  if (numHit == 0)
+    fLogger -> Info(MESSAGE_ORIGIN, "Event #%d : Bad event. No hits to build tracks.");
 
-  for (UInt_t iCluster = 0; iCluster < numCluster; iCluster++) {
-    STHitCluster *cluster = (STHitCluster *) eventHCM -> GetCluster(iCluster);
-    fClusterBuffer -> push_back(cluster);
+  for (UInt_t iHit = 0; iHit < numHit; iHit++) {
+    STHit *hit = (STHit *) eventHCM -> GetCluster(iHit); // TODO
+    fHitBuffer -> push_back(hit);
   }
 
   std::vector<STRiemannTrack *> riemannTemp; // temporary storage
@@ -309,8 +308,8 @@ STRiemannTrackingTask::Exec(Option_t *opt)
 
 
   // 1st Build & Merge ----------------------------------------------------------------------------------
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortR, fMinHitsR, fMaxRMS);
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinHitsZ, 0.7*fMaxRMS);
+  BuildTracks(fTrackFinder, fHitBuffer, &riemannTemp, STRiemannSort::kSortR, fMinHitsR, fMaxRMS);
+  BuildTracks(fTrackFinder, fHitBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinHitsZ, 0.7*fMaxRMS);
   riemannTemp.clear();
 
   MergeTracks();
@@ -322,8 +321,8 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   for (UInt_t iTrack = 0; iTrack < nTracks; iTrack++)
     riemannTemp.push_back(fRiemannList[iTrack]);
 
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortPhi, fMinHitsPhi, fMaxRMS);
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortReversePhi, fMinHitsPhi, fMaxRMS);
+  BuildTracks(fTrackFinder, fHitBuffer, &riemannTemp, STRiemannSort::kSortPhi, fMinHitsPhi, fMaxRMS);
+  BuildTracks(fTrackFinder, fHitBuffer, &riemannTemp, STRiemannSort::kSortReversePhi, fMinHitsPhi, fMaxRMS);
   riemannTemp.clear();
 
   MergeTracks();
@@ -335,10 +334,10 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   for (UInt_t iTrack = 0; iTrack < nTracks; iTrack++)
     riemannTemp.push_back(fRiemannList[iTrack]);
 
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortR, fMinPoints+3, fMaxRMS);
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinPoints+1, fMaxRMS*1.5);
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortPhi, fMinPoints+1, fMaxRMS*1.5);
-  BuildTracks(fTrackFinder, fClusterBuffer, &riemannTemp, STRiemannSort::kSortReversePhi, fMinPoints+1, fMaxRMS*1.5);
+  BuildTracks(fTrackFinder, fHitBuffer, &riemannTemp, STRiemannSort::kSortR, fMinPoints+3, fMaxRMS);
+  BuildTracks(fTrackFinder, fHitBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinPoints+1, fMaxRMS*1.5);
+  BuildTracks(fTrackFinder, fHitBuffer, &riemannTemp, STRiemannSort::kSortPhi, fMinPoints+1, fMaxRMS*1.5);
+  BuildTracks(fTrackFinder, fHitBuffer, &riemannTemp, STRiemannSort::kSortReversePhi, fMinPoints+1, fMaxRMS*1.5);
   riemannTemp.clear();
 
   MergeTracks();
@@ -364,13 +363,13 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   // Store ----------------------------------------------------------------------------------------------
   STRiemannTrack *track;
   UInt_t foundTracks = fRiemannList.size();
-  UInt_t numUsedCluster = 0;
+  UInt_t numUsedHit = 0;
   UInt_t numHits;
 
   for (UInt_t iTrack = 0; iTrack < foundTracks; iTrack++){
     track = fRiemannList[iTrack];
     numHits = track -> GetNumHits();
-    numUsedCluster += numHits;
+    numUsedHit += numHits;
 
     new((*fRiemannTrackArray)[fRiemannTrackArray -> GetEntriesFast()]) STRiemannTrack(*track);
     for (UInt_t iHit = 0; iHit < numHits; iHit++){
@@ -381,13 +380,13 @@ STRiemannTrackingTask::Exec(Option_t *opt)
 
 
 
-  fLogger -> Info(MESSAGE_ORIGIN, Form("Event #%d : Found %d tracks, used %d(/%d) clusters.", 
-                       eventHCM -> GetEventID(), foundTracks, numUsedCluster, numCluster));
+  fLogger -> Info(MESSAGE_ORIGIN, Form("Event #%d : Found %d tracks, used %d(/%d) hits.", 
+                       eventHCM -> GetEventID(), foundTracks, numUsedHit, numHit));
 }
 
 
 void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
-                                        std::vector<STHitCluster *> *clusterBuffer,
+                                        std::vector<STHit *> *hitbuffer,
                                         std::vector<STRiemannTrack *> *trackletList,
                                         Int_t sorting,
                                         UInt_t minHits,
@@ -395,13 +394,13 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
                                         Bool_t skipCrossingAreas,
                                         Bool_t skipAndDelete)
 {
-  Int_t nClIn = clusterBuffer -> size();
-  if (nClIn == 0)
+  Int_t nHitIn = hitbuffer -> size();
+  if (nHitIn == 0)
     return;
 
   Int_t nTracksIn = trackletList -> size();
 
-  fLogger -> Debug(MESSAGE_ORIGIN, Form("... building tracks from %d clusters", clusterBuffer -> size()));
+  fLogger -> Debug(MESSAGE_ORIGIN, Form("... building tracks from %d hits", hitbuffer -> size()));
 
   trackfinder -> SetSorting(sorting);
   trackfinder -> SetMinHits(minHits);
@@ -414,7 +413,7 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
   if (nTracksIn > 0)
     LastTrackIn = trackletList -> back();
 
-  trackfinder -> BuildTracks(*clusterBuffer, *trackletList);
+  trackfinder -> BuildTracks(*hitbuffer, *trackletList);
 
   UInt_t nGoodTrks = 0, nErasedCl = 0, nHits;
   STRiemannTrack *trk;
@@ -434,12 +433,12 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
       trk -> SetFinished(kFALSE);
       trk -> SetGood();
 
-      // clear clusters from good tracklets
-      for (UInt_t iCl = 0; iCl < nHits; iCl++)
-        clusterBuffer -> erase(remove(clusterBuffer -> begin(), 
-                                      clusterBuffer -> end(), 
-                                      trk -> GetHit(iCl) -> GetCluster()), 
-                               clusterBuffer -> end());
+      // clear hits from good tracklets
+      for (UInt_t iHit = 0; iHit < nHits; iHit++)
+        hitbuffer -> erase(remove(hitbuffer -> begin(), 
+                                      hitbuffer -> end(), 
+                                      trk -> GetHit(iHit) -> GetHit()), 
+                                      hitbuffer -> end());
      
       nGoodTrks++;
       fLogger -> Debug(MESSAGE_ORIGIN, "======================================================== good Track!");
@@ -452,10 +451,10 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
     else // delete bad tracklets 
     {
       if (trk -> IsGood()) {
-      // track has been found before ( -> clusters were taken out) 
-      // but does not pass quality criteria anymore -> fill clusters back into buffer
-        for (UInt_t iCl = 0; iCl < nHits; iCl++) {
-          clusterBuffer -> push_back(trk -> GetHit(iCl) -> GetCluster());
+      // track has been found before ( -> hits were taken out) 
+      // but does not pass quality criteria anymore -> fill hits back into buffer
+        for (UInt_t iHit = 0; iHit < nHits; iHit++) {
+          hitbuffer -> push_back(trk -> GetHit(iHit) -> GetHit());
         }
       }
 
@@ -471,12 +470,12 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
   }
 
   fLogger -> Debug(MESSAGE_ORIGIN, 
-                   Form("   nGoodTrks: %d,  nTracksIn: %d,  nClIn: %d, clusterBufferSize: %d", 
-                        nTracksIn, nClIn, clusterBuffer -> size()));
+                   Form("   nGoodTrks: %d,  nTracksIn: %d,  nHitIn: %d, hitBufferSize: %d", 
+                        nTracksIn, nHitIn, hitbuffer -> size()));
 
   fLogger -> Debug(MESSAGE_ORIGIN, 
-                   Form("   found good tracks: %d, reuduced nCl by %d", 
-                        nGoodTrks - nTracksIn, nClIn - clusterBuffer -> size()));
+                   Form("   found good tracks: %d, reuduced nHit by %d", 
+                        nGoodTrks - nTracksIn, nHitIn - hitbuffer -> size()));
 }
 
 void STRiemannTrackingTask::MergeTracks()

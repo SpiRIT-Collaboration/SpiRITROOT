@@ -319,7 +319,7 @@ STEventDrawTask::DrawRiemannHits()
   fLogger -> Debug(MESSAGE_ORIGIN,"DrawRiemannHits()");
 
   STRiemannTrack* track = NULL;
-  STHitCluster* rCluster = NULL;
+  STHit* rHit = NULL;
   TEvePointSet* riemannPointSet = NULL;
 
   STEvent* event = (STEvent*) fHitClusterArray -> At(0);
@@ -341,12 +341,12 @@ STEventDrawTask::DrawRiemannHits()
 
     for (Int_t iCluster=0; iCluster<nClusters; iCluster++)
     {
-      rCluster = track -> GetHit(iCluster) -> GetCluster();
+      rHit = track -> GetHit(iCluster) -> GetHit();
 
-      if (rCluster -> GetCharge() < fThresholdMin[kRiemann] || rCluster -> GetCharge() > fThresholdMax[kRiemann])
+      if (rHit -> GetCharge() < fThresholdMin[kRiemann] || rHit -> GetCharge() > fThresholdMax[kRiemann])
         continue;
 
-      Int_t id = rCluster -> GetClusterID();
+      Int_t id = rHit -> GetClusterID();
       STHitCluster oCluster = event -> GetClusterArray() -> at(id);
 
       TVector3 position = oCluster.GetPosition();

@@ -145,7 +145,8 @@ STHitClusteringTask::Exec(Option_t *opt)
     return;
 
   STEvent *eventH = (STEvent *) fEventHArray -> At(0);
-  STEvent *eventHC = (STEvent *) new ((*fEventHCArray)[0]) STEvent(eventH);
+  //STEvent *eventHC = (STEvent *) new ((*fEventHCArray)[0]) STEvent(eventH);
+  STEvent *eventHC = eventH;
 
   if (!(eventH -> IsGood())) {
     eventHC -> SetIsGood(kFALSE);

@@ -8,7 +8,7 @@
 
 // SpiRITROOT classes
 #include "STProximityHTCorrelator.hh"
-#include "STHitCluster.hh"
+#include "STHit.hh"
 #include "STRiemannHit.hh"
 #include "STRiemannTrack.hh"
 #include "STDebugLogger.hh"
@@ -34,11 +34,11 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track,
                                    Double_t &matchQuality)
 {
   /**
-   * Get the position of the cluster of the given Riemann hit, rhit.
+   * Get the position of the hit of the given Riemann hit, rhit.
    * That is the position of the hit in TPC.
    * Riemann hit is the hit on Riemann sphere.
    */
-  TVector3 posX = rhit -> GetCluster() -> GetPosition();
+  TVector3 posX = rhit -> GetHit() -> GetPosition();
 
   /**
    * When the track is already fitted, just check if the difference between the helical radius and
@@ -86,7 +86,7 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track,
   // Check last and first hit for match
   for (UInt_t iHit = numHits - 1; kTRUE; iHit -= iHit) 
   {
-    pos = track -> GetHit(iHit) -> GetCluster() -> GetPosition();
+    pos = track -> GetHit(iHit) -> GetHit() -> GetPosition();
     dis3 = posX - pos;
     dis3.SetZ(dis3.Z()/fZStretch); // What's this fZStretch for?
     dis = dis3.Mag();
@@ -131,7 +131,7 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track,
   
   for (UInt_t iHit = 2; iHit < numHits - 1; iHit += SPEEDUP)
   {
-    pos = track -> GetHit(iHit) -> GetCluster() -> GetPosition();
+    pos = track -> GetHit(iHit) -> GetHit() -> GetPosition();
     dis = (posX - pos).Mag();
     if (dis < mindis) {
       mindis = dis;
@@ -154,7 +154,7 @@ STProximityHTCorrelator::Correlate(STRiemannTrack *track,
   }
 
   Double_t l;
-  TVector3 dist = posX - track -> GetHit(track -> GetClosestHit(rhit, l, closest - SPEEDUP - 2, closest + SPEEDUP + 2)) -> GetCluster() -> GetPosition();
+  TVector3 dist = posX - track -> GetHit(track -> GetClosestHit(rhit, l, closest - SPEEDUP - 2, closest + SPEEDUP + 2)) -> GetHit() -> GetPosition();
 
   matchQuality = l; // unaltered distance in 3D
 

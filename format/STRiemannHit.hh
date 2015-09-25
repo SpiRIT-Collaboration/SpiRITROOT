@@ -14,7 +14,7 @@
 #define STRIEMANNHIT_HH
 
 // SpiRITROOT classes
-#include "STHitCluster.hh"
+#include "STHit.hh"
 
 // ROOT classes
 #include "TObject.h"
@@ -29,11 +29,11 @@ class STRiemannHit : public TObject
     STRiemannHit();
     STRiemannHit(Double_t riemannScale);
     STRiemannHit(Double_t r, Double_t phi, Double_t riemannScale = 86.1);
-    STRiemannHit(STHitCluster *cluster, Double_t riemannScale = 86.1);
+    STRiemannHit(STHit *hit, Double_t riemannScale = 86.1);
     ~STRiemannHit();
 
     const TVector3 &GetX() const;
-    STHitCluster *GetCluster() const;
+    STHit *GetHit() const;
     Double_t GetS() const;
     Double_t GetAngleOnHelix() const;
     Double_t GetRiemannScale() const;
@@ -46,7 +46,7 @@ class STRiemannHit : public TObject
     void InitVariables(Double_t r, Double_t phi, Double_t riemannScale = 86.1);
 
     TVector3 fX;            /// Position on Riemann sphere in cartesian coordinates
-    STHitCluster *fCluster; /// STHitCluster pointer, no ownership over this pointer!
+    STHit *fHit;            /// STHit pointer, no ownership over this pointer!
     Double_t fS;            /// Pathlength along track
     Double_t fAngleOnHelix; /// Angle on helix
     Double_t fRiemannScale; /// Scaling in xy plane: 8.7 for prototype, 24.6 for panda. What about our case?

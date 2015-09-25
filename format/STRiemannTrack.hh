@@ -18,7 +18,7 @@
 #define STRIEMANNTRACK_HH
 
 // SpiRITROOT classes
-#include "STHitCluster.hh"
+#include "STHit.hh"
 #include "STRiemannHit.hh"
 
 // FairRoot classes
@@ -149,7 +149,7 @@ class STRiemannTrack : public TObject
 
     std::vector<STRiemannHit *> fHits; // riemann hits of the track; track has ownership!
     TVector3 fAv;  // average over all hits
-    Double_t fSumOfWeights; // for weighing the average with cluster error
+    Double_t fSumOfWeights; // for weighing the average with hit error
 
     Bool_t fDoSort; // flag for switching on and off sorting
 
@@ -162,13 +162,13 @@ class STRiemannTrack : public TObject
 class SortByX {
   public:
     SortByX() {}
-    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetCluster() -> GetPosition().X() < hit2 -> GetCluster() -> GetPosition().X()); }
+    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetHit() -> GetPosition().X() < hit2 -> GetHit() -> GetPosition().X()); }
 };
 
 class SortByXInv {
   public:
     SortByXInv() {}
-    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetCluster() -> GetPosition().X() > hit2 -> GetCluster() -> GetPosition().X()); }
+    Bool_t operator()(STRiemannHit *hit1, STRiemannHit *hit2) { return (hit1 -> GetHit() -> GetPosition().X() > hit2 -> GetHit() -> GetPosition().X()); }
 };
 
 class SortByAngle {

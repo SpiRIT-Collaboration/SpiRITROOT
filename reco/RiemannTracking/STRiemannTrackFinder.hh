@@ -6,7 +6,7 @@
 
 using std::vector;
 
-class STHitCluster;
+class STHit;
 class STAbsHitTrackCorrelator;
 class STAbsTrackTrackCorrelator;
 class STRiemannTrack;
@@ -55,7 +55,7 @@ class STRiemannTrackFinder
     /** 
      * @param sorting
      *        -1: no sorting, 
-     *         0: sort Clusters by X, 
+     *         0: sort Hits by X, 
      *         1: Y, 
      *         2: Z, 
      *         3: R, 
@@ -84,7 +84,7 @@ class STRiemannTrackFinder
     void SetScale(Double_t scale);
 
     // Operations ----------------------
-    UInt_t BuildTracks(vector<STHitCluster *> &clusters, vector<STRiemannTrack *> &candlist);
+    UInt_t BuildTracks(vector<STHit *> &hits, vector<STRiemannTrack *> &candlist);
 
     void MergeTracks(vector<STRiemannTrack *> &candlist);
     void CleanTracks(vector<STRiemannTrack *> &candlist, Double_t szcut, Double_t planecut);
@@ -92,7 +92,7 @@ class STRiemannTrackFinder
     void AddHTCorrelator(STAbsHitTrackCorrelator *c);
     void AddTTCorrelator(STAbsTrackTrackCorrelator *c);
 
-    void SortClusters(vector<STHitCluster *> &cll);
+    void SortHits(vector<STHit *> &hitList);
     void SortTracklets(vector<STRiemannTrack *> &tracklets);
 
   private:
@@ -131,11 +131,11 @@ class STRiemannTrackFinder
 
 };
 
-/// Sorting algorithm for clusters
-class SortClusterClass
+/// Sorting algorithm for hits
+class SortHitClass
 {
   public:
-    Bool_t operator() (STHitCluster *cluster1, STHitCluster *cluster2);
+    Bool_t operator() (STHit *hit1, STHit *hit2);
 
     void SetSorting(Int_t sorting) { fSorting = sorting; }
     void SetInteractionZ(Double_t z) { fInteractionZ = z; }

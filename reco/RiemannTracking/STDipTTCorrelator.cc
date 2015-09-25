@@ -10,7 +10,7 @@
 // SpiRITROOT classes
 #include "STDipTTCorrelator.hh"
 
-#include "STHitCluster.hh"
+#include "STHit.hh"
 #include "STRiemannHit.hh"
 #include "STRiemannTrack.hh"
 #include "STDebugLogger.hh"
@@ -71,10 +71,10 @@ STDipTTCorrelator::Correlate(STRiemannTrack* track1,
   }
 
   // check distance
-  TVector3 t1h1 = track1 -> GetFirstHit() -> GetCluster() -> GetPosition();
-  TVector3 t1hn = track1 -> GetLastHit()  -> GetCluster() -> GetPosition();
-  TVector3 t2h1 = track2 -> GetFirstHit() -> GetCluster() -> GetPosition();
-  TVector3 t2hn = track2 -> GetLastHit()  -> GetCluster() -> GetPosition();
+  TVector3 t1h1 = track1 -> GetFirstHit() -> GetHit() -> GetPosition();
+  TVector3 t1hn = track1 -> GetLastHit()  -> GetHit() -> GetPosition();
+  TVector3 t2h1 = track2 -> GetFirstHit() -> GetHit() -> GetPosition();
+  TVector3 t2hn = track2 -> GetLastHit()  -> GetHit() -> GetPosition();
 
   Double_t d1n21 = (t1hn - t2h1).Mag();
   Double_t d1n2n = (t1hn - t2hn).Mag();
@@ -110,14 +110,14 @@ STDipTTCorrelator::Correlate(STRiemannTrack* track1,
 
 
     // check if helix distance matches
-    STHitCluster *testCluster = new STHitCluster();
-    testCluster -> SetPosition(pos2);
-    testCluster -> SetCharge(1.);
-    STRiemannHit *testHit = new STRiemannHit(testCluster);
-    Double_t hDist = track1 -> DistHelix(testHit, kTRUE, kTRUE);
+    STHit *testHit = new STHit();
+    testHit -> SetPosition(pos2);
+    testHit -> SetCharge(1.);
+    STRiemannHit *testRiemannHit = new STRiemannHit(testHit);
+    Double_t hDist = track1 -> DistHelix(testRiemannHit, kTRUE, kTRUE);
 
+    delete testRiemannHit;
     delete testHit;
-    delete testCluster;
 
     // check if sz distace small enough
     Double_t scaling2 = scaling * dist/30.;

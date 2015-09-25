@@ -18,7 +18,7 @@
 
 // SpiRITROOT classes 
 #include "STRiemannTrack.hh"
-#include "STHitCluster.hh"
+#include "STHit.hh"
 #include "STRiemannSort.hh"
 #include "STRiemannTrackFinder.hh"
 #include "STDigiPar.hh"
@@ -32,7 +32,7 @@ class STRiemannTrackingTask : public FairTask
     STRiemannTrackingTask();
     ~STRiemannTrackingTask();
 
-    /// default : kHelix
+    /// Track model (default : kHelix)
     enum STRiemannTrackModel { kHelix, kStraightLine };
 
     /// store processed data into output ROOT file
@@ -46,7 +46,7 @@ class STRiemannTrackingTask : public FairTask
      *
      * @param sorting 
      *       -1: no sorting, 
-     *        0: sort Clusters by X, 
+     *        0: sort Hits by X, 
      *        1: Y, 
      *        2: Z, 
      *        3: R,
@@ -64,9 +64,9 @@ class STRiemannTrackingTask : public FairTask
      *
      * @param doMultistep
      *        if true, do a multistep approach:
-     *        1. find steep tracks (presort clusters along z)
-     *        2. find circle tracks  (presort clusters by angle)
-     *        3. find all other tracks (presort clusters by decreasing radius)
+     *        1. find steep tracks (presort hits along z)
+     *        2. find circle tracks  (presort hits by angle)
+     *        3. find all other tracks (presort hits by decreasing radius)
      *
      * @param minHitsZ    minimum number of hits for a track to be found in step 1.
      * @param minHitsR    minimum number of hits for a track to be found in step 1.
@@ -132,7 +132,7 @@ class STRiemannTrackingTask : public FairTask
     FairLogger *fLogger;
 
     void BuildTracks(STRiemannTrackFinder *trackfinder,
-                     std::vector<STHitCluster *> *clusterBuffer,
+                     std::vector<STHit *> *hitBuffer,
                      std::vector<STRiemannTrack*> *TrackletList,
                      Int_t sorting,
                      UInt_t minHits,
@@ -152,7 +152,7 @@ class STRiemannTrackingTask : public FairTask
 
     STDigiPar *fPar;
 
-    std::vector<STHitCluster *> *fClusterBuffer;
+    std::vector<STHit *> *fHitBuffer;
     std::vector<STRiemannTrack *> fRiemannList;
 
     STRiemannTrackFinder *fTrackFinder;

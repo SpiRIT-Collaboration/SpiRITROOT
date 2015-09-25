@@ -7,7 +7,7 @@
  */
 
 // SpiRITROOT classes
-#include "STHitCluster.hh"
+#include "STHit.hh"
 #include "STRiemannHit.hh"
 #include "STRiemannTrack.hh"
 #include "STHelixHTCorrelator.hh"
