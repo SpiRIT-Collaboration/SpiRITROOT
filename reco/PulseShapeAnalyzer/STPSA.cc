@@ -48,7 +48,7 @@ STPSA::STPSA()
   fPadRows = fPar -> GetPadRows();
   fPadLayers = fPar -> GetPadLayers();
 
-  fNumTbs = fPar -> GetWindowNumTbs();
+  fNumTbs = fPar -> GetNumTbs();
   fTBTime = fPar -> GetTBTime();
   fDriftVelocity = fPar -> GetDriftVelocity();
   fMaxDriftLength = fPar -> GetDriftLength();
@@ -61,7 +61,7 @@ STPSA::~STPSA()
 }
 
 void
-STPSA::LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope)
+STPSA::LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope, Double_t &chi2)
 {
   Double_t sumXY = 0, sumX = 0, sumY = 0, sumX2 = 0;
   for (Int_t iPoint = 0; iPoint < numPoints; iPoint++) {
@@ -73,6 +73,10 @@ STPSA::LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Dou
 
   slope = (numPoints*sumXY - sumX*sumY)/(numPoints*sumX2 - sumX*sumX);
   constant = (sumX2*sumY - sumX*sumXY)/(numPoints*sumX2 - sumX*sumX);
+
+  chi2 = 0;
+  for (Int_t iPoint = 0; iPoint < numPoints; iPoint++)
+    chi2 += pow(x[iPoint]*slope + constant - y[iPoint], 2);
 }
 
 void STPSA::SetThreshold(Double_t threshold) { fThreshold = threshold; }

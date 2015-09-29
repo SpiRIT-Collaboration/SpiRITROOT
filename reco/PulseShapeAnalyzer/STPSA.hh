@@ -41,7 +41,7 @@ class STPSA
     void SetLayerCut(Int_t layerCut);
 
     virtual void Analyze(STRawEvent *rawEvent, STEvent *event) = 0;
-    virtual void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope);
+    virtual void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope, Double_t &chi2);
 
   protected:
     FairLogger *fLogger;      ///< logger pointer
