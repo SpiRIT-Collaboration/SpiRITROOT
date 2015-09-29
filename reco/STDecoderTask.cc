@@ -38,10 +38,6 @@ STDecoderTask::STDecoderTask()
   fExternalNumTbs = kFALSE;
   fNumTbs = 512;
 
-  fExternalWindow = kFALSE;
-  fWindowNumTbs = 512;
-  fWindowStartTb = 0;
-
   fGainCalibrationFile = "";
   fGainConstant = -9999;
   fGainLinear = -9999;
@@ -64,7 +60,6 @@ STDecoderTask::~STDecoderTask()
 
 void STDecoderTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }
 void STDecoderTask::SetNumTbs(Int_t numTbs)                                                   { fNumTbs = numTbs; fExternalNumTbs = kTRUE; }
-void STDecoderTask::SetWindow(Int_t numTbs, Int_t startTb)                                    { fWindowNumTbs = numTbs; fWindowStartTb = startTb; fExternalWindow = kTRUE; }
 void STDecoderTask::AddData(TString filename)                                                 { fDataList.push_back(filename); }
 void STDecoderTask::SetData(Int_t value)                                                      { fDataNum = value; }
 void STDecoderTask::SetInternalPedestal(Int_t startTb, Int_t averageTbs)                      { fUseInternalPedestal = kTRUE; fPedestalStartTb = startTb; fAverageTbs = averageTbs; } 
@@ -95,11 +90,6 @@ STDecoderTask::Init()
     fDecoder -> SetNumTbs(fNumTbs);
   else
     fDecoder -> SetNumTbs(fPar -> GetNumTbs());
-
-  if (fExternalWindow)
-    fDecoder -> SetWindow(fWindowNumTbs, fWindowStartTb);
-  else
-    fDecoder -> SetWindow(fPar -> GetWindowNumTbs(), fPar -> GetWindowStartTb());
 
   fDecoder -> SetOldData(fOldData);
   fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());

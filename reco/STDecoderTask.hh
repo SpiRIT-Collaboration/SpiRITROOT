@@ -49,8 +49,6 @@ class STDecoderTask : public FairTask {
 
     /// Setting the number of time buckets used when taking data
     void SetNumTbs(Int_t numTbs);
-    /// Setting the time window to see
-    void SetWindow(Int_t numTbs, Int_t startTb);
     /// Adding raw data file to the list
     void AddData(TString filename);
     /// Setting which data to be decoded
@@ -103,9 +101,6 @@ class STDecoderTask : public FairTask {
 
     Bool_t fExternalNumTbs;             ///< Flag for checking if the number of time buckets is set by the user.
     Int_t fNumTbs;                      ///< The number of time buckets
-    Bool_t fExternalWindow;             ///< Flag for checking if the number of window-starting time bucket is set by the user.
-    Int_t fWindowNumTbs;                ///< The number of time buckets of the window
-    Int_t fWindowStartTb;               ///< The window-starting time bucket number
 
     Bool_t fIsPersistence;              ///< Persistence check variable
 
