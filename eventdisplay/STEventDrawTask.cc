@@ -119,7 +119,7 @@ STEventDrawTask::Init()
   fCvsPadPlane -> AddExec("ex", "STEventDrawTask::ClickSelectedPadPlane()");
   DrawPadPlane();
 
-  fNTbs          = fPar -> GetWindowNumTbs();
+  fNTbs          = fPar -> GetNumTbs();
   fXPadPlane     = fPar -> GetPadPlaneX();
   fTBTime        = fPar -> GetTBTime();
   fDriftVelocity = fPar -> GetDriftVelocity();
