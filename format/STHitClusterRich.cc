@@ -6,8 +6,12 @@ STHitClusterRich::STHitClusterRich()
 {
   fClusterID = -1;
 
-  fPosition = TVector3(0, 0, -1000);
-  fPosSigma = TVector3(0., 0., 0.);
+  fX = 0;
+  fY = 0;
+  fZ = -1000;
+  fDx = 0;
+  fDy = 0;
+  fDz = 0;
 
   fCovMatrix.ResizeTo(3, 3);
   for (Int_t iElem = 0; iElem < 9; iElem++)
@@ -28,8 +32,12 @@ STHitClusterRich::STHitClusterRich(STHitClusterRich *cluster)
 {
   fClusterID = cluster -> GetClusterID();
 
-  fPosition = cluster -> GetPosition();
-  fPosSigma = cluster -> GetPosSigma();
+  fX = cluster -> GetX();
+  fY = cluster -> GetY();
+  fZ = cluster -> GetZ();
+  fDx = cluster -> GetDx();
+  fDy = cluster -> GetDy();
+  fDz = cluster -> GetDz();
 
   fCovMatrix.ResizeTo(3, 3);
   fCovMatrix = cluster -> GetCovMatrix();

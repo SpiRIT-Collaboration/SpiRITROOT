@@ -50,7 +50,7 @@ class STHitCluster : public STHit
      */
     void CalculateCovMatrix(TVector3 hitPos, Double_t charge); 
 
-  ClassDef(STHitCluster, 5);
+  ClassDef(STHitCluster, 6);
 };
 
 #endif

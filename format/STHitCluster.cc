@@ -17,8 +17,12 @@ STHitCluster::STHitCluster()
 {
   fClusterID = -1;
 
-  fPosition = TVector3(0, 0, -1000);
-  fPosSigma = TVector3(0., 0., 0.);
+  fX = 0;
+  fY = 0;
+  fZ = -1000;
+  fDx = 0;
+  fDy = 0;
+  fDz = 0;
 
   fCovMatrix.ResizeTo(3, 3);
   for (Int_t iElem = 0; iElem < 9; iElem++)
@@ -31,8 +35,12 @@ STHitCluster::STHitCluster(STHitCluster *cluster)
 {
   fClusterID = cluster -> GetClusterID();
 
-  fPosition = cluster -> GetPosition();
-  fPosSigma = cluster -> GetPosSigma();
+  fX = cluster -> GetX();
+  fY = cluster -> GetZ();
+  fZ = cluster -> GetZ();
+  fDx = cluster -> GetDx();
+  fDy = cluster -> GetDy();
+  fDz = cluster -> GetDz();
 
   fCovMatrix.ResizeTo(3, 3);
   fCovMatrix = cluster -> GetCovMatrix();
@@ -63,10 +71,9 @@ STHitCluster::AddHit(STHit *hit)
   if (GetNumHits() > 0)
     CalculateCovMatrix(hitPos, charge);
   else {
-    TVector3 posSigma = hit -> GetPosSigma();
-    fCovMatrix(0, 0) = posSigma.X();
-    fCovMatrix(1, 1) = posSigma.Y();
-    fCovMatrix(2, 2) = posSigma.Z();
+    fCovMatrix(0, 0) = hit -> GetDx();
+    fCovMatrix(1, 1) = hit -> GetDy();
+    fCovMatrix(2, 2) = hit -> GetDz();
   }
 
   fCharge += charge;
@@ -78,23 +85,34 @@ STHitCluster::AddHit(STHit *hit)
 void 
 STHitCluster::CalculatePosition(TVector3 hitPos, Double_t charge)
 {
+  TVector3 position(fX, fY, fZ);
+
   for (Int_t iPos = 0; iPos < 3; iPos++)
-    fPosition[iPos] += charge*(hitPos[iPos] - fPosition[iPos])/(fCharge + charge);
+    position[iPos] += charge*(hitPos[iPos] - position[iPos])/(fCharge + charge);
+
+  fX = position.X();
+  fY = position.Y();
+  fZ = position.Z();
 }
 
 void 
 STHitCluster::CalculateCovMatrix(TVector3 hitPos, Double_t charge)
 {
+  TVector3 position(fX, fY, fZ);
+
   for (Int_t iFirst = 0; iFirst < 3; iFirst++) {
     for (Int_t iSecond = 0; iSecond < iFirst + 1; iSecond++) {
       fCovMatrix(iFirst, iSecond) = fCharge*fCovMatrix(iFirst, iSecond)/(fCharge + charge);
       fCovMatrix(iFirst, iSecond) += charge*(hitPos[iFirst] 
-                                     - fPosition[iFirst])*(hitPos[iSecond] 
-                                     - fPosition[iSecond])/fCharge;
+                                     - position[iFirst])*(hitPos[iSecond] 
+                                     - position[iSecond])/fCharge;
       fCovMatrix(iSecond, iFirst) = fCovMatrix(iFirst, iSecond);
     }
-    fPosSigma[iFirst] = TMath::Sqrt(fCovMatrix(iFirst, iFirst));
   }
+
+  fDx = fCovMatrix(0, 0);
+  fDy = fCovMatrix(1, 1);
+  fDz = fCovMatrix(2, 2);
 }
 
 /*

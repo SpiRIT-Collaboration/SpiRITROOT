@@ -38,7 +38,7 @@ class STHitClusterRich : public STHitCluster
     Double_t fYMin;
     Double_t fZMin;
 
-  ClassDef(STHitClusterRich, 0);
+  ClassDef(STHitClusterRich, 1);
 };
 
 #endif
