@@ -92,8 +92,9 @@ STPSADF::Analyze(STRawEvent *rawEvent, STEvent *event)
 
           Double_t fitConst = 0;
           Double_t fitSlope = 0;
+          Double_t chi2 = 0;
 
-          LSLFit(countPoints, binBufferFit, valBufferFit, fitConst, fitSlope);
+          LSLFit(countPoints, binBufferFit, valBufferFit, fitConst, fitSlope, chi2);
           Double_t tbHit = -fitConst/fitSlope;
           Double_t yHit = CalculateY(tbHit);
 
@@ -105,6 +106,11 @@ STPSADF::Analyze(STRawEvent *rawEvent, STEvent *event)
 
           //std::cout << "    z, y " << zPos << " " << adcMax << std::endl;
           STHit *hit = new STHit(hitNum, xPos, yHit, zPos, adcMax);
+          hit -> SetRow(pad -> GetRow());
+          hit -> SetLayer(pad -> GetLayer());
+          hit -> SetTb(tbHit);
+          hit -> SetChi2(chi2);
+          hit -> SetNDF(countPoints);
           event -> AddHit(hit);
           delete hit;
 

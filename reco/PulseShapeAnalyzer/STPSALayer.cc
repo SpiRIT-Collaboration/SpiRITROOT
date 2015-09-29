@@ -303,8 +303,9 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
 
     Double_t fitConst = 0;
     Double_t fitSlope = 0;
+    Double_t chi2 = 0;
 
-    LSLFit(selectedPoints, selectedTbs, selectedValues, fitConst, fitSlope);
+    LSLFit(selectedPoints, selectedTbs, selectedValues, fitConst, fitSlope, chi2);
     Double_t hitTime = -fitConst/fitSlope;
 
     Double_t yPos = CalculateY(hitTime);
@@ -314,6 +315,11 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
     Double_t zPos = CalculateZ(layer);
 
     STHit *hit = new STHit(hitNum, xPos, yPos, zPos, peakValue);
+    hit -> SetRow(pad.GetRow());
+    hit -> SetLayer(pad.GetLayer());
+    hit -> SetTb(hitTime);
+    hit -> SetChi2(chi2);
+    hit -> SetNDF(selectedPoints);
     event -> AddHit(hit);
     delete hit;
 

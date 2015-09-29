@@ -273,7 +273,8 @@ STPSALayerOPTICS::SetLayer(STRawEvent* rawEvent)
 
       Double_t fitConst = 0;
       Double_t fitSlope = 0;
-      LSLFit(countPoints, tbArray, adcArray, fitConst, fitSlope);
+      Double_t chi2 = 0;
+      LSLFit(countPoints, tbArray, adcArray, fitConst, fitSlope, chi2); // chi2 is not stored.
       Double_t tbHit = -fitConst/fitSlope;
       Double_t yHit = CalculateY(tbHit);
       if (yHit > 0 || yHit < -fMaxDriftLength)
