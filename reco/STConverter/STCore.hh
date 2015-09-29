@@ -44,7 +44,6 @@ class STCore : public TObject {
     Int_t GetNumData();
     TString GetDataName(Int_t index);
     void SetNumTbs(Int_t value);
-    void SetWindow(Int_t numTbs, Int_t startTb);
     void SetInternalPedestal(Int_t pedestalStartTb = 10, Int_t averageTbs = 20);
     Bool_t SetPedestalData(TString filename, Double_t rmsFactor = 0);
     void SetFPNPedestal(Double_t sigmaThreshold = 5);
@@ -73,9 +72,6 @@ class STCore : public TObject {
     STPlot *fPlotPtr;
 
     Int_t fNumTbs;
-
-    Int_t fWindowNumTbs;
-    Int_t fWindowStartTb;
 
     GETDecoder *fDecoderPtr;
     Bool_t fIsData;

@@ -33,7 +33,6 @@ STCore::STCore(TString filename)
   Initialize();
   AddData(filename);
   SetNumTbs(512);
-  SetWindow(512, 0);
 }
 
 STCore::STCore(TString filename, Int_t numTbs, Int_t windowNumTbs, Int_t windowStartTb)
@@ -41,7 +40,6 @@ STCore::STCore(TString filename, Int_t numTbs, Int_t windowNumTbs, Int_t windowS
   Initialize();
   AddData(filename);
   SetNumTbs(numTbs);
-  SetWindow(windowNumTbs, windowStartTb);
 }
 
 STCore::~STCore()
@@ -77,9 +75,6 @@ void STCore::Initialize()
   fIsGainCalibrationData = kFALSE;
 
   fNumTbs = 512;
-
-  fWindowNumTbs = 512;
-  fWindowStartTb = 0;
 
   fPedestalStartTb = 3;
   fAverageTbs = 20;
@@ -136,12 +131,6 @@ void STCore::SetNumTbs(Int_t value)
 {
   fNumTbs = value;
   fDecoderPtr -> SetNumTbs(value);
-}
-
-void STCore::SetWindow(Int_t numTbs, Int_t startTb)
-{
-  fWindowNumTbs = numTbs;
-  fWindowStartTb = startTb;
 }
 
 void STCore::SetInternalPedestal(Int_t startTb, Int_t averageTbs)
@@ -303,16 +292,16 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
 
         STPad *pad = new ((*fPadArray)[row*112 + layer]) STPad(row, layer);
         Int_t *rawadc = frame -> GetRawADC(iAget, iCh);
-        for (Int_t iTb = 0; iTb < fWindowNumTbs; iTb++)
-          pad -> SetRawADC(iTb, rawadc[fWindowStartTb + iTb]);
+        for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+          pad -> SetRawADC(iTb, rawadc[iTb]);
 
         if (fPedestalMode == kPedestalInternal) {
           frame -> CalcPedestal(iAget, iCh, fPedestalStartTb, fAverageTbs);
           frame -> SubtractPedestal(iAget, iCh);
 
           Double_t *adc = frame -> GetADC(iAget, iCh);
-          for (Int_t iTb = 0; iTb < fWindowNumTbs; iTb++)
-            pad -> SetADC(iTb, adc[fWindowStartTb + iTb]);
+          for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+            pad -> SetADC(iTb, adc[iTb]);
 
           pad -> SetPedestalSubtracted(kTRUE);
         } else if (fPedestalMode != kNoPedestal) {
@@ -344,8 +333,8 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
           if (fIsGainCalibrationData)
             fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
 
-          for (Int_t iTb = 0; iTb < fWindowNumTbs; iTb++)
-            pad -> SetADC(iTb, adc[fWindowStartTb + iTb]);
+          for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+            pad -> SetADC(iTb, adc[iTb]);
 
           pad -> SetPedestalSubtracted(kTRUE);
         }
