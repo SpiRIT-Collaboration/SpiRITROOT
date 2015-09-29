@@ -91,16 +91,22 @@ STPSAAll::Analyze(STRawEvent *rawEvent, STEvent *event)
 
       Double_t fitConst = 0;
       Double_t fitSlope = 0;
-      LSLFit(countPoints, tbArray, adcArray, fitConst, fitSlope);
+      Double_t chi2 = 0;
+      Int_t ndf = 0;
+
+      LSLFit(countPoints, tbArray, adcArray, fitConst, fitSlope, chi2);
       Double_t tbHit = -fitConst/fitSlope;
       Double_t yHit = CalculateY(tbHit);
-      if (yHit > 0 || yHit < -fMaxDriftLength)
-        continue;
 
-      if (yHit > 0 || yHit < -fMaxDriftLength)
-        continue;
+//      if (yHit > 0 || yHit < -fMaxDriftLength)
+//        continue;
 
       STHit *hit = new STHit(hitNum, xPos, yHit, zPos, charge);
+      hit -> SetRow(pad -> GetRow());
+      hit -> SetLayer(pad -> GetLayer());
+      hit -> SetTb(tbHit);
+      hit -> SetChi2(chi2);
+      hit -> SetNDF(countPoints);
       event -> AddHit(hit);
       delete hit;
 
