@@ -43,6 +43,7 @@
 #include <vector>
 #include <iostream>
 
+#define NUMEVEOBJ 6
 
 class STEventDrawTask : public FairTask
 {
@@ -70,15 +71,27 @@ class STEventDrawTask : public FairTask
 
     void Set2DPlotRange(Int_t uaIdx);
     void SetRange(Double_t min, Double_t max);
+    void SetThresholdRange(STEveObject eve, Double_t min, Double_t max);
+    void SetWindowRange(Int_t start, Int_t end);
+    void SetWindow(Int_t start = 0, Int_t num = 512);
 
     void SetSelfRiemannSet(Int_t iRiemannSet = -1, Bool_t offElse = kTRUE);
-    void SetRendering(STEveObject eveObj, Bool_t rnr, Double_t thresholdMin = -1, Double_t thresholdMax = -1);
-    void SetAttributes(STEveObject eveObj, Style_t style = -1, Size_t size = -1, Color_t color = -1);
+    void SetRendering(STEveObject eveObj, 
+                           Bool_t rnr = kTRUE,
+                         Double_t thresholdMin = -1, 
+                         Double_t thresholdMax = -1);
+    void SetAttributes(STEveObject eveObj, 
+                           Style_t style = -1, 
+                            Size_t size  = -1, 
+                           Color_t color = -1);
     void SetObject(STEveObject eveObj, Bool_t set);
 
     static void ClickSelectedPadPlane();
     void DrawPad(Int_t row, Int_t layer);
     void DrawPadByPosition(Double_t x, Double_t z);
+
+    Int_t GetWindowTbStart();
+    Int_t GetWindowTbEnd();
 
     Int_t GetNRiemannSet();
 
@@ -136,21 +149,26 @@ class STEventDrawTask : public FairTask
     Int_t fMinX;
     Int_t fMaxX;
 
-    TEvePointSet* fPointSet[6];
-    Bool_t   fSetObject[6];
-    Bool_t   fRnrSelf[6];
-    Color_t  fPointColor[6];
-    Size_t   fPointSize[6];
-    Style_t  fPointStyle[6];
-    Double_t fThresholdMin[6];
-    Double_t fThresholdMax[6];
+    Int_t fWindowTbStart;
+    Int_t fWindowTbEnd;
+    Double_t fWindowYStart;
+    Double_t fWindowYEnd;
+
+    TEvePointSet* fPointSet[NUMEVEOBJ];
+    Bool_t   fSetObject[NUMEVEOBJ];
+    Bool_t   fRnrSelf[NUMEVEOBJ];
+    Color_t  fPointColor[NUMEVEOBJ];
+    Size_t   fPointSize[NUMEVEOBJ];
+    Style_t  fPointStyle[NUMEVEOBJ];
+    Double_t fThresholdMin[NUMEVEOBJ];
+    Double_t fThresholdMax[NUMEVEOBJ];
 
     TEveBoxSet* fBoxClusterSet;
     vector<TEvePointSet*> fRiemannSetArray;
 
     static STEventDrawTask* fInstance;
 
-  ClassDef(STEventDrawTask,2);
+  ClassDef(STEventDrawTask,3);
 };
 
 #endif

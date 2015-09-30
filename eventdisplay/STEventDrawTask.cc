@@ -125,6 +125,12 @@ STEventDrawTask::Init()
   fDriftVelocity = fPar -> GetDriftVelocity();
   fDriftVelocity = fDriftVelocity/100.;
 
+  fWindowTbStart    = fPar -> GetWindowStartTb();
+  fWindowTbEnd = fPar -> GetWindowNumTbs() + fWindowTbStart;
+
+  fWindowYStart = fWindowTbStart    * fTBTime * fDriftVelocity / 10.;
+  fWindowYEnd   = fWindowTbEnd * fTBTime * fDriftVelocity / 10.;
+
   fCvsPad = fEventManager -> GetCvsPad();
   SetHistPad();
 
@@ -176,7 +182,9 @@ STEventDrawTask::DrawMCPoints()
   {
     STMCPoint *point = (STMCPoint*) fMCHitArray -> At(iPoint);
               
-    fPointSet[kMC] -> SetNextPoint(point -> GetX(), point -> GetY(), point -> GetZ());
+    fPointSet[kMC] -> SetNextPoint(point -> GetX(), 
+                                   point -> GetY(),
+                                   point -> GetZ());
   }
 
   fPointSet[kMC] -> SetRnrSelf(fRnrSelf[kMC]);
@@ -204,7 +212,7 @@ STEventDrawTask::DrawDriftedElectrons()
     Double_t y = electron -> GetHitY() + fDriftVelocity*(electron -> GetDiffusedTime() + electron -> GetDriftTime());
     Double_t z = electron -> GetZ() + electron -> GetDiffusedZ();
 
-    fPointSet[kDigi] -> SetNextPoint(x/10.,y/10.,z/10.);
+    fPointSet[kDigi] -> SetNextPoint(x/10., y/10., z/10.);
   }
 
   fPointSet[kDigi] -> SetRnrSelf(fRnrSelf[kDigi]);
@@ -231,11 +239,25 @@ STEventDrawTask::DrawHitPoints()
   {
     STHit hit = fEvent -> GetHitArray() -> at(iHit);
 
-    if (hit.GetCharge() < fThresholdMin[kHit] || hit.GetCharge() > fThresholdMax[kHit])
+    if (hit.GetCharge() < fThresholdMin[kHit] || 
+        hit.GetCharge() > fThresholdMax[kHit])
       continue;
 
     TVector3 position = hit.GetPosition();
-    fPointSet[kHit] -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
+
+    if (hit.GetTb() < fWindowTbStart || hit.GetTb() > fWindowTbEnd)
+      continue;
+
+    Double_t y = position.Y()/10.;
+    /*
+    if (y > -fWindowYStart || y < -fWindowYEnd)
+      continue;
+    */
+    y += fWindowYStart;
+
+    fPointSet[kHit] -> SetNextPoint(position.X()/10.,
+                                    y,
+                                    position.Z()/10.);
 
     fPadPlane -> Fill(-position.X(), position.Z(), hit.GetCharge());
   }
@@ -275,13 +297,23 @@ STEventDrawTask::DrawHitClusterPoints()
   {
     STHitCluster cluster = fEvent -> GetClusterArray() -> at(iCluster);
 
-    if (cluster.GetCharge() < fThresholdMin[kCluster] || cluster.GetCharge() > fThresholdMax[kCluster])
+    if (cluster.GetCharge() < fThresholdMin[kCluster] || 
+        cluster.GetCharge() > fThresholdMax[kCluster])
       continue;
 
     TVector3 position = cluster.GetPosition();
+
+    Double_t y = position.Y()/10.;
+    if (y > -fWindowYStart || y < -fWindowYEnd)
+      continue;
+    y += fWindowYStart;
+
     TVector3 sigma = cluster.GetPosSigma();
+
     if (fSetObject[kCluster]) {
-      fPointSet[kCluster] -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
+      fPointSet[kCluster] -> SetNextPoint(position.X()/10.,
+                                          y,
+                                          position.Z()/10.);
     }
 
     Double_t xS =  sigma.X()/10.;
@@ -289,7 +321,7 @@ STEventDrawTask::DrawHitClusterPoints()
     Double_t zS =  sigma.Z()/10.;
 
     Double_t xP =  position.X()/10. - xS/2.;
-    Double_t yP =  position.Y()/10. - yS/2.;
+    Double_t yP =  y                - yS/2.;
     Double_t zP =  position.Z()/10. - zS/2.;
 
     if (fSetObject[kClusterBox]) {
@@ -337,14 +369,23 @@ STEventDrawTask::DrawRiemannHits()
     {
       rHit = track -> GetHit(iCluster) -> GetHit();
 
-      if (rHit -> GetCharge() < fThresholdMin[kRiemann] || rHit -> GetCharge() > fThresholdMax[kRiemann])
+      if (rHit -> GetCharge() < fThresholdMin[kRiemann] || 
+          rHit -> GetCharge() > fThresholdMax[kRiemann])
         continue;
 
       Int_t id = rHit -> GetClusterID();
       STHitCluster oCluster = fEvent -> GetClusterArray() -> at(id);
 
       TVector3 position = oCluster.GetPosition();
-      riemannPointSet -> SetNextPoint(position.X()/10.,position.Y()/10.,position.Z()/10.);
+
+      Double_t y = position.Y()/10.;
+      if (y > -fWindowYStart || y < -fWindowYEnd)
+        continue;
+      y += fWindowYStart;
+
+      riemannPointSet -> SetNextPoint(position.X()/10.,
+                                      y,
+                                      position.Z()/10.);
     }
 
     riemannPointSet -> SetRnrSelf(fRnrSelf[kRiemann]);
@@ -678,7 +719,7 @@ STEventDrawTask::ClickSelectedPadPlane()
 void 
 STEventDrawTask::SetRange(Double_t min, Double_t max) 
 { 
-  fLogger -> Warning(MESSAGE_ORIGIN, "This method will be removed in next version. Please use SetRendering() instead.");
+  fLogger -> Warning(MESSAGE_ORIGIN, "This method will be removed in next version. Please use SetThresholdRange() instead.");
 
   fThresholdMin[kHit] = min;
   fThresholdMax[kHit] = max;
@@ -688,9 +729,38 @@ STEventDrawTask::SetRange(Double_t min, Double_t max)
 }
 
 void 
+STEventDrawTask::SetThresholdRange(STEveObject eve, Double_t min, Double_t max) 
+{ 
+  fThresholdMin[eve] = min;
+  fThresholdMax[eve] = max;
+}
+
+void 
+STEventDrawTask::SetWindowRange(Int_t start, Int_t end) 
+{ 
+  fWindowTbStart = start;
+  fWindowTbEnd   = end;
+
+  fWindowYStart = fWindowTbStart    * fTBTime * fDriftVelocity / 10.;
+  fWindowYEnd   = fWindowTbEnd * fTBTime * fDriftVelocity / 10.;
+}
+
+void 
+STEventDrawTask::SetWindow(Int_t start, Int_t num) 
+{ 
+  fWindowTbStart = start;
+  fWindowTbEnd   = start + num;
+
+  fWindowYStart = fWindowTbStart    * fTBTime * fDriftVelocity / 10.;
+  fWindowYEnd   = fWindowTbEnd * fTBTime * fDriftVelocity / 10.;
+}
+
+void 
 STEventDrawTask::SetEventManagerEditor(STEventManagerEditor* pointer)
 { 
   fEventManagerEditor = pointer; 
 } 
 
-Int_t STEventDrawTask::GetNRiemannSet() { return fRiemannSetArray.size(); }
+Int_t STEventDrawTask::GetNRiemannSet()   { return fRiemannSetArray.size(); }
+Int_t STEventDrawTask::GetWindowTbStart() { return fWindowTbStart; }
+Int_t STEventDrawTask::GetWindowTbEnd()   { return fWindowTbEnd; }

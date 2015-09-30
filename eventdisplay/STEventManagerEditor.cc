@@ -213,6 +213,46 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
 
   /********************************************************************/
 
+  TGGroupFrame* frameWindowTb = new TGGroupFrame(eventFrame,"Time Bucket Window");
+  frameWindowTb -> SetTitlePos(TGGroupFrame::kLeft);
+
+  TGHorizontalFrame* frameWindowTbStart = new TGHorizontalFrame(frameWindowTb);
+  TGLabel* labelWindowTbStart = new TGLabel(frameWindowTbStart, "start :");
+  fWindowTbStartDefault = fDrawTask -> GetWindowTbStart();
+  fCurrentWindowTbStart = new TGNumberEntry(frameWindowTbStart, fWindowTbStartDefault, 6, -1,
+                                  TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
+                                  TGNumberFormat::kNELLimitMinMax, 1, 512);
+  frameWindowTbStart -> AddFrame(labelWindowTbStart, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
+  frameWindowTbStart -> AddFrame(fCurrentWindowTbStart, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
+
+  TGHorizontalFrame* frameWindowTbEnd = new TGHorizontalFrame(frameWindowTb);
+  TGLabel* labelWindowTbEnd = new TGLabel(frameWindowTbEnd, "end  :");
+  fWindowTbEndDefault = fDrawTask -> GetWindowTbEnd();
+  fCurrentWindowTbEnd = new TGNumberEntry(frameWindowTbEnd, fWindowTbEndDefault, 6, -1,
+                                  TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
+                                  TGNumberFormat::kNELLimitMinMax, 1, 512);
+  frameWindowTbEnd -> AddFrame(labelWindowTbEnd, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
+  frameWindowTbEnd -> AddFrame(fCurrentWindowTbEnd, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
+
+  TGTextButton* buttonUpdateWindowTb = new TGTextButton(frameWindowTb, "Update");
+  buttonUpdateWindowTb -> Connect("Clicked()", "STEventManagerEditor", this, "UpdateWindowTb()");
+
+  TGTextButton* buttonDefaultWindowTb = new TGTextButton(frameWindowTb, "Reset to default");
+  buttonDefaultWindowTb -> Connect("Clicked()", "STEventManagerEditor", this, "DefaultWindowTb()");
+
+  TGTextButton* buttonResetWindowTb = new TGTextButton(frameWindowTb, "Reset (0,512)");
+  buttonResetWindowTb -> Connect("Clicked()", "STEventManagerEditor", this, "ResetWindowTb()");
+
+  frameWindowTb -> AddFrame(frameWindowTbStart, new TGLayoutHints(kLHintsLeft, 1,1,5,3));
+  frameWindowTb -> AddFrame(frameWindowTbEnd, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
+  frameWindowTb -> AddFrame(buttonUpdateWindowTb, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,3));
+  frameWindowTb -> AddFrame(buttonDefaultWindowTb, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,3,1));
+  frameWindowTb -> AddFrame(buttonResetWindowTb, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,1,3));
+
+  eventFrame -> AddFrame(frameWindowTb, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
+
+  /********************************************************************/
+
   frame -> AddFrame(eventFrame, new TGLayoutHints(kLHintsTop, 0, 0, 2, 0));
 }
 
@@ -220,6 +260,31 @@ void
 STEventManagerEditor::ToggleAutoUpdatePad(Bool_t onoff)
 {
   fAutoUpdatePadFlag = onoff;
+}
+
+void 
+STEventManagerEditor::UpdateWindowTb()
+{
+  fDrawTask -> SetWindowRange(fCurrentWindowTbStart -> GetIntNumber(), fCurrentWindowTbEnd -> GetIntNumber());
+  SelectEvent();
+}
+
+void 
+STEventManagerEditor::ResetWindowTb()
+{
+  fDrawTask -> SetWindow();
+  fCurrentWindowTbStart -> SetNumber(fDrawTask -> GetWindowTbStart());
+  fCurrentWindowTbEnd -> SetNumber(fDrawTask -> GetWindowTbEnd());
+  SelectEvent();
+}
+
+void 
+STEventManagerEditor::DefaultWindowTb()
+{
+  fCurrentWindowTbStart -> SetNumber(fWindowTbStartDefault);
+  fCurrentWindowTbEnd -> SetNumber(fWindowTbEndDefault);
+  fDrawTask -> SetWindowRange(fCurrentWindowTbStart -> GetIntNumber(), fCurrentWindowTbEnd -> GetIntNumber());
+  SelectEvent();
 }
 
 void 

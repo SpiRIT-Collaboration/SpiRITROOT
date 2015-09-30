@@ -27,12 +27,17 @@ class STEventManagerEditor : public TGedFrame
     STEventDrawTask* fDrawTask;
     TGNumberEntry*   fCurrentEvent;
     TGNumberEntry*   fCurrentRiemannSet;
+    TGNumberEntry*   fCurrentWindowTbStart;
+    TGNumberEntry*   fCurrentWindowTbEnd;
     TGNumberEntry*   fTempRiemannSet;
     TGNumberEntry*   fCurrentRow;
     TGNumberEntry*   fCurrentLayer;
     TGLabel*         fEventTime;
 
     TGVerticalFrame* fEditorTabSubFrame;
+
+    Int_t fWindowTbStartDefault;
+    Int_t fWindowTbEndDefault;
 
   public:
     STEventManagerEditor(const TGWindow* p=0, Int_t width=170, Int_t height=30,
@@ -45,6 +50,9 @@ class STEventManagerEditor : public TGedFrame
     virtual void SelectEventIf();
     virtual void SelectPad();
     virtual void SelectPadIf();
+    virtual void UpdateWindowTb();
+    virtual void ResetWindowTb();
+    virtual void DefaultWindowTb();
     virtual void Init();
 
     void SelectRiemannSet();
