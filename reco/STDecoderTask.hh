@@ -57,14 +57,18 @@ class STDecoderTask : public FairTask {
     void SetInternalPedestal(Int_t startTb = 3, Int_t averageTbs = 20);
     /// Setting pedestal data file for external pedestal data.
     void SetPedestalData(TString filename, Double_t rmsFactor = 0);
+    /// Setting to use FPN channels as pedestal with RMS cut in parameters file.
+    void SetFPNPedestal();
     /// Setting to use FPN channels as pedestal
-    void SetFPNPedestal(Double_t rms = 5);
+    void SetFPNPedestal(Double_t rms);
     /// Setting gain calibration data file. If not set, gain is not calibrated.
     void SetGainCalibrationData(TString filename);
     /// Setting gain calibration reference.
     void SetGainReference(Double_t constant, Double_t linear, Double_t quadratic = 0.);
     /// Setting to decode old data file
     void SetOldData(Bool_t oldData = kTRUE);
+    /// Setting event id for STSource
+    void SetEventID(Long64_t eventid = -1);
 
     /// If set, decoded raw data is written in ROOT file with STRawEvent class.
     void SetPersistence(Bool_t value = kTRUE);
@@ -108,9 +112,9 @@ class STDecoderTask : public FairTask {
     TClonesArray *fRawEventArray;       ///< STRawEvent container
     STRawEvent *fRawEvent;              ///< Current raw event for run
 
-    Bool_t fOldData;              ///< Set to decode old data
+    Bool_t fOldData;                    ///< Set to decode old data
 
-    Int_t fEventID;
+    Long64_t fEventID;                  ///< Event ID for STSource
 
   ClassDef(STDecoderTask, 1);
 };
