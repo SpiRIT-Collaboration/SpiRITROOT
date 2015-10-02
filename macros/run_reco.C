@@ -42,7 +42,6 @@ void run_reco
   fDecorderTask -> SetPersistence();
   fDecorderTask -> AddData(dataFile);
   fDecorderTask -> SetFPNPedestal(100);
-  fDecorderTask -> SetWindow(256, 300);
   fDecorderTask -> SetNumTbs(512);
   if (fUseDecorderTask)
     fRun -> AddTask(fDecorderTask);
