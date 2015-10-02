@@ -119,7 +119,7 @@ class STRiemannTrack : public TObject
     Double_t CalcRMS(TVector3 n1, Double_t c1) const;
 
     // Private Data Members ------------
-    FairLogger *fLogger;        //!< FairLogger singleton
+    FairLogger *fLogger;        //! < FairLogger singleton
 
     TVector3 fN;          ///< normal vector of plane (pointing towards origin!)
     Double_t fC;          ///< distance of plane to origin
