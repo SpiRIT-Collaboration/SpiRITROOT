@@ -14,6 +14,9 @@ STClusterizerScan2::STClusterizerScan2()
   fHitClusterTempArray -> reserve(20);
 
   fClusterTemp = new STHitClusterRich();
+
+  SetProximityCutInUnit(1.5, 2.5, 0.5);
+  SetSigmaCutInUnit(4.0, 4.0, 0.8);
 }
 
 STClusterizerScan2::~STClusterizerScan2()
@@ -44,7 +47,7 @@ STClusterizerScan2::Analyze(STEvent* eventIn, STEvent* eventOut)
 
 
   Double_t rSizeTempArray = fZCut*4;
-  Double_t rCurrentTempArray = (fHitArray -> back() -> GetPosition()).Mag();
+  Double_t rMaxWindow = (fHitArray -> back() -> GetPosition()).Mag();
 
 
 
@@ -55,9 +58,11 @@ STClusterizerScan2::Analyze(STEvent* eventIn, STEvent* eventOut)
     fHitArray -> pop_back();
 
     // Merge and move clusters in temp array to final array
-    if (rCurrentTempArray - rSizeTempArray > (hit -> GetPosition()).Mag())
+    Double_t rCurrentHit = (hit -> GetPosition()).Mag();
+    if (rMaxWindow - rSizeTempArray > rCurrentHit)
     {
-      rCurrentTempArray -= rSizeTempArray/2.;
+      while (rMaxWindow - rSizeTempArray > rCurrentHit)
+        rMaxWindow -= rSizeTempArray/2.;
 
       Int_t nClusters = fHitClusterTempArray -> size();
       for (Int_t iCluster=nClusters-1; iCluster>=0; iCluster--)
@@ -80,7 +85,7 @@ STClusterizerScan2::Analyze(STEvent* eventIn, STEvent* eventOut)
       for (Int_t iCluster=nClusters-1; iCluster>=0; iCluster--)
       {
         STHitClusterRich *cluster = fHitClusterTempArray -> at(iCluster);
-        if ((cluster -> GetPosition()).Mag() > rCurrentTempArray)
+        if ((cluster -> GetPosition()).Mag() > rMaxWindow)
         {
           fHitClusterFinalArray -> push_back(cluster);
           fHitClusterTempArray -> erase(fHitClusterTempArray -> begin() + iCluster);
@@ -158,7 +163,7 @@ STClusterizerScan2::Analyze(STEvent* eventIn, STEvent* eventOut)
 
 
   // Add Final cluster in to event;
-  Int_t nClustersFinal  = fHitClusterFinalArray -> size(); 
+  Int_t nClustersFinal = fHitClusterFinalArray -> size(); 
   for (Int_t iClusterFinal=0; iClusterFinal<nClustersFinal; iClusterFinal++)
   {
     STHitClusterRich *clusterFinal = fHitClusterFinalArray -> at(iClusterFinal);
