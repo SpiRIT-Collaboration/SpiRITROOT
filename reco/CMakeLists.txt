@@ -83,7 +83,7 @@ STHitClusteringTask.cc
 STSMTask.cc
 STRiemannTrackingTask.cc
 STGenfitTask.cc
-STUnitTestTask.cc
+STSource.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

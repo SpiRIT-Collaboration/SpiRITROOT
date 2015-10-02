@@ -49,6 +49,6 @@
 #pragma link C++ class genfit::STSpacepointMeasurement+;
 #pragma link C++ class STGenfitTask+;
 
-#pragma link C++ class STUnitTestTask+;
+#pragma link C++ class STSource+;
 
 #endif
