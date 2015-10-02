@@ -28,24 +28,28 @@ class STClusterizer
     STClusterizer();
     virtual ~STClusterizer();
 
-    virtual void Analyze(STEvent* eventH, STEvent* eventHC) = 0;
+    virtual void Analyze(STEvent* eventIn, STEvent* eventOut = NULL) = 0;
+
+    void SetPrimaryVertex(TVector3 vertex);
 
     void SetProximityCut(Double_t x, Double_t y, Double_t z);
-    void SetSigmaCut(Double_t x, Double_t y, Double_t z);
+    void SetProximityCutInUnit(Double_t x, Double_t y, Double_t z);
+
+    void SetSigmaCut(Double_t xw, Double_t yw, Double_t zw);
+    void SetSigmaCutInUnit(Double_t xw, Double_t yw, Double_t zw);
+
     void SetEdgeCut(Double_t low, Double_t high);
 
   protected:
-    FairLogger *fLogger;      //!< logger
-    STDigiPar *fPar;          //!< parameter
+    TVector3 fPrimaryVertex;  //!< primary vertex position
 
     Double_t fPadPlaneX;      //!< pad plane size x in mm
     Double_t fPadSizeX;       //!< pad size x in mm
     Double_t fPadSizeZ;       //!< pad size y in mm
-    Int_t fPadRows;           //!< number of total pad rows
-    Int_t fPadLayers;         //!< number of total pad layers
-
-    Int_t fNumTbs;            //!< the number of time buckets used in taking data
-    Int_t fTBTime;            //!< time duration of a time bucket in ns
+    Int_t    fPadRows;        //!< number of total pad rows
+    Int_t    fPadLayers;      //!< number of total pad layers
+    Int_t    fNumTbs;         //!< the number of time buckets used in taking data
+    Int_t    fTBTime;         //!< time duration of a time bucket in ns
     Double_t fDriftVelocity;  //!< drift velocity of electron in cm/us
     Double_t fMaxDriftLength; //!< maximum drift length in mm
 
@@ -60,6 +64,8 @@ class STClusterizer
 
     Double_t fXLowCut;
     Double_t fXHighCut;
+
+    FairLogger *fLogger;      //!< logger
 
 
   ClassDef(STClusterizer, 1)

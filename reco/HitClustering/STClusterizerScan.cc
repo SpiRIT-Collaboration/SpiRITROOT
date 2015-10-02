@@ -11,16 +11,8 @@ STClusterizerScan::STClusterizerScan()
   fHitClusterArray = new std::vector<STHitCluster *>;
   fHitClusterArray -> reserve(100);
 
-  fPrimaryVertex = TVector3(0., -213.3, -35.2);
-
-  SetZCutPadUnit(0.5);
-
   SetVerticalCutTbUnit(0.8);
-
   SetHorizontalCutPadUnit(4);
-
-  SetSigmaXCutPadUnit(1.8);
-  SetSigmaYCutTbUnit(1);
 
   fClusterTemp = new STHitCluster();
 
@@ -65,31 +57,19 @@ STClusterizerScan::~STClusterizerScan()
 {
 }
 
-void STClusterizerScan::SetPrimaryVertex(TVector3 vertex) { fPrimaryVertex = vertex; }
-
-void STClusterizerScan::SetZCut(Double_t zCut)                   { fZCut = zCut; }
-void STClusterizerScan::SetZCutPadUnit(Double_t zCut)            { fZCut = zCut*fPadSizeZ; }
 void STClusterizerScan::SetVerticalCut(Double_t vCut)            { fVerticalCut = vCut; }
 void STClusterizerScan::SetVerticalCutTbUnit(Double_t vCut)      { fVerticalCut = vCut*fYTb; }
 void STClusterizerScan::SetHorizontalCut(Double_t hCut)          { fHorizontalCut = hCut; }
 void STClusterizerScan::SetHorizontalCutPadUnit(Double_t hCut)   { fHorizontalCut = hCut*fPadSizeX; }
 
-void STClusterizerScan::SetSigmaXCut(Double_t xCut)              { fSigmaXCut = xCut; }
-void STClusterizerScan::SetSigmaXCutPadUnit(Double_t xCut)       { fSigmaXCut = xCut*fPadSizeX; }
-void STClusterizerScan::SetSigmaYCut(Double_t yCut)              { fSigmaYCut = yCut; }
-void STClusterizerScan::SetSigmaYCutTbUnit(Double_t yCut)        { fSigmaYCut = yCut*fYTb; }
-
 void STClusterizerScan::SetParameters(Double_t *par)
 {
-  SetZCutPadUnit(par[0]);
   SetHorizontalCutPadUnit(par[1]);
   SetVerticalCutTbUnit(par[2]);
-  SetSigmaXCutPadUnit(par[3]);
-  SetSigmaYCutTbUnit(par[4]);
 }
 
 void 
-STClusterizerScan::Analyze(STEvent* eventH, STEvent* eventHC)
+STClusterizerScan::Analyze(STEvent* eventIn, STEvent* eventOut)
 {
   Double_t rCut = sqrt(  fZCut*fZCut
                        + fVerticalCut*fVerticalCut 
@@ -105,10 +85,10 @@ STClusterizerScan::Analyze(STEvent* eventH, STEvent* eventHC)
   fHitClusterArray -> clear();
 
 
-  Int_t nHits = eventH -> GetNumHits();
+  Int_t nHits = eventIn -> GetNumHits();
   for(Int_t iHit=0; iHit<nHits; iHit++) 
   {
-    STHit *hit = (STHit *) eventH -> GetHit(iHit);
+    STHit *hit = (STHit *) eventIn -> GetHit(iHit);
     hit -> SetPosition(hit -> GetPosition() - fPrimaryVertex);
     fHitArray -> push_back(hit);
   }
@@ -185,7 +165,7 @@ STClusterizerScan::Analyze(STEvent* eventH, STEvent* eventHC)
       Double_t rCluster = (cluster -> GetPosition()).Mag();
       if( rCluster - rhoHit > rCut ) 
       {
-        AddClusterToEvent(eventHC, cluster);
+        AddClusterToEvent(eventOut, cluster);
         fHitClusterArray -> erase(fHitClusterArray -> begin() + iCluster);
       }
 #ifdef DEBUG
@@ -259,12 +239,12 @@ STClusterizerScan::Analyze(STEvent* eventH, STEvent* eventHC)
   for(Int_t iCluster=0; iCluster<nClusters; iCluster++)
   {
     STHitCluster *cluster = fHitClusterArray -> at(iCluster);
-    AddClusterToEvent(eventHC, cluster);
+    AddClusterToEvent(eventOut, cluster);
   }
 
   for(Int_t iHit=0; iHit<nHits; iHit++) 
   {
-    STHit *hit = (STHit *) eventH -> GetHit(iHit);
+    STHit *hit = (STHit *) eventIn -> GetHit(iHit);
     hit -> SetPosition(hit -> GetPosition() + fPrimaryVertex);
   }
 }
@@ -395,14 +375,14 @@ STClusterizerScan::CorrelateHC(STHit* hit, STHitCluster* cluster)
 }
 
 
-void STClusterizerScan::AddClusterToEvent(STEvent* eventHC, STHitCluster* cluster)
+void STClusterizerScan::AddClusterToEvent(STEvent* eventOut, STHitCluster* cluster)
 {
-  Int_t clusterID = eventHC -> GetNumClusters();
+  Int_t clusterID = eventOut -> GetNumClusters();
   cluster -> SetClusterID(clusterID);
 #ifdef DEBUG
   fGraphFinishedCluster -> SetPoint(clusterID, (cluster -> GetPosition()).Z(), (cluster -> GetPosition()).X() );
   fGraphFinishedCluster -> SetPointError(clusterID, (cluster -> GetPosSigma()).Z(), (cluster -> GetPosSigma()).X() );
 #endif
   cluster -> SetPosition(cluster -> GetPosition() + fPrimaryVertex);
-  eventHC -> AddCluster(cluster);
+  eventOut -> AddCluster(cluster);
 }

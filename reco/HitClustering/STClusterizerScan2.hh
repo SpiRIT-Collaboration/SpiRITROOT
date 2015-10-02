@@ -11,17 +11,12 @@ class STClusterizerScan2 : public STClusterizer
     STClusterizerScan2();
     ~STClusterizerScan2();
 
-    void Analyze(STEvent* eventH, STEvent* eventHC);
-    void SetParameters(Double_t *par);
-
-    void SetPrimaryVertex(TVector3 vertex);
+    void Analyze(STEvent* eventIn, STEvent* eventOut = NULL);
 
   private:
     std::vector<STHit *> *fHitArray;
     std::vector<STHitClusterRich *> *fHitClusterFinalArray;
     std::vector<STHitClusterRich *> *fHitClusterTempArray;
-
-    TVector3 fPrimaryVertex; // primary vertex position
 
     /**
      * Correlator between hit and cluster.

@@ -19,28 +19,17 @@ class STClusterizerScan : public STClusterizer
     STClusterizerScan();
     ~STClusterizerScan();
 
-    void Analyze(STEvent* eventH, STEvent* eventHC);
+    void Analyze(STEvent* eventIn, STEvent* eventOut = NULL);
     void SetParameters(Double_t *par);
 
-    void SetPrimaryVertex(TVector3 vertex);
-
-    void SetZCut(Double_t zCut);
-    void SetZCutPadUnit(Double_t zCut);
     void SetVerticalCut(Double_t vCut);
     void SetVerticalCutTbUnit(Double_t vCut);
     void SetHorizontalCut(Double_t hCut);
     void SetHorizontalCutPadUnit(Double_t hCut);
 
-    void SetSigmaXCut(Double_t xCut);
-    void SetSigmaXCutPadUnit(Double_t xCut);
-    void SetSigmaYCut(Double_t yCut);
-    void SetSigmaYCutTbUnit(Double_t yCut);
-
   private:
     std::vector<STHit *> *fHitArray;
     std::vector<STHitCluster *> *fHitClusterArray;
-
-    TVector3 fPrimaryVertex; // primary vertex position
 
     /**
      * Correlator between hit and cluster.
@@ -51,7 +40,7 @@ class STClusterizerScan : public STClusterizer
     Double_t fVerticalCut;
     Double_t fHorizontalCut;
 
-    void AddClusterToEvent(STEvent* eventHC, STHitCluster* cluster);
+    void AddClusterToEvent(STEvent* eventOut, STHitCluster* cluster);
 
     STHitCluster* fClusterTemp;
 
