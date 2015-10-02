@@ -52,6 +52,11 @@ void STSource::Reset()
 {
 }
 
+void STSource::SetData(TString filename)
+{
+  fDataFile = filename;
+}
+
 void STSource::SetEventID(Long64_t eventid)
 {
   fEventID = eventid;
