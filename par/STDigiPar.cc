@@ -29,6 +29,7 @@ Double_t STDigiPar::GetAnodeWirePlaneY()           { return fAnodeWirePlaneY; }
 Double_t STDigiPar::GetGroundWirePlaneY()          { return fGroundWirePlaneY; }
 Double_t STDigiPar::GetGatingWirePlaneY()          { return fGatingWirePlaneY; }
 Double_t STDigiPar::GetEField()                    { return fEField; }
+Double_t STDigiPar::GetFPNPedestalRMS()            { return fFPNPedestalRMS; }
 Int_t    STDigiPar::GetNumTbs()                    { return fNumTbs; }
 Int_t    STDigiPar::GetWindowNumTbs()              { return fWindowNumTbs; }
 Int_t    STDigiPar::GetWindowStartTb()             { return fWindowStartTb; }
@@ -88,6 +89,10 @@ STDigiPar::getParams(FairParamList *paramList)
     }
     if (!(paramList -> fill("GatingWirePlaneY", &fGatingWirePlaneY))) {
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GatingWirePlaneY parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("FPNPedestalRMS", &fFPNPedestalRMS))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find FPNPedestalRMS parameter!");
       return kFALSE;
     }
     if (!(paramList -> fill("EField", &fEField))) {
@@ -190,6 +195,7 @@ STDigiPar::putParams(FairParamList *paramList)
   paramList -> add("GroundWirePlaneY", fGroundWirePlaneY);
   paramList -> add("GatingWirePlaneY", fGatingWirePlaneY);
   paramList -> add("EField", fEField);
+  paramList -> add("FPNPedestalRMS", fFPNPedestalRMS);
   paramList -> add("NumTbs", fNumTbs);
   paramList -> add("WindowNumTbs", fWindowNumTbs);
   paramList -> add("WindowStartTb", fWindowStartTb);

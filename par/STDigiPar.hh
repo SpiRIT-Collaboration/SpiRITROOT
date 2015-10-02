@@ -33,6 +33,7 @@ class STDigiPar : public FairParGenericSet
     Double_t GetAnodeWirePlaneY();
     Double_t GetGroundWirePlaneY();
     Double_t GetGatingWirePlaneY();
+    Double_t GetFPNPedestalRMS();
     Double_t GetEField();
     /// returns the number of time buckets that the data actually has
        Int_t GetNumTbs();
@@ -72,6 +73,7 @@ class STDigiPar : public FairParGenericSet
     Double_t fAnodeWirePlaneY;
     Double_t fGroundWirePlaneY;
     Double_t fGatingWirePlaneY;
+    Double_t fFPNPedestalRMS;
     Double_t fEField;
        Int_t fNumTbs;
        Int_t fWindowNumTbs;
