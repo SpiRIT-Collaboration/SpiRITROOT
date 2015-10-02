@@ -52,7 +52,7 @@ class STRiemannHit : public TObject
 
     FairLogger *fLogger;    //! <
 
-  ClassDef(STRiemannHit, 1);
+  ClassDef(STRiemannHit, 2);
 };
 
 #endif

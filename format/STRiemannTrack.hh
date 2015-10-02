@@ -155,7 +155,7 @@ class STRiemannTrack : public TObject
     // Private Methods -----------------
     Bool_t CheckScale(STRiemannHit *) const;
 
-  ClassDef(STRiemannTrack, 1);
+  ClassDef(STRiemannTrack, 2);
 };
 
 class SortByX {
