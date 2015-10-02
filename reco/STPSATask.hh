@@ -1,17 +1,13 @@
-//-----------------------------------------------------------
-// Description:
-//   Analyzing pulse shape of raw signal and make it to a hit
-//
-// Environment:
-//   Software developed for the SPiRIT-TPC at RIKEN
-//
-// Author List:
-//   Genie Jhang     Korea University     (original author)
-//   JungWoo Lee     Korea University
-//-----------------------------------------------------------
+/**
+ * @brief Analyzing pulse shape of raw signal and make it to a hit
+ *
+ * Author List:
+ * @author Genie Jhang (Korea University), original author
+ * @author JungWoo Lee (Korea University)
+ */
 
-#ifndef _STPSATASK_H_
-#define _STPSATASK_H_
+#ifndef STPSATASK_HH
+#define STPSATASK_HH
 
 // FAIRROOT classes
 #include "FairTask.h"
@@ -34,7 +30,6 @@ class STPSATask : public FairTask
     enum STPSAMode { kSimple, kAll, kLayer, kOPTICS ,kDF, kFast};
 
     void SetPSAMode(STPSAMode mode);
-    void SetPersistence(Bool_t value = kTRUE);
     void SetThreshold(Double_t threshold);
     void SetLayerCut(Double_t layerCut);
 
@@ -45,19 +40,17 @@ class STPSATask : public FairTask
     STPSA* GetPSA();
 
   private:
-    FairLogger *fLogger;
-    
-    STDigiPar *fPar;
     TClonesArray *fRawEventArray;
-    TClonesArray *fEventHArray;
+    TClonesArray *fEventArray;
 
-    STPSA *fPSA;
+    STPSA *fPSA;         //!< Pulse shape analyzer
     STPSAMode fPSAMode;
-
-    Bool_t fIsPersistence;
     
     Double_t fThreshold;
-    Int_t fLayerCut;
+    Int_t    fLayerCut;
+
+    FairLogger *fLogger;   //!
+    
 
   ClassDef(STPSATask, 1);
 };

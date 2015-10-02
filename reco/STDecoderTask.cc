@@ -58,7 +58,7 @@ STDecoderTask::~STDecoderTask()
 {
 }
 
-void STDecoderTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }
+void STDecoderTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; fInputPersistance = value; }
 void STDecoderTask::SetNumTbs(Int_t numTbs)                                                   { fNumTbs = numTbs; fExternalNumTbs = kTRUE; }
 void STDecoderTask::AddData(TString filename)                                                 { fDataList.push_back(filename); }
 void STDecoderTask::SetData(Int_t value)                                                      { fDataNum = value; }
@@ -81,7 +81,7 @@ STDecoderTask::Init()
     return kERROR;
   }
 
-  ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
+  ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fInputPersistance);
 
   fDecoder = new STCore();
   for (Int_t iFile = 0; iFile < fDataList.size(); iFile++)

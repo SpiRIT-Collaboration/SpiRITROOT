@@ -31,38 +31,36 @@ void run_reco
 
   // -----------------------------------------------------------------
   // Settings
-  Bool_t fUseDecorderTask = kTRUE;
+  Bool_t fUseDecoder = kTRUE;
   if (dataFile.IsNull() == kTRUE)
-    fUseDecorderTask = kFALSE;
+    fUseDecoder = kFALSE;
 
 
   // -----------------------------------------------------------------
   // Set reconstruction tasks
   STDecoderTask *fDecorderTask = new STDecoderTask();
-  fDecorderTask -> SetPersistence();
+  fDecorderTask -> SetInputPersistance(kTRUE);
   fDecorderTask -> AddData(dataFile);
   fDecorderTask -> SetFPNPedestal(100);
-  fDecorderTask -> SetNumTbs(512);
-  if (fUseDecorderTask)
+  if (fUseDecoder)
     fRun -> AddTask(fDecorderTask);
 
   STPSATask *fPSATask = new STPSATask();
-  fPSATask -> SetPersistence();
+  fPSATask -> SetInputPersistance(kTRUE);
   fPSATask -> SetThreshold(25);
   fRun -> AddTask(fPSATask);
 
   STHitClusteringTask *fClusteringTask = new STHitClusteringTask();
-  fClusteringTask -> SetPersistence();
   fRun -> AddTask(fClusteringTask);
 
   STSMTask* fSMTask = new STSMTask();
-  fSMTask -> SetPersistence();
+  fSMTask -> SetInputPersistance(kTRUE);
   fSMTask -> SetMode(STSMTask::kChange);
   fRun -> AddTask(fSMTask);
 
   STRiemannTrackingTask* fRiemannTrackingTask = new STRiemannTrackingTask();
   fRiemannTrackingTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ, 0);
-  fRiemannTrackingTask -> SetPersistence();
+  fRiemannTrackingTask -> SetInputPersistance(kTRUE);
   fRun -> AddTask(fRiemannTrackingTask);
 
 
@@ -102,7 +100,7 @@ void run_reco
 
   // -----------------------------------------------------------------
   // Set FairRun
-  if (fUseDecorderTask == kFALSE)
+  if (fUseDecoder == kFALSE)
     fRun -> SetInputFile(inputFile);
   fRun -> SetOutputFile(outputFile);
 
@@ -128,7 +126,7 @@ void run_reco
 
   // -----------------------------------------------------------------
   // Run
-  if (fUseDecorderTask)
+  if (fUseDecoder)
     fRun -> RunOnTBData();
   else
     fRun -> Run(0, 0);

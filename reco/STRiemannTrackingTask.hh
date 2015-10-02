@@ -35,9 +35,6 @@ class STRiemannTrackingTask : public FairTask
     /// Track model (default : kHelix)
     enum STRiemannTrackModel { kHelix, kStraightLine };
 
-    /// store processed data into output ROOT file
-    void SetPersistence(Bool_t value = kTRUE); 
-
     /** Set sorting parameters
      *
      * @param sortingMode
@@ -157,8 +154,6 @@ class STRiemannTrackingTask : public FairTask
 
     STRiemannTrackFinder *fTrackFinder;
     STRiemannTrackFinder *fTrackFinderCurl;
-
-    Bool_t fIsPersistence;
 
     Bool_t fSortingMode;
     Int_t fSorting;

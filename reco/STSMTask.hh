@@ -36,10 +36,9 @@ class STSMTask : public FairTask {
     virtual void Exec(Option_t *opt);
 
     void SetMode(STSMTask::ESMMode mode);
-    void SetPersistence(Bool_t value = kTRUE);
 
   private:
-    FairLogger *fLogger;
+    FairLogger *fLogger;  //!
     
     STDigiPar *fPar;
     TClonesArray *fEventHCArray;
@@ -48,7 +47,6 @@ class STSMTask : public FairTask {
     STSystemManipulator *fManipulator;
 
     ESMMode fSMMode;
-    Bool_t fIsPersistence;
 
   ClassDef(STSMTask, 1);
 };

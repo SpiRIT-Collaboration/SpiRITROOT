@@ -36,7 +36,6 @@ class STHitClusteringTask : public FairTask
 
     enum STClusterizerMode { kX, kScan, kScan2 };
 
-    void SetPersistence(Bool_t value = kTRUE);
     void SetVerbose(Int_t value = 1);
     
     virtual InitStatus Init();

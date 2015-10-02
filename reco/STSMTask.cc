@@ -26,8 +26,6 @@ STSMTask::STSMTask()
   fLogger = FairLogger::GetLogger();
   fPar = NULL;
 
-  fIsPersistence = kFALSE;
-  
   fEventHCMArray = new TClonesArray("STEvent");
 
   fManipulator = new STSystemManipulator();
@@ -38,7 +36,6 @@ STSMTask::~STSMTask()
 {
 }
 
-void STSMTask::SetPersistence(Bool_t value)     { fIsPersistence = value; }
 void STSMTask::SetMode(ESMMode mode)            { fSMMode = mode; }
 
 InitStatus
@@ -57,7 +54,7 @@ STSMTask::Init()
     return kERROR;
   }
 
-  ioMan -> Register("STEventHCM", "SPiRIT", fEventHCMArray, fIsPersistence);
+  ioMan -> Register("STEventHCM", "SPiRIT", fEventHCMArray, fInputPersistance);
 
   return kSUCCESS;
 }

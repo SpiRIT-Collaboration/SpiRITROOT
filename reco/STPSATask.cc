@@ -1,14 +1,10 @@
-//-----------------------------------------------------------
-// Description:
-//   Analyzing pulse shape of raw signal and make it to a hit
-//
-// Environment:
-//   Software developed for the SPiRIT-TPC at RIKEN
-//
-// Author List:
-//   Genie Jhang     Korea University     (original author)
-//   JungWoo Lee     Korea University
-//-----------------------------------------------------------
+/**
+ * @brief Analyzing pulse shape of raw signal and make it to a hit
+ *
+ * Author List:
+ * @author Genie Jhang (Korea University), original author
+ * @author JungWoo Lee (Korea University)
+ */
 
 // SPiRITROOT classes
 #include "STPSATask.hh"
@@ -33,8 +29,7 @@ STPSATask::STPSATask()
 {
   fLogger = FairLogger::GetLogger();
 
-  fIsPersistence = kFALSE;
-  fEventHArray = new TClonesArray("STEvent");
+  fEventArray = new TClonesArray("STEvent");
 
   fPSAMode = kAll;
   fThreshold = 0;
@@ -46,7 +41,6 @@ STPSATask::~STPSATask()
 }
 
 void STPSATask::SetPSAMode(STPSAMode mode)       { fPSAMode = mode; }
-void STPSATask::SetPersistence(Bool_t value)     { fIsPersistence = value; }
 void STPSATask::SetThreshold(Double_t threshold) { fThreshold = threshold; }
 void STPSATask::SetLayerCut(Double_t layerCut)   { fLayerCut = layerCut; }
 
@@ -99,7 +93,7 @@ STPSATask::Init()
   fPSA -> SetThreshold((Int_t)fThreshold);
   fPSA -> SetLayerCut(fLayerCut);
 
-  ioMan -> Register("STEvent", "SPiRIT", fEventHArray, fIsPersistence);
+  ioMan -> Register("STEvent", "SPiRIT", fEventArray, fInputPersistance);
 
   return kSUCCESS;
 }
@@ -107,30 +101,19 @@ STPSATask::Init()
 void
 STPSATask::SetParContainers()
 {
-  FairRun *run = FairRun::Instance();
-  if (!run)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "No analysis run!");
-
-  FairRuntimeDb *db = run -> GetRuntimeDb();
-  if (!db)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "No runtime database!");
-
-  fPar = (STDigiPar *) db -> getContainer("STDigiPar");
-  if (!fPar)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "STDigiPar not found!!");
 }
 
 void
 STPSATask::Exec(Option_t *opt)
 {
-  fEventHArray -> Delete();
+  fEventArray -> Delete();
 
   if (fRawEventArray -> GetEntriesFast() == 0)
     return;
 
   STRawEvent *rawEvent = (STRawEvent *) fRawEventArray -> At(0);
 
-  STEvent *event = (STEvent *) new ((*fEventHArray)[0]) STEvent();
+  STEvent *event = (STEvent *) new ((*fEventArray)[0]) STEvent();
   event -> SetEventID(rawEvent -> GetEventID());
 
   if (!(rawEvent -> IsGood())) {
