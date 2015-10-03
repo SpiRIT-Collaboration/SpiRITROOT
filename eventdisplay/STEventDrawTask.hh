@@ -9,9 +9,6 @@
 // FairRoot class headers
 #include "FairTask.h"
 #include "FairLogger.h"
-#include "FairRunAna.h"
-#include "FairRootManager.h"
-#include "FairRuntimeDb.h"
 
 // ROOT class headers
 #include "TEvePointSet.h"

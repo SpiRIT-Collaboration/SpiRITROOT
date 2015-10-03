@@ -42,8 +42,19 @@ STEventManager* STEventManager::Instance()
 STEventManager::STEventManager()
 : TEveEventManager("STEventManager","")
 {
-  fRootManager = FairRootManager::Instance();
-  fRunAna = FairRunAna::Instance();
+  fSourceOnline = NULL;
+
+  fRunOnline = FairRunOnline::Instance();
+
+  if (fRunOnline != NULL) {
+    fOnline = kTRUE;
+    fSourceOnline = (STSource*) fRunOnline -> GetSource();
+  }
+  else {
+    fRunAna = FairRunAna::Instance();
+    fOnline = kFALSE;
+  }
+
 
   fEntry = 0;
 
@@ -51,6 +62,7 @@ STEventManager::STEventManager()
   fCvsPadPlane = NULL;
   fCvsPad = NULL;
 
+  fGeomFileName = "";
   fTransparency = 80;
 
   fClearColor = kWhite;
@@ -142,24 +154,41 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 
   /**************************************************************************/
 
-  fRunAna -> Init();
+  if (fOnline) 
+    fRunOnline -> Init();
+  else         
+    fRunAna -> Init();
 
-   if (gGeoManager) {
+  if (gGeoManager) 
+  {
+    fLogger -> Debug(MESSAGE_ORIGIN, "Setting geometry file from FairRun.");
     TGeoNode* geoNode = gGeoManager -> GetTopNode();
     TEveGeoTopNode* topNode
       = new TEveGeoTopNode(gGeoManager, geoNode, option, level, nNodes);
     gEve -> AddGlobalElement(topNode);
-
-    TObjArray* listVolume = gGeoManager -> GetListOfVolumes();
-    Int_t nVolumes = listVolume -> GetEntries();
-    for (Int_t i=0; i<nVolumes; i++)
-      ((TGeoVolume*) listVolume -> At(i)) -> SetTransparency(fTransparency);
-
-    gEve -> FullRedraw3D(kTRUE);
-
-    fLogger -> Debug(MESSAGE_ORIGIN, "Adding STEventManager to TEveManager.");
-    fEvent = gEve -> AddEvent(this);
   }
+  else 
+  {
+    fLogger -> Debug(MESSAGE_ORIGIN, "Reading geometry file: " + fGeomFileName);
+    TFile* file = new TFile(fGeomFileName, "read");
+    if (file -> IsZombie())
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Geometry not found!");
+
+    file -> Get("SpiRIT");
+    TGeoNode* geoNode = gGeoManager -> GetTopNode();
+    TEveGeoTopNode* topNode = new TEveGeoTopNode(gGeoManager,geoNode);
+    gEve -> AddGlobalElement(topNode);
+  }
+
+  TObjArray* listVolume = gGeoManager -> GetListOfVolumes();
+  Int_t nVolumes = listVolume -> GetEntries();
+  for (Int_t i=0; i<nVolumes; i++)
+    ((TGeoVolume*) listVolume -> At(i)) -> SetTransparency(fTransparency);
+
+  gEve -> FullRedraw3D(kTRUE);
+
+  fLogger -> Debug(MESSAGE_ORIGIN, "Adding STEventManager to TEveManager.");
+  fEvent = gEve -> AddEvent(this);
 
   /**************************************************************************/
 
@@ -206,45 +235,26 @@ STEventManager::InitByEditor()
   gEve -> GetBrowser() -> SetTabTitle("Event control", TRootBrowser::kLeft);
 }
 
-void 
-STEventManager::GotoEvent(Int_t event)
-{
-  fEntry = event;
-  fRunAna -> Run((Long64_t)event);
-}
-
-void 
-STEventManager::NextEvent()
-{
-  fEntry += 1;
-  fRunAna -> Run((Long64_t)fEntry);
-}
-
-void 
-STEventManager::PrevEvent()
-{
-  fEntry -= 1;
-  fRunAna -> Run((Long64_t)fEntry);
-}
-
-void
-STEventManager::RunEvent()
-{
-  fRunAna -> Run((Long64_t)fEntry);
-} 
-
-void
-STEventManager::AddTask(FairTask* task)
+void STEventManager::AddTask(FairTask* task) 
 { 
-  fRunAna -> AddTask(task); 
+  if (fOnline) fRunOnline -> AddTask(task);
+  else         fRunAna -> AddTask(task);
 }
 
-void 
-STEventManager::SetEventManagerEditor(STEventManagerEditor* editor)
-{
-  fEditor = editor;
+void STEventManager::GotoEvent(Int_t event)  { fEntry = event; RunEvent(); }
+void STEventManager::NextEvent()             { fEntry += 1;    RunEvent(); }
+void STEventManager::PrevEvent()             { fEntry -= 1;    RunEvent(); }
+void STEventManager::RunEvent()              
+{ 
+  if (fOnline) {
+    fSourceOnline -> SetEventID(fEntry);
+    fRunOnline -> Run(-1, 0);
+  }
+  else 
+    fRunAna -> Run((Long64_t)fEntry);
 }
 
+void STEventManager::SetEventManagerEditor(STEventManagerEditor* editor) { fEditor = editor; }
 void STEventManager::SetVolumeTransparency(Int_t val) { fTransparency = val; }
 void STEventManager::SetClearColor(Color_t color)     { fClearColor = color; }
 void STEventManager::SetViwerPoint(Double_t hRotate, Double_t vRotate)
@@ -253,3 +263,9 @@ void STEventManager::SetViwerPoint(Double_t hRotate, Double_t vRotate)
   fHRotate = hRotate;
   fVRotate = vRotate;
 }
+void STEventManager::SetGeomFile(TString name) { fGeomFileName = name; }
+
+Bool_t   STEventManager::Online()          { return fOnline; }
+Int_t    STEventManager::GetCurrentEvent() { return fEntry; }
+TCanvas* STEventManager::GetCvsPadPlane()  { return fCvsPadPlane; }
+TCanvas* STEventManager::GetCvsPad()       { return fCvsPad; }

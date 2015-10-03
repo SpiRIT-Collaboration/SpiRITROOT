@@ -3,7 +3,10 @@
  * @author JungWoo Lee (Korea Univ.)
  */
 
+#include "FairRun.h"
 #include "STEventDrawTask.hh"
+#include "FairRootManager.h"
+#include "FairRuntimeDb.h"
 
 ClassImp(STEventDrawTask);
 
@@ -95,8 +98,8 @@ STEventDrawTask::SetParContainers()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"SetParContainers of STEventDrawTask");
 
-  FairRunAna* ana = FairRunAna::Instance();
-  FairRuntimeDb* rtdb = ana -> GetRuntimeDb();
+  FairRun* run = FairRun::Instance();
+  FairRuntimeDb* rtdb = run -> GetRuntimeDb();
   fPar = (STDigiPar*) rtdb -> getContainer("STDigiPar");
 }
 
@@ -125,8 +128,8 @@ STEventDrawTask::Init()
   fDriftVelocity = fPar -> GetDriftVelocity();
   fDriftVelocity = fDriftVelocity/100.;
 
-  fWindowTbStart    = fPar -> GetWindowStartTb();
-  fWindowTbEnd = fPar -> GetWindowNumTbs() + fWindowTbStart;
+  fWindowTbStart = fPar -> GetWindowStartTb();
+  fWindowTbEnd   = fPar -> GetWindowNumTbs() + fWindowTbStart;
 
   fWindowYStart = fWindowTbStart    * fTBTime * fDriftVelocity / 10.;
   fWindowYEnd   = fWindowTbEnd * fTBTime * fDriftVelocity / 10.;

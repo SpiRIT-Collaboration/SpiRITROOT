@@ -7,6 +7,9 @@ ${BASE_INCLUDE_DIRECTORIES}
 ${CMAKE_SOURCE_DIR}/eventdisplay
 ${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/par
+${CMAKE_SOURCE_DIR}/reco
+${CMAKE_SOURCE_DIR}/reco/STConverter
+${CMAKE_SOURCE_DIR}/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/reco/RiemannTracking
 )
 

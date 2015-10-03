@@ -9,6 +9,7 @@
 #include "TEveEventManager.h"
 
 #include "FairRunAna.h"
+#include "FairRunOnline.h"
 #include "FairRootManager.h"
 #include "FairTask.h"
 #include "FairLogger.h"
@@ -16,6 +17,7 @@
 #include "TCanvas.h"
 
 #include "STEventManagerEditor.hh"
+#include "STSource.hh"
 
 class TGListTreeItem;
 
@@ -24,35 +26,35 @@ class STEventManager : public TEveEventManager
   public : 
     static STEventManager* Instance();
     STEventManager();
-    virtual ~STEventManager();
+    ~STEventManager();
 
-    virtual void GotoEvent(Int_t event); ///< *MENU*
-    virtual void NextEvent();            ///< *MENU*
-    virtual void PrevEvent();            ///< *MENU*
+    void GotoEvent(Int_t event); ///< *MENU*
+    void NextEvent();            ///< *MENU*
+    void PrevEvent();            ///< *MENU*
+    void RunEvent();
 
     void AddTask(FairTask* task);
-    //virtual void InitRiemann(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
-    virtual void Init(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
+    void Init(Int_t option=1, Int_t level=3, Int_t nNodes=10000);
+    void InitByEditor();
 
-    void SetSelfRiemannSet(Int_t val) {}
+    void SetEventManagerEditor(STEventManagerEditor*);
     void SetVolumeTransparency(Int_t val);
     void SetClearColor(Color_t color);
     void SetViwerPoint(Double_t hRotate, Double_t vRotate);
+    void SetGeomFile(TString name);
 
-    virtual Int_t GetCurrentEvent() { return fEntry; }
-
-    TCanvas* GetCvsPadPlane() { return fCvsPadPlane; }
-    TCanvas* GetCvsPad()      { return fCvsPad; }
-
-    void RunEvent();
-
-    void SetEventManagerEditor(STEventManagerEditor*);
-    void InitByEditor();
+    Bool_t   Online();
+    Int_t    GetCurrentEvent();
+    TCanvas* GetCvsPadPlane();
+    TCanvas* GetCvsPad();
 
   private :
-    FairRootManager* fRootManager;
     FairRunAna* fRunAna;
-    FairLogger* fLogger;
+    FairRunOnline* fRunOnline;
+    FairLogger* fLogger; //!
+
+    STSource* fSourceOnline;
+    Bool_t    fOnline;
 
     STEventManagerEditor* fEditor;
 
@@ -62,6 +64,7 @@ class STEventManager : public TEveEventManager
     TCanvas* fCvsPadPlane;
     TCanvas* fCvsPad;
 
+    TString fGeomFileName;
     Int_t fTransparency;
 
     Bool_t fUseUserViewerPoint;
