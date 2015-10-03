@@ -19,20 +19,18 @@
 
 void run_online
 (
-  TString name     = "urqmd_short",
-  TString dataFile = ""
+  TString name     = "cosmic_short",
+  TString dataFile = "../input/run_0457_event4n10.dat"
 )
 {
   // -----------------------------------------------------------------
-  // FairRun
-  FairRunAna* fRun = new FairRunAna();
-
+  // Source
+  STSource *source = new STSource();
+  source -> SetData(dataFile);
 
   // -----------------------------------------------------------------
-  // Settings
-  Bool_t fUseDecorderTask = kTRUE;
-  if (dataFile.IsNull() == kTRUE)
-    fUseDecorderTask = kFALSE;
+  // FairRun
+  FairRunOnline* fRun = new FairRunOnline(source);
 
 
   // -----------------------------------------------------------------
@@ -43,35 +41,24 @@ void run_online
 
   // -----------------------------------------------------------------
   // Set reconstruction tasks
-  STDecoderTask *fDecorderTask = new STDecoderTask();
-  fDecorderTask -> SetPersistence(kFALSE);
-  fDecorderTask -> AddData(dataFile);
-  fDecorderTask -> SetFPNPedestal(100);
-  fDecorderTask -> SetWindow(256, 300);
-  fDecorderTask -> SetNumTbs(512);
-  if (fUseDecorderTask)
-    fEveManager -> AddTask(fDecorderTask);
-
   STPSATask *fPSATask = new STPSATask();
-  fPSATask -> SetPersistence(kFALSE);
-  fPSATask -> SetThreshold(15);
+  fPSATask -> SetThreshold(35);
   fPSATask -> SetPSAMode(STPSATask::kSimple);
   fEveManager -> AddTask(fPSATask);
 
+  /*
   STHitClusteringTask *fClusteringTask = new STHitClusteringTask();
-  fClusteringTask -> SetPersistence();
   fClusteringTask -> SetClusterizerMode(STHitClusteringTask::kScan2);
   //fEventManager -> AddTask(fClusteringTask);
 
   STSMTask* fSMTask = new STSMTask();
-  fSMTask -> SetPersistence();
   fSMTask -> SetMode(STSMTask::kChange);
   //fEventManager -> AddTask(fSMTask);
 
   STRiemannTrackingTask* fRiemannTrackingTask = new STRiemannTrackingTask();
   fRiemannTrackingTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ, 0);
-  fRiemannTrackingTask -> SetPersistence();
-  //fEventManager -> AddTask(fRiemannTrackingTask);
+  fEventManager -> AddTask(fRiemannTrackingTask);
+  */
 
   STEventDrawTask* fEve = new STEventDrawTask();
   fEve -> SetRendering(STEventDrawTask::kHit, kTRUE);
@@ -109,20 +96,19 @@ void run_online
   fLogger -> SetLogFileName(loggerFile);
   fLogger -> SetLogToScreen(kTRUE);
   fLogger -> SetLogToFile(kTRUE);
-  fLogger -> SetLogVerbosityLevel("LOW");
-  fLogger -> SetLogScreenLevel("DEBUG");
+  fLogger -> SetLogVerbosityLevel("MEDIUM");
+  fLogger -> SetLogScreenLevel("DEBUG2");
 
 
   // -----------------------------------------------------------------
   // Set FairRun
-  if (fUseDecorderTask == kFALSE)
-    fRun -> SetInputFile(inputFile);
   fRun -> SetOutputFile(outputFile);
 
 
   // -----------------------------------------------------------------
   // Geometry
-  fRun -> SetGeomFile(geoManFile);
+  //fRun -> SetGeomFile(geoManFile);
+  fEveManager -> SetGeomFile(geoManFile);
 
 
   // -----------------------------------------------------------------
