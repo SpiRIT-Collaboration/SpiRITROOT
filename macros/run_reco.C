@@ -3,7 +3,7 @@
  *
  * - This macro can be used to reconstruct both MC simulation data
  *   and experiment data. For MC data reconstruction, set variable
- *   'dataFile' to blanck("") - default. 
+ *   'dataFile' to blank("") - default. 
  *
  * - See headers of each tasks for more information.
  *
@@ -14,14 +14,16 @@
  *
  * - Varialbles
  *   @ name : Name of simulation.
- *   @ dataFile : Full path of data file. Blanck("") for MC reconstruction.
+ *   @ dataFile : Full path of data file. Blank("") for MC reconstruction.
+ *   @ dparameterFile : File name of parameter file without any path.
  *   
  */
 
 void run_reco
 (
-  TString name     = "urqmd_short",
-  TString dataFile = ""
+  TString      name     = "urqmd_short",
+  TString      dataFile = "",
+  TString parameterFile = "ST.parameters.par"
 )
 {
   // -----------------------------------------------------------------
@@ -38,16 +40,16 @@ void run_reco
 
   // -----------------------------------------------------------------
   // Set reconstruction tasks
-  STDecoderTask *fDecorderTask = new STDecoderTask();
-  fDecorderTask -> SetInputPersistance(kTRUE);
-  fDecorderTask -> AddData(dataFile);
-  fDecorderTask -> SetFPNPedestal(100);
+  STDecoderTask *fDecoderTask = new STDecoderTask();
+  fDecoderTask -> SetInputPersistance(kTRUE);
+  fDecoderTask -> AddData(dataFile);
+  fDecoderTask -> SetFPNPedestal();
   if (fUseDecoder)
-    fRun -> AddTask(fDecorderTask);
+    fRun -> AddTask(fDecoderTask);
 
   STPSATask *fPSATask = new STPSATask();
   fPSATask -> SetInputPersistance(kTRUE);
-  fPSATask -> SetThreshold(25);
+  fPSATask -> SetThreshold(30);
   fRun -> AddTask(fPSATask);
 
   STHitClusteringTask *fClusteringTask = new STHitClusteringTask();
@@ -85,7 +87,7 @@ void run_reco
   TString outputFile  = dataDir + name + ".reco.root"; 
   TString mcParFile   = dataDir + name + ".params.root";
   TString loggerFile  = dataDir + "log_" + name + ".reco.txt";
-  TString digiParFile = workDir + "/parameters/ST.parameters.par";
+  TString digiParFile = workDir + "/parameters/" + parameterFile;
   TString geoManFile  = workDir + "/geometry/geomSpiRIT.man.root";
 
 
