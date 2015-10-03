@@ -7,4 +7,7 @@
 #pragma link C++ class STEventGenGenerator+;
 #pragma link C++ class STSimpleEventGenerator+;
 
+#pragma link C++ class STPHITSEVentGenerator+;
+#pragma link C++ class Particle+;
+
 #endif
