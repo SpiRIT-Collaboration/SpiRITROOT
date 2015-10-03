@@ -42,10 +42,12 @@ STPSASimple::Analyze(STRawEvent *rawEvent, STEvent *event)
     Double_t zPos = CalculateZ(pad -> GetLayer());
     Double_t yPos = 0;
     Double_t charge = 0;
+    Int_t tb = -1;
 
     if (pad -> IsPedestalSubtracted()) {
       Double_t *adc = pad -> GetADC();
       Int_t maxAdcIdx = distance(adc, max_element(adc + 4, adc + fNumTbs - 5));
+      tb = maxAdcIdx;
 
       yPos = CalculateY(maxAdcIdx);
       charge = adc[maxAdcIdx];
@@ -55,6 +57,7 @@ STPSASimple::Analyze(STRawEvent *rawEvent, STEvent *event)
     } else {
       Int_t *rawAdc = pad -> GetRawADC();
       Int_t minAdcIdx = distance(rawAdc, min_element(rawAdc + 4, rawAdc + fNumTbs - 5));
+      tb = minAdcIdx;
 
       yPos = CalculateY(minAdcIdx);
       charge = rawAdc[minAdcIdx];
@@ -65,6 +68,9 @@ STPSASimple::Analyze(STRawEvent *rawEvent, STEvent *event)
 
 
     STHit *hit = new STHit(hitNum, xPos, yPos, zPos, charge);
+    hit -> SetRow(pad -> GetRow());
+    hit -> SetLayer(pad -> GetLayer());
+    hit -> SetTb(tb);
     event -> AddHit(hit);
     delete hit;
 
