@@ -45,7 +45,6 @@ STRiemannTrackingTask::STRiemannTrackingTask()
 {
   fLogger = FairLogger::GetLogger();
 
-  fRiemannTrackModel = kHelix;
   UseDefaultParameterSet();
 }
 
@@ -58,7 +57,6 @@ void STRiemannTrackingTask::SetMaxRMS(Double_t value)                { fMaxRMS =
 void STRiemannTrackingTask::SetMergeTracks(Bool_t mergeTracks)       { fMergeTracks = mergeTracks; }
 void STRiemannTrackingTask::SetRiemannScale(Double_t riemannScale)   { fRiemannScale = riemannScale; }
 void STRiemannTrackingTask::SkipCrossingAreas(Bool_t value)          { fSkipCrossingAreas = value; }
-void STRiemannTrackingTask::SetRiemannTrackModel(STRiemannTrackModel model) { fRiemannTrackModel = model; } 
 
 void 
 STRiemannTrackingTask::UseDefaultParameterSet()
@@ -206,40 +204,28 @@ STRiemannTrackingTask::Init()
   fTrackFinder -> SetProxCut(fProxCut);
   fTrackFinder -> SetTTProxCut(fTTProxCut);
 
-  if ( fRiemannTrackModel == kHelix )
-  {
-    // Hit-Track Correlators
-    fTrackFinder -> AddHTCorrelator(new STProximityHTCorrelator(fProxCut, fProxZStretch, fHelixCut));
-    fTrackFinder -> AddHTCorrelator(new STHelixHTCorrelator(fHelixCut));
+  // Hit-Track Correlators
+  fTrackFinder -> AddHTCorrelator(new STProximityHTCorrelator(fProxCut, fProxZStretch, fHelixCut));
+  fTrackFinder -> AddHTCorrelator(new STHelixHTCorrelator(fHelixCut));
 
-    // Track-Track Correlators
-    fTrackFinder -> AddTTCorrelator(new STDipTTCorrelator(fTTProxCut, fTTDipCut, fTTHelixCut));
-    fTrackFinder -> AddTTCorrelator(new STRiemannTTCorrelator(fTTPlaneCut, fMinPoints));
+  // Track-Track Correlators
+  fTrackFinder -> AddTTCorrelator(new STDipTTCorrelator(fTTProxCut, fTTDipCut, fTTHelixCut));
+  fTrackFinder -> AddTTCorrelator(new STRiemannTTCorrelator(fTTPlaneCut, fMinPoints));
 
-    // for merging curling tracks with increased TT helixcut
-    fTrackFinderCurl = new STRiemannTrackFinder();
-    fTrackFinderCurl -> SetSorting(fSorting);
-    fTrackFinderCurl -> SetSortingMode(fSortingMode);
-    fTrackFinderCurl -> SetMinHitsForFit(fMinPoints);
-    fTrackFinderCurl -> SetScale(fRiemannScale);
-    fTrackFinderCurl -> SetMaxNumHitsForPR(fMinPoints);
+  // for merging curling tracks with increased TT helixcut
+  fTrackFinderCurl = new STRiemannTrackFinder();
+  fTrackFinderCurl -> SetSorting(fSorting);
+  fTrackFinderCurl -> SetSortingMode(fSortingMode);
+  fTrackFinderCurl -> SetMinHitsForFit(fMinPoints);
+  fTrackFinderCurl -> SetScale(fRiemannScale);
+  fTrackFinderCurl -> SetMaxNumHitsForPR(fMinPoints);
 
-    fTrackFinderCurl -> SetProxCut(fProxCut);
-    fTrackFinderCurl -> SetTTProxCut(30.);
+  fTrackFinderCurl -> SetProxCut(fProxCut);
+  fTrackFinderCurl -> SetTTProxCut(30.);
 
-    // Track-Track Correlators
-    fTrackFinderCurl -> AddTTCorrelator(new STDipTTCorrelator(30., fBlowUp*fTTDipCut, fBlowUp*fTTHelixCut));
-    fTrackFinderCurl -> AddTTCorrelator(new STRiemannTTCorrelator(1.5*fTTPlaneCut, 20));
-  }
-  else if ( fRiemannTrackModel == kStraightLine )
-  {
-    fMergeTracks  = kFALSE;
-    fMergeCurlers = kFALSE;
-
-    //fTrackFinder -> AddHTCorrelator(new STStraightLineHTCorrelator(fHelixCut));
-  }
-  else
-    fLogger -> Debug(MESSAGE_ORIGIN, "No matching riemann track model!");
+  // Track-Track Correlators
+  fTrackFinderCurl -> AddTTCorrelator(new STDipTTCorrelator(30., fBlowUp*fTTDipCut, fBlowUp*fTTHelixCut));
+  fTrackFinderCurl -> AddTTCorrelator(new STRiemannTTCorrelator(1.5*fTTPlaneCut, 20));
 
   fHitBuffer = new std::vector<STHit *>;
 
@@ -398,7 +384,7 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
 
   Int_t nTracksIn = trackletList -> size();
 
-  fLogger -> Debug(MESSAGE_ORIGIN, Form("... building tracks from %d hits", hitbuffer -> size()));
+  fLogger -> Debug(MESSAGE_ORIGIN, Form("... building tracks from %lu hits", hitbuffer -> size()));
 
   trackfinder -> SetSorting(sorting);
   trackfinder -> SetMinHits(minHits);
@@ -467,13 +453,15 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
     }
   }
 
+  Int_t hitBufferSize = hitbuffer -> size();
+
   fLogger -> Debug(MESSAGE_ORIGIN, 
-                   Form("   nGoodTrks: %d,  nTracksIn: %d,  nHitIn: %d, hitBufferSize: %d", 
-                        nTracksIn, nHitIn, hitbuffer -> size()));
+                   Form("   nTracksIn: %d,  nHitIn: %d, hitBufferSize: %d", 
+                        nTracksIn, nHitIn, hitBufferSize));
 
   fLogger -> Debug(MESSAGE_ORIGIN, 
                    Form("   found good tracks: %d, reuduced nHit by %d", 
-                        nGoodTrks - nTracksIn, nHitIn - hitbuffer -> size()));
+                        nGoodTrks - nTracksIn, nHitIn - hitBufferSize));
 }
 
 void STRiemannTrackingTask::MergeTracks()
@@ -482,12 +470,12 @@ void STRiemannTrackingTask::MergeTracks()
    return;
 
   fLogger -> Debug(MESSAGE_ORIGIN, 
-                   Form("merge of fRiemannList: merge %d tracks ...", fRiemannList.size()));
+                   Form("merge of fRiemannList: merge %lu tracks ...", fRiemannList.size()));
 
   fTrackFinder -> MergeTracks(fRiemannList);
 
   fLogger -> Debug(MESSAGE_ORIGIN, 
-                   Form(" done - created %d merged tracks", fRiemannList.size()));
+                   Form(" done - created %lu merged tracks", fRiemannList.size()));
 }
 
 void STRiemannTrackingTask::MergeCurlers()
@@ -510,11 +498,11 @@ void STRiemannTrackingTask::MergeCurlers()
     }
   }
 
-  fLogger -> Debug(MESSAGE_ORIGIN, Form("merge curlers: merge %d tracks ... ", riemannTempCurl.size()));
+  fLogger -> Debug(MESSAGE_ORIGIN, Form("merge curlers: merge %lu tracks ... ", riemannTempCurl.size()));
 
   fTrackFinderCurl -> MergeTracks(riemannTempCurl);
 
-  fLogger -> Debug(MESSAGE_ORIGIN, Form(" done - created %d merged tracks", riemannTempCurl.size()));
+  fLogger -> Debug(MESSAGE_ORIGIN, Form(" done - created %lu merged tracks", riemannTempCurl.size()));
 
   for (UInt_t iTrack = 0; iTrack < riemannTempCurl.size(); iTrack++)
     fRiemannList.push_back(riemannTempCurl[iTrack]);

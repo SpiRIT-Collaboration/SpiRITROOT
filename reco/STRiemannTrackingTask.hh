@@ -32,9 +32,6 @@ class STRiemannTrackingTask : public FairTask
     STRiemannTrackingTask();
     ~STRiemannTrackingTask();
 
-    /// Track model (default : kHelix)
-    enum STRiemannTrackModel { kHelix, kStraightLine };
-
     /** Set sorting parameters
      *
      * @param sortingMode
@@ -118,8 +115,6 @@ class STRiemannTrackingTask : public FairTask
     void UsePANDAParameterSet();
     void UseFOPIParameterSet();
 
-    void SetRiemannTrackModel(STRiemannTrackModel model);
-
     virtual InitStatus Init();
     virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
@@ -139,8 +134,6 @@ class STRiemannTrackingTask : public FairTask
 
     void MergeTracks();
     void MergeCurlers();
-
-    STRiemannTrackModel fRiemannTrackModel;
 
     TClonesArray *fEventHCMArray;
     TClonesArray *fMvdArray;
