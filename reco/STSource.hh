@@ -18,9 +18,12 @@ class STSource : public FairSource {
     Bool_t Init();
     Int_t ReadEvent(UInt_t);
     void Reset();
+    void Close();
 
     void SetData(TString filename);
     void SetEventID(Long64_t eventid);
+
+    TString GetDataFileName();
 
   private:
     TString fDataFile;

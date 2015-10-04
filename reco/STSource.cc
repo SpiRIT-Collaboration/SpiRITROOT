@@ -2,6 +2,8 @@
 
 ClassImp(STSource)
 
+extern Bool_t gIsInterrupted;
+
 STSource::STSource()
 {
   fDataFile = "";
@@ -16,7 +18,7 @@ Bool_t STSource::Init()
   if (fIsInitialized) {
     LOG(INFO) << "STSource already initialized!" << FairLogger::endl;
 
-    return kTRUE;
+    return kFALSE;
   }
 
   if (fDataFile.IsNull()) {
@@ -28,9 +30,10 @@ Bool_t STSource::Init()
   fDecoder = new STDecoderTask();
   fDecoder -> AddData(fDataFile);
   fDecoder -> SetFPNPedestal();
+  fDecoder -> SetParContainers();
   Bool_t decoderInit = fDecoder -> Init();
 
-  if (decoderInit == kFALSE) {
+  if (decoderInit == kERROR) {
     LOG(FATAL) << "Fail to initialize STDecoderTask!" << FairLogger::endl;
 
     return kFALSE;
@@ -44,11 +47,16 @@ Int_t STSource::ReadEvent(UInt_t)
 {
   fDecoder -> SetEventID(fEventID);
   fDecoder -> Exec("");
+  gIsInterrupted = kTRUE;
 
   return 0;
 }
 
 void STSource::Reset()
+{
+}
+
+void STSource::Close()
 {
 }
 
@@ -60,4 +68,9 @@ void STSource::SetData(TString filename)
 void STSource::SetEventID(Long64_t eventid)
 {
   fEventID = eventid;
+}
+
+TString STSource::GetDataFileName()
+{
+  return fDataFile;
 }
