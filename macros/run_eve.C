@@ -6,7 +6,8 @@
  */
 
 void run_eve(TString name = "urqmd_short",
-             TString parameterFile = "ST.parameters.RIKEN_20150820.par")
+             TString parameterFile = "ST.parameters.RIKEN_20150820.par",
+             Bool_t online = kTRUE)
 {
   // -----------------------------------------------------------------
   // FairRun
@@ -48,13 +49,13 @@ void run_eve(TString name = "urqmd_short",
   // Event display manager
   STEventManager *fEveManager = new STEventManager();
   fEveManager -> SetVolumeTransparency(80);
+  fEveManager -> SetOnlineEditor(online);
 
 
   // -----------------------------------------------------------------
   // Event draw task
   STEventDrawTask* fEve = new STEventDrawTask();
   fEve -> SetRendering(STEventDrawTask::kHit, kTRUE);
-  fEve -> SetRendering(STEventDrawTask::kRiemann, kTRUE);
 
 
   // -----------------------------------------------------------------
