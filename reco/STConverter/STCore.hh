@@ -36,13 +36,13 @@ class STCore : public TObject {
     void Initialize();
 
     // setters
-    Bool_t AddData(TString filename);
+    Bool_t AddData(TString filename, Int_t coboIdx = 0);
     void SetNoAutoReload(Bool_t value = kFALSE);
     void SetPedestalGenerationMode(Bool_t value = kTRUE);
     void SetPositivePolarity(Bool_t value = kTRUE);
     Bool_t SetData(Int_t value);
-    Int_t GetNumData();
-    TString GetDataName(Int_t index);
+    Int_t GetNumData(Int_t coboIdx = 0);
+    TString GetDataName(Int_t index, Int_t coboIdx = 0);
     void SetNumTbs(Int_t value);
     void SetInternalPedestal(Int_t pedestalStartTb = 10, Int_t averageTbs = 20);
     Bool_t SetPedestalData(TString filename, Double_t rmsFactor = 0);
@@ -56,11 +56,12 @@ class STCore : public TObject {
     Bool_t SetAGETMap(TString filename);
 
     void SetOldData(Bool_t oldData = kTRUE);
+    void SetUseSeparatedData(Bool_t value = kTRUE);
 
     // getters
     STRawEvent *GetRawEvent(Int_t eventID = -1);          ///< Returns STRawEvent object filled with the data
     Int_t GetEventID();                                   ///< Returns the current event ID
-    Int_t GetNumTbs();                                    ///< Returns the number of time buckets of the data
+    Int_t GetNumTbs(Int_t coboIdx = 0);                   ///< Returns the number of time buckets of the data
 
     STMap *GetSTMap();
     STPlot *GetSTPlot();
@@ -73,7 +74,7 @@ class STCore : public TObject {
 
     Int_t fNumTbs;
 
-    GETDecoder *fDecoderPtr;
+    GETDecoder *fDecoderPtr[12];
     Bool_t fIsData;
 
     STPedestal *fPedestalPtr;
@@ -96,9 +97,10 @@ class STCore : public TObject {
     Long64_t fPrevEventNo;
     Long64_t fCurrEventNo;
 
-    Int_t fCurrFrameNo;
+    Int_t fCurrFrameNo[12];
 
     Bool_t fOldData;
+    Bool_t fIsSeparatedData;
 
   ClassDef(STCore, 1);
 };
