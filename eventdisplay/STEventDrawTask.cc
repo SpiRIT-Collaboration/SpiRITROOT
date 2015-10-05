@@ -649,6 +649,15 @@ STEventDrawTask::GetRiemannColor(Int_t index)
   return color;
 }
 
+void 
+STEventDrawTask::DrawPadByPosition(Double_t x, Double_t z)
+{
+  Int_t row = (-x+fXPadPlane/2)/8;
+  Int_t layer = z/12;
+
+  DrawPad(row, layer);
+}
+
 void
 STEventDrawTask::DrawPad(Int_t row, Int_t layer)
 {
@@ -669,8 +678,14 @@ STEventDrawTask::DrawPad(Int_t row, Int_t layer)
   Double_t* adc = pad -> GetADC();
 
   fHistPad -> SetTitle(Form("row: %d, layer: %d",row, layer));
-  for (Int_t tb=0; tb<fNTbs; tb++)
-    fHistPad -> SetBinContent(tb+1, adc[tb]);
+  fMaxAdcCurrentPad = 0;
+  for (Int_t tb=0; tb<fNTbs; tb++) {
+    Double_t val = adc[tb];
+    if (val > fMaxAdcCurrentPad) fMaxAdcCurrentPad = val;
+    fHistPad -> SetBinContent(tb+1, val);
+  }
+
+  fHistPad -> SetMaximum(fMaxAdcCurrentPad * 1.1);
 
   Int_t nHits = fEvent -> GetNumHits();
 
@@ -680,13 +695,12 @@ STEventDrawTask::DrawPad(Int_t row, Int_t layer)
   fCvsPad -> Update();
 }
 
-void 
-STEventDrawTask::DrawPadByPosition(Double_t x, Double_t z)
+void
+STEventDrawTask::UpdatePadRange()
 {
-  Int_t row = (-x+fXPadPlane/2)/8;
-  Int_t layer = z/12;
-
-  DrawPad(row, layer);
+  fHistPad -> GetXaxis() -> SetRangeUser(fWindowTbStart, fWindowTbEnd);
+  fCvsPad -> Modified();
+  fCvsPad -> Update();
 }
 
 void

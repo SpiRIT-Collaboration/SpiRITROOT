@@ -84,8 +84,9 @@ class STEventDrawTask : public FairTask
     void SetObject(STEveObject eveObj, Bool_t set);
 
     static void ClickSelectedPadPlane();
-    void DrawPad(Int_t row, Int_t layer);
     void DrawPadByPosition(Double_t x, Double_t z);
+    void DrawPad(Int_t row, Int_t layer);
+    void UpdatePadRange();
 
     Int_t GetWindowTbStart();
     Int_t GetWindowTbEnd();
@@ -162,6 +163,8 @@ class STEventDrawTask : public FairTask
 
     TEveBoxSet* fBoxClusterSet;
     vector<TEvePointSet*> fRiemannSetArray;
+
+    Double_t fMaxAdcCurrentPad;
 
     static STEventDrawTask* fInstance;
 

@@ -121,7 +121,8 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
 
   TGCheckButton* checkAutoUpdate = new TGCheckButton(frameEvent, "Auto Update");
   checkAutoUpdate -> Connect("Toggled(Bool_t)", "STEventManagerEditor", this, "ToggleAutoUpdate(Bool_t)");
-  checkAutoUpdate -> Toggle(kTRUE);
+  if (fManager -> Online() == kFALSE)
+    checkAutoUpdate -> Toggle(kTRUE);
 
   TGHorizontalFrame* frameEvent1 = new TGHorizontalFrame(frameEvent);
   TGLabel* labelEvent = new TGLabel(frameEvent1, "Current Event : ");
@@ -145,7 +146,8 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   TGTextButton* buttonUpdate = new TGTextButton(frameEvent, "Update");
   buttonUpdate -> Connect("Clicked()", "STEventManagerEditor", this, "SelectEvent()");
 
-  frameEvent -> AddFrame(checkAutoUpdate, new TGLayoutHints(kLHintsLeft, 1,1,5,3));
+  if (fManager -> Online() == kFALSE)
+    frameEvent -> AddFrame(checkAutoUpdate, new TGLayoutHints(kLHintsLeft, 1,1,5,3));
   frameEvent -> AddFrame(frameEvent1, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
   frameEvent -> AddFrame(buttonNextEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,1));
   if (fManager -> Online() == kFALSE)
@@ -194,7 +196,8 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   frameRiemann -> AddFrame(buttonVisAll, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,2));
   frameRiemann -> AddFrame(buttonVisOff, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,2,3));
 
-  eventFrame -> AddFrame(frameRiemann, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
+  if (fManager -> Online() == kFALSE)
+    eventFrame -> AddFrame(frameRiemann, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
 
   /********************************************************************/
 
@@ -343,6 +346,8 @@ STEventManagerEditor::SelectEvent()
     fCurrentRiemannSet -> SetLimitValues(0,GetNRiemannSet()-1);
   if(fTempRiemannSet)
     fTempRiemannSet -> SetLimitValues(0,GetNRiemannSet()-1);
+
+  fDrawTask -> UpdatePadRange();
 
   Update();
 }
