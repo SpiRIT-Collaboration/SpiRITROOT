@@ -279,7 +279,7 @@ STRiemannTrackingTask::Exec(Option_t *opt)
 
   UInt_t numHit = eventHCM -> GetNumClusters(); // TODO
   if (numHit == 0)
-    fLogger -> Info(MESSAGE_ORIGIN, "Event #%d : Bad event. No hits to build tracks.");
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Event #%d : Bad event. No hits to build tracks.", eventHCM -> GetEventID()));
 
   for (UInt_t iHit = 0; iHit < numHit; iHit++) {
     STHit *hit = (STHit *) eventHCM -> GetCluster(iHit); // TODO
