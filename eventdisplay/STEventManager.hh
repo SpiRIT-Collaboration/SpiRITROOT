@@ -43,7 +43,10 @@ class STEventManager : public TEveEventManager
     void SetViwerPoint(Double_t hRotate, Double_t vRotate);
     void SetGeomFile(TString name);
 
-    Bool_t   Online();
+    void   SetOnlineEditor(Bool_t val);
+    Bool_t Online();
+    Bool_t OnlineEditor();
+
     Int_t    GetCurrentEvent();
     TCanvas* GetCvsPadPlane();
     TCanvas* GetCvsPad();
@@ -53,8 +56,8 @@ class STEventManager : public TEveEventManager
     FairRunOnline* fRunOnline;
     FairLogger* fLogger; //!
 
-    STSource* fSourceOnline;
-    Bool_t    fOnline;
+    Bool_t fOnlineEditor;
+    Bool_t fOnline;
 
     STEventManagerEditor* fEditor;
 

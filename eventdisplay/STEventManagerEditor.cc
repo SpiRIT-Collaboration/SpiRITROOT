@@ -48,15 +48,18 @@ STEventManagerEditor::STEventManagerEditor
 
   fLogger = FairLogger::GetLogger();
 
+  fOnline = fManager -> Online();
+  fOnlineEditor = fManager -> OnlineEditor();
+
   Init();
 }
 
 void 
 STEventManagerEditor::Init()
 {
-  fLogger -> Debug(MESSAGE_ORIGIN, "STEventManagerEditor Init().");
+  fLogger -> Info(MESSAGE_ORIGIN, "STEventManagerEditor Init().");
 
-  if (fManager -> Online())
+  if (fOnline)
     fEntries = 999999;
   else 
   {
@@ -120,7 +123,7 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   frameEvent -> SetTitlePos(TGGroupFrame::kLeft);
 
   TGCheckButton* checkAutoUpdate;
-  if (fManager -> Online() == kFALSE)
+  if (fOnline == kFALSE)
   {
     checkAutoUpdate = new TGCheckButton(frameEvent, "Auto Update");
     checkAutoUpdate -> Connect("Toggled(Bool_t)", "STEventManagerEditor", this, "ToggleAutoUpdate(Bool_t)");
@@ -130,7 +133,7 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   TGHorizontalFrame* frameEvent1 = new TGHorizontalFrame(frameEvent);
   TGLabel* labelEvent = new TGLabel(frameEvent1, "Current Event : ");
   Int_t eventMin = 0;
-  if (fManager -> Online() == kTRUE)
+  if (fOnline == kTRUE)
     eventMin = -1;
 
   fCurrentEvent = new TGNumberEntry(frameEvent1, 0., 6, -1,
@@ -144,7 +147,7 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   buttonNextEvent -> Connect("Clicked()", "STEventManagerEditor", this, "NextEvent()");
 
   TGTextButton* buttonBeforeEvent;
-  if (fManager -> Online() == kFALSE)
+  if (fOnline == kFALSE)
   {
     buttonBeforeEvent = new TGTextButton(frameEvent, "Before");
     buttonBeforeEvent -> Connect("Clicked()", "STEventManagerEditor", this, "BeforeEvent()");
@@ -153,11 +156,11 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   TGTextButton* buttonUpdate = new TGTextButton(frameEvent, "Update");
   buttonUpdate -> Connect("Clicked()", "STEventManagerEditor", this, "SelectEvent()");
 
-  if (fManager -> Online() == kFALSE)
+  if (fOnline == kFALSE)
     frameEvent -> AddFrame(checkAutoUpdate, new TGLayoutHints(kLHintsLeft, 1,1,5,3));
   frameEvent -> AddFrame(frameEvent1, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
   frameEvent -> AddFrame(buttonNextEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,1));
-  if (fManager -> Online() == kFALSE)
+  if (fOnline == kFALSE)
     frameEvent -> AddFrame(buttonBeforeEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,1,3));
   frameEvent -> AddFrame(buttonUpdate, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,3));
 
@@ -203,7 +206,7 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   frameRiemann -> AddFrame(buttonVisAll, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,2));
   frameRiemann -> AddFrame(buttonVisOff, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,2,3));
 
-  if (fManager -> Online() == kFALSE)
+  if (fOnlineEditor == kFALSE)
     eventFrame -> AddFrame(frameRiemann, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
 
   /********************************************************************/
@@ -346,7 +349,7 @@ STEventManagerEditor::SelectEvent()
 {
   fManager -> GotoEvent(fCurrentEvent -> GetIntNumber());
 
-  if (fManager -> Online() == kTRUE)
+  if (fOnline == kTRUE)
     fCurrentEvent -> SetLimitValues(fCurrentEvent -> GetIntNumber(), fEntries - 1);
 
   if(fCurrentRiemannSet)
@@ -364,7 +367,7 @@ STEventManagerEditor::NextEvent()
 {
   Int_t eventID = fCurrentEvent -> GetIntNumber();
 
-  if (fManager -> Online() == kTRUE)
+  if (fOnline == kTRUE)
   {
     fCurrentEvent -> SetNumber(-1);
     SelectEvent();

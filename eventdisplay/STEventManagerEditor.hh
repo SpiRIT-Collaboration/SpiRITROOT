@@ -78,6 +78,9 @@ class STEventManagerEditor : public TGedFrame
 
     Int_t fEntries;
 
+    Bool_t fOnline;
+    Bool_t fOnlineEditor;
+
     ClassDef(STEventManagerEditor, 0); // Specialization of TGedEditor for proper update propagation to TEveManager.
 };
 

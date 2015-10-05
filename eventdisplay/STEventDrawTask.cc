@@ -70,7 +70,7 @@ STEventDrawTask::STEventDrawTask()
   fPointStyle[kHit] = kFullCircle;
   fPointSize[kHit]  = 0.5;
   fPointColor[kHit] = kRed;
-  fRnrSelf[kHit]    = kFALSE;
+  fRnrSelf[kHit]    = kTRUE;
   fSetObject[kHit]  = kTRUE;
 
   fPointStyle[kCluster] = kFullCircle;
@@ -83,8 +83,8 @@ STEventDrawTask::STEventDrawTask()
   fPointStyle[kRiemann] = kFullCircle;
   fPointSize[kRiemann]  = 1.0;
   fPointColor[kRiemann] = 0;
-  fRnrSelf[kRiemann]    = kTRUE;
-  fSetObject[kRiemann]  = kTRUE;
+  fRnrSelf[kRiemann]    = kFALSE;
+  fSetObject[kRiemann]  = kFALSE;
 
   fBoxClusterSet = NULL;
 }
@@ -144,6 +144,7 @@ void
 STEventDrawTask::Exec(Option_t* option)
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"Exec()");
+  //std::cout << fPadPlane ->GetName() << std::endl;
 
   Reset();
 
@@ -166,6 +167,12 @@ STEventDrawTask::Exec(Option_t* option)
 
   gEve -> Redraw3D(kFALSE);
   UpdateCvsPadPlane();
+}
+
+void 
+STEventDrawTask::Finish(Option_t* option)
+{
+  //std::cout << fPadPlane ->GetName() << std::endl;
 }
 
 void 
@@ -471,11 +478,10 @@ STEventDrawTask::SetObject(STEveObject eveObj, Bool_t set)
 void
 STEventDrawTask::Reset()
 {
-  fLogger -> Debug(MESSAGE_ORIGIN,"Reset PointSets");
+  fLogger -> Debug(MESSAGE_ORIGIN,"Reset Eve");
 
   for(Int_t i=0; i<6; i++) 
   {
-    fLogger -> Debug(MESSAGE_ORIGIN,Form("Reset Object %d", i));
     if(fPointSet[i]) {
       fPointSet[i] -> Reset();
       gEve -> RemoveElement(fPointSet[i], fEventManager);
@@ -484,15 +490,11 @@ STEventDrawTask::Reset()
   }
 
 
-  fLogger -> Debug(MESSAGE_ORIGIN, "Reset BoxClusters");
-
   if (fBoxClusterSet) {
     fBoxClusterSet -> Reset();
     gEve -> RemoveElement(fBoxClusterSet, fEventManager);
   }
 
-
-  fLogger -> Debug(MESSAGE_ORIGIN, "Reset RiemannTracks");
 
   Int_t nRiemannTracks = fRiemannSetArray.size();
   for (Int_t i=0; i<nRiemannTracks; i++) 
@@ -611,6 +613,8 @@ STEventDrawTask::DrawPadPlane()
 void 
 STEventDrawTask::UpdateCvsPadPlane()
 {
+  fLogger -> Debug(MESSAGE_ORIGIN,"Updating pad plane.");
+
   fCvsPadPlane -> Modified();
   fCvsPadPlane -> Update();
 

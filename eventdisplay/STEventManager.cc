@@ -42,19 +42,21 @@ STEventManager* STEventManager::Instance()
 STEventManager::STEventManager()
 : TEveEventManager("STEventManager","")
 {
-  fSourceOnline = NULL;
+  fLogger = FairLogger::GetLogger();
 
   fRunOnline = FairRunOnline::Instance();
+  fRunAna = FairRunAna::Instance();
 
   if (fRunOnline != NULL) {
     fOnline = kTRUE;
-    fSourceOnline = (STSource*) fRunOnline -> GetSource();
+    fOnlineEditor = kTRUE;
+    fLogger -> Info(MESSAGE_ORIGIN, "Eve initalized with FairRunOnline.");
   }
   else {
-    fRunAna = FairRunAna::Instance();
     fOnline = kFALSE;
+    fOnlineEditor = kTRUE;
+    fLogger -> Info(MESSAGE_ORIGIN, "Eve initalized with FairRunAna.");
   }
-
 
   fEntry = 0;
 
@@ -71,7 +73,6 @@ STEventManager::STEventManager()
   fHRotate = 0;
   fVRotate = 0;
 
-  fLogger = FairLogger::GetLogger();
   fInstance = this;
 }
 
@@ -84,7 +85,7 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
 {
   fLogger -> Debug(MESSAGE_ORIGIN, "STEventManager Init().");
 
-  TEveManager::Create(kTRUE, "FIV");
+  TEveManager::Create(kTRUE, "V");
 
   Int_t dummy;
   UInt_t width, height;
@@ -247,7 +248,7 @@ void STEventManager::PrevEvent()             { fEntry -= 1;    RunEvent(); }
 void STEventManager::RunEvent()              
 { 
   if (fOnline) {
-    fSourceOnline -> SetEventID(fEntry);
+    ((STSource*) fRunOnline -> GetSource()) -> SetEventID(fEntry);
     fRunOnline -> Run(-1, 0);
   }
   else 
@@ -265,7 +266,10 @@ void STEventManager::SetViwerPoint(Double_t hRotate, Double_t vRotate)
 }
 void STEventManager::SetGeomFile(TString name) { fGeomFileName = name; }
 
-Bool_t   STEventManager::Online()          { return fOnline; }
+void   STEventManager::SetOnlineEditor(Bool_t val) { fOnlineEditor = val; }
+Bool_t STEventManager::Online()                    { return fOnline; }
+Bool_t STEventManager::OnlineEditor()              { return fOnlineEditor; }
+
 Int_t    STEventManager::GetCurrentEvent() { return fEntry; }
 TCanvas* STEventManager::GetCvsPadPlane()  { return fCvsPadPlane; }
 TCanvas* STEventManager::GetCvsPad()       { return fCvsPad; }
