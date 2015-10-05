@@ -55,6 +55,9 @@ STPHITSEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
   fDataTree -> GetEntry(fCurrentEvent++);
 
   Int_t numParticles = fEventArray -> GetEntries();
+  if (numParticles == 1)
+    return ReadEvent(primGen);
+
   for (Int_t iPart = 0; iPart < numParticles; iPart++) {
     Particle *particle = (Particle *) fEventArray -> At(iPart);
 
@@ -66,9 +69,8 @@ STPHITSEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     TVector3 p(particle -> mom[0], particle -> mom[1], particle -> mom[2]);
     p.SetMag(pMag);
 
-    TVector3 pos(particle -> pos[0], particle -> pos[1], particle -> pos[2]);
-    pos -= TVector3(fVx, fVy, fVz);
-    pos *= 0.1; // in cm
+    TVector3 pos(particle -> pos[0]/10., particle -> pos[1]/10., particle -> pos[2]/10.);
+    pos += TVector3(fVx, fVy, fVz);
 
     primGen -> AddTrack(pdg, p.X(), p.Y(), p.Z(), pos.X(), pos.Y(), pos.Z());
   }
