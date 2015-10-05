@@ -119,10 +119,13 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   TGGroupFrame* frameEvent = new TGGroupFrame(eventFrame,"Event",kVerticalFrame);
   frameEvent -> SetTitlePos(TGGroupFrame::kLeft);
 
-  TGCheckButton* checkAutoUpdate = new TGCheckButton(frameEvent, "Auto Update");
-  checkAutoUpdate -> Connect("Toggled(Bool_t)", "STEventManagerEditor", this, "ToggleAutoUpdate(Bool_t)");
+  TGCheckButton* checkAutoUpdate;
   if (fManager -> Online() == kFALSE)
+  {
+    checkAutoUpdate = new TGCheckButton(frameEvent, "Auto Update");
+    checkAutoUpdate -> Connect("Toggled(Bool_t)", "STEventManagerEditor", this, "ToggleAutoUpdate(Bool_t)");
     checkAutoUpdate -> Toggle(kTRUE);
+  }
 
   TGHorizontalFrame* frameEvent1 = new TGHorizontalFrame(frameEvent);
   TGLabel* labelEvent = new TGLabel(frameEvent1, "Current Event : ");
@@ -140,8 +143,12 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   TGTextButton* buttonNextEvent = new TGTextButton(frameEvent, "Next");
   buttonNextEvent -> Connect("Clicked()", "STEventManagerEditor", this, "NextEvent()");
 
-  TGTextButton* buttonBeforeEvent = new TGTextButton(frameEvent, "Before");
-  buttonBeforeEvent -> Connect("Clicked()", "STEventManagerEditor", this, "BeforeEvent()");
+  TGTextButton* buttonBeforeEvent;
+  if (fManager -> Online() == kFALSE)
+  {
+    buttonBeforeEvent = new TGTextButton(frameEvent, "Before");
+    buttonBeforeEvent -> Connect("Clicked()", "STEventManagerEditor", this, "BeforeEvent()");
+  }
 
   TGTextButton* buttonUpdate = new TGTextButton(frameEvent, "Update");
   buttonUpdate -> Connect("Clicked()", "STEventManagerEditor", this, "SelectEvent()");
@@ -360,8 +367,8 @@ STEventManagerEditor::NextEvent()
   if (fManager -> Online() == kTRUE)
   {
     fCurrentEvent -> SetNumber(-1);
-
     SelectEvent();
+    fCurrentEvent -> SetNumber(((STSource*) FairRunOnline::Instance() -> GetSource()) -> GetEventID());
   }
   else if (eventID != fEntries - 1)
   {

@@ -71,6 +71,8 @@ void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_
 void STDecoderTask::SetOldData(Bool_t oldData)                                                { fOldData = oldData; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
 
+Long64_t STDecoderTask::GetEventID() { return fEventID; }
+
 InitStatus
 STDecoderTask::Init()
 {
@@ -94,8 +96,8 @@ STDecoderTask::Init()
     fDecoder -> SetNumTbs(fPar -> GetNumTbs());
 
   fDecoder -> SetOldData(fOldData);
-  fDecoder -> SetUAMap((fPar -> GetFile(0)).Data());
-  fDecoder -> SetAGETMap((fPar -> GetFile(1)).Data());
+  fDecoder -> SetUAMap(fPar -> GetUAMapFileName());
+  fDecoder -> SetAGETMap(fPar -> GetAGETMapFileName());
 
   if (fUseInternalPedestal)
     fDecoder -> SetInternalPedestal(fPedestalStartTb, fAverageTbs);
@@ -162,8 +164,12 @@ STDecoderTask::Exec(Option_t *opt)
 {
   fRawEventArray -> Delete();
 
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Reading event %d", fEventID));
+
   if (fRawEvent == NULL)
     fRawEvent = fDecoder -> GetRawEvent(fEventID);
+
+  fEventID = fDecoder -> GetEventID();
 
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
 

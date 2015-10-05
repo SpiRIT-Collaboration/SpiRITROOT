@@ -74,3 +74,8 @@ TString STSource::GetDataFileName()
 {
   return fDataFile;
 }
+
+Long64_t STSource::GetEventID()
+{
+  return fDecoder -> GetEventID();
+}

@@ -24,6 +24,7 @@ class STSource : public FairSource {
     void SetEventID(Long64_t eventid);
 
     TString GetDataFileName();
+    Long64_t GetEventID();
 
   private:
     TString fDataFile;
