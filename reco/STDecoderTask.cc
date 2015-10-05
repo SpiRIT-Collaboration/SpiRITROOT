@@ -14,6 +14,7 @@
 
 // FAIRROOT classes
 #include "FairRootManager.h"
+#include "FairRunOnline.h"
 #include "FairRun.h"
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
@@ -164,7 +165,7 @@ STDecoderTask::Exec(Option_t *opt)
 {
   fRawEventArray -> Delete();
 
-    fLogger -> Info(MESSAGE_ORIGIN, Form("Reading event %d", fEventID));
+  fLogger -> Info(MESSAGE_ORIGIN, Form("Reading event %lld", fEventID));
 
   if (fRawEvent == NULL)
     fRawEvent = fDecoder -> GetRawEvent(fEventID);
@@ -179,6 +180,9 @@ STDecoderTask::Exec(Option_t *opt)
 void
 STDecoderTask::FinishEvent()
 {
+  if (FairRunOnline::Instance() != NULL)
+    return;
+
   fRawEvent = fDecoder -> GetRawEvent();
 
   if (fRawEvent == NULL)
