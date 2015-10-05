@@ -50,7 +50,7 @@ class STDecoderTask : public FairTask {
     /// Setting the number of time buckets used when taking data
     void SetNumTbs(Int_t numTbs);
     /// Adding raw data file to the list
-    void AddData(TString filename);
+    void AddData(TString filename, Int_t coboIdx = 0);
     /// Setting which data to be decoded
     void SetData(Int_t value);
     /// Setting values for internal pedestal calculation.
@@ -67,6 +67,8 @@ class STDecoderTask : public FairTask {
     void SetGainReference(Double_t constant, Double_t linear, Double_t quadratic = 0.);
     /// Setting to decode old data file
     void SetOldData(Bool_t oldData = kTRUE);
+    /// Setting to use not merged data files
+    void SetUseSeparatedData(Bool_t value = kTRUE);
     /// Setting event id for STSource
     void SetEventID(Long64_t eventid = -1);
 
@@ -89,7 +91,7 @@ class STDecoderTask : public FairTask {
 
     STCore *fDecoder;                   ///< STConverter pointer
 
-    vector<TString> fDataList;          ///< Raw data file list
+    vector<TString> fDataList[12];      ///< Raw data file list
     Int_t fDataNum;                     ///< Set which number in data list to be decoded
 
     Bool_t fUseInternalPedestal;        ///< Flag for using internal pedestal calculation
@@ -115,6 +117,7 @@ class STDecoderTask : public FairTask {
     STRawEvent *fRawEvent;              ///< Current raw event for run
 
     Bool_t fOldData;                    ///< Set to decode old data
+    Bool_t fIsSeparatedData;            ///< Set to use separated data files
 
     Long64_t fEventIDLast;              ///< Last event ID 
     Long64_t fEventID;                  ///< Event ID for STSource

@@ -51,6 +51,7 @@ STDecoderTask::STDecoderTask()
   fRawEvent = NULL;
 
   fOldData = kFALSE;
+  fIsSeparatedData = kFALSE;
 
   fEventID = -1;
 }
@@ -61,7 +62,7 @@ STDecoderTask::~STDecoderTask()
 
 void STDecoderTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; fInputPersistance = value; }
 void STDecoderTask::SetNumTbs(Int_t numTbs)                                                   { fNumTbs = numTbs; fExternalNumTbs = kTRUE; }
-void STDecoderTask::AddData(TString filename)                                                 { fDataList.push_back(filename); }
+void STDecoderTask::AddData(TString filename, Int_t coboIdx)                                  { fDataList[coboIdx].push_back(filename); }
 void STDecoderTask::SetData(Int_t value)                                                      { fDataNum = value; }
 void STDecoderTask::SetInternalPedestal(Int_t startTb, Int_t averageTbs)                      { fUseInternalPedestal = kTRUE; fPedestalStartTb = startTb; fAverageTbs = averageTbs; } 
 void STDecoderTask::SetFPNPedestal()                                                          { fUseFPNPedestal = kTRUE; fUseInternalPedestal = kFALSE; fPedestalFile = ""; }
@@ -70,6 +71,7 @@ void STDecoderTask::SetPedestalData(TString filename, Double_t rmsFactor)       
 void STDecoderTask::SetGainCalibrationData(TString filename)                                  { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)  { fGainConstant = constant; fGainLinear = linear; fGainQuadratic = quadratic; }
 void STDecoderTask::SetOldData(Bool_t oldData)                                                { fOldData = oldData; }
+void STDecoderTask::SetUseSeparatedData(Bool_t value)                                         { fIsSeparatedData = value; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
 
 Long64_t STDecoderTask::GetEventID() { return fEventIDLast; }
@@ -87,8 +89,15 @@ STDecoderTask::Init()
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fInputPersistance);
 
   fDecoder = new STCore();
-  for (Int_t iFile = 0; iFile < fDataList.size(); iFile++)
-    fDecoder -> AddData(fDataList.at(iFile));
+  fDecoder -> SetUseSeparatedData(fIsSeparatedData);
+  for (Int_t iFile = 0; iFile < fDataList[0].size(); iFile++)
+    fDecoder -> AddData(fDataList[0].at(iFile));
+
+  if (fIsSeparatedData)
+    for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+      for (Int_t iFile = 0; iFile < fDataList[iCobo].size(); iFile++)
+        fDecoder -> AddData(fDataList[iCobo].at(iFile), iCobo);
+
   fDecoder -> SetData(fDataNum);
 
   if (fExternalNumTbs)
@@ -168,9 +177,10 @@ STDecoderTask::Exec(Option_t *opt)
   if (fRawEvent == NULL)
     fRawEvent = fDecoder -> GetRawEvent(fEventID);
 
-  fEventIDLast = fDecoder -> GetEventID();
+  if (fRawEvent -> GetEventID() == 10)
+    FairRootManager::Instance() -> SetFinishRun();
 
-  fLogger -> Info(MESSAGE_ORIGIN, Form("Reading event %lld", fEventIDLast));
+  fEventIDLast = fDecoder -> GetEventID();
 
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
 
