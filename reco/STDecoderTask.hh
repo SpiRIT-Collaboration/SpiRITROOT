@@ -70,7 +70,7 @@ class STDecoderTask : public FairTask {
     /// Setting event id for STSource
     void SetEventID(Long64_t eventid = -1);
 
-    Long64_t GetEventID();
+    Int_t GetEventID();
 
     /// If set, decoded raw data is written in ROOT file with STRawEvent class.
     void SetPersistence(Bool_t value = kTRUE);
