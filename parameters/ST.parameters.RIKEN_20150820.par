@@ -16,6 +16,7 @@ AnodeWirePlaneY:Double_t        -4.05             # mm
 GroundWirePlaneY:Double_t       -8.1              # mm
 GatingWirePlaneY:Double_t       -14.0             # mm
 EField:Double_t                 0.0               # 
+FPNPedestalRMS:Double_t         100               # RMS threshold value for FPN pedestal
 NumTbs:Int_t                    512               # The number of time buckets in the actual data
 WindowNumTbs:Int_t              260               # The number of time buckets of the window
 WindowStartTb:Int_t             140               # First time bucket number of the window
