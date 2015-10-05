@@ -5,7 +5,8 @@
  *   https://github.com/SpiRIT-Collaboration/SpiRITROOT/wiki/Event-Display-Macro
  */
 
-void run_eve(TString name = "urqmd_short")
+void run_eve(TString name = "urqmd_short",
+             TString parameterFile = "ST.parameters.RIKEN_20150820.par")
 {
   // -----------------------------------------------------------------
   // FairRun
@@ -17,7 +18,7 @@ void run_eve(TString name = "urqmd_short")
   TString workDir     = gSystem -> Getenv("VMCWORKDIR");
   TString inputFile   = workDir + "/macros/data/" + name + ".reco.root";
   TString outputFile  = workDir + "/macros/data/" + name + ".eve.root";
-  TString digiParFile = workDir + "/parameters/ST.parameters.par";
+  TString digiParFile = workDir + "/parameters/" + parameterFile;
   TString geomFile    = workDir + "/geometry/geomSpiRIT.man.root";
 
 
@@ -52,6 +53,7 @@ void run_eve(TString name = "urqmd_short")
   // -----------------------------------------------------------------
   // Event draw task
   STEventDrawTask* fEve = new STEventDrawTask();
+  fEve -> SetRendering(STEventDrawTask::kHit, kTRUE);
   fEve -> SetRendering(STEventDrawTask::kRiemann, kTRUE);
 
 
