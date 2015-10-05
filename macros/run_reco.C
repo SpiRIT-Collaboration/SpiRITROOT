@@ -23,7 +23,7 @@ void run_reco
 (
   TString      name     = "urqmd_short",
   TString      dataFile = "",
-  TString parameterFile = "ST.parameters.par"
+  TString parameterFile = "ST.parameters.RIKEN_20150820.par"
 )
 {
   // -----------------------------------------------------------------
