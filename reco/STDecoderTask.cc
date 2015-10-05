@@ -72,7 +72,7 @@ void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_
 void STDecoderTask::SetOldData(Bool_t oldData)                                                { fOldData = oldData; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
 
-Int_t STDecoderTask::GetEventID() { return fRawEvent -> GetEventID(); }
+Long64_t STDecoderTask::GetEventID() { return fEventIDLast; }
 
 InitStatus
 STDecoderTask::Init()
@@ -168,7 +168,9 @@ STDecoderTask::Exec(Option_t *opt)
   if (fRawEvent == NULL)
     fRawEvent = fDecoder -> GetRawEvent(fEventID);
 
-  fLogger -> Info(MESSAGE_ORIGIN, Form("Reading event %d", fRawEvent -> GetEventID()));
+  fEventIDLast = fDecoder -> GetEventID();
+
+  fLogger -> Info(MESSAGE_ORIGIN, Form("Reading event %lld", fEventIDLast));
 
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
 
