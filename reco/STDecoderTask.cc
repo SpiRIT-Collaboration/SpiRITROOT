@@ -177,9 +177,6 @@ STDecoderTask::Exec(Option_t *opt)
   if (fRawEvent == NULL)
     fRawEvent = fDecoder -> GetRawEvent(fEventID);
 
-  if (fRawEvent -> GetEventID() == 10)
-    FairRootManager::Instance() -> SetFinishRun();
-
   fEventIDLast = fDecoder -> GetEventID();
 
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
