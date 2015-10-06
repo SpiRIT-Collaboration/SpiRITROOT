@@ -1,5 +1,8 @@
 #include "STDebugLogger.hh"
 
+#define STLOG_COLOR_RED "\033[1m\033[32m"
+#define STLOG_COLOR_RESET "\033[1m\033[32m"
+
 ClassImp(STDebugLogger)
 
 STDebugLogger* STDebugLogger::fInstance = NULL;
@@ -168,3 +171,29 @@ STDebugLogger::FillTree(TString name, Int_t nVal, Double_t *val, TString *bname)
 TFile* STDebugLogger::GetOutFile() { return fOutFile; }
 TH1D*  STDebugLogger::GetHist1(TString name) { return fMapHist1[name] != NULL ? fMapHist1[name] : NULL; }
 TH2D*  STDebugLogger::GetHist2(TString name) { return fMapHist2[name] != NULL ? fMapHist2[name] : NULL; }
+
+void 
+STDebugLogger::SetObject(TString name, TObject* object)
+{
+  if (fMapObject[name] == NULL)
+    fMapObject[name] = object;
+}
+
+TObject* STDebugLogger::GetObject(TString name) { return fMapObject[name] != NULL ? fMapObject[name] : NULL; }
+
+
+void STDebugLogger::Print(TString message)
+{
+  std::cout << "\033[1m\033[32m[STLOG]\033[0m "
+            << message 
+            << std::endl;
+}
+
+void STDebugLogger::Print(TString header, TString message)
+{
+  std::cout << "\033[1m\033[32m["
+            << header
+            << "]\033[0m "
+            << message 
+            << std::endl;
+}

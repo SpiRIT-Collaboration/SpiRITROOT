@@ -8,6 +8,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TTree.h"
+#include "TObject.h"
 
 #include <map> 
 #include <vector> 
@@ -41,6 +42,13 @@ class STDebugLogger
     TH1D*  GetHist1(TString name);
     TH2D*  GetHist2(TString name);
 
+    void SetObject(TString name, TObject* object);
+
+    TObject* GetObject(TString name);
+
+    void Print(TString message);
+    void Print(TString header, TString message);
+
   private:
     TFile* fOutFile;
     std::map<TString, TH1D*> fMapHist1;
@@ -51,10 +59,11 @@ class STDebugLogger
     std::vector<Double_t*> fMapBranchVal;
     Int_t fMaxBranchIdx;
 
+    std::map<TString, TObject*> fMapObject;
 
     static STDebugLogger* fInstance;
 
-  ClassDef(STDebugLogger, 0)
+  ClassDef(STDebugLogger, 1)
 };
 
 #endif
