@@ -662,7 +662,8 @@ void
 STEventDrawTask::DrawPad(Int_t row, Int_t layer)
 {
   if (!fRawEventArray) return;
-  if (row==fCurrentRow && layer==fCurrentLayer) return;
+  if (fCurrentEvent != currentEvent && 
+      row==fCurrentRow && layer==fCurrentLayer) return;
 
   fCurrentRow = row;
   fCurrentLayer = layer;
