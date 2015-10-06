@@ -663,14 +663,23 @@ STEventDrawTask::DrawPad(Int_t row, Int_t layer)
 {
   if (!fRawEventArray) return;
 
-  Int_t currentEvent = fEventManager -> GetCurrentEvent();
-  if (fCurrentEvent != currentEvent && 
-      row==fCurrentRow && layer==fCurrentLayer) return;
+  Int_t currentEvent;
+
+  if (fEventManager -> Online())
+    currentEvent = 
+      ((STSource*) FairRunOnline::Instance() -> GetSource()) -> GetEventID();
+  else
+    currentEvent = fEventManager -> GetCurrentEvent();
+
+  if (fCurrentEvent == currentEvent && 
+                row == fCurrentRow  && 
+              layer == fCurrentLayer)
+    return;
 
   fCurrentRow = row;
   fCurrentLayer = layer;
   fEventManagerEditor -> SetRowLayer(row, layer);
-  if (currentEvent!=fCurrentEvent) 
+  if (currentEvent != fCurrentEvent) 
   {
     fCurrentEvent = currentEvent;
     fRawEvent = (STRawEvent*) fRawEventArray -> At(0);
@@ -710,28 +719,27 @@ void
 STEventDrawTask::ClickSelectedPadPlane()
 {
   TObject* select = ((TCanvas*)gPad) -> GetClickSelected();
-  if (!select) return;
 
-  if (select -> InheritsFrom(TH1::Class()))
-  {
-    TH2D* hist = (TH2D*) select;
+  if (select == NULL || select -> InheritsFrom(TH1::Class()) == kFALSE)
+    return;
 
-    Int_t uniqueID = gPad -> GetUniqueID();
-    Int_t xEvent = gPad -> GetEventX();
-    Int_t yEvent = gPad -> GetEventY();
+  TH2D* hist = (TH2D*) select;
 
-    gPad -> SetUniqueID(yEvent);
+  Int_t uniqueID = gPad -> GetUniqueID();
+  Int_t xEvent = gPad -> GetEventX();
+  Int_t yEvent = gPad -> GetEventY();
 
-    Float_t xAbs = gPad -> AbsPixeltoX(xEvent);
-    Float_t yAbs = gPad -> AbsPixeltoY(yEvent);
-    Double_t xOnClick = gPad -> PadtoX(xAbs);
-    Double_t yOnClick = gPad -> PadtoY(yAbs);
+  gPad -> SetUniqueID(yEvent);
 
-    Int_t bin = hist -> FindBin(xOnClick,yOnClick);
-    Double_t content = hist -> GetBinContent(bin);
+  Float_t xAbs = gPad -> AbsPixeltoX(xEvent);
+  Float_t yAbs = gPad -> AbsPixeltoY(yEvent);
+  Double_t xOnClick = gPad -> PadtoX(xAbs);
+  Double_t yOnClick = gPad -> PadtoY(yAbs);
 
-    STEventDrawTask::Instance() -> DrawPadByPosition(xOnClick,yOnClick);
-  }
+  Int_t bin = hist -> FindBin(xOnClick,yOnClick);
+  Double_t content = hist -> GetBinContent(bin);
+
+  STEventDrawTask::Instance() -> DrawPadByPosition(xOnClick,yOnClick);
 
   ((TCanvas*)gPad) -> SetClickSelected(0);
 }
