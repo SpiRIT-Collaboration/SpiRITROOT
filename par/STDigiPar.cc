@@ -158,6 +158,7 @@ STDigiPar::getParams(FairParamList *paramList)
     }
     fAGETMapFileName = GetFile(fAGETMapFile);
 
+    fInitialized = kTRUE;
   }
 
   return kTRUE;
