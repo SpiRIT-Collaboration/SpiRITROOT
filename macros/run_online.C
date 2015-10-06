@@ -5,8 +5,6 @@
  *   If you update the event number in GUI, The analysis runs as soon as
  *   it is changed and apdate event display.
  *
- * - TODO : DOES NOT WORK WITH STDecoderTask!!!
- *
  * - How To Run
  *   In bash,
  *   > root 'run_reco.C("name", "dataFile")'
@@ -14,13 +12,15 @@
  *
  * - Varialbles
  *   @ name : Name of simulation.
- *   @ dataFile : Full path of data file. Blanck("") for MC reconstruction.
+ *   @ dataFile : Full path of data file.
+ *   @ parameterFile : name of the digi par.
  */
 
 void run_online
 (
   TString name     = "cosmic_short",
-  TString dataFile = "../input/run_0457_event4n10.dat"
+  TString dataFile = "../input/run_0457_event4n10.dat",
+  TString parameterFile = "ST.parameters.RIKEN_20150820.par"
 )
 {
   // -----------------------------------------------------------------
@@ -86,7 +86,7 @@ void run_online
   TString outputFile  = dataDir + name + ".online.root"; 
   TString mcParFile   = dataDir + name + ".params.root";
   TString loggerFile  = dataDir + "log_" + name + ".reco.txt";
-  TString digiParFile = workDir + "/parameters/ST.parameters.par";
+  TString digiParFile = workDir + "/parameters/" + parameterFile;
   TString geoManFile  = workDir + "/geometry/geomSpiRIT.man.root";
 
 
@@ -103,11 +103,11 @@ void run_online
   // -----------------------------------------------------------------
   // Set FairRun
   fRun -> SetOutputFile(outputFile);
+  fRun -> SetAutoFinish(kFALSE);
 
 
   // -----------------------------------------------------------------
   // Geometry
-  //fRun -> SetGeomFile(geoManFile);
   fEveManager -> SetGeomFile(geoManFile);
 
 
