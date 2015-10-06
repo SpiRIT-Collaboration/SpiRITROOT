@@ -33,7 +33,7 @@ STEventDrawTask::STEventDrawTask()
   fSet2dPlotRangeFlag = kFALSE;
   fSetDigiFileFlag    = kFALSE;
 
-  fCurrentEvent = -1;
+  fCurrentEvent = -2; // avoid -1, will break.
   fCurrentRow   = -1;
   fCurrentLayer = -1;
 
@@ -144,7 +144,6 @@ void
 STEventDrawTask::Exec(Option_t* option)
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"Exec()");
-  //std::cout << fPadPlane ->GetName() << std::endl;
 
   Reset();
 
@@ -165,14 +164,11 @@ STEventDrawTask::Exec(Option_t* option)
   if (fRiemannTrackArray != NULL && fSetObject[kRiemann])
     DrawRiemannHits();
 
+  DrawPad(fCurrentRow, fCurrentLayer);
+  UpdatePadRange();
+
   gEve -> Redraw3D(kFALSE);
   UpdateCvsPadPlane();
-}
-
-void 
-STEventDrawTask::Finish(Option_t* option)
-{
-  //std::cout << fPadPlane ->GetName() << std::endl;
 }
 
 void 
@@ -678,7 +674,8 @@ STEventDrawTask::DrawPad(Int_t row, Int_t layer)
     fRawEvent = (STRawEvent*) fRawEventArray -> At(0);
   }
   STPad* pad = fRawEvent -> GetPad(row, layer);
-  if (!pad) return;
+  if (pad == NULL) 
+    return;
   Double_t* adc = pad -> GetADC();
 
   fHistPad -> SetTitle(Form("row: %d, layer: %d",row, layer));

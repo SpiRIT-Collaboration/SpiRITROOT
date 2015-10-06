@@ -53,7 +53,6 @@ class STEventDrawTask : public FairTask
 
     virtual InitStatus Init();
     virtual void Exec(Option_t* option);
-    virtual void Finish(Option_t* option);
     virtual void SetParContainers();
     void Reset();
 
