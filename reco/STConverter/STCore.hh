@@ -59,7 +59,7 @@ class STCore : public TObject {
     void SetUseSeparatedData(Bool_t value = kTRUE);
 
     // getters
-    STRawEvent *GetRawEvent(Int_t eventID = -1);          ///< Returns STRawEvent object filled with the data
+    STRawEvent *GetRawEvent(Long64_t eventID = -1);       ///< Returns STRawEvent object filled with the data
     Int_t GetEventID();                                   ///< Returns the current event ID
     Int_t GetNumTbs(Int_t coboIdx = 0);                   ///< Returns the number of time buckets of the data
 
