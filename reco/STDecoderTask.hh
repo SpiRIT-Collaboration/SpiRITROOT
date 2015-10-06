@@ -86,6 +86,9 @@ class STDecoderTask : public FairTask {
     /// Finishing the event.
     virtual void FinishEvent();
 
+    /// Read event for STSource
+    Int_t ReadEvent(Int_t eventID);
+
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
 

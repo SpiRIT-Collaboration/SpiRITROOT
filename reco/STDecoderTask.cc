@@ -177,19 +177,31 @@ STDecoderTask::Exec(Option_t *opt)
   if (fRawEvent == NULL)
     fRawEvent = fDecoder -> GetRawEvent(fEventID);
 
-  fEventIDLast = fDecoder -> GetEventID();
-
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
 
   fRawEvent = NULL;
 }
 
+Int_t
+STDecoderTask::ReadEvent(Int_t eventID)
+{
+  fRawEventArray -> Delete();
+
+  fRawEvent = fDecoder -> GetRawEvent(eventID);
+  fEventIDLast = fDecoder -> GetEventID();
+
+  if (fRawEvent == NULL)
+    return 1;
+
+  new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
+
+  return 0;
+}
+
+
 void
 STDecoderTask::FinishEvent()
 {
-  if (FairRunOnline::Instance() != NULL)
-    return;
-
   fRawEvent = fDecoder -> GetRawEvent();
 
   if (fRawEvent == NULL)

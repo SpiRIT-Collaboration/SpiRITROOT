@@ -2,8 +2,6 @@
 
 ClassImp(STSource)
 
-extern Bool_t gIsInterrupted;
-
 STSource::STSource()
 {
   fDataFile = "";
@@ -45,11 +43,9 @@ Bool_t STSource::Init()
 
 Int_t STSource::ReadEvent(UInt_t)
 {
-  fDecoder -> SetEventID(fEventID);
-  fDecoder -> Exec("");
-  gIsInterrupted = kTRUE;
+  Int_t status = fDecoder -> ReadEvent(fEventID);
 
-  return 0;
+  return status;
 }
 
 void STSource::Reset()
