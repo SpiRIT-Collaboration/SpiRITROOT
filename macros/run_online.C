@@ -46,20 +46,6 @@ void run_online
   fPSATask -> SetPSAMode(STPSATask::kSimple);
   fEveManager -> AddTask(fPSATask);
 
-  /*
-  STHitClusteringTask *fClusteringTask = new STHitClusteringTask();
-  fClusteringTask -> SetClusterizerMode(STHitClusteringTask::kScan2);
-  //fEventManager -> AddTask(fClusteringTask);
-
-  STSMTask* fSMTask = new STSMTask();
-  fSMTask -> SetMode(STSMTask::kChange);
-  //fEventManager -> AddTask(fSMTask);
-
-  STRiemannTrackingTask* fRiemannTrackingTask = new STRiemannTrackingTask();
-  fRiemannTrackingTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ, 0);
-  fEventManager -> AddTask(fRiemannTrackingTask);
-  */
-
   STEventDrawTask* fEve = new STEventDrawTask();
   fEve -> SetRendering(STEventDrawTask::kHit, kTRUE);
   fEveManager -> AddTask(fEve);
@@ -97,7 +83,6 @@ void run_online
   fLogger -> SetLogToScreen(kTRUE);
   fLogger -> SetLogToFile(kTRUE);
   fLogger -> SetLogVerbosityLevel("MEDIUM");
-  fLogger -> SetLogScreenLevel("DEBUG2");
 
 
   // -----------------------------------------------------------------
