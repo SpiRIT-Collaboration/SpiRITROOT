@@ -662,13 +662,14 @@ void
 STEventDrawTask::DrawPad(Int_t row, Int_t layer)
 {
   if (!fRawEventArray) return;
+
+  Int_t currentEvent = fEventManager -> GetCurrentEvent();
   if (fCurrentEvent != currentEvent && 
       row==fCurrentRow && layer==fCurrentLayer) return;
 
   fCurrentRow = row;
   fCurrentLayer = layer;
   fEventManagerEditor -> SetRowLayer(row, layer);
-  Int_t currentEvent = fEventManager -> GetCurrentEvent();
   if (currentEvent!=fCurrentEvent) 
   {
     fCurrentEvent = currentEvent;
