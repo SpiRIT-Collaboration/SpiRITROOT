@@ -54,7 +54,7 @@ STCore::~STCore()
 
 void STCore::Initialize()
 {
-  fRawEventPtr = NULL;
+  fRawEventPtr = new STRawEvent();
 
   fMapPtr = new STMap();
   fPedestalPtr = new STPedestal();
@@ -81,8 +81,8 @@ void STCore::Initialize()
   fPedestalStartTb = 3;
   fAverageTbs = 20;
 
-  fPrevEventNo = -1;
-  fCurrEventNo = -1;
+  fPrevEventNo = 0;
+  fCurrEventNo = 0;
   memset(fCurrFrameNo, 0, sizeof(Int_t)*12);
 
   fOldData = kFALSE;
@@ -135,8 +135,8 @@ Bool_t STCore::SetData(Int_t value)
     }
   }
 
-  fPrevEventNo = -1;
-  fCurrEventNo = -1;
+  fPrevEventNo = 0;
+  fCurrEventNo = 0;
   memset(fCurrFrameNo, 0, sizeof(Int_t)*12);
 
   return fIsData;
@@ -246,7 +246,7 @@ Bool_t STCore::SetAGETMap(TString filename)
   return fMapPtr -> SetAGETMap(filename);
 }
 
-STRawEvent *STCore::GetRawEvent(Int_t eventID)
+STRawEvent *STCore::GetRawEvent(Long64_t eventID)
 {
   if (!fIsData) {
     std::cout << "== [STCore] Data file is not set!" << std::endl;
@@ -257,20 +257,27 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
   if (fPedestalMode == kNoPedestal && !fIsPedestalGenerationMode)
     std::cout << "== [STCore] Pedestal data file is not set!" << std::endl;
 
-  fPrevEventNo = eventID;
-
-  if (fRawEventPtr != NULL)
-    fRawEventPtr -> Clear();
-  else
-    fRawEventPtr = new STRawEvent();
-
-  fPadArray -> Clear("C");
-
-  GETFrame *frame = NULL;
-
   if (fIsSeparatedData) {
-    frame = fDecoderPtr[0] -> GetFrame(fCurrFrameNo[0]);
+    if (fCurrEventNo == eventID)
+      return fRawEventPtr;
+
+    fPrevEventNo = eventID;
+
+    fRawEventPtr -> Clear();
+
+    fPadArray -> Clear("C");
+
+    GETFrame *frame = fDecoderPtr[0] -> GetFrame(fCurrFrameNo[0]);
     fCurrEventNo = frame -> GetEventID();
+
+    if (fPrevEventNo == -1) {
+      fPrevEventNo = fCurrEventNo;
+    } else if (fPrevEventNo < fCurrEventNo) {
+      for (Int_t iCobo = 0; iCobo < 12; iCobo++)
+        fCurrFrameNo[iCobo] = 0;
+    }
+    
+    fCurrEventNo = fPrevEventNo;
     fRawEventPtr -> SetEventID(fCurrEventNo);
     frame = NULL;
 
@@ -279,7 +286,12 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
       for (Int_t iAsad = 0; iAsad < 4; iAsad++) {
         frame = fDecoderPtr[iCobo] -> GetFrame(fCurrFrameNo[iCobo] + iAsad);
 
-        if (fCurrEventNo != frame -> GetEventID()) {
+        if (fCurrEventNo > frame -> GetEventID()) {
+          fCurrFrameNo[iCobo]++;
+          iAsad = -1;
+
+          continue;
+        } else if (fCurrEventNo < frame -> GetEventID()) {
           stoppedInMiddle = kTRUE;
           fCurrFrameNo[iCobo] += iAsad;
 
@@ -355,6 +367,13 @@ STRawEvent *STCore::GetRawEvent(Int_t eventID)
 
     return fRawEventPtr;
   } else {
+    fPrevEventNo = eventID;
+
+    fRawEventPtr -> Clear();
+
+    fPadArray -> Clear("C");
+
+    GETFrame *frame = NULL;
     while ((frame = fDecoderPtr[0] -> GetFrame(fCurrFrameNo[0]))) {
       if (fPrevEventNo == -1)
         fPrevEventNo = frame -> GetEventID();
