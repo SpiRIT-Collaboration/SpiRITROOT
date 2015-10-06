@@ -28,10 +28,10 @@ class STEventManager : public TEveEventManager
     STEventManager();
     ~STEventManager();
 
-    void GotoEvent(Int_t event); ///< *MENU*
     void NextEvent();            ///< *MENU*
     void PrevEvent();            ///< *MENU*
-    void RunEvent();
+    void RunEvent(Int_t eventid);
+    void UpdateEvent();
 
     void AddTask(FairTask* task);
     void Init(Int_t option=1, Int_t level=3, Int_t nNodes=10000);

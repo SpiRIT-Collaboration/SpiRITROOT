@@ -4,6 +4,7 @@
  */
 
 #include "STEventManager.hh"
+#include "STEventDrawTask.hh"
 
 #include "TEveGeoNode.h"
 #include "TEveManager.h"
@@ -58,7 +59,7 @@ STEventManager::STEventManager()
     fLogger -> Info(MESSAGE_ORIGIN, "Eve initalized with FairRunAna.");
   }
 
-  fEntry = 0;
+  fEntry = -1;
 
   fEvent = NULL;
   fCvsPadPlane = NULL;
@@ -242,18 +243,22 @@ void STEventManager::AddTask(FairTask* task)
   else         fRunAna -> AddTask(task);
 }
 
-void STEventManager::GotoEvent(Int_t event)  { fEntry = event; RunEvent(); }
-void STEventManager::NextEvent()             { fEntry += 1;    RunEvent(); }
-void STEventManager::PrevEvent()             { fEntry -= 1;    RunEvent(); }
-void STEventManager::RunEvent()              
+void STEventManager::NextEvent()  { RunEvent(fEntry + 1); }
+void STEventManager::PrevEvent()  { RunEvent(fEntry - 1); }
+
+void STEventManager::RunEvent(Int_t eventid)
 { 
   if (fOnline) {
-    ((STSource*) fRunOnline -> GetSource()) -> SetEventID(fEntry);
-    fRunOnline -> Run(-1, 0);
+    ((STSource*) fRunOnline -> GetSource()) -> SetEventID(eventid);
+    fRunOnline -> Run(1, 0);
   }
   else 
-    fRunAna -> Run((Long64_t)fEntry);
+    fRunAna -> Run((Long64_t)eventid);
+
+  fEntry = eventid;
 }
+
+void STEventManager::UpdateEvent() { STEventDrawTask::Instance() -> Exec(""); }
 
 void STEventManager::SetEventManagerEditor(STEventManagerEditor* editor) { fEditor = editor; }
 void STEventManager::SetVolumeTransparency(Int_t val) { fTransparency = val; }

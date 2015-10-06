@@ -305,7 +305,7 @@ void
 STEventManagerEditor::UpdateWindowTb()
 {
   fDrawTask -> SetWindowRange(fCurrentWindowTbStart -> GetIntNumber(), fCurrentWindowTbEnd -> GetIntNumber());
-  SelectEvent();
+  fManager -> UpdateEvent();
 }
 
 void 
@@ -314,7 +314,7 @@ STEventManagerEditor::ResetWindowTb()
   fDrawTask -> SetWindow();
   fCurrentWindowTbStart -> SetNumber(fDrawTask -> GetWindowTbStart());
   fCurrentWindowTbEnd -> SetNumber(fDrawTask -> GetWindowTbEnd());
-  SelectEvent();
+  fManager -> UpdateEvent();
 }
 
 void 
@@ -323,7 +323,7 @@ STEventManagerEditor::DefaultWindowTb()
   fCurrentWindowTbStart -> SetNumber(fWindowTbStartDefault);
   fCurrentWindowTbEnd -> SetNumber(fWindowTbEndDefault);
   fDrawTask -> SetWindowRange(fCurrentWindowTbStart -> GetIntNumber(), fCurrentWindowTbEnd -> GetIntNumber());
-  SelectEvent();
+  fManager -> UpdateEvent();
 }
 
 void 
@@ -347,7 +347,7 @@ STEventManagerEditor::SelectEventIf()
 void 
 STEventManagerEditor::SelectEvent()
 {
-  fManager -> GotoEvent(fCurrentEvent -> GetIntNumber());
+  fManager -> RunEvent(fCurrentEvent -> GetIntNumber());
 
   if (fOnline == kTRUE)
     fCurrentEvent -> SetLimitValues(fCurrentEvent -> GetIntNumber(), fEntries - 1);
