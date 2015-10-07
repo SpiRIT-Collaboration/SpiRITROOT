@@ -30,6 +30,7 @@ STHitClusterRich.cc
 STRiemannHit.cc
 STRiemannTrack.cc
 STDriftedElectron.cc
+STLinearTrack.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

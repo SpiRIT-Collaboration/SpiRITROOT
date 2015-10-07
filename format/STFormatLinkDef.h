@@ -14,5 +14,6 @@
 #pragma link C++ class STRiemannHit+;
 #pragma link C++ class STRiemannTrack+;
 #pragma link C++ class STDriftedElectron+;
+#pragma link C++ class STLinearTrack+;
 
 #endif
