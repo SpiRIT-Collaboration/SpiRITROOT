@@ -105,7 +105,8 @@ TString
 STParReader::GetFilePar(Int_t index)
 {
   TString listFile = fParFile;
-  listFile.ReplaceAll("ST.parameters.par", "ST.files.par");
+  listFile.Remove(listFile.Last('/') + 1, listFile.Last('r') - listFile.Last('/'));
+  listFile.Append("ST.files.par");
 
   std::ifstream fileList(listFile.Data());
 
