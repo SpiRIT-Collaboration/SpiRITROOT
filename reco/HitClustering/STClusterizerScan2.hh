@@ -1,3 +1,6 @@
+#ifndef STCLUSTERIZERSCAN2
+#define STCLUSTERIZERSCAN2
+
 #include "STClusterizer.hh"
 
 #include "STHitClusterRich.hh"
@@ -39,3 +42,5 @@ class STHitSortR2
     Bool_t operator() (STHit* hit1, STHit* hit2)
     { return (hit1 -> GetPosition()).Mag() < (hit2 -> GetPosition()).Mag(); }
 };
+
+#endif
