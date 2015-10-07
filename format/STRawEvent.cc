@@ -19,7 +19,7 @@ ClassImp(STRawEvent);
 STRawEvent::STRawEvent()
 :TNamed("STRawEvent", "Raw event container")
 {
-  fEventID = -1;
+  fEventID = -2;
   fPadArray.reserve(108*112);
 
   fIsGood = kTRUE;
@@ -40,7 +40,7 @@ STRawEvent::~STRawEvent()
 
 void STRawEvent::Clear()
 {
-  fEventID = 0;
+  fEventID = -2;
   fPadArray.clear();
 
   fIsGood = kTRUE;
