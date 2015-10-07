@@ -49,6 +49,7 @@ class STPSATask : public FairTask
     Double_t fThreshold;
     Int_t    fLayerCut;
 
+    STDigiPar *fPar;   //!
     FairLogger *fLogger;   //!
     
 
