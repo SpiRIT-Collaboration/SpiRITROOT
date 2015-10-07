@@ -260,7 +260,7 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   fWindowTbStartDefault = fDrawTask -> GetWindowTbStart();
   fCurrentWindowTbStart = new TGNumberEntry(frameWindowTbStart, fWindowTbStartDefault, 6, -1,
                                   TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
-                                  TGNumberFormat::kNELLimitMinMax, 1, 512);
+                                  TGNumberFormat::kNELLimitMinMax, 0, 512);
   frameWindowTbStart -> AddFrame(labelWindowTbStart, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
   frameWindowTbStart -> AddFrame(fCurrentWindowTbStart, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
 
