@@ -134,7 +134,11 @@ STGainCheck::DrawSpectra()
   fCanvas -> SetLogz();
 
   fSpectra = new TH2D("GainCheckHist", Form("Gain Check - UAIdx:%03d", fUAIdx), 252, 0, 252, 2048, 0, 4096);
+#if ROOT_VERSION_CODE < ROOT_VERSION(6,0,0)
   fSpectra -> SetBit(TH1::kCanRebin);
+#else
+  fSpectra -> SetCanExtend(TH1::kAllAxes);
+#endif
 
   for (Int_t iLayer = fMinLayer; iLayer < fMaxLayer; iLayer++) {
     for (Int_t iRow = fMinRow; iRow < fMaxRow; iRow++) {
