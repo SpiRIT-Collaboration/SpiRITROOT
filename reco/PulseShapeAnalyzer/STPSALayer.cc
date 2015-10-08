@@ -41,8 +41,8 @@ STPSALayer::STPSALayer()
   fPrevRightPeak.Reset();
   fPrevLeftPeak.Reset();
 
-  fNumSidePads = 2;
-  fNumSideTbs = 2;
+  fNumSidePads = 4;
+  fNumSideTbs = 4;
   fPeakStorageSize = 50;
 
   fMinPoints = 4;
@@ -88,7 +88,9 @@ STPSALayer::Analyze(STRawEvent *rawEvent, STEvent *event)
 
   Int_t hitNum = 0;
 
-  STPad pad = fPadArray -> at(GetUnusedPadIdx());
+  Int_t padIdxCheck = GetUnusedPadIdx(); 
+  if (padIdxCheck == -1) return;
+  STPad pad = fPadArray -> at(padIdxCheck);
   Int_t totalPads = fNumFiredPads;
 
 #ifndef DEBUG
@@ -386,6 +388,9 @@ STPSALayer::GetUnusedPadIdx()
     return fPadIdxArray[fArrayIdx];
   } else {
     fArrayIdx++;
+
+    if (fArrayIdx > 12096)
+      return -1;
     
     return GetUnusedPadIdx();
   }
