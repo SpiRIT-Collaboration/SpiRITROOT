@@ -31,7 +31,16 @@ STLinearTrackFitter::Fit(STLinearTrack* track)
 Double_t
 STLinearTrackFitter::Perp(STLinearTrack* track, STHit* hit) 
 {
-  return -1;
+  TVector3 centroid = track -> GetCentroid();
+  TVector3 direction = track -> GetNormal();
+  TVector3 directionUnit = direciton.Unit();
+
+  TVector3 hitPos = hit -> GetPosition();
+  TVector3 hitPosMinusCentroid = hitPos - centroid;
+  TVector3 hitPosMinusCentroidUnit = hitPosMinusCentroid.Unit();
+  Double_t cosine = hitPosMinusCentroidUnit.Dot(directionUnit);
+
+  return hitPosMinusCentroid.Mag()*sqrt(1 - cosine*cosine);
 }
 
 void 
