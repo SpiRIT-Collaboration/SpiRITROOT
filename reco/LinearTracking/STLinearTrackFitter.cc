@@ -28,19 +28,21 @@ STLinearTrackFitter::Fit(STLinearTrack* track)
 
 }
 
-Double_t
+TVector3
 STLinearTrackFitter::Perp(STLinearTrack* track, STHit* hit) 
 {
   TVector3 centroid = track -> GetCentroid();
-  TVector3 direction = track -> GetNormal();
-  TVector3 directionUnit = direciton.Unit();
+  TVector3 directionUnit = track -> GetNormal();
 
   TVector3 hitPos = hit -> GetPosition();
   TVector3 hitPosMinusCentroid = hitPos - centroid;
   TVector3 hitPosMinusCentroidUnit = hitPosMinusCentroid.Unit();
   Double_t cosine = hitPosMinusCentroidUnit.Dot(directionUnit);
 
-  return hitPosMinusCentroid.Mag()*sqrt(1 - cosine*cosine);
+  TVector3 vectorAlongDirection = directionUnit;
+  vectorAlongDirection.SetMag(hitPosMinusCentroid.Mag()*cosine);
+
+  return (vectorAlongDirection - hitPosMinusCentroid);
 }
 
 void 

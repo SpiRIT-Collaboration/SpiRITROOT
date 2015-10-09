@@ -5,6 +5,8 @@
 #ifndef STLINEARTRACKFITTER
 #define STLINEARTRACKFITTER
 
+#include "TVector3.h"
+
 #include "STEvent.hh"
 #include "STHit.hh"
 #include "STLinearTrack.hh"
@@ -21,8 +23,8 @@ class STLinearTrackFitter
 
     /// Fit track and set variables. Return quality of the fitting.
     Double_t Fit(STLinearTrack* track);
-    /// Calculate and return perpendicular (shortest distance from track to hit.
-    Double_t Perp(STLinearTrack* track, STHit* hit);
+    /// Calculate and return perpendicular vector (having the shortest distance from track to hit.)
+    Tvector3 Perp(STLinearTrack* track, STHit* hit);
 
     /// Merge track and hit. Run Fit() automatically.
     void Merge(STLinearTrack* track, STHit* hit);
