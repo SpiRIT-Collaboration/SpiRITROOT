@@ -19,6 +19,7 @@ ${CMAKE_SOURCE_DIR}/reco/SystemManipulator
 ${CMAKE_SOURCE_DIR}/reco/RiemannTracking
 ${CMAKE_SOURCE_DIR}/reco/HoughTracking
 ${CMAKE_SOURCE_DIR}/reco/Genfit
+${CMAKE_SOURCE_DIR}/reco/LinearTracking
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -77,6 +78,9 @@ HoughTracking/STHoughSpaceHelix.cc
 
 Genfit/STSpacepointMeasurement.cc
 
+LinearTracking/STLinearTrackFinder.cc
+LinearTracking/ODRFitter.cc
+
 STDecoderTask.cc
 STPSATask.cc
 STHitClusteringTask.cc
@@ -84,6 +88,8 @@ STSMTask.cc
 STRiemannTrackingTask.cc
 STGenfitTask.cc
 STSource.cc
+
+STLinearTrackingTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

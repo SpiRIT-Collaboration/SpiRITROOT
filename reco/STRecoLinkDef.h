@@ -43,6 +43,10 @@
 #pragma link C++ class STRiemannSort+;
 #pragma link C++ class STRiemannTrackingTask+;
 
+#pragma link C++ class STLinearTrackFinder+;
+#pragma link C++ class STLinearTrackingTask+;
+#pragma link C++ class ODRFitter+;
+
 #pragma link C++ class STHoughSpaceLine+;
 #pragma link C++ class STHoughSpaceHelix+;
 
