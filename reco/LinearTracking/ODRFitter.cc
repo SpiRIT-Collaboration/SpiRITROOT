@@ -1,4 +1,3 @@
-
 /// @brief Orthogonal Distance Regression (ODR) Fitter.
 /// @author JungWoo Lee
 
@@ -8,21 +7,25 @@ ClassImp(ODRFitter)
 
 ODRFitter::ODRFitter()
 {
-  Init();
+  Reset();
 }
 
 ODRFitter::~ODRFitter()
 {
 }
 
-void 
-ODRFitter::Init()
+void ODRFitter::Reset()
 {
-  nPoints = 0;
+  fNumPoints = 0;
+
+  fWeightSum = 0;
+  fSumOfPC2 = 0;
 
   fCentroid.Clear();
   fCentroid.ResizeTo(3,1);
-  fWeightSum = 0;
+
+  fNormal.Clear();
+  fNormal.ResizeTo(3);
 
   fMatrixA.Clear();
   fMatrixA.ResizeTo(3,3);
@@ -33,22 +36,17 @@ ODRFitter::Init()
   fEigenVectors.Clear();
   fEigenVectors.ResizeTo(3,3);
 
-  fNormal.Clear();
-  fNormal.ResizeTo(3);
-
   fRMS = 0;
 }
 
-void 
-ODRFitter::SetCentroid(Double_t x, Double_t y, Double_t z)
+void ODRFitter::SetCentroid(Double_t x, Double_t y, Double_t z)
 {
   fCentroid[0][0] = x;
   fCentroid[1][0] = y;
   fCentroid[2][0] = z;
 }
 
-void 
-ODRFitter::AddPoint(Double_t x, Double_t y, Double_t z, Double_t w)
+void ODRFitter::AddPoint(Double_t x, Double_t y, Double_t z, Double_t w)
 {
   // building position matrix
   TMatrixD matrixP(3, 1);
@@ -71,52 +69,35 @@ ODRFitter::AddPoint(Double_t x, Double_t y, Double_t z, Double_t w)
   fSumOfPC2 += PC2;
 
   fWeightSum += w;
-
-  nPoints++;
+  fNumPoints++;
 }
 
-void 
-ODRFitter::SolveEigenValueEquation()
+void ODRFitter::SolveEigenValueEquation()
 {
-  std::cout << "Solving eigen value equation!" << std::endl;
-
-  if (fWeightSum == 0)
-    fWeightSum = 1;
-  
-  fMatrixA *= 1./fWeightSum;
   fEigenVectors = fMatrixA.EigenVectors(fEigenValues);
 }
 
-Int_t 
-ODRFitter::FitLine()
+void ODRFitter::ChooseEigenValue(Int_t iEV)
+{
+  fNormal = TMatrixDColumn(fEigenVectors, iEV);
+  fRMS = fSumOfPC2 - fEigenValues[iEV];
+}
+
+void ODRFitter::FitLine()
 {
   SolveEigenValueEquation();
-
-  std::cout << "caculating normal vector!" << std::endl;
-
-  fNormal = TMatrixDColumn(fEigenVectors, 0);
-  Double_t absNormal = TMath::Sqrt(fNormal.Norm2Sqr());
-  fNormal *= 1./absNormal;
-
-  return 0;
+  ChooseEigenValue(0);
 }
 
-Int_t 
-ODRFitter::FitPlane()
+void ODRFitter::FitPlane()
 {
-  return 0;
+  SolveEigenValueEquation();
+  ChooseEigenValue(2);
 }
 
-TVector3 
-ODRFitter::GetCentroid() 
-{ return TVector3(fCentroid[0][0], fCentroid[1][0], fCentroid[2][0]); }
-
-TVector3 
-ODRFitter::GetNormal() 
-{ return TVector3(fNormal[0], fNormal[1], fNormal[2]); }
-
-TVector3 
-ODRFitter::GetDirection() 
-{ return TVector3(fNormal[0], fNormal[1], fNormal[2]); }
-
-Double_t ODRFitter::GetRMS() { return fRMS; }
+TVector3 ODRFitter::GetCentroid()  { return TVector3(fCentroid[0][0], fCentroid[1][0], fCentroid[2][0]); }
+TVector3 ODRFitter::GetNormal()    { return TVector3(fNormal[0], fNormal[1], fNormal[2]); }
+TVector3 ODRFitter::GetDirection() { return TVector3(fNormal[0], fNormal[1], fNormal[2]); }
+   Int_t ODRFitter::GetNumPoints() { return fNumPoints; }
+Double_t ODRFitter::GetWeightSum() { return fWeightSum; }
+Double_t ODRFitter::GetRMS()       { return fRMS; }

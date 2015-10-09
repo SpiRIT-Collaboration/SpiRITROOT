@@ -31,12 +31,10 @@ class ODRFitter
     ODRFitter();
     ~ODRFitter();
 
-    void Init();
+    void Reset(); ///< Reset fitter
 
-    /// Set centroid 
-    void SetCentroid(Double_t x, Double_t y, Double_t z);
-    /// Set centroid with TVector3
-    void SetCentroid(TVector3 position);
+    void SetCentroid(Double_t x, Double_t y, Double_t z); ///< Set centroid 
+    void SetCentroid(TVector3 position); ///< Set centroid with TVector3
 
     /** 
      *  @brief  Add point as a fitting data
@@ -54,23 +52,28 @@ class ODRFitter
      */
     void AddPoint(Double_t x, Double_t y, Double_t z, Double_t w = 1);
 
-    Int_t FitPlane(); ///< Fit plane
-    Int_t FitLine();  ///< Fit line
+    void FitPlane(); ///< Fit plane
+    void FitLine();  ///< Fit line
 
     TVector3 GetCentroid();   ///< Get centroid
-    TVector3 GetNormal();     ///< Get normal vector
-    TVector3 GetDirection(); ///< Get direction vector (for line but same as normal for plane)
-    Double_t GetRMS();
+    TVector3 GetNormal();     ///< Get normal vector for plane
+    TVector3 GetDirection();  ///< Get direction vector for line
+
+       Int_t GetNumPoints();  ///< Get number of points
+    Double_t GetWeightSum();  ///< Get sum of weights
+    Double_t GetRMS();        ///< Get RMS
 
   private:
     /// Solve eigen value equation
     void SolveEigenValueEquation();
+    /// Choose which eigen value to use.
+    void ChooseEigenValue(Int_t iEV);
 
   private:
-    UInt_t nPoints; ///< Number of point set
-
+       Int_t fNumPoints; ///< Number of point set
     Double_t fWeightSum; ///< Sum of weights
     Double_t fSumOfPC2;  ///< Sum of square of distance from point to the centroid
+
     TMatrixD fCentroid;  ///< Centroid position of the point set
     TVectorD fNormal;    ///< Normal vector of ODR plane, or vector of ODR line
 
@@ -78,7 +81,7 @@ class ODRFitter
     TVectorD fEigenValues;  ///< eigen values sorted by decending order
     TMatrixD fEigenVectors; ///< eigen vectors sorted by decending eigen value order
 
-    Double_t fRMS;
+    Double_t fRMS; /// Root mean square of the fit
 
 
   ClassDef(ODRFitter, 1)
