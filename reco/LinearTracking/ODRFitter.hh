@@ -74,12 +74,12 @@ class ODRFitter
     Double_t fWeightSum; ///< Sum of weights
     Double_t fSumOfPC2;  ///< Sum of square of distance from point to the centroid
 
-    TMatrixD fCentroid;  ///< Centroid position of the point set
-    TVectorD fNormal;    ///< Normal vector of ODR plane, or vector of ODR line
+    TMatrixD *fCentroid;  ///< Centroid position of the point set
+    TVectorD *fNormal;    ///< Normal vector of ODR plane, or vector of ODR line
 
-    TMatrixD fMatrixA;      ///< Matrix A
-    TVectorD fEigenValues;  ///< eigen values sorted by decending order
-    TMatrixD fEigenVectors; ///< eigen vectors sorted by decending eigen value order
+    TMatrixD *fMatrixA;      ///< Matrix A
+    TVectorD *fEigenValues;  ///< eigen values sorted by decending order
+    TMatrixD *fEigenVectors; ///< eigen vectors sorted by decending eigen value order
 
     Double_t fRMS; /// Root mean square of the fit
 
