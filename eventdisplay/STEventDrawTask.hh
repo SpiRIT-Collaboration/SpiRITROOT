@@ -14,6 +14,7 @@
 #include "TEvePointSet.h"
 #include "TEveManager.h"
 #include "TEveBoxSet.h"
+#include "TEveLine.h"
 #include "TClonesArray.h"
 #include "TPaletteAxis.h"
 #include "TVector3.h"
@@ -27,6 +28,8 @@
 #include "STEventManager.hh"
 #include "STEventManagerEditor.hh"
 #include "STRiemannTrack.hh"
+#include "STLinearTrackFitter.hh"
+#include "STLinearTrack.hh"
 #include "STRiemannHit.hh"
 #include "STRawEvent.hh"
 #include "STDigiPar.hh"
@@ -40,7 +43,7 @@
 #include <vector>
 #include <iostream>
 
-#define NUMEVEOBJ 6
+#define NUMEVEOBJ 7
 
 class STEventDrawTask : public FairTask
 {
@@ -58,12 +61,13 @@ class STEventDrawTask : public FairTask
 
     enum STEveObject
     {
-      kMC      = 0,
-      kDigi    = 1,
-      kHit     = 2,
-      kCluster = 3,
+      kMC         = 0,
+      kDigi       = 1,
+      kHit        = 2,
+      kCluster    = 3,
       kClusterBox = 4,
-      kRiemann = 5
+      kRiemann    = 5,
+      kLinear     = 6
     };
 
     void Set2DPlotRange(Int_t uaIdx);
@@ -105,9 +109,11 @@ class STEventDrawTask : public FairTask
     void DrawHitPoints();
     void DrawHitClusterPoints();
     void DrawRiemannHits();
+    void DrawLinearTracks();
 
-    Color_t GetRiemannColor(Int_t);
+    Color_t GetColor(Int_t);
 
+  private :
     STEventManager* fEventManager;
     STEventManagerEditor* fEventManagerEditor;
 
@@ -117,6 +123,7 @@ class STEventDrawTask : public FairTask
     TClonesArray* fDriftedElectronArray;
     TClonesArray* fEventArray;
     TClonesArray* fRiemannTrackArray;
+    TClonesArray* fLinearTrackArray;
     TClonesArray* fRawEventArray;
 
     STRawEvent* fRawEvent;
@@ -155,14 +162,17 @@ class STEventDrawTask : public FairTask
     TEvePointSet* fPointSet[NUMEVEOBJ];
     Bool_t   fSetObject[NUMEVEOBJ];
     Bool_t   fRnrSelf[NUMEVEOBJ];
-    Color_t  fPointColor[NUMEVEOBJ];
-    Size_t   fPointSize[NUMEVEOBJ];
-    Style_t  fPointStyle[NUMEVEOBJ];
+    Color_t  fEveColor[NUMEVEOBJ];
+    Size_t   fEveSize[NUMEVEOBJ];
+    Style_t  fEveStyle[NUMEVEOBJ];
     Double_t fThresholdMin[NUMEVEOBJ];
     Double_t fThresholdMax[NUMEVEOBJ];
 
     TEveBoxSet* fBoxClusterSet;
     vector<TEvePointSet*> fRiemannSetArray;
+    vector<TEveLine*> fLinearSetArray;
+
+    STLinearTrackFitter* fLTFitter;
 
     Double_t fMaxAdcCurrentPad;
 

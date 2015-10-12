@@ -26,6 +26,7 @@ STEventDrawTask::STEventDrawTask()
   fDriftedElectronArray = NULL;
   fEventArray           = NULL;
   fRiemannTrackArray    = NULL;
+  fLinearTrackArray     = NULL;
   fRawEventArray        = NULL;
 
   fRawEvent = NULL;
@@ -57,36 +58,43 @@ STEventDrawTask::STEventDrawTask()
     fSetObject[i] = kFALSE;
   }
 
-  fPointStyle[kMC] = kFullCircle;
-  fPointSize[kMC]  = 1;
-  fPointColor[kMC] = kGray+2;
+  fEveStyle[kMC] = kFullCircle;
+  fEveSize[kMC]  = 1;
+  fEveColor[kMC] = kGray+2;
   fRnrSelf[kMC]    = kFALSE;
 
-  fPointStyle[kDigi] = 1;
-  fPointSize[kDigi]  = 1.;
-  fPointColor[kDigi] = kAzure-5;
+  fEveStyle[kDigi] = 1;
+  fEveSize[kDigi]  = 1.;
+  fEveColor[kDigi] = kAzure-5;
   fRnrSelf[kDigi]    = kFALSE;
 
-  fPointStyle[kHit] = kFullCircle;
-  fPointSize[kHit]  = 0.5;
-  fPointColor[kHit] = kRed;
+  fEveStyle[kHit] = kFullCircle;
+  fEveSize[kHit]  = 0.5;
+  fEveColor[kHit] = kRed;
   fRnrSelf[kHit]    = kTRUE;
   fSetObject[kHit]  = kTRUE;
 
-  fPointStyle[kCluster] = kFullCircle;
-  fPointSize[kCluster]  = 1.;
-  fPointColor[kCluster] = kBlack;
+  fEveStyle[kCluster] = kFullCircle;
+  fEveSize[kCluster]  = 1.;
+  fEveColor[kCluster] = kBlack;
   fRnrSelf[kCluster]    = kFALSE;
   fRnrSelf[kClusterBox] = kFALSE;
 
-
-  fPointStyle[kRiemann] = kFullCircle;
-  fPointSize[kRiemann]  = 1.0;
-  fPointColor[kRiemann] = 0;
+  fEveStyle[kRiemann] = kFullCircle;
+  fEveSize[kRiemann]  = 1.0;
+  fEveColor[kRiemann] = 0;
   fRnrSelf[kRiemann]    = kFALSE;
   fSetObject[kRiemann]  = kFALSE;
 
+  fEveStyle[kLinear] = 1;
+  fEveSize[kLinear]  = 3;
+  fEveColor[kLinear] = kRed;
+  fRnrSelf[kLinear]    = kFALSE;
+  fSetObject[kLinear]  = kFALSE;
+
   fBoxClusterSet = NULL;
+
+  fLTFitter = new STLinearTrackFitter();
 }
 
 STEventDrawTask::~STEventDrawTask()
@@ -115,6 +123,7 @@ STEventDrawTask::Init()
   fDriftedElectronArray = (TClonesArray*) ioMan -> GetObject("STDriftedElectron");
   fEventArray           = (TClonesArray*) ioMan -> GetObject("STEvent");
   fRiemannTrackArray    = (TClonesArray*) ioMan -> GetObject("STRiemannTrack");
+  fLinearTrackArray     = (TClonesArray*) ioMan -> GetObject("STLinearTrack");
   fRawEventArray        = (TClonesArray*) ioMan -> GetObject("STRawEvent");
 
   gStyle -> SetPalette(55);
@@ -164,6 +173,9 @@ STEventDrawTask::Exec(Option_t* option)
   if (fRiemannTrackArray != NULL && fSetObject[kRiemann])
     DrawRiemannHits();
 
+  if (fLinearTrackArray != NULL && fSetObject[kLinear])
+    DrawLinearTracks();
+
   DrawPad(fCurrentRow, fCurrentLayer);
   UpdatePadRange();
 
@@ -180,9 +192,9 @@ STEventDrawTask::DrawMCPoints()
 
   fPointSet[kMC] = new TEvePointSet("MC", nPoints);
   fPointSet[kMC] -> SetOwnIds(kTRUE);
-  fPointSet[kMC] -> SetMarkerColor(fPointColor[kMC]);
-  fPointSet[kMC] -> SetMarkerSize(fPointSize[kMC]);
-  fPointSet[kMC] -> SetMarkerStyle(fPointStyle[kMC]);
+  fPointSet[kMC] -> SetMarkerColor(fEveColor[kMC]);
+  fPointSet[kMC] -> SetMarkerSize(fEveSize[kMC]);
+  fPointSet[kMC] -> SetMarkerStyle(fEveStyle[kMC]);
 
   for (Int_t iPoint=0; iPoint<nPoints; iPoint++)
   {
@@ -206,9 +218,9 @@ STEventDrawTask::DrawDriftedElectrons()
 
   fPointSet[kDigi] = new TEvePointSet("DriftedElectron", nPoints);
   fPointSet[kDigi] -> SetOwnIds(kTRUE);
-  fPointSet[kDigi] -> SetMarkerColor(fPointColor[kDigi]);
-  fPointSet[kDigi] -> SetMarkerSize(fPointSize[kDigi]);
-  fPointSet[kDigi] -> SetMarkerStyle(fPointStyle[kDigi]);
+  fPointSet[kDigi] -> SetMarkerColor(fEveColor[kDigi]);
+  fPointSet[kDigi] -> SetMarkerSize(fEveSize[kDigi]);
+  fPointSet[kDigi] -> SetMarkerStyle(fEveStyle[kDigi]);
 
   for(Int_t iPoint=0; iPoint<nPoints; iPoint++)
   {
@@ -237,9 +249,9 @@ STEventDrawTask::DrawHitPoints()
 
   fPointSet[kHit] = new TEvePointSet("Hit", nHits);
   fPointSet[kHit] -> SetOwnIds(kTRUE);
-  fPointSet[kHit] -> SetMarkerColor(fPointColor[kHit]);
-  fPointSet[kHit] -> SetMarkerSize(fPointSize[kHit]);
-  fPointSet[kHit] -> SetMarkerStyle(fPointStyle[kHit]);
+  fPointSet[kHit] -> SetMarkerColor(fEveColor[kHit]);
+  fPointSet[kHit] -> SetMarkerSize(fEveSize[kHit]);
+  fPointSet[kHit] -> SetMarkerStyle(fEveStyle[kHit]);
 
   for (Int_t iHit=0; iHit<nHits; iHit++)
   {
@@ -293,9 +305,9 @@ STEventDrawTask::DrawHitClusterPoints()
   if (fSetObject[kCluster]) {
     fPointSet[kCluster] = new TEvePointSet("HitCluster", nClusters);
     fPointSet[kCluster] -> SetOwnIds(kTRUE);
-    fPointSet[kCluster] -> SetMarkerColor(fPointColor[kCluster]);
-    fPointSet[kCluster] -> SetMarkerSize(fPointSize[kCluster]);
-    fPointSet[kCluster] -> SetMarkerStyle(fPointStyle[kCluster]);
+    fPointSet[kCluster] -> SetMarkerColor(fEveColor[kCluster]);
+    fPointSet[kCluster] -> SetMarkerSize(fEveSize[kCluster]);
+    fPointSet[kCluster] -> SetMarkerStyle(fEveStyle[kCluster]);
   }
 
   fLogger -> Debug(MESSAGE_ORIGIN,Form("Number of clusters: %d",nClusters));
@@ -367,9 +379,9 @@ STEventDrawTask::DrawRiemannHits()
     Int_t nClusters = track -> GetNumHits();
 
     riemannPointSet = new TEvePointSet(Form("RiemannTrack_%d", iTrack), 1, TEvePointSelectorConsumer::kTVT_XYZ);
-    riemannPointSet -> SetMarkerColor(GetRiemannColor(iTrack));
-    riemannPointSet -> SetMarkerSize(fPointSize[kRiemann]);
-    riemannPointSet -> SetMarkerStyle(fPointStyle[kRiemann]);
+    riemannPointSet -> SetMarkerColor(GetColor(iTrack));
+    riemannPointSet -> SetMarkerSize(fEveSize[kRiemann]);
+    riemannPointSet -> SetMarkerStyle(fEveStyle[kRiemann]);
 
     for (Int_t iCluster=0; iCluster<nClusters; iCluster++)
     {
@@ -397,6 +409,50 @@ STEventDrawTask::DrawRiemannHits()
     riemannPointSet -> SetRnrSelf(fRnrSelf[kRiemann]);
     gEve -> AddElement(riemannPointSet);
     fRiemannSetArray.push_back(riemannPointSet);
+  }
+}
+
+void
+STEventDrawTask::DrawLinearTracks()
+{
+  fLogger -> Debug(MESSAGE_ORIGIN,"Draw Linear Tracks");
+
+  if (fEvent == NULL) 
+    return;
+
+  STLinearTrack* track = NULL;
+  TEveLine* line;
+
+  fLogger -> Debug(MESSAGE_ORIGIN,"Draw Linear Tracks");
+  Int_t nTracks = fLinearTrackArray -> GetEntries();
+  for (Int_t iTrack = 0; iTrack < nTracks; iTrack++)
+  {
+    track = (STLinearTrack*) fLinearTrackArray -> At(iTrack);
+    Int_t nHits = track -> GetNumHits();
+
+    line = new TEveLine();
+    line -> SetLineStyle(fEveStyle[kLinear]);
+    line -> SetLineColor(GetColor(iTrack));
+    line -> SetLineWidth(fEveSize[kLinear]);
+
+    Int_t hitIDFirst = track -> GetHitID(0);
+    Int_t hitIDLast  = track -> GetHitID(track -> GetNumHits()-1);
+
+    STHit *hitFirst = fEvent -> GetHit(hitIDFirst);
+    STHit *hitLast  = fEvent -> GetHit(hitIDLast);
+
+    //TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
+    //TVector3 posLast  = fLTFitter -> GetClosestPointOnTrack(track, hitLast);
+
+    TVector3 posFirst = hitFirst -> GetPosition();
+    TVector3 posLast  = hitLast -> GetPosition();
+
+    line -> SetNextPoint(posFirst.X()/10., posFirst.Y()/10., posFirst.Z()/10.);
+    line -> SetNextPoint(posLast.X()/10., posLast.Y()/10., posLast.Z()/10.);
+
+    line -> SetRnrSelf(fRnrSelf[kLinear]);
+    gEve -> AddElement(line);
+    fLinearSetArray.push_back(line);
   }
 }
 
@@ -454,13 +510,13 @@ void
 STEventDrawTask::SetAttributes(STEveObject eveObj, Style_t style, Size_t size, Color_t color)
 {
   if (style != -1) 
-    fPointStyle[eveObj] = style;
+    fEveStyle[eveObj] = style;
 
   if (size != -1) 
-    fPointSize[eveObj] = size;
+    fEveSize[eveObj] = size;
 
   if (color != -1) 
-    fPointColor[eveObj] = color;
+    fEveColor[eveObj] = color;
 }
 
 
@@ -499,6 +555,16 @@ STEventDrawTask::Reset()
     gEve -> RemoveElement(pointSet, fEventManager);
   }
   fRiemannSetArray.clear();
+
+
+  Int_t nLinearTracks = fLinearSetArray.size();
+  for (Int_t i=0; i<nLinearTracks; i++) 
+  {
+    TEveLine* line = fLinearSetArray[i];
+    gEve -> RemoveElement(line, fEventManager);
+  }
+  fLinearSetArray.clear();
+
 
   if (fPadPlane != NULL)
     fPadPlane -> Reset("");
@@ -634,9 +700,11 @@ STEventDrawTask::UpdateCvsPadPlane()
 }
 
 Color_t 
-STEventDrawTask::GetRiemannColor(Int_t index)
+STEventDrawTask::GetColor(Int_t index)
 {
   Color_t color;
+
+  /*
   Color_t colors[] = {kRed, kBlue, kMagenta, kCyan, kGreen, kYellow, kPink, kSpring, kAzure, kOrange, kViolet, kTeal};
 
   Int_t remainder = index%12;
@@ -644,6 +712,22 @@ STEventDrawTask::GetRiemannColor(Int_t index)
 
   Int_t quotient  = index/12;
   Int_t offColor  = (quotient%10) -5;
+  color += offColor;
+  */
+
+  Color_t colors[] = {kOrange, kTeal, kViolet, kSpring, kPink, kAzure};
+
+  Int_t remainder = index%6;
+  color = colors[remainder];
+
+  Int_t quotient  = index/6;
+  Int_t offColor  = (quotient%20);
+
+  if (offColor%2 == 0)
+    offColor = offColor/2 + 1;
+  else 
+    offColor = -(offColor+1)/2;
+
   color += offColor;
 
   return color;
