@@ -77,7 +77,8 @@ void ODRFitter::SolveEigenValueEquation()
 void ODRFitter::ChooseEigenValue(Int_t iEV)
 {
   (*fNormal) = TMatrixDColumn((*fEigenVectors), iEV);
-  fRMS = TMath::Sqrt(fSumOfPC2 - (*fEigenValues)[iEV]);
+  fRMS = (fSumOfPC2 - (*fEigenValues)[iEV]) / (fWeightSum - 2*fWeightSum/fNumPoints);
+  fRMS = TMath::Sqrt(fRMS);
 }
 
 void ODRFitter::FitLine()
