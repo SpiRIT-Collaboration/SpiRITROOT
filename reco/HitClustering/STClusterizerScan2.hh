@@ -36,11 +36,4 @@ class STClusterizerScan2 : public STClusterizer
   ClassDef(STClusterizerScan2, 1)
 };
 
-class STHitSortR2
-{
-  public:
-    Bool_t operator() (STHit* hit1, STHit* hit2)
-    { return (hit1 -> GetPosition()).Mag() < (hit2 -> GetPosition()).Mag(); }
-};
-
 #endif

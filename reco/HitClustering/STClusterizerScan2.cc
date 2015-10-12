@@ -41,7 +41,7 @@ STClusterizerScan2::Analyze(STEvent* eventIn, STEvent* eventOut)
     hit -> SetPosition(hit -> GetPosition() - fPrimaryVertex);
     fHitArray -> push_back(hit);
   }
-  STHitSortR2 sortR;
+  STHitSortR sortR;
   std::sort(fHitArray -> begin(), fHitArray -> end(), sortR);
 
 

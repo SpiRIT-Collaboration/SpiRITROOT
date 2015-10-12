@@ -97,4 +97,40 @@ class STHit : public TObject
   ClassDef(STHit, 4);
 };
 
+class STHitSortTheta {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetPosition().Theta() > hit2 -> GetPosition().Theta(); }
+};
+
+class STHitSortThetaInv {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetPosition().Theta() < hit2 -> GetPosition().Theta(); }
+};
+
+class STHitSortR {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetPosition().Mag() > hit2 -> GetPosition().Mag(); }
+};
+
+class STHitSortRInv {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetPosition().Mag() < hit2 -> GetPosition().Mag(); }
+};
+
+class STHitSortZ {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetPosition().Z() > hit2 -> GetPosition().Z(); }
+};
+
+class STHitSortZInv {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetPosition().Z() < hit2 -> GetPosition().Z(); }
+};
+
 #endif
