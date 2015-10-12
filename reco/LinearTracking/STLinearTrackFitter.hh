@@ -11,7 +11,7 @@
 #include "STHit.hh"
 #include "STLinearTrack.hh"
 
-#include "TVirtualFitter.hh"
+#include "ODRFitter.hh"
 
 #include <vector>
 
@@ -21,17 +21,25 @@ class STLinearTrackFitter
     STLinearTrackFitter();
     ~STLinearTrackFitter();
 
-    /// Fit track and set variables. Return quality of the fitting.
+    /// Fit track and set variables. Return quality of the fitting
     Double_t Fit(STLinearTrack* track);
-    /// Calculate and return perpendicular vector (having the shortest distance from track to hit.)
-    Tvector3 Perp(STLinearTrack* track, STHit* hit);
 
-    /// Merge track and hit. Run Fit() automatically.
-    void Merge(STLinearTrack* track, STHit* hit);
+    /// Fit track and set variables. Return RMS of the fitting
+    Double_t Fit(STLinearTrack* track, STHit* hit);
+
+    /// Calculate and return perpendicular vector (having the shortest distance from track to hit.)
+    TVector3 Perp(STLinearTrack* track, STHit* hit);
+    TVector3 Perp(STLinearTrack* track, TVector3 hitPos);
+
+    /// Get Closest point on the track from the hit
+    TVector3 GetClosestPointOnTrack(STLinearTrack* track, STHit* hit);
+    TVector3 GetClosestPointOnTrack(STLinearTrack* track, TVector3 posHit);
+
+    /// Fit and set track variables with fitted result
+    void FitAndSetTrack(STLinearTrack* track);
 
   private:
-
-    TVirtualFitter* fFitter;
+    ODRFitter* fODRFitter;
 
   ClassDef(STLinearTrackFitter, 1)
 };
