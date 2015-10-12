@@ -11,13 +11,12 @@
 #include "FairRuntimeDb.h"
 #include "FairRun.h"
 
-// ROOT classes
-#include "TMath.h"
+#include <iostream>
 
 ClassImp(STLinearTrackingTask);
 
 STLinearTrackingTask::STLinearTrackingTask()
-:FairTask("ST Pattern Reconstruction")
+:FairTask("ST Linear Tracking")
 {
   fLogger = FairLogger::GetLogger();
 }
@@ -30,19 +29,24 @@ InitStatus
 STLinearTrackingTask::Init()
 {
   FairRootManager *ioMan = FairRootManager::Instance(); 
-  if (ioMan == 0){
+  if (ioMan == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find FairRootManager!");
     return kERROR;
   }
   
-  fEventArray = (TClonesArray *) ioMan -> GetObject("STEventHCM");
+  fEventArray = (TClonesArray *) ioMan -> GetObject("STEvent");
   if (fEventArray == 0) {
-    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEventHCM array!");
+    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEvent array!");
     return kERROR;
   }
+  
+  fTrackArray = new TClonesArray("STLinearTrack");
 
-  fTrackArray = new TClonesArray("STRiemannTrack");
-  ioMan -> Register("STRiemannTrack", "SPiRIT", fTrackArray, fInputPersistance);
+  ioMan -> Register("STLinearTrack", "SPiRIT", fTrackArray, fInputPersistance);
+
+  fLinearTrackFinder = new STLinearTrackFinder();
+
+  fTrackBuffer = new std::vector<STLinearTrack*>;
 
   return kSUCCESS;
 }
@@ -52,23 +56,41 @@ void
 STLinearTrackingTask::SetParContainers()
 {
   FairRun *run = FairRun::Instance();
-  if (!run) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find analysis run!");
+  if (!run)
+    fLogger -> Fatal(MESSAGE_ORIGIN, "No analysis run!");
 
   FairRuntimeDb *db = run -> GetRuntimeDb();
-  if (!db) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find runtime database!");
+  if (!db)
+    fLogger -> Fatal(MESSAGE_ORIGIN, "No runtime database!");
 
   fPar = (STDigiPar *) db -> getContainer("STDigiPar");
-  if (!fPar) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find STDigiPar!");
+  if (!fPar)
+    fLogger -> Fatal(MESSAGE_ORIGIN, "STDigiPar not found!!");
 }
 
 
 void
 STLinearTrackingTask::Exec(Option_t *opt)
 {
-  if (fTrackArray == 0)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find RiemannTrackArray!");
+  if(!fTrackArray) 
+    fLogger->Fatal(MESSAGE_ORIGIN,"No TrackArray!");
   fTrackArray -> Delete();
 
-  if (fEventArray -> GetEntriesFast() == 0)
-    return;
+  fTrackBuffer -> clear();
+
+  STEvent *event = (STEvent *) fEventArray -> At(0);
+
+  fLinearTrackFinder -> BuildTracks(event, fTrackBuffer);
+
+  Int_t nTracks = fTrackBuffer -> size();
+  for (Int_t iTrack = 0; iTrack < nTracks; iTrack++)
+  {
+    STLinearTrack* trackCand = fTrackBuffer -> at(iTrack);
+    Int_t index = fTrackArray -> GetEntriesFast();
+    STLinearTrack *track = new ((*fTrackArray)[index]) STLinearTrack(trackCand);
+  }
+
+  fLogger -> Info(MESSAGE_ORIGIN, 
+    Form("Event #%d : Found %d linear tracks", 
+      event -> GetEventID(), fTrackArray -> GetEntriesFast()));
 }
