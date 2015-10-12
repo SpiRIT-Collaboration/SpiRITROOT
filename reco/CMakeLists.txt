@@ -79,6 +79,7 @@ HoughTracking/STHoughSpaceHelix.cc
 Genfit/STSpacepointMeasurement.cc
 
 LinearTracking/STLinearTrackFinder.cc
+LinearTracking/STLinearTrackFitter.cc
 LinearTracking/ODRFitter.cc
 
 STDecoderTask.cc

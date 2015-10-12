@@ -44,6 +44,7 @@
 #pragma link C++ class STRiemannTrackingTask+;
 
 #pragma link C++ class STLinearTrackFinder+;
+#pragma link C++ class STLinearTrackFitter+;
 #pragma link C++ class STLinearTrackingTask+;
 #pragma link C++ class ODRFitter+;
 
