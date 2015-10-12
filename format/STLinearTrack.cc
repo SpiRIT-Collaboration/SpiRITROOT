@@ -10,7 +10,26 @@ ClassImp(STLinearTrack)
 
 STLinearTrack::STLinearTrack()
 {
-  Init();
+  fTrackID   = -1;
+  fIsPrimary = kFALSE;
+  fIsFitted  = kFALSE;
+
+  fXVertex = 0;
+  fYVertex = 0;
+  fZVertex = 0;
+
+  fXCentroid = 0;
+  fYCentroid = 0;
+  fZCentroid = 0;
+
+  fXNormal = 0;
+  fYNormal = 0;
+  fZNormal = 0;
+
+  fChargeSum = 0;
+
+  fHitPointerArray = new std::vector<STHit*>;
+  fHitIDArray = new std::vector<Int_t>;
 }
 
 STLinearTrack::~STLinearTrack()
@@ -19,49 +38,26 @@ STLinearTrack::~STLinearTrack()
 
 STLinearTrack::STLinearTrack(STLinearTrack *track)
 {
-  Init(track -> GetTrackID(), track -> IsPrimary(), track -> IsFitted(),
-       track -> GetXVertex(), track -> GetYVertex(), track -> GetZVertex(),
-       track -> GetYNormal(), track -> GetYNormal(), track -> GetZNormal());
-}
+  fTrackID   = track -> GetTrackID();
+  fIsPrimary = track -> IsPrimary();
+  fIsFitted  = track -> IsFitted();
 
-STLinearTrack::STLinearTrack(Int_t id, Bool_t isPrimary, Bool_t isFitted,
-                             TVector3 vertex, TVector3 normal)
-{
-  Init(id, isPrimary, isFitted,
-       vertex.X(), vertex.Y(), vertex.Z(), 
-       normal.X(), normal.Y(), normal.Z());
-}
+  fXVertex = track -> GetXVertex();
+  fYVertex = track -> GetYVertex();
+  fZVertex = track -> GetZVertex();
 
-STLinearTrack::STLinearTrack(Int_t id, Bool_t isPrimary, Bool_t isFitted,
-                             Double_t xV, Double_t yV, Double_t zV,
-                             Double_t xN, Double_t yN, Double_t zN)
-{
-  Init(id, isPrimary, isFitted, xV, yV, zV, xN, yN, zN);
-}
+  fXCentroid = track -> GetXCentroid();
+  fYCentroid = track -> GetYCentroid();
+  fZCentroid = track -> GetZCentroid();
 
-void 
-STLinearTrack::Init(Int_t id, Bool_t isPrimary, Bool_t isFitted,
-                    Double_t xV, Double_t yV, Double_t zV,
-                    Double_t xN, Double_t yN, Double_t zN,
-                    Double_t xC, Double_t yC, Double_t zC)
-{
-  fTrackID = id;
-  fIsPrimary = isPrimary;
-  fIsFitted  = isFitted;
+  fXNormal = track -> GetXNormal();
+  fYNormal = track -> GetYNormal();
+  fZNormal = track -> GetZNormal();
 
-  fXVertex = xV;
-  fYVertex = yV;
-  fZVertex = zV;
+  fChargeSum = track -> GetChargeSum();
 
-  fXNormal = xN;
-  fYNormal = yN;
-  fZNormal = zN;
-
-  fXCentroid = xC;
-  fYCentroid = yC;
-  fZCentroid = zC;
-
-  fChargeSum = 0;
+  fHitPointerArray = track -> GetHitPointerArray(); 
+  fHitIDArray = track -> GetHitIDArray(); 
 }
 
 void STLinearTrack::SetTrackID(Int_t id)     { fTrackID   = id;  }
@@ -79,6 +75,12 @@ void STLinearTrack::SetNormal(TVector3 vec)
   fXNormal = vec.X();
   fYNormal = vec.Y();
   fZNormal = vec.Z();
+}
+void STLinearTrack::SetCentroid(TVector3 pos)
+{
+  fXCentroid = pos.X();
+  fYCentroid = pos.Y();
+  fZCentroid = pos.Z();
 }
 
 void STLinearTrack::SetXVertex(Double_t x) { fXVertex = x; }
@@ -101,11 +103,9 @@ void STLinearTrack::AddHit(STHit *hit)
   fXCentroid *= 1./fChargeSum;
   fYCentroid *= 1./fChargeSum;
   fZCentroid *= 1./fChargeSum;
-              
-  fChargeSum += hit -> GetCharge();
 
-  fHitPointerArray.push_back(hit);
-  fHitIDArray.push_back(hit -> GetHitID());
+  fHitPointerArray -> push_back(hit);
+  fHitIDArray -> push_back(hit -> GetHitID());
 
   fIsFitted = kFALSE;
 }
@@ -131,7 +131,10 @@ Double_t STLinearTrack::GetYCentroid() const { return fYCentroid; }
 Double_t STLinearTrack::GetZCentroid() const { return fZCentroid; }
 
 Double_t STLinearTrack::GetChargeSum() const { return fChargeSum; }
-   Int_t STLinearTrack::GetNumHits()         { return fHitIDArray.size(); }
+   Int_t STLinearTrack::GetNumHits()         { return fHitIDArray -> size(); }
 
-std::vector<Int_t>  *STLinearTrack::GetHitIDArray()      { return &fHitIDArray; }
-std::vector<STHit*> *STLinearTrack::GetHitPointerArray() { return &fHitPointerArray; }
+std::vector<Int_t>  *STLinearTrack::GetHitIDArray()      { return fHitIDArray; }
+std::vector<STHit*> *STLinearTrack::GetHitPointerArray() { return fHitPointerArray; }
+
+Int_t  STLinearTrack::GetHitID(Int_t i) { return fHitIDArray -> at(i); }
+STHit* STLinearTrack::GetHit(Int_t i)   { return fHitPointerArray -> at(i); }

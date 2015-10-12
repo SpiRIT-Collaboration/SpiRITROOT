@@ -18,37 +18,26 @@ class STLinearTrack : public TObject
 {
   public:
     STLinearTrack();
+    STLinearTrack(STLinearTrack *track);
     ~STLinearTrack();
 
-    STLinearTrack(STLinearTrack *track);
+    void SetTrackID(Int_t id);      ///< Set track ID
+    void SetIsPrimary(Bool_t val);  ///< Set track primary flag
+    void SetIsFitted(Bool_t val);   ///< Set fitted flag
 
-    STLinearTrack(Int_t id,
-                  Bool_t isPrimary,
-                  Bool_t isFitted,
-                  TVector3 vertex,
-                  TVector3 normal);
+    void SetVertex(TVector3 pos);   ///< Set position of vextex
+    void SetNormal(TVector3 vec);   ///< Set normal vector
+    void SetCentroid(TVector3 pos); ///< Set centroid
 
-    STLinearTrack(Int_t id, Bool_t isPrimary, Bool_t isFitted,
-                  Double_t xV, Double_t yV, Double_t zV,
-                  Double_t xN, Double_t yN, Double_t zN);
+    void SetXVertex(Double_t x);    ///< Set x position of vextex
+    void SetYVertex(Double_t y);    ///< Set y position of vextex
+    void SetZVertex(Double_t z);    ///< Set z position of vextex
 
+    void SetXNormal(Double_t x);    ///< Set x component of normal vector
+    void SetYNormal(Double_t y);    ///< Set y component of normal vector
+    void SetZNormal(Double_t z);    ///< Set z component of normal vector
 
-    void SetTrackID(Int_t id);     ///< Set track ID
-    void SetIsPrimary(Bool_t val); ///< Set track primary flag
-    void SetIsFitted(Bool_t val);  ///< Set fitted flag
-
-    void SetVertex(TVector3 pos);  ///< Set position of vextex
-    void SetNormal(TVector3 vec);  ///< Set normal vector
-
-    void SetXVertex(Double_t x);   ///< Set x position of vextex
-    void SetYVertex(Double_t y);   ///< Set y position of vextex
-    void SetZVertex(Double_t z);   ///< Set z position of vextex
-
-    void SetXNormal(Double_t x);   ///< Set x component of normal vector
-    void SetYNormal(Double_t y);   ///< Set y component of normal vector
-    void SetZNormal(Double_t z);   ///< Set z component of normal vector
-
-    void AddHit(STHit *hit);       ///< Add id into hit ID array
+    void AddHit(STHit *hit);        ///< Add id into hit ID array
 
 
        Int_t GetTrackID()   const; ///< Get track ID
@@ -77,12 +66,8 @@ class STLinearTrack : public TObject
     std::vector<Int_t>  *GetHitIDArray();      ///< Get hit ID array
     std::vector<STHit*> *GetHitPointerArray(); ///< Get hit ID array
 
-  private:
-    void Init(Int_t id = -1,
-              Bool_t isPrimary = kFALSE, Bool_t isFitted = kFALSE,
-              Double_t xV = 0, Double_t yV = 0, Double_t zV = 0,
-              Double_t xN = 0, Double_t yN = 0, Double_t zN = 0,
-              Double_t xC = 0, Double_t yC = 0, Double_t zC = 0);
+    Int_t GetHitID(Int_t i);
+    STHit *GetHit(Int_t i);
 
   private:
     Int_t  fTrackID;   ///< Track ID.
@@ -103,8 +88,8 @@ class STLinearTrack : public TObject
 
     Double_t fChargeSum; ///< charge sum
 
-    std::vector<STHit*> fHitPointerArray; //! < STHit pointer array
-    std::vector<Int_t>  fHitIDArray;      /// < hit id array
+    std::vector<STHit*> *fHitPointerArray; //! < STHit pointer array
+    std::vector<Int_t>  *fHitIDArray;      //-> < hit id array
 
 
   ClassDef(STLinearTrack, 1);
