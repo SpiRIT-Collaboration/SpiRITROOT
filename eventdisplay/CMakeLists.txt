@@ -3,6 +3,7 @@
 set(INCLUDE_DIRECTORIES
 ${ROOT_INCLUDE_DIR} 
 ${BASE_INCLUDE_DIRECTORIES}
+${ANAROOT_INCLUDE_DIR}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/eventdisplay
 ${CMAKE_SOURCE_DIR}/format
@@ -22,6 +23,7 @@ include_directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
 set(LINK_DIRECTORIES
 ${ROOT_LIBRARY_DIR}
 ${GENFIT2_LIBRARY_DIR}
+${ANAROOT_LIBRARY_DIR}
 ${FAIRROOT_LIBRARY_DIR}
 ) 
 
@@ -50,6 +52,7 @@ Set(DEPENDENCIES
     STReco
     STPar
     STUtil
+    anaroot
 )
 
 GENERATE_LIBRARY()
