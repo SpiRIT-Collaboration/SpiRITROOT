@@ -8,6 +8,7 @@
 #include "STEvent.hh"
 #include "STHit.hh"
 #include "STLinearTrack.hh"
+#include "STLinearTrackFitter.hh"
 
 #include <vector>
 
@@ -21,14 +22,22 @@ class STLinearTrackFinder
                      std::vector<STLinearTrack*> *trackBuffer);
 
   private:
+    void CreateNewTrack(STHit *hit);
+
+  private:
+    Bool_t PerpDistCorrelator(STLinearTrack* track, STHit* hit);
     Bool_t ProximityCorrelator(STLinearTrack* track, STHit* hit);
     Bool_t QualityTest(STLinearTrack* track, STHit* hit);
 
-    //STLinearTrackFitter* fLinearTrackFitter;
+    STLinearTrackFitter* fLTFitter;
 
     std::vector<STLinearTrack*> *fTrackBuffer;
+    std::vector<STHit*> *fHitBuffer;
 
     TVector3 fPrimaryVertex;
+
+    Double_t fProxCut;
+    Double_t fRMSCut;
 
   ClassDef(STLinearTrackFinder, 1)
 };
