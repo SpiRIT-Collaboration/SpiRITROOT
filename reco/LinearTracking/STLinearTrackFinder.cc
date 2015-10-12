@@ -13,8 +13,9 @@
 STLinearTrackFinder::STLinearTrackFinder()
 {
   fPrimaryVertex = TVector3(0, -213.3, -35.2);
-  fProxCut = 1000;
-  fRMSCut = 1000;
+  fProxHHCut = 20;
+  fProxHTCut = 30;
+  fRMSCut = 10;
 
   fHitBuffer = new std::vector<STHit*>;
 
@@ -39,7 +40,8 @@ void STLinearTrackFinder::BuildTracks(STEvent* event,
     fHitBuffer -> push_back(hit);
   }
   
-  std::sort(fHitBuffer -> begin(), fHitBuffer -> end(), STLTFHitSortTheta());
+  std::sort(fHitBuffer -> begin(), fHitBuffer -> end(), STHitSortTheta());
+  std::sort(fHitBuffer -> begin(), fHitBuffer -> end(), STHitSortZ());
 
   STHit *hit = fHitBuffer -> at(0);
   CreateNewTrack(hit);
@@ -49,7 +51,7 @@ void STLinearTrackFinder::BuildTracks(STEvent* event,
     hit = fHitBuffer -> at(iHit);
 
     Int_t nTracks = fTrackBuffer -> size();
-    std::cout << iHit << " / " << nHits << " : " << nTracks << std::endl;
+    //std::cout << std::endl << iHit << " / " << nHits << " : " << nTracks << std::endl;
 
     Bool_t survive;
 
@@ -57,14 +59,14 @@ void STLinearTrackFinder::BuildTracks(STEvent* event,
     {
       STLinearTrack* track = fTrackBuffer -> at(iTrack);
 
-      if (track -> GetNumHits() < 6)
-        survive = ProximityCorrelator(track, hit);
-      else 
+      survive = ProximityCorrelator(track, hit);   ////// 
+
+      if (track -> GetNumHits() > 15)
       {
-        survive = PerpDistCorrelator(track, hit);
+        survive = PerpDistCorrelator(track, hit);   ////// 
 
         if (survive == kTRUE)
-          survive = QualityTest(track, hit);
+          survive = QualityTest(track, hit);   ////// 
       }
 
       if (survive == kTRUE)
@@ -82,26 +84,37 @@ void STLinearTrackFinder::BuildTracks(STEvent* event,
 Bool_t 
 STLinearTrackFinder::ProximityCorrelator(STLinearTrack* track, STHit* hit)
 {
-  Int_t n = track -> GetNumHits();
-  STHit *hitFT = track -> GetHit(track -> GetNumHits() - 1);
+  Int_t minNumCompare = 15;
+  Int_t nHits = track -> GetNumHits();
 
-  TVector3 posT = hitFT -> GetPosition();
+  if (minNumCompare > nHits)
+    minNumCompare = nHits;
+
   TVector3 posH = hit -> GetPosition();
 
-  Double_t dX = posT.X()-posH.X();
-  Double_t dY = posT.Y()-posH.Y();
-  Double_t dZ = posT.Z()-posH.Z();
+  for (Int_t iHit = 0; iHit < minNumCompare; iHit++)
+  {
+    STHit *hitT = track -> GetHit(track -> GetNumHits() - 1 - iHit);
+    TVector3 posT = hitT -> GetPosition();
 
-  Double_t distance = TMath::Sqrt(dX*dX + dY*dY + dZ*dZ);
+    Double_t dX = posT.X()-posH.X();
+    Double_t dY = posT.Y()-posH.Y();
+    Double_t dZ = posT.Z()-posH.Z();
 
-  STDebugLogger::Instance() -> FillHist1("distHH",distance,100,0,100);
-  //std::cout << "distHH: " << distance << std::endl;
+    //std::cout << "T: " << posT.X() <<" "<< posT.Y() <<" "<< posT.Z() << std::endl;
+    //std::cout << "H: " << posH.X() <<" "<< posH.Y() <<" "<< posH.Z() << std::endl;
 
+    Double_t distance = TMath::Sqrt(dX*dX + dY*dY + dZ*dZ);
+    //std::cout << "D: " << dX <<" "<< dY <<" "<< dZ <<" "<< distance << std::endl;
 
-  if (distance < fProxCut) 
-    return kTRUE;
-  else 
-    return kFALSE;
+    //STDebugLogger::Instance() -> FillHist1("distHH",distance,100,0,500);
+    //STDebugLogger::Instance() -> FillHist1Step("distHHs",distance,500,0,500);
+
+    if (distance < fProxHHCut) 
+      return kTRUE;
+  }
+
+  return kFALSE;
 }
 
 Bool_t 
@@ -111,11 +124,13 @@ STLinearTrackFinder::PerpDistCorrelator(STLinearTrack* track, STHit* hit)
     fLTFitter -> FitAndSetTrack(track);
 
   Double_t distance = (fLTFitter -> Perp(track, hit)).Mag();
+  //std::cout << "DHT: " << distance << std::endl;
 
-  STDebugLogger::Instance() -> FillHist1("distHT",distance,100,0,500);
+  //STDebugLogger::Instance() -> FillHist1("distHT",distance,100,0,500);
+  //STDebugLogger::Instance() -> FillHist1Step("distHTs",distance,500,0,500);
   //std::cout << "distHT: " << distance << std::endl;
 
-  if (distance < fProxCut) 
+  if (distance < fProxHTCut) 
     return kTRUE;
   else 
     return kFALSE;
@@ -128,8 +143,8 @@ STLinearTrackFinder::QualityTest(STLinearTrack* track, STHit* hit)
     fLTFitter -> FitAndSetTrack(track);
 
   Double_t rms = fLTFitter -> Fit(track, hit);
-  STDebugLogger::Instance() -> FillHist1("rms",rms,100,0,500);
-
+  //STDebugLogger::Instance() -> FillHist1("rms",rms,500,0,0.1);
+  //STDebugLogger::Instance() -> FillHist1Step("rmss",rms,500,0,500);
   //std::cout << "rms: " << rms << std::endl;
 
   if (rms < fRMSCut) 

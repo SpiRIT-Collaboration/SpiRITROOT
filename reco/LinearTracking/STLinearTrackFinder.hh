@@ -36,28 +36,11 @@ class STLinearTrackFinder
 
     TVector3 fPrimaryVertex;
 
-    Double_t fProxCut;
+    Double_t fProxHHCut;
+    Double_t fProxHTCut;
     Double_t fRMSCut;
 
   ClassDef(STLinearTrackFinder, 1)
-};
-
-class STLTFHitSortPhi {
-  public:
-    Bool_t operator() (STHit* hit1, STHit* hit2) 
-    { return hit1 -> GetPosition().Phi() < hit1 -> GetPosition().Phi(); }
-};
-
-class STLTFHitSortTheta {
-  public:
-    Bool_t operator() (STHit* hit1, STHit* hit2)
-    { return hit1 -> GetPosition().Theta() < hit1 -> GetPosition().Theta(); }
-};
-
-class STLTFHitSortR {
-  public:
-    Bool_t operator() (STHit* hit1, STHit* hit2)
-    { return hit1 -> GetPosition().Mag() < hit1 -> GetPosition().Mag(); }
 };
 
 #endif
