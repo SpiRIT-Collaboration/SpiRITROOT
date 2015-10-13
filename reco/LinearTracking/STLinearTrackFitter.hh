@@ -21,27 +21,57 @@ class STLinearTrackFitter
     STLinearTrackFitter();
     ~STLinearTrackFitter();
 
-    /// Fit track and set variables. Return quality of the fitting
-    Double_t Fit(STLinearTrack* track);
+    /// Fit track and set variables.
+    /// @param track pointer to STLinearTrack
+    /// @param hit   pointer to STHit - NULL is possible
+    /// @param rmsL  RMS of fitted line
+    /// @param rmsP  RMS of fitted plane
+    void Fit(STLinearTrack* track, STHit* hit, 
+             Double_t &rmsL, Double_t &rmsP);
+    void Fit(STLinearTrack* track1, STLinearTrack* track2,
+             Double_t &rmsL, Double_t &rmsP);
 
-    /// Fit track and set variables. Return RMS of the fitting
-    Double_t Fit(STLinearTrack* track, STHit* hit);
+    /// Fit and set track variables with fitted result
+    void FitAndSetTrack(STLinearTrack* track);
+    void MergeAndSetTrack(STLinearTrack* track1, STLinearTrack* track2);
 
-    /// Calculate and return perpendicular vector (having the shortest distance from track to hit.)
+    /// Set data for fitting
+    void SetDataToODRFitter(STLinearTrack* track);
+    void SetDataToODRFitter(STLinearTrack* track, STHit* hit);
+    void SetDataToODRFitter(STLinearTrack* track1, STLinearTrack* track2);
+
+    void SortHits(STLinearTrack* track);
+
+    /// Calculate and return perpendicular vector to the track line
+    /// (having the shortest distance from track to hit.)
     TVector3 Perp(STLinearTrack* track, STHit* hit);
     TVector3 Perp(STLinearTrack* track, TVector3 hitPos);
+
+    /// Calculate and return perpendicular vector to the track plane
+    TVector3 PerpToPlane(STLinearTrack* track, STHit* hit);
+    TVector3 PerpToPlane(STLinearTrack* track, TVector3 hitPos);
 
     /// Get Closest point on the track from the hit
     TVector3 GetClosestPointOnTrack(STLinearTrack* track, STHit* hit);
     TVector3 GetClosestPointOnTrack(STLinearTrack* track, TVector3 posHit);
 
-    /// Fit and set track variables with fitted result
-    void FitAndSetTrack(STLinearTrack* track);
-
   private:
     ODRFitter* fODRFitter;
 
-  ClassDef(STLinearTrackFitter, 1)
+  ClassDef(STLinearTrackFitter, 2)
+};
+
+class STHitSortByTrackDirection 
+{
+  private:
+    TVector3 centroid;
+    TVector3 direction;
+
+  public:
+    STHitSortByTrackDirection(TVector3 c, TVector3 d) : centroid(c), direction(d) {}
+    Bool_t operator() (STHit* hit1, STHit *hit2)
+    { return ( (hit1 -> GetPosition() - centroid).Dot(direction) >
+               (hit2 -> GetPosition() - centroid).Dot(direction) ); }
 };
 
 #endif

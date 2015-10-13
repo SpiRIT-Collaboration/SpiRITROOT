@@ -14,45 +14,103 @@ STLinearTrackFitter::~STLinearTrackFitter()
 {
 }
 
-Double_t
-STLinearTrackFitter::Fit(STLinearTrack* track)
+void
+STLinearTrackFitter::Fit(STLinearTrack* track, STHit* hit, 
+                         Double_t &rmsL, Double_t &rmsP)
+{
+  SetDataToODRFitter(track, hit);
+  fODRFitter -> Solve();
+
+  fODRFitter -> ChooseEigenValue(0);
+  rmsL = fODRFitter -> GetRMSLine();
+  fODRFitter -> ChooseEigenValue(2);
+  rmsP = fODRFitter -> GetRMSPlane();
+}
+
+void
+STLinearTrackFitter::Fit(STLinearTrack* track1, STLinearTrack* track2,
+                         Double_t &rmsL, Double_t &rmsP)
+{
+  SetDataToODRFitter(track1, track2);
+  fODRFitter -> Solve();
+
+  fODRFitter -> ChooseEigenValue(0);
+  rmsL = fODRFitter -> GetRMSLine();
+  fODRFitter -> ChooseEigenValue(2);
+  rmsP = fODRFitter -> GetRMSPlane();
+}
+
+void 
+STLinearTrackFitter::FitAndSetTrack(STLinearTrack* track)
+{
+  SetDataToODRFitter(track);
+  fODRFitter -> Solve();
+
+  fODRFitter -> ChooseEigenValue(0);
+  track -> SetDirection(fODRFitter -> GetDirection());
+  track -> SetRMSLine(fODRFitter -> GetRMSLine());
+
+  fODRFitter -> ChooseEigenValue(2);
+  track -> SetNormal(fODRFitter -> GetNormal());
+  track -> SetRMSPlane(fODRFitter -> GetRMSPlane());
+
+  track -> SetIsFitted(kTRUE);
+}
+
+void 
+STLinearTrackFitter::MergeAndSetTrack(STLinearTrack* track1, STLinearTrack* track2)
+{
+  std::vector<STHit*> *hitPointerBuffer = track2 -> GetHitPointerArray();
+  Int_t nHits = hitPointerBuffer -> size();
+  for (Int_t iHit = 0; iHit < nHits; iHit++) {
+    STHit* hit = hitPointerBuffer -> at(iHit);
+    track1 -> AddHit(hit);
+  }
+
+  SetDataToODRFitter(track1);
+  fODRFitter -> Solve();
+
+  fODRFitter -> ChooseEigenValue(0);
+  track1 -> SetDirection(fODRFitter -> GetDirection());
+  track1 -> SetRMSLine(fODRFitter -> GetRMSLine());
+
+  fODRFitter -> ChooseEigenValue(2);
+  track1 -> SetNormal(fODRFitter -> GetNormal());
+  track1 -> SetRMSPlane(fODRFitter -> GetRMSPlane());
+
+  track1 -> SetIsFitted(kTRUE);
+}
+
+void
+STLinearTrackFitter::SetDataToODRFitter(STLinearTrack* track)
 {
   fODRFitter -> Reset();
 
-  track -> GetXCentroid();
-
-
   fODRFitter -> SetCentroid(track -> GetXCentroid(),
-                         track -> GetYCentroid(),
-                         track -> GetZCentroid());
-
+                            track -> GetYCentroid(),
+                            track -> GetZCentroid());
 
   std::vector<STHit*> *hitPointerBuffer = track -> GetHitPointerArray();
   Int_t nHits = hitPointerBuffer -> size();
 
-  for (Int_t iHit = 0; iHit < nHits; iHit++) 
-  {
-    STHit* hit = hitPointerBuffer -> at(iHit);
-    TVector3 position = hit -> GetPosition();
+  for (Int_t iHit = 0; iHit < nHits; iHit++) {
+    STHit* hitInTrack = hitPointerBuffer -> at(iHit);
+    TVector3 position = hitInTrack -> GetPosition();
     fODRFitter -> AddPoint(position.X(), 
-                        position.Y(), 
-                        position.Z(), 
-                        hit -> GetCharge());
+                           position.Y(), 
+                           position.Z(), 
+                           hitInTrack -> GetCharge());
   }
-
-  fODRFitter -> FitLine();
-
-  return fODRFitter -> GetRMS();
 }
 
-Double_t
-STLinearTrackFitter::Fit(STLinearTrack* track, STHit* hit)
+void
+STLinearTrackFitter::SetDataToODRFitter(STLinearTrack* track, STHit* hit)
 {
   fODRFitter -> Reset();
 
   TVector3 positionHit = hit -> GetPosition();
   Double_t chargeHit   = hit -> GetCharge();
-  Double_t chargeSum  = track -> GetChargeSum();
+  Double_t chargeSum   = track -> GetChargeSum();
 
   Double_t xC = chargeSum * track -> GetXCentroid()
               + chargeHit * positionHit.X();
@@ -69,70 +127,133 @@ STLinearTrackFitter::Fit(STLinearTrack* track, STHit* hit)
 
   fODRFitter -> SetCentroid(xC, yC, zC);
 
+  fODRFitter -> AddPoint(positionHit.X(), 
+                         positionHit.Y(), 
+                         positionHit.Z(), 
+                         chargeHit);
+
   std::vector<STHit*> *hitPointerBuffer = track -> GetHitPointerArray();
   Int_t nHits = hitPointerBuffer -> size();
 
-  for (Int_t iHit = 0; iHit < nHits; iHit++) 
-  {
+  for (Int_t iHit = 0; iHit < nHits; iHit++) {
     STHit* hitInTrack = hitPointerBuffer -> at(iHit);
     TVector3 position = hitInTrack -> GetPosition();
     fODRFitter -> AddPoint(position.X(), 
-                        position.Y(), 
-                        position.Z(), 
-                        hitInTrack -> GetCharge());
+                           position.Y(), 
+                           position.Z(), 
+                           hitInTrack -> GetCharge());
+  }
+}
+
+void
+STLinearTrackFitter::SetDataToODRFitter(STLinearTrack* track1, 
+                                        STLinearTrack* track2)
+{
+  fODRFitter -> Reset();
+
+  STLinearTrack track;
+
+  std::vector<STHit*> *hitPointerBuffer1 = track1 -> GetHitPointerArray();
+  Int_t nHits1 = hitPointerBuffer1 -> size();
+  for (Int_t iHit = 0; iHit < nHits1; iHit++) {
+    STHit* hit = hitPointerBuffer1 -> at(iHit);
+    track.AddHit(hit);
   }
 
-  fODRFitter -> AddPoint(positionHit.X(), 
-                      positionHit.Y(), 
-                      positionHit.Z(), 
-                      hit -> GetCharge());
+  std::vector<STHit*> *hitPointerBuffer2 = track2 -> GetHitPointerArray();
+  Int_t nHits2 = hitPointerBuffer2 -> size();
+  for (Int_t iHit = 0; iHit < nHits2; iHit++) {
+    STHit* hit = hitPointerBuffer2 -> at(iHit);
+    track.AddHit(hit);
+  }
 
-  fODRFitter -> FitLine();
+  fODRFitter -> SetCentroid(track.GetXCentroid(),
+                            track.GetYCentroid(),
+                            track.GetZCentroid());
 
-  return fODRFitter -> GetRMS();
+  for (Int_t iHit = 0; iHit < nHits1; iHit++) {
+    STHit* hit = hitPointerBuffer1 -> at(iHit);
+    TVector3 position = hit -> GetPosition();
+    fODRFitter -> AddPoint(position.X(), 
+                           position.Y(), 
+                           position.Z(), 
+                           hit -> GetCharge());
+  }
+
+  for (Int_t iHit = 0; iHit < nHits2; iHit++) {
+    STHit* hit = hitPointerBuffer2 -> at(iHit);
+    TVector3 position = hit -> GetPosition();
+    fODRFitter -> AddPoint(position.X(), 
+                           position.Y(), 
+                           position.Z(), 
+                           hit -> GetCharge());
+  }
+}
+
+void 
+STLinearTrackFitter::SortHits(STLinearTrack* track)
+{
+  std::vector<STHit*> *hitArray = track -> GetHitPointerArray();
+  STHitSortByTrackDirection sorting(track -> GetDirection(), track -> GetCentroid());
+  std::sort(hitArray -> begin(), hitArray -> end(), sorting);
+
+  std::vector<Int_t> *idArray  = track -> GetHitIDArray();
+  Int_t size = idArray -> size();
+  idArray -> clear();
+  for (Int_t i = 0; i < size; i++)
+    idArray -> push_back(hitArray -> at(i) -> GetHitID());
+}
+
+TVector3
+STLinearTrackFitter::GetClosestPointOnTrack(STLinearTrack* track, STHit* hit) 
+{
+  return GetClosestPointOnTrack(track, hit -> GetPosition());
+}
+
+TVector3
+STLinearTrackFitter::GetClosestPointOnTrack(STLinearTrack* track, TVector3 hitPos)
+{
+  return (hitPos + Perp(track, hitPos));
 }
 
 TVector3
 STLinearTrackFitter::Perp(STLinearTrack* track, STHit* hit) 
 {
-  TVector3 hitPos = hit -> GetPosition();
-  return Perp(track, hitPos);
+  return Perp(track, hit -> GetPosition());
 }
 
 TVector3
 STLinearTrackFitter::Perp(STLinearTrack* track, TVector3 hitPos)
 {
   TVector3 centroid = track -> GetCentroid();
-  TVector3 directionUnit = track -> GetNormal();
+  TVector3 directionUnit = track -> GetDirection();
 
   TVector3 hitPosMinusCentroid = hitPos - centroid;
   TVector3 hitPosMinusCentroidUnit = hitPosMinusCentroid.Unit();
   Double_t cosine = hitPosMinusCentroidUnit.Dot(directionUnit);
 
-  TVector3 vectorAlongDirection = directionUnit;
-  vectorAlongDirection.SetMag(hitPosMinusCentroid.Mag()*cosine);
+  directionUnit.SetMag(hitPosMinusCentroid.Mag()*cosine);
 
-  return (vectorAlongDirection - hitPosMinusCentroid);
+  return (directionUnit - hitPosMinusCentroid);
 }
 
 TVector3
-STLinearTrackFitter::GetClosestPointOnTrack(STLinearTrack* track, STHit* hit) 
+STLinearTrackFitter::PerpToPlane(STLinearTrack* track, STHit* hit) 
 {
-  TVector3 hitPos = hit -> GetPosition();
-  return GetClosestPointOnTrack(track, hitPos);
+  return PerpToPlane(track, hit -> GetPosition());
 }
 
 TVector3
-STLinearTrackFitter::GetClosestPointOnTrack(STLinearTrack* track, TVector3 hitPos)
+STLinearTrackFitter::PerpToPlane(STLinearTrack* track, TVector3 hitPos)
 {
-  TVector3 displacement = Perp(track, hitPos);
-  return (hitPos + displacement);
-}
+  TVector3 centroid = track -> GetCentroid();
+  TVector3 normalUnit = track -> GetNormal();
 
-void 
-STLinearTrackFitter::FitAndSetTrack(STLinearTrack* track)
-{
-  Fit(track);
-  track -> SetNormal(fODRFitter -> GetNormal());
-  track -> SetIsFitted(kTRUE);
+  TVector3 hitPosMinusCentroid = hitPos - centroid;
+  TVector3 hitPosMinusCentroidUnit = hitPosMinusCentroid.Unit();
+  Double_t cosine = hitPosMinusCentroidUnit.Dot(normalUnit);
+
+  normalUnit.SetMag(-hitPosMinusCentroid.Mag()*cosine);
+
+  return normalUnit;
 }
