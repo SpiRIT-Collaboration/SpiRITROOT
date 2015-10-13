@@ -87,7 +87,7 @@ STEventDrawTask::STEventDrawTask()
   fSetObject[kRiemann]  = kFALSE;
 
   fEveStyle[kLinear] = 1;
-  fEveSize[kLinear]  = 3;
+  fEveSize[kLinear]  = 5;
   fEveColor[kLinear] = kRed;
   fRnrSelf[kLinear]    = kFALSE;
   fSetObject[kLinear]  = kFALSE;
@@ -441,11 +441,11 @@ STEventDrawTask::DrawLinearTracks()
     STHit *hitFirst = fEvent -> GetHit(hitIDFirst);
     STHit *hitLast  = fEvent -> GetHit(hitIDLast);
 
+    TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
+    TVector3 posLast  = fLTFitter -> GetClosestPointOnTrack(track, hitLast);
+
     //TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
     //TVector3 posLast  = fLTFitter -> GetClosestPointOnTrack(track, hitLast);
-
-    TVector3 posFirst = hitFirst -> GetPosition();
-    TVector3 posLast  = hitLast -> GetPosition();
 
     line -> SetNextPoint(posFirst.X()/10., posFirst.Y()/10., posFirst.Z()/10.);
     line -> SetNextPoint(posLast.X()/10., posLast.Y()/10., posLast.Z()/10.);
