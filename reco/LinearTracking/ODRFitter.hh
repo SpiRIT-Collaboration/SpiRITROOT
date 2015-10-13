@@ -55,19 +55,21 @@ class ODRFitter
     void FitPlane(); ///< Fit plane
     void FitLine();  ///< Fit line
 
+    /// Solve eigen value equation
+    void Solve();
+    /// Choose which eigen value to use.
+    void ChooseEigenValue(Int_t iEV);
+
     TVector3 GetCentroid();   ///< Get centroid
     TVector3 GetNormal();     ///< Get normal vector for plane
     TVector3 GetDirection();  ///< Get direction vector for line
 
        Int_t GetNumPoints();  ///< Get number of points
     Double_t GetWeightSum();  ///< Get sum of weights
-    Double_t GetRMS();        ///< Get RMS
+    Double_t GetRMSLine();    ///< Get RMS of the line fit 
+    Double_t GetRMSPlane();   ///< Get RMS of the plane fit 
 
   private:
-    /// Solve eigen value equation
-    void SolveEigenValueEquation();
-    /// Choose which eigen value to use.
-    void ChooseEigenValue(Int_t iEV);
 
   private:
        Int_t fNumPoints; ///< Number of point set
@@ -81,10 +83,11 @@ class ODRFitter
     TVectorD *fEigenValues;  ///< eigen values sorted by decending order
     TMatrixD *fEigenVectors; ///< eigen vectors sorted by decending eigen value order
 
-    Double_t fRMS; /// Root mean square of the fit
+    Double_t fRMSLine; /// Root mean square of the line fit
+    Double_t fRMSPlane; /// Root mean square of the plane fit
 
 
-  ClassDef(ODRFitter, 1)
+  ClassDef(ODRFitter, 2)
 };
 
 #endif

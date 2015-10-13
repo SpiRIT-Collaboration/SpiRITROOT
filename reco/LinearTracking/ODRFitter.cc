@@ -27,13 +27,12 @@ void ODRFitter::Reset()
   fWeightSum = 0;
   fSumOfPC2 = 0;
 
-  for (Int_t i = 0; i < 3; i++) {
-    for (Int_t j = 0; j < 3; j++) {
+  for (Int_t i = 0; i < 3; i++)
+    for (Int_t j = 0; j < 3; j++)
       (*fMatrixA)[i][j] = 0;
-    }
-  }
 
-  fRMS = -1;
+  fRMSLine = -1;
+  fRMSPlane = -1;
 }
 
 void ODRFitter::SetCentroid(Double_t x, Double_t y, Double_t z)
@@ -69,7 +68,7 @@ void ODRFitter::AddPoint(Double_t x, Double_t y, Double_t z, Double_t w)
   fNumPoints++;
 }
 
-void ODRFitter::SolveEigenValueEquation()
+void ODRFitter::Solve()
 {
   (*fEigenVectors) = fMatrixA -> EigenVectors(*fEigenValues);
 }
@@ -77,19 +76,23 @@ void ODRFitter::SolveEigenValueEquation()
 void ODRFitter::ChooseEigenValue(Int_t iEV)
 {
   (*fNormal) = TMatrixDColumn((*fEigenVectors), iEV);
-  fRMS = (fSumOfPC2 - (*fEigenValues)[iEV]) / (fWeightSum - 2*fWeightSum/fNumPoints);
-  fRMS = TMath::Sqrt(fRMS);
+
+  fRMSLine = (fSumOfPC2 - (*fEigenValues)[iEV]) / (fWeightSum - 2*fWeightSum/fNumPoints);
+  fRMSLine = TMath::Sqrt(fRMSLine);
+
+  fRMSPlane = (*fEigenValues)[iEV] / (fWeightSum - 2*fWeightSum/fNumPoints);
+  fRMSPlane = TMath::Sqrt(fRMSPlane);
 }
 
 void ODRFitter::FitLine()
 {
-  SolveEigenValueEquation();
+  Solve();
   ChooseEigenValue(0);
 }
 
 void ODRFitter::FitPlane()
 {
-  SolveEigenValueEquation();
+  Solve();
   ChooseEigenValue(2);
 }
 
@@ -98,4 +101,5 @@ TVector3 ODRFitter::GetNormal()    { return TVector3((*fNormal)[0], (*fNormal)[1
 TVector3 ODRFitter::GetDirection() { return TVector3((*fNormal)[0], (*fNormal)[1], (*fNormal)[2]); }
    Int_t ODRFitter::GetNumPoints() { return fNumPoints; }
 Double_t ODRFitter::GetWeightSum() { return fWeightSum; }
-Double_t ODRFitter::GetRMS()       { return fRMS; }
+Double_t ODRFitter::GetRMSLine()   { return fRMSLine; }
+Double_t ODRFitter::GetRMSPlane()  { return fRMSPlane; }
