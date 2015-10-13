@@ -133,4 +133,28 @@ class STHitSortZInv {
     { return hit1 -> GetPosition().Z() < hit2 -> GetPosition().Z(); }
 };
 
+class STHitSortX {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetPosition().X() > hit2 -> GetPosition().X(); }
+};
+
+class STHitSortXInv {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetPosition().X() < hit2 -> GetPosition().X(); }
+};
+
+class STHitSortY {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetPosition().Y() > hit2 -> GetPosition().Y(); }
+};
+
+class STHitSortYInv {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetPosition().Y() < hit2 -> GetPosition().Y(); }
+};
+
 #endif
