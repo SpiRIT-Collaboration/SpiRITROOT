@@ -469,6 +469,8 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
       }
     }
 
+    fData.ignore(frameSize - nItems*itemSize - headerSize);
+
     fCurrentFrameID = frameNo;
 
     if (fDebugMode) {
