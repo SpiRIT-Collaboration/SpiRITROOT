@@ -268,6 +268,10 @@ STRawEvent *STCore::GetRawEvent(Long64_t eventID)
     fPadArray -> Clear("C");
 
     GETFrame *frame = fDecoderPtr[0] -> GetFrame(fCurrFrameNo[0]);
+
+    if (frame == NULL)
+      return NULL;
+
     fCurrEventNo = frame -> GetEventID();
 
     if (fPrevEventNo == -1) {
@@ -285,6 +289,9 @@ STRawEvent *STCore::GetRawEvent(Long64_t eventID)
       Bool_t stoppedInMiddle = kFALSE;
       for (Int_t iAsad = 0; iAsad < 4; iAsad++) {
         frame = fDecoderPtr[iCobo] -> GetFrame(fCurrFrameNo[iCobo] + iAsad);
+
+        if (frame == NULL)
+          continue;
 
         if (fCurrEventNo > frame -> GetEventID()) {
           fCurrFrameNo[iCobo]++;
@@ -365,7 +372,10 @@ STRawEvent *STCore::GetRawEvent(Long64_t eventID)
         fCurrFrameNo[iCobo] += 4;
     }
 
-    return fRawEventPtr;
+    if (fRawEventPtr -> GetNumPads() == 0 && fRawEventPtr -> IsGood() == kFALSE)
+      return NULL; 
+    else
+      return fRawEventPtr;
   } else {
     fPrevEventNo = eventID;
 
