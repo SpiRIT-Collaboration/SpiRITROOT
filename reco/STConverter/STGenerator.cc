@@ -40,6 +40,7 @@ STGenerator::STGenerator()
 {
   fMode = kError;
   fIsPositivePolarity = kFALSE;
+  fIsSeparatedData = kFALSE;
 
   fParReader = NULL;
 }
@@ -49,6 +50,7 @@ STGenerator::STGenerator(TString mode)
   fMode = kError;
   SetMode(mode);
   fIsPositivePolarity = kFALSE;
+  fIsSeparatedData = kFALSE;
 
   fParReader = NULL;
 }
@@ -63,6 +65,14 @@ void
 STGenerator::SetPositivePolarity(Bool_t value)
 {
   fIsPositivePolarity = value;
+}
+
+void
+STGenerator::SetUseSeparatedData(Bool_t value)
+{
+  fIsSeparatedData = value;
+
+  fCore -> SetUseSeparatedData(fIsSeparatedData);
 }
 
 void
@@ -173,7 +183,7 @@ STGenerator::SetFPNPedestal(Double_t fpnThreshold)
 }
 
 Bool_t
-STGenerator::AddData(TString filename)
+STGenerator::AddData(TString filename, Int_t coboIdx)
 {
   if (fMode == kGain) {
     cout << "== [STGenerator] Use AddData(voltage, file) method in Gain mode!" << endl;
@@ -181,13 +191,17 @@ STGenerator::AddData(TString filename)
     return kFALSE;
   }
 
-  Bool_t okay = fCore -> AddData(filename);
+  Bool_t okay = kTRUE;
+  if (!fIsSeparatedData)
+    okay = fCore -> AddData(filename);
+  else
+    okay &= fCore -> AddData(filename, coboIdx);
 
   return okay;
 }
 
 Bool_t
-STGenerator::AddData(Double_t voltage, TString filename)
+STGenerator::AddData(Double_t voltage, TString filename, Int_t coboIdx)
 {
   if (fMode == kPedestal) {
     cout << "== [STGenerator] Use AddData(file) method in Pedestal mode!" << endl;
@@ -195,7 +209,11 @@ STGenerator::AddData(Double_t voltage, TString filename)
     return kFALSE;
   }
 
-  Bool_t okay = fCore -> AddData(filename);
+  Bool_t okay = kTRUE;
+  if (!fIsSeparatedData)
+    okay = fCore -> AddData(filename);
+  else
+    okay &= fCore -> AddData(filename, coboIdx);
 
   if (okay)
     fVoltageArray.push_back(voltage);
@@ -320,6 +338,8 @@ STGenerator::GeneratePedestalData()
 void
 STGenerator::GenerateGainCalibrationData()
 {
+  fVoltageArray.erase(unique(fVoltageArray.begin(), fVoltageArray.end()), fVoltageArray.end());
+
   Int_t numVoltages = fVoltageArray.size();
 
   Int_t iRow, iLayer;
@@ -466,22 +486,58 @@ STGenerator::Print()
     return;
   }
 
-  Int_t numData = fCore -> GetNumData();
+  if (!fIsSeparatedData) {
+    Int_t numData = fCore -> GetNumData();
 
-  cout << "============================================" << endl;
-  cout << " Mode: ";
-  if (fMode == kPedestal) {
-    cout << "Pedetal data generator mode" << endl;
-    cout << " Output File: " << fOutputFile << endl;
-    cout << " Data list:" << endl;
-    for (Int_t iData = 0; iData < numData; iData++)
-      cout << "   " << fCore -> GetDataName(iData) << endl;
-  } else if (fMode == kGain) {
-    cout << "Gain calibration data generator mode" << endl;
-    cout << " Output File: " << fOutputFile << endl;
-    cout << " Data list:" << endl;
-    for (Int_t iData = 0; iData < numData; iData++)
-      cout << "   " << Form("%.2f V  ", fVoltageArray.at(iData)) << fCore -> GetDataName(iData) << endl;
+    cout << "============================================" << endl;
+    cout << " Mode: ";
+    if (fMode == kPedestal) {
+      cout << "Pedetal data generator mode" << endl;
+      cout << " Output File: " << fOutputFile << endl;
+      cout << " Data list:" << endl;
+      for (Int_t iData = 0; iData < numData; iData++)
+        cout << "   " << fCore -> GetDataName(iData) << endl;
+    } else if (fMode == kGain) {
+      cout << "Gain calibration data generator mode" << endl;
+      cout << " Output File: " << fOutputFile << endl;
+      cout << " Data list:" << endl;
+      for (Int_t iData = 0; iData < numData; iData++)
+        cout << "   " << Form("%.2f V  ", fVoltageArray.at(iData)) << fCore -> GetDataName(iData) << endl;
+    }
+    cout << "============================================" << endl;
+  } else {
+    Int_t numData = fCore -> GetNumData();
+
+    cout << "============================================" << endl;
+    cout << " Mode: ";
+    if (fMode == kPedestal) {
+      cout << "Pedetal data generator mode" << endl;
+      cout << " Output File: " << fOutputFile << endl;
+      cout << " Data list:" << endl;
+      if (!fIsSeparatedData)
+        for (Int_t iData = 0; iData < numData; iData++)
+          cout << "   " << fCore -> GetDataName(iData) << endl;
+      else
+        for (Int_t iCobo = 0; iCobo < 12; iCobo++)
+          for (Int_t iData = 0; iData < numData; iData++)
+            cout << "   CoBo " << iCobo << " - " << fCore -> GetDataName(iData, iCobo) << endl;
+    } else if (fMode == kGain) {
+      fVoltageArray.erase(unique(fVoltageArray.begin(), fVoltageArray.end()), fVoltageArray.end());
+
+      cout << "Gain calibration data generator mode" << endl;
+      cout << " Output File: " << fOutputFile << endl;
+      cout << " Data list:" << endl;
+      if (!fIsSeparatedData)
+        for (Int_t iData = 0; iData < numData; iData++)
+          cout << "   " << Form("%.2f V  ", fVoltageArray.at(iData)) << fCore -> GetDataName(iData) << endl;
+      else {
+        for (Int_t iData = 0; iData < numData; iData++) {
+          cout << "   " << Form("%.2f V", fVoltageArray.at(iData)) << endl;
+          for (Int_t iCobo = 0; iCobo < 12; iCobo++)
+            cout << "             CoBo " << iCobo << " - " << fCore -> GetDataName(iData, iCobo) << endl;
+        }
+      }
+    }
+    cout << "============================================" << endl;
   }
-  cout << "============================================" << endl;
 }

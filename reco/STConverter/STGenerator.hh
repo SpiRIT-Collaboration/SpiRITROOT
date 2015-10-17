@@ -22,6 +22,7 @@
 #include <vector>
 
 using std::vector;
+using std::unique;
 
 class STGenerator : public TObject {
   public:
@@ -36,9 +37,10 @@ class STGenerator : public TObject {
     Bool_t SetPedestalData(TString filename, Double_t rmsFactor = 0);
     void SetFPNPedestal(Double_t fpnThreshold = 5);
     void SetPositivePolarity(Bool_t value = kTRUE);
+    void SetUseSeparatedData(Bool_t value = kTRUE);
 
-    Bool_t AddData(TString filename);
-    Bool_t AddData(Double_t voltage, TString filename);
+    Bool_t AddData(TString filename, Int_t coboIdx = 0);
+    Bool_t AddData(Double_t voltage, TString filename, Int_t coboIdx = 0);
     Bool_t SetData(Int_t index);
 
     void StartProcess();
@@ -69,7 +71,9 @@ class STGenerator : public TObject {
     Int_t fRows;
     Int_t fLayers;
     Double_t fPadX;
-    Double_t fPadZ;
+    Double_t fPadZ; 
+
+    Bool_t fIsSeparatedData;
 
   ClassDef(STGenerator, 1)
 };
