@@ -14,16 +14,19 @@
  *
  * - Varialbles
  *   @ name : Name of simulation.
- *   @ dataFile : Full path of data file. Blank("") for MC reconstruction.
- *   @ dparameterFile : File name of parameter file without any path.
+ *   @ dataFile : Full path of data file.
+ *                Blank("") for MC reconstruction.
+ *                Ending with txt("list.txt") will use separated data files in the list file.
+ *   @ parameterFile : File name of parameter file without any path.
  *   
  */
 
 void run_reco
 (
-  TString      name     = "urqmd_short",
+  TString          name = "urqmd_short",
   TString      dataFile = "",
-  TString parameterFile = "ST.parameters.RIKEN_20150820.par"
+  TString parameterFile = "ST.parameters.RIKEN_20150820.par",
+  TString gainCalibData = ""
 )
 {
   // -----------------------------------------------------------------
@@ -37,12 +40,36 @@ void run_reco
   if (dataFile.IsNull() == kTRUE)
     fUseDecoder = kFALSE;
 
+  Bool_t fUseSeparatedData = kFALSE;
+  if (dataFile.EndsWith(".txt"))
+    fUseSeparatedData = kTRUE;
 
   // -----------------------------------------------------------------
   // Set reconstruction tasks
   STDecoderTask *fDecoderTask = new STDecoderTask();
+  fDecoderTask -> SetUseSeparatedData(fUseSeparatedData);
   fDecoderTask -> SetInputPersistance(kTRUE);
-  fDecoderTask -> AddData(dataFile);
+
+  // Note: Gain calibration data will be set in the parameter file late.
+  //       So are the reference values.
+  if (!gainCalibData.IsNull()) {
+    fDecoderTask -> SetGainCalibrationData(gainCalibData);
+    fDecoderTask -> SetGainReference(0.1, 0.1, 0.1);
+  }
+
+  // Note: If data file becomes large, those are split into several files ending with .#
+  //       This fact should be adapted later.
+  if (!fUseSeparatedData)
+    fDecoderTask -> AddData(dataFile);
+  else {
+    std::ifstream listFile(dataFile.Data());
+    TString dataFileWithPath;
+    for (Int_t iFile = 0; iFile < 12; iFile++) {
+      dataFileWithPath.ReadLine(listFile);
+      fDecoderTask -> AddData(dataFileWithPath, iFile);
+    }
+  }
+
   fDecoderTask -> SetFPNPedestal();
   if (fUseDecoder)
     fRun -> AddTask(fDecoderTask);
