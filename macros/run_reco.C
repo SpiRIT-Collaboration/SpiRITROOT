@@ -66,7 +66,13 @@ void run_reco
     TString dataFileWithPath;
     for (Int_t iFile = 0; iFile < 12; iFile++) {
       dataFileWithPath.ReadLine(listFile);
-      fDecoderTask -> AddData(dataFileWithPath, iFile);
+
+      if (dataFileWithPath.Contains("s.")) {
+        iFile--;
+
+        fDecoderTask -> AddData(dataFileWithPath, iFile);
+      } else
+        fDecoderTask -> AddData(dataFileWithPath, iFile);
     }
   }
 
