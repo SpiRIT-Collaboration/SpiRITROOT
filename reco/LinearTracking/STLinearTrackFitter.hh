@@ -44,12 +44,12 @@ class STLinearTrackFitter
 
     /// Calculate and return perpendicular vector to the track line
     /// (having the shortest distance from track to hit.)
-    TVector3 Perp(STLinearTrack* track, STHit* hit);
-    TVector3 Perp(STLinearTrack* track, TVector3 hitPos);
+    TVector3 PerpLine(STLinearTrack* track, STHit* hit);
+    TVector3 PerpLine(STLinearTrack* track, TVector3 hitPos);
 
     /// Calculate and return perpendicular vector to the track plane
-    TVector3 PerpToPlane(STLinearTrack* track, STHit* hit);
-    TVector3 PerpToPlane(STLinearTrack* track, TVector3 hitPos);
+    TVector3 PerpPlane(STLinearTrack* track, STHit* hit);
+    TVector3 PerpPlane(STLinearTrack* track, TVector3 hitPos);
 
     /// Get Closest point on the track from the hit
     TVector3 GetClosestPointOnTrack(STLinearTrack* track, STHit* hit);

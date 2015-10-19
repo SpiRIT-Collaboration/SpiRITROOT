@@ -213,17 +213,17 @@ STLinearTrackFitter::GetClosestPointOnTrack(STLinearTrack* track, STHit* hit)
 TVector3
 STLinearTrackFitter::GetClosestPointOnTrack(STLinearTrack* track, TVector3 hitPos)
 {
-  return (hitPos + Perp(track, hitPos));
+  return (hitPos + PerpLine(track, hitPos));
 }
 
 TVector3
-STLinearTrackFitter::Perp(STLinearTrack* track, STHit* hit) 
+STLinearTrackFitter::PerpLine(STLinearTrack* track, STHit* hit) 
 {
-  return Perp(track, hit -> GetPosition());
+  return PerpLine(track, hit -> GetPosition());
 }
 
 TVector3
-STLinearTrackFitter::Perp(STLinearTrack* track, TVector3 hitPos)
+STLinearTrackFitter::PerpLine(STLinearTrack* track, TVector3 hitPos)
 {
   TVector3 centroid = track -> GetCentroid();
   TVector3 directionUnit = track -> GetDirection();
@@ -238,13 +238,13 @@ STLinearTrackFitter::Perp(STLinearTrack* track, TVector3 hitPos)
 }
 
 TVector3
-STLinearTrackFitter::PerpToPlane(STLinearTrack* track, STHit* hit) 
+STLinearTrackFitter::PerpPlane(STLinearTrack* track, STHit* hit) 
 {
-  return PerpToPlane(track, hit -> GetPosition());
+  return PerpPlane(track, hit -> GetPosition());
 }
 
 TVector3
-STLinearTrackFitter::PerpToPlane(STLinearTrack* track, TVector3 hitPos)
+STLinearTrackFitter::PerpPlane(STLinearTrack* track, TVector3 hitPos)
 {
   TVector3 centroid = track -> GetCentroid();
   TVector3 normalUnit = track -> GetNormal();

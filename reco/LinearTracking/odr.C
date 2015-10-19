@@ -13,7 +13,7 @@ void odr()
 
   gStyle -> SetOptStat(0);
 
-  const Int_t nPoints = 100;
+  const Int_t nPoints = 20;
 
   Double_t x[nPoints] = {0};
   Double_t y[nPoints] = {0};
@@ -25,13 +25,14 @@ void odr()
   Double_t zMean = 0;
 
   Double_t factor = nPoints/10.;
+  Double_t sigma = 0.1;
 
   for (Int_t iPoint = 0; iPoint < nPoints; iPoint++)
   {
-    x[iPoint] = gRandom -> Gaus(iPoint/factor, 0.1);
-    y[iPoint] = gRandom -> Gaus(iPoint/factor, 0.1);
-    z[iPoint] = gRandom -> Gaus(iPoint/factor, 0.1);
-    w[iPoint] = gRandom -> Gaus(1, 0.5);
+    x[iPoint] = gRandom -> Gaus(iPoint/factor, sigma);
+    y[iPoint] = gRandom -> Gaus(iPoint/factor, sigma);
+    z[iPoint] = gRandom -> Gaus(iPoint/factor, sigma);
+    w[iPoint] = gRandom -> Gaus(1, 0);
 
     xMean += w[iPoint]*x[iPoint];
     yMean += w[iPoint]*y[iPoint];
@@ -55,22 +56,26 @@ void odr()
 
   /*******************************************************************/
 
-  ODRFitter *fitter = new ODRFitter();
-  fitter -> SetCentroid(xMean, yMean, zMean);
+  ODRFitter *fODRFitter = new ODRFitter();
+  fODRFitter -> SetCentroid(xMean, yMean, zMean);
 
   for (Int_t iPoint = 0; iPoint < nPoints; iPoint++)
-    fitter -> AddPoint(x[iPoint], y[iPoint], z[iPoint], w[iPoint]);
+    fODRFitter -> AddPoint(x[iPoint], y[iPoint], z[iPoint], w[iPoint]);
 
-  fitter -> FitLine();
+  fODRFitter -> FitLine();
 
-  std::cout << "normal  : "; fitter -> GetDirection().Print();
-  std::cout << "centroid: "; fitter -> GetCentroid().Print();
+  STLinearTrackFitter* fLTFitter = new STLinearTrackFitter();
 
-  TVector3 pointStart = GetPointFromLineWithZ(fitter -> GetCentroid(), fitter -> GetDirection(), 0);
-  TVector3 pointEnd   = GetPointFromLineWithZ(fitter -> GetCentroid(), fitter -> GetDirection(), 10);
+  STLinearTrack *track= new STLinearTrack();
+  track -> SetNormal(fODRFitter -> GetDirection());
+  track -> SetCentroid(fODRFitter -> GetCentroid());
 
-  std::cout << "start   : "; pointStart.Print();
-  std::cout << "end     : "; pointEnd.Print();
+  TVector3 pointStart = fLTFitter -> GetClosestPointOnTrack(track, TVector3(5,5,5));
+  TVector3 pointEnd   = fLTFitter -> GetClosestPointOnTrack(track, TVector3(10,10,10));
+  //TVector3 pointStart = GetPointFromLineWithZ(fODRFitter -> GetCentroid(), fODRFitter -> GetDirection(), 0);
+  //TVector3 pointEnd   = GetPointFromLineWithZ(fODRFitter -> GetCentroid(), fODRFitter -> GetDirection(), 10);
+
+  //std::cout << fitter -> GetRMS() << std::endl;
 
   line = new TEveLine();
   line -> SetLineColor(kRed);

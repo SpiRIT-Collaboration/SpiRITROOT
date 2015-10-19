@@ -26,7 +26,7 @@ using std::vector;
 ClassImp(STHitClusteringTask);
 
 STHitClusteringTask::STHitClusteringTask()
-:FairTask("SpiRIT Hit Clusterint Task")
+:FairTask("SpiRIT Hit Clustering Task")
 {
   fLogger = FairLogger::GetLogger();
 

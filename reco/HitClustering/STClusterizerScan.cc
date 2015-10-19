@@ -93,7 +93,7 @@ STClusterizerScan::Analyze(STEvent* eventIn, STEvent* eventOut)
     fHitArray -> push_back(hit);
   }
 
-  STHitSortR sortR;
+  STHitSortRInv sortR;
   std::sort(fHitArray -> begin(), fHitArray -> end(), sortR);
 
 #ifdef DEBUG

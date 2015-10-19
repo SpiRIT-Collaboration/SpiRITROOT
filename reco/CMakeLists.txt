@@ -78,6 +78,13 @@ HoughTracking/STHoughSpaceHelix.cc
 
 Genfit/STSpacepointMeasurement.cc
 
+LinearTracking/STCorrLinearTHProx.cc
+LinearTracking/STCorrLinearTHPerp.cc
+LinearTracking/STCorrLinearTHRMS.cc
+LinearTracking/STCorrLinearTTGeo.cc
+LinearTracking/STCorrLinearTTPerp.cc
+LinearTracking/STCorrLinearTTRMS.cc
+LinearTracking/STLinearTrackFinderAbstract.cc
 LinearTracking/STLinearTrackFinder.cc
 LinearTracking/STLinearTrackFitter.cc
 LinearTracking/ODRFitter.cc

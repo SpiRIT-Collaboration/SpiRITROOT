@@ -43,6 +43,8 @@
 #pragma link C++ class STRiemannSort+;
 #pragma link C++ class STRiemannTrackingTask+;
 
+#pragma link C++ class STLinearTrackingConf+;
+#pragma link C++ class STLinearTrackFinderAbstract+;
 #pragma link C++ class STLinearTrackFinder+;
 #pragma link C++ class STLinearTrackFitter+;
 #pragma link C++ class STLinearTrackingTask+;
