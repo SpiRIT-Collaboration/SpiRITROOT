@@ -98,6 +98,8 @@ STPSAAll::Analyze(STRawEvent *rawEvent, STEvent *event)
       Double_t tbHit = -fitConst/fitSlope;
       Double_t yHit = CalculateY(tbHit);
 
+      if (yHit > fMaxDriftLength || yHit < -2 * fMaxDriftLength)
+        continue;
 //      if (yHit > 0 || yHit < -fMaxDriftLength)
 //        continue;
 
