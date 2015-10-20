@@ -257,3 +257,45 @@ STLinearTrackFitter::PerpPlane(STLinearTrack* track, TVector3 hitPos)
 
   return normalUnit;
 }
+
+TVector3
+STLinearTrackFitter::GetPointOnX(STLinearTrack* track, Double_t x)
+{
+  TVector3 direction = track -> GetDirection();
+  TVector3 centroid = track -> GetCentroid();
+
+  Double_t d = (x - centroid.X()) / direction.X();
+
+  Double_t y = d * direction.Y() + centroid.Y();
+  Double_t z = d * direction.Z() + centroid.Z();
+
+  return TVector3(x,y,z);
+}
+
+TVector3
+STLinearTrackFitter::GetPointOnY(STLinearTrack* track, Double_t y)
+{
+  TVector3 direction = track -> GetDirection();
+  TVector3 centroid = track -> GetCentroid();
+
+  Double_t d = (y - centroid.Y()) / direction.Y();
+
+  Double_t x = d * direction.X() + centroid.X();
+  Double_t z = d * direction.Z() + centroid.Z();
+
+  return TVector3(x,y,z);
+}
+
+TVector3
+STLinearTrackFitter::GetPointOnZ(STLinearTrack* track, Double_t z)
+{
+  TVector3 direction = track -> GetDirection();
+  TVector3 centroid = track -> GetCentroid();
+
+  Double_t d = (z - centroid.Z()) / direction.Z();
+
+  Double_t x = d * direction.X() + centroid.X();
+  Double_t y = d * direction.Y() + centroid.Y();
+
+  return TVector3(x,y,z);
+}

@@ -51,9 +51,14 @@ class STLinearTrackFitter
     TVector3 PerpPlane(STLinearTrack* track, STHit* hit);
     TVector3 PerpPlane(STLinearTrack* track, TVector3 hitPos);
 
-    /// Get Closest point on the track from the hit
+    /// Get closest point on the track from the hit
     TVector3 GetClosestPointOnTrack(STLinearTrack* track, STHit* hit);
     TVector3 GetClosestPointOnTrack(STLinearTrack* track, TVector3 posHit);
+
+    /// Get point on the track due to x, y, z
+    TVector3 GetPointOnX(STLinearTrack* track, Double_t x);
+    TVector3 GetPointOnY(STLinearTrack* track, Double_t y);
+    TVector3 GetPointOnZ(STLinearTrack* track, Double_t z);
 
   private:
     ODRFitter* fODRFitter;
