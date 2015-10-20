@@ -17,6 +17,7 @@
 #include "TEveLine.h"
 #include "TClonesArray.h"
 #include "TPaletteAxis.h"
+#include "TVector.h"
 #include "TVector3.h"
 #include "TCanvas.h"
 #include "TGraph.h"
@@ -115,6 +116,8 @@ class STEventDrawTask : public FairTask
 
   void SetHistPad4();
   void SetHistPad5();
+  void SetHistPad6();
+  void SetHistPad7();
   void DrawHitAndDrift();
 
   private :
@@ -155,6 +158,10 @@ class STEventDrawTask : public FairTask
   TCanvas* fCvsPad5; 
   TH1D* fHistPad2; 
   TH1D* fHistPad3; 
+  TCanvas* fCvsPad6; 
+  TCanvas* fCvsPad7; 
+  TH1D* fHistPad4; 
+  TH2D* fHistPad5; 
 
     TCanvas* fCvsPadPlane;
     TH2D* fPadPlane;

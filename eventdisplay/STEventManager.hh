@@ -53,6 +53,8 @@ class STEventManager : public TEveEventManager
 
   TCanvas* GetCvsPad4();
   TCanvas* GetCvsPad5();
+  TCanvas* GetCvsPad6();
+  TCanvas* GetCvsPad7();
 
   TCanvas* GetCvs_a();
   TCanvas* GetCvs_b();
@@ -74,8 +76,12 @@ class STEventManager : public TEveEventManager
     TCanvas* fCvsPadPlane;
     TCanvas* fCvsPad;
 
+  Bool_t fBeamPlotsC;
+
   TCanvas* fCvsPad4;
   TCanvas* fCvsPad5;
+  TCanvas* fCvsPad6;
+  TCanvas* fCvsPad7;
   TCanvas* fCvs_a;
   TCanvas* fCvs_b;
 

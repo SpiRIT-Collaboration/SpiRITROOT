@@ -54,6 +54,10 @@ STEventDrawTask::STEventDrawTask()
   fHistPad3 = NULL; 
   fCvsPad4  = NULL; 
   fCvsPad5  = NULL; 
+  fHistPad4 = NULL; 
+  fHistPad5 = NULL; 
+  fCvsPad6  = NULL; 
+  fCvsPad7  = NULL; 
 
   for (Int_t i=0; i<6; i++)
   {
@@ -155,6 +159,10 @@ STEventDrawTask::Init()
   fCvsPad5 = fEventManager -> GetCvsPad5();
   SetHistPad4();
   SetHistPad5();
+  fCvsPad6 = fEventManager -> GetCvsPad6();
+  fCvsPad7 = fEventManager -> GetCvsPad7();
+  SetHistPad6();
+  SetHistPad7();
 
   return kSUCCESS;
 }
@@ -444,7 +452,7 @@ STEventDrawTask::DrawHitAndDrift()
 
     for(int j=0;j<nhits;j++)
       {
-        STHit *hit = fEvent->GetHit(j); //increase hit                                                                                                                           
+        STHit *hit = fEvent->GetHit(j); //increase hit                                                                                                                         
   
         TVector3 vect=(TVector3)hit->GetPosition();
         Double_t xpos=vect.X();
@@ -459,6 +467,28 @@ STEventDrawTask::DrawHitAndDrift()
     fHistPad3 -> Draw();
     fCvsPad5 -> Modified();
     fCvsPad5 -> Update();
+
+    STRawEvent* rawEvent = (STRawEvent*) fRawEventArray -> At(0);
+    // max ADC distribution
+    double max = 0;
+    std::vector<STPad> padArray = *(rawEvent -> GetPads());
+    for (std::vector<STPad>::iterator iPad = padArray.begin(); iPad != padArray.end(); ++iPad)
+      {
+	Double_t* adc = iPad->GetADC();
+	for (Int_t tb=0; tb<fNTbs; tb++) {
+	  Double_t val = adc[tb];
+	  if (max < val)
+	    max = val;
+	}
+      }
+    fHistPad4->SetBinContent(fEvent -> GetEventID(), max);
+    //    std::cout << " the max is " << max << std::endl;
+    //    std::cout << " the average max of the 5 highest is " << avgmax << std::endl;
+
+    fCvsPad6 -> cd();
+    fHistPad4 -> Draw();
+    fCvsPad6 -> Modified();
+    fCvsPad6 -> Update();
 
   } else
     return;
@@ -513,7 +543,19 @@ STEventDrawTask::DrawLinearTracks()
     line -> SetRnrSelf(fRnrSelf[kLinear]);
     gEve -> AddElement(line);
     fLinearSetArray.push_back(line);
+
+    // beam profile
+    TVector3 position = fLTFitter -> GetPointOnZ(track, -35.3);
+    Double_t new_y = position.Y()/10.;
+    new_y += fWindowYStart;
+    std::cout << "x: " << position.X() << " y: " << new_y << " z: " << position.Z() << std::endl;
   }
+
+  fCvsPad7 -> cd();
+  fHistPad5 -> Draw();                                                                
+  fCvsPad7 -> Modified();                                                             
+  fCvsPad7 -> Update();     
+
 }
 
 void 
@@ -740,6 +782,68 @@ STEventDrawTask::SetHistPad5()
   fHistPad3 -> Draw();
   fCvsPad5 -> SetGridy();
   fCvsPad5 -> SetGridx();
+}
+
+void
+STEventDrawTask::SetHistPad6()
+{
+  if (fHistPad4)
+    {
+      fHistPad4 -> Reset();
+      return;
+    }
+
+  fCvsPad6 -> cd();
+  fHistPad4 = new TH1D("Pad6","",100,0,99);
+  fHistPad4 -> SetLineColor(9);
+  fHistPad4 -> SetFillColor(9);
+  fHistPad4 -> SetFillStyle(3002);
+  fHistPad4 -> GetXaxis() -> SetTickLength(0.01);
+  fHistPad4 -> GetXaxis() -> SetTitle("run number");
+  fHistPad4 -> GetXaxis() -> CenterTitle();
+  fHistPad4 -> GetXaxis() -> SetLabelSize(0.05);
+  fHistPad4 -> GetXaxis() -> SetTitleSize(0.05);
+  fHistPad4 -> GetYaxis() -> SetTickLength(0.01);
+  fHistPad4 -> GetYaxis() -> SetTitle("Max ADC");
+  fHistPad4 -> GetYaxis() -> CenterTitle();
+  fHistPad4 -> GetYaxis() -> SetLabelSize(0.05);
+  fHistPad4 -> GetYaxis() -> SetTitleSize(0.05);
+  fHistPad4 -> SetMinimum(0);
+  fHistPad4 -> SetStats(0);
+  fHistPad4 -> Draw();
+  fCvsPad6 -> SetGridy();
+  fCvsPad6 -> SetGridx();
+}
+
+void
+STEventDrawTask::SetHistPad7()
+{
+  if (fHistPad5)
+    {
+      fHistPad5 -> Reset();
+      return;
+    }
+
+  fCvsPad7 -> cd();
+  fHistPad5 = new TH2D("Pad7","",100,-0.3,0.3,100,-0.4,0.4);
+  fHistPad5 -> SetLineColor(9);
+  fHistPad5 -> SetFillColor(9);
+  fHistPad5 -> SetFillStyle(3002);
+  fHistPad5 -> GetXaxis() -> SetTickLength(0.01);
+  fHistPad5 -> GetXaxis() -> SetTitle("x (mm)");
+  fHistPad5 -> GetXaxis() -> CenterTitle();
+  fHistPad5 -> GetXaxis() -> SetLabelSize(0.05);
+  fHistPad5 -> GetXaxis() -> SetTitleSize(0.05);
+  fHistPad5 -> GetYaxis() -> SetTickLength(0.01);
+  fHistPad5 -> GetYaxis() -> SetTitle("y (mm)");
+  fHistPad5 -> GetYaxis() -> CenterTitle();
+  fHistPad5 -> GetYaxis() -> SetLabelSize(0.05);
+  fHistPad5 -> GetYaxis() -> SetTitleSize(0.05);
+  fHistPad5 -> SetMinimum(0);
+  fHistPad5 -> SetStats(0);
+  fHistPad5 -> Draw();
+  fCvsPad7 -> SetGridy();
+  fCvsPad7 -> SetGridx();
 }
 
 
