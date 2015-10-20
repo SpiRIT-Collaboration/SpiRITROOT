@@ -157,4 +157,16 @@ class STHitSortYInv {
     { return hit1 -> GetPosition().Y() < hit2 -> GetPosition().Y(); }
 };
 
+class STHitSortCharge {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetCharge() > hit2 -> GetCharge(); }
+};
+
+class STHitSortChargeInv {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetCharge() < hit2 -> GetCharge(); }
+};
+
 #endif
