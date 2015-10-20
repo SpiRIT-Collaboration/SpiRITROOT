@@ -7,5 +7,6 @@
 #pragma link C++ class STEventManager+;
 #pragma link C++ class STEventManagerEditor+;
 #pragma link C++ class STEventDrawTask+;
+#pragma link C++ class STEventRIDFTask+;
 
 #endif
