@@ -25,8 +25,8 @@ void run_reco
 (
   TString          name = "urqmd_short",
   TString      dataFile = "",
-  TString parameterFile = "ST.parameters.RIKEN_20150820.par",
-  TString gainCalibData = ""
+  TString parameterFile = "ST.parameters.RIKEN_20151021.par",
+   Bool_t  useGainCalib = kFALSE
 )
 {
   // -----------------------------------------------------------------
@@ -49,16 +49,14 @@ void run_reco
   STDecoderTask *fDecoderTask = new STDecoderTask();
   fDecoderTask -> SetUseSeparatedData(fUseSeparatedData);
   fDecoderTask -> SetInputPersistance(kTRUE);
+  fDecoderTask -> SetUseGainCalibration(useGainCalib);
 
-  // Note: Gain calibration data will be set in the parameter file late.
-  //       So are the reference values.
-  if (!gainCalibData.IsNull()) {
-    fDecoderTask -> SetGainCalibrationData(gainCalibData);
-    fDecoderTask -> SetGainReference(0.1, 0.1, 0.1);
-  }
+  /* 
+  // For manual setup of gain calibraiton
+  fDecoderTask -> SetGainCalibrationData(gainCalibData);
+  fDecoderTask -> SetGainReference(0.1, 0.1, 0.1);
+  */
 
-  // Note: If data file becomes large, those are split into several files ending with .#
-  //       This fact should be adapted later.
   if (!fUseSeparatedData)
     fDecoderTask -> AddData(dataFile);
   else {
@@ -93,10 +91,15 @@ void run_reco
   fSMTask -> SetMode(STSMTask::kChange);
   fRun -> AddTask(fSMTask);
 
+  STLinearTrackingTask *fLinearTrackingTask = new STLinearTrackingTask();
+  fLinearTrackingTask -> SetInputPersistance(kTRUE);
+  fRun -> AddTask(fLinearTrackingTask);
+/*
   STRiemannTrackingTask* fRiemannTrackingTask = new STRiemannTrackingTask();
   fRiemannTrackingTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ, 0);
   fRiemannTrackingTask -> SetInputPersistance(kTRUE);
   fRun -> AddTask(fRiemannTrackingTask);
+*/
 
 
   //////////////////////////////////////////////////////////
