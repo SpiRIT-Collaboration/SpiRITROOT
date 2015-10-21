@@ -69,7 +69,7 @@ void ToggleLog() {
       fPadplaneHist[iCvs] -> GetZaxis() -> SetLimits(fParMin[iCvs], fParMax[iCvs]);
       fPadplaneHist[iCvs] -> GetZaxis() -> SetRangeUser(fParMin[iCvs], fParMax[iCvs]);
       fPadplaneHist[iCvs] -> SetContour(50);
-      ((TPaletteAxis *) fPadplaneHist[iCvs] -> FindObject("palette")) -> GetAxis() -> SetMaxDigits(2);
+//      ((TPaletteAxis *) fPadplaneHist[iCvs] -> FindObject("palette")) -> GetAxis() -> SetMaxDigits(2);
 
       fPadplaneCvs[iCvs] -> Modified();
       fPadplaneCvs[iCvs] -> Update();
