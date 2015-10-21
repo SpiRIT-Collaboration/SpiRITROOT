@@ -9,6 +9,8 @@ STSource::STSource()
   fEventID = 0;
 
   fIsInitialized = kFALSE;
+  fIsSeparatedData = kFALSE;
+  fIsGainCalibration = kFALSE;
 }
 
 Bool_t STSource::Init()
@@ -25,8 +27,32 @@ Bool_t STSource::Init()
     return kFALSE;
   }
 
+  if (fDataFile.EndsWith(".txt"))
+    fIsSeparatedData = kTRUE;
+
   fDecoder = new STDecoderTask();
-  fDecoder -> AddData(fDataFile);
+  fDecoder -> SetUseSeparatedData(fIsSeparatedData);
+
+  if (fIsGainCalibration)
+    fDecoder -> SetUseGainCalibration();
+
+  if (!fIsSeparatedData)
+    fDecoder -> AddData(fDataFile);
+  else {
+    std::ifstream listFile(fDataFile.Data());
+    TString dataFileWithPath;
+    for (Int_t iFile = 0; iFile < 12; iFile++) {
+      dataFileWithPath.ReadLine(listFile);
+
+      if (dataFileWithPath.Contains("s.")) {
+        iFile--;
+
+        fDecoder -> AddData(dataFileWithPath, iFile);
+      } else
+        fDecoder -> AddData(dataFileWithPath, iFile);
+    }
+  }
+
   fDecoder -> SetFPNPedestal();
   fDecoder -> SetParContainers();
   Bool_t decoderInit = fDecoder -> Init();
@@ -64,6 +90,11 @@ void STSource::SetData(TString filename)
 void STSource::SetEventID(Long64_t eventid)
 {
   fEventID = eventid;
+}
+
+void STSource::SetUseGainCalibration()
+{
+  fIsGainCalibration = kTRUE;
 }
 
 TString STSource::GetDataFileName()

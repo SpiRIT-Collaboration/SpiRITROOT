@@ -22,6 +22,7 @@ class STSource : public FairSource {
 
     void SetData(TString filename);
     void SetEventID(Long64_t eventid);
+    void SetUseGainCalibration();
 
     TString GetDataFileName();
     Long64_t GetEventID();
@@ -32,6 +33,8 @@ class STSource : public FairSource {
     Long64_t fEventID;
 
     Bool_t fIsInitialized;
+    Bool_t fIsSeparatedData;
+    Bool_t fIsGainCalibration;
 
   ClassDef(STSource, 1)
 };
