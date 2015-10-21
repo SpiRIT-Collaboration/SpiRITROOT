@@ -39,6 +39,7 @@ STDecoderTask::STDecoderTask()
   fExternalNumTbs = kFALSE;
   fNumTbs = 512;
 
+  fUseGainCalibration = kFALSE;
   fGainCalibrationFile = "";
   fGainConstant = -9999;
   fGainLinear = -9999;
@@ -68,6 +69,7 @@ void STDecoderTask::SetInternalPedestal(Int_t startTb, Int_t averageTbs)        
 void STDecoderTask::SetFPNPedestal()                                                          { fUseFPNPedestal = kTRUE; fUseInternalPedestal = kFALSE; fPedestalFile = ""; }
 void STDecoderTask::SetFPNPedestal(Double_t pedestalRMS)                                      { fUseFPNPedestal = kTRUE; fUseInternalPedestal = kFALSE; fPedestalFile = ""; fFPNPedestalRMS = pedestalRMS; }
 void STDecoderTask::SetPedestalData(TString filename, Double_t rmsFactor)                     { fPedestalFile = filename; fPedestalRMSFactor = rmsFactor; }
+void STDecoderTask::SetUseGainCalibration(Bool_t value)                                       { fUseGainCalibration = value; }
 void STDecoderTask::SetGainCalibrationData(TString filename)                                  { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)  { fGainConstant = constant; fGainLinear = linear; fGainQuadratic = quadratic; }
 void STDecoderTask::SetOldData(Bool_t oldData)                                                { fOldData = oldData; }
@@ -130,9 +132,20 @@ STDecoderTask::Init()
     fDecoder -> SetFPNPedestal(fFPNPedestalRMS);
   }
 
-  if (fGainCalibrationFile.EqualTo(""))
+  if (fGainCalibrationFile.EqualTo("") && fUseGainCalibration == kFALSE)
     fLogger -> Info(MESSAGE_ORIGIN, "Gain not calibrated!");
-  else {
+  else if (fGainCalibrationFile.EqualTo("") && fUseGainCalibration == kTRUE) {
+    Bool_t isSetGainCalibrationData = fDecoder -> SetGainCalibrationData(fPar -> GetGainCalibrationDataFileName());
+    if (!isSetGainCalibrationData) {
+      fLogger -> Error(MESSAGE_ORIGIN, "Cannot find gain calibration data file!");
+      
+      return kERROR;
+    }
+    LOG(INFO) << fPar -> GetGainCalibrationDataFileName() << " " << fPar -> GetGCConstant() << " " << fPar -> GetGCLinear() << " " << fPar -> GetGCQuadratic() << FairLogger::endl;
+
+    fDecoder -> SetGainReference(fPar -> GetGCConstant(), fPar -> GetGCLinear(), fPar -> GetGCQuadratic());
+    fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set from parameter list!");
+  } else {
     Bool_t isSetGainCalibrationData = fDecoder -> SetGainCalibrationData(fGainCalibrationFile);
     if (!isSetGainCalibrationData) {
       fLogger -> Error(MESSAGE_ORIGIN, "Cannot find gain calibration data file!");

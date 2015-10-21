@@ -61,6 +61,8 @@ class STDecoderTask : public FairTask {
     void SetFPNPedestal();
     /// Setting to use FPN channels as pedestal
     void SetFPNPedestal(Double_t rms);
+    /// Setting use gain calibration data file. If there's no file specified by user using two methods below, it'll use the one in parameter files.
+    void SetUseGainCalibration(Bool_t value = kTRUE);
     /// Setting gain calibration data file. If not set, gain is not calibrated.
     void SetGainCalibrationData(TString filename);
     /// Setting gain calibration reference.
@@ -105,6 +107,7 @@ class STDecoderTask : public FairTask {
     Bool_t fUseFPNPedestal;             ///< Flas for using FPN channel as pedestal
     Double_t fFPNPedestalRMS;           ///< RMS cut of baseline matching part selection
 
+    Bool_t fUseGainCalibration;         ///< Use gain calibration data
     TString fGainCalibrationFile;       ///< Gain calibration data file name
     Double_t fGainConstant;             ///< Gain calibration reference constant
     Double_t fGainLinear;               ///< Gain calibration reference coefficient of linear term
