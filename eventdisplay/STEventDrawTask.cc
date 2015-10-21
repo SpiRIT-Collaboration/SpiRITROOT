@@ -55,6 +55,7 @@ STEventDrawTask::STEventDrawTask()
   fCvsPad4  = NULL; 
   fCvsPad5  = NULL; 
   fHistPad4 = NULL; 
+  fHistPad4b = NULL; 
   fHistPad5 = NULL; 
   fCvsPad6  = NULL; 
   fCvsPad7  = NULL; 
@@ -468,25 +469,31 @@ STEventDrawTask::DrawHitAndDrift()
     fCvsPad5 -> Modified();
     fCvsPad5 -> Update();
 
-    STRawEvent* rawEvent = (STRawEvent*) fRawEventArray -> At(0);
     // max ADC distribution
-    double max = 0;
+    STRawEvent* rawEvent = (STRawEvent*) fRawEventArray -> At(0);
+    double avgmax = 0;
+    int Navg = 5;
+
+    vector<Double_t> adc_vec; adc_vec.clear();
     std::vector<STPad> padArray = *(rawEvent -> GetPads());
     for (std::vector<STPad>::iterator iPad = padArray.begin(); iPad != padArray.end(); ++iPad)
       {
 	Double_t* adc = iPad->GetADC();
-	for (Int_t tb=0; tb<fNTbs; tb++) {
-	  Double_t val = adc[tb];
-	  if (max < val)
-	    max = val;
-	}
+	for (Int_t tb=0; tb<fNTbs; tb++) 
+	  adc_vec.push_back(adc[tb]);
       }
-    fHistPad4->SetBinContent(fEvent -> GetEventID(), max);
-    //    std::cout << " the max is " << max << std::endl;
-    //    std::cout << " the average max of the 5 highest is " << avgmax << std::endl;
+
+    fHistPad4->SetBinContent(fEvent -> GetEventID(), *std::max_element(adc_vec.begin(), adc_vec.end()));
+    
+    sort(adc_vec.begin(), adc_vec.end(), std::greater<double>());
+    for (int i=0 ; i<Navg ; i++)
+      avgmax += adc_vec.at(i); avgmax /= Navg;
+    fHistPad4b->SetBinContent(fEvent -> GetEventID(), avgmax);
+
 
     fCvsPad6 -> cd();
     fHistPad4 -> Draw();
+    fHistPad4b -> Draw("SAME");
     fCvsPad6 -> Modified();
     fCvsPad6 -> Update();
 
@@ -790,14 +797,19 @@ STEventDrawTask::SetHistPad6()
   if (fHistPad4)
     {
       fHistPad4 -> Reset();
+      fHistPad4b -> Reset();
       return;
     }
 
   fCvsPad6 -> cd();
   fHistPad4 = new TH1D("Pad6","",100,0,99);
-  fHistPad4 -> SetLineColor(9);
-  fHistPad4 -> SetFillColor(9);
+  fHistPad4b = new TH1D("Pad6b","",100,0,99);
+  fHistPad4 -> SetLineColor(46);
+  fHistPad4 -> SetFillColor(46);
   fHistPad4 -> SetFillStyle(3002);
+  fHistPad4b -> SetLineColor(9);
+  fHistPad4b -> SetFillColor(9);
+  fHistPad4b -> SetFillStyle(3002);
   fHistPad4 -> GetXaxis() -> SetTickLength(0.01);
   fHistPad4 -> GetXaxis() -> SetTitle("run number");
   fHistPad4 -> GetXaxis() -> CenterTitle();
