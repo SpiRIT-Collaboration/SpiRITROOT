@@ -10,9 +10,9 @@
 ////////////////////////////
 
 // Put the parameter file name. Path is automatically concatenated.
-TString fParameterFile = "ST.parameters.par";
+TString fParameterFile = "ST.parameters.RIKEN_20151021.par";
 
-// Set the raw data file with path
+// Set the raw data file with path. If the file having txt with its extension, the macro will load separated data files in the list automatically.
 TString fDataFile = "";
 
 // Set the gain calibration data file. If not, assign "".
@@ -47,7 +47,31 @@ void quickViewer() {
 
   STParReader *fPar = new STParReader(parameterDir + fParameterFile);
 
-  fCore = new STCore(fDataFile);
+  Bool_t fUseSeparatedData = kFALSE;
+  if (fDataFile.EndsWith(".txt"))
+    fUseSeparatedData = kTRUE;
+
+  if (!fUseSeparatedData) {
+    fCore = new STCore(fDataFile);
+  } else {
+    fCore = new STCore();
+    fCore -> SetUseSeparatedData(fUseSeparatedData);
+
+    TString dataFileWithPath = fDataFile;
+    std::ifstream listFile(dataFileWithPath.Data());
+    TString buffer;
+    for (Int_t iCobo = 0; iCobo < 12; iCobo++) {
+      dataFileWithPath.ReadLine(listFile);
+
+      if (dataFileWithPath.Contains("s.")) {
+        iCobo--;
+
+        fCore -> AddData(dataFileWithPath, iCobo);
+      } else
+        fCore -> AddData(dataFileWithPath, iCobo);
+    }
+  }
+
   if (!fGainCalibrationData.EqualTo("")) {
     fCore -> SetGainCalibrationData(fGainCalibrationData);
     fCore -> SetGainReference(fReferenceConstant, fReferenceLinear, fReferenceQuadratic);
