@@ -163,6 +163,7 @@ class STEventDrawTask : public FairTask
   TH1D* fHistPad4; 
   TH1D* fHistPad4b; 
   TH2D* fHistPad5; 
+  TBox* box1;
 
     TCanvas* fCvsPadPlane;
     TH2D* fPadPlane;
