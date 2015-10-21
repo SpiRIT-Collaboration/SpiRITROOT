@@ -19,31 +19,35 @@ STDigiPar::~STDigiPar()
 {
 }
 
-Double_t STDigiPar::GetPadPlaneX()                 { return fPadPlaneX; }
-Double_t STDigiPar::GetPadPlaneZ()                 { return fPadPlaneZ; }
-Double_t STDigiPar::GetPadSizeX()                  { return fPadSizeX; }
-Double_t STDigiPar::GetPadSizeZ()                  { return fPadSizeZ; }
-Int_t    STDigiPar::GetPadRows()                   { return fPadRows; }
-Int_t    STDigiPar::GetPadLayers()                 { return fPadLayers; }
-Double_t STDigiPar::GetAnodeWirePlaneY()           { return fAnodeWirePlaneY; }
-Double_t STDigiPar::GetGroundWirePlaneY()          { return fGroundWirePlaneY; }
-Double_t STDigiPar::GetGatingWirePlaneY()          { return fGatingWirePlaneY; }
-Double_t STDigiPar::GetEField()                    { return fEField; }
-Double_t STDigiPar::GetFPNPedestalRMS()            { return fFPNPedestalRMS; }
-Int_t    STDigiPar::GetNumTbs()                    { return fNumTbs; }
-Int_t    STDigiPar::GetWindowNumTbs()              { return fWindowNumTbs; }
-Int_t    STDigiPar::GetWindowStartTb()             { return fWindowStartTb; }
-Int_t    STDigiPar::GetSamplingRate()              { return fSamplingRate; }
-Double_t STDigiPar::GetDriftLength()               { return fDriftLength; }
-Int_t    STDigiPar::GetYDivider()                  { return fYDivider; }
-Double_t STDigiPar::GetEIonize()                   { return fEIonize; }
-Double_t STDigiPar::GetDriftVelocity()             { return fDriftVelocity; }
-Double_t STDigiPar::GetCoefDiffusionLong()         { return fCoefDiffusionLong; }
-Double_t STDigiPar::GetCoefDiffusionTrans()        { return fCoefDiffusionTrans; }
-Double_t STDigiPar::GetCoefAttachment()            { return fCoefAttachment; }
-Int_t    STDigiPar::GetGain()                      { return fGain; }
-TString  STDigiPar::GetUAMapFileName()             { return fUAMapFileName; }
-TString  STDigiPar::GetAGETMapFileName()           { return fAGETMapFileName; }
+Double_t STDigiPar::GetPadPlaneX()                   { return fPadPlaneX; }
+Double_t STDigiPar::GetPadPlaneZ()                   { return fPadPlaneZ; }
+Double_t STDigiPar::GetPadSizeX()                    { return fPadSizeX; }
+Double_t STDigiPar::GetPadSizeZ()                    { return fPadSizeZ; }
+Int_t    STDigiPar::GetPadRows()                     { return fPadRows; }
+Int_t    STDigiPar::GetPadLayers()                   { return fPadLayers; }
+Double_t STDigiPar::GetAnodeWirePlaneY()             { return fAnodeWirePlaneY; }
+Double_t STDigiPar::GetGroundWirePlaneY()            { return fGroundWirePlaneY; }
+Double_t STDigiPar::GetGatingWirePlaneY()            { return fGatingWirePlaneY; }
+Double_t STDigiPar::GetEField()                      { return fEField; }
+Double_t STDigiPar::GetFPNPedestalRMS()              { return fFPNPedestalRMS; }
+Int_t    STDigiPar::GetNumTbs()                      { return fNumTbs; }
+Int_t    STDigiPar::GetWindowNumTbs()                { return fWindowNumTbs; }
+Int_t    STDigiPar::GetWindowStartTb()               { return fWindowStartTb; }
+Int_t    STDigiPar::GetSamplingRate()                { return fSamplingRate; }
+Double_t STDigiPar::GetDriftLength()                 { return fDriftLength; }
+Int_t    STDigiPar::GetYDivider()                    { return fYDivider; }
+Double_t STDigiPar::GetEIonize()                     { return fEIonize; }
+Double_t STDigiPar::GetDriftVelocity()               { return fDriftVelocity; }
+Double_t STDigiPar::GetCoefDiffusionLong()           { return fCoefDiffusionLong; }
+Double_t STDigiPar::GetCoefDiffusionTrans()          { return fCoefDiffusionTrans; }
+Double_t STDigiPar::GetCoefAttachment()              { return fCoefAttachment; }
+Int_t    STDigiPar::GetGain()                        { return fGain; }
+TString  STDigiPar::GetUAMapFileName()               { return fUAMapFileName; }
+TString  STDigiPar::GetAGETMapFileName()             { return fAGETMapFileName; }
+TString  STDigiPar::GetGainCalibrationDataFileName() { return fGainCalibrationDataFileName; }
+Double_t STDigiPar::GetGCConstant()                  { return fGCConstant; }
+Double_t STDigiPar::GetGCLinear()                    { return fGCLinear; }
+Double_t STDigiPar::GetGCQuadratic()                 { return fGCQuadratic; }
 
 
 Bool_t 
@@ -157,6 +161,23 @@ STDigiPar::getParams(FairParamList *paramList)
       return kFALSE;
     }
     fAGETMapFileName = GetFile(fAGETMapFile);
+    if (!(paramList -> fill("GainCalibrationDataFile", &fGainCalibrationDataFile))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GainCalibrationDataFile parameter!");
+      return kFALSE;
+    }
+    fGainCalibrationDataFileName = GetFile(fGainCalibrationDataFile);
+    if (!(paramList -> fill("GCConstant", &fGCConstant))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GCConstant parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("GCLinear", &fGCLinear))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GCLinear parameter!");
+      return kFALSE;
+    }
+    if (!(paramList -> fill("GCQuadratic", &fGCQuadratic))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find GCQuadratic parameter!");
+      return kFALSE;
+    }
 
     fInitialized = kTRUE;
   }
@@ -211,6 +232,10 @@ STDigiPar::putParams(FairParamList *paramList)
   paramList -> add("Gain", fGain);
   paramList -> add("UAMapFile", fUAMapFile);
   paramList -> add("AGETMapFile", fAGETMapFile);
+  paramList -> add("GainCalibrationDataFile", fGainCalibrationDataFile);
+  paramList -> add("GCConstant", fGCConstant);
+  paramList -> add("GCLinear", fGCLinear);
+  paramList -> add("GCQuadratic", fGCQuadratic);
 }
 
 TString 

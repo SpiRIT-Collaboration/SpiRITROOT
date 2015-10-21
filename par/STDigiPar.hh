@@ -56,6 +56,11 @@ class STDigiPar : public FairParGenericSet
 
      TString GetUAMapFileName();
      TString GetAGETMapFileName();
+     TString GetGainCalibrationDataFileName();
+
+    Double_t GetGCConstant();
+    Double_t GetGCLinear();
+    Double_t GetGCQuadratic();
 
     /// returns the time duration of a time bucket in given sampling time in ns.
        Int_t GetTBTime();
@@ -88,10 +93,16 @@ class STDigiPar : public FairParGenericSet
     Double_t fCoefAttachment;
        Int_t fGain;
 
-    TString  fUAMapFileName;
-      Int_t  fUAMapFile;
-    TString  fAGETMapFileName;
-      Int_t  fAGETMapFile;
+     TString fUAMapFileName;
+       Int_t fUAMapFile;
+     TString fAGETMapFileName;
+       Int_t fAGETMapFile;
+     TString fGainCalibrationDataFileName;
+       Int_t fGainCalibrationDataFile;
+
+    Double_t fGCConstant;
+    Double_t fGCLinear;
+    Double_t fGCQuadratic;
 
   ClassDef(STDigiPar, 1);
 };
