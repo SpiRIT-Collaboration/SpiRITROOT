@@ -18,15 +18,18 @@
 
 void run_online
 (
-  TString name     = "cosmic_short",
-  TString dataFile = "../input/run_0457_event4n10.dat",
-  TString parameterFile = "ST.parameters.RIKEN_20150820.par"
+  TString          name = "cosmic_short",
+  TString      dataFile = "",
+  TString parameterFile = "ST.parameters.RIKEN_20151021.par",
+   Bool_t  useGainCalib = kFALSE
 )
 {
   // -----------------------------------------------------------------
   // Source
   STSource *source = new STSource();
   source -> SetData(dataFile);
+  if (useGainCalib)
+    source -> SetUseGainCalibration();
 
   // -----------------------------------------------------------------
   // FairRun
