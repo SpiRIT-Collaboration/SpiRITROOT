@@ -10,21 +10,16 @@
 ////////////////////////////
 
 // Put the parameter file name. Path is automatically concatenated.
-TString fParameterFile = "ST.parameters.RIKEN_20151021.par";
+TString fParameterFile = "ST.parameters.par";
 
 // Set the raw data file with path. If the file having txt with its extension, the macro will load separated data files in the list automatically.
 TString fDataFile = "";
 
-// Set the gain calibration data file. If not, assign "".
-TString fGainCalibrationData = "";
-
-// Set the reference values for gain calibration
-Double_t fReferenceConstant = 0.0410293;
-Double_t fReferenceLinear = 1.69946E-3;
-Double_t fReferenceQuadratic = -3.05356E-8;
+// Set use the gain calibration data file.
+Bool_t fUseGainCalibration = kTRUE;
 
 // FPN pedestal range selection threshold
-Int_t fFPNThreshold = 100;
+Int_t fFPNThreshold = 5;
 
 //////////////////////////////////////////////////////////
 //                                                      //
@@ -60,29 +55,29 @@ void quickViewer() {
     TString dataFileWithPath = fDataFile;
     std::ifstream listFile(dataFileWithPath.Data());
     TString buffer;
-    for (Int_t iCobo = 0; iCobo < 12; iCobo++) {
-      dataFileWithPath.ReadLine(listFile);
-
-      if (dataFileWithPath.Contains("s.")) {
-        iCobo--;
-
+    Int_t iCobo = -1;
+    while (dataFileWithPath.ReadLine(listFile)) {
+      if (dataFileWithPath.Contains("s."))
         fCore -> AddData(dataFileWithPath, iCobo);
-      } else
+      else {
+        iCobo++;
         fCore -> AddData(dataFileWithPath, iCobo);
+      }
     }
   }
 
-  if (!fGainCalibrationData.EqualTo("")) {
-    fCore -> SetGainCalibrationData(fGainCalibrationData);
-    fCore -> SetGainReference(fReferenceConstant, fReferenceLinear, fReferenceQuadratic);
+  if (fUseGainCalibration) {
+    fCore -> SetGainCalibrationData(fPar -> GetFilePar(fPar -> GetIntPar("GainCalibrationDataFile")));
+    fCore -> SetGainReference(fPar -> GetDoublePar("GCConstant"), fPar -> GetDoublePar("GCLinear"), fPar -> GetDoublePar("GCQuadratic"));
   }
+
   fCore -> SetUAMap(fPar -> GetFilePar(fPar -> GetIntPar("UAMapFile")));
   fCore -> SetAGETMap(fPar -> GetFilePar(fPar -> GetIntPar("AGETMapFile")));
   fCore -> SetFPNPedestal(fFPNThreshold);
   fCore -> SetData(0);
 
   fPlot = fCore -> GetSTPlot();
-  if (!fGainCalibrationData.EqualTo("")) {
+  if (fUseGainCalibration) {
     fPlot -> SetPadplaneTitle("Event ID: %d (Gain calibrated) - Top view");
     fPlot -> SetSideviewTitle("Event ID: %d (Gain calibrated) - Beam right view");
   } else {
