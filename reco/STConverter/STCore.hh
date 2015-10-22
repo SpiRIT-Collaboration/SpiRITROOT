@@ -58,6 +58,8 @@ class STCore : public TObject {
     void SetOldData(Bool_t oldData = kTRUE);
     void SetUseSeparatedData(Bool_t value = kTRUE);
 
+    void ProcessCobo(Int_t coboIdx);
+
     // getters
     STRawEvent *GetRawEvent(Long64_t eventID = -1);       ///< Returns STRawEvent object filled with the data
     Int_t GetEventID();                                   ///< Returns the current event ID
