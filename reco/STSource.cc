@@ -41,15 +41,14 @@ Bool_t STSource::Init()
   else {
     std::ifstream listFile(fDataFile.Data());
     TString dataFileWithPath;
-    for (Int_t iFile = 0; iFile < 12; iFile++) {
-      dataFileWithPath.ReadLine(listFile);
-
-      if (dataFileWithPath.Contains("s.")) {
-        iFile--;
-
-        fDecoder -> AddData(dataFileWithPath, iFile);
-      } else
-        fDecoder -> AddData(dataFileWithPath, iFile);
+    Int_t iCobo = -1;
+    while (dataFileWithPath.ReadLine(listFile)) {
+      if (dataFileWithPath.Contains("s."))
+        fDecoder -> AddData(dataFileWithPath, iCobo);
+      else {
+        iCobo++;
+        fDecoder -> AddData(dataFileWithPath, iCobo);
+      }
     }
   }
 
