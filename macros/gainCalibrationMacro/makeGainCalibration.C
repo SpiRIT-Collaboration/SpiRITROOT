@@ -20,10 +20,10 @@ Int_t fFPNThreshold = 5;
 // Set the directory path where the data files are.
 TString fDataDir = ".";
 
-// Voltage list
+// Voltage list - Ignored if separated data files is set
 Double_t fVoltage[] = {1.0, 2.0, 3.0, 4.0, 5.0};
 
-// Data file list
+// Data file list - Ignored if separated data file is set
 TString fData[] = {"pulser1.dat",
                    "pulser2.dat",
                    "pulser3.dat",
@@ -33,7 +33,8 @@ TString fData[] = {"pulser1.dat",
 // Set use separated data files
 Bool_t fUseSeparatedData = kTRUE;
 
-// If set use separated data files, data file list should be set. Voltage list, data file list and data dir above are neglected.
+// If set use separated data files, data file list should be set. 
+// Voltage list, data file list and data dir above are neglected.
 // Only data used in the list file below.
 TString fDataList = "list.txt";
 
