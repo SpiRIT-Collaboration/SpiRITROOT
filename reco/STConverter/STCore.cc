@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <thread>
 
 #include "STCore.hh"
 
@@ -246,6 +247,93 @@ Bool_t STCore::SetAGETMap(TString filename)
   return fMapPtr -> SetAGETMap(filename);
 }
 
+void STCore::ProcessCobo(Int_t coboIdx)
+{
+  Bool_t stoppedInMiddleLocal = kFALSE;
+
+  for (Int_t iAsad = 0; iAsad < 4; iAsad++) {
+    GETFrame *frame = fDecoderPtr[coboIdx] -> GetFrame(fCurrFrameNo[coboIdx] + iAsad);
+
+    if (frame == NULL)
+      continue;
+
+    if (fCurrEventNo > frame -> GetEventID()) {
+      fCurrFrameNo[coboIdx]++;
+      iAsad = -1;
+
+      continue;
+    } else if (fCurrEventNo < frame -> GetEventID()) {
+      stoppedInMiddleLocal = kTRUE;
+      fCurrFrameNo[coboIdx] += iAsad;
+
+      break;
+    }
+
+    Int_t coboID = frame -> GetCoboID();
+    Int_t asadID = frame -> GetAsadID();
+
+    for (Int_t iAget = 0; iAget < 4; iAget++) {
+      for (Int_t iCh = 0; iCh < 68; iCh++) {
+        Int_t row, layer;
+        fMapPtr -> GetRowNLayer(coboID, asadID, iAget, iCh, row, layer);
+
+        if (row == -2 || layer == -2)
+          continue;
+
+        STPad *pad = new ((*fPadArray)[row*112 + layer]) STPad(row, layer);
+        Int_t *rawadc = frame -> GetRawADC(iAget, iCh);
+        for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+          pad -> SetRawADC(iTb, rawadc[iTb]);
+
+        if (fPedestalMode == kPedestalInternal) {
+          frame -> CalcPedestal(iAget, iCh, fPedestalStartTb, fAverageTbs);
+          frame -> SubtractPedestal(iAget, iCh);
+
+          Double_t *adc = frame -> GetADC(iAget, iCh);
+          for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+            pad -> SetADC(iTb, adc[iTb]);
+
+          pad -> SetPedestalSubtracted(kTRUE);
+        } else if (fPedestalMode != kNoPedestal) {
+          if (fPedestalMode == kPedestalBothIE)
+            frame -> CalcPedestal(iAget, iCh, fPedestalStartTb, fAverageTbs);
+
+          Double_t pedestal[512];
+          Double_t pedestalSigma[512];
+
+          if (fPedestalMode == kPedestalExternal || fPedestalMode == kPedestalBothIE) {
+            fPedestalPtr -> GetPedestal(row, layer, pedestal, pedestalSigma);
+            frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
+          } else if (fPedestalMode == kPedestalFPN)
+            frame -> SetFPNPedestal(fFPNSigmaThreshold);
+
+          Bool_t good = frame -> SubtractPedestal(iAget, iCh, fPedestalRMSFactor);
+          fRawEventPtr -> SetIsGood(good);
+          if (!good) {
+            iAget = 4;
+            iCh = 68;
+
+            continue;
+          }
+
+          Double_t *adc = frame -> GetADC(iAget, iCh);
+
+          if (fIsGainCalibrationData)
+            fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
+
+          for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+            pad -> SetADC(iTb, adc[iTb]);
+
+          pad -> SetPedestalSubtracted(kTRUE);
+        }
+      }
+    }
+  }
+
+  if (!stoppedInMiddleLocal)
+    fCurrFrameNo[coboIdx] += 4;
+}
+
 STRawEvent *STCore::GetRawEvent(Long64_t eventID)
 {
   if (!fIsData) {
@@ -285,91 +373,38 @@ STRawEvent *STCore::GetRawEvent(Long64_t eventID)
     fRawEventPtr -> SetEventID(fCurrEventNo);
     frame = NULL;
 
-    for (Int_t iCobo = 0; iCobo < 12; iCobo++) {
-      Bool_t stoppedInMiddle = kFALSE;
-      for (Int_t iAsad = 0; iAsad < 4; iAsad++) {
-        frame = fDecoderPtr[iCobo] -> GetFrame(fCurrFrameNo[iCobo] + iAsad);
+    std::thread cobo0([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 0);
+    std::thread cobo1([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 1);
+    std::thread cobo2([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 2);
+    std::thread cobo3([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 3);
+    std::thread cobo4([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 4);
+    std::thread cobo5([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 5);
+    std::thread cobo6([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 6);
+    std::thread cobo7([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 7);
+    std::thread cobo8([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 8);
+    std::thread cobo9([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 9);
+    std::thread cobo10([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 10);
+    std::thread cobo11([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 11);
 
-        if (frame == NULL)
-          continue;
+    cobo0.join();
+    cobo1.join();
+    cobo2.join();
+    cobo3.join();
+    cobo4.join();
+    cobo5.join();
+    cobo6.join();
+    cobo7.join();
+    cobo8.join();
+    cobo9.join();
+    cobo10.join();
+    cobo11.join();
 
-        if (fCurrEventNo > frame -> GetEventID()) {
-          fCurrFrameNo[iCobo]++;
-          iAsad = -1;
-
-          continue;
-        } else if (fCurrEventNo < frame -> GetEventID()) {
-          stoppedInMiddle = kTRUE;
-          fCurrFrameNo[iCobo] += iAsad;
-
-          break;
-        }
-
-        Int_t coboID = frame -> GetCoboID();
-        Int_t asadID = frame -> GetAsadID();
-
-        for (Int_t iAget = 0; iAget < 4; iAget++) {
-          for (Int_t iCh = 0; iCh < 68; iCh++) {
-            Int_t row, layer;
-            fMapPtr -> GetRowNLayer(coboID, asadID, iAget, iCh, row, layer);
-
-            if (row == -2 || layer == -2)
-              continue;
-
-            STPad *pad = new ((*fPadArray)[row*112 + layer]) STPad(row, layer);
-            Int_t *rawadc = frame -> GetRawADC(iAget, iCh);
-            for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-              pad -> SetRawADC(iTb, rawadc[iTb]);
-
-            if (fPedestalMode == kPedestalInternal) {
-              frame -> CalcPedestal(iAget, iCh, fPedestalStartTb, fAverageTbs);
-              frame -> SubtractPedestal(iAget, iCh);
-
-              Double_t *adc = frame -> GetADC(iAget, iCh);
-              for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-                pad -> SetADC(iTb, adc[iTb]);
-
-              pad -> SetPedestalSubtracted(kTRUE);
-            } else if (fPedestalMode != kNoPedestal) {
-              if (fPedestalMode == kPedestalBothIE)
-                frame -> CalcPedestal(iAget, iCh, fPedestalStartTb, fAverageTbs);
-
-              Double_t pedestal[512];
-              Double_t pedestalSigma[512];
-
-              if (fPedestalMode == kPedestalExternal || fPedestalMode == kPedestalBothIE) {
-                fPedestalPtr -> GetPedestal(row, layer, pedestal, pedestalSigma);
-                frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
-              } else if (fPedestalMode == kPedestalFPN)
-                frame -> SetFPNPedestal(fFPNSigmaThreshold);
-
-              Bool_t good = frame -> SubtractPedestal(iAget, iCh, fPedestalRMSFactor);
-              fRawEventPtr -> SetIsGood(good);
-              if (!good) {
-                iAget = 4;
-                iCh = 68;
-
-                continue;
-              }
-
-              Double_t *adc = frame -> GetADC(iAget, iCh);
-
-              if (fIsGainCalibrationData)
-                fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
-
-              for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-                pad -> SetADC(iTb, adc[iTb]);
-
-              pad -> SetPedestalSubtracted(kTRUE);
-            }
-
-            fRawEventPtr -> SetPad(pad);
-          }
-        }
+    for (Int_t iRow = 0; iRow < 108; iRow++) {
+      for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
+        STPad *pad = (STPad *) fPadArray -> At(iRow*112 + iLayer);
+        if (pad != NULL)
+          fRawEventPtr -> SetPad(pad);
       }
-
-      if (!stoppedInMiddle)
-        fCurrFrameNo[iCobo] += 4;
     }
 
     if (fRawEventPtr -> GetNumPads() == 0 && fRawEventPtr -> IsGood() == kFALSE)
