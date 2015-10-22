@@ -62,15 +62,14 @@ void run_reco
   else {
     std::ifstream listFile(dataFile.Data());
     TString dataFileWithPath;
-    for (Int_t iFile = 0; iFile < 12; iFile++) {
-      dataFileWithPath.ReadLine(listFile);
-
-      if (dataFileWithPath.Contains("s.")) {
-        iFile--;
-
-        fDecoderTask -> AddData(dataFileWithPath, iFile);
-      } else
-        fDecoderTask -> AddData(dataFileWithPath, iFile);
+    Int_t iCobo = -1;
+    while (dataFileWithPath.ReadLine(listFile)) {
+      if (dataFileWithPath.Contains("s."))
+        fDecoderTask -> AddData(dataFileWithPath, iCobo);
+      else {
+        iCobo++;
+        fDecoderTask -> AddData(dataFileWithPath, iCobo);
+      }
     }
   }
 
