@@ -778,6 +778,8 @@ void GETDecoder::CheckEOF() {
 }
 
 void GETDecoder::CheckBlobFrame() {
+  fBlobFrameSize = 0;
+
   fData.seekg(0);
 
   UShort_t metaType = 0;
