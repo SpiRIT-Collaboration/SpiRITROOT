@@ -30,7 +30,6 @@ Int_t fFPNThreshold = 5;
 STCore *fCore = NULL;
 STPlot *fPlot = NULL;
 
-  TStopwatch timer;
 void next(Int_t eventID = -1) {
   fPlot -> DrawPadplane(eventID);
   fPlot -> DrawSideview(fCore -> GetEventID());
