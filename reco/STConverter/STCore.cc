@@ -85,6 +85,7 @@ void STCore::Initialize()
   fPrevEventNo = 0;
   fCurrEventNo = 0;
   memset(fCurrFrameNo, 0, sizeof(Int_t)*12);
+  memset(fNumCurrEventFrames, 0, sizeof(Int_t)*12);
 
   fOldData = kFALSE;
   fIsSeparatedData = kFALSE;
@@ -265,6 +266,7 @@ void STCore::ProcessCobo(Int_t coboIdx)
     } else if (fCurrEventNo < frame -> GetEventID()) {
       stoppedInMiddleLocal = kTRUE;
       fCurrFrameNo[coboIdx] += iAsad;
+      fNumCurrEventFrames[coboIdx] = iAsad + 1;
 
       break;
     }
@@ -330,8 +332,34 @@ void STCore::ProcessCobo(Int_t coboIdx)
     }
   }
 
-  if (!stoppedInMiddleLocal)
+  if (!stoppedInMiddleLocal) {
     fCurrFrameNo[coboIdx] += 4;
+    fNumCurrEventFrames[coboIdx] = 4;
+  }
+}
+
+Bool_t STCore::SetWriteFile(TString filename, Int_t coboIdx, Bool_t overwrite)
+{
+  return fDecoderPtr[coboIdx] -> SetWriteFile(filename, overwrite);
+}
+
+void STCore::WriteData()
+{
+  if (fRawEventPtr == NULL) {
+    std::cout << "== [STCore] Call this method after GetRawEvent()!" << std::endl;
+
+    return;
+  }
+
+  if (fIsSeparatedData)  {
+    for (Int_t iCobo = 0; iCobo < 12; iCobo++) {
+      for (Int_t iFrame = 0; iFrame < fNumCurrEventFrames[iCobo]; iFrame++) {
+        fDecoderPtr[iCobo] -> GetFrame(fCurrFrameNo[iCobo] - fNumCurrEventFrames[iCobo] + iFrame);
+        fDecoderPtr[iCobo] -> WriteFrame();
+      }
+    }
+  } else 
+    fDecoderPtr[0] -> WriteFrame();
 }
 
 STRawEvent *STCore::GetRawEvent(Long64_t eventID)

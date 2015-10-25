@@ -60,6 +60,9 @@ class STCore : public TObject {
 
     void ProcessCobo(Int_t coboIdx);
 
+    Bool_t SetWriteFile(TString filename, Int_t coboIdx = 0, Bool_t overwrite = kFALSE);
+    void WriteData();
+
     // getters
     STRawEvent *GetRawEvent(Long64_t eventID = -1);       ///< Returns STRawEvent object filled with the data
     Int_t GetEventID();                                   ///< Returns the current event ID
@@ -100,6 +103,7 @@ class STCore : public TObject {
     Long64_t fCurrEventNo;
 
     Int_t fCurrFrameNo[12];
+    Int_t fNumCurrEventFrames[12];
 
     Bool_t fOldData;
     Bool_t fIsSeparatedData;
