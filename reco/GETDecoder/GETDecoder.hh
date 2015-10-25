@@ -64,6 +64,8 @@ class GETDecoder : public TObject
     GETMath *GetGETMath();
     //! Return the frame type. This is used when drawing merged frame.
     Int_t GetFrameType();
+    //! Return the frame size.
+    Long64_t GetFrameSize();
 
     //! Return the number of frames counted by CountFrames() method.
     Int_t GetCurrentFrameID();
@@ -79,6 +81,11 @@ class GETDecoder : public TObject
     enum EFrameType { kNormal, kMergedID, kMergedTime };
     //! Endianness enumerator
     enum EEndianness { kBig, kLittle };
+
+    //! Set the file for writing frame
+    Bool_t SetWriteFile(TString filename, Bool_t overwrite = kFALSE);
+    //! Write current frame
+    void WriteFrame();
 
   private:
     //! Initialize variables used in the class.
@@ -112,6 +119,7 @@ class GETDecoder : public TObject
     Int_t fMergedHeaderSize; /// header size of merged frame. For additional skip bytes when finding frame by frame number.
     Int_t fNumMergedFrames; /// the number of merged frames. For additional skip bytes when finding frame by frame number.
     Int_t fUnitBlock; /// Unit block size used in frame header
+    ULong64_t fFrameSize; /// size of normal frame size
     ULong64_t fMergedFrameStartPoint; /// byte number of the merged frame start point. For navigational feature in a merged frame.
     ULong64_t fCurrentMergedFrameSize; /// size of a merged frame of the frame ID **fCurrentFrameID**. For additional skip bytes when finding frame by frame number.
     ULong64_t fCurrentInnerFrameSize; /// size of an inner frame.
@@ -134,6 +142,9 @@ class GETDecoder : public TObject
     GETMath *fGETMath;     /// GETMath pointer
 
     UInt_t fBlobFrameSize; /// Blob frame size to skip
+
+    Char_t *fBuffer;       /// Buffer for writing frame
+    TString fWriteFile;    /// File for writing frames
 
   ClassDef(GETDecoder, 1); /// added for making dictionary by ROOT
 };

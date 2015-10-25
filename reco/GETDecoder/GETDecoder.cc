@@ -71,6 +71,7 @@ void GETDecoder::Initialize()
   fMergedHeaderSize = 0;
   fNumMergedFrames = 0;
   fUnitBlock = 1;
+  fFrameSize = 0;
   fMergedFrameStartPoint = 0;
   fCurrentMergedFrameSize = 0;
   fCurrentInnerFrameSize = 0;
@@ -91,6 +92,9 @@ void GETDecoder::Initialize()
   fGETPlot = 0;
 
   fBlobFrameSize = 0;
+
+  fBuffer = NULL;
+  fWriteFile = "";
 }
 
 void GETDecoder::SetNumTbs(Int_t value)
@@ -281,6 +285,11 @@ Int_t GETDecoder::GetFrameType()
   return fFrameType;
 }
 
+Long64_t GETDecoder::GetFrameSize()
+{
+  return fFrameSize;
+}
+
 Int_t GETDecoder::GetCurrentFrameID()
 {
   return fCurrentFrameID;
@@ -344,6 +353,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
         frameSize = (htonl(frameSize) >> 8);
 
       frameSize *= fUnitBlock;
+      fFrameSize = frameSize;
 
       fData.seekg((ULong64_t)fData.tellg() - 4 + frameSize);
 
@@ -399,6 +409,8 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
 
     frameSize *= fUnitBlock;
     headerSize *= fUnitBlock;
+
+    fFrameSize = frameSize;
 
     if (fDebugMode) {
       PrintFrameInfo(frameNo, eventIdx, coboIdx, asadIdx);
@@ -716,6 +728,57 @@ Int_t GETDecoder::GetNumMergedFrames()
   return fNumMergedFrames;
 }
 
+Bool_t GETDecoder::SetWriteFile(TString filename, Bool_t overwrite)
+{
+  fWriteFile = GETFileChecker::CheckFile(filename);
+  if (!fWriteFile.IsNull() && !overwrite) {
+    std::cout << "== [GETDecoder] The file you specified already exists!" << std::endl;
+    std::cout << "                If you want to overwrite it, give kTRUE as a second argument." << std::endl;
+
+    fWriteFile = "";
+
+    return kFALSE;
+  }
+
+  fWriteFile = filename;
+  std::ofstream dummy(fWriteFile.Data(), std::ios::trunc);
+  dummy.close();
+
+  if (fBuffer == NULL)
+    fBuffer = new Char_t[14000000];
+
+  return kTRUE;
+}
+
+void GETDecoder::WriteFrame()
+{
+  if (fWriteFile.IsNull()) {
+    std::cout << "== [GETDecoder] Write file is not set. Use SetWriteFile() first!" << std::endl;
+
+    return;
+  }
+
+  if (fFrame == NULL) {
+    std::cout << "== [GETDecoder] No frame loaded! Read a frame before write." << std::endl;
+
+    return;
+  }
+
+  std::ofstream outFile(fWriteFile.Data(), std::ios::ate|std::ios::binary|std::ios::app);
+  if (GetFrameType() == GETDecoder::kNormal) {
+    fData.seekg((ULong64_t) fData.tellg() - fFrameSize);
+    fData.read(fBuffer, fFrameSize);
+    outFile.write(fBuffer, fFrameSize);
+  } else {
+    ULong64_t currentPosition = fData.tellg();
+    fData.seekg(fMergedFrameStartPoint);
+    fData.read(fBuffer, fFrameSize);
+    outFile.write(fBuffer, fFrameSize);
+    fData.seekg(currentPosition);
+  }
+  outFile.close();
+}
+
 void GETDecoder::PrintFrameInfo(Int_t frameNo, Int_t eventID, Int_t coboID, Int_t asadID)
 {
   std::cout << "== Frame Info -";
@@ -753,6 +816,7 @@ void GETDecoder::ReadMergedFrameInfo()
   }
 
   fCurrentMergedFrameSize *= fMergedUnitBlock;
+  fFrameSize = fCurrentMergedFrameSize;
 }
 
 void GETDecoder::ReadInnerFrameInfo()
