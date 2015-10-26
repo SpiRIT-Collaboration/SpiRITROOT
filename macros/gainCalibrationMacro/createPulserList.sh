@@ -25,7 +25,7 @@ SECOND=4;
 
 for i in $(seq $FIRST $SECOND);
 do
-  echo ${VOLTAGES[$((i-FIRST))]} >> $PWD/list.txt;
+  echo ${VOLTAGES[$((i-FIRST))]} >> $PWD/$OUTPUT
   if [ $i -le 1000 ];
   then
     ls /data/spdaq0?/narval/cobo??/run_0$i* >> $PWD/$OUTPUT
