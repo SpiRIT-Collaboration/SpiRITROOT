@@ -554,11 +554,11 @@ STEventDrawTask::DrawLinearTracks()
         TVector3 position = hit -> GetPosition();
 
         linearPointSet -> SetNextPoint(position.X()/10.,
-                                       (position.Y() + fWindowYStart)/10.,
+                                       position.Y()/10. + fWindowYStart,
                                        position.Z()/10.);
       }
 
-      linearPointSet -> SetRnrSelf(fRnrSelf[kRiemannHit]);
+      linearPointSet -> SetRnrSelf(fRnrSelf[kLinearHit]);
       gEve -> AddElement(linearPointSet);
       fLinearHitSetArray.push_back(linearPointSet);
     }
@@ -655,7 +655,7 @@ STEventDrawTask::SetSelfLinearSet(Int_t iLinearSet, Bool_t offElse)
       for (Int_t i=0; i<nLinearHitSets; i++)
       {
         TEvePointSet* pointSet = fLinearHitSetArray[i];
-        pointSet -> SetRnrSelf(kTRUE);
+        pointSet -> SetRnrSelf(fRnrSelf[kLinearHit]);
       }
       for (Int_t i=0; i<nLinearTrackSets; i++)
       {
@@ -685,7 +685,7 @@ STEventDrawTask::SetSelfLinearSet(Int_t iLinearSet, Bool_t offElse)
       TEvePointSet* pointSet = fLinearHitSetArray[i];
 
       if (i==iLinearSet) 
-        pointSet -> SetRnrSelf(kTRUE);
+        pointSet -> SetRnrSelf(fRnrSelf[kLinearHit]);
       else if (offElse) 
         pointSet -> SetRnrSelf(kFALSE);
     }
