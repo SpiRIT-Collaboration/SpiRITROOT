@@ -24,6 +24,13 @@
 #include "GETDecoder.hh"
 #include "GETFrame.hh"
 
+#include <tuple>
+#include <vector>
+
+using std::tuple;
+using std::get;
+using std::vector;
+
 class STPlot;
 
 class STCore : public TObject {
@@ -101,9 +108,12 @@ class STCore : public TObject {
 
     Long64_t fPrevEventNo;
     Long64_t fCurrEventNo;
+    Long64_t fNextEventNo;
 
     Int_t fCurrFrameNo[12];
     Int_t fNumCurrEventFrames[12];
+    Int_t fCurrEventFrameNo[12][4];
+    vector<tuple<Int_t, Int_t, Int_t, Int_t>> fEventFrameIndex[12];
 
     Bool_t fOldData;
     Bool_t fIsSeparatedData;

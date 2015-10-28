@@ -62,7 +62,7 @@ void STCore::Initialize()
   fPlotPtr = NULL;
 
   fDecoderPtr[0] = new GETDecoder();
-//  fDecoderPtr -> SetDebugMode(1);
+//  fDecoderPtr[0] -> SetDebugMode(1);
   fPadArray = new TClonesArray("STPad", 12096);
 
   fIsData = kFALSE;
@@ -84,6 +84,7 @@ void STCore::Initialize()
 
   fPrevEventNo = 0;
   fCurrEventNo = 0;
+  fNextEventNo = 0;
   memset(fCurrFrameNo, 0, sizeof(Int_t)*12);
   memset(fNumCurrEventFrames, 0, sizeof(Int_t)*12);
 
@@ -139,6 +140,7 @@ Bool_t STCore::SetData(Int_t value)
 
   fPrevEventNo = 0;
   fCurrEventNo = 0;
+  fNextEventNo = 0;
   memset(fCurrFrameNo, 0, sizeof(Int_t)*12);
 
   return fIsData;
@@ -250,29 +252,38 @@ Bool_t STCore::SetAGETMap(TString filename)
 
 void STCore::ProcessCobo(Int_t coboIdx)
 {
-  Bool_t stoppedInMiddleLocal = kFALSE;
+  Int_t iSkipper = 0;
 
-  for (Int_t iAsad = 0; iAsad < 4; iAsad++) {
-    GETFrame *frame = fDecoderPtr[coboIdx] -> GetFrame(fCurrFrameNo[coboIdx] + iAsad);
+  Bool_t skipped = kFALSE;
+  fNumCurrEventFrames[coboIdx] = 0;
+
+  while (1) {
+    GETFrame *frame = fDecoderPtr[coboIdx] -> GetFrame(fCurrFrameNo[coboIdx] + iSkipper);
 
     if (frame == NULL)
-      continue;
-
-    if (fCurrEventNo > frame -> GetEventID()) {
-      fCurrFrameNo[coboIdx]++;
-      iAsad = -1;
-
-      continue;
-    } else if (fCurrEventNo < frame -> GetEventID()) {
-      stoppedInMiddleLocal = kTRUE;
-      fCurrFrameNo[coboIdx] += iAsad;
-      fNumCurrEventFrames[coboIdx] = iAsad + 1;
-
       break;
+
+    if (frame -> GetEventID() != fCurrEventNo) {
+      iSkipper++;
+
+      skipped = kTRUE;
+
+      continue;
     }
 
     Int_t coboID = frame -> GetCoboID();
     Int_t asadID = frame -> GetAsadID();
+
+//    std::cout << "coboIdx: " << coboIdx << " skipped: " << skipped << " fCurrFrameNo[coboIdx]: " << fCurrFrameNo[coboIdx];
+//    std::cout << " iSkipper: " << iSkipper << " Taken: " << fCurrFrameNo[coboIdx] + iSkipper << " fNumCurrEventFrames[coboIdx]: " << fNumCurrEventFrames[coboIdx] << std::endl;
+
+    fCurrEventFrameNo[coboIdx][asadID] = fCurrFrameNo[coboIdx] + iSkipper;
+    fNumCurrEventFrames[coboIdx]++;
+
+    if (!skipped)
+      fCurrFrameNo[coboIdx]++;
+    else
+      iSkipper++;
 
     for (Int_t iAget = 0; iAget < 4; iAget++) {
       for (Int_t iCh = 0; iCh < 68; iCh++) {
@@ -330,12 +341,16 @@ void STCore::ProcessCobo(Int_t coboIdx)
         }
       }
     }
+
+    if (fNumCurrEventFrames[coboIdx] == 4) {
+      fCurrFrameNo[coboIdx] = (fCurrEventFrameNo[coboIdx][0] > 3 ? fCurrEventFrameNo[coboIdx][0] - 3 : 0);
+
+      break;
+    }
   }
 
-  if (!stoppedInMiddleLocal) {
-    fCurrFrameNo[coboIdx] += 4;
-    fNumCurrEventFrames[coboIdx] = 4;
-  }
+  if (fNumCurrEventFrames[coboIdx] < 4)
+    std::cout << "== [STCore] Warning: There're less than 4 AsAds' frame in this event! (Event ID: " << fCurrEventNo << ")" << std::endl;
 }
 
 Bool_t STCore::SetWriteFile(TString filename, Int_t coboIdx, Bool_t overwrite)
@@ -354,7 +369,7 @@ void STCore::WriteData()
   if (fIsSeparatedData)  {
     for (Int_t iCobo = 0; iCobo < 12; iCobo++) {
       for (Int_t iFrame = 0; iFrame < fNumCurrEventFrames[iCobo]; iFrame++) {
-        fDecoderPtr[iCobo] -> GetFrame(fCurrFrameNo[iCobo] - fNumCurrEventFrames[iCobo] + iFrame);
+        fDecoderPtr[iCobo] -> GetFrame(fCurrEventFrameNo[iCobo][iFrame]);
         fDecoderPtr[iCobo] -> WriteFrame();
       }
     }
@@ -374,32 +389,24 @@ STRawEvent *STCore::GetRawEvent(Long64_t eventID)
     std::cout << "== [STCore] Pedestal data file is not set!" << std::endl;
 
   if (fIsSeparatedData) {
-    if (fCurrEventNo == eventID)
+    if (fCurrEventNo == eventID && fNextEventNo != 0)
       return fRawEventPtr;
 
-    fPrevEventNo = eventID;
-
     fRawEventPtr -> Clear();
-
     fPadArray -> Clear("C");
 
-    GETFrame *frame = fDecoderPtr[0] -> GetFrame(fCurrFrameNo[0]);
-
-    if (frame == NULL)
-      return NULL;
-
-    fCurrEventNo = frame -> GetEventID();
-
-    if (fPrevEventNo == -1) {
-      fPrevEventNo = fCurrEventNo;
-    } else if (fPrevEventNo < fCurrEventNo) {
+    if (eventID == -1) {
+      eventID = fNextEventNo;
+    } else if (eventID < fCurrEventNo) {
+      fCurrEventNo = eventID;
       for (Int_t iCobo = 0; iCobo < 12; iCobo++)
         fCurrFrameNo[iCobo] = 0;
     }
-    
-    fCurrEventNo = fPrevEventNo;
+
+    fCurrEventNo = eventID;
     fRawEventPtr -> SetEventID(fCurrEventNo);
-    frame = NULL;
+
+    fNextEventNo = fCurrEventNo + 1;
 
     std::thread cobo0([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 0);
     std::thread cobo1([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 1);
@@ -592,8 +599,11 @@ void STCore::SetUseSeparatedData(Bool_t value) {
     std::cout << cYELLOW << "== [STCore] You set the decoder to analyze seperated data files." << std::endl;
     std::cout << "            Make sure to call this method right after the instance created!" << cNORMAL << std::endl;
 
-    for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+//    fDecoderPtr[0] -> SetDebugMode(1);
+    for (Int_t iCobo = 1; iCobo < 12; iCobo++) {
       fDecoderPtr[iCobo] = new GETDecoder();
+//      fDecoderPtr[iCobo] -> SetDebugMode(1);
+    }
   }
 }
 
