@@ -26,10 +26,15 @@ class STEventManagerEditor : public TGedFrame
     STEventManager*  fManager;
     STEventDrawTask* fDrawTask;
     TGNumberEntry*   fCurrentEvent;
-    TGNumberEntry*   fCurrentRiemannSet;
     TGNumberEntry*   fCurrentWindowTbStart;
     TGNumberEntry*   fCurrentWindowTbEnd;
+
+    TGNumberEntry*   fCurrentRiemannSet;
     TGNumberEntry*   fTempRiemannSet;
+
+    TGNumberEntry*   fCurrentLinearSet;
+    TGNumberEntry*   fTempLinearSet;
+
     TGNumberEntry*   fCurrentRow;
     TGNumberEntry*   fCurrentLayer;
     TGLabel*         fEventTime;
@@ -60,6 +65,11 @@ class STEventManagerEditor : public TGedFrame
     void VisAllRiemannSet();
     void VisOffRiemannSet();
     Int_t GetNRiemannSet();
+
+    void SelectLinearSet();
+    void AddLinearSet();
+    void VisAllLinearSet();
+    void VisOffLinearSet();
 
     void ToggleAutoUpdate(Bool_t onoff);
     void ToggleAutoUpdatePad(Bool_t onoff);

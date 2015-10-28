@@ -8,6 +8,10 @@
 #include "FairRootManager.h"
 #include "FairRuntimeDb.h"
 
+#include <iostream>
+
+using namespace std;
+
 ClassImp(STEventDrawTask);
 
 STEventDrawTask* STEventDrawTask::fInstance = 0;
@@ -71,40 +75,48 @@ STEventDrawTask::STEventDrawTask()
   fEveStyle[kMC] = kFullCircle;
   fEveSize[kMC]  = 1;
   fEveColor[kMC] = kGray+2;
-  fRnrSelf[kMC]    = kFALSE;
+  fRnrSelf[kMC]  = kFALSE;
 
   fEveStyle[kDigi] = 1;
   fEveSize[kDigi]  = 1.;
   fEveColor[kDigi] = kAzure-5;
-  fRnrSelf[kDigi]    = kFALSE;
+  fRnrSelf[kDigi]  = kFALSE;
 
-  fEveStyle[kHit] = kFullCircle;
-  fEveSize[kHit]  = 0.5;
-  fEveColor[kHit] = kRed;
+  fEveStyle[kHit]   = kFullCircle;
+  fEveSize[kHit]    = 0.5;
+  fEveColor[kHit]   = kRed;
   fRnrSelf[kHit]    = kTRUE;
   fSetObject[kHit]  = kTRUE;
 
-  fEveStyle[kCluster] = kFullCircle;
-  fEveSize[kCluster]  = 1.;
-  fEveColor[kCluster] = kBlack;
+  fEveStyle[kCluster]   = kFullCircle;
+  fEveSize[kCluster]    = 1.;
+  fEveColor[kCluster]   = kBlack;
   fRnrSelf[kCluster]    = kFALSE;
   fRnrSelf[kClusterBox] = kFALSE;
 
-  fEveStyle[kRiemann] = kFullCircle;
-  fEveSize[kRiemann]  = 1.0;
-  fEveColor[kRiemann] = 0;
-  fRnrSelf[kRiemann]    = kFALSE;
-  fSetObject[kRiemann]  = kFALSE;
+  fEveStyle[kRiemannHit]  = kFullCircle;
+  fEveSize[kRiemannHit]   = 1.0;
+  fEveColor[kRiemannHit]  = 0;
+  fRnrSelf[kRiemannHit]   = kFALSE;
+  fSetObject[kRiemannHit] = kFALSE;
 
-  fEveStyle[kLinear] = 1;
-  fEveSize[kLinear]  = 5;
-  fEveColor[kLinear] = kRed;
-  fRnrSelf[kLinear]    = kFALSE;
-  fSetObject[kLinear]  = kFALSE;
+  fEveStyle[kLinear]  = 1;
+  fEveSize[kLinear]   = 5;
+  fEveColor[kLinear]  = kRed;
+  fRnrSelf[kLinear]   = kFALSE;
+  fSetObject[kLinear] = kFALSE;
+
+  fEveStyle[kLinearHit]  = kFullCircle;
+  fEveSize[kLinearHit]   = 0.5;
+  fEveColor[kLinearHit]  = 0;
+  fRnrSelf[kLinearHit]   = kFALSE;
+  fSetObject[kLinearHit] = kFALSE;
 
   fBoxClusterSet = NULL;
 
   fLTFitter = new STLinearTrackFitter();
+
+  fDrawHitAndDrift = kTRUE;
 }
 
 STEventDrawTask::~STEventDrawTask()
@@ -189,13 +201,16 @@ STEventDrawTask::Exec(Option_t* option)
   if (fSetObject[kCluster] || fSetObject[kClusterBox])
     DrawHitClusterPoints();
 
-  if (fRiemannTrackArray != NULL && fSetObject[kRiemann])
+  if (fRiemannTrackArray != NULL && fSetObject[kRiemannHit])
     DrawRiemannHits();
 
-  if (fLinearTrackArray != NULL && fSetObject[kLinear])
+  if (fLinearTrackArray != NULL && 
+      (fSetObject[kLinear] || fSetObject[kLinearHit])
+     )
     DrawLinearTracks();
 
-  DrawHitAndDrift();
+  if (fRawEventArray!= NULL && fDrawHitAndDrift)
+    DrawHitAndDrift();
 
   DrawPad(fCurrentRow, fCurrentLayer);
   UpdatePadRange();
@@ -401,15 +416,15 @@ STEventDrawTask::DrawRiemannHits()
 
     riemannPointSet = new TEvePointSet(Form("RiemannTrack_%d", iTrack), 1, TEvePointSelectorConsumer::kTVT_XYZ);
     riemannPointSet -> SetMarkerColor(GetColor(iTrack));
-    riemannPointSet -> SetMarkerSize(fEveSize[kRiemann]);
-    riemannPointSet -> SetMarkerStyle(fEveStyle[kRiemann]);
+    riemannPointSet -> SetMarkerSize(fEveSize[kRiemannHit]);
+    riemannPointSet -> SetMarkerStyle(fEveStyle[kRiemannHit]);
 
     for (Int_t iCluster=0; iCluster<nClusters; iCluster++)
     {
       rHit = track -> GetHit(iCluster) -> GetHit();
 
-      if (rHit -> GetCharge() < fThresholdMin[kRiemann] || 
-          rHit -> GetCharge() > fThresholdMax[kRiemann])
+      if (rHit -> GetCharge() < fThresholdMin[kRiemannHit] || 
+          rHit -> GetCharge() > fThresholdMax[kRiemannHit])
         continue;
 
       Int_t id = rHit -> GetClusterID();
@@ -427,7 +442,7 @@ STEventDrawTask::DrawRiemannHits()
                                       position.Z()/10.);
     }
 
-    riemannPointSet -> SetRnrSelf(fRnrSelf[kRiemann]);
+    riemannPointSet -> SetRnrSelf(fRnrSelf[kRiemannHit]);
     gEve -> AddElement(riemannPointSet);
     fRiemannSetArray.push_back(riemannPointSet);
   }
@@ -514,7 +529,10 @@ STEventDrawTask::DrawLinearTracks()
     return;
 
   STLinearTrack* track = NULL;
-  TEveLine* line;
+  STHit* hit = NULL;
+
+  TEveLine* line = NULL;
+  TEvePointSet* linearPointSet = NULL;
 
   fLogger -> Debug(MESSAGE_ORIGIN,"Draw Linear Tracks");
   Int_t nTracks = fLinearTrackArray -> GetEntries();
@@ -522,6 +540,28 @@ STEventDrawTask::DrawLinearTracks()
   {
     track = (STLinearTrack*) fLinearTrackArray -> At(iTrack);
     Int_t nHits = track -> GetNumHits();
+
+    if (fSetObject[kLinearHit] == kTRUE)
+    {
+      linearPointSet = new TEvePointSet(Form("LinearHit_%d", iTrack), 1, TEvePointSelectorConsumer::kTVT_XYZ);
+      linearPointSet -> SetMarkerColor(GetColor(iTrack));
+      linearPointSet -> SetMarkerSize(fEveSize[kLinearHit]);
+      linearPointSet -> SetMarkerStyle(fEveStyle[kLinearHit]);
+
+      for (Int_t iHit = 0; iHit < nHits; iHit++)
+      {
+        hit = fEvent -> GetHit(track -> GetHitID(iHit));
+        TVector3 position = hit -> GetPosition();
+
+        linearPointSet -> SetNextPoint(position.X()/10.,
+                                       position.Y()/10. + fWindowYStart,
+                                       position.Z()/10.);
+      }
+
+      linearPointSet -> SetRnrSelf(fRnrSelf[kLinearHit]);
+      gEve -> AddElement(linearPointSet);
+      fLinearHitSetArray.push_back(linearPointSet);
+    }
 
     line = new TEveLine();
     line -> SetLineStyle(fEveStyle[kLinear]);
@@ -537,22 +577,17 @@ STEventDrawTask::DrawLinearTracks()
     TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
     TVector3 posLast  = fLTFitter -> GetClosestPointOnTrack(track, hitLast);
 
-    //TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
-    //TVector3 posLast  = fLTFitter -> GetClosestPointOnTrack(track, hitLast);
-
     Double_t yFirst = posFirst.Y()/10.;
     yFirst += fWindowYStart;
     Double_t yLast = posLast.Y()/10.;
     yLast += fWindowYStart;
 
-    //    line -> SetNextPoint(posFirst.X()/10., posFirst.Y()/10., posFirst.Z()/10.);
-    //    line -> SetNextPoint(posLast.X()/10., posLast.Y()/10., posLast.Z()/10.);
     line -> SetNextPoint(posFirst.X()/10., yFirst, posFirst.Z()/10.);
     line -> SetNextPoint(posLast.X()/10., yLast, posLast.Z()/10.);
 
     line -> SetRnrSelf(fRnrSelf[kLinear]);
     gEve -> AddElement(line);
-    fLinearSetArray.push_back(line);
+    fLinearTrackSetArray.push_back(line);
 
     // beam profile
     TVector3 position = fLTFitter -> GetPointOnZ(track, 0);
@@ -608,6 +643,66 @@ STEventDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
 }
 
 void 
+STEventDrawTask::SetSelfLinearSet(Int_t iLinearSet, Bool_t offElse)
+{
+  Int_t nLinearTrackSets = fLinearTrackSetArray.size();
+  Int_t nLinearHitSets = fLinearHitSetArray.size();
+
+  if (iLinearSet == -1) 
+  {
+    if (!offElse)
+    {
+      for (Int_t i=0; i<nLinearHitSets; i++)
+      {
+        TEvePointSet* pointSet = fLinearHitSetArray[i];
+        pointSet -> SetRnrSelf(fRnrSelf[kLinearHit]);
+      }
+      for (Int_t i=0; i<nLinearTrackSets; i++)
+      {
+        TEveLine* line = fLinearTrackSetArray[i];
+        line -> SetRnrSelf(kTRUE);
+      }
+    }
+    else
+    {
+      for (Int_t i=0; i<nLinearHitSets; i++)
+      {
+        TEvePointSet* pointSet = fLinearHitSetArray[i];
+        pointSet -> SetRnrSelf(kFALSE);
+      }
+      for (Int_t i=0; i<nLinearTrackSets; i++)
+      {
+        TEveLine* line = fLinearTrackSetArray[i];
+        line -> SetRnrSelf(kFALSE);
+      }
+    }
+  }
+
+  else 
+  {
+    for (Int_t i=0; i<nLinearHitSets; i++)
+    {
+      TEvePointSet* pointSet = fLinearHitSetArray[i];
+
+      if (i==iLinearSet) 
+        pointSet -> SetRnrSelf(fRnrSelf[kLinearHit]);
+      else if (offElse) 
+        pointSet -> SetRnrSelf(kFALSE);
+    }
+
+    for (Int_t i=0; i<nLinearTrackSets; i++)
+    {
+      TEveLine* line = fLinearTrackSetArray[i];
+
+      if (i==iLinearSet) 
+        line -> SetRnrSelf(kTRUE);
+      else if (offElse) 
+        line -> SetRnrSelf(kFALSE);
+    }
+  }
+}
+
+void 
 STEventDrawTask::SetRendering(STEveObject eveObj, Bool_t rnr, Double_t thresholdMin, Double_t thresholdMax)
 {
   fSetObject[eveObj] = kTRUE; 
@@ -643,6 +738,13 @@ STEventDrawTask::SetObject(STEveObject eveObj, Bool_t set)
 
 
 void
+STEventDrawTask::SetDrawHitAndDrift(Bool_t val)
+{
+  fDrawHitAndDrift = val;
+}
+
+
+void
 STEventDrawTask::Reset()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"Reset Eve");
@@ -672,13 +774,23 @@ STEventDrawTask::Reset()
   fRiemannSetArray.clear();
 
 
-  Int_t nLinearTracks = fLinearSetArray.size();
+  Int_t nLinearTracks = fLinearTrackSetArray.size();
   for (Int_t i=0; i<nLinearTracks; i++) 
   {
-    TEveLine* line = fLinearSetArray[i];
+    TEveLine* line = fLinearTrackSetArray[i];
     gEve -> RemoveElement(line, fEventManager);
+
   }
-  fLinearSetArray.clear();
+
+  Int_t nLinearPoints = fLinearHitSetArray.size();
+  for (Int_t i=0; i<nLinearPoints; i++) 
+  {
+    TEvePointSet* point = fLinearHitSetArray[i];
+    gEve -> RemoveElement(point, fEventManager);
+  }
+
+  fLinearTrackSetArray.clear();
+  fLinearHitSetArray.clear();
 
 
   if (fPadPlane != NULL)
@@ -1126,5 +1238,6 @@ STEventDrawTask::SetEventManagerEditor(STEventManagerEditor* pointer)
 } 
 
 Int_t STEventDrawTask::GetNRiemannSet()   { return fRiemannSetArray.size(); }
+Int_t STEventDrawTask::GetNLinearSet()    { return fLinearTrackSetArray.size(); }
 Int_t STEventDrawTask::GetWindowTbStart() { return fWindowTbStart; }
 Int_t STEventDrawTask::GetWindowTbEnd()   { return fWindowTbEnd; }

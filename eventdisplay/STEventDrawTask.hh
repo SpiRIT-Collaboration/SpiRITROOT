@@ -44,7 +44,7 @@
 #include <vector>
 #include <iostream>
 
-#define NUMEVEOBJ 7
+#define NUMEVEOBJ 8
 
 class STEventDrawTask : public FairTask
 {
@@ -62,13 +62,14 @@ class STEventDrawTask : public FairTask
 
     enum STEveObject
     {
-      kMC         = 0,
-      kDigi       = 1,
-      kHit        = 2,
-      kCluster    = 3,
-      kClusterBox = 4,
-      kRiemann    = 5,
-      kLinear     = 6
+      kMC          = 0,
+      kDigi        = 1,
+      kHit         = 2,
+      kCluster     = 3,
+      kClusterBox  = 4,
+      kRiemannHit  = 5,
+      kLinear      = 6,
+      kLinearHit   = 7
     };
 
     void Set2DPlotRange(Int_t uaIdx);
@@ -78,6 +79,7 @@ class STEventDrawTask : public FairTask
     void SetWindow(Int_t start = 0, Int_t num = 512);
 
     void SetSelfRiemannSet(Int_t iRiemannSet = -1, Bool_t offElse = kTRUE);
+    void SetSelfLinearSet(Int_t iLinearSet = -1, Bool_t offElse = kTRUE);
     void SetRendering(STEveObject eveObj, 
                            Bool_t rnr = kTRUE,
                          Double_t thresholdMin = -1, 
@@ -88,6 +90,8 @@ class STEventDrawTask : public FairTask
                            Color_t color = -1);
     void SetObject(STEveObject eveObj, Bool_t set);
 
+    void SetDrawHitAndDrift(Bool_t val);
+
     static void ClickSelectedPadPlane();
     void DrawPadByPosition(Double_t x, Double_t z);
     void DrawPad(Int_t row, Int_t layer);
@@ -97,6 +101,7 @@ class STEventDrawTask : public FairTask
     Int_t GetWindowTbEnd();
 
     Int_t GetNRiemannSet();
+    Int_t GetNLinearSet();
 
     void SetEventManagerEditor(STEventManagerEditor* pointer);
 
@@ -114,11 +119,11 @@ class STEventDrawTask : public FairTask
 
     Color_t GetColor(Int_t);
 
-  void SetHistPad4();
-  void SetHistPad5();
-  void SetHistPad6();
-  void SetHistPad7();
-  void DrawHitAndDrift();
+    void SetHistPad4();
+    void SetHistPad5();
+    void SetHistPad6();
+    void SetHistPad7();
+    void DrawHitAndDrift();
 
   private :
     STEventManager* fEventManager;
@@ -154,16 +159,18 @@ class STEventDrawTask : public FairTask
     Double_t fRangeMin;
     Double_t fRangeMax;
 
-  TCanvas* fCvsPad4; 
-  TCanvas* fCvsPad5; 
-  TH1D* fHistPad2; 
-  TH1D* fHistPad3; 
-  TCanvas* fCvsPad6; 
-  TCanvas* fCvsPad7; 
-  TH1D* fHistPad4; 
-  TH1D* fHistPad4b; 
-  TH2D* fHistPad5; 
-  TBox* box1;
+    Bool_t fDrawHitAndDrift;
+
+    TCanvas* fCvsPad4; 
+    TCanvas* fCvsPad5; 
+    TH1D* fHistPad2; 
+    TH1D* fHistPad3; 
+    TCanvas* fCvsPad6; 
+    TCanvas* fCvsPad7; 
+    TH1D* fHistPad4; 
+    TH1D* fHistPad4b; 
+    TH2D* fHistPad5; 
+    TBox* box1;
 
     TCanvas* fCvsPadPlane;
     TH2D* fPadPlane;
@@ -188,7 +195,9 @@ class STEventDrawTask : public FairTask
 
     TEveBoxSet* fBoxClusterSet;
     vector<TEvePointSet*> fRiemannSetArray;
-    vector<TEveLine*> fLinearSetArray;
+
+    vector<TEveLine*> fLinearTrackSetArray;
+    vector<TEvePointSet*> fLinearHitSetArray;
 
     STLinearTrackFitter* fLTFitter;
 

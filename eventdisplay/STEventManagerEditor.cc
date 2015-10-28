@@ -34,10 +34,12 @@ STEventManagerEditor::STEventManagerEditor
   fManager(STEventManager::Instance()),
   fDrawTask(0),
   fCurrentEvent(0),
-  fCurrentRiemannSet(0),
   fCurrentRow(0),
   fCurrentLayer(0),
+  fCurrentRiemannSet(0),
   fTempRiemannSet(0),
+  fCurrentLinearSet(0),
+  fTempLinearSet(0),
   fEventTime(NULL),
   fAutoUpdateFlag(kFALSE),
   fAutoUpdatePadFlag(kFALSE)
@@ -182,32 +184,44 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   frameRiemann1 -> AddFrame(labelTracklet, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
   frameRiemann1 -> AddFrame(fCurrentRiemannSet, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
 
-  /*
-  TGHorizontalFrame* frameRiemann2 = new TGHorizontalFrame(frameRiemann);
-  TGLabel* labelAddTracklet = new TGLabel(frameRiemann2, "Add : ");
-  fTempRiemannSet = new TGNumberEntry(frameRiemann2, 0., 6, -1,
-                                      TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
-                                      TGNumberFormat::kNELLimitMinMax, 0, GetNRiemannSet()-1);
-  fTempRiemannSet -> Connect("ValueSet(Long_t)", "STEventManagerEditor", this, "");
-  TGTextButton* buttonAddRiemannSet = new TGTextButton(frameRiemann2, "Add");
-  buttonAddRiemannSet -> Connect("Clicked()", "STEventManagerEditor", this, "AddRiemannSet()");
-  frameRiemann2 -> AddFrame(labelAddTracklet, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
-  frameRiemann2 -> AddFrame(fTempRiemannSet, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
-  frameRiemann2 -> AddFrame(buttonAddRiemannSet, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
-  */
-
   TGTextButton* buttonVisAll = new TGTextButton(frameRiemann, "Visualize All");
   buttonVisAll -> Connect("Clicked()","STEventManagerEditor", this, "VisAllRiemannSet()");
   TGTextButton* buttonVisOff = new TGTextButton(frameRiemann, "Unvisualize All");
   buttonVisOff -> Connect("Clicked()","STEventManagerEditor", this, "VisOffRiemannSet()");
 
   frameRiemann -> AddFrame(frameRiemann1, new TGLayoutHints(kLHintsLeft, 1,1,5,3));
-  //frameRiemann -> AddFrame(frameRiemann2, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
   frameRiemann -> AddFrame(buttonVisAll, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,2));
   frameRiemann -> AddFrame(buttonVisOff, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,2,3));
 
   if (fOnlineEditor == kFALSE)
     eventFrame -> AddFrame(frameRiemann, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
+
+  /********************************************************************/
+
+  fLogger -> Info(MESSAGE_ORIGIN, "Making linear control frame.");
+
+  TGGroupFrame* frameLinear = new TGGroupFrame(eventFrame,"Linear Tracklet");
+  frameLinear -> SetTitlePos(TGGroupFrame::kLeft);
+
+  TGHorizontalFrame* frameLinear1 = new TGHorizontalFrame(frameLinear);
+  TGLabel* labelLinearTracklet = new TGLabel(frameLinear1, "Select Tracklet : ");
+  fCurrentLinearSet = new TGNumberEntry(frameLinear1, 0., 6, -1,
+                                         TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
+                                         TGNumberFormat::kNELLimitMinMax, 0, fDrawTask -> GetNLinearSet() - 1);
+  fCurrentLinearSet -> Connect("ValueSet(Long_t)", "STEventManagerEditor", this, "SelectLinearSet()");
+  frameLinear1 -> AddFrame(labelLinearTracklet, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
+  frameLinear1 -> AddFrame(fCurrentLinearSet, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
+
+  TGTextButton* buttonVisAllLinear = new TGTextButton(frameLinear, "Visualize All");
+  buttonVisAllLinear -> Connect("Clicked()","STEventManagerEditor", this, "VisAllLinearSet()");
+  TGTextButton* buttonVisOffLinear = new TGTextButton(frameLinear, "Unvisualize All");
+  buttonVisOffLinear -> Connect("Clicked()","STEventManagerEditor", this, "VisOffLinearSet()");
+
+  frameLinear -> AddFrame(frameLinear1, new TGLayoutHints(kLHintsLeft, 1,1,5,3));
+  frameLinear -> AddFrame(buttonVisAllLinear, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,2));
+  frameLinear -> AddFrame(buttonVisOffLinear, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,2,3));
+
+  eventFrame -> AddFrame(frameLinear, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
 
   /********************************************************************/
 
@@ -357,6 +371,11 @@ STEventManagerEditor::SelectEvent()
   if(fTempRiemannSet)
     fTempRiemannSet -> SetLimitValues(0,GetNRiemannSet()-1);
 
+  if(fCurrentLinearSet)
+    fCurrentLinearSet -> SetLimitValues(0, fDrawTask -> GetNLinearSet() - 1);
+  if(fTempLinearSet)
+    fTempLinearSet -> SetLimitValues(0, fDrawTask -> GetNLinearSet() - 1);
+
   fDrawTask -> UpdatePadRange();
 
   Update();
@@ -438,6 +457,34 @@ void
 STEventManagerEditor::VisOffRiemannSet()
 {
   fDrawTask -> SetSelfRiemannSet(-1,kTRUE);
+  gEve -> Redraw3D();
+}
+
+void 
+STEventManagerEditor::SelectLinearSet()
+{
+  fDrawTask -> SetSelfLinearSet(fCurrentLinearSet->GetIntNumber(),kTRUE);
+  gEve -> Redraw3D();
+}
+
+void
+STEventManagerEditor::AddLinearSet()
+{
+  fDrawTask -> SetSelfLinearSet(fTempLinearSet->GetIntNumber(),kFALSE);
+  gEve -> Redraw3D();
+}
+
+void
+STEventManagerEditor::VisAllLinearSet()
+{
+  fDrawTask -> SetSelfLinearSet(-1,kFALSE);
+  gEve -> Redraw3D();
+}
+
+void
+STEventManagerEditor::VisOffLinearSet()
+{
+  fDrawTask -> SetSelfLinearSet(-1,kTRUE);
   gEve -> Redraw3D();
 }
 
