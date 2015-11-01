@@ -69,7 +69,8 @@ class STEventDrawTask : public FairTask
       kClusterBox  = 4,
       kRiemannHit  = 5,
       kLinear      = 6,
-      kLinearHit   = 7
+      kLinearHit   = 7,
+      kHitBox      = 8
     };
 
     void Set2DPlotRange(Int_t uaIdx);
@@ -184,20 +185,24 @@ class STEventDrawTask : public FairTask
     Double_t fWindowYStart;
     Double_t fWindowYEnd;
 
-    TEvePointSet* fPointSet[NUMEVEOBJ];
-    Bool_t   fSetObject[NUMEVEOBJ];
-    Bool_t   fRnrSelf[NUMEVEOBJ];
-    Color_t  fEveColor[NUMEVEOBJ];
-    Size_t   fEveSize[NUMEVEOBJ];
-    Style_t  fEveStyle[NUMEVEOBJ];
-    Double_t fThresholdMin[NUMEVEOBJ];
-    Double_t fThresholdMax[NUMEVEOBJ];
+    static const Int_t fNumEveObject = 9;
 
+    Bool_t   fSetObject[fNumEveObject];
+    Bool_t   fRnrSelf[fNumEveObject];
+    Color_t  fEveColor[fNumEveObject];
+    Size_t   fEveSize[fNumEveObject];
+    Style_t  fEveStyle[fNumEveObject];
+    Double_t fThresholdMin[fNumEveObject];
+    Double_t fThresholdMax[fNumEveObject];
+
+    TEvePointSet* fPointSet[fNumEveObject];
+
+    TEveBoxSet* fBoxHitSet;
     TEveBoxSet* fBoxClusterSet;
-    vector<TEvePointSet*> fRiemannSetArray;
 
-    vector<TEveLine*> fLinearTrackSetArray;
+    vector<TEvePointSet*> fRiemannSetArray;
     vector<TEvePointSet*> fLinearHitSetArray;
+    vector<TEveLine*>     fLinearTrackSetArray;
 
     STLinearTrackFitter* fLTFitter;
 

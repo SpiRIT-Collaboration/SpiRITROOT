@@ -64,7 +64,7 @@ STEventDrawTask::STEventDrawTask()
   fCvsPad6  = NULL; 
   fCvsPad7  = NULL; 
 
-  for (Int_t i=0; i<6; i++)
+  for (Int_t i=0; i<fNumEveObject; i++)
   {
     fPointSet[i] = NULL;
     fThresholdMin[i] = 0;
@@ -85,8 +85,14 @@ STEventDrawTask::STEventDrawTask()
   fEveStyle[kHit]   = kFullCircle;
   fEveSize[kHit]    = 0.5;
   fEveColor[kHit]   = kRed;
-  fRnrSelf[kHit]    = kTRUE;
-  fSetObject[kHit]  = kTRUE;
+  fRnrSelf[kHit]    = kFALSE;
+  fSetObject[kHit]  = kFALSE;
+
+  fEveStyle[kHitBox]   = kFullCircle;
+  fEveSize[kHitBox]    = 0.5;
+  fEveColor[kHitBox]   = kRed;
+  fRnrSelf[kHitBox]    = kTRUE;
+  fSetObject[kHitBox]  = kTRUE;
 
   fEveStyle[kCluster]   = kFullCircle;
   fEveSize[kCluster]    = 1.;
@@ -111,6 +117,8 @@ STEventDrawTask::STEventDrawTask()
   fEveColor[kLinearHit]  = 0;
   fRnrSelf[kLinearHit]   = kFALSE;
   fSetObject[kLinearHit] = kFALSE;
+
+  fBoxHitSet = NULL;
 
   fBoxClusterSet = NULL;
 
@@ -195,7 +203,7 @@ STEventDrawTask::Exec(Option_t* option)
   if (fDriftedElectronArray != NULL && fSetObject[kDigi]) 
     DrawDriftedElectrons();
 
-  if (fSetObject[kHit])
+  if (fSetObject[kHit] || fSetObject[kHitBox])
     DrawHitPoints();
 
   if (fSetObject[kCluster] || fSetObject[kClusterBox])
@@ -283,11 +291,29 @@ STEventDrawTask::DrawHitPoints()
 
   Int_t nHits = fEvent -> GetNumHits();
 
-  fPointSet[kHit] = new TEvePointSet("Hit", nHits);
-  fPointSet[kHit] -> SetOwnIds(kTRUE);
-  fPointSet[kHit] -> SetMarkerColor(fEveColor[kHit]);
-  fPointSet[kHit] -> SetMarkerSize(fEveSize[kHit]);
-  fPointSet[kHit] -> SetMarkerStyle(fEveStyle[kHit]);
+  if (fSetObject[kHit]) 
+  {
+    fPointSet[kHit] = new TEvePointSet("Hit", nHits);
+    fPointSet[kHit] -> SetOwnIds(kTRUE);
+    fPointSet[kHit] -> SetMarkerColor(fEveColor[kHit]);
+    fPointSet[kHit] -> SetMarkerSize(fEveSize[kHit]);
+    fPointSet[kHit] -> SetMarkerStyle(fEveStyle[kHit]);
+  }
+
+  TEveRGBAPalette *pal = new TEveRGBAPalette(0, 4096);
+
+  if (fSetObject[kHitBox]) 
+  {
+    fBoxHitSet = new TEveBoxSet();
+    fBoxHitSet -> Reset(TEveBoxSet::kBT_AABoxFixedDim, kFALSE, 32);
+
+    fBoxHitSet -> SetOwnIds(kTRUE);
+    fBoxHitSet -> SetAntiFlick(kTRUE);
+    fBoxHitSet -> SetPalette(pal);
+    fBoxHitSet -> SetDefDepth(1.2);
+    fBoxHitSet -> SetDefHeight(0.5);
+    fBoxHitSet -> SetDefWidth(0.8);
+  }
 
   for (Int_t iHit=0; iHit<nHits; iHit++)
   {
@@ -309,15 +335,34 @@ STEventDrawTask::DrawHitPoints()
     */
     y += fWindowYStart;
 
-    fPointSet[kHit] -> SetNextPoint(position.X()/10.,
-                                    y,
-                                    position.Z()/10.);
+    if (fSetObject[kHit]) 
+      fPointSet[kHit] -> SetNextPoint(position.X()/10., y, position.Z()/10.);
 
     fPadPlane -> Fill(-position.X(), position.Z(), hit.GetCharge());
+
+    if (fSetObject[kHitBox]) 
+    {
+      fBoxHitSet -> AddBox(position.X()/10. - fBoxHitSet -> GetDefWidth()/2., 
+                           y - fBoxHitSet -> GetDefHeight()/2., 
+                           position.Z()/10. - fBoxHitSet -> GetDefDepth()/2.);
+
+      fBoxHitSet -> DigitValue(hit.GetCharge());
+      //    fBoxHitSet -> DigitId(new TNamed(Form("Digit %d", iHit), ""));
+    }
   }
 
-  fPointSet[kHit] -> SetRnrSelf(fRnrSelf[kHit]);
-  gEve -> AddElement(fPointSet[kHit]);
+  if (fSetObject[kHit]) 
+  {
+    fPointSet[kHit] -> SetRnrSelf(fRnrSelf[kHit]);
+    gEve -> AddElement(fPointSet[kHit]);
+  }
+
+  if (fSetObject[kHitBox]) 
+  {
+    fBoxHitSet -> RefitPlex();
+    fBoxHitSet -> SetRnrSelf(fRnrSelf[kHitBox]);
+    gEve -> AddElement(fBoxHitSet);
+  }
 }
 
 void 
@@ -747,9 +792,9 @@ STEventDrawTask::SetDrawHitAndDrift(Bool_t val)
 void
 STEventDrawTask::Reset()
 {
-  fLogger -> Debug(MESSAGE_ORIGIN,"Reset Eve");
+  fLogger -> Debug(MESSAGE_ORIGIN,"Reset point set");
 
-  for(Int_t i=0; i<6; i++) 
+  for(Int_t i=0; i<fNumEveObject; i++) 
   {
     if(fPointSet[i]) {
       fPointSet[i] -> Reset();
@@ -758,12 +803,21 @@ STEventDrawTask::Reset()
     }
   }
 
+  fLogger -> Debug2(MESSAGE_ORIGIN,"Reset box hit set");
+
+  if (fBoxHitSet) {
+    fBoxHitSet -> Reset();
+    gEve -> RemoveElement(fBoxHitSet, fEventManager);
+  }
+
+  fLogger -> Debug2(MESSAGE_ORIGIN,"Reset box cluster set");
 
   if (fBoxClusterSet) {
     fBoxClusterSet -> Reset();
     gEve -> RemoveElement(fBoxClusterSet, fEventManager);
   }
 
+  fLogger -> Debug2(MESSAGE_ORIGIN,"Reset riemann set");
 
   Int_t nRiemannTracks = fRiemannSetArray.size();
   for (Int_t i=0; i<nRiemannTracks; i++) 
@@ -773,6 +827,7 @@ STEventDrawTask::Reset()
   }
   fRiemannSetArray.clear();
 
+  fLogger -> Debug2(MESSAGE_ORIGIN,"Reset linear line set");
 
   Int_t nLinearTracks = fLinearTrackSetArray.size();
   for (Int_t i=0; i<nLinearTracks; i++) 
@@ -781,6 +836,8 @@ STEventDrawTask::Reset()
     gEve -> RemoveElement(line, fEventManager);
 
   }
+
+  fLogger -> Debug2(MESSAGE_ORIGIN,"Reset linear point set");
 
   Int_t nLinearPoints = fLinearHitSetArray.size();
   for (Int_t i=0; i<nLinearPoints; i++) 
