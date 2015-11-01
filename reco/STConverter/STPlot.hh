@@ -37,10 +37,10 @@ class STPlot : public TObject
 
     void SetSTCore(STCore *core);
 
-    void DrawPadplane(Int_t eventID = -1);
+    TCanvas *DrawPadplane(Int_t eventID = -1);
     void ClickPad();
 
-    void DrawSideview(Int_t eventID = -1);
+    TCanvas *DrawSideview(Int_t eventID = -1);
     void ClickLayer();
 
     TCanvas *GetPadplaneCanvas();

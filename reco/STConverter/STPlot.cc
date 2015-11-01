@@ -104,7 +104,7 @@ void STPlot::SetSideviewTitle(TString title)
   fSideviewTitle = title;
 }
 
-void STPlot::DrawPadplane(Int_t eventID)
+TCanvas *STPlot::DrawPadplane(Int_t eventID)
 {
   if (fCore != NULL) {
     if (eventID != fCore -> GetEventID())
@@ -112,7 +112,7 @@ void STPlot::DrawPadplane(Int_t eventID)
   }
   
   if (CheckEvent())
-    return;
+    return NULL;
 
   if (fPadplaneHist)
     fPadplaneHist -> Reset();
@@ -143,6 +143,8 @@ void STPlot::DrawPadplane(Int_t eventID)
 
   fPadplaneCvs -> Modified();
   fPadplaneCvs -> Update();
+
+  return fPadplaneCvs;
 }
 
 void STPlot::ClickPad()
@@ -190,7 +192,7 @@ void STPlot::ClickPad()
   DrawPad(row, layer);
 }
 
-void STPlot::DrawSideview(Int_t eventID)
+TCanvas *STPlot::DrawSideview(Int_t eventID)
 {
   if (fCore != NULL) {
     if (eventID != fCore -> GetEventID())
@@ -198,7 +200,7 @@ void STPlot::DrawSideview(Int_t eventID)
   }
   
   if (CheckEvent())
-    return;
+    return NULL;
 
   if (fSideviewHist)
     fSideviewHist -> Reset();
@@ -227,6 +229,8 @@ void STPlot::DrawSideview(Int_t eventID)
 
   fSideviewCvs -> Modified();
   fSideviewCvs -> Update();
+
+  return fSideviewCvs;
 }
 
 void STPlot::ClickLayer()
