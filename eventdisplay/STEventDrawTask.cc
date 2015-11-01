@@ -504,16 +504,17 @@ STEventDrawTask::DrawHitAndDrift()
     fCvsPad4 -> Modified();
     fCvsPad4 -> Update();
 
-    // driftime                                                                     
+    // driftime                                                                                                                                                                
     Int_t nhits = fEvent -> GetNumHits();
-    Double_t driftvel=54.3/2; // mm/us                                               
+    Double_t driftvel=54.3/2; // mm/us                                                                                                                                        
+     
     // divide by two because I halved the sampling rate to display full events 
-    //in the viewer was 50  MHz now its 25Mhz that time buckets went from 20ns to 40ns.
+    //in the viewer was 50  MHz now its 25Mhz that time buckets went from 20ns to 40ns.                   
 
     for(int j=0;j<nhits;j++)
       {
-        STHit *hit = fEvent->GetHit(j); //increase hit                 
-	
+        STHit *hit = fEvent->GetHit(j); //increase hit                                                                                                                         
+  
         TVector3 vect=(TVector3)hit->GetPosition();
         Double_t xpos=vect.X();
         Double_t zpos=vect.Z();
@@ -527,16 +528,12 @@ STEventDrawTask::DrawHitAndDrift()
     fHistPad3 -> Draw();
     fCvsPad5 -> Modified();
     fCvsPad5 -> Update();
-  } else
-    return;
-  
-  if (fHistPad4->GetBinContent(fEvent -> GetEventID()) == 0 && 
-      fHistPad4b->GetBinContent(fEvent -> GetEventID()) == 0){
+
     // max ADC distribution
     STRawEvent* rawEvent = (STRawEvent*) fRawEventArray -> At(0);
     double avgmax = 0;
     int Navg = 5;
-    
+
     vector<Double_t> adc_vec; adc_vec.clear();
     std::vector<STPad> padArray = *(rawEvent -> GetPads());
     for (std::vector<STPad>::iterator iPad = padArray.begin(); iPad != padArray.end(); ++iPad)
@@ -545,15 +542,15 @@ STEventDrawTask::DrawHitAndDrift()
 	for (Int_t tb=0; tb<fNTbs; tb++) 
 	  adc_vec.push_back(adc[tb]);
       }
-    
+
     fHistPad4->SetBinContent(fEvent -> GetEventID(), *std::max_element(adc_vec.begin(), adc_vec.end()));
     
     sort(adc_vec.begin(), adc_vec.end(), std::greater<double>());
     for (int i=0 ; i<Navg ; i++)
       avgmax += adc_vec.at(i); avgmax /= Navg;
     fHistPad4b->SetBinContent(fEvent -> GetEventID(), avgmax);
-    
-    
+
+
     fCvsPad6 -> cd();
     fHistPad4 -> Draw();
     fHistPad4b -> Draw("SAME");
@@ -635,17 +632,14 @@ STEventDrawTask::DrawLinearTracks()
     fLinearTrackSetArray.push_back(line);
 
     // beam profile
-    TVector3 position = fLTFitter -> GetPointOnZ(track, 0);
+    TVector3 position = fLTFitter -> GetPointOnZ(track, -35.3);
     Double_t new_y = position.Y()/10.;
     new_y += fWindowYStart;
-    
-    fHistPad5->Fill(-position.X()/10.,new_y);
-    //    std::cout << -position.X()/10. << " " << new_y << " " << position.Z()/10. << std::endl;
+    std::cout << "x: " << position.X() << " y: " << new_y << " z: " << position.Z() << std::endl;
   }
 
   fCvsPad7 -> cd();
   fHistPad5 -> Draw();                                                                
-  box1->Draw("SAME");
   fCvsPad7 -> Modified();                                                             
   fCvsPad7 -> Update();     
 
@@ -951,7 +945,7 @@ STEventDrawTask::SetHistPad5()
   fHistPad3 -> SetFillColor(9);
   fHistPad3 -> SetFillStyle(3002);
   fHistPad3 -> GetXaxis() -> SetTickLength(0.01);
-  fHistPad3 -> GetXaxis() -> SetTitle("drift time");
+  fHistPad3 -> GetXaxis() -> SetTitle("time bucket");
   fHistPad3 -> GetXaxis() -> CenterTitle();
   fHistPad3 -> GetXaxis() -> SetLabelSize(0.05);
   fHistPad3 -> GetXaxis() -> SetTitleSize(0.05);
@@ -1012,12 +1006,10 @@ STEventDrawTask::SetHistPad7()
     }
 
   fCvsPad7 -> cd();
-  //  fHistPad5 = new TH2D("Pad7","",100,-3.5,3.5,100,-25.33,-17.33);
-  fHistPad5 = new TH2D("Pad7","",100,-10,10,100,-25.33,-17.33);
+  fHistPad5 = new TH2D("Pad7","",100,-0.3,0.3,100,-0.4,0.4);
   fHistPad5 -> SetLineColor(9);
   fHistPad5 -> SetFillColor(9);
   fHistPad5 -> SetFillStyle(3002);
-  fHistPad5 -> SetMarkerStyle(7);
   fHistPad5 -> GetXaxis() -> SetTickLength(0.01);
   fHistPad5 -> GetXaxis() -> SetTitle("x (mm)");
   fHistPad5 -> GetXaxis() -> CenterTitle();
@@ -1033,11 +1025,6 @@ STEventDrawTask::SetHistPad7()
   fHistPad5 -> Draw();
   fCvsPad7 -> SetGridy();
   fCvsPad7 -> SetGridx();
-  box1 = new TBox(-1.5,-23.33,1.5,-19.33);
-  box1->SetFillColor(46);
-  box1->SetFillStyle(3002);
-  box1->Draw();
-  
 }
 
 
