@@ -57,22 +57,43 @@ STDebugLogger::Write()
 {
   fOutFile -> cd();
 
-  std::map<TString, TH1D*>::iterator it1 = fMapHist1.begin();
-  while (it1 != fMapHist1.end()) 
+  Double_t total_time;
+
+  std::map<TString, TStopwatch*>::iterator itTimer = fTimer.begin();
+  while (itTimer != fTimer.end()) 
   {
-    std::cout << "STDebugLogger::Writing 1D Histogram " << it1 -> first << std::endl;
-    it1 -> second -> Write();
-    delete it1 -> second;
-    it1++;
+    total_time += itTimer -> second -> RealTime();
+    itTimer++;
+  }
+  itTimer = fTimer.begin();
+  while (itTimer != fTimer.end()) 
+  {
+    std::cout << std::endl;
+    std::cout << "STDebugLogger::Summary of Timer " 
+              << itTimer -> first 
+              << ", (" << itTimer -> second -> RealTime()/total_time * 100 << " %)" 
+              << std::endl;
+    itTimer -> second -> Print("m");
+    itTimer++;
+  }
+  std::cout << std::endl;
+
+  std::map<TString, TH1D*>::iterator itHist1D = fMapHist1.begin();
+  while (itHist1D != fMapHist1.end()) 
+  {
+    std::cout << "STDebugLogger::Writing 1D Histogram " << itHist1D -> first << std::endl;
+    itHist1D -> second -> Write();
+    delete itHist1D -> second;
+    itHist1D++;
   }
 
-  std::map<TString, TH2D*>::iterator it2 = fMapHist2.begin();
-  while (it2 != fMapHist2.end()) 
+  std::map<TString, TH2D*>::iterator tiHist2D = fMapHist2.begin();
+  while (tiHist2D != fMapHist2.end()) 
   {
-    std::cout << "STDebugLogger::Writing 2D Histogram " << it2 -> first << std::endl;
-    it2 -> second -> Write();
-    delete it2 -> second;
-    it2++;
+    std::cout << "STDebugLogger::Writing 2D Histogram " << tiHist2D -> first << std::endl;
+    tiHist2D -> second -> Write();
+    delete tiHist2D -> second;
+    tiHist2D++;
   }
 
   if (fOutFile != NULL) {
@@ -168,9 +189,22 @@ STDebugLogger::FillTree(TString name, Int_t nVal, Double_t *val, TString *bname)
   fMapTree[name] -> Fill();
 }
 
-TFile* STDebugLogger::GetOutFile() { return fOutFile; }
-TH1D*  STDebugLogger::GetHist1(TString name) { return fMapHist1[name] != NULL ? fMapHist1[name] : NULL; }
-TH2D*  STDebugLogger::GetHist2(TString name) { return fMapHist2[name] != NULL ? fMapHist2[name] : NULL; }
+void STDebugLogger::TimerStart(TString name)
+{
+  if (fTimer[name] == NULL)
+  {
+    TStopwatch *timer = new TStopwatch();
+    fTimer[name] = timer;
+  }
+  TStopwatch *timer = fTimer[name];
+  timer -> Start(kFALSE);
+}
+
+void STDebugLogger::TimerStop(TString name) 
+{ 
+  TStopwatch *timer = fTimer[name];
+  timer -> Stop(); 
+}
 
 void 
 STDebugLogger::SetObject(TString name, TObject* object)
@@ -197,3 +231,7 @@ void STDebugLogger::Print(TString header, TString message)
             << message 
             << std::endl;
 }
+
+TFile* STDebugLogger::GetOutFile() { return fOutFile; }
+TH1D*  STDebugLogger::GetHist1(TString name) { return fMapHist1[name] != NULL ? fMapHist1[name] : NULL; }
+TH2D*  STDebugLogger::GetHist2(TString name) { return fMapHist2[name] != NULL ? fMapHist2[name] : NULL; }
