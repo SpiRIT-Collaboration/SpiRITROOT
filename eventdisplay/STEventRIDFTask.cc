@@ -22,7 +22,6 @@ STEventRIDFTask::STEventRIDFTask()
   fCvs_a  = NULL; 
   fCvs_b  = NULL; 
 
-  fBeamPlots = kFALSE;
 }
 
 STEventRIDFTask::~STEventRIDFTask()
@@ -40,11 +39,9 @@ STEventRIDFTask::Init()
   fCvs_a = fEventManager -> GetCvs_a(); 
   fCvs_b = fEventManager -> GetCvs_b(); 
 
-  if (fBeamPlots){
-    SetHist_scaler_ch();
-    SetHist_scaler_val();
-  }
-  
+  SetHist_scaler_ch();
+  SetHist_scaler_val();
+
   return kSUCCESS;
 
 }
@@ -56,14 +53,7 @@ STEventRIDFTask::SetParContainers()
 void
 STEventRIDFTask::Exec(Option_t *opt)
 {
-  if (fBeamPlots)
-    Fill_scaler_histograms();
-}
-
-void
-STEventRIDFTask::SetBeamScalersPlot(Bool_t var)
-{
-  fBeamPlots = var; 
+  Fill_scaler_histograms();
 }
 
 void 
@@ -71,12 +61,11 @@ STEventRIDFTask::Fill_scaler_histograms()
 {
 
   int neve = 0;
-  int max = 1;
+  int max = 100;
   if (fHist_a->GetEntries() == 0) {
 
     while (estore->GetNextEvent() && neve<max){
       // BEAM
-      /*
       for(int i=0 ; i<rawevent->GetNumScaler(); i++){
 	TArtRawScalerObject *sca = rawevent->GetScaler(i);
 	int id = sca->GetScalerID();
@@ -93,7 +82,6 @@ STEventRIDFTask::Fill_scaler_histograms()
 	
 	//      }
       }
-      */
 
       // KYOTO ARRAY
       /*
@@ -112,7 +100,6 @@ STEventRIDFTask::Fill_scaler_histograms()
 	    int geo = d->GetGeo(); 
 	    int ch = d->GetCh();
 	    int val = d->GetVal(); 
-	    std::cout << "geo: " << d->GetGeo() << " ch: " << d->GetCh() << " val: " << d->GetVal() << std::endl;
 	    //	    ntp->Fill(geo,ch,val); 
 	  }
 	  //	  h1->Fill(seg->GetNumData());

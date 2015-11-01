@@ -49,13 +49,10 @@ public:
   void Fill_scaler_histograms();
   void SetHist_scaler_ch();
   void SetHist_scaler_val();
-  void SetBeamScalersPlot(Bool_t var);
 
 private:
 
   STEventManager* fEventManager;
-
-  Bool_t fBeamPlots;
   
   TFile* rootfile;
   TTree* tree;

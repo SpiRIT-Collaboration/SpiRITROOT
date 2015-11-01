@@ -151,7 +151,7 @@ STEventManagerEditor::FillFrameContent(TGCompositeFrame* frame)
   TGTextButton* buttonBeforeEvent;
   if (fOnline == kFALSE)
   {
-    buttonBeforeEvent = new TGTextButton(frameEvent, "Previous");
+    buttonBeforeEvent = new TGTextButton(frameEvent, "Before");
     buttonBeforeEvent -> Connect("Clicked()", "STEventManagerEditor", this, "BeforeEvent()");
   }
 
