@@ -13,6 +13,7 @@ STLinearTrack::STLinearTrack()
   fTrackID   = -1;
   fIsPrimary = kFALSE;
   fIsFitted  = kFALSE;
+  fIsSorted  = kFALSE;
 
   fXVertex = 0;
   fYVertex = 0;
@@ -48,6 +49,7 @@ STLinearTrack::STLinearTrack(STLinearTrack *track)
   fTrackID   = track -> GetTrackID();
   fIsPrimary = track -> IsPrimary();
   fIsFitted  = track -> IsFitted();
+  fIsSorted  = track -> IsSorted();
 
   fXVertex = track -> GetXVertex();
   fYVertex = track -> GetYVertex();
@@ -69,11 +71,49 @@ STLinearTrack::STLinearTrack(STLinearTrack *track)
 
   fHitPointerArray = track -> GetHitPointerArray(); 
   fHitIDArray = track -> GetHitIDArray(); 
+
+  fRMSLine = track -> GetRMSLine();
+  fRMSPlane = track -> GetRMSPlane();
+}
+
+STLinearTrack::STLinearTrack(Int_t trackID, STHit* hit)
+{
+  fTrackID   = trackID;
+  fIsPrimary = kFALSE;
+  fIsFitted  = kFALSE;
+  fIsSorted  = kFALSE;
+
+  fXVertex = 0;
+  fYVertex = 0;
+  fZVertex = 0;
+
+  fXCentroid = 0;
+  fYCentroid = 0;
+  fZCentroid = 0;
+
+  fXDirection = 0;
+  fYDirection = 0;
+  fZDirection = 0;
+
+  fXNormal = 0;
+  fYNormal = 0;
+  fZNormal = 0;
+
+  fChargeSum = 0;
+
+  fHitPointerArray = new std::vector<STHit*>;
+  fHitIDArray = new std::vector<Int_t>;
+
+  fRMSLine = -1;
+  fRMSPlane = -1;
+
+  AddHit(hit);
 }
 
 void STLinearTrack::SetTrackID(Int_t id)     { fTrackID   = id;  }
 void STLinearTrack::SetIsPrimary(Bool_t val) { fIsPrimary = val; }
 void STLinearTrack::SetIsFitted(Bool_t val)  { fIsFitted  = val; }
+void STLinearTrack::SetIsSorted(Bool_t val)  { fIsSorted  = val; }
 
 void STLinearTrack::SetVertex(TVector3 pos)
 {
@@ -129,6 +169,7 @@ void STLinearTrack::AddHit(STHit *hit)
   fHitIDArray -> push_back(hit -> GetHitID());
 
   fIsFitted = kFALSE;
+  fIsSorted = kFALSE;
 }
 
 void STLinearTrack::SetRMSLine(Double_t rms) { fRMSLine = rms; }
@@ -137,6 +178,7 @@ void STLinearTrack::SetRMSPlane(Double_t rms) { fRMSPlane = rms; }
    Int_t STLinearTrack::GetTrackID()    const { return fTrackID; }
   Bool_t STLinearTrack::IsPrimary()     const { return fIsPrimary; }
   Bool_t STLinearTrack::IsFitted()      const { return fIsFitted; }
+  Bool_t STLinearTrack::IsSorted()      const { return fIsSorted; }
 
 TVector3 STLinearTrack::GetVertex()     const { return TVector3(fXVertex, fYVertex, fZVertex); }
 TVector3 STLinearTrack::GetDirection()  const { return TVector3(fXDirection, fYDirection, fZDirection); }

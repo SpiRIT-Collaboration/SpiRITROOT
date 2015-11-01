@@ -19,11 +19,13 @@ class STLinearTrack : public TObject
   public:
     STLinearTrack();
     STLinearTrack(STLinearTrack *track);
+    STLinearTrack(Int_t trackID, STHit* hit);
     ~STLinearTrack();
 
     void SetTrackID(Int_t id);       ///< Set track ID
     void SetIsPrimary(Bool_t val);   ///< Set track primary flag
     void SetIsFitted(Bool_t val);    ///< Set fitted flag
+    void SetIsSorted(Bool_t val);    ///< Set sorted flag
 
     void SetVertex(TVector3 pos);    ///< Set position of vextex
     void SetDirection(TVector3 vec); ///< Set direction vector
@@ -51,6 +53,7 @@ class STLinearTrack : public TObject
        Int_t GetTrackID()    const; ///< Get track ID
       Bool_t IsPrimary()     const; ///< Get track primary flag
       Bool_t IsFitted()      const; ///< Get fitted flag
+      Bool_t IsSorted()      const; ///< Get fitted flag
 
     TVector3 GetVertex()     const; ///< Get position of vextex
     TVector3 GetDirection()  const; ///< Get direction vector
@@ -89,6 +92,7 @@ class STLinearTrack : public TObject
     Int_t  fTrackID;   ///< Track ID.
     Bool_t fIsPrimary; ///< True if track is primary track.
     Bool_t fIsFitted;  ///< True if fitted.
+    Bool_t fIsSorted;  ///< True if sorted.
 
     Double_t fXVertex; //! < x position of vextex
     Double_t fYVertex; //! < y position of vextex
@@ -115,7 +119,7 @@ class STLinearTrack : public TObject
     Double_t fRMSPlane;
 
 
-  ClassDef(STLinearTrack, 1);
+  ClassDef(STLinearTrack, 2);
 };
 
 #endif
