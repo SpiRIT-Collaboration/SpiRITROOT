@@ -54,11 +54,6 @@ STEventDrawTask::STEventDrawTask()
   fMinX = 432;
   fMaxX = -432;
 
-  fHistPad2 = NULL; 
-  fHistPad3 = NULL; 
-  fCvsPad4  = NULL; 
-  fCvsPad5  = NULL; 
-
   for (Int_t i=0; i<fNumEveObject; i++)
   {
     fPointSet[i] = NULL;
@@ -118,8 +113,6 @@ STEventDrawTask::STEventDrawTask()
   fBoxClusterSet = NULL;
 
   fLTFitter = new STLinearTrackFitter();
-
-  fDrawHitAndDrift = kTRUE;
 }
 
 STEventDrawTask::~STEventDrawTask()
@@ -171,11 +164,6 @@ STEventDrawTask::Init()
   fCvsPad = fEventManager -> GetCvsPad();
   SetHistPad();
 
-  fCvsPad4 = fEventManager -> GetCvsPad4();
-  fCvsPad5 = fEventManager -> GetCvsPad5();
-  SetHistPad4();
-  SetHistPad5();
-
   return kSUCCESS;
 }
 
@@ -207,9 +195,6 @@ STEventDrawTask::Exec(Option_t* option)
       (fSetObject[kLinear] || fSetObject[kLinearHit])
      )
     DrawLinearTracks();
-
-  if (fRawEventArray!= NULL && fDrawHitAndDrift)
-    DrawHitAndDrift();
 
   DrawPad(fCurrentRow, fCurrentLayer);
   UpdatePadRange();
@@ -485,47 +470,6 @@ STEventDrawTask::DrawRiemannHits()
 }
 
 void
-STEventDrawTask::DrawHitAndDrift()
-{
-
-  if (fHistPad2->GetBinContent(fEvent -> GetEventID()) == 0){
-    fHistPad2->SetBinContent(fEvent -> GetEventID(), fEvent -> GetNumHits());
-    fCvsPad4 -> cd();
-    fHistPad2 -> Draw("HIST");
-    fCvsPad4 -> Modified();
-    fCvsPad4 -> Update();
-
-    // driftime                                                                                                                                                                
-    Int_t nhits = fEvent -> GetNumHits();
-    Double_t driftvel=54.3/2; // mm/us                                                                                                                                        
-     
-    // divide by two because I halved the sampling rate to display full events 
-    //in the viewer was 50  MHz now its 25Mhz that time buckets went from 20ns to 40ns.                   
-
-    for(int j=0;j<nhits;j++)
-      {
-        STHit *hit = fEvent->GetHit(j); //increase hit                                                                                                                           
-  
-        TVector3 vect=(TVector3)hit->GetPosition();
-        Double_t xpos=vect.X();
-        Double_t zpos=vect.Z();
-        Double_t ypos=vect.Y();
-        Double_t drifttime=-ypos/driftvel;
-
-        fHistPad3->Fill(drifttime);
-      }
-
-    fCvsPad5 -> cd();
-    fHistPad3 -> Draw();
-    fCvsPad5 -> Modified();
-    fCvsPad5 -> Update();
-
-  } else
-    return;
-}
-
-
-void
 STEventDrawTask::DrawLinearTracks()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"Draw Linear Tracks");
@@ -726,14 +670,6 @@ STEventDrawTask::SetObject(STEveObject eveObj, Bool_t set)
   fSetObject[eveObj] = set;
 }
 
-
-void
-STEventDrawTask::SetDrawHitAndDrift(Bool_t val)
-{
-  fDrawHitAndDrift = val;
-}
-
-
 void
 STEventDrawTask::Reset()
 {
@@ -848,69 +784,6 @@ STEventDrawTask::SetHistPad()
   fCvsPad -> SetGridy();
   fCvsPad -> SetGridx();
 }
-
-void
-STEventDrawTask::SetHistPad4()
-{
-  if (fHistPad2)
-    {
-      fHistPad2 -> Reset();
-      return;
-    }
-
-  fCvsPad4 -> cd();
-  fHistPad2 = new TH1D("Pad2","",100,0,99);
-  fHistPad2 -> SetLineColor(9);
-  fHistPad2 -> SetFillColor(9);
-  fHistPad2 -> SetFillStyle(3002);
-  fHistPad2 -> GetXaxis() -> SetTickLength(0.01);
-  fHistPad2 -> GetXaxis() -> SetTitle("run number");
-  fHistPad2 -> GetXaxis() -> CenterTitle();
-  fHistPad2 -> GetXaxis() -> SetLabelSize(0.05);
-  fHistPad2 -> GetXaxis() -> SetTitleSize(0.05);
-  fHistPad2 -> GetYaxis() -> SetTickLength(0.01);
-  fHistPad2 -> GetYaxis() -> SetTitle("# hits");
-  fHistPad2 -> GetYaxis() -> CenterTitle();
-  fHistPad2 -> GetYaxis() -> SetLabelSize(0.05);
-  fHistPad2 -> GetYaxis() -> SetTitleSize(0.05);
-  fHistPad2 -> SetMinimum(0);
-  fHistPad2 -> SetStats(0);
-  fHistPad2 -> Draw();
-  fCvsPad4 -> SetGridy();
-  fCvsPad4 -> SetGridx();
-
-}
-
-void
-STEventDrawTask::SetHistPad5()
-{
-  if (fHistPad3)
-    {
-      fHistPad3 -> Reset();
-      return;
-    }
-
-  fCvsPad5 -> cd();
-  fHistPad3 = new TH1D("Pad3","",100,0,99);
-  fHistPad3 -> SetLineColor(9);
-  fHistPad3 -> SetFillColor(9);
-  fHistPad3 -> SetFillStyle(3002);
-  fHistPad3 -> GetXaxis() -> SetTickLength(0.01);
-  fHistPad3 -> GetXaxis() -> SetTitle("time bucket");
-  fHistPad3 -> GetXaxis() -> CenterTitle();
-  fHistPad3 -> GetXaxis() -> SetLabelSize(0.05);
-  fHistPad3 -> GetXaxis() -> SetTitleSize(0.05);
-  fHistPad3 -> GetYaxis() -> SetTickLength(0.01);
-  fHistPad3 -> GetYaxis() -> CenterTitle();
-  fHistPad3 -> GetYaxis() -> SetLabelSize(0.05);
-  fHistPad3 -> GetYaxis() -> SetTitleSize(0.05);
-  fHistPad3 -> SetMinimum(0);
-  fHistPad3 -> SetStats(0);
-  fHistPad3 -> Draw();
-  fCvsPad5 -> SetGridy();
-  fCvsPad5 -> SetGridx();
-}
-
 
 void
 STEventDrawTask::DrawPadPlane()

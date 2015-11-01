@@ -51,13 +51,6 @@ class STEventManager : public TEveEventManager
     TCanvas* GetCvsPadPlane();
     TCanvas* GetCvsPad();
 
-    TCanvas* GetCvsPad4();
-    TCanvas* GetCvsPad5();
-
-    TCanvas* GetCvs_a();
-    TCanvas* GetCvs_b();
-
-
   private :
     FairRunAna* fRunAna;
     FairRunOnline* fRunOnline;
@@ -73,11 +66,6 @@ class STEventManager : public TEveEventManager
 
     TCanvas* fCvsPadPlane;
     TCanvas* fCvsPad;
-
-    TCanvas* fCvsPad4;
-    TCanvas* fCvsPad5;
-    TCanvas* fCvs_a;
-    TCanvas* fCvs_b;
 
     TString fGeomFileName;
     Int_t fTransparency;

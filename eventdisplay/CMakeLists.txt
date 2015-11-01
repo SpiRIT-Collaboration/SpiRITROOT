@@ -34,7 +34,6 @@ set(SRCS
 STEventManager.cc
 STEventManagerEditor.cc
 STEventDrawTask.cc
-STEventRIDFTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
@@ -54,7 +53,6 @@ Set(DEPENDENCIES
     STPar
     STUtil
     anaroot
-    anacore
 )
 
 GENERATE_LIBRARY()

@@ -65,11 +65,6 @@ STEventManager::STEventManager()
   fCvsPadPlane = NULL;
   fCvsPad = NULL;
 
-  fCvsPad4 = NULL;
-  fCvsPad5 = NULL;
-  fCvs_a = NULL;
-  fCvs_b = NULL;
-
   fGeomFileName = "";
   fTransparency = 80;
 
@@ -119,26 +114,6 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
   TEveWindowSlot* slotPadPlane = NULL;
   TEveWindowSlot* slotPad = NULL;
 
-  TEveWindowPack* packRight = NULL;
-  TEveWindowSlot* slotPad2 = NULL;
-  TEveWindowSlot* slotPad3 = NULL;
-
-  TRootEmbeddedCanvas* ecvsPad2 = new TRootEmbeddedCanvas();
-  TRootEmbeddedCanvas* ecvsPad3 = new TRootEmbeddedCanvas();
-
-  TEveWindowFrame* framePad2 = NULL;
-  TEveWindowFrame* framePad3 = NULL;
-
-  TEveWindowPack* packRight2 = NULL;
-  TEveWindowSlot* slotPad4 = NULL;
-  TEveWindowSlot* slotPad5 = NULL;
-
-  TRootEmbeddedCanvas* ecvsPad4 = new TRootEmbeddedCanvas();
-  TRootEmbeddedCanvas* ecvsPad5 = new TRootEmbeddedCanvas();
-
-  TEveWindowFrame* framePad4 = NULL;
-  TEveWindowFrame* framePad5 = NULL;
-
   TRootEmbeddedCanvas* ecvsPadPlane = new TRootEmbeddedCanvas();
   TRootEmbeddedCanvas* ecvsPad = new TRootEmbeddedCanvas();
   TEveWindowFrame* framePadPlane = NULL;
@@ -167,53 +142,17 @@ STEventManager::Init(Int_t option, Int_t level, Int_t nNodes)
   viewer3D -> AddScene(gEve -> GetGlobalScene());
   viewer3D -> AddScene(gEve -> GetEventScene());
 
-  packRight2 = packOverview -> NewSlot() -> MakePack();
-  packRight2 -> SetShowTitleBar(kFALSE);
-  packRight2 -> SetElementName("right pack 2");
-  packRight2 -> SetVertical();
-
-  slotPad4 = packRight2 -> NewSlotWithWeight(.5);
-  slotPad4 -> SetShowTitleBar(kFALSE);
-  framePad4 = slotPad4 -> MakeFrame(ecvsPad4);
-  framePad4 -> SetElementName("pad4");
-  fCvsPad4 = ecvsPad4 -> GetCanvas();
-
-  slotPad5 = packRight2 -> NewSlotWithWeight(.5);
-  slotPad5 -> SetShowTitleBar(kFALSE);
-  framePad5 = slotPad5 -> MakeFrame(ecvsPad5);
-  framePad5 -> SetElementName("pad5");
-  fCvsPad5 = ecvsPad5 -> GetCanvas();
-
-
   slotPadPlane = packOverview -> NewSlot();
   slotPadPlane -> SetShowTitleBar(kFALSE);
   framePadPlane = slotPadPlane -> MakeFrame(ecvsPadPlane);
   framePadPlane -> SetElementName("SpiRIT Pad Plane");
   fCvsPadPlane = ecvsPadPlane -> GetCanvas();
 
-  slotPad = packLeft -> NewSlotWithWeight(.5);
+  slotPad = packLeft -> NewSlotWithWeight(.6);
   slotPad -> SetShowTitleBar(kFALSE);
   framePad = slotPad -> MakeFrame(ecvsPad);
   framePad -> SetElementName("pad");
   fCvsPad = ecvsPad -> GetCanvas();
-
-  packRight = packOverview -> NewSlot() -> MakePack();
-  packRight -> SetShowTitleBar(kFALSE);
-  packRight -> SetElementName("right pack");
-  packRight -> SetVertical();
-
-  slotPad2 = packRight -> NewSlotWithWeight(.5);
-  slotPad2 -> SetShowTitleBar(kFALSE);
-  framePad2 = slotPad2 -> MakeFrame(ecvsPad2);
-  framePad2 -> SetElementName("pad2");
-  fCvs_a = ecvsPad2 -> GetCanvas();
-
-  slotPad3 = packRight -> NewSlotWithWeight(.5);
-  slotPad3 -> SetShowTitleBar(kFALSE);
-  framePad3 = slotPad3 -> MakeFrame(ecvsPad3);
-  framePad3 -> SetElementName("pad3");
-  fCvs_b = ecvsPad3 -> GetCanvas();
-
 
   /**************************************************************************/
 
@@ -339,7 +278,3 @@ Bool_t STEventManager::OnlineEditor()              { return fOnlineEditor; }
 Int_t    STEventManager::GetCurrentEvent() { return fEntry; }
 TCanvas* STEventManager::GetCvsPadPlane()  { return fCvsPadPlane; }
 TCanvas* STEventManager::GetCvsPad()       { return fCvsPad; }
-TCanvas* STEventManager::GetCvsPad4()       { return fCvsPad4; }
-TCanvas* STEventManager::GetCvsPad5()       { return fCvsPad5; }
-TCanvas* STEventManager::GetCvs_a()       { return fCvs_a; }
-TCanvas* STEventManager::GetCvs_b()       { return fCvs_b; }

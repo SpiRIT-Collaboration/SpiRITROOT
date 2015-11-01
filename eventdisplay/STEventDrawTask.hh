@@ -119,10 +119,6 @@ class STEventDrawTask : public FairTask
 
     Color_t GetColor(Int_t);
 
-    void SetHistPad4();
-    void SetHistPad5();
-    void DrawHitAndDrift();
-
   private :
     STEventManager* fEventManager;
     STEventManagerEditor* fEventManagerEditor;
@@ -156,13 +152,6 @@ class STEventDrawTask : public FairTask
     TH1D* fHistPad;
     Double_t fRangeMin;
     Double_t fRangeMax;
-
-    Bool_t fDrawHitAndDrift;
-
-    TCanvas* fCvsPad4; 
-    TCanvas* fCvsPad5; 
-    TH1D* fHistPad2; 
-    TH1D* fHistPad3; 
 
     TCanvas* fCvsPadPlane;
     TH2D* fPadPlane;
