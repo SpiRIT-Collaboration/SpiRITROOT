@@ -208,7 +208,9 @@ Bool_t GETDecoder::SetData(Int_t index)
 
     fCurrentDataID = index;
 
-    fCurrentFrameID = -1;
+    if (index == 0 || fIsAutoReload == kFALSE)
+      fCurrentFrameID = -1;
+
     fCurrentInnerFrameID = -1;
 
     return kTRUE;
@@ -308,7 +310,7 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
   if (frameNo == -1)
     frameNo = fCurrentFrameID + 1;
 
-  if (fCurrentFrameID == frameNo) {
+  if (fCurrentFrameID == frameNo && fFrame != NULL) {
     if (fDebugMode)
       PrintFrameInfo(frameNo, fFrame -> GetEventID(), fFrame -> GetCoboID(), fFrame -> GetAsadID());
 
@@ -342,9 +344,15 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
       if (fData.eof()) {
         std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
 
+        if (fCurrentDataID + 1 > fNumFrames.size())
+          fNumFrames.push_back(fCurrentFrameID);
+
         if (fIsAutoReload)
           if (SetNextFile())
-            return GetFrame(0);
+            return GetFrame(frameNo);
+
+        fCurrentFrameID = fNumFrames.at(fNumFrames.size() - 1) + 1;
+        fFrame = NULL;
 
         return 0;
       }
@@ -361,11 +369,22 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     }
 
     if (frameNo < fCurrentFrameID) {
-      fCurrentFrameID = -1;
-      fData.clear();
-      fData.seekg(0 + fBlobFrameSize);
+      if (fCurrentDataID == 0 || fIsAutoReload == kFALSE) {
+        fCurrentFrameID = -1;
+        fData.clear();
+        fData.seekg(0 + fBlobFrameSize);
 
-      return GetFrame(frameNo);
+        return GetFrame(frameNo);
+      } else {
+        for (Int_t iIdx = 0; iIdx < fNumFrames.size(); iIdx++) {
+          if (fNumFrames.at(iIdx) >= frameNo) {
+            fCurrentFrameID = (iIdx == 0 ? -1 : fNumFrames.at(iIdx - 1));
+            SetData(iIdx);
+
+            return GetFrame(frameNo);
+          }
+        }
+      }
     }
 
     UShort_t metaType = 0;
@@ -387,9 +406,15 @@ GETFrame *GETDecoder::GetFrame(Int_t frameNo)
     if (fData.eof()) {
       std::cout << "== [GETDecoder] End of the file! (last frame: " << fCurrentFrameID << ")" << std::endl;
 
+      if (fCurrentDataID + 1 > fNumFrames.size())
+        fNumFrames.push_back(fCurrentFrameID);
+
       if (fIsAutoReload)
         if (SetNextFile())
-          return GetFrame(0);
+          return GetFrame(frameNo);
+
+      fCurrentFrameID = fNumFrames.at(fNumFrames.size() - 1) + 1;
+      fFrame = NULL;
 
       return 0;
     }

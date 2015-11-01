@@ -134,7 +134,8 @@ class GETDecoder : public TObject
     Int_t fCurrentDataID;        /// current file index in list
 
     GETFrame *fFrame;      /// frame container
-    Int_t fCurrentFrameID; /// current frame index
+    std::vector<Int_t> fNumFrames; /// The number of frames in each data file
+    Int_t fCurrentFrameID;  /// current frame index (in a single data file)
     Int_t fCurrentInnerFrameID; /// current inner frame index
     Bool_t fEOF; /// check if end of file
 
