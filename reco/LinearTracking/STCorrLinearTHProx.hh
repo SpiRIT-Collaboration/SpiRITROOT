@@ -6,10 +6,11 @@
 class STCorrLinearTHProx : public STCorrLinearTH
 {
   public:
-    STCorrLinearTHProx(Int_t nHitsCompare,
-                       Double_t xCut, 
+    STCorrLinearTHProx(Double_t xCut, 
                        Double_t yCut, 
-                       Double_t zCut);
+                       Double_t zCut,
+                          Int_t nHitsCompare,
+                          Int_t nHitsCompareMax);
 
     Bool_t Correlate(STLinearTrack *track, 
                      STHit *hit, 
@@ -22,6 +23,7 @@ class STCorrLinearTHProx : public STCorrLinearTH
     Double_t fZProxCut;
 
     Int_t fNumHitsCompare;
+    Int_t fNumHitsCompareMax;
 };
 
 #endif

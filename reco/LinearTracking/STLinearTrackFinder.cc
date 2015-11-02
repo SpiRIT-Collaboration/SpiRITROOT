@@ -5,626 +5,450 @@
 #include "STLinearTrackFinder.hh"
 #include "STDebugLogger.hh"
 
-#include "TMath.h"
+#include "STCorrLinearTHProx.hh"
+#include "STCorrLinearTHPerp.hh"
+#include "STCorrLinearTHRMS.hh"
+
+#include "STCorrLinearTTPerp.hh"
+#include "STCorrLinearTTGeo.hh"
+#include "STCorrLinearTTRMS.hh"
+
 #include "TVector3.h"
+
+#include <iostream>
+#include <vector>
+
+using namespace std;
 
 ClassImp(STLinearTrackFinder)
 
-//#define DEBUG_cout_build
-//#define DEBUG_cout_position
-//#define DEBUG_cout_merge
-//#define DEBUG_cout_choose
-//#define DEBUG_cout_status
-//#define DEBUG_logger
-
 STLinearTrackFinder::STLinearTrackFinder()
 {
-  fPrimaryVertex = TVector3(0, -213.3, -35.2);
+  fHitQueue   = new vecHit_t;
+  fTrackQueue = new vecTrk_t;
+  fTrackBufferTemp = new vecTrk_t;
 
-  fHitQueue   = new std::vector<STHit*>;
-  fTrackQueue = new std::vector<STLinearTrack*>;
+  SetProximityCutFactor(1.1, 3.0, 1.1);
+  SetNumHitsCut(30, 8, 20, 50);
+  SetRMSCut(12, 3);
+  SetProximityTrackCutFactor(18, 5);
+  SetDotProductCut(0.8, 0.8);
 
-  fLTFitter = new STLinearTrackFitter();
+  cout << endl;
+  cout << "List of Parameters ================================================" << endl;
+  cout << endl;
+  cout << "No. of hits need for track    : " << fNumHitsTrackCut << endl;
+  cout << "No. of hits need for track fit: " << fNumHitsFit << endl;
+  cout << "No. of hits in track to correlate proximity with hit: " << fNumHitsCompare << endl;
+  cout << "Track with more hit No.>> do not use prox. corr.: " << fNumHitsCompareMax << endl;
+  cout << endl;
+  cout << "Unit of X: " << fXUnit << endl;
+  cout << "Unit of Y: " << fYUnit << endl;
+  cout << "Unit of Z: " << fZUnit << endl;
+  cout << endl;
+  cout << "Proximity cut of X: " << fProxXCut << endl;
+  cout << "Proximity cut of Y: " << fProxYCut << endl;
+  cout << "Proximity cut of Z: " << fProxZCut << endl;
+  cout << "Proximity cut of R: " << fProxRCut << endl;
+  cout << endl;
+  cout << "Proximity cut of line : " << fProxLineCut << endl;
+  cout << "Proximity cut of plane: " << fProxPlaneCut << endl;
+  cout << endl;
+  cout << "RMS of track fit line : " << fRMSLineCut  << endl;
+  cout << "RMS of track fit plane: " << fRMSPlaneCut << endl;
+  cout << endl;
+  cout << "RMS of track fit total: " << fRMSTrackCut << endl;
+  cout << endl;
+  cout << "Dot product cut of direction vector between two tracks: " 
+       << fDirectionDotCut << endl;
+  cout << "Dot product cut of    normal vector between two tracks: " 
+       << fNormalDotCut    << endl;
+  cout << endl;
+  cout << "End of list =======================================================" << endl;
+  cout << endl;
 
-  SetNumHitsCut(20, 10000, 8, 10);
-  SetProximityCutFactor(1.01, 3.0, 1.01);
-  SetProximityRCut(20);
-  SetRMSCut(18, 2);
-  SetDotProductCut(0.85, 0.9);
-  SetCutStretch(1,1);
+  fFitter = new STLinearTrackFitter();
+
+  // Linear Track - Hit Correlator ______________________________________________
+
+  STCorrLinearTHProx *corrTHProx = new STCorrLinearTHProx (fProxXCut, fProxYCut, fProxZCut, fNumHitsCompare, fNumHitsCompareMax);
+  STCorrLinearTHPerp *corrTHPerp = new STCorrLinearTHPerp (fNumHitsFit, fProxLineCut, fProxPlaneCut);
+  //STCorrLinearTHRMS  *corrTHRMS  = new STCorrLinearTHRMS  (fNumHitsFit, fRMSLineCut, fRMSPlaneCut);
+
+  fCorrTH = new vecCTH_t;
+  fCorrTH -> push_back(corrTHProx);
+  fCorrTH -> push_back(corrTHPerp);
+
+  // -----------
+
+  corrTHProx = new STCorrLinearTHProx (fProxXCut, fProxYCut, 2 * fProxZCut, fNumHitsCompare, fNumHitsCompareMax);
+
+  fCorrTH_largeAngle = new vecCTH_t;
+  fCorrTH_largeAngle -> push_back(corrTHProx);
+  fCorrTH_largeAngle -> push_back(corrTHPerp);
+
+  // -----------
+
+  corrTHPerp = new STCorrLinearTHPerp (fNumHitsFit, fRMSLineCut, fRMSPlaneCut);
+
+  fCorrTH_justPerp = new vecCTH_t;
+  fCorrTH_justPerp -> push_back(corrTHPerp);
+
+  // Linear Track - Track Correlator ____________________________________________
+
+  STCorrLinearTTPerp *corrTTPerp = new STCorrLinearTTPerp (fNumHitsFit, fProxLineCut, fProxPlaneCut);
+  STCorrLinearTTGeo  *corrTTGeo  = new STCorrLinearTTGeo  (fNumHitsFit, fDirectionDotCut, fNormalDotCut);
+  STCorrLinearTTRMS  *corrTTRMS  = new STCorrLinearTTRMS  (fNumHitsFit, fRMSLineCut, fRMSPlaneCut);
+
+  fCorrTT = new vecCTT_t;
+  fCorrTT -> push_back(corrTTPerp);
+  fCorrTT -> push_back(corrTTGeo);
+  fCorrTT -> push_back(corrTTRMS);
 }
 
-void STLinearTrackFinder::BuildTracks(STEvent* event,
-                                      std::vector<STLinearTrack*> *trackBuffer)
+void 
+STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *tracks)
 {
-  fHitQueue -> clear();
-  fTrackQueue -> clear();
-
-  fTrackBuffer = trackBuffer;
-
   Int_t numHits = event -> GetNumHits();
   if (numHits == 0)
     return;
 
+  fHitQueue -> clear();
+  fTrackQueue -> clear();
+
+  fTrackBufferFinal = tracks;
+
   for (Int_t iHit = 0; iHit < numHits; iHit++) {
     STHit *hit = new STHit(event -> GetHit(iHit));
+
+    TVector3 p = hit -> GetPosition();
+    if (TMath::Sqrt(p.X()*p.X() + p.Z()*p.Z()) < 200)
+      continue;
+
     fHitQueue -> push_back(hit);
   }
 
-  /////////////////////////////////////////////////////////////////////////
-  
-  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortChargeInv());
-  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortZInv());
-
-  BuildTracksFromQueue(1);
-  SelectTracks(fTrackQueue, fTrackQueue);
-  MergeTracks(fTrackQueue);
-
-  BuildTracksFromQueue(0, -1, kTRUE);
-  SelectTracks(fTrackQueue, fTrackQueue);
-
-  /////////////////////////////////////////////////////////////////////////
-
-  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortZInv());
   std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortXInv());
+  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortZInv());
 
-  BuildTracksFromQueue(1);
-  SelectTracks(fTrackQueue, fTrackQueue);
-  MergeTracks(fTrackQueue);
-  SelectTracks(fTrackQueue, fTrackBuffer);
+  Build  (fTrackQueue, fHitQueue, fCorrTH);
+  Select (fTrackQueue, fTrackQueue, fHitQueue, TMath::Pi()*1/4);
+  Build  (fTrackQueue, fHitQueue, fCorrTH_justPerp, kFALSE);
+  Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
+  Merge  (fTrackBufferFinal);
+  Merge  (fTrackBufferFinal);
 
-  /////////////////////////////////////////////////////////////////////////
+  Build  (fTrackQueue, fHitQueue, fCorrTH_largeAngle);
+  Merge  (fTrackQueue);
+  Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
+  Build  (fTrackQueue, fHitQueue, fCorrTH_justPerp, kFALSE);
 
-  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortChargeInv());
-  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortYInv());
+  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortXInv());
+  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortZInv());
 
-  SetProximityCutFactor(1.01, 5, 1.01);
-  BuildTracksFromQueue(1);
-  SelectTracks(fTrackQueue, fTrackQueue);
+  Build  (fTrackQueue, fHitQueue, fCorrTH_largeAngle);
+  Merge  (fTrackQueue);
+  Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
 
-  SetProximityCutFactor(1.01, 12, 1.01);
-  BuildTracksFromQueue(1);
-  SelectTracks(fTrackQueue, fTrackQueue);
-  MergeTracks(fTrackQueue);
-
-  /////////////////////////////////////////////////////////////////////////
-
-  SelectTracks(fTrackQueue, fTrackBuffer, 0);
-  SortHits(fTrackBuffer);
+  SortHits(fTrackBufferFinal);
 }
 
 void 
-STLinearTrackFinder::BuildTracksFromQueue(Int_t numIter, Int_t idxHitLimit, Bool_t emptyQueue)
+STLinearTrackFinder::Build(vecTrk_t *tracks, vecHit_t *hits, vecCTH_t *corrTH, Bool_t createNewTracks)
 {
-  Int_t numHits = fHitQueue -> size();
-  if (numHits == 0)
-    return;
+#ifdef DEBUGLIT_TIMER
+  STDebugLogger::Instance() -> TimerStart("LIT Build");
+#endif
 
-  for (Int_t iHit = 0; iHit < numHits; iHit++) 
+#ifdef DEBUGLIT
+  fLogger -> Info(MESSAGE_ORIGIN, "Build");
+#endif
+
+  Int_t numHits = hits -> size();
+
+  for (Int_t iHit = 0; iHit < numHits; iHit++)
   {
     Int_t idxHit = numHits - 1 - iHit;
-    if (idxHit <= idxHitLimit)
-      break;
+    STHit *hit = fHitQueue -> at(idxHit);
 
-    STHit *hit = fHitQueue -> at(idxHit); ////////
+    Double_t bestQuality = 0;
+    STLinearTrack* trackCandidate = NULL;
 
-    STCoStatus statusFinal = kFAIL;
-
-    Int_t idxMergeTrack = -1;
-    Double_t rmsMin = 2 * fRMSTrackCut;
-
-#ifdef DEBUG_cout_build
-    std::cout << std::endl;
-#endif
-
-    Int_t numTracks = fTrackQueue -> size();
-    for(Int_t iTrack = 0; iTrack < numTracks; iTrack++) 
+    for (auto track : *tracks) 
     {
-      STLinearTrack* track = fTrackQueue -> at(iTrack); /////////
+      Double_t quality = 0;
+      Bool_t survive = kFALSE;
 
-#ifdef DEBUG_cout_build
-      std::cout << "[BUILDER-" << numIter << "] Hit-" << idxHit << "/" << numHits
-        << " Track-" << iTrack  << "(" << track -> GetNumHits() << ")/" 
-        << numTracks << std::endl;
+#ifdef DEBUGLIT_BUILD
+      cout << "[Correlating Track-Hit]" 
+           << " trk-id:" << track -> GetTrackID() 
+           << " (out of "  << tracks -> size() << ")"
+           << " no.hits:" << track -> GetNumHits() 
+           << endl;
 #endif
-      if (emptyQueue == kTRUE)
-        SetCutStretch(3, 1);
-
-      Double_t rms = fRMSTrackCut;
-      STCoStatus status = CorrelateHT(track, hit, rms); ///////////
-
-      if (emptyQueue == kTRUE && status == kQUEUE) {
-        status = kFAIL;
-        SetCutStretch(1, 1);
+      for (auto correlator : *corrTH) 
+      {
+        correlator -> Correlate(track, hit, survive, quality);
+#ifdef DEBUGLIT_BUILD
+        cout << "  " << survive << " " << quality << endl;
+#endif
+        if (survive == kFALSE) 
+          break;
       }
 
-      if (status == kCANDIDATE) 
+      if (survive == kTRUE)
       {
-        statusFinal = kCANDIDATE;
-        if (rms < rmsMin) {
-          rmsMin = rms;
-          idxMergeTrack = iTrack;
-        }
-      }
-      else if (status == kQUEUE && statusFinal != kCANDIDATE) 
-        statusFinal = kQUEUE;
-      //else if (status == kFAIL) // FINAL STATUS DO NOT CHANGE
-        //continue;
-#ifdef DEBUG_cout_status
-      std::cout << " ++ Current status: " << status << std::endl;
-      std::cout << " ++ Final   status: " << statusFinal << std::endl;
-#endif
-    }
-#ifdef DEBUG_cout_build
-    std::cout << "END Hit-" << idxHit << std::endl;
-#endif
-
-    if (statusFinal == kQUEUE && numIter != 0) 
-    {
-#ifdef DEBUG_cout_status
-      std::cout << " !! \033[1;36m\033[40mBACK TO THE QUEUE\033[0m" << std::endl;
-#endif
-      continue;
-    }
-
-    if (statusFinal == kCANDIDATE) 
-    {
-#ifdef DEBUG_cout_status
-      std::cout << " !! \033[1;32m\033[40mMERGE >> TRACK-" << idxMergeTrack 
-                << "\033[0m" << std::endl;
-#endif
-      STLinearTrack* track = fTrackQueue -> at(idxMergeTrack);
-      track -> AddHit(hit);
-      fLTFitter -> FitAndSetTrack(track);
-      fHitQueue -> erase(fHitQueue -> begin() + idxHit);
-    }
-    else if (iHit !=0 && iHit < fHitQueue -> size() - 1) {
-#ifdef DEBUG_cout_status
-      std::cout << " !! \033[0;31mTIME MACHINE!\033[0m" << std::endl;
-#endif
-      BuildTracksFromQueue(0, idxHit, kTRUE);
-      iHit++;
-    }
-    else // if 1) statusFinal == kFAIL, 2) statusFinal == kQUEUE && numIter == 0
-    {
-      NewTrack(hit);
-      fHitQueue -> erase(fHitQueue -> begin() + idxHit);
-    }
-  }
-
-  if (numIter == 0)
-    return;
-
-  BuildTracksFromQueue(--numIter);
-}
-
-void
-STLinearTrackFinder::MergeTracks(std::vector<STLinearTrack*> *trackBuffer)
-{
-  Int_t numTracks = trackBuffer -> size();
-  for(Int_t iTrack = 0; iTrack < numTracks; iTrack++) 
-  {
-    Int_t iIdxTrack = numTracks - 1 - iTrack;
-    STLinearTrack* tracki = trackBuffer -> at(iIdxTrack); ////////
-
-    STCoStatus statusFinal = kFAIL;
-
-    Int_t idxMergeTrack = -1;
-    Double_t rmsMin = fRMSTrackCut;
-
-    Int_t numCompareTracks = iIdxTrack;
-    for (Int_t jTrack = 0; jTrack < numCompareTracks; jTrack++)
-    {
-      Int_t jIdxTrack = numCompareTracks - 1 - jTrack;
-      STLinearTrack* trackj = trackBuffer -> at(jIdxTrack); ////////
-
-#ifdef DEBUG_cout_merge
-      std::cout << std::endl;
-      std::cout << "[MERGER] Track-" << iIdxTrack
-                << "(" << tracki -> GetNumHits() << ")"
-                << " Track-" << jIdxTrack
-                << "(" << trackj -> GetNumHits() << ")" << std::endl;
-#endif
-
-      Double_t rms;
-      STCoStatus status = CorrelateTT(tracki, trackj, rms);
-
-      if (status == kCANDIDATE) 
-      {
-        statusFinal = kCANDIDATE;
-        if (rms < rmsMin) {
-          rmsMin = rms;
-          idxMergeTrack = jIdxTrack;
+        if (quality > bestQuality) 
+        {
+          bestQuality = quality;
+          trackCandidate = track;
         }
       }
     }
-
-    if (statusFinal == kCANDIDATE)
-    {
-      // be careful when using erase of vector
-      // merge tracki INTO trackj
-      // add tracki to trackj and erase tracki 
-      fLTFitter -> MergeAndSetTrack(trackBuffer -> at(idxMergeTrack), tracki);
-      trackBuffer -> erase(trackBuffer -> begin() + iIdxTrack);
-      break;
+    
+    if (trackCandidate != NULL){
+      trackCandidate -> AddHit(hit);
+      fFitter -> FitAndSetTrack(trackCandidate);
+      hits -> erase(hits -> begin() + idxHit);
+    }
+    else if (createNewTracks == kTRUE) {
+      tracks -> push_back(new STLinearTrack(tracks -> size(), hit));
+      hits -> erase(hits -> begin() + idxHit);
     }
   }
-}
 
+#ifdef DEBUGLIT_TIMER
+  STDebugLogger::Instance() -> TimerStop("LIT Build");
+#endif
 
-void 
-STLinearTrackFinder::SortHits(std::vector<STLinearTrack*> *trackBuffer)
-{
-  Int_t numTracks = trackBuffer -> size();
-  for(Int_t iTrack = 0; iTrack < numTracks; iTrack++) 
-  {
-    STLinearTrack* track = trackBuffer -> at(iTrack);
-    fLTFitter -> SortHits(track);
-  }
+#ifdef DEBUGLIT
+  fLogger -> Info(MESSAGE_ORIGIN, Form("Build-end: num. tracks: %lu, num. hits: %lu", tracks -> size(), hits -> size()));
+#endif
 }
 
 void
-STLinearTrackFinder::SelectTracks(std::vector<STLinearTrack*> *trackBufferIn,
-                                  std::vector<STLinearTrack*> *trackBufferOut,
-                                  Int_t numHitsCut)
+STLinearTrackFinder::Merge(vecTrk_t *tracks)
 {
-  if (numHitsCut == -1)
-    numHitsCut = fMinNumHitCut;
+#ifdef DEBUGLIT_TIMER
+  STDebugLogger::Instance() -> TimerStart("LIT Merge");
+#endif
 
-  fHitQueue -> clear();
+#ifdef DEBUGLIT_MERGE
+  fLogger -> Info(MESSAGE_ORIGIN, "Merge");
+#endif
 
-  Int_t numTracks = trackBufferIn -> size();
-  for(Int_t iTrack = 0; iTrack < numTracks; iTrack++) 
+  Int_t numTracks = tracks -> size();
+
+  for (Int_t iTrack = 0; iTrack < numTracks; iTrack++)
   {
     Int_t idxTrack = numTracks - 1 - iTrack;
-    STLinearTrack* track = trackBufferIn -> at(idxTrack);
+    auto track = tracks -> at(idxTrack);
 
-    Int_t numHitsInTrack = track -> GetNumHits();
+    Double_t bestQuality = 0;
+    STLinearTrack* trackCandidate = NULL;
 
-#ifdef DEBUG_cout_choose
-    std::cout << "[SELECTOR] Track-" << iTrack 
-              << "(" << numHitsInTrack << ") ";
-#endif
-#ifdef DEBUG_logger
-    STDebugLogger::Instance() -> FillHist1("numHits", numHitsInTrack, 200, 0, 200);
-#endif
+    Int_t numTracksLeft = idxTrack;
 
-    if (numHitsInTrack < numHitsCut) {
-      for (Int_t iHit = 0; iHit < numHitsInTrack; iHit++)
-        fHitQueue -> push_back(track -> GetHit(iHit));
-#ifdef DEBUG_cout_choose
-      std::cout << "BAD!" << std::endl;
-#endif
-    }
-    else {
-#ifdef DEBUG_cout_choose
-    std::cout << "GOOD!" << std::endl;
-#endif
-      trackBufferOut -> push_back(track);
-    }
-
-    trackBufferIn -> erase(trackBufferIn -> begin() + idxTrack);
-  }
-}
-
-STLinearTrackFinder::STCoStatus
-STLinearTrackFinder::CorrelateHT(STLinearTrack* track, STHit* hit, Double_t &rms)
-{
-  STCoStatus status = kCANDIDATE;
-
-  status = CorrelateHTProximity(track, hit);
-  if (status != kCANDIDATE) 
-    return status;
-
-  status = CorrelateHTPerpPlane(track, hit);
-  if (status != kCANDIDATE) 
-    return status;
-
-  status = CorrelateHTPerpLine(track, hit);
-  if (status != kCANDIDATE) 
-    return status;
-
-  status = RMSTestHT(track, hit, rms);
-
-  return status;
-}
-
-STLinearTrackFinder::STCoStatus
-STLinearTrackFinder::CorrelateTT(STLinearTrack* track1, STLinearTrack* track2, Double_t &rms)
-{
-  STCoStatus status = kCANDIDATE;
-
-  status = CorrelateTTPerp(track1, track2);
-  if (status != kCANDIDATE) 
-    return status;
-
-  status = CorrelateTTGeo(track1, track2);
-  if (status != kCANDIDATE) 
-    return status;
-
-  status = RMSTestTT(track1, track2, rms);
-
-  return status;
-}
-
-STLinearTrackFinder::STCoStatus
-STLinearTrackFinder::CorrelateHTProximity(STLinearTrack* track, STHit* hit)
-{
-  Int_t numHitsInTrack = track -> GetNumHits();
-  Int_t nHitIter = numHitsInTrack;
-
-  STCoStatus statusFail = kQUEUE;
-  Int_t scaling = 1;
-
-  if (nHitIter >= fNumHHCompare) {
-    nHitIter = fNumHHCompare;
-  }
-  else {
-    scaling = 2;
-    statusFail = kQUEUE;
-  }
-
-
-  TVector3 posH = hit -> GetPosition();
-
-  for (Int_t iHit = 0; iHit < nHitIter; iHit++)
-  {
-    STHit *hitT = track -> GetHit(numHitsInTrack - 1 - iHit);
-    TVector3 posT = hitT -> GetPosition();
-
-    Double_t dX = posT.X()-posH.X();
-    Double_t dZ = posT.Z()-posH.Z();
-    Double_t dY = posT.Y()-posH.Y();
-
-    if (dX < 0) dX *= -1;
-    if (dY < 0) dY *= -1;
-    if (dZ < 0) dZ *= -1;
-
-    Double_t dR = TMath::Sqrt(dX*dX + dZ*dZ);
-
-#ifdef DEBUG_cout_position
-    std::cout << " @@ positionH: " 
-              << posH.X() << " " << posH.Y() << " " << posH.Z() << std::endl;
-    std::cout << "    positionT: "
-              << posT.X() << " " << posT.Y() << " " << posT.Z() << std::endl;
-#endif
-#ifdef DEBUG_cout_build
-    std::cout << " =" << iHit << " proximity: "
-              << dX << " " << dY << " " << dZ << " " << dR << " / " 
-              << fProxXCut << " "
-              << fProxYCut << " "
-              << fProxZCut << " "
-              << scaling * fProxRCut << "(" << fProxRCut << ")" << std::endl;
-#endif 
-#ifdef DEBUG_logger
-    STDebugLogger::Instance() -> FillHist1("dX",dX,200,0,50);
-    STDebugLogger::Instance() -> FillHist1("dY",dY,200,0,50);
-    STDebugLogger::Instance() -> FillHist1("dZ",dZ,200,0,50);
-    STDebugLogger::Instance() -> FillHist1("dR",dR,200,0,50);
-#endif
-
-    //if (dY <= fStretchY * fProxYCut)
-    Double_t proxYCutTemp = fStretchY * fYUnit *  fNumTbs / (hit -> GetLayer());
-    if (dY <= proxYCutTemp)
+    for (Int_t iTrackCompare = 0; iTrackCompare < numTracksLeft; iTrackCompare++)
     {
-      if (dX <= fStretchXZ * fProxXCut && dZ <= fStretchXZ * fProxZCut)
-        return kCANDIDATE;
-      if (dR <= scaling * fProxRCut)
-        return statusFail;
+      Int_t idxTrackCompare = numTracksLeft - 1 - iTrackCompare;
+      auto trackCompare = tracks -> at(idxTrackCompare);
+
+      Double_t quality = 0;
+      Bool_t survive = kFALSE;
+#ifdef DEBUGLIT_MERGE
+      cout << "[Correlating Track-Track]" 
+           << " (out of "  << tracks -> size() << ")"
+           << " trk1-id:" << track -> GetTrackID() 
+           << "/no.hits:" << track -> GetNumHits() 
+           << " trk2-id:" << trackCompare -> GetTrackID() 
+           << "/no.hits:" << trackCompare -> GetNumHits() 
+           << endl;
+#endif
+      for (auto correlator : *fCorrTT) 
+      {
+        correlator -> Correlate(track, trackCompare, survive, quality);
+#ifdef DEBUGLIT_MERGE
+        cout << "  " << survive << " " << quality << endl;
+#endif
+        if (survive == kFALSE) 
+          break;
+      }
+
+      if (survive == kTRUE)
+      {
+        if (quality > bestQuality) 
+        {
+          bestQuality = quality;
+          trackCandidate = trackCompare;
+        }
+      }
+    }
+    
+    if (trackCandidate != NULL)
+    {
+      fFitter -> MergeAndSetTrack(trackCandidate, track);
+      tracks -> erase(tracks -> begin() + idxTrack);
     }
   }
 
-  return kFAIL;
-}
-
-STLinearTrackFinder::STCoStatus
-STLinearTrackFinder::CorrelateHTPerpPlane(STLinearTrack* track, STHit* hit)
-{
-  Int_t numHitsInTrack = track -> GetNumHits();
-  if (numHitsInTrack <= fMinNumHitFitPlane) 
-    return kCANDIDATE;
-
-  Double_t scaling = 1.;
-  if (numHitsInTrack < fMinNumHitCut) 
-    scaling += 0.5 * (1 - (Double_t)numHitsInTrack/fMinNumHitCut);
-
-  if (track -> IsFitted() == kFALSE)
-    fLTFitter -> FitAndSetTrack(track);
-
-  Double_t perpPlane = (fLTFitter -> PerpPlane(track, hit)).Mag();
-
-#ifdef DEBUG_cout_build
-  std::cout << " == perpPlane: " << perpPlane 
-            << " / " << scaling * fRMSPlaneCut 
-            << "(" << fRMSPlaneCut << ")" << std::endl;
-#endif
-#ifdef DEBUG_logger
-  STDebugLogger::Instance() -> FillHist1("perpPlane",perpPlane,200,0,50);
+#ifdef DEBUGLIT_TIMER
+  STDebugLogger::Instance() -> TimerStop("LIT Merge");
 #endif
 
-  if (perpPlane < scaling * fRMSPlaneCut) 
-    return kCANDIDATE;
-  else 
-    return kFAIL;
-}
-
-STLinearTrackFinder::STCoStatus
-STLinearTrackFinder::CorrelateHTPerpLine(STLinearTrack* track, STHit* hit)
-{
-  Int_t numHitsInTrack = track -> GetNumHits();
-  if (numHitsInTrack <= fMinNumHitFitLine) 
-    return kCANDIDATE;
-
-  Double_t scaling = 1.;
-  if (numHitsInTrack < fMinNumHitCut)
-    scaling += 1 - (Double_t)numHitsInTrack/fMinNumHitCut;
-
-  if (track -> IsFitted() == kFALSE)
-    fLTFitter -> FitAndSetTrack(track);
-
-  Double_t perpLine = (fLTFitter -> PerpLine(track, hit)).Mag();
-
-#ifdef DEBUG_cout_build
-  std::cout << " == perpLine : " << perpLine 
-            << " / " << scaling * fRMSLineCut 
-            << "(" << fRMSLineCut << ")" << std::endl;
+#ifdef DEBUGLIT
+  fLogger -> Info(MESSAGE_ORIGIN, Form("Merge-end: num. tracks: %lu", tracks -> size()));
 #endif
-#ifdef DEBUG_logger
-  STDebugLogger::Instance() -> FillHist1("perpLine",perpLine,200,0,50);
-  STDebugLogger::Instance() -> FillHist2("perpL_charge",
-                                         perpLine, hit->GetCharge(),
-                                         200,0,20, 200,0,500);
-#endif
-
-  if (perpLine < scaling * fRMSLineCut) 
-    return kCANDIDATE;
-  else 
-    return kFAIL;
-}
-
-STLinearTrackFinder::STCoStatus
-STLinearTrackFinder::RMSTestHT(STLinearTrack* track, STHit* hit, Double_t &rms)
-{
-  Int_t numHitsInTrack = track -> GetNumHits();
-  if (numHitsInTrack <= fMinNumHitFitPlane || numHitsInTrack <= fMinNumHitFitLine) 
-    return kCANDIDATE;
-
-  Double_t scaling = 1.;
-  if (numHitsInTrack < fMinNumHitCut)
-    scaling += 1 - (Double_t)numHitsInTrack/fMinNumHitCut;
-
-  if (track -> IsFitted() == kFALSE)
-    fLTFitter -> FitAndSetTrack(track);
-
-  Double_t rmsL, rmsP;
-  fLTFitter -> Fit(track, hit, rmsL, rmsP);
-#ifdef DEBUG_cout_build
-  std::cout << " == rms      : " << rmsL << " " << rmsP << " / "
-            << scaling * fRMSLineCut  << "(" << fRMSLineCut << ") "
-            << scaling * fRMSPlaneCut << "(" << fRMSPlaneCut << ") " << std::endl;
-#endif
-#ifdef DEBUG_logger
-  STDebugLogger::Instance() -> FillHist1("rmsL",rmsL,500,0,10);
-  STDebugLogger::Instance() -> FillHist1("rmsP",rmsP,500,0,10);
-#endif
-
-  rms = TMath::Sqrt(rmsL*rmsL + rmsP*rmsP);
-
-  if (rmsL < scaling * fRMSLineCut && rmsP < scaling * fRMSPlaneCut)
-    return kCANDIDATE;
-  else 
-    return kFAIL;
-}
-
-STLinearTrackFinder::STCoStatus
-STLinearTrackFinder::CorrelateTTGeo(STLinearTrack* track1, STLinearTrack* track2)
-{
-  Int_t numHitsInTracks = track1 -> GetNumHits() + track2 -> GetNumHits();
-
-  Double_t scaling = 1.;
-  if (numHitsInTracks < fMinNumHitCut)
-    scaling -= 0.1 * (1 - (Double_t)numHitsInTracks/fMinNumHitCut);
-
-  Double_t dotLine  = track1 -> GetDirection().Dot(track2 -> GetDirection());
-  Double_t dotPlane = track1 -> GetNormal().Dot(track2 -> GetNormal());
-
-#ifdef DEBUG_cout_merge
-  std::cout << " == dot: " << dotLine << " " << dotPlane << " / "
-            << fDirectionDotCut << " " << fNormalDotCut << std::endl;
-#endif
-#ifdef DEBUG_logger
-  STDebugLogger::Instance() -> FillHist1("dotL",dotLine,100,0,1);
-  STDebugLogger::Instance() -> FillHist1("dotP",dotPlane,100,0,1);
-#endif
-
-  //if (dotLine  > scaling * fDirectionDotCut &&
-      //dotPlane > scaling * fNormalDotCut)
-  if (dotLine  > scaling * fDirectionDotCut)
-    return kCANDIDATE;
-  else 
-    return kQUEUE;
-}
-
-STLinearTrackFinder::STCoStatus
-STLinearTrackFinder::CorrelateTTPerp(STLinearTrack* track1, STLinearTrack* track2)
-{
-  Int_t numHitsInTracks = track1 -> GetNumHits() + track2 -> GetNumHits();
-
-  Double_t scaling = 1.;
-  if (numHitsInTracks < fMinNumHitCut)
-    scaling += 1 - (Double_t)numHitsInTracks/fMinNumHitCut;
-
-  Double_t perpL1 = (fLTFitter -> PerpLine (track1, track2 -> GetCentroid())).Mag();
-  Double_t perpL2 = (fLTFitter -> PerpLine (track2, track1 -> GetCentroid())).Mag();
-  Double_t perpP1 = (fLTFitter -> PerpPlane(track1, track2 -> GetCentroid())).Mag();
-  Double_t perpP2 = (fLTFitter -> PerpPlane(track2, track1 -> GetCentroid())).Mag();
-
-#ifdef DEBUG_cout_merge
-  std::cout <<" == perpLine-TT : " << perpL1 << ", " << perpL2 << " / " 
-            << fRMSLineCut << std::endl;
-  std::cout <<" == perpPlane-TT: " << perpP1 << ", " << perpP2 << " / " 
-            << fRMSPlaneCut << std::endl;
-#endif
-#ifdef DEBUG_logger
-  STDebugLogger::Instance() -> FillHist1("perpLineTT",perpL1,200,0,50);
-  STDebugLogger::Instance() -> FillHist1("perpLineTT",perpL2,200,0,50);
-  STDebugLogger::Instance() -> FillHist1("perpPlaneTT",perpP1,200,0,50);
-  STDebugLogger::Instance() -> FillHist1("perpPlaneTT",perpP2,200,0,50);
-#endif
-
-  if (perpL1 < scaling * fRMSLineCut  &&
-      perpL2 < scaling * fRMSLineCut  &&
-      perpP1 < scaling * fRMSPlaneCut && 
-      perpP2 < scaling * fRMSPlaneCut)
-    return kCANDIDATE;
-  else 
-    return kQUEUE;
-}
-
-STLinearTrackFinder::STCoStatus
-STLinearTrackFinder::RMSTestTT(STLinearTrack* track1, STLinearTrack* track2, Double_t &rms)
-{
-  Int_t numHitsInTracks = track1 -> GetNumHits() + track2 -> GetNumHits();
-
-  Double_t scaling = 1.;
-  if (numHitsInTracks < fMinNumHitCut)
-    scaling += 1 - (Double_t)numHitsInTracks/fMinNumHitCut;
-
-  Double_t rmsL, rmsP;
-  fLTFitter -> Fit(track1, track2, rmsL, rmsP);
-
-#ifdef DEBUG_cout_merge
-  std::cout << " == rms-TT: " << rmsL << " " << rmsP << " / "
-            << fRMSLineCut << " " << fRMSPlaneCut << std::endl;
-#endif
-#ifdef DEBUG_logger
-  STDebugLogger::Instance() -> FillHist1("rmsL",rmsL,500,0,10);
-  STDebugLogger::Instance() -> FillHist1("rmsP",rmsP,500,0,10);
-#endif
-
-  rms = TMath::Sqrt(rmsL*rmsL + rmsP*rmsP);
-
-  if (rmsL < scaling * fRMSLineCut && rmsP < scaling * fRMSPlaneCut) 
-    return kCANDIDATE;
-  else
-    return kQUEUE;
-}
-
-void 
-STLinearTrackFinder::NewTrack(STHit* hit)
-{
-#ifdef DEBUG_cout_status
-  std::cout << " !! \033[0;31mCREATE NEW TRACK\033[0m" << std::endl;
-#endif
-  STLinearTrack *track = new STLinearTrack();
-  track -> AddHit(hit);
-  track -> SetTrackID(fTrackQueue -> size());
-  fTrackQueue -> push_back(track);
 }
 
 void
-STLinearTrackFinder::SetCutStretch(Double_t stretchXZ, Double_t stretchY)
+STLinearTrackFinder::Select(vecTrk_t *tracks, vecTrk_t *tracks2, vecHit_t *hits, Double_t thetaCut)
 {
-  fStretchXZ = stretchXZ;
-  fStretchY = stretchY;
+#ifdef DEBUGLIT_TIMER
+  STDebugLogger::Instance() -> TimerStart("LIT Select");
+#endif
+
+#ifdef DEBUGLIT
+  fLogger -> Info(MESSAGE_ORIGIN, "Select");
+#endif
+
+  TVector3 pointingZ(0,0,1);
+  Double_t cosineCut = TMath::Cos(thetaCut);
+
+  fTrackBufferTemp -> clear();
+
+  for (auto track : *tracks)
+  {
+#ifdef DEBUGLIT_SELECT
+    cout << endl;
+    cout << "Testing track-" << track -> GetTrackID() << endl;
+    cout << "  num  " << track -> GetNumHits() << " <? " << fNumHitsTrackCut << endl;
+#endif
+    if (track -> GetNumHits() < fNumHitsTrackCut) {
+      if (track -> GetNumHits() > 3) 
+        ReturnHits(track, hits);
+      continue; 
+    }
+
+    if (track -> IsFitted() == kFALSE)
+      fFitter -> FitAndSetTrack(track); 
+
+#ifdef DEBUGLIT_SELECT
+    cout << "  rms line:  " << track -> GetRMSLine() << " <? " << fRMSLineCut << endl;
+    cout << "  rms plane: " << track -> GetRMSPlane() << " <? " << fRMSPlaneCut << endl;
+#endif
+    if (track -> GetRMSLine() > fRMSLineCut || track -> GetRMSPlane() > fRMSPlaneCut) {
+      ReturnHits(track, hits);
+      continue; 
+    }
+
+#ifdef DEBUGLIT_SELECT
+    cout << "  dot  " << pointingZ.Dot(track -> GetDirection()) << " >? " << cosineCut<< endl;
+#endif
+    if (pointingZ.Dot(track -> GetDirection()) < cosineCut) {
+      ReturnHits(track, hits);
+      continue;
+    }
+#ifdef DEBUGLIT_SELECT
+    cout << "  OK!" << endl;
+#endif
+
+    fTrackBufferTemp -> push_back(track);
+  }
+
+  tracks -> clear();
+
+  for (auto track : *fTrackBufferTemp)
+    tracks2 -> push_back(track);
+
+  fTrackBufferTemp -> clear();
+
+#ifdef DEBUGLIT_TIMER
+  STDebugLogger::Instance() -> TimerStop("LIT Select");
+#endif
+
+#ifdef DEBUGLIT_SELECT
+  fLogger -> Info(MESSAGE_ORIGIN, Form("Select-end: num. tracks: %lu, >> num tracks2: %lu, hits: %lu",
+                                       tracks -> size(), tracks2 -> size(), hits -> size()));
+#endif
 }
+
+void 
+STLinearTrackFinder::SortHits(vecTrk_t *tracks)
+{
+  Int_t numTracks = tracks -> size();
+  for(Int_t iTrack = 0; iTrack < numTracks; iTrack++) 
+  {
+    STLinearTrack* track = tracks -> at(iTrack);
+    fFitter -> SortHits(track);
+  }
+}
+
+void
+STLinearTrackFinder::ReturnHits(STLinearTrack *track, vecHit_t *hits)
+{
+  vecHit_t *hitsFromTrack = track -> GetHitPointerArray();
+
+  for (auto hit : *hitsFromTrack)
+    hits -> push_back(hit);
+}
+
+// Setters ____________________________________________________
+
+/*
+void 
+STLinearTrackFinder::SetNumHitsCut(
+  Int_t numHitsTrackCut,
+  Int_t numHitsFit,
+  Int_t numHitsCompare,
+  Int_t numHitsCompareMax)
+{
+  fDNumHitsTrackCut = numHitsTrackCut;
+  fDNumHitsFit = numHitsFit;
+  fDNumHitsCompare = numHitsCompare;
+  fDNumHitsCompareMax = numHitsCompareMax;
+}
+
+void 
+STLinearTrackFinder::SetProximityCutFactor(
+  Double_t xConst, 
+  Double_t yConst,
+  Double_t zConst)
+{
+  fDProxXCut = xConst * fXUnit;
+  fDProxYCut = yConst * fYUnit;
+  fDProxZCut = zConst * fZUnit;
+}
+
+void
+STLinearTrackFinder::SetProximityTrackCutFactor(
+  Double_t proxLine,
+  Double_t proxPlane)
+{
+  fDProxLineCut  = proxLine;
+  fDProxPlaneCut = proxPlane;
+}
+
+void
+STLinearTrackFinder::SetProximityRCut(Double_t val)
+{
+  fDProxRCut = val;
+}
+
+void 
+STLinearTrackFinder::SetRMSCut(Double_t rmsLineCut, Double_t rmsPlaneCut)
+{
+  fDRMSLineCut  = rmsLineCut;
+  fDRMSPlaneCut = rmsPlaneCut;
+  fDRMSTrackCut = TMath::Sqrt(fRMSPlaneCut*fRMSPlaneCut + fRMSLineCut*fRMSLineCut);
+}
+
+void 
+STLinearTrackFinder::SetDotProductCut(
+  Double_t directionDotCut, 
+  Double_t normalDotCut)
+{
+  fDDirectionDotCut = directionDotCut;
+  fDNormalDotCut = normalDotCut;
+}
+*/

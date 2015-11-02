@@ -4,7 +4,7 @@ STCorrLinearTTRMS::STCorrLinearTTRMS(Int_t nHitsToFitCut,
                                        Double_t rmsLine,
                                        Double_t rmsPlane)
 {
-  nHitsToFitCut = fMinNumHitsToFitTrack;
+  fMinNumHitsToFitTrack = nHitsToFitCut;
   fRMSLineCut = rmsLine;
   fRMSPlaneCut = rmsPlane;
 }
@@ -16,12 +16,14 @@ STCorrLinearTTRMS::Correlate(STLinearTrack *track1,
                              Double_t &matchQuality)
 {
   survive = kFALSE;
+
+  if (track1 -> GetNumHits() <= fMinNumHitsToFitTrack ||
+      track2 -> GetNumHits() <= fMinNumHitsToFitTrack)
+    return kFALSE;
+
   Double_t scaling = 2 - matchQuality;
   Double_t rmsLineCut  = scaling * fRMSLineCut;
   Double_t rmsPlaneCut = scaling * fRMSPlaneCut;
-
-  if (track1 -> GetNumHits() + track2 -> GetNumHits() <= fMinNumHitsToFitTrack)
-    return kFALSE;
 
   if (track1 -> IsFitted() == kFALSE)
     fLTFitter -> FitAndSetTrack(track1);
@@ -35,11 +37,13 @@ STCorrLinearTTRMS::Correlate(STLinearTrack *track1,
   Double_t corrLine  = (rmsLineCut  - rmsLine)  / rmsLineCut;
   Double_t corrPlane = (rmsPlaneCut - rmsPlane) / rmsPlaneCut;
 
-  if (corrLine <= 0 && corrPlane <= 0) 
+  if (corrLine >= 0 && corrPlane >= 0) 
   {
     matchQuality = TMath::Sqrt(matchQuality*matchQuality + 
                                corrLine*corrLine + 
-                               corrPlane*corrPlane);
+                               corrPlane*corrPlane)
+                   / (corrLine + corrPlane + matchQuality);
+
     survive = kTRUE;
   }
 

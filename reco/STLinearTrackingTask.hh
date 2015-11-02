@@ -13,7 +13,9 @@
 #include "STHit.hh"
 #include "STDigiPar.hh"
 #include "STLinearTrack.hh"
+#include "STLinearTrackFinderAbstract.hh"
 #include "STLinearTrackFinder.hh"
+#include "STLinearTrackFinder2.hh"
 
 // ROOT classes
 #include "TClonesArray.h"
@@ -31,6 +33,8 @@ class STLinearTrackingTask : public FairTask
     virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
 
+    STLinearTrackFinderAbstract* GetTrackFinder();
+
   private:
     FairLogger *fLogger; //!
 
@@ -40,7 +44,7 @@ class STLinearTrackingTask : public FairTask
 
     STDigiPar *fPar; //!
 
-    STLinearTrackFinder* fLinearTrackFinder; //!
+    STLinearTrackFinderAbstract* fTrackFinder; //!
 
   ClassDef(STLinearTrackingTask, 1);
 };

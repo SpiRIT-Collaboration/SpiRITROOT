@@ -86,6 +86,7 @@ LinearTracking/STCorrLinearTTPerp.cc
 LinearTracking/STCorrLinearTTRMS.cc
 LinearTracking/STLinearTrackFinderAbstract.cc
 LinearTracking/STLinearTrackFinder.cc
+LinearTracking/STLinearTrackFinder2.cc
 LinearTracking/STLinearTrackFitter.cc
 LinearTracking/ODRFitter.cc
 

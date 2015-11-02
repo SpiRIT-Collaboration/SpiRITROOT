@@ -1,22 +1,18 @@
 #ifndef STLINEARTRACKINGCONF
 #define STLINEARTRACKINGCONF
 
+//#define DEBUGLIT
+//#define DEBUGLIT_BUILD
+//#define DEBUGLIT_SELECT
+//#define DEBUGLIT_MERGE
+//#define DEBUGLIT_MERGE_CORR
+//#define DEBUGLIT_TIMER
+//#define DEBUGLIT_CUT
+
 #include "STHit.hh"
 #include "STLinearTrack.hh"
 #include "STLinearTrackFitter.hh"
-
-class STLinearTrackingConf
-{
-  public:
-    enum STLinearTrackSort
-    {
-      kSortX,
-      kSortY,
-      kSortZ,
-      kSortR,
-      kSortCharge
-    };
-};
+#include "STDebugLogger.hh"
 
 class STCorrLinearTH 
 {
@@ -44,6 +40,20 @@ class STCorrLinearTT
 
     virtual Bool_t Correlate(STLinearTrack *track1, 
                              STLinearTrack *track2, 
+                             Bool_t &survive, 
+                             Double_t &matchQuality) = 0;
+};
+
+class STTestLinearTrack 
+{
+  protected:
+    STLinearTrackFitter* fLTFitter;
+
+  public:
+    STTestLinearTrack():fLTFitter(new STLinearTrackFitter()) {}
+    virtual ~STTestLinearTrack() {}
+
+    virtual Bool_t Correlate(STLinearTrack *track, 
                              Bool_t &survive, 
                              Double_t &matchQuality) = 0;
 };

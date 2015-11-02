@@ -13,7 +13,7 @@ void odr()
 
   gStyle -> SetOptStat(0);
 
-  const Int_t nPoints = 20;
+  const Int_t nPoints = 11;
 
   Double_t x[nPoints] = {0};
   Double_t y[nPoints] = {0};
@@ -24,8 +24,8 @@ void odr()
   Double_t yMean = 0;
   Double_t zMean = 0;
 
-  Double_t factor = nPoints/10.;
-  Double_t sigma = 0.1;
+  Double_t factor = (nPoints-1)/10.;
+  Double_t sigma = 0;
 
   for (Int_t iPoint = 0; iPoint < nPoints; iPoint++)
   {
@@ -33,6 +33,8 @@ void odr()
     y[iPoint] = gRandom -> Gaus(iPoint/factor, sigma);
     z[iPoint] = gRandom -> Gaus(iPoint/factor, sigma);
     w[iPoint] = gRandom -> Gaus(1, 0);
+
+    cout << x[iPoint] << " " << y[iPoint] << " " << z[iPoint] << endl;
 
     xMean += w[iPoint]*x[iPoint];
     yMean += w[iPoint]*y[iPoint];
@@ -63,19 +65,23 @@ void odr()
     fODRFitter -> AddPoint(x[iPoint], y[iPoint], z[iPoint], w[iPoint]);
 
   fODRFitter -> FitLine();
+  fODRFitter -> GetDirection().Print();
+  fODRFitter -> GetCentroid().Print();
 
   STLinearTrackFitter* fLTFitter = new STLinearTrackFitter();
 
   STLinearTrack *track= new STLinearTrack();
-  track -> SetNormal(fODRFitter -> GetDirection());
+  track -> SetDirection(fODRFitter -> GetDirection());
   track -> SetCentroid(fODRFitter -> GetCentroid());
 
-  TVector3 pointStart = fLTFitter -> GetClosestPointOnTrack(track, TVector3(5,5,5));
+  std::cout << fLTFitter -> PerpLine(track, TVector3(0,0,0)).Mag() << std::endl;
+  TVector3 pointStart = fLTFitter -> GetClosestPointOnTrack(track, TVector3(0,0,0));
   TVector3 pointEnd   = fLTFitter -> GetClosestPointOnTrack(track, TVector3(10,10,10));
-  //TVector3 pointStart = GetPointFromLineWithZ(fODRFitter -> GetCentroid(), fODRFitter -> GetDirection(), 0);
-  //TVector3 pointEnd   = GetPointFromLineWithZ(fODRFitter -> GetCentroid(), fODRFitter -> GetDirection(), 10);
+  //TVector3 pointStart = fLTFitter -> GetPointOnZ(track, -1);
+  //TVector3 pointEnd   = fLTFitter -> GetPointOnZ(track, 11);
 
-  //std::cout << fitter -> GetRMS() << std::endl;
+  pointStart.Print();
+  pointEnd.Print();
 
   line = new TEveLine();
   line -> SetLineColor(kRed);

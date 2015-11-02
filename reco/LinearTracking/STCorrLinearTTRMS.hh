@@ -7,8 +7,8 @@ class STCorrLinearTTRMS : public STCorrLinearTT
 {
   public:
     STCorrLinearTTRMS(Int_t nHitsToFitCut,
-                       Double_t rmsLine,
-                       Double_t rmsPlane);
+                      Double_t rmsLine,
+                      Double_t rmsPlane);
 
     Bool_t Correlate(STLinearTrack *track1,
                      STLinearTrack *track2,

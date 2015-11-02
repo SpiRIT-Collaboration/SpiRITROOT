@@ -47,7 +47,10 @@ STLinearTrackFitter::FitAndSetTrack(STLinearTrack* track)
   fODRFitter -> Solve();
 
   fODRFitter -> ChooseEigenValue(0);
-  track -> SetDirection(fODRFitter -> GetDirection());
+  TVector3 direction = fODRFitter -> GetDirection();
+  if (direction.Z() < 0)
+    direction = -direction;
+  track -> SetDirection(direction);
   track -> SetRMSLine(fODRFitter -> GetRMSLine());
 
   fODRFitter -> ChooseEigenValue(2);
@@ -71,7 +74,10 @@ STLinearTrackFitter::MergeAndSetTrack(STLinearTrack* track1, STLinearTrack* trac
   fODRFitter -> Solve();
 
   fODRFitter -> ChooseEigenValue(0);
-  track1 -> SetDirection(fODRFitter -> GetDirection());
+  TVector3 direction = fODRFitter -> GetDirection();
+  if (direction.Z() < 0)
+    direction = -direction;
+  track1 -> SetDirection(direction);
   track1 -> SetRMSLine(fODRFitter -> GetRMSLine());
 
   fODRFitter -> ChooseEigenValue(2);
@@ -194,14 +200,18 @@ void
 STLinearTrackFitter::SortHits(STLinearTrack* track)
 {
   std::vector<STHit*> *hitArray = track -> GetHitPointerArray();
+  std::vector<Int_t> *idArray  = track -> GetHitIDArray();
+
+  Int_t size = idArray -> size();
+  idArray -> clear();
+
   STHitSortByTrackDirection sorting(track -> GetDirection(), track -> GetCentroid());
   std::sort(hitArray -> begin(), hitArray -> end(), sorting);
 
-  std::vector<Int_t> *idArray  = track -> GetHitIDArray();
-  Int_t size = idArray -> size();
-  idArray -> clear();
   for (Int_t i = 0; i < size; i++)
     idArray -> push_back(hitArray -> at(i) -> GetHitID());
+
+  track -> SetIsSorted(kTRUE);
 }
 
 TVector3

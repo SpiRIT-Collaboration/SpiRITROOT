@@ -13,6 +13,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 ClassImp(STLinearTrackingTask);
 
 STLinearTrackingTask::STLinearTrackingTask()
@@ -44,9 +46,9 @@ STLinearTrackingTask::Init()
 
   ioMan -> Register("STLinearTrack", "SPiRIT", fTrackArray, fInputPersistance);
 
-  fLinearTrackFinder = new STLinearTrackFinder();
-
   fTrackBuffer = new std::vector<STLinearTrack*>;
+
+  fTrackFinder = new STLinearTrackFinder();
 
   return kSUCCESS;
 }
@@ -80,7 +82,7 @@ STLinearTrackingTask::Exec(Option_t *opt)
 
   STEvent *event = (STEvent *) fEventArray -> At(0);
 
-  fLinearTrackFinder -> BuildTracks(event, fTrackBuffer);
+  fTrackFinder -> BuildTracks(event, fTrackBuffer);
 
   Int_t nTracks = fTrackBuffer -> size();
   for (Int_t iTrack = 0; iTrack < nTracks; iTrack++)
@@ -94,3 +96,5 @@ STLinearTrackingTask::Exec(Option_t *opt)
     Form("Event #%d : Found %d linear tracks", 
       event -> GetEventID(), fTrackArray -> GetEntriesFast()));
 }
+
+STLinearTrackFinderAbstract* STLinearTrackingTask::GetTrackFinder() { return fTrackFinder; }

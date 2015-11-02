@@ -16,15 +16,15 @@ STCorrLinearTTPerp::Correlate(STLinearTrack *track1,
                               Double_t &matchQuality)
 {
   survive = kFALSE;
-  Double_t scaling = 2 - matchQuality;
-  Double_t perpLineCut   = scaling * fPerpLineCut;
-  Double_t perpPlaneCut = scaling * fPerpPlaneCut;
-
   Int_t nHitsTrack1 = track1 -> GetNumHits();
   Int_t nHitsTrack2 = track2 -> GetNumHits();
 
-  if (nHitsTrack1 + nHitsTrack2 <= fMinNumHitsToFitTrack)
+  if (nHitsTrack1 <= fMinNumHitsToFitTrack || nHitsTrack2 <= fMinNumHitsToFitTrack)
     return kFALSE;
+
+  Double_t scaling = 2 - matchQuality;
+  Double_t perpLineCut   = scaling * fPerpLineCut;
+  Double_t perpPlaneCut = scaling * fPerpPlaneCut;
 
   if (track1 -> IsFitted() == kFALSE)
     fLTFitter -> FitAndSetTrack(track1);
@@ -53,7 +53,7 @@ STCorrLinearTTPerp::Correlate(STLinearTrack *track1,
   Double_t distPlaneFirst = perpPlaneFirst.Mag();
 
 
-  STHit* hitLast = trackShort -> GetHit(trackShort -> GetNumHits());
+  STHit* hitLast = trackShort -> GetHit(trackShort -> GetNumHits() - 1);
   TVector3 perpLineLast  = fLTFitter -> PerpLine (trackLong, hitLast);
   TVector3 perpPlaneLast = fLTFitter -> PerpPlane(trackLong, hitLast);
            perpLineLast  = perpLineLast - perpPlaneLast;
@@ -80,12 +80,13 @@ STCorrLinearTTPerp::Correlate(STLinearTrack *track1,
   Double_t corrLine  = (perpLineCut  - distL) / perpLineCut;
   Double_t corrPlane = (perpPlaneCut - distP) / perpPlaneCut;
 
-
-  if (corrLine <= 0 && corrPlane <= 0) 
+  if (corrLine >= 0 && corrPlane >= 0) 
   {
     matchQuality = TMath::Sqrt(matchQuality*matchQuality + 
                                corrLine*corrLine + 
-                               corrPlane*corrPlane);
+                               corrPlane*corrPlane)
+                   / (corrLine + corrPlane + matchQuality);
+
     survive = kTRUE;
   }
 
