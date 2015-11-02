@@ -255,13 +255,16 @@ void STCore::ProcessCobo(Int_t coboIdx)
   Int_t iSkipper = 0;
 
   Bool_t skipped = kFALSE;
+  Bool_t eof = kFALSE;
   fNumCurrEventFrames[coboIdx] = 0;
 
   while (1) {
     GETFrame *frame = fDecoderPtr[coboIdx] -> GetFrame(fCurrFrameNo[coboIdx] + iSkipper);
 
-    if (frame == NULL)
+    if (frame == NULL) {
+      eof = kTRUE;
       break;
+    }
 
     if (frame -> GetEventID() != fCurrEventNo) {
       iSkipper++;
@@ -349,7 +352,11 @@ void STCore::ProcessCobo(Int_t coboIdx)
     }
   }
 
-  if (fNumCurrEventFrames[coboIdx] < 4)
+  if (eof == kTRUE) {
+    fRawEventPtr -> Clear();
+    fRawEventPtr -> SetIsGood(kFALSE);
+  }
+  else if (fNumCurrEventFrames[coboIdx] < 4)
     std::cout << "== [STCore] Warning: There're less than 4 AsAds' frame in this event! (Event ID: " << fCurrEventNo << ")" << std::endl;
 }
 
