@@ -70,13 +70,14 @@ class ODRFitter
     Double_t GetRMSPlane();   ///< Get RMS of the plane fit 
 
   private:
-
-  private:
        Int_t fNumPoints; ///< Number of point set
     Double_t fWeightSum; ///< Sum of weights
     Double_t fSumOfPC2;  ///< Sum of square of distance from point to the centroid
 
-    TMatrixD *fCentroid;  ///< Centroid position of the point set
+    Double_t fXCentroid;
+    Double_t fYCentroid;
+    Double_t fZCentroid;
+    //TMatrixD *fCentroid;  ///< Centroid position of the point set
     TVectorD *fNormal;    ///< Normal vector of ODR plane, or vector of ODR line
 
     TMatrixD *fMatrixA;      ///< Matrix A

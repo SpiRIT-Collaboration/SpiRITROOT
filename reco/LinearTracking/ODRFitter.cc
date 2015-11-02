@@ -7,9 +7,7 @@ ClassImp(ODRFitter)
 
 ODRFitter::ODRFitter()
 {
-  fCentroid = new TMatrixD(3,1);
   fNormal = new TVectorD(3);
-
   fMatrixA = new TMatrixD(3,3);
   fEigenValues = new TVectorD(3);
   fEigenVectors = new TMatrixD(3,3);
@@ -23,6 +21,10 @@ ODRFitter::~ODRFitter()
 
 void ODRFitter::Reset()
 {
+  fXCentroid = 0;
+  fYCentroid = 0;
+  fZCentroid = 0;
+
   fNumPoints = 0;
   fWeightSum = 0;
   fSumOfPC2 = 0;
@@ -37,39 +39,41 @@ void ODRFitter::Reset()
 
 void ODRFitter::SetCentroid(Double_t x, Double_t y, Double_t z)
 {
-  (*fCentroid)[0][0] = x;
-  (*fCentroid)[1][0] = y;
-  (*fCentroid)[2][0] = z;
+  fXCentroid = x;
+  fYCentroid = y;
+  fZCentroid = z;
 }
 
 void ODRFitter::AddPoint(Double_t x, Double_t y, Double_t z, Double_t w)
 {
-  // building position matrix
-  TMatrixD matrixP(3, 1);
-  matrixP[0][0] = x;
-  matrixP[1][0] = y;
-  matrixP[2][0] = z;
-  
-  // building difference from position to centroid matrix
-  TMatrixD matrixD(3, 1); 
-  matrixD = matrixP - (*fCentroid);
+  Double_t dX = x - fXCentroid;
+  Double_t dY = y - fYCentroid;
+  Double_t dZ = z - fZCentroid;
 
-  // adding to matrix A with position matrix and difference matrix
-  TMatrixD matrixDT(TMatrixD::kTransposed, matrixD);
-  TMatrixD matrixD2(matrixD, TMatrixD::kMult, matrixDT);
-  matrixD2 *= w;
-  (*fMatrixA) += matrixD2;  
+  Double_t wx2 = w * dX * dX;
+  Double_t wy2 = w * dY * dY;
+  Double_t wz2 = w * dZ * dZ;
 
-  // adding to the square of distance from point to the centroid
-  Double_t PC2 = matrixD2[0][0] + matrixD2[1][1] + matrixD2[2][2];
-  fSumOfPC2 += PC2;
+  (*fMatrixA)[0][0] += wx2;
+  (*fMatrixA)[0][1] += w * dX * dY;
+  (*fMatrixA)[0][2] += w * dX * dZ;
 
+  (*fMatrixA)[1][1] += wy2;
+  (*fMatrixA)[1][2] += w * dY * dZ;
+
+  (*fMatrixA)[2][2] += wz2;
+
+  fSumOfPC2 += wx2 + wy2 + wz2;
   fWeightSum += w;
   fNumPoints++;
 }
 
 void ODRFitter::Solve()
 {
+  (*fMatrixA)[1][0] = (*fMatrixA)[0][1];
+  (*fMatrixA)[2][0] = (*fMatrixA)[0][2];
+  (*fMatrixA)[2][1] = (*fMatrixA)[1][2];
+
   (*fEigenVectors) = fMatrixA -> EigenVectors(*fEigenValues);
 }
 
@@ -96,7 +100,7 @@ void ODRFitter::FitPlane()
   ChooseEigenValue(2);
 }
 
-TVector3 ODRFitter::GetCentroid()  { return TVector3((*fCentroid)[0][0], (*fCentroid)[1][0], (*fCentroid)[2][0]); }
+TVector3 ODRFitter::GetCentroid()  { return TVector3(fXCentroid, fYCentroid, fZCentroid); }
 TVector3 ODRFitter::GetNormal()    { return TVector3((*fNormal)[0], (*fNormal)[1], (*fNormal)[2]); }
 TVector3 ODRFitter::GetDirection() { return TVector3((*fNormal)[0], (*fNormal)[1], (*fNormal)[2]); }
    Int_t ODRFitter::GetNumPoints() { return fNumPoints; }
