@@ -3,6 +3,8 @@
 #define STLOG_COLOR_RED "\033[1m\033[32m"
 #define STLOG_COLOR_RESET "\033[1m\033[32m"
 
+using namespace std;
+
 ClassImp(STDebugLogger)
 
 STDebugLogger* STDebugLogger::fInstance = NULL;
@@ -11,7 +13,7 @@ STDebugLogger* STDebugLogger::Create(TString name)
   if (fInstance == NULL)
     fInstance = new STDebugLogger(name);
   else 
-    std::cout << "STDebugLogger already exist!" << std::endl;
+    cout << "STDebugLogger already exist!" << endl;
 
   return fInstance;
 }
@@ -57,31 +59,31 @@ STDebugLogger::Write()
 {
   fOutFile -> cd();
 
-  Double_t total_time;
+  Int_t total_time = 0;
 
-  std::map<TString, TStopwatch*>::iterator itTimer = fTimer.begin();
-  while (itTimer != fTimer.end()) 
+  std::map<TString, Int_t>::iterator itTimer = fTimeTotal.begin();
+  while (itTimer != fTimeTotal.end()) 
   {
-    total_time += itTimer -> second -> RealTime();
+    total_time += itTimer -> second;
     itTimer++;
   }
-  itTimer = fTimer.begin();
-  while (itTimer != fTimer.end()) 
+  cout << "-- Total Time: " << total_time << " ms" << endl;
+
+  itTimer = fTimeTotal.begin();
+  while (itTimer != fTimeTotal.end()) 
   {
-    std::cout << std::endl;
-    std::cout << "STDebugLogger::Summary of Timer " 
-              << itTimer -> first 
-              << ", (" << itTimer -> second -> RealTime()/total_time * 100 << " %)" 
-              << std::endl;
-    itTimer -> second -> Print("m");
+    cout << "-- Timer [" << itTimer -> first <<  "]: " << itTimer -> second 
+              << " ms (" << std::fixed << std::setprecision(2) 
+              << Double_t(itTimer -> second) / total_time * 100 << " %)" << endl;
     itTimer++;
   }
-  std::cout << std::endl;
+  cout << endl;
 
   std::map<TString, TH1D*>::iterator itHist1D = fMapHist1.begin();
   while (itHist1D != fMapHist1.end()) 
   {
-    std::cout << "STDebugLogger::Writing 1D Histogram " << itHist1D -> first << std::endl;
+    cout << itTimer -> second << endl;
+    cout << "STDebugLogger::Writing 1D Histogram " << itHist1D -> first << endl;
     itHist1D -> second -> Write();
     delete itHist1D -> second;
     itHist1D++;
@@ -90,7 +92,7 @@ STDebugLogger::Write()
   std::map<TString, TH2D*>::iterator tiHist2D = fMapHist2.begin();
   while (tiHist2D != fMapHist2.end()) 
   {
-    std::cout << "STDebugLogger::Writing 2D Histogram " << tiHist2D -> first << std::endl;
+    cout << "STDebugLogger::Writing 2D Histogram " << tiHist2D -> first << endl;
     tiHist2D -> second -> Write();
     delete tiHist2D -> second;
     tiHist2D++;
@@ -191,19 +193,16 @@ STDebugLogger::FillTree(TString name, Int_t nVal, Double_t *val, TString *bname)
 
 void STDebugLogger::TimerStart(TString name)
 {
-  if (fTimer[name] == NULL)
-  {
-    TStopwatch *timer = new TStopwatch();
-    fTimer[name] = timer;
-  }
-  TStopwatch *timer = fTimer[name];
-  timer -> Start(kFALSE);
+  fTimeStamp[name] = std::chrono::high_resolution_clock::now();
 }
 
 void STDebugLogger::TimerStop(TString name) 
 { 
-  TStopwatch *timer = fTimer[name];
-  timer -> Stop(); 
+  st_time_t stamp = fTimeStamp[name];
+  st_time_t now = std::chrono::high_resolution_clock::now();
+  
+  Int_t time_took = std::chrono::duration_cast<std::chrono::milliseconds>(now - stamp).count();
+  fTimeTotal[name] = time_took + fTimeTotal[name];
 }
 
 void 
@@ -218,18 +217,18 @@ TObject* STDebugLogger::GetObject(TString name) { return fMapObject[name] != NUL
 
 void STDebugLogger::Print(TString message)
 {
-  std::cout << "\033[1m\033[32m[STLOG]\033[0m "
-            << message 
-            << std::endl;
+  cout << "\033[1m\033[32m[STLOG]\033[0m "
+       << message 
+       << endl;
 }
 
 void STDebugLogger::Print(TString header, TString message)
 {
-  std::cout << "\033[1m\033[32m["
-            << header
-            << "]\033[0m "
-            << message 
-            << std::endl;
+  cout << "\033[1m\033[32m["
+       << header
+       << "]\033[0m "
+       << message 
+       << endl;
 }
 
 TFile* STDebugLogger::GetOutFile() { return fOutFile; }
