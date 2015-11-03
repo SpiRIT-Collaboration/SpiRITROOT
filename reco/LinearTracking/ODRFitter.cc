@@ -68,6 +68,29 @@ void ODRFitter::AddPoint(Double_t x, Double_t y, Double_t z, Double_t w)
   fNumPoints++;
 }
 
+void ODRFitter::SetMatrixA(
+  Double_t c00, 
+  Double_t c01, 
+  Double_t c02,
+  Double_t c11, 
+  Double_t c12, 
+  Double_t c22)
+{
+  (*fMatrixA)[0][0] = c00;
+  (*fMatrixA)[0][1] = c01;
+  (*fMatrixA)[0][2] = c02;
+
+  (*fMatrixA)[1][1] = c11;
+  (*fMatrixA)[1][2] = c12;
+
+  (*fMatrixA)[2][2] = c22;
+
+  fSumOfPC2 += c00 + c11 + c22;
+}
+
+void ODRFitter::SetWeightSum(Double_t weightSum) { fWeightSum = weightSum; }
+void ODRFitter::SetNumPoints(Double_t numPoints) { fNumPoints = numPoints; }
+
 void ODRFitter::Solve()
 {
   (*fMatrixA)[1][0] = (*fMatrixA)[0][1];

@@ -96,6 +96,17 @@ STLinearTrackFitter::SetDataToODRFitter(STLinearTrack* track)
                             track -> GetYCentroid(),
                             track -> GetZCentroid());
 
+  fODRFitter -> SetMatrixA(track -> GetSumDistCXX(),
+                           track -> GetSumDistCXY(),
+                           track -> GetSumDistCZX(),
+                           track -> GetSumDistCYY(),
+                           track -> GetSumDistCYZ(),
+                           track -> GetSumDistCZZ());
+
+  fODRFitter -> SetWeightSum(track -> GetChargeSum());
+  fODRFitter -> SetNumPoints(track -> GetNumHits());
+
+  /*
   std::vector<STHit*> *hitPointerBuffer = track -> GetHitPointerArray();
   Int_t nHits = hitPointerBuffer -> size();
 
@@ -107,6 +118,7 @@ STLinearTrackFitter::SetDataToODRFitter(STLinearTrack* track)
                            position.Z(), 
                            hitInTrack -> GetCharge());
   }
+  */
 }
 
 void
@@ -114,6 +126,39 @@ STLinearTrackFitter::SetDataToODRFitter(STLinearTrack* track, STHit* hit)
 {
   fODRFitter -> Reset();
 
+  STLinearTrack trackTemp;
+
+  trackTemp.SetCentroid (track -> GetCentroid());
+  trackTemp.SetChargeSum(track -> GetChargeSum());
+  trackTemp.SetNumHits  (track -> GetNumHits());
+
+  trackTemp.SetSumDistCX (track -> GetSumDistCX());
+  trackTemp.SetSumDistCY (track -> GetSumDistCY());
+  trackTemp.SetSumDistCZ (track -> GetSumDistCZ());
+  trackTemp.SetSumDistCXX(track -> GetSumDistCXX());
+  trackTemp.SetSumDistCYY(track -> GetSumDistCYY());
+  trackTemp.SetSumDistCZZ(track -> GetSumDistCZZ());
+  trackTemp.SetSumDistCXY(track -> GetSumDistCXY());
+  trackTemp.SetSumDistCYZ(track -> GetSumDistCYZ());
+  trackTemp.SetSumDistCZX(track -> GetSumDistCZX());
+
+  trackTemp.AddHit(hit);
+
+  fODRFitter -> SetCentroid(trackTemp.GetXCentroid(),
+                            trackTemp.GetYCentroid(),
+                            trackTemp.GetZCentroid());
+
+  fODRFitter -> SetMatrixA(trackTemp.GetSumDistCXX(),
+                           trackTemp.GetSumDistCXY(),
+                           trackTemp.GetSumDistCZX(),
+                           trackTemp.GetSumDistCYY(),
+                           trackTemp.GetSumDistCYZ(),
+                           trackTemp.GetSumDistCZZ());
+
+  fODRFitter -> SetWeightSum(trackTemp.GetChargeSum());
+  fODRFitter -> SetNumPoints(trackTemp.GetNumHits());
+
+  /*
   TVector3 positionHit = hit -> GetPosition();
   Double_t chargeHit   = hit -> GetCharge();
   Double_t chargeSum   = track -> GetChargeSum();
@@ -149,6 +194,7 @@ STLinearTrackFitter::SetDataToODRFitter(STLinearTrack* track, STHit* hit)
                            position.Z(), 
                            hitInTrack -> GetCharge());
   }
+  */
 }
 
 void
@@ -157,6 +203,45 @@ STLinearTrackFitter::SetDataToODRFitter(STLinearTrack* track1,
 {
   fODRFitter -> Reset();
 
+  STLinearTrack trackTemp;
+
+  trackTemp.SetCentroid (track1 -> GetCentroid());
+  trackTemp.SetChargeSum(track1 -> GetChargeSum());
+  trackTemp.SetNumHits  (track1 -> GetNumHits());
+
+  trackTemp.SetSumDistCX (track1 -> GetSumDistCX());
+  trackTemp.SetSumDistCY (track1 -> GetSumDistCY());
+  trackTemp.SetSumDistCZ (track1 -> GetSumDistCZ());
+  trackTemp.SetSumDistCXX(track1 -> GetSumDistCXX());
+  trackTemp.SetSumDistCYY(track1 -> GetSumDistCYY());
+  trackTemp.SetSumDistCZZ(track1 -> GetSumDistCZZ());
+  trackTemp.SetSumDistCXY(track1 -> GetSumDistCXY());
+  trackTemp.SetSumDistCYZ(track1 -> GetSumDistCYZ());
+  trackTemp.SetSumDistCZX(track1 -> GetSumDistCZX());
+
+  std::vector<STHit*> *hitBuffer = track2 -> GetHitPointerArray();
+  Int_t numHits = hitBuffer -> size();
+  for (Int_t iHit = 0; iHit < numHits; iHit++) {
+    STHit* hit = hitBuffer -> at(iHit);
+    trackTemp.AddHit(hit);
+  }
+
+  fODRFitter -> SetCentroid(trackTemp.GetXCentroid(),
+                            trackTemp.GetYCentroid(),
+                            trackTemp.GetZCentroid());
+
+  fODRFitter -> SetMatrixA(trackTemp.GetSumDistCXX(),
+                           trackTemp.GetSumDistCXY(),
+                           trackTemp.GetSumDistCZX(),
+                           trackTemp.GetSumDistCYY(),
+                           trackTemp.GetSumDistCYZ(),
+                           trackTemp.GetSumDistCZZ());
+
+  fODRFitter -> SetWeightSum(trackTemp.GetChargeSum());
+  fODRFitter -> SetNumPoints(trackTemp.GetNumHits());
+
+
+  /*
   STLinearTrack track;
 
   std::vector<STHit*> *hitPointerBuffer1 = track1 -> GetHitPointerArray();
@@ -194,6 +279,7 @@ STLinearTrackFitter::SetDataToODRFitter(STLinearTrack* track1,
                            position.Z(), 
                            hit -> GetCharge());
   }
+  */
 }
 
 void 

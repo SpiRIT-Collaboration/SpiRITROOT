@@ -52,6 +52,15 @@ class ODRFitter
      */
     void AddPoint(Double_t x, Double_t y, Double_t z, Double_t w = 1);
 
+    void SetMatrixA(Double_t c00, 
+                    Double_t c01, 
+                    Double_t c02,
+                    Double_t c11, 
+                    Double_t c12, 
+                    Double_t c22);
+    void SetWeightSum(Double_t weightSum);
+    void SetNumPoints(Double_t numPoints);
+
     void FitPlane(); ///< Fit plane
     void FitLine();  ///< Fit line
 
