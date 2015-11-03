@@ -22,6 +22,9 @@ class STLinearTrack : public TObject
     STLinearTrack(Int_t trackID, STHit* hit);
     ~STLinearTrack();
 
+    void Reset();
+    void AddHit(STHit *hit);         ///< Add hit and update parameters
+
     void SetTrackID(Int_t id);       ///< Set track ID
     void SetIsPrimary(Bool_t val);   ///< Set track primary flag
     void SetIsFitted(Bool_t val);    ///< Set fitted flag
@@ -44,10 +47,23 @@ class STLinearTrack : public TObject
     void SetYNormal(Double_t y);     ///< Set y component of normal vector
     void SetZNormal(Double_t z);     ///< Set z component of normal vector
 
-    void AddHit(STHit *hit);         ///< Add id into hit ID array
+    void SetChargeSum(Double_t val);  
+    void SetNumHits(Int_t val);
 
-    void SetRMSLine(Double_t rms);
+    void SetRMSLine (Double_t rms);
     void SetRMSPlane(Double_t rms);
+
+    void SetSumDistCX(Double_t val);
+    void SetSumDistCY(Double_t val);
+    void SetSumDistCZ(Double_t val);
+
+    void SetSumDistCXX(Double_t val);
+    void SetSumDistCYY(Double_t val);
+    void SetSumDistCZZ(Double_t val);
+
+    void SetSumDistCXY(Double_t val);
+    void SetSumDistCYZ(Double_t val);
+    void SetSumDistCZX(Double_t val);
 
 
        Int_t GetTrackID()    const; ///< Get track ID
@@ -76,17 +92,29 @@ class STLinearTrack : public TObject
     Double_t GetYCentroid()  const; ///< Get y component of centroid
     Double_t GetZCentroid()  const; ///< Get z component of centroid
 
-    Double_t GetChargeSum() const; ///< Get charge sum 
-       Int_t GetNumHits();         ///< Get number of hits
+    Double_t GetChargeSum()  const; ///< Get charge sum 
+       Int_t GetNumHits();          ///< Get number of hits
 
     std::vector<Int_t>  *GetHitIDArray();      ///< Get hit ID array
     std::vector<STHit*> *GetHitPointerArray(); ///< Get hit ID array
 
-    Int_t GetHitID(Int_t i);
+    Int_t  GetHitID(Int_t i);
     STHit *GetHit(Int_t i);
 
-    Double_t GetRMSLine();
-    Double_t GetRMSPlane();
+    Double_t GetRMSLine()    const;
+    Double_t GetRMSPlane()   const;
+
+    Double_t GetSumDistCX()  const;
+    Double_t GetSumDistCY()  const;
+    Double_t GetSumDistCZ()  const;
+
+    Double_t GetSumDistCXX() const;
+    Double_t GetSumDistCYY() const;
+    Double_t GetSumDistCZZ() const;
+
+    Double_t GetSumDistCXY() const;
+    Double_t GetSumDistCYZ() const;
+    Double_t GetSumDistCZX() const;
 
   private:
     Int_t  fTrackID;   ///< Track ID.
@@ -111,15 +139,30 @@ class STLinearTrack : public TObject
     Double_t fZNormal; ///< z component of normal vector
 
     Double_t fChargeSum; ///< charge sum
+       Int_t fNumHits;
 
-    std::vector<STHit*> *fHitPointerArray; //! < STHit pointer array
-    std::vector<Int_t>  *fHitIDArray;      //-> < hit id array
+    std::vector<STHit*> *fHitPtrArray; //! < STHit pointer array
+    std::vector<Int_t>  *fHitIDArray;  //-> < hit id array
 
     Double_t fRMSLine;
     Double_t fRMSPlane;
 
+    // For track fit ___________________________________________________________
 
-  ClassDef(STLinearTrack, 2);
+    Double_t fSumDistCX;  //! < SUM_i (x_centroid - x_i)
+    Double_t fSumDistCY;  //! < SUM_i (y_centroid - y_i)
+    Double_t fSumDistCZ;  //! < SUM_i (z_centroid - z_i)
+
+    Double_t fSumDistCXX; //! < SUM_i {(x_centroid - x_i) * (x_centroid - x_i) }
+    Double_t fSumDistCYY; //! < SUM_i {(y_centroid - y_i) * (y_centroid - y_i) }
+    Double_t fSumDistCZZ; //! < SUM_i {(z_centroid - z_i) * (z_centroid - z_i) }
+
+    Double_t fSumDistCXY; //! < SUM_i {(x_centroid - x_i) * (y_centroid - y_i) }
+    Double_t fSumDistCYZ; //! < SUM_i {(y_centroid - y_i) * (z_centroid - z_i) }
+    Double_t fSumDistCZX; //! < SUM_i {(z_centroid - z_i) * (x_centroid - x_i) }
+
+
+  ClassDef(STLinearTrack, 3);
 };
 
 #endif

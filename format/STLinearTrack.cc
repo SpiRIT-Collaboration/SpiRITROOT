@@ -9,35 +9,9 @@
 ClassImp(STLinearTrack)
 
 STLinearTrack::STLinearTrack()
+: fHitPtrArray(NULL), fHitIDArray(NULL)
 {
-  fTrackID   = -1;
-  fIsPrimary = kFALSE;
-  fIsFitted  = kFALSE;
-  fIsSorted  = kFALSE;
-
-  fXVertex = 0;
-  fYVertex = 0;
-  fZVertex = 0;
-
-  fXCentroid = 0;
-  fYCentroid = 0;
-  fZCentroid = 0;
-
-  fXDirection = 0;
-  fYDirection = 0;
-  fZDirection = 0;
-
-  fXNormal = 0;
-  fYNormal = 0;
-  fZNormal = 0;
-
-  fChargeSum = 0;
-
-  fHitPointerArray = new std::vector<STHit*>;
-  fHitIDArray = new std::vector<Int_t>;
-
-  fRMSLine = -1;
-  fRMSPlane = -1;
+  Reset();
 }
 
 STLinearTrack::~STLinearTrack()
@@ -68,17 +42,40 @@ STLinearTrack::STLinearTrack(STLinearTrack *track)
   fZNormal = track -> GetZNormal();
 
   fChargeSum = track -> GetChargeSum();
+  fNumHits = track -> GetNumHits();
 
-  fHitPointerArray = track -> GetHitPointerArray(); 
-  fHitIDArray = track -> GetHitIDArray(); 
+  fHitPtrArray = track -> GetHitPointerArray(); 
+  fHitIDArray  = track -> GetHitIDArray(); 
 
-  fRMSLine = track -> GetRMSLine();
+  fRMSLine  = track -> GetRMSLine();
   fRMSPlane = track -> GetRMSPlane();
+
+  /*
+  fSumDistCX = track -> GetSumDistCX();
+  fSumDistCY = track -> GetSumDistCY();
+  fSumDistCZ = track -> GetSumDistCZ();
+
+  fSumDistCXX = track -> GetSumDistCXX();
+  fSumDistCYY = track -> GetSumDistCYY();
+  fSumDistCZZ = track -> GetSumDistCZZ();
+
+  fSumDistCXY = track -> GetSumDistCXY();
+  fSumDistCYZ = track -> GetSumDistCYZ();
+  fSumDistCZX = track -> GetSumDistCZX();
+  */
 }
 
 STLinearTrack::STLinearTrack(Int_t trackID, STHit* hit)
+: fHitPtrArray(NULL), fHitIDArray(NULL)
 {
-  fTrackID   = trackID;
+  Reset();
+  fTrackID = trackID;
+  AddHit(hit);
+}
+
+void STLinearTrack::Reset()
+{
+  fTrackID   = -1;
   fIsPrimary = kFALSE;
   fIsFitted  = kFALSE;
   fIsSorted  = kFALSE;
@@ -100,15 +97,80 @@ STLinearTrack::STLinearTrack(Int_t trackID, STHit* hit)
   fZNormal = 0;
 
   fChargeSum = 0;
+  fNumHits = 0;
 
-  fHitPointerArray = new std::vector<STHit*>;
-  fHitIDArray = new std::vector<Int_t>;
+  if(fHitPtrArray == NULL) fHitPtrArray = new std::vector<STHit*>;
+  else                     fHitPtrArray -> clear();
+
+  if(fHitIDArray  == NULL) fHitIDArray = new std::vector<Int_t>;
+  else                     fHitIDArray -> clear();
 
   fRMSLine = -1;
   fRMSPlane = -1;
 
-  AddHit(hit);
+  fSumDistCX = 0;
+  fSumDistCY = 0;
+  fSumDistCZ = 0;
+
+  fSumDistCXX = 0;
+  fSumDistCYY = 0;
+  fSumDistCZZ = 0;
+
+  fSumDistCXY = 0;
+  fSumDistCYZ = 0;
+  fSumDistCZX = 0;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+void STLinearTrack::AddHit(STHit *hit)
+{
+  fIsFitted = kFALSE;
+  fIsSorted = kFALSE;
+
+  Double_t xCentroid_pre = fXCentroid;
+  Double_t yCentroid_pre = fYCentroid;
+  Double_t zCentroid_pre = fZCentroid;
+  Double_t chargeSum_pre = fChargeSum;
+
+  TVector3 position = hit -> GetPosition();
+  Double_t charge   = hit -> GetCharge();
+
+  fXCentroid = (fXCentroid * fChargeSum  +  charge * position.X());
+  fYCentroid = (fYCentroid * fChargeSum  +  charge * position.Y());
+  fZCentroid = (fZCentroid * fChargeSum  +  charge * position.Z());
+
+  fChargeSum += charge;
+
+  fXCentroid *= 1./fChargeSum;
+  fYCentroid *= 1./fChargeSum;
+  fZCentroid *= 1./fChargeSum;
+
+  fHitPtrArray -> push_back(hit);
+  fHitIDArray -> push_back(hit -> GetHitID());
+
+  fNumHits++;
+
+  Double_t dXCentroid = fXCentroid - xCentroid_pre;
+  Double_t dYCentroid = fYCentroid - yCentroid_pre;
+  Double_t dZCentroid = fZCentroid - zCentroid_pre;
+
+  Double_t dXNew = position.X() - fXCentroid;
+  Double_t dYNew = position.Y() - fYCentroid;
+  Double_t dZNew = position.Z() - fZCentroid;
+
+  fSumDistCXX += charge * dXNew * dXNew + (chargeSum_pre * dXCentroid - 2 * fSumDistCX) * dXCentroid;
+  fSumDistCYY += charge * dYNew * dYNew + (chargeSum_pre * dYCentroid - 2 * fSumDistCY) * dYCentroid;
+  fSumDistCZZ += charge * dZNew * dZNew + (chargeSum_pre * dZCentroid - 2 * fSumDistCZ) * dZCentroid;
+
+  fSumDistCXY += charge * dXNew * dYNew - dYCentroid * fSumDistCX - dXCentroid * fSumDistCY + chargeSum_pre * dXCentroid * dYCentroid;
+  fSumDistCYZ += charge * dYNew * dZNew - dZCentroid * fSumDistCY - dYCentroid * fSumDistCZ + chargeSum_pre * dYCentroid * dZCentroid;
+  fSumDistCZX += charge * dZNew * dXNew - dXCentroid * fSumDistCZ - dZCentroid * fSumDistCX + chargeSum_pre * dZCentroid * dXCentroid;
+
+  fSumDistCX += charge * dXNew - chargeSum_pre * dXCentroid;
+  fSumDistCY += charge * dYNew - chargeSum_pre * dYCentroid;
+  fSumDistCZ += charge * dZNew - chargeSum_pre * dZCentroid;
+}
+////////////////////////////////////////////////////////////////////////////////
 
 void STLinearTrack::SetTrackID(Int_t id)     { fTrackID   = id;  }
 void STLinearTrack::SetIsPrimary(Bool_t val) { fIsPrimary = val; }
@@ -152,28 +214,23 @@ void STLinearTrack::SetXNormal(Double_t x) { fXNormal = x; }
 void STLinearTrack::SetYNormal(Double_t y) { fYNormal = y; }
 void STLinearTrack::SetZNormal(Double_t z) { fZNormal = z; }
 
-void STLinearTrack::AddHit(STHit *hit)
-{
-  TVector3 position = hit -> GetPosition();
-  fXCentroid = (fXCentroid * fChargeSum  +  hit -> GetCharge() * position.X());
-  fYCentroid = (fYCentroid * fChargeSum  +  hit -> GetCharge() * position.Y());
-  fZCentroid = (fZCentroid * fChargeSum  +  hit -> GetCharge() * position.Z());
+void STLinearTrack::SetChargeSum(Double_t val) { fChargeSum = val; }
+void STLinearTrack::SetNumHits(Int_t val)      { fNumHits = val; }
 
-  fChargeSum += hit -> GetCharge();
-
-  fXCentroid *= 1./fChargeSum;
-  fYCentroid *= 1./fChargeSum;
-  fZCentroid *= 1./fChargeSum;
-
-  fHitPointerArray -> push_back(hit);
-  fHitIDArray -> push_back(hit -> GetHitID());
-
-  fIsFitted = kFALSE;
-  fIsSorted = kFALSE;
-}
-
-void STLinearTrack::SetRMSLine(Double_t rms) { fRMSLine = rms; }
+void STLinearTrack::SetRMSLine (Double_t rms) { fRMSLine  = rms; }
 void STLinearTrack::SetRMSPlane(Double_t rms) { fRMSPlane = rms; }
+
+void STLinearTrack::SetSumDistCX(Double_t val) { fSumDistCX = val; }
+void STLinearTrack::SetSumDistCY(Double_t val) { fSumDistCY = val; }
+void STLinearTrack::SetSumDistCZ(Double_t val) { fSumDistCZ = val; }
+
+void STLinearTrack::SetSumDistCXX(Double_t val) { fSumDistCXX = val; }
+void STLinearTrack::SetSumDistCYY(Double_t val) { fSumDistCYY = val; }
+void STLinearTrack::SetSumDistCZZ(Double_t val) { fSumDistCZZ = val; }
+
+void STLinearTrack::SetSumDistCXY(Double_t val) { fSumDistCXY = val; }
+void STLinearTrack::SetSumDistCYZ(Double_t val) { fSumDistCYZ = val; }
+void STLinearTrack::SetSumDistCZX(Double_t val) { fSumDistCZX = val; }
 
    Int_t STLinearTrack::GetTrackID()    const { return fTrackID; }
   Bool_t STLinearTrack::IsPrimary()     const { return fIsPrimary; }
@@ -202,13 +259,25 @@ Double_t STLinearTrack::GetYCentroid()  const { return fYCentroid; }
 Double_t STLinearTrack::GetZCentroid()  const { return fZCentroid; }
 
 Double_t STLinearTrack::GetChargeSum()  const { return fChargeSum; }
-   Int_t STLinearTrack::GetNumHits()          { return fHitIDArray -> size(); }
+   Int_t STLinearTrack::GetNumHits()          { return fNumHits; }
 
 std::vector<Int_t>  *STLinearTrack::GetHitIDArray()      { return fHitIDArray; }
-std::vector<STHit*> *STLinearTrack::GetHitPointerArray() { return fHitPointerArray; }
+std::vector<STHit*> *STLinearTrack::GetHitPointerArray() { return fHitPtrArray; }
 
 Int_t  STLinearTrack::GetHitID(Int_t i) { return fHitIDArray -> at(i); }
-STHit* STLinearTrack::GetHit(Int_t i)   { return fHitPointerArray -> at(i); }
+STHit* STLinearTrack::GetHit(Int_t i)   { return fHitPtrArray -> at(i); }
 
-Double_t STLinearTrack::GetRMSLine()  { return fRMSLine; }
-Double_t STLinearTrack::GetRMSPlane() { return fRMSPlane; }
+Double_t STLinearTrack::GetRMSLine()    const { return fRMSLine; }
+Double_t STLinearTrack::GetRMSPlane()   const { return fRMSPlane; }
+
+Double_t STLinearTrack::GetSumDistCX()  const { return fSumDistCX; }
+Double_t STLinearTrack::GetSumDistCY()  const { return fSumDistCY; }
+Double_t STLinearTrack::GetSumDistCZ()  const { return fSumDistCZ; }
+
+Double_t STLinearTrack::GetSumDistCXX() const { return fSumDistCXX; }
+Double_t STLinearTrack::GetSumDistCYY() const { return fSumDistCYY; }
+Double_t STLinearTrack::GetSumDistCZZ() const { return fSumDistCZZ; }
+
+Double_t STLinearTrack::GetSumDistCXY() const { return fSumDistCXY; }
+Double_t STLinearTrack::GetSumDistCYZ() const { return fSumDistCYZ; }
+Double_t STLinearTrack::GetSumDistCZX() const { return fSumDistCZX; }
