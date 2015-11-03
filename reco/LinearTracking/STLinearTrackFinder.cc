@@ -33,6 +33,8 @@ STLinearTrackFinder::STLinearTrackFinder()
   SetRMSCut(12, 3);
   SetProximityTrackCutFactor(18, 5);
   SetDotProductCut(0.8, 0.8);
+  SetPerpYCut(200);
+  SetNumHitsVanishCut(3);
 
   cout << endl;
   cout << "List of Parameters ================================================" << endl;
@@ -122,7 +124,7 @@ STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *tracks)
     STHit *hit = new STHit(event -> GetHit(iHit));
 
     TVector3 p = hit -> GetPosition();
-    if (TMath::Sqrt(p.X()*p.X() + p.Z()*p.Z()) < 200)
+    if (TMath::Sqrt(p.X()*p.X() + p.Z()*p.Z()) < fPerpYCut)
       continue;
 
     fHitQueue -> push_back(hit);
@@ -132,8 +134,10 @@ STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *tracks)
   std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortZInv());
 
   Build  (fTrackQueue, fHitQueue, fCorrTH);
+
   Select (fTrackQueue, fTrackQueue, fHitQueue, TMath::Pi()*1/4);
   Build  (fTrackQueue, fHitQueue, fCorrTH_justPerp, kFALSE);
+
   Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
   Merge  (fTrackBufferFinal);
   Merge  (fTrackBufferFinal);
@@ -156,14 +160,6 @@ STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *tracks)
 void 
 STLinearTrackFinder::Build(vecTrk_t *tracks, vecHit_t *hits, vecCTH_t *corrTH, Bool_t createNewTracks)
 {
-#ifdef DEBUGLIT_TIMER
-  STDebugLogger::Instance() -> TimerStart("LIT Build");
-#endif
-
-#ifdef DEBUGLIT
-  fLogger -> Info(MESSAGE_ORIGIN, "Build");
-#endif
-
   Int_t numHits = hits -> size();
 
   for (Int_t iHit = 0; iHit < numHits; iHit++)
@@ -179,19 +175,9 @@ STLinearTrackFinder::Build(vecTrk_t *tracks, vecHit_t *hits, vecCTH_t *corrTH, B
       Double_t quality = 0;
       Bool_t survive = kFALSE;
 
-#ifdef DEBUGLIT_BUILD
-      cout << "[Correlating Track-Hit]" 
-           << " trk-id:" << track -> GetTrackID() 
-           << " (out of "  << tracks -> size() << ")"
-           << " no.hits:" << track -> GetNumHits() 
-           << endl;
-#endif
       for (auto correlator : *corrTH) 
       {
         correlator -> Correlate(track, hit, survive, quality);
-#ifdef DEBUGLIT_BUILD
-        cout << "  " << survive << " " << quality << endl;
-#endif
         if (survive == kFALSE) 
           break;
       }
@@ -208,35 +194,19 @@ STLinearTrackFinder::Build(vecTrk_t *tracks, vecHit_t *hits, vecCTH_t *corrTH, B
     
     if (trackCandidate != NULL){
       trackCandidate -> AddHit(hit);
-      fFitter -> FitAndSetTrack(trackCandidate);
       hits -> erase(hits -> begin() + idxHit);
+      fFitter -> FitAndSetTrack(trackCandidate);
     }
     else if (createNewTracks == kTRUE) {
       tracks -> push_back(new STLinearTrack(tracks -> size(), hit));
       hits -> erase(hits -> begin() + idxHit);
     }
   }
-
-#ifdef DEBUGLIT_TIMER
-  STDebugLogger::Instance() -> TimerStop("LIT Build");
-#endif
-
-#ifdef DEBUGLIT
-  fLogger -> Info(MESSAGE_ORIGIN, Form("Build-end: num. tracks: %lu, num. hits: %lu", tracks -> size(), hits -> size()));
-#endif
 }
 
 void
 STLinearTrackFinder::Merge(vecTrk_t *tracks)
 {
-#ifdef DEBUGLIT_TIMER
-  STDebugLogger::Instance() -> TimerStart("LIT Merge");
-#endif
-
-#ifdef DEBUGLIT_MERGE
-  fLogger -> Info(MESSAGE_ORIGIN, "Merge");
-#endif
-
   Int_t numTracks = tracks -> size();
 
   for (Int_t iTrack = 0; iTrack < numTracks; iTrack++)
@@ -256,21 +226,9 @@ STLinearTrackFinder::Merge(vecTrk_t *tracks)
 
       Double_t quality = 0;
       Bool_t survive = kFALSE;
-#ifdef DEBUGLIT_MERGE
-      cout << "[Correlating Track-Track]" 
-           << " (out of "  << tracks -> size() << ")"
-           << " trk1-id:" << track -> GetTrackID() 
-           << "/no.hits:" << track -> GetNumHits() 
-           << " trk2-id:" << trackCompare -> GetTrackID() 
-           << "/no.hits:" << trackCompare -> GetNumHits() 
-           << endl;
-#endif
       for (auto correlator : *fCorrTT) 
       {
         correlator -> Correlate(track, trackCompare, survive, quality);
-#ifdef DEBUGLIT_MERGE
-        cout << "  " << survive << " " << quality << endl;
-#endif
         if (survive == kFALSE) 
           break;
       }
@@ -291,27 +249,11 @@ STLinearTrackFinder::Merge(vecTrk_t *tracks)
       tracks -> erase(tracks -> begin() + idxTrack);
     }
   }
-
-#ifdef DEBUGLIT_TIMER
-  STDebugLogger::Instance() -> TimerStop("LIT Merge");
-#endif
-
-#ifdef DEBUGLIT
-  fLogger -> Info(MESSAGE_ORIGIN, Form("Merge-end: num. tracks: %lu", tracks -> size()));
-#endif
 }
 
 void
 STLinearTrackFinder::Select(vecTrk_t *tracks, vecTrk_t *tracks2, vecHit_t *hits, Double_t thetaCut)
 {
-#ifdef DEBUGLIT_TIMER
-  STDebugLogger::Instance() -> TimerStart("LIT Select");
-#endif
-
-#ifdef DEBUGLIT
-  fLogger -> Info(MESSAGE_ORIGIN, "Select");
-#endif
-
   TVector3 pointingZ(0,0,1);
   Double_t cosineCut = TMath::Cos(thetaCut);
 
@@ -319,13 +261,8 @@ STLinearTrackFinder::Select(vecTrk_t *tracks, vecTrk_t *tracks2, vecHit_t *hits,
 
   for (auto track : *tracks)
   {
-#ifdef DEBUGLIT_SELECT
-    cout << endl;
-    cout << "Testing track-" << track -> GetTrackID() << endl;
-    cout << "  num  " << track -> GetNumHits() << " <? " << fNumHitsTrackCut << endl;
-#endif
     if (track -> GetNumHits() < fNumHitsTrackCut) {
-      if (track -> GetNumHits() > 3) 
+      if (track -> GetNumHits() > fNumHitsVanishCut) 
         ReturnHits(track, hits);
       continue; 
     }
@@ -333,25 +270,15 @@ STLinearTrackFinder::Select(vecTrk_t *tracks, vecTrk_t *tracks2, vecHit_t *hits,
     if (track -> IsFitted() == kFALSE)
       fFitter -> FitAndSetTrack(track); 
 
-#ifdef DEBUGLIT_SELECT
-    cout << "  rms line:  " << track -> GetRMSLine() << " <? " << fRMSLineCut << endl;
-    cout << "  rms plane: " << track -> GetRMSPlane() << " <? " << fRMSPlaneCut << endl;
-#endif
     if (track -> GetRMSLine() > fRMSLineCut || track -> GetRMSPlane() > fRMSPlaneCut) {
       ReturnHits(track, hits);
       continue; 
     }
 
-#ifdef DEBUGLIT_SELECT
-    cout << "  dot  " << pointingZ.Dot(track -> GetDirection()) << " >? " << cosineCut<< endl;
-#endif
     if (pointingZ.Dot(track -> GetDirection()) < cosineCut) {
       ReturnHits(track, hits);
       continue;
     }
-#ifdef DEBUGLIT_SELECT
-    cout << "  OK!" << endl;
-#endif
 
     fTrackBufferTemp -> push_back(track);
   }
@@ -363,14 +290,6 @@ STLinearTrackFinder::Select(vecTrk_t *tracks, vecTrk_t *tracks2, vecHit_t *hits,
 
   fTrackBufferTemp -> clear();
 
-#ifdef DEBUGLIT_TIMER
-  STDebugLogger::Instance() -> TimerStop("LIT Select");
-#endif
-
-#ifdef DEBUGLIT_SELECT
-  fLogger -> Info(MESSAGE_ORIGIN, Form("Select-end: num. tracks: %lu, >> num tracks2: %lu, hits: %lu",
-                                       tracks -> size(), tracks2 -> size(), hits -> size()));
-#endif
 }
 
 void 

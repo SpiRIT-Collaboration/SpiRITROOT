@@ -30,6 +30,8 @@ STLinearTrackFinderAbstract::STLinearTrackFinderAbstract()
   SetRMSCut(18, 1);
   SetProximityTrackCutFactor(6, 1);
   SetDotProductCut(0.85, 0.9);
+  SetPerpYCut(200);
+  SetNumHitsVanishCut(3);
 }
 
 void 
@@ -86,4 +88,16 @@ STLinearTrackFinderAbstract::SetDotProductCut(
 {
   fDirectionDotCut = directionDotCut;
   fNormalDotCut = normalDotCut;
+}
+
+void 
+STLinearTrackFinderAbstract::SetPerpYCut(Double_t perpYCut)
+{
+  fPerpYCut = perpYCut;
+}
+
+void 
+STLinearTrackFinderAbstract::SetNumHitsVanishCut(Double_t numHitsVanishCut)
+{
+  fNumHitsVanishCut = numHitsVanishCut;
 }

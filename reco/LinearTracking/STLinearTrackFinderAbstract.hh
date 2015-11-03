@@ -53,6 +53,9 @@ class STLinearTrackFinderAbstract
 
     Double_t fDirectionDotCut;
     Double_t fNormalDotCut;
+
+    Double_t fPerpYCut;
+    Double_t fNumHitsVanishCut;
   
   public:
     /// Set number of hits cuts
@@ -93,6 +96,9 @@ class STLinearTrackFinderAbstract
     /// @param normalDotCut     norma vector dot product cut for
     virtual void SetDotProductCut(Double_t directionDotCut, 
                                   Double_t normalDotCut);
+
+    virtual void SetPerpYCut(Double_t perpYCut);
+    virtual void SetNumHitsVanishCut(Double_t numHitsVanishCut);
 
   ClassDef(STLinearTrackFinderAbstract, 1)
 };
