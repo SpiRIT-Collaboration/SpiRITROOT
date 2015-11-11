@@ -36,6 +36,7 @@ class STLinearTrackFinder : public STLinearTrackFinderAbstract
 
     vecCTH_t *fCorrTH;
     vecCTH_t *fCorrTH_largeAngle;
+    vecCTH_t *fCorrTH_largeAngle2;
     vecCTH_t *fCorrTH_justPerp;
     vecCTT_t *fCorrTT;
 

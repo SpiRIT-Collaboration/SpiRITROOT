@@ -30,10 +30,10 @@ STLinearTrackFinder::STLinearTrackFinder()
 
   SetProximityCutFactor(1.1, 3.0, 1.1);
   SetNumHitsCut(30, 8, 20, 50);
-  SetRMSCut(12, 3);
-  SetProximityTrackCutFactor(18, 5);
+  SetRMSCut(12, 2.5);
+  SetProximityTrackCutFactor(18, 2.5);
   SetDotProductCut(0.8, 0.8);
-  SetPerpYCut(200);
+  SetPerpYCut(120);
   SetNumHitsVanishCut(3);
 
   cout << endl;
@@ -75,19 +75,29 @@ STLinearTrackFinder::STLinearTrackFinder()
 
   STCorrLinearTHProx *corrTHProx = new STCorrLinearTHProx (fProxXCut, fProxYCut, fProxZCut, fNumHitsCompare, fNumHitsCompareMax);
   STCorrLinearTHPerp *corrTHPerp = new STCorrLinearTHPerp (fNumHitsFit, fProxLineCut, fProxPlaneCut);
-  //STCorrLinearTHRMS  *corrTHRMS  = new STCorrLinearTHRMS  (fNumHitsFit, fRMSLineCut, fRMSPlaneCut);
+  STCorrLinearTHRMS  *corrTHRMS  = new STCorrLinearTHRMS  (fNumHitsFit, fRMSLineCut, fRMSPlaneCut);
 
   fCorrTH = new vecCTH_t;
   fCorrTH -> push_back(corrTHProx);
   fCorrTH -> push_back(corrTHPerp);
+  fCorrTH -> push_back(corrTHRMS);
 
   // -----------
 
-  corrTHProx = new STCorrLinearTHProx (fProxXCut, fProxYCut, 2 * fProxZCut, fNumHitsCompare, fNumHitsCompareMax);
+  corrTHProx = new STCorrLinearTHProx (fProxXCut, 2 * fProxYCut, fProxZCut, fNumHitsCompare, fNumHitsCompareMax);
+  corrTHPerp = new STCorrLinearTHPerp (fNumHitsFit, fProxLineCut, 2 * fProxPlaneCut);
 
   fCorrTH_largeAngle = new vecCTH_t;
   fCorrTH_largeAngle -> push_back(corrTHProx);
   fCorrTH_largeAngle -> push_back(corrTHPerp);
+
+  // -----------
+
+  corrTHProx = new STCorrLinearTHProx (fProxXCut, 5 * fProxYCut, fProxZCut, fNumHitsCompare, fNumHitsCompareMax);
+
+  fCorrTH_largeAngle2 = new vecCTH_t;
+  fCorrTH_largeAngle2 -> push_back(corrTHProx);
+  fCorrTH_largeAngle2 -> push_back(corrTHPerp);
 
   // -----------
 
@@ -133,28 +143,43 @@ STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *tracks)
   std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortXInv());
   std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortZInv());
 
+  ///////////////////////////////////////////////////////////////
   Build  (fTrackQueue, fHitQueue, fCorrTH);
-
   Select (fTrackQueue, fTrackQueue, fHitQueue, TMath::Pi()*1/4);
   Build  (fTrackQueue, fHitQueue, fCorrTH_justPerp, kFALSE);
 
   Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
   Merge  (fTrackBufferFinal);
   Merge  (fTrackBufferFinal);
+  ///////////////////////////////////////////////////////////////
 
+  ///////////////////////////////////////////////////////////////
   Build  (fTrackQueue, fHitQueue, fCorrTH_largeAngle);
   Merge  (fTrackQueue);
-  Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
+  Select (fTrackQueue, fTrackQueue, fHitQueue);
   Build  (fTrackQueue, fHitQueue, fCorrTH_justPerp, kFALSE);
+  Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
+  ///////////////////////////////////////////////////////////////
 
+  ///////////////////////////////////////////////////////////////
+  Build  (fTrackQueue, fHitQueue, fCorrTH_largeAngle2);
+  Merge  (fTrackQueue);
+  Select (fTrackQueue, fTrackQueue, fHitQueue);
+  Build  (fTrackQueue, fHitQueue, fCorrTH_justPerp, kFALSE);
+  Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
+  ///////////////////////////////////////////////////////////////
+  //
   std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortXInv());
   std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortZInv());
 
+  ///////////////////////////////////////////////////////////////
   Build  (fTrackQueue, fHitQueue, fCorrTH_largeAngle);
   Merge  (fTrackQueue);
   Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
+  ///////////////////////////////////////////////////////////////
 
-  SortHits(fTrackBufferFinal);
+  Merge    (fTrackBufferFinal);
+  SortHits (fTrackBufferFinal);
 }
 
 void 
@@ -270,7 +295,7 @@ STLinearTrackFinder::Select(vecTrk_t *tracks, vecTrk_t *tracks2, vecHit_t *hits,
     if (track -> IsFitted() == kFALSE)
       fFitter -> FitAndSetTrack(track); 
 
-    if (track -> GetRMSLine() > fRMSLineCut || track -> GetRMSPlane() > fRMSPlaneCut) {
+    if (track -> GetRMSLine() > fRMSLineCut || track -> GetRMSPlane() > 2 * fRMSPlaneCut) {
       ReturnHits(track, hits);
       continue; 
     }
