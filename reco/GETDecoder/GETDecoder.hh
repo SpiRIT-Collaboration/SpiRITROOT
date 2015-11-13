@@ -43,6 +43,8 @@ class GETDecoder : public TObject
     //! Constructor
     GETDecoder(TString filename /*!< GRAW filename including path */);
 
+    void Clear(); ///< Clear data information
+
     //! Frame type enumerator
     enum EFrameType { kBasic, kCobo, kMergedID, kMergedTime };
 

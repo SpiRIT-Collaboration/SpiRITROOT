@@ -103,6 +103,36 @@ void GETDecoder::Initialize()
   else                           fLayeredFrame -> Clear();
 }
 
+void GETDecoder::Clear() {
+  fFrameType = kBasic;
+
+  fIsDoneAnalyzing = kFALSE;
+  fIsDataInfo = kFALSE;
+
+  fDataSize = 0;
+  fCurrentDataID = -1;
+
+  fFrameInfoIdx = 0;
+  fCoboFrameInfoIdx = 0;
+  fTargetFrameInfoIdx = -1;
+
+  fBuffer = NULL;
+  fWriteFile = "";
+
+      fFrameInfoArray -> Clear("C");
+  fCoboFrameInfoArray -> Clear("C");
+
+          fHeaderBase -> Clear();
+    fBasicFrameHeader -> Clear();
+         fLayerHeader -> Clear();
+       fTopologyFrame -> Clear();
+          fBasicFrame -> Clear();
+           fCoboFrame -> Clear();
+        fLayeredFrame -> Clear();
+
+  fDataList.clear();
+}
+
 void GETDecoder::SetNumTbs(Int_t value) { fNumTbs = value; } 
 
 Bool_t GETDecoder::AddData(TString filename)
