@@ -3,7 +3,7 @@
 
 #include "GETBasicFrame.hh"
 
-class GETCoboFrame : public TObject {
+class GETCoboFrame {
   public:
     GETCoboFrame();
 
