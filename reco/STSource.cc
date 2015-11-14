@@ -52,7 +52,6 @@ Bool_t STSource::Init()
     }
   }
 
-  fDecoder -> SetFPNPedestal();
   fDecoder -> SetParContainers();
   Bool_t decoderInit = fDecoder -> Init();
 
