@@ -37,9 +37,18 @@ link_directories(${LINK_DIRECTORIES})
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
 GETDecoder/GETDecoder.cc
-GETDecoder/GETFrame.cc
+GETDecoder/GETFrameInfo.cc
+
+GETDecoder/GETHeaderBase.cc
+GETDecoder/GETBasicFrameHeader.cc
+GETDecoder/GETLayerHeader.cc
+
+GETDecoder/GETTopologyFrame.cc
+GETDecoder/GETBasicFrame.cc
+GETDecoder/GETCoboFrame.cc
+GETDecoder/GETLayeredFrame.cc
+
 GETDecoder/GETMath.cc
-GETDecoder/GETPlot.cc
 GETDecoder/GETFileChecker.cc
 
 STConverter/STCore.cc
