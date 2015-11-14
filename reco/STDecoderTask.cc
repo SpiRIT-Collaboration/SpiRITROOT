@@ -28,12 +28,6 @@ STDecoderTask::STDecoderTask()
   fDecoder = NULL;
   fDataNum = 0;
 
-  fUseInternalPedestal = kFALSE;
-  fPedestalStartTb = 3;
-  fAverageTbs = 20;
-  fPedestalFile = "";
-  fPedestalRMSFactor = 0;
-  fUseFPNPedestal = kFALSE;
   fFPNPedestalRMS = -1;
 
   fExternalNumTbs = kFALSE;
@@ -51,7 +45,6 @@ STDecoderTask::STDecoderTask()
   fRawEventArray = new TClonesArray("STRawEvent");
   fRawEvent = NULL;
 
-  fOldData = kFALSE;
   fIsSeparatedData = kFALSE;
 
   fEventID = -1;
@@ -65,14 +58,10 @@ void STDecoderTask::SetPersistence(Bool_t value)                                
 void STDecoderTask::SetNumTbs(Int_t numTbs)                                                   { fNumTbs = numTbs; fExternalNumTbs = kTRUE; }
 void STDecoderTask::AddData(TString filename, Int_t coboIdx)                                  { fDataList[coboIdx].push_back(filename); }
 void STDecoderTask::SetData(Int_t value)                                                      { fDataNum = value; }
-void STDecoderTask::SetInternalPedestal(Int_t startTb, Int_t averageTbs)                      { fUseInternalPedestal = kTRUE; fPedestalStartTb = startTb; fAverageTbs = averageTbs; } 
-void STDecoderTask::SetFPNPedestal()                                                          { fUseFPNPedestal = kTRUE; fUseInternalPedestal = kFALSE; fPedestalFile = ""; }
-void STDecoderTask::SetFPNPedestal(Double_t pedestalRMS)                                      { fUseFPNPedestal = kTRUE; fUseInternalPedestal = kFALSE; fPedestalFile = ""; fFPNPedestalRMS = pedestalRMS; }
-void STDecoderTask::SetPedestalData(TString filename, Double_t rmsFactor)                     { fPedestalFile = filename; fPedestalRMSFactor = rmsFactor; }
+void STDecoderTask::SetFPNPedestal(Double_t pedestalRMS)                                      { fFPNPedestalRMS = pedestalRMS; }
 void STDecoderTask::SetUseGainCalibration(Bool_t value)                                       { fUseGainCalibration = value; }
 void STDecoderTask::SetGainCalibrationData(TString filename)                                  { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)  { fGainConstant = constant; fGainLinear = linear; fGainQuadratic = quadratic; }
-void STDecoderTask::SetOldData(Bool_t oldData)                                                { fOldData = oldData; }
 void STDecoderTask::SetUseSeparatedData(Bool_t value)                                         { fIsSeparatedData = value; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
 
@@ -107,30 +96,13 @@ STDecoderTask::Init()
   else
     fDecoder -> SetNumTbs(fPar -> GetNumTbs());
 
-  fDecoder -> SetOldData(fOldData);
   fDecoder -> SetUAMap(fPar -> GetUAMapFileName());
   fDecoder -> SetAGETMap(fPar -> GetAGETMapFileName());
 
-  if (fUseInternalPedestal)
-    fDecoder -> SetInternalPedestal(fPedestalStartTb, fAverageTbs);
+  if (fFPNPedestalRMS == -1)
+    fFPNPedestalRMS = fPar -> GetFPNPedestalRMS();
 
-  if (!fPedestalFile.EqualTo("")) {
-    Bool_t isSetPedestalData = fDecoder -> SetPedestalData(fPedestalFile, fPedestalRMSFactor);
-    if (!isSetPedestalData) {
-      fLogger -> Error(MESSAGE_ORIGIN, "Cannot find pedestal data file!");
-      
-      return kERROR;
-    }
-
-    fLogger -> Info(MESSAGE_ORIGIN, "Pedestal data is set!");
-  }
-
-  if (fUseFPNPedestal) {
-    if (fFPNPedestalRMS == -1)
-      fFPNPedestalRMS = fPar -> GetFPNPedestalRMS();
-
-    fDecoder -> SetFPNPedestal(fFPNPedestalRMS);
-  }
+  fDecoder -> SetFPNPedestal(fFPNPedestalRMS);
 
   if (fGainCalibrationFile.EqualTo("") && fUseGainCalibration == kFALSE)
     fLogger -> Info(MESSAGE_ORIGIN, "Gain not calibrated!");

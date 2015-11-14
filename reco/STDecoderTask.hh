@@ -53,13 +53,7 @@ class STDecoderTask : public FairTask {
     void AddData(TString filename, Int_t coboIdx = 0);
     /// Setting which data to be decoded
     void SetData(Int_t value);
-    /// Setting values for internal pedestal calculation.
-    void SetInternalPedestal(Int_t startTb = 3, Int_t averageTbs = 20);
-    /// Setting pedestal data file for external pedestal data.
-    void SetPedestalData(TString filename, Double_t rmsFactor = 0);
-    /// Setting to use FPN channels as pedestal with RMS cut in parameters file.
-    void SetFPNPedestal();
-    /// Setting to use FPN channels as pedestal
+    /// Setting the FPN RMS value cut for pedestal region taking
     void SetFPNPedestal(Double_t rms);
     /// Setting use gain calibration data file. If there's no file specified by user using two methods below, it'll use the one in parameter files.
     void SetUseGainCalibration(Bool_t value = kTRUE);
@@ -99,12 +93,6 @@ class STDecoderTask : public FairTask {
     vector<TString> fDataList[12];      ///< Raw data file list
     Int_t fDataNum;                     ///< Set which number in data list to be decoded
 
-    Bool_t fUseInternalPedestal;        ///< Flag for using internal pedestal calculation
-    Int_t fPedestalStartTb;             ///< Starting time bucket number for internal pedestal calculation
-    Int_t fAverageTbs;                  ///< The number of time buckets for internal pedestal calculation
-    TString fPedestalFile;              ///< Pedestal data file name
-    Double_t fPedestalRMSFactor;        ///< Pedestal RMS factor that will be multiplied to external pedestal RMS value
-    Bool_t fUseFPNPedestal;             ///< Flas for using FPN channel as pedestal
     Double_t fFPNPedestalRMS;           ///< RMS cut of baseline matching part selection
 
     Bool_t fUseGainCalibration;         ///< Use gain calibration data
