@@ -19,10 +19,9 @@
 
 #include "GETDecoder.hh"
 
-//#include "GETPlot.hh"
 #include "GETFileChecker.hh"
 
-#define DEBUG
+//#define DEBUG
 
 ClassImp(GETDecoder);
 
