@@ -15,9 +15,6 @@
 
 class GETFileChecker {
   public:
-    GETFileChecker() {};
-    ~GETFileChecker() {};
-
     static TString CheckFile(TString filename);
 
   ClassDef(GETFileChecker, 1)
