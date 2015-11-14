@@ -22,7 +22,6 @@
 #include "STPlot.hh"
 
 #include "GETDecoder.hh"
-#include "GETFrame.hh"
 
 #include <tuple>
 
@@ -33,21 +32,17 @@ class STCore : public TObject {
     STCore();
     STCore(TString filename);
     STCore(TString filename, Int_t numTbs, Int_t windowNumTbs = 512, Int_t windowStartTb = 0);
-    ~STCore();
 
     void Initialize();
 
     // setters
     Bool_t AddData(TString filename, Int_t coboIdx = 0);
-    void SetNoAutoReload(Bool_t value = kFALSE);
     void SetPedestalGenerationMode(Bool_t value = kTRUE);
     void SetPositivePolarity(Bool_t value = kTRUE);
     Bool_t SetData(Int_t value);
     Int_t GetNumData(Int_t coboIdx = 0);
     TString GetDataName(Int_t index, Int_t coboIdx = 0);
     void SetNumTbs(Int_t value);
-    void SetInternalPedestal(Int_t pedestalStartTb = 10, Int_t averageTbs = 20);
-    Bool_t SetPedestalData(TString filename, Double_t rmsFactor = 0);
     void SetFPNPedestal(Double_t sigmaThreshold = 5);
 
     Bool_t SetGainCalibrationData(TString filename, TString dataType = "f");
@@ -57,7 +52,6 @@ class STCore : public TObject {
     Bool_t SetUAMap(TString filename);
     Bool_t SetAGETMap(TString filename);
 
-    void SetOldData(Bool_t oldData = kTRUE);
     void SetUseSeparatedData(Bool_t value = kTRUE);
 
     void ProcessCobo(Int_t coboIdx);
@@ -73,7 +67,7 @@ class STCore : public TObject {
     STMap *GetSTMap();
     STPlot *GetSTPlot();
 
-    enum EPedestalMode { kNoPedestal, kPedestalInternal, kPedestalExternal, kPedestalFPN, kPedestalBothIE };
+    Int_t GetFPNChannel(Int_t chIdx);
 
   private:
     STMap *fMapPtr;
@@ -84,16 +78,10 @@ class STCore : public TObject {
     GETDecoder *fDecoderPtr[12];
     Bool_t fIsData;
 
-    STPedestal *fPedestalPtr;
+    STPedestal *fPedestalPtr[12];
+    Bool_t fIsNegativePolarity;
     Bool_t fIsPedestalGenerationMode;
-    Bool_t fIsInternalPedestal;
-    Bool_t fIsPedestalData;
-    Bool_t fIsFPNPedestal;
     Double_t fFPNSigmaThreshold;
-    EPedestalMode fPedestalMode;
-    Double_t fPedestalRMSFactor;
-    Int_t fPedestalStartTb;
-    Int_t fAverageTbs;
 
     STGainCalibration *fGainCalibrationPtr;
     Bool_t fIsGainCalibrationData;
@@ -101,15 +89,9 @@ class STCore : public TObject {
     STRawEvent *fRawEventPtr;
     TClonesArray *fPadArray;
 
-    Long64_t fPrevEventNo;
-    Long64_t fCurrEventNo;
-    Long64_t fNextEventNo;
+    Int_t fCurrentEventID[12];
+    Int_t fTargetFrameID;
 
-    Int_t fCurrFrameNo[12];
-    Int_t fNumCurrEventFrames[12];
-    Int_t fCurrEventFrameNo[12][4];
-
-    Bool_t fOldData;
     Bool_t fIsSeparatedData;
 
   ClassDef(STCore, 1);
