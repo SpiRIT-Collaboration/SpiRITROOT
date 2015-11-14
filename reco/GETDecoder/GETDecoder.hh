@@ -27,7 +27,6 @@
 #include <fstream>
 #include <vector>
 
-#include "TObject.h"
 #include "TROOT.h"
 #include "TString.h"
 #include "TClonesArray.h"
@@ -35,7 +34,7 @@
 //class GETPlot;
 
 /** Read the raw file from GET electronics and process it into GETFrame class **/
-class GETDecoder : public TObject
+class GETDecoder
 {
   public:
     //! Constructor
