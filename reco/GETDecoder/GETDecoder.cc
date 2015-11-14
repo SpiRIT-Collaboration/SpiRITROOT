@@ -302,8 +302,12 @@ GETBasicFrame *GETDecoder::GetBasicFrame(Int_t frameID)
       if (fFrameInfo -> GetDataID() != fCurrentDataID)
         SetData(fFrameInfo -> GetDataID());
 
+      ULong64_t currentByte = fData.tellg();
+ 
       fData.seekg(fFrameInfo -> GetStartByte());
       fBasicFrame -> Read(fData);
+
+      fData.seekg(currentByte);
 
 #ifdef DEBUG
     cout << "Returned event ID: " << fBasicFrame -> GetEventID() << endl;
@@ -363,12 +367,16 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
         if (fCoboFrameInfo -> GetDataID() != fCurrentDataID)
           SetData(fCoboFrameInfo -> GetDataID());
 
+        ULong64_t currentByte = fData.tellg();
+
         fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(fCoboFrameInfoIdx);
         for (Int_t iFrame = 0; iFrame < fTopologyFrame -> GetAsadMask().count(); iFrame++) {
           fData.seekg(fCoboFrameInfo -> GetStartByte());
           fCoboFrame -> ReadFrame(fData);
           fCoboFrameInfo = fCoboFrameInfo -> GetNextInfo();
         }
+
+        fData.seekg(currentByte);
 
 #ifdef DEBUG
     cout << "Returned fCoboFrameInfoIdx: " << fCoboFrameInfoIdx << " with event ID: " << fCoboFrame -> GetFrame(0) -> GetEventID() << endl;
@@ -448,8 +456,12 @@ GETLayeredFrame *GETDecoder::GetLayeredFrame(Int_t frameID)
       if (fFrameInfo -> GetDataID() != fCurrentDataID)
         SetData(fFrameInfo -> GetDataID());
 
+      ULong64_t currentByte = fData.tellg();
+
       fData.seekg(fFrameInfo -> GetStartByte());
       fLayeredFrame -> Read(fData);
+
+      fData.seekg(currentByte);
 
 #ifdef DEBUG
     cout << "Returned event ID: " << fLayeredFrame -> GetEventID() << endl;
