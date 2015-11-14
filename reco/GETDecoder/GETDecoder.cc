@@ -298,13 +298,17 @@ GETBasicFrame *GETDecoder::GetBasicFrame(Int_t frameID)
 #endif
 
     if (fFrameInfoIdx == fTargetFrameInfoIdx) {
+      Int_t currentDataID = fCurrentDataID;
+      ULong64_t currentByte = fData.tellg();
+
       if (fFrameInfo -> GetDataID() != fCurrentDataID)
         SetData(fFrameInfo -> GetDataID());
-
-      ULong64_t currentByte = fData.tellg();
  
       fData.seekg(fFrameInfo -> GetStartByte());
       fBasicFrame -> Read(fData);
+
+      if (currentDataID != fCurrentDataID)
+        SetData(currentDataID);
 
       fData.seekg(currentByte);
 
@@ -363,10 +367,11 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
       if (fCoboFrameInfoIdx == fTargetFrameInfoIdx) {
         fCoboFrame -> Clear();
 
+        Int_t currentDataID = fCurrentDataID;
+        ULong64_t currentByte = fData.tellg();
+
         if (fCoboFrameInfo -> GetDataID() != fCurrentDataID)
           SetData(fCoboFrameInfo -> GetDataID());
-
-        ULong64_t currentByte = fData.tellg();
 
         fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(fCoboFrameInfoIdx);
         for (Int_t iFrame = 0; iFrame < fTopologyFrame -> GetAsadMask().count(); iFrame++) {
@@ -374,6 +379,9 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
           fCoboFrame -> ReadFrame(fData);
           fCoboFrameInfo = fCoboFrameInfo -> GetNextInfo();
         }
+
+        if (currentDataID != fCurrentDataID)
+          SetData(currentDataID);
 
         fData.seekg(currentByte);
 
@@ -452,13 +460,17 @@ GETLayeredFrame *GETDecoder::GetLayeredFrame(Int_t frameID)
 #endif
 
     if (fFrameInfoIdx == fTargetFrameInfoIdx) {
+      Int_t currentDataID = fCurrentDataID;
+      ULong64_t currentByte = fData.tellg();
+
       if (fFrameInfo -> GetDataID() != fCurrentDataID)
         SetData(fFrameInfo -> GetDataID());
 
-      ULong64_t currentByte = fData.tellg();
-
       fData.seekg(fFrameInfo -> GetStartByte());
       fLayeredFrame -> Read(fData);
+
+      if (currentDataID != fCurrentDataID)
+        SetData(currentDataID);
 
       fData.seekg(currentByte);
 
