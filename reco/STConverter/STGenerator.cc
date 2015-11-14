@@ -165,18 +165,6 @@ STGenerator::SetParameterFile(TString filename)
 }
 
 void
-STGenerator::SetInternalPedestal(Int_t startTb, Int_t numTbs)
-{
-  fCore -> SetInternalPedestal(startTb, numTbs);
-}
-
-Bool_t
-STGenerator::SetPedestalData(TString filename, Double_t rmsFactor)
-{
-  return fCore -> SetPedestalData(filename, rmsFactor);
-}
-
-void
 STGenerator::SetFPNPedestal(Double_t fpnThreshold)
 {
   return fCore -> SetFPNPedestal(fpnThreshold);
@@ -369,8 +357,6 @@ STGenerator::GenerateGainCalibrationData()
       }
     }
   }
-
-  fCore -> SetNoAutoReload();
 
   for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++) {
     fCore -> SetData(iVoltage);

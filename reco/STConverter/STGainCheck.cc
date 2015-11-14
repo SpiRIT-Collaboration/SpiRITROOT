@@ -78,22 +78,9 @@ STGainCheck::SetGainReference(Int_t row, Int_t layer)
 }
 
 void
-STGainCheck::SetInternalPedestal(Int_t startTb, Int_t numTbs)
-{
-  fCore -> SetInternalPedestal(startTb, numTbs);
-}
-
-void
 STGainCheck::SetFPNPedestal(Double_t sigmaThreshold)
 {
   fCore -> SetFPNPedestal(sigmaThreshold);
-}
-
-
-Bool_t
-STGainCheck::SetPedestalData(TString filename)
-{
-  return fCore -> SetPedestalData(filename);
 }
 
 Bool_t
@@ -149,8 +136,6 @@ STGainCheck::DrawSpectra()
   }
 
   fSpectra -> Reset();
-
-  fCore -> SetNoAutoReload();
 
   Int_t numVoltages = fCore -> GetNumData();
 
