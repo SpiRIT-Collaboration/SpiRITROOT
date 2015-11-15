@@ -64,7 +64,6 @@ void STCore::Initialize()
   fPadArray = new TClonesArray("STPad", 12096);
 
   fIsData = kFALSE;
-  fIsPedestalGenerationMode = kFALSE;
   fFPNSigmaThreshold = 5;
 
   fGainCalibrationPtr = new STGainCalibration();
@@ -81,11 +80,6 @@ void STCore::Initialize()
 Bool_t STCore::AddData(TString filename, Int_t coboIdx)
 {
   return fDecoderPtr[coboIdx] -> AddData(filename);
-}
-
-void STCore::SetPedestalGenerationMode(Bool_t value)
-{
-  fIsPedestalGenerationMode = value;
 }
 
 void STCore::SetPositivePolarity(Bool_t value)
@@ -119,6 +113,14 @@ Bool_t STCore::SetData(Int_t value)
   memset(fCurrentEventID, 0, sizeof(Int_t)*12);
 
   return fIsData;
+}
+
+void STCore::SetDiscontinuousData(Bool_t value)
+{
+  fDecoderPtr[0] -> SetDiscontinuousData(value);
+  if (fIsSeparatedData)
+    for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+      fDecoderPtr[iCobo] -> SetDiscontinuousData(value);
 }
 
 Int_t STCore::GetNumData(Int_t coboIdx)
@@ -191,6 +193,12 @@ Bool_t STCore::SetAGETMap(TString filename)
 void STCore::ProcessCobo(Int_t coboIdx)
 {
   GETCoboFrame *coboFrame = fDecoderPtr[coboIdx] -> GetCoboFrame(fTargetFrameID);
+
+  if (coboFrame == NULL) {
+    fRawEventPtr -> SetIsGood(kFALSE);
+
+    return;
+  }
 
   Int_t numFrames = coboFrame -> GetNumFrames();
   for (Int_t iFrame = 0; iFrame < numFrames; iFrame++) {

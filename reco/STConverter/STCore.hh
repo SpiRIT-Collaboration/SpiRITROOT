@@ -37,9 +37,9 @@ class STCore : public TObject {
 
     // setters
     Bool_t AddData(TString filename, Int_t coboIdx = 0);
-    void SetPedestalGenerationMode(Bool_t value = kTRUE);
     void SetPositivePolarity(Bool_t value = kTRUE);
     Bool_t SetData(Int_t value);
+    void SetDiscontinuousData(Bool_t value = kTRUE);
     Int_t GetNumData(Int_t coboIdx = 0);
     TString GetDataName(Int_t index, Int_t coboIdx = 0);
     void SetNumTbs(Int_t value);
@@ -80,7 +80,6 @@ class STCore : public TObject {
 
     STPedestal *fPedestalPtr[12];
     Bool_t fIsNegativePolarity;
-    Bool_t fIsPedestalGenerationMode;
     Double_t fFPNSigmaThreshold;
 
     STGainCalibration *fGainCalibrationPtr;
