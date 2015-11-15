@@ -228,7 +228,6 @@ STGenerator::StartProcess()
 
   if (fMode == kPedestal) {
     fCore -> SetData(0);
-    fCore -> SetPedestalGenerationMode();
 
     GeneratePedestalData();
   }
@@ -357,6 +356,8 @@ STGenerator::GenerateGainCalibrationData()
       }
     }
   }
+
+  fCore -> SetDiscontinuousData();
 
   for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++) {
     fCore -> SetData(iVoltage);
