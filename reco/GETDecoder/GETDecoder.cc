@@ -63,6 +63,7 @@ void GETDecoder::Initialize()
 
   fIsDoneAnalyzing = kFALSE;
   fIsDataInfo = kFALSE;
+  fIsContinuousData = kTRUE;
 
   fDataSize = 0;
   fCurrentDataID = -1;
@@ -128,8 +129,15 @@ void GETDecoder::Clear() {
           fBasicFrame -> Clear();
            fCoboFrame -> Clear();
         fLayeredFrame -> Clear();
+  
+  if (fIsContinuousData) {
 
-  fDataList.clear();
+#ifdef DEBUG
+    std::cout << "== [GETDecoder] Discontinuous data set is set. Leave data list intact!" << std::endl;
+#endif
+
+    fDataList.clear();
+  }
 }
 
 void GETDecoder::SetNumTbs(Int_t value) { fNumTbs = value; } 
@@ -162,6 +170,15 @@ Bool_t GETDecoder::AddData(TString filename)
 
 Bool_t GETDecoder::SetData(Int_t index)
 {
+  if (!fIsContinuousData) {
+
+#ifdef DEBUG
+    std::cout << "== [GETDecoder] Discontinuous data set is set. Clear info!" << std::endl;
+#endif
+
+    Clear();
+  }
+
   if (index >= fDataList.size()) {
     std::cout << "== [GETDecoder] End of data list!" << std::endl;
 
@@ -225,7 +242,8 @@ Bool_t GETDecoder::SetData(Int_t index)
   return kTRUE;
 }
 
-Bool_t GETDecoder::NextData() { return SetData(fCurrentDataID + 1); }
+void GETDecoder::SetDiscontinuousData(Bool_t value) { fIsContinuousData = !value; }
+Bool_t GETDecoder::NextData() { if (fIsContinuousData) return SetData(fCurrentDataID + 1); else return kFALSE; }
 void GETDecoder::SetPositivePolarity(Bool_t value) { fIsPositivePolarity = value; }
 
 void GETDecoder::ShowList()

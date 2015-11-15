@@ -53,6 +53,7 @@ class GETDecoder
     Bool_t AddData(TString filename);
     //! Set the data file to the class.
     Bool_t SetData(Int_t index);
+    void SetDiscontinuousData(Bool_t value = kTRUE);    ///<
     //! Search the next file and set it if exists. Returns 1 if successful.
     Bool_t NextData();
     /// Set the positive signal polarity
@@ -109,7 +110,8 @@ class GETDecoder
 
     Bool_t fIsDataInfo;             ///< Flag for data information existance
     Bool_t fIsDoneAnalyzing;        ///< Flag for all the frame info are read
-    Bool_t fIsPositivePolarity; /// Flag for the signal polarity
+    Bool_t fIsPositivePolarity;     ///< Flag for the signal polarity
+    Bool_t fIsContinuousData;         ///< Flag for continuous data set
 
     std::ifstream fData;            ///< Current file data stream
     ULong64_t fDataSize;            ///< Current file size
