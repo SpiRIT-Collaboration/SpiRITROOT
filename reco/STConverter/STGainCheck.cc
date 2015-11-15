@@ -138,6 +138,7 @@ STGainCheck::DrawSpectra()
   fSpectra -> Reset();
 
   Int_t numVoltages = fCore -> GetNumData();
+  fCore -> SetDiscontinuousData();
 
   for (Int_t iVoltage = 0; iVoltage < numVoltages; iVoltage++) {
     fCore -> SetData(iVoltage);
