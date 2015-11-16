@@ -388,11 +388,15 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
         Int_t currentDataID = fCurrentDataID;
         ULong64_t currentByte = fData.tellg();
 
+        fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(fCoboFrameInfoIdx);
+
         if (fCoboFrameInfo -> GetDataID() != fCurrentDataID)
           SetData(fCoboFrameInfo -> GetDataID());
 
-        fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(fCoboFrameInfoIdx);
         for (Int_t iFrame = 0; iFrame < fTopologyFrame -> GetAsadMask().count(); iFrame++) {
+//          if (fCoboFrameInfo -> GetDataID() != fCurrentDataID)
+//            SetData(fCoboFrameInfo -> GetDataID());
+
           fData.seekg(fCoboFrameInfo -> GetStartByte());
           fCoboFrame -> ReadFrame(fData);
           fCoboFrameInfo = fCoboFrameInfo -> GetNextInfo();
