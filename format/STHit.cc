@@ -52,7 +52,7 @@ STHit::~STHit()
 {
 }
 
-void STHit::Clear()
+void STHit::Clear(Option_t *)
 {
   fIsClustered = kFALSE;
   fHitID = -1;

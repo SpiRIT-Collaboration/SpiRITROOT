@@ -27,7 +27,7 @@ class STHit : public TObject
     /// Hit setter
     void SetHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge);
 
-    void Clear(option_t * = "");                             ///< Clear method for reuse object
+    void Clear(Option_t * = "");                             ///< Clear method for reuse object
 
     void SetIsClustered(Bool_t value = kTRUE);               ///< Clustered flag setter
     void SetHitID(Int_t hitID);                              ///< Hit ID setter
