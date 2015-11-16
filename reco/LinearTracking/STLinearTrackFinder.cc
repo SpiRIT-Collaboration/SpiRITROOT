@@ -28,6 +28,8 @@ STLinearTrackFinder::STLinearTrackFinder()
   fTrackQueue = new vecTrk_t;
   fTrackBufferTemp = new vecTrk_t;
 
+  fTrackClonesArray = new TClonesArray("STLinearTrack", 20);
+
   SetProximityCutFactor(1.1, 3.0, 1.1);
   SetNumHitsCut(30, 8, 20, 50);
   SetRMSCut(12, 2.5);
@@ -119,7 +121,7 @@ STLinearTrackFinder::STLinearTrackFinder()
 }
 
 void 
-STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *tracks)
+STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *trackArray)
 {
   Int_t numHits = event -> GetNumHits();
   if (numHits == 0)
@@ -127,11 +129,12 @@ STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *tracks)
 
   fHitQueue -> clear();
   fTrackQueue -> clear();
+  fTrackClonesArray -> Clear();
 
-  fTrackBufferFinal = tracks;
+  fTrackBufferFinal = trackArray;
 
   for (Int_t iHit = 0; iHit < numHits; iHit++) {
-    STHit *hit = new STHit(event -> GetHit(iHit));
+    STHit *hit = event -> GetHit(iHit);
 
     TVector3 p = hit -> GetPosition();
     if (TMath::Sqrt(p.X()*p.X() + p.Z()*p.Z()) < fPerpYCut)
@@ -183,9 +186,9 @@ STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *tracks)
 }
 
 void 
-STLinearTrackFinder::Build(vecTrk_t *tracks, vecHit_t *hits, vecCTH_t *corrTH, Bool_t createNewTracks)
+STLinearTrackFinder::Build(vecTrk_t *trackArray, vecHit_t *hitArray, vecCTH_t *corrTH, Bool_t createNewTracks)
 {
-  Int_t numHits = hits -> size();
+  Int_t numHits = hitArray -> size();
 
   for (Int_t iHit = 0; iHit < numHits; iHit++)
   {
@@ -195,7 +198,7 @@ STLinearTrackFinder::Build(vecTrk_t *tracks, vecHit_t *hits, vecCTH_t *corrTH, B
     Double_t bestQuality = 0;
     STLinearTrack* trackCandidate = NULL;
 
-    for (auto track : *tracks) 
+    for (auto track : *trackArray) 
     {
       Double_t quality = 0;
       Bool_t survive = kFALSE;
@@ -219,25 +222,27 @@ STLinearTrackFinder::Build(vecTrk_t *tracks, vecHit_t *hits, vecCTH_t *corrTH, B
     
     if (trackCandidate != NULL){
       trackCandidate -> AddHit(hit);
-      hits -> erase(hits -> begin() + idxHit);
+      hitArray -> erase(hitArray -> begin() + idxHit);
       fFitter -> FitAndSetTrack(trackCandidate);
     }
     else if (createNewTracks == kTRUE) {
-      tracks -> push_back(new STLinearTrack(tracks -> size(), hit));
-      hits -> erase(hits -> begin() + idxHit);
+      Int_t index = fTrackClonesArray -> GetEntriesFast();
+      STLinearTrack* track = new ((*fTrackClonesArray)[index]) STLinearTrack(trackArray -> size(), hit);
+      trackArray -> push_back(track);
+      hitArray -> erase(hitArray -> begin() + idxHit);
     }
   }
 }
 
 void
-STLinearTrackFinder::Merge(vecTrk_t *tracks)
+STLinearTrackFinder::Merge(vecTrk_t *trackArray)
 {
-  Int_t numTracks = tracks -> size();
+  Int_t numTracks = trackArray -> size();
 
   for (Int_t iTrack = 0; iTrack < numTracks; iTrack++)
   {
     Int_t idxTrack = numTracks - 1 - iTrack;
-    auto track = tracks -> at(idxTrack);
+    auto track = trackArray -> at(idxTrack);
 
     Double_t bestQuality = 0;
     STLinearTrack* trackCandidate = NULL;
@@ -247,7 +252,7 @@ STLinearTrackFinder::Merge(vecTrk_t *tracks)
     for (Int_t iTrackCompare = 0; iTrackCompare < numTracksLeft; iTrackCompare++)
     {
       Int_t idxTrackCompare = numTracksLeft - 1 - iTrackCompare;
-      auto trackCompare = tracks -> at(idxTrackCompare);
+      auto trackCompare = trackArray -> at(idxTrackCompare);
 
       Double_t quality = 0;
       Bool_t survive = kFALSE;
@@ -271,24 +276,24 @@ STLinearTrackFinder::Merge(vecTrk_t *tracks)
     if (trackCandidate != NULL)
     {
       fFitter -> MergeAndSetTrack(trackCandidate, track);
-      tracks -> erase(tracks -> begin() + idxTrack);
+      trackArray -> erase(trackArray -> begin() + idxTrack);
     }
   }
 }
 
 void
-STLinearTrackFinder::Select(vecTrk_t *tracks, vecTrk_t *tracks2, vecHit_t *hits, Double_t thetaCut)
+STLinearTrackFinder::Select(vecTrk_t *trackArray, vecTrk_t *trackArray2, vecHit_t *hitArray, Double_t thetaCut)
 {
   TVector3 pointingZ(0,0,1);
   Double_t cosineCut = TMath::Cos(thetaCut);
 
   fTrackBufferTemp -> clear();
 
-  for (auto track : *tracks)
+  for (auto track : *trackArray)
   {
     if (track -> GetNumHits() < fNumHitsTrackCut) {
       if (track -> GetNumHits() > fNumHitsVanishCut) 
-        ReturnHits(track, hits);
+        ReturnHits(track, hitArray);
       continue; 
     }
 
@@ -296,45 +301,45 @@ STLinearTrackFinder::Select(vecTrk_t *tracks, vecTrk_t *tracks2, vecHit_t *hits,
       fFitter -> FitAndSetTrack(track); 
 
     if (track -> GetRMSLine() > fRMSLineCut || track -> GetRMSPlane() > 2 * fRMSPlaneCut) {
-      ReturnHits(track, hits);
+      ReturnHits(track, hitArray);
       continue; 
     }
 
     if (pointingZ.Dot(track -> GetDirection()) < cosineCut) {
-      ReturnHits(track, hits);
+      ReturnHits(track, hitArray);
       continue;
     }
 
     fTrackBufferTemp -> push_back(track);
   }
 
-  tracks -> clear();
+  trackArray -> clear();
 
   for (auto track : *fTrackBufferTemp)
-    tracks2 -> push_back(track);
+    trackArray2 -> push_back(track);
 
   fTrackBufferTemp -> clear();
 
 }
 
 void 
-STLinearTrackFinder::SortHits(vecTrk_t *tracks)
+STLinearTrackFinder::SortHits(vecTrk_t *trackArray)
 {
-  Int_t numTracks = tracks -> size();
+  Int_t numTracks = trackArray -> size();
   for(Int_t iTrack = 0; iTrack < numTracks; iTrack++) 
   {
-    STLinearTrack* track = tracks -> at(iTrack);
+    STLinearTrack* track = trackArray -> at(iTrack);
     fFitter -> SortHits(track);
   }
 }
 
 void
-STLinearTrackFinder::ReturnHits(STLinearTrack *track, vecHit_t *hits)
+STLinearTrackFinder::ReturnHits(STLinearTrack *track, vecHit_t *hitArray)
 {
   vecHit_t *hitsFromTrack = track -> GetHitPointerArray();
 
   for (auto hit : *hitsFromTrack)
-    hits -> push_back(hit);
+    hitArray -> push_back(hit);
 }
 
 // Setters ____________________________________________________

@@ -3,6 +3,7 @@
 
 #include "STLinearTrackFinderAbstract.hh"
 #include "STLinearTrackingConf.hh"
+#include "TClonesArray.h"
 
 #include <vector>
 #include "TMath.h"
@@ -24,7 +25,7 @@ class STLinearTrackFinder : public STLinearTrackFinderAbstract
     STLinearTrackFinder();
     ~STLinearTrackFinder() {}
 
-    void BuildTracks(STEvent* event, vecTrk_t *tracks);
+    void BuildTracks(STEvent* event, vecTrk_t *trackArray);
 
   private:
     STLinearTrackFitter* fFitter;
@@ -33,6 +34,7 @@ class STLinearTrackFinder : public STLinearTrackFinderAbstract
     vecTrk_t *fTrackQueue;
     vecTrk_t *fTrackBufferTemp;
     vecTrk_t *fTrackBufferFinal;
+    TClonesArray *fTrackClonesArray;
 
     vecCTH_t *fCorrTH;
     vecCTH_t *fCorrTH_largeAngle;
@@ -45,40 +47,40 @@ class STLinearTrackFinder : public STLinearTrackFinderAbstract
 
   private:
     /**
-     * Build track from hits. Push track into tracks.
+     * Build track from hitArray. Push track into trackArray.
      * If varialbe createNewTracks is false, hit with no matching track is
      * left in the buffer without being erased or create new track.
      */
-    void Build(vecTrk_t *tracks, 
-               vecHit_t *hits, 
+    void Build(vecTrk_t *trackArray, 
+               vecHit_t *hitArray, 
                vecCTH_t *corrTH,
                  Bool_t createNewTracks = kTRUE);
 
     /**
-     * Merge tracks
+     * Merge trackArray
      */
-    void Merge(vecTrk_t *tracks);
+    void Merge(vecTrk_t *trackArray);
 
     /**
-     * Select survived track from tracks, push to tracks2. 
-     * Dead track returns hit to hits.
+     * Select survived track from trackArray, push to trackArray2. 
+     * Dead track returns hit to hitArray.
      * If varialble thetaCut is set, track with angle-theta 
      * bigger than thetaCut cannot survive.
      */
-    void Select(vecTrk_t *tracks, 
-                vecTrk_t *tracks2, 
-                vecHit_t *hits, 
+    void Select(vecTrk_t *trackArray, 
+                vecTrk_t *trackArray2, 
+                vecHit_t *hitArray, 
                 Double_t thetaCut = -TMath::Pi());
 
     /** 
-     * Sort hits of tracks in the buffer
+     * Sort hitArray of trackArray in the buffer
      */
-    void SortHits(vecTrk_t *tracks);
+    void SortHits(vecTrk_t *trackArray);
 
     /**
-     * Return hit from tracks to hits
+     * Return hit from trackArray to hitArray
      */
-    void ReturnHits(STLinearTrack *track, vecHit_t *hits);
+    void ReturnHits(STLinearTrack *track, vecHit_t *hitArray);
 
   /*
   private:
