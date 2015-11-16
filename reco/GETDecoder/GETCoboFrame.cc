@@ -13,6 +13,16 @@ void GETCoboFrame::ReadFrame(Int_t index, ifstream &stream) {
   fFrame[index].Read(stream);
 }
 
+Int_t GETCoboFrame::GetEventID() {
+  Int_t eventID = fFrame[0].GetEventID();
+
+  for (Int_t iFrame = 1; iFrame < fNumFrames; iFrame++)
+    if (fFrame[0].GetEventID() != fFrame[iFrame].GetEventID())
+      return -1;
+
+  return eventID;
+}
+
         Int_t  GETCoboFrame::GetNumFrames()        { return fNumFrames; }
 GETBasicFrame *GETCoboFrame::GetFrames()           { return fFrame; }
 GETBasicFrame *GETCoboFrame::GetFrame(Int_t index) { return &fFrame[index]; }

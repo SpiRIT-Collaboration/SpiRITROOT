@@ -10,6 +10,7 @@ class GETCoboFrame {
              void  ReadFrame(ifstream &stream);
              void  ReadFrame(Int_t index, ifstream &stream);
 
+            Int_t  GetEventID();
             Int_t  GetNumFrames();
     GETBasicFrame *GetFrames();
     GETBasicFrame *GetFrame(Int_t index);
