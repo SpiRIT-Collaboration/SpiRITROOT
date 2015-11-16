@@ -9,26 +9,26 @@
 
 STHit::STHit()
 {
-  Init();
+  Clear();
 }
 
 STHit::STHit(Int_t hitID, TVector3 vec, Double_t charge)
 {
-  Init();
+  Clear();
 
   SetHit(hitID, vec, charge);
 }
 
 STHit::STHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge)
 {
-  Init();
+  Clear();
 
   SetHit(hitID, x, y, z, charge);
 }
 
 STHit::STHit(STHit *hit)
 {
-  Init();
+  Clear();
 
   fIsClustered = hit -> IsClustered();
   fClusterID = hit -> GetClusterID();
@@ -52,7 +52,7 @@ STHit::~STHit()
 {
 }
 
-void STHit::Init()
+void STHit::Clear()
 {
   fIsClustered = kFALSE;
   fHitID = -1;

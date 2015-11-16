@@ -27,6 +27,8 @@ class STHit : public TObject
     /// Hit setter
     void SetHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge);
 
+    void Clear(option_t * = "");                             ///< Clear method for reuse object
+
     void SetIsClustered(Bool_t value = kTRUE);               ///< Clustered flag setter
     void SetHitID(Int_t hitID);                              ///< Hit ID setter
     void SetClusterID(Int_t clusterID);                      ///< Cluster stter
@@ -90,9 +92,6 @@ class STHit : public TObject
 
     Double_t fChi2;        ///< Chi-square of hit time fit
        Int_t fNDF;         ///< NDF of hit time fit
-
-  private:
-    void Init();
 
   ClassDef(STHit, 4);
 };
