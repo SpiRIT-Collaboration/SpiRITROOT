@@ -11,15 +11,10 @@
 #ifndef GETFILECHECKER
 #define GETFILECHECKER
 
-#include "TObject.h"
+#include "TString.h"
 
-class TString;
-
-class GETFileChecker : public TObject {
+class GETFileChecker {
   public:
-    GETFileChecker() {};
-    ~GETFileChecker() {};
-
     static TString CheckFile(TString filename);
 
   ClassDef(GETFileChecker, 1)

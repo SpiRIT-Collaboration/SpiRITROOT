@@ -6,47 +6,56 @@
 //    Genie Jhang ( geniejhang@majimak.com )
 //  
 //  Log:
-//    - 2013. 09. 23
-//      Start writing class
+//    - 2015. 11. 09
+//      Start writing new! class
 // =================================================
 
-#ifndef _GETDECODER_H_
-#define _GETDECODER_H_
+#ifndef GETDECODER
+#define GETDECODER
+
+#include "GETHeaderBase.hh"
+#include "GETBasicFrameHeader.hh"
+#include "GETLayerHeader.hh"
+
+#include "GETTopologyFrame.hh"
+#include "GETBasicFrame.hh"
+#include "GETCoboFrame.hh"
+#include "GETLayeredFrame.hh"
+
+#include "GETFrameInfo.hh"
 
 #include <fstream>
 #include <vector>
 
-#include "TObject.h"
 #include "TROOT.h"
 #include "TString.h"
+#include "TClonesArray.h"
 
-class GETFrame;
-class GETPlot;
-class GETMath;
+//class GETPlot;
 
 /** Read the raw file from GET electronics and process it into GETFrame class **/
-class GETDecoder : public TObject
+class GETDecoder
 {
   public:
     //! Constructor
     GETDecoder();
     //! Constructor
     GETDecoder(TString filename /*!< GRAW filename including path */);
-    //! Destructor
-    ~GETDecoder();
 
-    //! Setting debug mode. If set to 1, more information is printed out on the screen.
-    void SetDebugMode(Bool_t value = kTRUE);
+    void Clear(); ///< Clear data information
+
+    //! Frame type enumerator
+    enum EFrameType { kBasic, kCobo, kMergedID, kMergedTime };
+
     //! Setting the number of time buckets.
     void SetNumTbs(Int_t value = 512);
     //! Add the data file to the list of rawdata.
     Bool_t AddData(TString filename);
     //! Set the data file to the class.
     Bool_t SetData(Int_t index);
+    void SetDiscontinuousData(Bool_t value = kTRUE);    ///<
     //! Search the next file and set it if exists. Returns 1 if successful.
-    Bool_t SetNextFile();
-    /// Set the flag for auto reload continuing file in the list
-    void SetNoAutoReload(Bool_t value = kFALSE);
+    Bool_t NextData();
     /// Set the positive signal polarity
     void SetPositivePolarity(Bool_t value = kTRUE);
     //! Print rawdata file list on the screen.
@@ -59,28 +68,17 @@ class GETDecoder : public TObject
     //! Return the number of time buckets.
     Int_t GetNumTbs();
     //! Return GETPlot object pointer if there exists. If not, create a new one and return it.
-    GETPlot *GetGETPlot();
-    //! Return GETMath object pointer if there exists. If not, create a new one and return it.
-    GETMath *GetGETMath();
     //! Return the frame type. This is used when drawing merged frame.
-    Int_t GetFrameType();
-    //! Return the frame size.
-    Long64_t GetFrameSize();
+    EFrameType GetFrameType();
 
-    //! Return the number of frames counted by CountFrames() method.
-    Int_t GetCurrentFrameID();
-    //! Return the number of inner frame in the current frame.
-    Int_t GetCurrentInnerFrameID();
-    //! Return specific frame of the given frame number. If **frameIdx** is -1, this method returns next frame.
-    GETFrame *GetFrame(Int_t frameIdx = -1);
-    GETFrame *GetFrame(Int_t frameIdx, Int_t innerFrameIdx);
-    //! Return the number of merged frames. Note that this number only valid after the first frame of merged frame is loaded by GetFrame() method.
-    Int_t GetNumMergedFrames();
+    Int_t GetNumFrames();
+    //! Return specific frame of the given frame number. If **frameID** is -1, this method returns next frame.
+      GETBasicFrame *GetBasicFrame(Int_t frameID = -1);
+       GETCoboFrame *GetCoboFrame(Int_t frameID = -1);
+    GETLayeredFrame *GetLayeredFrame(Int_t frameID = -1);
 
-    //! Frame type enumerator
-    enum EFrameType { kNormal, kMergedID, kMergedTime };
-    //! Endianness enumerator
-    enum EEndianness { kBig, kLittle };
+    void PrintFrameInfo(Int_t frameID = -1);
+    void PrintCoboFrameInfo(Int_t frameID = -1);
 
     //! Set the file for writing frame
     Bool_t SetWriteFile(TString filename, Bool_t overwrite = kFALSE);
@@ -91,58 +89,38 @@ class GETDecoder : public TObject
     //! Initialize variables used in the class.
     void Initialize();
 
-    //! Print the information of the returned frame.
-    void PrintFrameInfo(Int_t frameID, Int_t eventID, Int_t coboID, Int_t asadID);
+          GETHeaderBase *fHeaderBase;
+    GETBasicFrameHeader *fBasicFrameHeader;
+         GETLayerHeader *fLayerHeader;
 
-    //! Skip a frame for accessing frames behind. This method also used in merged frame to skip an inner frame.
-    void SkipInnerFrame();
+    GETTopologyFrame *fTopologyFrame;
+       GETBasicFrame *fBasicFrame;
+        GETCoboFrame *fCoboFrame;
+     GETLayeredFrame *fLayeredFrame;
 
-    //! Skip a merged frame for accessing frames behind.
-    void SkipMergedFrame();
-
-    //! Get needed information of given frame to the internal variables
-    void ReadMergedFrameInfo();
-    //! Get needed information of given inner frame to the internal variables
-    void ReadInnerFrameInfo();
-
-    //! Check if the file is end
-    void CheckEOF();
-
-    //! Check if there's blob frame
-    void CheckBlobFrame();
+    TClonesArray *fFrameInfoArray;
+    TClonesArray *fCoboFrameInfoArray;
+    GETFrameInfo *fFrameInfo;
+    GETFrameInfo *fCoboFrameInfo;
 
     Int_t fNumTbs; /// the number of time buckets. It's determined when taking data and should be changed manually by user. (Default: 512)
 
-    Bool_t fEndianness; /// Endianness of the data. 0: Big-endian, 1: Little-endian
-    Int_t fMergedUnitBlock; /// Unit block size used in merged frame header
-    UShort_t fFrameType;  /// frame type. 0: normal frame, 1: event number merged, 2: event time merged
-    Int_t fMergedHeaderSize; /// header size of merged frame. For additional skip bytes when finding frame by frame number.
-    Int_t fNumMergedFrames; /// the number of merged frames. For additional skip bytes when finding frame by frame number.
-    Int_t fUnitBlock; /// Unit block size used in frame header
-    ULong64_t fFrameSize; /// size of normal frame size
-    ULong64_t fMergedFrameStartPoint; /// byte number of the merged frame start point. For navigational feature in a merged frame.
-    ULong64_t fCurrentMergedFrameSize; /// size of a merged frame of the frame ID **fCurrentFrameID**. For additional skip bytes when finding frame by frame number.
-    ULong64_t fCurrentInnerFrameSize; /// size of an inner frame.
+    EFrameType fFrameType;  /// frame type. 0: normal frame, 1: event number merged, 2: event time merged
+    ULong64_t fFrameSize; ///
 
-    Bool_t fDebugMode; /// flag for debug mode
-    Bool_t fIsAutoReload; /// Flag for auto reloading continuing data file in the list.
-    Bool_t fIsPositivePolarity; /// Flag for the signal polarity
+    Bool_t fIsDataInfo;             ///< Flag for data information existance
+    Bool_t fIsDoneAnalyzing;        ///< Flag for all the frame info are read
+    Bool_t fIsPositivePolarity;     ///< Flag for the signal polarity
+    Bool_t fIsContinuousData;         ///< Flag for continuous data set
 
-    std::ifstream fData;            /// rawdata filestream
-    ULong64_t fFileSize; /// file size
-    std::vector<TString> fDataList; /// rawdata file list
-    Int_t fCurrentDataID;        /// current file index in list
+    std::ifstream fData;            ///< Current file data stream
+    ULong64_t fDataSize;            ///< Current file size
+    std::vector<TString> fDataList; ///< Data file list
+    Int_t fCurrentDataID;           ///< Current data file index in list
 
-    GETFrame *fFrame;      /// frame container
-    std::vector<Int_t> fNumFrames; /// The number of frames in each data file
-    Int_t fCurrentFrameID;  /// current frame index (in a single data file)
-    Int_t fCurrentInnerFrameID; /// current inner frame index
-    Bool_t fEOF; /// check if end of file
-
-    GETPlot *fGETPlot;     /// GETPlot pointer
-    GETMath *fGETMath;     /// GETMath pointer
-
-    UInt_t fBlobFrameSize; /// Blob frame size to skip
+    Int_t fFrameInfoIdx;                ///< Current frame index
+    Int_t fCoboFrameInfoIdx;            ///< Current cobo frame index
+    Int_t fTargetFrameInfoIdx;          ///< Target frame or cobo frame index to return
 
     Char_t *fBuffer;       /// Buffer for writing frame
     TString fWriteFile;    /// File for writing frames

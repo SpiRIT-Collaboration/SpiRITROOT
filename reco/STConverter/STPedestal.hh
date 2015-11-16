@@ -2,45 +2,30 @@
 //  STPedestal Class
 // 
 //  Description:
-//    This class is used for calculating or finding
-//    pedestal value and sigma corresponding to
-//    user-input padRow and padLayer.
+//    This class is used for calculating pedestal
+//    values of each channel using FPN channels.
 // 
 //  Genie Jhang ( geniejhang@majimak.com )
-//  2013. 08. 14
+//  2015. 11. 14
 // =================================================
 
-#ifndef STPEDESTAL_H
-#define STPEDESTAL_H
+#ifndef STPEDESTAL
+#define STPEDESTAL
 
-#include "TROOT.h"
 #include "TObject.h"
 
-#include "TFile.h"
-#include "TTree.h"
+#include "GETMath.hh"
 
 #include <fstream>
 
 class STPedestal : public TObject {
   public:
     STPedestal();
-    STPedestal(TString pedestalData);
-    ~STPedestal() {};
 
-    void Initialize();
-    Bool_t SetPedestalData(TString filename);
-
-    Bool_t IsSetPedestalData();
-    void GetPedestal(Int_t padRow, Int_t padLayer, Double_t *pedestal, Double_t *pedestalSigma);
+    Bool_t SubtractPedestal(Int_t numTbs, Int_t *fpn, Int_t *rawADC, Double_t *dest, Double_t rmsCut = 5, Bool_t signalNegativePolarity = kTRUE, Int_t startTb = 3, Int_t averageTbs = 10);
 
   private:
-    TFile *fOpenFile;
-    TTree *fPedestalTree;
-
-    Bool_t fIsSetPedestalData;
-
-    Double_t fPedestal[108][112][512];
-    Double_t fPedestalSigma[108][112][512];
+    GETMath *fMath;
 
   ClassDef(STPedestal, 1);
 };

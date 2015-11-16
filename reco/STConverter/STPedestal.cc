@@ -12,83 +12,58 @@
 
 #include "STPedestal.hh"
 
-#include "TMath.h"
-#include "TFile.h"
-#include "TTree.h"
-
 #include <iostream>
 
 ClassImp(STPedestal);
 
 STPedestal::STPedestal() {
-  Initialize();
+  fMath = new GETMath();
 }
 
-STPedestal::STPedestal(TString pedestalData) {
-  Initialize();
-
-  SetPedestalData(pedestalData);
-}
-
-void STPedestal::Initialize()
+Bool_t STPedestal::SubtractPedestal(   Int_t  numTbs,
+                                       Int_t *fpn,
+                                       Int_t *rawADC,
+                                    Double_t *dest,
+                                    Double_t  rmsCut,
+                                      Bool_t  signalNegativePolarity,
+                                       Int_t  startTb,
+                                       Int_t  averageTbs
+                                   )
 {
-  fOpenFile = NULL;
-  fPedestalTree = NULL;
+  while (1) {
+    fMath -> Reset();
+    for (Int_t iTb = startTb; iTb < startTb + averageTbs; iTb++)
+      fMath -> Add(rawADC[iTb]);
 
-  fIsSetPedestalData = kFALSE;
+    if (fMath -> GetRMS() < rmsCut)
+      break;
 
-  memset(fPedestal, 0, sizeof(Double_t)*108*112*512);;
-  memset(fPedestalSigma, 0, sizeof(Double_t)*108*112*512);;
-}
+    startTb += averageTbs;
 
-Bool_t STPedestal::SetPedestalData(TString pedestalData) {
-  if (fOpenFile != NULL)
-    delete fOpenFile;
+    if (startTb > numTbs - averageTbs - 3) {
+      std::cout << "= [STPedestal] There's no part satisfying sigma threshold " << rmsCut << "!" << std::endl;
 
-  if ((fOpenFile = new TFile(pedestalData))) {
-    Int_t padRow = -2;
-    Int_t padLayer = -2;
-    Double_t pedestal[512] = {0};
-    Double_t pedestalSigma[512] = {0};
-
-    fPedestalTree = (TTree *) fOpenFile -> Get("PedestalData");
-    fPedestalTree -> SetBranchAddress("padRow", &padRow);
-    fPedestalTree -> SetBranchAddress("padLayer", &padLayer);
-    fPedestalTree -> SetBranchAddress("pedestal", pedestal);
-    fPedestalTree -> SetBranchAddress("pedestalSigma", pedestalSigma);
-
-    Int_t numEntries = fPedestalTree -> GetEntries();
-    for (Int_t iEntry = 0; iEntry < numEntries; iEntry++) {
-      fPedestalTree -> GetEntry(iEntry);
-
-      memcpy(pedestal, fPedestal[padRow][padLayer], sizeof(pedestal));
-      memcpy(pedestalSigma, fPedestalSigma[padRow][padLayer], sizeof(pedestalSigma));
+      return kFALSE;
     }
-
-    delete fOpenFile;
-    fPedestalTree = NULL;
-    fOpenFile = NULL;
-
-    fIsSetPedestalData = kTRUE;
-    return kTRUE;
   }
 
-  return kFALSE;
-}
+  Double_t baselineDiff = -fMath -> GetMean();
 
-Bool_t STPedestal::IsSetPedestalData() {
-  return fIsSetPedestalData;
-}
+  fMath -> Reset();
+  for (Int_t iTb = startTb; iTb < startTb + averageTbs; iTb++)
+    fMath -> Add(fpn[iTb]);
 
-void STPedestal::GetPedestal(Int_t padRow, Int_t padLayer, Double_t *pedestal, Double_t *pedestalSigma) {
-  if (fIsSetPedestalData == kFALSE) {
-    std::cerr << "Pedestal data file is not set!" << std::endl;
+  baselineDiff += fMath -> GetMean();
 
-    memset(pedestal, 4096, sizeof(Double_t)*512);
-    memset(pedestalSigma, 4096, sizeof(Double_t)*512);
-    return;
+  for (Int_t iTb = 0; iTb < numTbs; iTb++) {
+    Double_t adc = 0;
+    if (signalNegativePolarity == kTRUE)
+      adc = (fpn[iTb] - baselineDiff) - rawADC[iTb];
+    else
+      adc = rawADC[iTb] - (fpn[iTb] - baselineDiff);
+
+    dest[iTb] = adc;
   }
 
-  memcpy(pedestal, fPedestal[padRow][padLayer], sizeof(Double_t)*512);
-  memcpy(pedestalSigma, fPedestalSigma[padRow][padLayer], sizeof(Double_t)*512);
+  return kTRUE;
 }

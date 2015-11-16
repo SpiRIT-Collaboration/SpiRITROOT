@@ -19,8 +19,8 @@
 #include "STPedestal.hh"
 #include "STRawEvent.hh"
 
-#include "GETDecoder.hh"
-#include "GETFrame.hh"
+#include "GETCoboFrame.hh"
+#include "GETLayeredFrame.hh"
 
 #define cRED "\033[1;31m"
 #define cYELLOW "\033[1;33m"
@@ -47,18 +47,16 @@ STCore::STCore(TString filename, Int_t numTbs, Int_t windowNumTbs, Int_t windowS
   SetNumTbs(numTbs);
 }
 
-STCore::~STCore()
-{
-  delete fPedestalPtr;
-  delete fMapPtr;
-}
-
 void STCore::Initialize()
 {
   fRawEventPtr = new STRawEvent();
 
   fMapPtr = new STMap();
-  fPedestalPtr = new STPedestal();
+  fIsNegativePolarity = kTRUE;
+  fPedestalPtr[0] = new STPedestal();
+  for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+    fPedestalPtr[iCobo] = NULL;
+
   fPlotPtr = NULL;
 
   fDecoderPtr[0] = new GETDecoder();
@@ -66,12 +64,6 @@ void STCore::Initialize()
   fPadArray = new TClonesArray("STPad", 12096);
 
   fIsData = kFALSE;
-  fIsPedestalGenerationMode = kFALSE;
-  fIsPedestalData = kFALSE;
-  fIsInternalPedestal = kFALSE;
-  fPedestalMode = kNoPedestal;
-  fPedestalRMSFactor = 0;
-  fIsFPNPedestal = kFALSE;
   fFPNSigmaThreshold = 5;
 
   fGainCalibrationPtr = new STGainCalibration();
@@ -79,16 +71,9 @@ void STCore::Initialize()
 
   fNumTbs = 512;
 
-  fPedestalStartTb = 3;
-  fAverageTbs = 20;
+  fTargetFrameID = -1;
+  memset(fCurrentEventID, 0, sizeof(Int_t)*12);
 
-  fPrevEventNo = 0;
-  fCurrEventNo = 0;
-  fNextEventNo = 0;
-  memset(fCurrFrameNo, 0, sizeof(Int_t)*12);
-  memset(fNumCurrEventFrames, 0, sizeof(Int_t)*12);
-
-  fOldData = kFALSE;
   fIsSeparatedData = kFALSE;
 }
 
@@ -97,53 +82,45 @@ Bool_t STCore::AddData(TString filename, Int_t coboIdx)
   return fDecoderPtr[coboIdx] -> AddData(filename);
 }
 
-void STCore::SetNoAutoReload(Bool_t value)
-{
-  fDecoderPtr[0] -> SetNoAutoReload(value);
-
-  if (fIsSeparatedData)
-    for (Int_t iCobo = 1; iCobo < 12; iCobo++)
-      fDecoderPtr[iCobo] -> SetNoAutoReload(value);
-}
-
-void STCore::SetPedestalGenerationMode(Bool_t value)
-{
-  fIsPedestalGenerationMode = value;
-}
-
 void STCore::SetPositivePolarity(Bool_t value)
 {
-  fDecoderPtr[0] -> SetPositivePolarity(value);
-
-  if (fIsSeparatedData)
-    for (Int_t iCobo = 1; iCobo < 12; iCobo++)
-      fDecoderPtr[iCobo] -> SetPositivePolarity(value);
+  fIsNegativePolarity = !value;
 }
 
 Bool_t STCore::SetData(Int_t value)
 {
   fIsData = fDecoderPtr[0] -> SetData(value);
-  Int_t frameType = (fDecoderPtr[0] -> GetFrameType() == GETDecoder::kNormal ? GETDecoder::kNormal : -1);
+  GETDecoder::EFrameType frameType = fDecoderPtr[0] -> GetFrameType();
 
   if (fIsSeparatedData) {
     for (Int_t iCobo = 1; iCobo < 12; iCobo++) {
+      if (fPedestalPtr[iCobo] == NULL)
+        fPedestalPtr[iCobo] = new STPedestal();
+
       fIsData &= fDecoderPtr[iCobo] -> SetData(value);
-      frameType = (fDecoderPtr[iCobo] -> GetFrameType() == GETDecoder::kNormal ? GETDecoder::kNormal : -1);
-    }
+      frameType = fDecoderPtr[iCobo] -> GetFrameType();
 
-    if (frameType != GETDecoder::kNormal) {
-      std::cout << cRED << "== [STCore] When using separated data, only accepted are normal(not merged) frame data files!" << cNORMAL << std::endl;
+      if (frameType != GETDecoder::kCobo) {
+        std::cout << cRED << "== [STCore] When using separated data, only accepted are not merged frame data files!" << cNORMAL << std::endl;
 
-      fIsData = kFALSE;
+        fIsData = kFALSE;
+        return fIsData;
+      }
     }
   }
 
-  fPrevEventNo = 0;
-  fCurrEventNo = 0;
-  fNextEventNo = 0;
-  memset(fCurrFrameNo, 0, sizeof(Int_t)*12);
+  fTargetFrameID = -1;
+  memset(fCurrentEventID, 0, sizeof(Int_t)*12);
 
   return fIsData;
+}
+
+void STCore::SetDiscontinuousData(Bool_t value)
+{
+  fDecoderPtr[0] -> SetDiscontinuousData(value);
+  if (fIsSeparatedData)
+    for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+      fDecoderPtr[iCobo] -> SetDiscontinuousData(value);
 }
 
 Int_t STCore::GetNumData(Int_t coboIdx)
@@ -166,45 +143,8 @@ void STCore::SetNumTbs(Int_t value)
       fDecoderPtr[iCobo] -> SetNumTbs(value);
 }
 
-void STCore::SetInternalPedestal(Int_t startTb, Int_t averageTbs)
-{
-  if (fIsPedestalData) {
-    fPedestalMode = kPedestalBothIE;
-    std::cout << "== [STCore] Using both pedestal data is set!" << std::endl;
-  } else {
-    fPedestalMode = kPedestalInternal;
-    std::cout << "== [STCore] Internal pedestal calculation will be done!" << std::endl;
-  }
-
-  fIsInternalPedestal = kTRUE;
-  fPedestalStartTb = startTb;
-  fAverageTbs = averageTbs;
-}
-
-Bool_t STCore::SetPedestalData(TString filename, Double_t rmsFactor)
-{
-  fIsPedestalData = fPedestalPtr -> SetPedestalData(filename);
-
-  if (fIsPedestalData) {
-    if (fIsInternalPedestal) {
-      fPedestalMode = kPedestalBothIE;
-      std::cout << "== [STCore] Using both pedestal data is set!" << std::endl;
-    } else {
-      fPedestalMode = kPedestalExternal;
-      std::cout << "== [STCore] External pedestal data is set!" << std::endl;
-    }
-
-    fPedestalRMSFactor = rmsFactor;
-  } else
-    std::cout << "== [STCore] Pedestal data is not set! Check it exists!" << std::endl;
-
-  return fIsPedestalData;
-}
-
 void STCore::SetFPNPedestal(Double_t sigmaThreshold)
 {
-  fIsFPNPedestal = kTRUE;
-  fPedestalMode = kPedestalFPN;
   fFPNSigmaThreshold = sigmaThreshold;
 
   std::cout << "== [STCore] Using FPN pedestal is set!" << std::endl;
@@ -252,41 +192,22 @@ Bool_t STCore::SetAGETMap(TString filename)
 
 void STCore::ProcessCobo(Int_t coboIdx)
 {
-  Int_t iSkipper = 0;
+  GETCoboFrame *coboFrame = fDecoderPtr[coboIdx] -> GetCoboFrame(fTargetFrameID);
 
-  Bool_t skipped = kFALSE;
-  Bool_t eof = kFALSE;
-  fNumCurrEventFrames[coboIdx] = 0;
+  if (coboFrame == NULL) {
+    fRawEventPtr -> SetIsGood(kFALSE);
 
-  while (1) {
-    GETFrame *frame = fDecoderPtr[coboIdx] -> GetFrame(fCurrFrameNo[coboIdx] + iSkipper);
+    return;
+  }
 
-    if (frame == NULL) {
-      eof = kTRUE;
-      break;
-    }
+  fCurrentEventID[coboIdx] = coboFrame -> GetEventID();
+  Int_t numFrames = coboFrame -> GetNumFrames();
+  for (Int_t iFrame = 0; iFrame < numFrames; iFrame++) {
+    GETBasicFrame *frame = coboFrame -> GetFrame(iFrame);
 
-    if (frame -> GetEventID() != fCurrEventNo) {
-      iSkipper++;
-
-      skipped = kTRUE;
-
-      continue;
-    }
 
     Int_t coboID = frame -> GetCoboID();
     Int_t asadID = frame -> GetAsadID();
-
-//    std::cout << "coboIdx: " << coboIdx << " skipped: " << skipped << " fCurrFrameNo[coboIdx]: " << fCurrFrameNo[coboIdx];
-//    std::cout << " iSkipper: " << iSkipper << " Taken: " << fCurrFrameNo[coboIdx] + iSkipper << " fNumCurrEventFrames[coboIdx]: " << fNumCurrEventFrames[coboIdx] << std::endl;
-
-    fCurrEventFrameNo[coboIdx][asadID] = fCurrFrameNo[coboIdx] + iSkipper;
-    fNumCurrEventFrames[coboIdx]++;
-
-    if (!skipped)
-      fCurrFrameNo[coboIdx]++;
-    else
-      iSkipper++;
 
     for (Int_t iAget = 0; iAget < 4; iAget++) {
       for (Int_t iCh = 0; iCh < 68; iCh++) {
@@ -297,67 +218,24 @@ void STCore::ProcessCobo(Int_t coboIdx)
           continue;
 
         STPad *pad = new ((*fPadArray)[row*112 + layer]) STPad(row, layer);
-        Int_t *rawadc = frame -> GetRawADC(iAget, iCh);
+        Int_t *rawadc = frame -> GetSample(iAget, iCh);
         for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
           pad -> SetRawADC(iTb, rawadc[iTb]);
 
-        if (fPedestalMode == kPedestalInternal) {
-          frame -> CalcPedestal(iAget, iCh, fPedestalStartTb, fAverageTbs);
-          frame -> SubtractPedestal(iAget, iCh);
+        Int_t fpnCh = GetFPNChannel(iCh);
+        Double_t adc[512] = {0};
+        fPedestalPtr[coboIdx] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
 
-          Double_t *adc = frame -> GetADC(iAget, iCh);
-          for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-            pad -> SetADC(iTb, adc[iTb]);
+        if (fIsGainCalibrationData)
+          fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
 
-          pad -> SetPedestalSubtracted(kTRUE);
-        } else if (fPedestalMode != kNoPedestal) {
-          if (fPedestalMode == kPedestalBothIE)
-            frame -> CalcPedestal(iAget, iCh, fPedestalStartTb, fAverageTbs);
+        for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+          pad -> SetADC(iTb, adc[iTb]);
 
-          Double_t pedestal[512];
-          Double_t pedestalSigma[512];
-
-          if (fPedestalMode == kPedestalExternal || fPedestalMode == kPedestalBothIE) {
-            fPedestalPtr -> GetPedestal(row, layer, pedestal, pedestalSigma);
-            frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
-          } else if (fPedestalMode == kPedestalFPN)
-            frame -> SetFPNPedestal(fFPNSigmaThreshold);
-
-          Bool_t good = frame -> SubtractPedestal(iAget, iCh, fPedestalRMSFactor);
-          fRawEventPtr -> SetIsGood(good);
-          if (!good) {
-            iAget = 4;
-            iCh = 68;
-
-            continue;
-          }
-
-          Double_t *adc = frame -> GetADC(iAget, iCh);
-
-          if (fIsGainCalibrationData)
-            fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
-
-          for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-            pad -> SetADC(iTb, adc[iTb]);
-
-          pad -> SetPedestalSubtracted(kTRUE);
-        }
+        pad -> SetPedestalSubtracted(kTRUE);
       }
     }
-
-    if (fNumCurrEventFrames[coboIdx] == 4) {
-      fCurrFrameNo[coboIdx] = (fCurrEventFrameNo[coboIdx][0] > 3 ? fCurrEventFrameNo[coboIdx][0] - 3 : 0);
-
-      break;
-    }
   }
-
-  if (eof == kTRUE) {
-    fRawEventPtr -> Clear();
-    fRawEventPtr -> SetIsGood(kFALSE);
-  }
-  else if (fNumCurrEventFrames[coboIdx] < 4)
-    std::cout << "== [STCore] Warning: There're less than 4 AsAds' frame in this event! (Event ID: " << fCurrEventNo << ")" << std::endl;
 }
 
 Bool_t STCore::SetWriteFile(TString filename, Int_t coboIdx, Bool_t overwrite)
@@ -375,16 +253,14 @@ void STCore::WriteData()
 
   if (fIsSeparatedData)  {
     for (Int_t iCobo = 0; iCobo < 12; iCobo++) {
-      for (Int_t iFrame = 0; iFrame < fNumCurrEventFrames[iCobo]; iFrame++) {
-        fDecoderPtr[iCobo] -> GetFrame(fCurrEventFrameNo[iCobo][iFrame]);
-        fDecoderPtr[iCobo] -> WriteFrame();
-      }
+      fDecoderPtr[iCobo] -> GetCoboFrame(fTargetFrameID);
+      fDecoderPtr[iCobo] -> WriteFrame();
     }
   } else 
     fDecoderPtr[0] -> WriteFrame();
 }
 
-STRawEvent *STCore::GetRawEvent(Long64_t eventID)
+STRawEvent *STCore::GetRawEvent(Long64_t frameID)
 {
   if (!fIsData) {
     std::cout << "== [STCore] Data file is not set!" << std::endl;
@@ -392,28 +268,14 @@ STRawEvent *STCore::GetRawEvent(Long64_t eventID)
     return NULL;
   }
 
-  if (fPedestalMode == kNoPedestal && !fIsPedestalGenerationMode)
-    std::cout << "== [STCore] Pedestal data file is not set!" << std::endl;
-
   if (fIsSeparatedData) {
-    if (fCurrEventNo == eventID && fNextEventNo != 0)
-      return fRawEventPtr;
-
     fRawEventPtr -> Clear();
     fPadArray -> Clear("C");
 
-    if (eventID == -1) {
-      eventID = fNextEventNo;
-    } else if (eventID < fCurrEventNo) {
-      fCurrEventNo = eventID;
-      for (Int_t iCobo = 0; iCobo < 12; iCobo++)
-        fCurrFrameNo[iCobo] = 0;
-    }
-
-    fCurrEventNo = eventID;
-    fRawEventPtr -> SetEventID(fCurrEventNo);
-
-    fNextEventNo = fCurrEventNo + 1;
+    if (frameID == -1)
+      fTargetFrameID++;
+    else
+      fTargetFrameID = frameID;
 
     std::thread cobo0([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 0);
     std::thread cobo1([this](Int_t coboIdx) { this -> ProcessCobo(coboIdx); }, 1);
@@ -441,6 +303,15 @@ STRawEvent *STCore::GetRawEvent(Long64_t eventID)
     cobo10.join();
     cobo11.join();
 
+    for (Int_t iCobo = 0; iCobo < 12; iCobo++)
+      if (fCurrentEventID[0] != fCurrentEventID[iCobo]) {
+        std::cout << "== [STCore] Event IDs don't match between CoBos! fCurrentEventID[0]: " << fCurrentEventID[0] << " fCurrentEventID[" << iCobo << "]: " << fCurrentEventID[iCobo] << std::endl;
+
+        fRawEventPtr -> SetIsGood(kFALSE);
+      }
+
+    fRawEventPtr -> SetEventID(fCurrentEventID[0]);
+
     for (Int_t iRow = 0; iRow < 108; iRow++) {
       for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
         STPad *pad = (STPad *) fPadArray -> At(iRow*112 + iLayer);
@@ -454,55 +325,25 @@ STRawEvent *STCore::GetRawEvent(Long64_t eventID)
     else
       return fRawEventPtr;
   } else {
-    fPrevEventNo = eventID;
-
     fRawEventPtr -> Clear();
-
     fPadArray -> Clear("C");
 
-    GETFrame *frame = NULL;
-    while ((frame = fDecoderPtr[0] -> GetFrame(fCurrFrameNo[0]))) {
-      if (fPrevEventNo == -1)
-        fPrevEventNo = frame -> GetEventID();
+    if (frameID == -1)
+      fTargetFrameID++;
+    else
+      fTargetFrameID = frameID;
 
-      fCurrEventNo = frame -> GetEventID();
+    GETLayeredFrame *layeredFrame = fDecoderPtr[0] -> GetLayeredFrame(fTargetFrameID);
+    if (layeredFrame == NULL)
+      return NULL;
 
-      if (fCurrEventNo == fPrevEventNo + 1) {
-        fPrevEventNo = fCurrEventNo;
-        return fRawEventPtr;
-      } else if (fCurrEventNo > fPrevEventNo + 1) {
-        fCurrFrameNo[0] = 0;
-        continue;
-      } else if (fCurrEventNo < fPrevEventNo) {
-        fCurrFrameNo[0]++;
-        continue;
-      }
+    fRawEventPtr -> SetEventID(layeredFrame -> GetEventID());
 
-      Int_t frameType = fDecoderPtr[0] -> GetFrameType();
-
-      if ((frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime) && !(fRawEventPtr -> IsGood())) {
-        Int_t currentInnerFrameID = fDecoderPtr[0] -> GetCurrentInnerFrameID();
-        Int_t numInnerFrames = fDecoderPtr[0] -> GetNumMergedFrames();
-
-        while (!(currentInnerFrameID + 1 == numInnerFrames)) {
-          fDecoderPtr[0] -> GetFrame(fCurrFrameNo[0]);
-
-          currentInnerFrameID = fDecoderPtr[0] -> GetCurrentInnerFrameID();
-          numInnerFrames = fDecoderPtr[0] -> GetNumMergedFrames();
-        }
-
-        fCurrFrameNo[0]++;
-        fPrevEventNo = fCurrEventNo;
-        return fRawEventPtr;
-      }
-
-      fRawEventPtr -> SetEventID(fCurrEventNo);
+    Int_t numFrames = layeredFrame -> GetNItems();
+    for (Int_t iFrame = 0; iFrame < numFrames; iFrame++) {
+      GETBasicFrame *frame = layeredFrame -> GetFrame(iFrame); 
 
       Int_t coboID = frame -> GetCoboID();
-
-      if (fOldData == kTRUE && (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime))
-        coboID = fDecoderPtr[0] -> GetCurrentInnerFrameID();
-
       Int_t asadID = frame -> GetAsadID();
 
       for (Int_t iAget = 0; iAget < 4; iAget++) {
@@ -514,70 +355,26 @@ STRawEvent *STCore::GetRawEvent(Long64_t eventID)
             continue;
 
           STPad *pad = new ((*fPadArray)[row*112 + layer]) STPad(row, layer);
-          Int_t *rawadc = frame -> GetRawADC(iAget, iCh);
+          Int_t *rawadc = frame -> GetSample(iAget, iCh);
           for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
             pad -> SetRawADC(iTb, rawadc[iTb]);
 
-          if (fPedestalMode == kPedestalInternal) {
-            frame -> CalcPedestal(iAget, iCh, fPedestalStartTb, fAverageTbs);
-            frame -> SubtractPedestal(iAget, iCh);
+          Int_t fpnCh = GetFPNChannel(iCh);
+          Double_t adc[512] = {0};
+          Bool_t good = fPedestalPtr[0] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
 
-            Double_t *adc = frame -> GetADC(iAget, iCh);
-            for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-              pad -> SetADC(iTb, adc[iTb]);
+          if (fIsGainCalibrationData)
+            fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
 
-            pad -> SetPedestalSubtracted(kTRUE);
-          } else if (fPedestalMode != kNoPedestal) {
-            if (fPedestalMode == kPedestalBothIE)
-              frame -> CalcPedestal(iAget, iCh, fPedestalStartTb, fAverageTbs);
+          for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+            pad -> SetADC(iTb, adc[iTb]);
 
-            Double_t pedestal[512];
-            Double_t pedestalSigma[512];
-
-            if (fPedestalMode == kPedestalExternal || fPedestalMode == kPedestalBothIE) {
-              fPedestalPtr -> GetPedestal(row, layer, pedestal, pedestalSigma);
-              frame -> SetPedestal(iAget, iCh, pedestal, pedestalSigma);
-            } else if (fPedestalMode == kPedestalFPN)
-              frame -> SetFPNPedestal(fFPNSigmaThreshold);
-
-            Bool_t good = frame -> SubtractPedestal(iAget, iCh, fPedestalRMSFactor);
-            fRawEventPtr -> SetIsGood(good);
-            if (!good) {
-  //            delete pad;
-
-              iAget = 4;
-              iCh = 68;
-
-              continue;
-            }
-
-            Double_t *adc = frame -> GetADC(iAget, iCh);
-
-            if (fIsGainCalibrationData)
-              fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
-
-            for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-              pad -> SetADC(iTb, adc[iTb]);
-
-            pad -> SetPedestalSubtracted(kTRUE);
-          }
+          pad -> SetPedestalSubtracted(kTRUE);
+          fRawEventPtr -> SetIsGood(good);
 
           fRawEventPtr -> SetPad(pad);
-  //        delete pad;
         }
       }
-
-      if (frameType == GETDecoder::kMergedID || frameType == GETDecoder::kMergedTime) {
-        Int_t currentInnerFrameID = fDecoderPtr[0] -> GetCurrentInnerFrameID();
-        Int_t numInnerFrames = fDecoderPtr[0] -> GetNumMergedFrames();
-
-        if (currentInnerFrameID + 1 == numInnerFrames) {
-          fCurrFrameNo[0]++;
-          fPrevEventNo = fCurrEventNo;
-          return fRawEventPtr;
-        }
-      } else
-        fCurrFrameNo[0]++;
     }
   }
 
@@ -592,11 +389,6 @@ Int_t STCore::GetEventID()
 Int_t STCore::GetNumTbs(Int_t coboIdx)
 {
   return fDecoderPtr[coboIdx] -> GetNumTbs();
-}
-
-void STCore::SetOldData(Bool_t oldData)
-{
-  fOldData = oldData;
 }
 
 void STCore::SetUseSeparatedData(Bool_t value) {
@@ -625,4 +417,16 @@ STPlot *STCore::GetSTPlot()
     fPlotPtr = new STPlot(this);
 
   return fPlotPtr;
+}
+
+Int_t STCore::GetFPNChannel(Int_t chIdx)
+{
+  Int_t fpn = -1;
+
+       if (chIdx < 17) fpn = 11;
+  else if (chIdx < 34) fpn = 22;
+  else if (chIdx < 51) fpn = 45;
+  else                 fpn = 56;
+
+  return fpn;
 }
