@@ -200,17 +200,14 @@ void STCore::ProcessCobo(Int_t coboIdx)
     return;
   }
 
+  fCurrentEventID[coboIdx] = coboFrame -> GetEventID();
   Int_t numFrames = coboFrame -> GetNumFrames();
   for (Int_t iFrame = 0; iFrame < numFrames; iFrame++) {
     GETBasicFrame *frame = coboFrame -> GetFrame(iFrame);
 
-    fCurrentEventID[coboIdx] = frame -> GetEventID();
 
     Int_t coboID = frame -> GetCoboID();
     Int_t asadID = frame -> GetAsadID();
-
-//    std::cout << "coboIdx: " << coboIdx << " skipped: " << skipped << " fCurrFrameNo[coboIdx]: " << fCurrFrameNo[coboIdx];
-//    std::cout << " iSkipper: " << iSkipper << " Taken: " << fCurrFrameNo[coboIdx] + iSkipper << " fNumCurrEventFrames[coboIdx]: " << fNumCurrEventFrames[coboIdx] << std::endl;
 
     for (Int_t iAget = 0; iAget < 4; iAget++) {
       for (Int_t iCh = 0; iCh < 68; iCh++) {
@@ -308,7 +305,7 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
 
     for (Int_t iCobo = 0; iCobo < 12; iCobo++)
       if (fCurrentEventID[0] != fCurrentEventID[iCobo]) {
-        std::cout << "== [STCore] Event IDs don't match between CoBos!" << std::endl;
+        std::cout << "== [STCore] Event IDs don't match between CoBos! fCurrentEventID[0]: " << fCurrentEventID[0] << " fCurrentEventID[" << iCobo << "]: " << fCurrentEventID[iCobo] << std::endl;
 
         fRawEventPtr -> SetIsGood(kFALSE);
       }
