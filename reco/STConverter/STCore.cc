@@ -376,6 +376,8 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
         }
       }
     }
+
+    return fRawEventPtr;
   }
 
   return NULL;
