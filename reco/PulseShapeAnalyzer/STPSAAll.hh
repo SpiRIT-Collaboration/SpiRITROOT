@@ -11,17 +11,34 @@
 
 // ROOT classes
 #include "TSpectrum.h"
+#include "TClonesArray.h"
+
+// STL
+#include <mutex>
+#include <condition_variable>
 
 class STPSAAll : public STPSA
 {
   public:
     STPSAAll();
-    ~STPSAAll();
 
     void Analyze(STRawEvent *rawEvent, STEvent *event);
+    void PadAnalyzer(TClonesArray *hitArray);
 
   private:
     TSpectrum *fPeakFinder;  /// TSpectrum object
+    TClonesArray **fThreadHitArray; /// TClonesArray object
+
+    const Int_t fNumThread;
+
+    Bool_t fPadReady;
+    Bool_t fPadTaken;
+    Bool_t fEnd;
+
+    std::mutex fMutex;
+    std::condition_variable fCondVariable;
+
+    STPad *fPad;
 
   ClassDef(STPSAAll, 2)
 };
