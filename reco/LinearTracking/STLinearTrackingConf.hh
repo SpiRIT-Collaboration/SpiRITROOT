@@ -1,14 +1,6 @@
 #ifndef STLINEARTRACKINGCONF
 #define STLINEARTRACKINGCONF
 
-//#define DEBUGLIT
-//#define DEBUGLIT_BUILD
-//#define DEBUGLIT_SELECT
-//#define DEBUGLIT_MERGE
-//#define DEBUGLIT_MERGE_CORR
-//#define DEBUGLIT_TIMER
-//#define DEBUGLIT_CUT
-
 #include "STHit.hh"
 #include "STLinearTrack.hh"
 #include "STLinearTrackFitter.hh"

@@ -28,7 +28,7 @@ STLinearTrackFinder::STLinearTrackFinder()
   fTrackQueue = new vecTrk_t;
   fTrackBufferTemp = new vecTrk_t;
 
-  fTrackClonesArray = new TClonesArray("STLinearTrack", 20);
+  fTrackClonesArray = new TClonesArray("STLinearTrack", 50);
 
   SetProximityCutFactor(1.1, 3.0, 1.1);
   SetNumHitsCut(30, 8, 20, 50);
@@ -143,16 +143,14 @@ STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *trackArray)
     fHitQueue -> push_back(hit);
   }
 
-  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortXInv());
-  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortZInv());
-
+  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortXYZInv());
+   
   ///////////////////////////////////////////////////////////////
   Build  (fTrackQueue, fHitQueue, fCorrTH);
   Select (fTrackQueue, fTrackQueue, fHitQueue, TMath::Pi()*1/4);
   Build  (fTrackQueue, fHitQueue, fCorrTH_justPerp, kFALSE);
 
   Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
-  Merge  (fTrackBufferFinal);
   Merge  (fTrackBufferFinal);
   ///////////////////////////////////////////////////////////////
 
@@ -169,15 +167,6 @@ STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *trackArray)
   Merge  (fTrackQueue);
   Select (fTrackQueue, fTrackQueue, fHitQueue);
   Build  (fTrackQueue, fHitQueue, fCorrTH_justPerp, kFALSE);
-  Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
-  ///////////////////////////////////////////////////////////////
-  //
-  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortXInv());
-  std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortZInv());
-
-  ///////////////////////////////////////////////////////////////
-  Build  (fTrackQueue, fHitQueue, fCorrTH_largeAngle);
-  Merge  (fTrackQueue);
   Select (fTrackQueue, fTrackBufferFinal, fHitQueue);
   ///////////////////////////////////////////////////////////////
 
@@ -319,7 +308,6 @@ STLinearTrackFinder::Select(vecTrk_t *trackArray, vecTrk_t *trackArray2, vecHit_
     trackArray2 -> push_back(track);
 
   fTrackBufferTemp -> clear();
-
 }
 
 void 
