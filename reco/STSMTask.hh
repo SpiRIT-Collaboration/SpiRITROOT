@@ -35,9 +35,13 @@ class STSMTask : public FairTask {
     virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
 
+    void SetPersistence(Bool_t value = kTRUE);
+
     void SetMode(STSMTask::ESMMode mode);
 
   private:
+    Bool_t fIsPersistence;  ///< Persistence check variable
+
     FairLogger *fLogger;  //!
     
     STDigiPar *fPar;

@@ -46,7 +46,10 @@ class STDriftTask : public FairTask
     virtual void Exec(Option_t* opt); //!< Executed for each event.
     virtual void SetParContainers();  //!< Load the parameter container from the runtime database.
 
+    void SetPersistence(Bool_t value = kTRUE);
+
   private:
+    Bool_t fIsPersistence;  ///< Persistence check variable
 
     Int_t fEventID; //!< EventID
 

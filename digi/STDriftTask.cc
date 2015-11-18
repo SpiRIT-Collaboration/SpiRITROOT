@@ -32,6 +32,8 @@ STDriftTask::STDriftTask()
 :FairTask("STDriftTask"),
  fEventID(0)
 {
+  fIsPersistence = kFALSE;
+
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STDriftTask");
 }
 
@@ -59,7 +61,7 @@ STDriftTask::Init()
 
   fMCPointArray = (TClonesArray*) ioman->GetObject("STMCPoint");
   fElectronArray = new TClonesArray("STDriftedElectron");
-  ioman->Register("STDriftedElectron","ST",fElectronArray,fInputPersistance);
+  ioman->Register("STDriftedElectron","ST",fElectronArray,fIsPersistence);
 
   fYAnodeWirePlane = fPar->GetAnodeWirePlaneY(); // [mm]
   fZWidthPadPlane  = fPar->GetPadPlaneZ(); // [mm]
@@ -181,5 +183,7 @@ STDriftTask::Exec(Option_t* option)
 
   return;
 }
+
+void STDriftTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
 
 ClassImp(STDriftTask);

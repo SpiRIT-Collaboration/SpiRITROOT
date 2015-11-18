@@ -47,7 +47,11 @@ class STGenfitTask : public FairTask {
     virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
 
+    void SetPersistence(Bool_t value = kTRUE);
+
   private:
+    Bool_t fIsPersistence;  ///< Persistence check variable
+
     FairLogger *fLogger;
 
     STDigiPar *fPar;

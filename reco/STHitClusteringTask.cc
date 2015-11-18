@@ -28,6 +28,8 @@ ClassImp(STHitClusteringTask);
 STHitClusteringTask::STHitClusteringTask()
 :FairTask("SpiRIT Hit Clustering Task")
 {
+  fIsPersistence = kFALSE;
+
   fLogger = FairLogger::GetLogger();
 
   fSetProxCut  = kFALSE;
@@ -41,6 +43,7 @@ STHitClusteringTask::~STHitClusteringTask()
 {
 }
 
+void STHitClusteringTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
 void STHitClusteringTask::SetClusterizerMode(STClusterizerMode mode) { fClusterizerMode = mode; }
 void STHitClusteringTask::SetProximityCut(Double_t x, Double_t y, Double_t z)
 {

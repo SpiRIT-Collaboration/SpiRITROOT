@@ -41,6 +41,8 @@ ClassImp(STGenfitTask);
 
 STGenfitTask::STGenfitTask()
 {
+  fIsPersistence = kFALSE;
+
   fLogger = FairLogger::GetLogger();
   fPar = NULL;
 
@@ -63,6 +65,7 @@ STGenfitTask::~STGenfitTask()
 {
 }
 
+void STGenfitTask::SetPersistence(Bool_t value)     { fIsPersistence = value; }
 void STGenfitTask::SetMaxIterations(Int_t value)    { fMaxIterations = value; }
 void STGenfitTask::SetFindVertex(Bool_t value)      { fIsFindVertex = value; }
 
@@ -87,7 +90,7 @@ STGenfitTask::Init()
     return kERROR;
   }
 
-  ioMan -> Register("STTrack", "SPiRIT", fTrackArray, fInputPersistance);
+  ioMan -> Register("STTrack", "SPiRIT", fTrackArray, fIsPersistence);
 
   // GENFIT initialization
   fFitter = new genfit::KalmanFitterRefTrack();
@@ -97,7 +100,7 @@ STGenfitTask::Init()
     fVertexFactory = new genfit::GFRaveVertexFactory(/* verbosity */ 2, /* useVacuumPropagator */ kFALSE);
     fVertexFactory -> setMethod("kalman-smoothing:1");
 
-    ioMan -> Register("STVertex", "SPiRIT", fVertexArray, fInputPersistance);
+    ioMan -> Register("STVertex", "SPiRIT", fVertexArray, fIsPersistence);
   }
 
   fMeasurementProducer = new genfit::MeasurementProducer<STHitCluster, genfit::STSpacepointMeasurement>(fHitClusterArray);

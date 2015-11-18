@@ -54,7 +54,7 @@ STDecoderTask::~STDecoderTask()
 {
 }
 
-void STDecoderTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; fInputPersistance = value; }
+void STDecoderTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }
 void STDecoderTask::SetNumTbs(Int_t numTbs)                                                   { fNumTbs = numTbs; fExternalNumTbs = kTRUE; }
 void STDecoderTask::AddData(TString filename, Int_t coboIdx)                                  { fDataList[coboIdx].push_back(filename); }
 void STDecoderTask::SetData(Int_t value)                                                      { fDataNum = value; }
@@ -77,7 +77,7 @@ STDecoderTask::Init()
     return kERROR;
   }
 
-  ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fInputPersistance);
+  ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
 
   fDecoder = new STCore();
   fDecoder -> SetUseSeparatedData(fIsSeparatedData);

@@ -27,6 +27,8 @@ ClassImp(STPSATask);
 
 STPSATask::STPSATask()
 {
+  fIsPersistence = kFALSE;
+
   fLogger = FairLogger::GetLogger();
 
   fEventArray = new TClonesArray("STEvent");
@@ -40,6 +42,7 @@ STPSATask::~STPSATask()
 {
 }
 
+void STPSATask::SetPersistence(Bool_t value)     { fIsPersistence = value; }
 void STPSATask::SetPSAMode(STPSAMode mode)       { fPSAMode = mode; }
 void STPSATask::SetThreshold(Double_t threshold) { fThreshold = threshold; }
 void STPSATask::SetLayerCut(Double_t layerCut)   { fLayerCut = layerCut; }
@@ -93,7 +96,7 @@ STPSATask::Init()
   fPSA -> SetThreshold((Int_t)fThreshold);
   fPSA -> SetLayerCut(fLayerCut);
 
-  ioMan -> Register("STEvent", "SPiRIT", fEventArray, fInputPersistance);
+  ioMan -> Register("STEvent", "SPiRIT", fEventArray, fIsPersistence);
 
   return kSUCCESS;
 }

@@ -43,6 +43,8 @@ ClassImp(STRiemannTrackingTask);
 STRiemannTrackingTask::STRiemannTrackingTask()
 :FairTask("ST Pattern Reconstruction")
 {
+  fIsPersistence = kFALSE;
+
   fLogger = FairLogger::GetLogger();
 
   UseDefaultParameterSet();
@@ -53,6 +55,7 @@ STRiemannTrackingTask::~STRiemannTrackingTask()
 }
 
 // Simple setter methods --------------------------------------------------------------------------------
+void STRiemannTrackingTask::SetPersistence(Bool_t value)             { fIsPersistence = value; }
 void STRiemannTrackingTask::SetMaxRMS(Double_t value)                { fMaxRMS = value; }
 void STRiemannTrackingTask::SetMergeTracks(Bool_t mergeTracks)       { fMergeTracks = mergeTracks; }
 void STRiemannTrackingTask::SetRiemannScale(Double_t riemannScale)   { fRiemannScale = riemannScale; }
@@ -187,7 +190,7 @@ STRiemannTrackingTask::Init()
   }
 
   fRiemannTrackArray = new TClonesArray("STRiemannTrack");
-  ioMan -> Register("STRiemannTrack", "SPiRIT", fRiemannTrackArray, fInputPersistance);
+  ioMan -> Register("STRiemannTrack", "SPiRIT", fRiemannTrackArray, fIsPersistence);
 
   fRiemannHitArray = new TClonesArray("STRiemannHit");
   ioMan -> Register("STRiemannHit", "SPiRIT", fRiemannHitArray, kFALSE);

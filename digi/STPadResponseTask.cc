@@ -27,6 +27,8 @@ STPadResponseTask::STPadResponseTask()
  fEventID(0),
  fAssumeGausPRF(kFALSE)
 {
+  fIsPersistence = kFALSE;
+
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STPadResponseTask");
 }
 
@@ -54,7 +56,7 @@ STPadResponseTask::Init()
 
   fElectronArray = (TClonesArray*) ioman->GetObject("STDriftedElectron");
   fRawEventArray = new TClonesArray("STRawEvent"); 
-  ioman->Register("PPEvent", "ST", fRawEventArray, fInputPersistance);
+  ioman->Register("PPEvent", "ST", fRawEventArray, fIsPersistence);
 
   fTBTime    = fPar -> GetTBTime();
   fNTbs      = fPar -> GetNumTbs();
@@ -256,5 +258,7 @@ STPadResponseTask::InitPRF()
   fPRIRow -> Fit(fitPRI,"Q");
   fPRIPar0 = fitPRI -> GetParameter(0);
 }
+
+void STPadResponseTask::SetPersistence(Bool_t value)  { fIsPersistence = value; }
 
 ClassImp(STPadResponseTask);

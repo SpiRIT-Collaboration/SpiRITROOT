@@ -23,6 +23,8 @@ ClassImp(STSMTask);
 
 STSMTask::STSMTask()
 {
+  fIsPersistence = kFALSE;
+
   fLogger = FairLogger::GetLogger();
   fPar = NULL;
 
@@ -36,6 +38,7 @@ STSMTask::~STSMTask()
 {
 }
 
+void STSMTask::SetPersistence(Bool_t value)     { fIsPersistence = value; }
 void STSMTask::SetMode(ESMMode mode)            { fSMMode = mode; }
 
 InitStatus
@@ -54,7 +57,7 @@ STSMTask::Init()
     return kERROR;
   }
 
-  ioMan -> Register("STEventHCM", "SPiRIT", fEventHCMArray, fInputPersistance);
+  ioMan -> Register("STEventHCM", "SPiRIT", fEventHCMArray, fIsPersistence);
 
   return kSUCCESS;
 }

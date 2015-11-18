@@ -119,8 +119,12 @@ class STRiemannTrackingTask : public FairTask
     virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
 
+    void SetPersistence(Bool_t value = kTRUE);
+
 
   private:
+    Bool_t fIsPersistence;  ///< Persistence check variable
+
     FairLogger *fLogger;
 
     void BuildTracks(STRiemannTrackFinder *trackfinder,

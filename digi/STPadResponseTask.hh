@@ -44,6 +44,8 @@ class STPadResponseTask : public FairTask
     virtual void Exec(Option_t* opt); //!< Executed for each event.
     virtual void SetParContainers();  //!< Load the parameter container from the runtime database.
 
+    void SetPersistence(Bool_t value = kTRUE);
+
     /**
      * Assume Gaussian like pad response function. Original pad response
      * function is a little more narror with same FWHM compare to gaussian.
@@ -57,6 +59,7 @@ class STPadResponseTask : public FairTask
     void AssumeGausPRF(Bool_t val = kTRUE) { fAssumeGausPRF = val; };
 
   private:
+    Bool_t fIsPersistence;  ///< Persistence check variable
 
     void InitDummy();   //!< Initialize dummy STRawEvent which contains all (dummy) pads used in TPC.
     void ReInitDummy(); //!< Initialize dummy pads content to be empty.

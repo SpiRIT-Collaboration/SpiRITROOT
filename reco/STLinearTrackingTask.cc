@@ -20,8 +20,12 @@ ClassImp(STLinearTrackingTask);
 STLinearTrackingTask::STLinearTrackingTask()
 :FairTask("ST Linear Tracking")
 {
+  fIsPersistence = kFALSE;
+
   fLogger = FairLogger::GetLogger();
 }
+
+void STLinearTrackingTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
 
 STLinearTrackingTask::~STLinearTrackingTask()
 {
@@ -44,7 +48,7 @@ STLinearTrackingTask::Init()
   
   fTrackArray = new TClonesArray("STLinearTrack");
 
-  ioMan -> Register("STLinearTrack", "SPiRIT", fTrackArray, fInputPersistance);
+  ioMan -> Register("STLinearTrack", "SPiRIT", fTrackArray, fIsPersistence);
 
   fTrackBuffer = new std::vector<STLinearTrack*>;
 

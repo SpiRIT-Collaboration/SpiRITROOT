@@ -42,6 +42,8 @@ class STHitClusteringTask : public FairTask
     virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
 
+    void SetPersistence(Bool_t value = kTRUE);
+
     STClusterizer* GetClusterizer();
     void SetClusterizerMode(STClusterizerMode mode);
 
@@ -50,6 +52,8 @@ class STHitClusteringTask : public FairTask
     void SetEdgeCut(Double_t low, Double_t high);
 
   private:
+    Bool_t fIsPersistence;  ///< Persistence check variable
+
     TClonesArray *fEventArray;    
 
     STClusterizer *fClusterizer;   //!< Clusterizer pointer

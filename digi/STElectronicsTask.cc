@@ -35,6 +35,8 @@ STElectronicsTask::STElectronicsTask()
  fPedestalSubtracted(kTRUE),
  fSignalPolarity(1)
 {
+  fIsPersistence = kFALSE;
+
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STElectronicsTask");
 }
 
@@ -63,7 +65,7 @@ STElectronicsTask::Init()
 
   fPPEventArray = (TClonesArray*) ioman->GetObject("PPEvent");
   fRawEventArray = new TClonesArray("STRawEvent"); 
-  ioman->Register("STRawEvent", "ST", fRawEventArray, fInputPersistance);
+  ioman->Register("STRawEvent", "ST", fRawEventArray, fIsPersistence);
 
   fNTBs = fPar -> GetNumTbs();
 
@@ -151,6 +153,7 @@ STElectronicsTask::Exec(Option_t* option)
   return;
 }
 
+void STElectronicsTask::SetPersistence(Bool_t value)       {    fIsPersistence = value; }
 void STElectronicsTask::SetADCConstant(Double_t val)       {       fADCConstant  = val; }
 void STElectronicsTask::SetDynamicRange(Double_t val)      {    fADCDynamicRange = val; }
 void STElectronicsTask::SetPedestalMean(Double_t val)      {       fPedestalMean = val; }

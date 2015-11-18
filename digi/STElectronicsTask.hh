@@ -34,6 +34,8 @@ class STElectronicsTask : public FairTask
     virtual void Exec(Option_t* opt); //!< Executed for each event.
     virtual void SetParContainers();  //!< Load the parameter container from the runtime database.
 
+    void SetPersistence(Bool_t value = kTRUE);
+
     void SetADCConstant(Double_t val);
     /**
      * Set dynamic range of ADC. Unit in [Coulomb].
@@ -46,6 +48,7 @@ class STElectronicsTask : public FairTask
     void SetSignalPolarity(Bool_t val);      //!< Set signal polarity. Default is 1(positive).
 
   private:
+    Bool_t fIsPersistence;  ///< Persistence check variable
 
     Int_t fEventID;
 
