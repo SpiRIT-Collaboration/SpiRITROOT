@@ -74,6 +74,7 @@ void skimEvents() {
       }
     }
     listFile.close();
+    fCore -> SetData(0);
 
     listFile.open(fOutputFile.Data());
     iCobo = 0;
@@ -90,7 +91,6 @@ void skimEvents() {
   fCore -> SetUAMap(fPar -> GetFilePar(fPar -> GetIntPar("UAMapFile")));
   fCore -> SetAGETMap(fPar -> GetFilePar(fPar -> GetIntPar("AGETMapFile")));
   fCore -> SetFPNPedestal(fFPNThreshold);
-  fCore -> SetData(0);
 
   STMap *fMap = fCore -> GetSTMap();
 
