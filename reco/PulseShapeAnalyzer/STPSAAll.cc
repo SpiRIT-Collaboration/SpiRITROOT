@@ -1,5 +1,6 @@
 // SpiRITROOT classes
 #include "STPSAAll.hh"
+#include "STGlobal.hh"
 
 // STL
 #include <cmath>
@@ -13,12 +14,11 @@
 ClassImp(STPSAAll)
 
 STPSAAll::STPSAAll()
-:fNumThread(12)
 {
   fPeakFinder = new TSpectrum();
 
-  fThreadHitArray = new TClonesArray*[fNumThread];
-  for (Int_t iThread = 0; iThread < fNumThread; iThread++)
+  fThreadHitArray = new TClonesArray*[NUMTHREAD];
+  for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++)
     fThreadHitArray[iThread] = new TClonesArray("STHit", 100);
 
   fPadReady = kFALSE;
@@ -39,8 +39,8 @@ STPSAAll::Analyze(STRawEvent *rawEvent, STEvent *event)
   LOG(INFO) << "Start to create threads!" << FairLogger::endl;
 #endif
 
-  std::thread thread[fNumThread];
-  for (Int_t iThread = 0; iThread < fNumThread; iThread++)
+  std::thread thread[NUMTHREAD];
+  for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++)
     thread[iThread] = std::thread([this](TClonesArray *array) { this -> PadAnalyzer(array); }, fThreadHitArray[iThread]);
 
 #ifdef DEBUG
@@ -73,7 +73,7 @@ STPSAAll::Analyze(STRawEvent *rawEvent, STEvent *event)
 #endif
 
   fEnd = kTRUE;
-  for (Int_t iThread = 0; iThread < fNumThread; iThread++) {
+  for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++) {
 
 #ifdef DEBUG
   LOG(INFO) << "Thread: " << iThread << " is not joinable!"  << FairLogger::endl;
@@ -88,7 +88,7 @@ STPSAAll::Analyze(STRawEvent *rawEvent, STEvent *event)
 #endif
 
   Int_t hitNum = 0;
-  for (Int_t iThread = 0; iThread < fNumThread; iThread++) {
+  for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++) {
     Int_t numHits = fThreadHitArray[iThread] -> GetEntriesFast();
 
     for (Int_t iHit = 0; iHit < numHits; iHit++) {

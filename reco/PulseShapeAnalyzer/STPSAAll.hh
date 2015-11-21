@@ -29,8 +29,6 @@ class STPSAAll : public STPSA
     TSpectrum *fPeakFinder;  /// TSpectrum object
     TClonesArray **fThreadHitArray; /// TClonesArray object
 
-    const Int_t fNumThread;
-
     Bool_t fPadReady;
     Bool_t fPadTaken;
     Bool_t fEnd;
