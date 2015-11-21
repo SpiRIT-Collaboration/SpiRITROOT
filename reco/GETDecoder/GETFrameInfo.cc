@@ -36,7 +36,7 @@ GETFrameInfo *GETFrameInfo::GetNextInfo()                      { return fNextInf
                                                                  else {
                                                                    numFrames++;
                                                                    GETFrameInfo *frameInfo = this;
-                                                                   while (frameInfo = frameInfo -> GetNextInfo()) {
+                                                                   while ((frameInfo = frameInfo -> GetNextInfo())) {
                                                                      if (frameInfo != NULL) numFrames++;
                                                                      else                   break;
                                                                    }

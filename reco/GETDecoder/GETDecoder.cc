@@ -520,6 +520,11 @@ GETLayeredFrame *GETDecoder::GetLayeredFrame(Int_t frameID)
       fFrameInfo -> SetEventTime(fLayerHeader -> GetEventTime());
       fFrameInfo -> SetDeltaT(fLayerHeader -> GetDeltaT());
       break;
+
+    case kBasic:
+    case kCobo:
+      std::cerr << "== " << __func__ << " This is serius error!" << std::endl;
+      break;
   }
 
   if (fFrameInfo -> GetEndByte() == fDataSize)

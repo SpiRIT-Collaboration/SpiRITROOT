@@ -22,6 +22,8 @@ UInt_t GETLayerHeader::GetHeaderSkip() {
     case GETFRAMEMERGEDBYTIME:
       return GetHeaderSize() - GETLAYERHEADERBYTIMESIZE;
   }
+
+  return 0;
 }
  
 void GETLayerHeader::Clear(Option_t *) {
