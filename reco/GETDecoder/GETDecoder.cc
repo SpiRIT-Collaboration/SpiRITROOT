@@ -64,6 +64,7 @@ void GETDecoder::Initialize()
   fIsDoneAnalyzing = kFALSE;
   fIsDataInfo = kFALSE;
   fIsContinuousData = kTRUE;
+  fIsMetaData = kFALSE;
 
   fDataSize = 0;
   fCurrentDataID = -1;
@@ -101,6 +102,9 @@ void GETDecoder::Initialize()
 
   if (    fLayeredFrame == NULL) fLayeredFrame = new GETLayeredFrame();
   else                           fLayeredFrame -> Clear();
+
+  fPrevDataID = 0;
+  fPrevPosition = 0;
 }
 
 void GETDecoder::Clear() {
@@ -316,8 +320,7 @@ GETBasicFrame *GETDecoder::GetBasicFrame(Int_t frameID)
 #endif
 
     if (fFrameInfoIdx == fTargetFrameInfoIdx) {
-      Int_t currentDataID = fCurrentDataID;
-      ULong64_t currentByte = fData.tellg();
+      BackupCurrentState();
 
       if (fFrameInfo -> GetDataID() != fCurrentDataID)
         SetData(fFrameInfo -> GetDataID());
@@ -325,10 +328,7 @@ GETBasicFrame *GETDecoder::GetBasicFrame(Int_t frameID)
       fData.seekg(fFrameInfo -> GetStartByte());
       fBasicFrame -> Read(fData);
 
-      if (currentDataID != fCurrentDataID)
-        SetData(currentDataID);
-
-      fData.seekg(currentByte);
+      RestorePreviousState();
 
 #ifdef DEBUG
     cout << "Returned event ID: " << fBasicFrame -> GetEventID() << endl;
@@ -347,9 +347,7 @@ GETBasicFrame *GETDecoder::GetBasicFrame(Int_t frameID)
   fFrameInfo -> SetEndByte(fData.tellg());
   fFrameInfo -> SetEventID(fBasicFrameHeader -> GetEventID());
 
-  if (fFrameInfo -> GetEndByte() == fDataSize)
-    if (!NextData())
-      fIsDoneAnalyzing = kTRUE;
+  CheckEndOfData();
 
   return GetBasicFrame(fTargetFrameInfoIdx);
 }
@@ -385,8 +383,7 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
       if (fCoboFrameInfoIdx == fTargetFrameInfoIdx) {
         fCoboFrame -> Clear();
 
-        Int_t currentDataID = fCurrentDataID;
-        ULong64_t currentByte = fData.tellg();
+        BackupCurrentState();
 
         fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(fCoboFrameInfoIdx);
 
@@ -402,10 +399,7 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
           fCoboFrameInfo = fCoboFrameInfo -> GetNextInfo();
         }
 
-        if (currentDataID != fCurrentDataID)
-          SetData(currentDataID);
-
-        fData.seekg(currentByte);
+        RestorePreviousState();
 
 #ifdef DEBUG
     cout << "Returned fCoboFrameInfoIdx: " << fCoboFrameInfoIdx << " with event ID: " << fCoboFrame -> GetFrame(0) -> GetEventID() << endl;
@@ -431,16 +425,14 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
   fFrameInfo -> SetEndByte(fData.tellg());
   fFrameInfo -> SetEventID(fBasicFrameHeader -> GetEventID());
 
-  if (fFrameInfo -> GetEndByte() == fDataSize)
-    if (!NextData())
-      fIsDoneAnalyzing = kTRUE;
+  CheckEndOfData();
 
   if (fCoboFrameInfo -> GetNumFrames() == 0)
     fCoboFrameInfo -> Copy(fFrameInfo);
   else if (fCoboFrameInfo -> GetEventID() == fFrameInfo -> GetEventID())
     fCoboFrameInfo -> SetNextInfo(fFrameInfo); 
   else {
-    Int_t iChecker = 0;
+    Int_t iChecker = (fCoboFrameInfoIdx - 10 < 0 ? 0 : fCoboFrameInfoIdx - 10);
     while (GETFrameInfo *checkCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(iChecker)) {
       if (checkCoboFrameInfo -> IsFill()) {
         if (checkCoboFrameInfo -> GetEventID() == fFrameInfo -> GetEventID()) {
@@ -482,8 +474,7 @@ GETLayeredFrame *GETDecoder::GetLayeredFrame(Int_t frameID)
 #endif
 
     if (fFrameInfoIdx == fTargetFrameInfoIdx) {
-      Int_t currentDataID = fCurrentDataID;
-      ULong64_t currentByte = fData.tellg();
+      BackupCurrentState();
 
       if (fFrameInfo -> GetDataID() != fCurrentDataID)
         SetData(fFrameInfo -> GetDataID());
@@ -491,10 +482,7 @@ GETLayeredFrame *GETDecoder::GetLayeredFrame(Int_t frameID)
       fData.seekg(fFrameInfo -> GetStartByte());
       fLayeredFrame -> Read(fData);
 
-      if (currentDataID != fCurrentDataID)
-        SetData(currentDataID);
-
-      fData.seekg(currentByte);
+       RestorePreviousState();
 
 #ifdef DEBUG
     cout << "Returned event ID: " << fLayeredFrame -> GetEventID() << endl;
@@ -527,9 +515,7 @@ GETLayeredFrame *GETDecoder::GetLayeredFrame(Int_t frameID)
       break;
   }
 
-  if (fFrameInfo -> GetEndByte() == fDataSize)
-    if (!NextData())
-      fIsDoneAnalyzing = kTRUE;
+  CheckEndOfData();
 
   return GetLayeredFrame(fTargetFrameInfoIdx);
 }
@@ -580,8 +566,7 @@ Bool_t GETDecoder::SetWriteFile(TString filename, Bool_t overwrite)
     fBuffer = new Char_t[14000000];
 
   if (fFrameType == kCobo) {
-    Int_t currentDataID = fCurrentDataID;
-    ULong64_t currentPosition = fData.tellg();
+    BackupCurrentState();
     if (fCurrentDataID != 0)
       SetData(0);
       
@@ -591,10 +576,7 @@ Bool_t GETDecoder::SetWriteFile(TString filename, Bool_t overwrite)
     outFile.write(fBuffer, fTopologyFrame -> GetFrameSize());
     outFile.close();
 
-    if (currentDataID != 0)
-      SetData(currentDataID);
-
-    fData.seekg(currentPosition);
+    RestorePreviousState();
 
     std::cout << "== [GETDecoder] Topology frame is written!" << std::endl;
   }
@@ -610,11 +592,16 @@ void GETDecoder::WriteFrame()
     return;
   }
 
+  BackupCurrentState();
+
   std::ofstream outFile(fWriteFile.Data(), std::ios::ate|std::ios::binary|std::ios::app);
   switch (fFrameType) {
     case kCobo:
       fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> At(fTargetFrameInfoIdx);
       do {
+        if (fCurrentDataID != fCoboFrameInfo -> GetDataID())
+          SetData(fCoboFrameInfo -> GetDataID());
+
         ULong64_t frameSize = fCoboFrameInfo -> GetEndByte() - fCoboFrameInfo -> GetStartByte();
         fData.seekg(fCoboFrameInfo -> GetStartByte());
         fData.read(fBuffer, frameSize);
@@ -625,6 +612,10 @@ void GETDecoder::WriteFrame()
 
     default:
       fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> At(fTargetFrameInfoIdx);
+
+      if (fCurrentDataID != fCoboFrameInfo -> GetDataID())
+        SetData(fCoboFrameInfo -> GetDataID());
+
       ULong64_t frameSize = fFrameInfo -> GetEndByte() - fFrameInfo -> GetStartByte();
       fData.seekg(fFrameInfo -> GetStartByte());
       fData.read(fBuffer, frameSize);
@@ -632,4 +623,31 @@ void GETDecoder::WriteFrame()
       break;
   }
   outFile.close();
+
+  RestorePreviousState();
+}
+
+void GETDecoder::CheckEndOfData() {
+  if (!fIsMetaData && fFrameInfo -> GetEndByte() == fDataSize)
+    if (!NextData() && !fIsDoneAnalyzing) {
+      fIsDoneAnalyzing = kTRUE;
+      fIsMetaData = kTRUE;
+
+      // Writing meta data will be here.
+    }
+}
+
+void GETDecoder::BackupCurrentState() {
+  fPrevDataID = fCurrentDataID;
+  fPrevPosition = fData.tellg();
+}
+
+void GETDecoder::RestorePreviousState() {
+  if (fIsDoneAnalyzing)
+    return;
+
+  if (fPrevDataID != fCurrentDataID)
+    SetData(fPrevDataID);
+
+  fData.seekg(fPrevPosition);
 }

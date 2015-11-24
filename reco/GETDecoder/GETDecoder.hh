@@ -85,6 +85,11 @@ class GETDecoder
     //! Write current frame
     void WriteFrame();
 
+    void CheckEndOfData();
+
+    void BackupCurrentState();
+    void RestorePreviousState();
+
   private:
     //! Initialize variables used in the class.
     void Initialize();
@@ -111,7 +116,8 @@ class GETDecoder
     Bool_t fIsDataInfo;             ///< Flag for data information existance
     Bool_t fIsDoneAnalyzing;        ///< Flag for all the frame info are read
     Bool_t fIsPositivePolarity;     ///< Flag for the signal polarity
-    Bool_t fIsContinuousData;         ///< Flag for continuous data set
+    Bool_t fIsContinuousData;       ///< Flag for continuous data set
+    Bool_t fIsMetaData;             ///< Flag for checking meta data
 
     std::ifstream fData;            ///< Current file data stream
     ULong64_t fDataSize;            ///< Current file size
@@ -122,8 +128,11 @@ class GETDecoder
     Int_t fCoboFrameInfoIdx;            ///< Current cobo frame index
     Int_t fTargetFrameInfoIdx;          ///< Target frame or cobo frame index to return
 
-    Char_t *fBuffer;       /// Buffer for writing frame
-    TString fWriteFile;    /// File for writing frames
+    Char_t *fBuffer;       ///< Buffer for writing frame
+    TString fWriteFile;    ///< File for writing frames
+
+    Int_t fPrevDataID;        ///< Data ID for going back to original data
+    ULong64_t fPrevPosition;  ///< Byte number for going back to original data
 
   ClassDef(GETDecoder, 1); /// added for making dictionary by ROOT
 };
