@@ -19,15 +19,20 @@ ULong64_t GETHeaderBase::GetFrameSkip(Bool_t rewind)   { return GetFrameSize() -
 
 ULong64_t GETHeaderBase::CorrectEndianness(uint8_t *variable, Short_t length) {
   ULong64_t returnVal = 0;
+  ULong64_t returnMask = 0;
 
   if (!IsLittleEndian())
-    for (Short_t idx = 0; idx < length; idx++)
-      returnVal += (variable[idx] << (8*(length - idx - 1)));
+    for (Short_t idx = 0; idx < length; idx++) {
+      returnVal += ((ULong64_t) variable[idx] << (8*(length - idx - 1)));
+      returnMask += ((ULong64_t) 0xff << 8*idx);
+    }
   else
-    for (Short_t idx = 0; idx < length; idx++)
-      returnVal += (variable[(length - idx - 1)] << (8*(length - idx - 1)));
+    for (Short_t idx = 0; idx < length; idx++) {
+      returnVal += ((ULong64_t) variable[(length - idx - 1)] << (8*(length - idx - 1)));
+      returnMask += ((ULong64_t) 0xff << 8*idx);
+    }
 
-  return returnVal;
+  return (returnVal&returnMask);
 }
 
 void GETHeaderBase::Clear(Option_t *) {
