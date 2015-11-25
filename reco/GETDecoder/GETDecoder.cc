@@ -396,12 +396,9 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
 
         fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(fCoboFrameInfoIdx);
 
-        if (fCoboFrameInfo -> GetDataID() != fCurrentDataID)
-          SetData(fCoboFrameInfo -> GetDataID());
-
         for (Int_t iFrame = 0; iFrame < fTopologyFrame -> GetAsadMask().count(); iFrame++) {
-//          if (fCoboFrameInfo -> GetDataID() != fCurrentDataID)
-//            SetData(fCoboFrameInfo -> GetDataID());
+          if (fCoboFrameInfo -> GetDataID() != fCurrentDataID)
+            SetData(fCoboFrameInfo -> GetDataID());
 
           fData.seekg(fCoboFrameInfo -> GetStartByte());
           fCoboFrame -> ReadFrame(fData);
@@ -446,7 +443,7 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
   else if (fCoboFrameInfo -> GetEventID() == fFrameInfo -> GetEventID())
     fCoboFrameInfo -> SetNextInfo(fFrameInfo); 
   else {
-    Int_t iChecker = 0; //(fCoboFrameInfoIdx - 30 < 0 ? 0 : fCoboFrameInfoIdx - 30);
+    Int_t iChecker = (fCoboFrameInfoIdx - 10 < 0 ? 0 : fCoboFrameInfoIdx - 10);
     while (GETFrameInfo *checkCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(iChecker)) {
       if (checkCoboFrameInfo -> IsFill()) {
         if (checkCoboFrameInfo -> GetEventID() == fFrameInfo -> GetEventID()) {
