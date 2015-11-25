@@ -27,7 +27,7 @@ class STPSATask : public FairTask
     STPSATask();
     ~STPSATask();
 
-    enum STPSAMode { kSimple, kAll, kLayer, kOPTICS ,kDF, kFast};
+    enum STPSAMode { kSimple, kAll, kLayer, kOPTICS ,kDF, kFast, kFastFit};
 
     void SetPSAMode(STPSAMode mode);
     void SetThreshold(Double_t threshold);

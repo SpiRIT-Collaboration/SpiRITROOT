@@ -15,6 +15,7 @@
 #include "STPSALayerOPTICS.hh"
 #include "STPSADF.hh"
 #include "STPSAFast.hh"
+#include "STPSAFastFit.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -87,6 +88,10 @@ STPSATask::Init()
   else if (fPSAMode == kFast) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use STPSAFast!");
     fPSA = new STPSAFast();
+  }
+  else if (fPSAMode == kFastFit) {
+    fLogger -> Info(MESSAGE_ORIGIN, "Use STPSAFastFit!");
+    fPSA = new STPSAFastFit();
   }
   else {
     fLogger -> Fatal(MESSAGE_ORIGIN, "No Matching PSAMode!");

@@ -49,6 +49,7 @@ STPSA::STPSA()
   fPadLayers = fPar -> GetPadLayers();
 
   fNumTbs = fPar -> GetNumTbs();
+  fNumTbsWindow = fPar -> GetWindowNumTbs();
   fTBTime = fPar -> GetTBTime();
   fDriftVelocity = fPar -> GetDriftVelocity();
   fMaxDriftLength = fPar -> GetDriftLength();

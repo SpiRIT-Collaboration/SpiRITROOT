@@ -69,6 +69,7 @@ PulseShapeAnalyzer/STPSALayer.cc
 PulseShapeAnalyzer/STPSALayerOPTICS.cc
 PulseShapeAnalyzer/STPSADF.cc
 PulseShapeAnalyzer/STPSAFast.cc
+PulseShapeAnalyzer/STPSAFastFit.cc
 
 HitClustering/STClusterizer.cc
 HitClustering/STClusterizerScan.cc
