@@ -310,55 +310,57 @@ GETBasicFrame *GETDecoder::GetBasicFrame(Int_t frameID)
   else
     fTargetFrameInfoIdx = frameID;
 
-  if (fIsDoneAnalyzing)
-    if (fTargetFrameInfoIdx > fFrameInfoArray -> GetLast())
-      return NULL;
+  while (kTRUE) {
+    if (fIsDoneAnalyzing)
+      if (fTargetFrameInfoIdx > fFrameInfoArray -> GetLast())
+        return NULL;
 
-  if (fFrameInfoIdx > fTargetFrameInfoIdx)
-    fFrameInfoIdx = fTargetFrameInfoIdx;
+    if (fFrameInfoIdx > fTargetFrameInfoIdx)
+      fFrameInfoIdx = fTargetFrameInfoIdx;
 
-  fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(fFrameInfoIdx);
-  while (fFrameInfo -> IsFill()) {
-
-#ifdef DEBUG
-    cout << "fFrameInfoIdx: " << fFrameInfoIdx << " fTargetFrameInfoIdx: " << fTargetFrameInfoIdx << endl;
-#endif
-
-    if (fFrameInfoIdx == fTargetFrameInfoIdx) {
-      BackupCurrentState();
-
-      if (fFrameInfo -> GetDataID() != fCurrentDataID)
-        SetData(fFrameInfo -> GetDataID());
- 
-      fData.seekg(fFrameInfo -> GetStartByte());
-      fBasicFrame -> Read(fData);
-
-      RestorePreviousState();
+    fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(fFrameInfoIdx);
+    while (fFrameInfo -> IsFill()) {
 
 #ifdef DEBUG
-    cout << "Returned event ID: " << fBasicFrame -> GetEventID() << endl;
+      cout << "fFrameInfoIdx: " << fFrameInfoIdx << " fTargetFrameInfoIdx: " << fTargetFrameInfoIdx << endl;
 #endif
 
-      return fBasicFrame;
-    } else
-      fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(++fFrameInfoIdx);
+      if (fFrameInfoIdx == fTargetFrameInfoIdx) {
+        BackupCurrentState();
+
+        if (fFrameInfo -> GetDataID() != fCurrentDataID)
+          SetData(fFrameInfo -> GetDataID());
+   
+        fData.seekg(fFrameInfo -> GetStartByte());
+        fBasicFrame -> Read(fData);
+
+        RestorePreviousState();
+
+#ifdef DEBUG
+      cout << "Returned event ID: " << fBasicFrame -> GetEventID() << endl;
+#endif
+
+        return fBasicFrame;
+      } else
+        fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(++fFrameInfoIdx);
+    }
+
+    ULong64_t startByte = fData.tellg();
+
+    fBasicFrameHeader -> Read(fData);
+    fData.ignore(fBasicFrameHeader -> GetFrameSkip());
+
+    ULong64_t endByte = startByte + fBasicFrameHeader -> GetFrameSize();
+
+    fFrameInfo -> SetDataID(fCurrentDataID);
+    fFrameInfo -> SetStartByte(startByte);
+    fFrameInfo -> SetEndByte(endByte);
+    fFrameInfo -> SetEventID(fBasicFrameHeader -> GetEventID());
+
+    CheckEndOfData();
   }
 
-  ULong64_t startByte = fData.tellg();
-
-  fBasicFrameHeader -> Read(fData);
-  fData.ignore(fBasicFrameHeader -> GetFrameSkip());
-
-  ULong64_t endByte = startByte + fBasicFrameHeader -> GetFrameSize();
-
-  fFrameInfo -> SetDataID(fCurrentDataID);
-  fFrameInfo -> SetStartByte(startByte);
-  fFrameInfo -> SetEndByte(endByte);
-  fFrameInfo -> SetEventID(fBasicFrameHeader -> GetEventID());
-
-  CheckEndOfData();
-
-  return GetBasicFrame(fTargetFrameInfoIdx);
+//  return GetBasicFrame(fTargetFrameInfoIdx);
 }
 
 GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
@@ -370,95 +372,97 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
   else
     fTargetFrameInfoIdx = frameID;
 
-  if (fIsDoneAnalyzing)
-    if (fTargetFrameInfoIdx > fCoboFrameInfoArray -> GetLast())
-      return NULL;
+  while (kTRUE) {
+    if (fIsDoneAnalyzing)
+      if (fTargetFrameInfoIdx > fCoboFrameInfoArray -> GetLast())
+        return NULL;
 
-  if (fCoboFrameInfoIdx > fTargetFrameInfoIdx)
-    fCoboFrameInfoIdx = fTargetFrameInfoIdx;
+    if (fCoboFrameInfoIdx > fTargetFrameInfoIdx)
+      fCoboFrameInfoIdx = fTargetFrameInfoIdx;
 
-  fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(fCoboFrameInfoIdx);
-  while (fCoboFrameInfo -> IsFill()) {
+    fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(fCoboFrameInfoIdx);
+    while (fCoboFrameInfo -> IsFill()) {
 
 #ifdef DEBUG
-    cout << "fFrameInfoIdx: " << fFrameInfoIdx << " fCoboFrameInfoIdx: " << fCoboFrameInfoIdx << " fTargetFrameInfoIdx: " << fTargetFrameInfoIdx << endl;
+      cout << "fFrameInfoIdx: " << fFrameInfoIdx << " fCoboFrameInfoIdx: " << fCoboFrameInfoIdx << " fTargetFrameInfoIdx: " << fTargetFrameInfoIdx << endl;
 #endif
 
 #ifdef DEBUG
-    cout << "fCoboFrameInfo -> GetNumFrames(): " << fCoboFrameInfo -> GetNumFrames() << " fTopologyFrame -> GetAsadMask().count(): " << fTopologyFrame -> GetAsadMask().count() << endl;
+      cout << "fCoboFrameInfo -> GetNumFrames(): " << fCoboFrameInfo -> GetNumFrames() << " fTopologyFrame -> GetAsadMask().count(): " << fTopologyFrame -> GetAsadMask().count() << endl;
 #endif
 
-    if (fCoboFrameInfo -> GetNumFrames() == fTopologyFrame -> GetAsadMask().count()) {
-      if (fCoboFrameInfoIdx == fTargetFrameInfoIdx) {
-        fCoboFrame -> Clear();
+      if (fCoboFrameInfo -> GetNumFrames() == fTopologyFrame -> GetAsadMask().count()) {
+        if (fCoboFrameInfoIdx == fTargetFrameInfoIdx) {
+          fCoboFrame -> Clear();
 
-        BackupCurrentState();
+          BackupCurrentState();
 
-        fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(fCoboFrameInfoIdx);
+          fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(fCoboFrameInfoIdx);
 
-        for (Int_t iFrame = 0; iFrame < fTopologyFrame -> GetAsadMask().count(); iFrame++) {
-          if (fCoboFrameInfo -> GetDataID() != fCurrentDataID)
-            SetData(fCoboFrameInfo -> GetDataID());
+          for (Int_t iFrame = 0; iFrame < fTopologyFrame -> GetAsadMask().count(); iFrame++) {
+            if (fCoboFrameInfo -> GetDataID() != fCurrentDataID)
+              SetData(fCoboFrameInfo -> GetDataID());
 
-          fData.seekg(fCoboFrameInfo -> GetStartByte());
-          fCoboFrame -> ReadFrame(fData);
-          fCoboFrameInfo = fCoboFrameInfo -> GetNextInfo();
-        }
+            fData.seekg(fCoboFrameInfo -> GetStartByte());
+            fCoboFrame -> ReadFrame(fData);
+            fCoboFrameInfo = fCoboFrameInfo -> GetNextInfo();
+          }
 
-        RestorePreviousState();
+          RestorePreviousState();
 
 #ifdef DEBUG
-    cout << "Returned fCoboFrameInfoIdx: " << fCoboFrameInfoIdx << " with event ID: " << fCoboFrame -> GetFrame(0) -> GetEventID() << endl;
+      cout << "Returned fCoboFrameInfoIdx: " << fCoboFrameInfoIdx << " with event ID: " << fCoboFrame -> GetFrame(0) -> GetEventID() << endl;
 #endif
 
-        return fCoboFrame;
-      } else 
-        fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(++fCoboFrameInfoIdx);
-    } else
-      break;
-  }
-
-#ifdef DEBUG
-    cout << "Not full in fCoboFrameInfoIdx: " << fCoboFrameInfoIdx << ", reading fFrameInfoIdx: " << fFrameInfoIdx << endl;
-#endif
-
-  ULong64_t startByte = fData.tellg();
-
-  fBasicFrameHeader -> Read(fData);
-  fData.ignore(fBasicFrameHeader -> GetFrameSkip());
-
-  ULong64_t endByte = startByte + fBasicFrameHeader -> GetFrameSize();
-
-  fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(fFrameInfoIdx++);
-  fFrameInfo -> SetDataID(fCurrentDataID);
-  fFrameInfo -> SetStartByte(startByte);
-  fFrameInfo -> SetEndByte(endByte);
-  fFrameInfo -> SetEventID(fBasicFrameHeader -> GetEventID());
-
-//  std::cout << "fFrameInfo -> GetEndByte(): " << fFrameInfo -> GetEndByte() << " fData.tellg(): " << fData.tellg() << " fDataSize: " << fDataSize << std::endl;
-  CheckEndOfData();
-
-  if (fCoboFrameInfo -> GetNumFrames() == 0)
-    fCoboFrameInfo -> Copy(fFrameInfo);
-  else if (fCoboFrameInfo -> GetEventID() == fFrameInfo -> GetEventID())
-    fCoboFrameInfo -> SetNextInfo(fFrameInfo); 
-  else {
-    Int_t iChecker = (fCoboFrameInfoIdx - 10 < 0 ? 0 : fCoboFrameInfoIdx - 10);
-    while (GETFrameInfo *checkCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(iChecker)) {
-      if (checkCoboFrameInfo -> IsFill()) {
-        if (checkCoboFrameInfo -> GetEventID() == fFrameInfo -> GetEventID()) {
-          checkCoboFrameInfo -> SetNextInfo(fFrameInfo); 
-          break;
-        } else
-          iChecker++;
-      } else {
-        checkCoboFrameInfo -> Copy(fFrameInfo);
+          return fCoboFrame;
+        } else 
+          fCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(++fCoboFrameInfoIdx);
+      } else
         break;
+    }
+
+#ifdef DEBUG
+      cout << "Not full in fCoboFrameInfoIdx: " << fCoboFrameInfoIdx << ", reading fFrameInfoIdx: " << fFrameInfoIdx << endl;
+#endif
+
+    ULong64_t startByte = fData.tellg();
+
+    fBasicFrameHeader -> Read(fData);
+    fData.ignore(fBasicFrameHeader -> GetFrameSkip());
+
+    ULong64_t endByte = startByte + fBasicFrameHeader -> GetFrameSize();
+
+    fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(fFrameInfoIdx++);
+    fFrameInfo -> SetDataID(fCurrentDataID);
+    fFrameInfo -> SetStartByte(startByte);
+    fFrameInfo -> SetEndByte(endByte);
+    fFrameInfo -> SetEventID(fBasicFrameHeader -> GetEventID());
+
+  //  std::cout << "fFrameInfo -> GetEndByte(): " << fFrameInfo -> GetEndByte() << " fData.tellg(): " << fData.tellg() << " fDataSize: " << fDataSize << std::endl;
+    CheckEndOfData();
+
+    if (fCoboFrameInfo -> GetNumFrames() == 0)
+      fCoboFrameInfo -> Copy(fFrameInfo);
+    else if (fCoboFrameInfo -> GetEventID() == fFrameInfo -> GetEventID())
+      fCoboFrameInfo -> SetNextInfo(fFrameInfo); 
+    else {
+      Int_t iChecker = (fCoboFrameInfoIdx - 10 < 0 ? 0 : fCoboFrameInfoIdx - 10);
+      while (GETFrameInfo *checkCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(iChecker)) {
+        if (checkCoboFrameInfo -> IsFill()) {
+          if (checkCoboFrameInfo -> GetEventID() == fFrameInfo -> GetEventID()) {
+            checkCoboFrameInfo -> SetNextInfo(fFrameInfo); 
+            break;
+          } else
+            iChecker++;
+        } else {
+          checkCoboFrameInfo -> Copy(fFrameInfo);
+          break;
+        }
       }
     }
   }
 
-  return GetCoboFrame(fTargetFrameInfoIdx);
+//  return GetCoboFrame(fTargetFrameInfoIdx);
 }
 
 GETLayeredFrame *GETDecoder::GetLayeredFrame(Int_t frameID)
@@ -470,69 +474,71 @@ GETLayeredFrame *GETDecoder::GetLayeredFrame(Int_t frameID)
   else
     fTargetFrameInfoIdx = frameID;
 
-  if (fIsDoneAnalyzing)
-    if (fTargetFrameInfoIdx > fFrameInfoArray -> GetLast())
-      return NULL;
+  while (kTRUE) {
+    if (fIsDoneAnalyzing)
+      if (fTargetFrameInfoIdx > fFrameInfoArray -> GetLast())
+        return NULL;
 
-  if (fFrameInfoIdx > fTargetFrameInfoIdx)
-    fFrameInfoIdx = fTargetFrameInfoIdx;
+    if (fFrameInfoIdx > fTargetFrameInfoIdx)
+      fFrameInfoIdx = fTargetFrameInfoIdx;
 
-  fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(fFrameInfoIdx);
-  while (fFrameInfo -> IsFill()) {
-
-#ifdef DEBUG
-    cout << "fFrameInfoIdx: " << fFrameInfoIdx << " fTargetFrameInfoIdx: " << fTargetFrameInfoIdx << endl;
-#endif
-
-    if (fFrameInfoIdx == fTargetFrameInfoIdx) {
-      BackupCurrentState();
-
-      if (fFrameInfo -> GetDataID() != fCurrentDataID)
-        SetData(fFrameInfo -> GetDataID());
-
-      fData.seekg(fFrameInfo -> GetStartByte());
-      fLayeredFrame -> Read(fData);
-
-       RestorePreviousState();
+    fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(fFrameInfoIdx);
+    while (fFrameInfo -> IsFill()) {
 
 #ifdef DEBUG
-    cout << "Returned event ID: " << fLayeredFrame -> GetEventID() << endl;
+      cout << "fFrameInfoIdx: " << fFrameInfoIdx << " fTargetFrameInfoIdx: " << fTargetFrameInfoIdx << endl;
 #endif
 
-      return fLayeredFrame;
-    } else
-      fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(++fFrameInfoIdx);
+      if (fFrameInfoIdx == fTargetFrameInfoIdx) {
+        BackupCurrentState();
+
+        if (fFrameInfo -> GetDataID() != fCurrentDataID)
+          SetData(fFrameInfo -> GetDataID());
+
+        fData.seekg(fFrameInfo -> GetStartByte());
+        fLayeredFrame -> Read(fData);
+
+         RestorePreviousState();
+
+#ifdef DEBUG
+      cout << "Returned event ID: " << fLayeredFrame -> GetEventID() << endl;
+#endif
+
+        return fLayeredFrame;
+      } else
+        fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(++fFrameInfoIdx);
+    }
+
+    ULong64_t startByte = fData.tellg();
+
+    fLayerHeader -> Read(fData);
+    fData.ignore(fLayerHeader -> GetFrameSkip());
+
+    ULong64_t endByte = startByte + fLayerHeader -> GetFrameSize();
+
+    fFrameInfo -> SetDataID(fCurrentDataID);
+    fFrameInfo -> SetStartByte(startByte);
+    fFrameInfo -> SetEndByte(endByte);
+    switch (fFrameType) {
+      case kMergedID:
+        fFrameInfo -> SetEventID(fLayerHeader -> GetEventID());
+        break;
+
+      case kMergedTime:
+        fFrameInfo -> SetEventTime(fLayerHeader -> GetEventTime());
+        fFrameInfo -> SetDeltaT(fLayerHeader -> GetDeltaT());
+        break;
+
+      case kBasic:
+      case kCobo:
+        std::cerr << "== " << __func__ << " This is serious error!" << std::endl;
+        break;
+    }
+
+    CheckEndOfData();
   }
 
-  ULong64_t startByte = fData.tellg();
-
-  fLayerHeader -> Read(fData);
-  fData.ignore(fLayerHeader -> GetFrameSkip());
-
-  ULong64_t endByte = startByte + fLayerHeader -> GetFrameSize();
-
-  fFrameInfo -> SetDataID(fCurrentDataID);
-  fFrameInfo -> SetStartByte(startByte);
-  fFrameInfo -> SetEndByte(endByte);
-  switch (fFrameType) {
-    case kMergedID:
-      fFrameInfo -> SetEventID(fLayerHeader -> GetEventID());
-      break;
-
-    case kMergedTime:
-      fFrameInfo -> SetEventTime(fLayerHeader -> GetEventTime());
-      fFrameInfo -> SetDeltaT(fLayerHeader -> GetDeltaT());
-      break;
-
-    case kBasic:
-    case kCobo:
-      std::cerr << "== " << __func__ << " This is serious error!" << std::endl;
-      break;
-  }
-
-  CheckEndOfData();
-
-  return GetLayeredFrame(fTargetFrameInfoIdx);
+//  return GetLayeredFrame(fTargetFrameInfoIdx);
 }
 
 void GETDecoder::PrintFrameInfo(Int_t frameID) {
