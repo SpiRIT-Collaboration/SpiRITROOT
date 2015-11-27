@@ -12,7 +12,6 @@
 // ROOT classes
 #include "TSpectrum.h"
 #include "TClonesArray.h"
-#include "TF1.h"
 
 // STL
 #include <mutex>
@@ -27,7 +26,7 @@ class STPSAFastFit : public STPSA
     void PadAnalyzer(TClonesArray *hitArray);
 
   private:
-    Double_t Pulse(Double_t *x, Double_t *par);
+    Double_t Pulse(Double_t x, Double_t amp, Double_t tb);
     void FitPulse(Double_t *buffer, Double_t tbStart, Double_t &chi2, Double_t &amp);
 
   private:
@@ -43,7 +42,6 @@ class STPSAFastFit : public STPSA
     STPad *fPad;
 
     Double_t *fPulseData;
-    TF1 *fPulse;
 
     Int_t fNumTbsCompare;
 

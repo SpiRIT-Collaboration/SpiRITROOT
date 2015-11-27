@@ -5,6 +5,9 @@
 // STL
 #include <cmath>
 #include <thread>
+#include <iostream>
+
+using namespace std;
 
 // ROOT
 #include "RVersion.h"
@@ -16,7 +19,6 @@ ClassImp(STPSAFastFit)
 STPSAFastFit::STPSAFastFit()
 {
   fPulseData = new Double_t[2000];
-  fPulse = new TF1("pulse", this, &STPSAFastFit::Pulse, 0, fNumTbsWindow, 2, "STPSAFastFit", "Pulse");
 
   fNumTbsCompare = 12;
 
@@ -110,14 +112,6 @@ void STPSAFastFit::PadAnalyzer(TClonesArray *hitArray)
 {
   hitArray -> Clear("C");
   Int_t hitNum = 0;
-  TSpectrum peakFinder;
-
-  auto calculateX = [this](Double_t row)    -> Double_t
-                    { return (row + 0.5)*fPadSizeX - fPadPlaneX/2.; };
-  auto calculateY = [this](Double_t peakTb) -> Double_t
-                    { return -peakTb*fTBTime*fDriftVelocity/100.; };
-  auto calculateZ = [this](Double_t layer)  -> Double_t
-                    { return (layer + 0.5)*fPadSizeZ; };
 
   while (1) {
     std::unique_lock<std::mutex> lock(fMutex);
@@ -141,9 +135,9 @@ void STPSAFastFit::PadAnalyzer(TClonesArray *hitArray)
     lock.unlock();
     fCondVariable.notify_all();
 
-    Double_t xPos = calculateX(pad -> GetRow());
-    Double_t zPos = calculateZ(pad -> GetLayer());
-    Double_t charge = 0;
+    Double_t xPos = (pad -> GetRow() + 0.5) * fPadSizeX - fPadPlaneX/2.;
+    Double_t zPos = (pad -> GetLayer() + 0.5) * fPadSizeZ;
+    //Double_t charge = 0;
 
     Double_t *adc = pad -> GetADC();
 
@@ -239,7 +233,7 @@ void STPSAFastFit::PadAnalyzer(TClonesArray *hitArray)
           if (amplitude < fThreshold)
             continue;
 
-          Double_t yHit = calculateY(tbStart);
+          Double_t yHit = -tbStart * fTBTime * fDriftVelocity / 100.;
 
           STHit *hit = (STHit *) hitArray -> ConstructedAt(hitNum);
           hit -> Clear();
@@ -252,12 +246,9 @@ void STPSAFastFit::PadAnalyzer(TClonesArray *hitArray)
 
           hitNum++;
 
-          fPulse -> SetParameter(0, amplitude);
-          fPulse -> SetParameter(1, tbStart);
-
           for (Int_t iTbPulse = 0; iTbPulse < 100; iTbPulse++) {
             Int_t tb = tbStartTemp + iTbPulse;
-            adc[tb] -= fPulse -> Eval(tb+0.5);
+            adc[tb] -= Pulse(tb + 0.5, amplitude, tbStart);
           }
 
           iTb = Int_t(tbStart) + 9;
@@ -266,63 +257,6 @@ void STPSAFastFit::PadAnalyzer(TClonesArray *hitArray)
         countRise = 0;
       }
     }
-
-    /*
-    for (Int_t iPeak = 0; iPeak < numPeaks; iPeak++) {
-      Int_t tbPeak = (Int_t)(ceil((peakFinder.GetPositionX())[iPeak]));
-
-      charge = adc[tbPeak];
-
-      if (fThreshold > 0 && charge < fThreshold)
-        continue;
-
-      Double_t tbArray[10] = {0};
-      Double_t adcArray[10] = {0};
-      
-      Int_t countPoints = 0;
-      for (Int_t iTb = tbPeak; iTb > tbPeak - 10; iTb--) 
-      {
-        Double_t adcTemp = adc[iTb];
-
-        //if (adcTemp < charge*fPercPeakMin/100. || adcTemp > charge*fPercPeakMax/100.) // TODO
-        if (adcTemp < charge*10./100. || adcTemp > charge*90./100.)
-          continue;
-
-        tbArray[countPoints] = iTb;
-        adcArray[countPoints] = adcTemp;
-        countPoints++;
-      }
-
-      // if (countPoints < fMinPointsForFit) // TODO
-      if (countPoints < 4) 
-        continue;
-
-      Double_t fitConst = 0;
-      Double_t fitSlope = 0;
-      Double_t chi2 = 0;
-      Int_t ndf = 0;
-
-      lslfit(countPoints, tbArray, adcArray, fitConst, fitSlope, chi2);
-      Double_t tbHit = -fitConst/fitSlope;
-      Double_t yHit = calculateY(tbHit);
-
-      if (yHit > fMaxDriftLength || yHit < -2 * fMaxDriftLength)
-        continue;
-//      if (yHit > 0 || yHit < -fMaxDriftLength)
-//        continue;
-
-      STHit *hit = (STHit *) hitArray -> ConstructedAt(hitNum);
-      hit -> Clear();
-      hit -> SetHit(hitNum, xPos, yHit, zPos, charge);
-      hit -> SetRow(pad -> GetRow());
-      hit -> SetLayer(pad -> GetLayer());
-      hit -> SetTb(tbHit);
-      hit -> SetChi2(chi2);
-      hit -> SetNDF(countPoints);
-
-      hitNum++;
-    }
-    */
   }
 
 #ifdef DEBUG
@@ -331,48 +265,50 @@ void STPSAFastFit::PadAnalyzer(TClonesArray *hitArray)
 }
 
 Double_t 
-STPSAFastFit::Pulse(Double_t *x, Double_t *par)
+STPSAFastFit::Pulse(Double_t x, Double_t amp, Double_t tb)
 {
-  if (x[0] < par[1]) 
+  if (x < tb) 
     return 0;
 
-  Double_t hit_time = x[0] - par[1];
-  int hit_time_0p1 = hit_time * 10;
+  Double_t hit_time = x - tb;
+  Int_t hit_time_0p1 = hit_time * 10;
   if (hit_time_0p1 > 1998) 
     return 0;
 
   Double_t r = 10 * hit_time - hit_time_0p1;
   Double_t val = r * fPulseData[hit_time_0p1 + 1] + (1 - r) * fPulseData[hit_time_0p1];
 
-  return par[0] * val;
+  return amp * val;
 }
 
 void 
 STPSAFastFit::FitPulse(Double_t *buffer, Double_t tbStart, Double_t &chi2, Double_t &amp)
 {
-  fPulse -> SetParameter(0, 1);
-  fPulse -> SetParameter(1, tbStart);
-
   Double_t refy = 0;
   Double_t ref2 = 0;
 
   for (Int_t iTbPulse = 0; iTbPulse < fNumTbsCompare; iTbPulse++) {
     Int_t tb = tbStart + iTbPulse;
-    Double_t adc = buffer[tb];
+    Double_t y = buffer[tb];
 
-    Double_t ref = fPulse -> Eval(tb+0.5);
-    refy += ref * adc;
+    Double_t ref = Pulse(tb + 0.5, 1, tbStart);
+    refy += ref * y;
     ref2 += ref * ref;
   }
 
+  if (ref2 == 0)
+  {
+    chi2 = 1.e10;
+    return;
+  }
+
   amp = refy / ref2;
-  fPulse -> SetParameter(0, amp);
 
   chi2 = 0;
   for (Int_t iTbPulse = 0; iTbPulse < fNumTbsCompare; iTbPulse++) {
     Int_t tb = tbStart + iTbPulse;
-    Double_t adc = buffer[tb];
-    Double_t ref = fPulse -> Eval(tb+0.5);
-    chi2 += (adc - ref) * (adc - ref);
+    Double_t val = buffer[tb];
+    Double_t ref = Pulse(tb + 0.5, amp, tbStart);
+    chi2 += (val - ref) * (val - ref);
   }
 }
