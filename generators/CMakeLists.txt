@@ -34,6 +34,7 @@ Set(DEPENDENCIES
   Stack
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
+  Gen
 )
 
 GENERATE_LIBRARY()
