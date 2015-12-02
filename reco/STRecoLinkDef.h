@@ -38,6 +38,7 @@
 #pragma link C++ class STPSALayerOPTICS+;
 #pragma link C++ class STPSAFast+;
 #pragma link C++ class STPSAFastFit+;
+#pragma link C++ class STPulse+;
 
 #pragma link C++ class STHitClusteringTask+;
 #pragma link C++ class STClusterizer+;
