@@ -8,6 +8,7 @@
 
 // SpiRITROOT classes
 #include "STPSA.hh"
+#include "STPulse.hh"
 
 // ROOT classes
 #include "TSpectrum.h"
@@ -17,7 +18,7 @@
 #include <mutex>
 #include <condition_variable>
 
-class STPSAFastFit : public STPSA
+class STPSAFastFit : public STPSA, public STPulse
 {
   public:
     STPSAFastFit();
@@ -25,8 +26,9 @@ class STPSAFastFit : public STPSA
     void Analyze(STRawEvent *rawEvent, STEvent *event);
     void PadAnalyzer(TClonesArray *hitArray);
 
+    void SetNumTbsCompare
+
   private:
-    Double_t Pulse(Double_t x, Double_t amp, Double_t tb);
     void FitPulse(Double_t *buffer, Double_t tbStart, Double_t &chi2, Double_t &amp);
 
   private:
@@ -41,9 +43,7 @@ class STPSAFastFit : public STPSA
 
     STPad *fPad;
 
-    Double_t *fPulseData;
-
-    Int_t fNumTbsCompare;
+    Int_t fNDFTbs;
 
   ClassDef(STPSAFastFit, 1)
 };

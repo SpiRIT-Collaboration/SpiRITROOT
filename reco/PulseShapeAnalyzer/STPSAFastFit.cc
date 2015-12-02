@@ -18,13 +18,7 @@ ClassImp(STPSAFastFit)
 
 STPSAFastFit::STPSAFastFit()
 {
-  fPulseData = new Double_t[2000];
-
-  fNumTbsCompare = 12;
-
-  std::ifstream ifpulse("../../parameters/PulserFitted.dat");
-  Int_t countData = 0;
-  while (ifpulse >> fPulseData[countData++]) {}
+  fNDFTbs = 9;
 
   fThreadHitArray = new TClonesArray*[NUMTHREAD];
   for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++)
@@ -139,7 +133,9 @@ void STPSAFastFit::PadAnalyzer(TClonesArray *hitArray)
     Double_t zPos = (pad -> GetLayer() + 0.5) * fPadSizeZ;
     //Double_t charge = 0;
 
-    Double_t *adc = pad -> GetADC();
+    Double_t *adcSource = pad -> GetADC();
+    Double_t adc[512] = {0};
+    memcpy(&adc, adcSource, sizeof(Double_t)*fNumTbs);
 
     Int_t numPeaks = 0;
     Int_t countRise = 0;
@@ -242,7 +238,7 @@ void STPSAFastFit::PadAnalyzer(TClonesArray *hitArray)
           hit -> SetLayer(pad -> GetLayer());
           hit -> SetTb(tbStart);
           hit -> SetChi2(chi2);
-          hit -> SetNDF(fNumTbsCompare);
+          hit -> SetNDF(fNDFTbs);
 
           hitNum++;
 
@@ -264,30 +260,13 @@ void STPSAFastFit::PadAnalyzer(TClonesArray *hitArray)
 #endif
 }
 
-Double_t 
-STPSAFastFit::Pulse(Double_t x, Double_t amp, Double_t tb)
-{
-  if (x < tb) 
-    return 0;
-
-  Double_t hit_time = x - tb;
-  Int_t hit_time_0p1 = hit_time * 10;
-  if (hit_time_0p1 > 1998) 
-    return 0;
-
-  Double_t r = 10 * hit_time - hit_time_0p1;
-  Double_t val = r * fPulseData[hit_time_0p1 + 1] + (1 - r) * fPulseData[hit_time_0p1];
-
-  return amp * val;
-}
-
 void 
 STPSAFastFit::FitPulse(Double_t *buffer, Double_t tbStart, Double_t &chi2, Double_t &amp)
 {
   Double_t refy = 0;
   Double_t ref2 = 0;
 
-  for (Int_t iTbPulse = 0; iTbPulse < fNumTbsCompare; iTbPulse++) {
+  for (Int_t iTbPulse = 0; iTbPulse < fNDFTbs; iTbPulse++) {
     Int_t tb = tbStart + iTbPulse;
     Double_t y = buffer[tb];
 
@@ -305,7 +284,7 @@ STPSAFastFit::FitPulse(Double_t *buffer, Double_t tbStart, Double_t &chi2, Doubl
   amp = refy / ref2;
 
   chi2 = 0;
-  for (Int_t iTbPulse = 0; iTbPulse < fNumTbsCompare; iTbPulse++) {
+  for (Int_t iTbPulse = 0; iTbPulse < fNDFTbs; iTbPulse++) {
     Int_t tb = tbStart + iTbPulse;
     Double_t val = buffer[tb];
     Double_t ref = Pulse(tb + 0.5, amp, tbStart);
