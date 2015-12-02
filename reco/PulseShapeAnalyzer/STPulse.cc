@@ -2,6 +2,8 @@
 #include "TSystem.h"
 #include <fstream>
 
+ClassImp(STPulse)
+
 STPulse::STPulse()
 {
   fPulseData = new Double_t[2000];

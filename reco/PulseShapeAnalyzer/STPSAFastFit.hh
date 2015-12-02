@@ -26,8 +26,6 @@ class STPSAFastFit : public STPSA, public STPulse
     void Analyze(STRawEvent *rawEvent, STEvent *event);
     void PadAnalyzer(TClonesArray *hitArray);
 
-    void SetNumTbsCompare
-
   private:
     void FitPulse(Double_t *buffer, Double_t tbStart, Double_t &chi2, Double_t &amp);
 

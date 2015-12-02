@@ -14,6 +14,9 @@ class STPulse
 
   private:
     Double_t *fPulseData;
+
+
+  ClassDef(STPulse, 1)
 };
 
 #endif

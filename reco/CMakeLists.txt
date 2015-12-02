@@ -94,7 +94,7 @@ LinearTracking/STCorrLinearTHPerp.cc
 LinearTracking/STCorrLinearTHRMS.cc
 LinearTracking/STCorrLinearTTGeo.cc
 LinearTracking/STCorrLinearTTPerp.cc
-LinearTracking/STCorrLinearTTProx.cc
+#LinearTracking/STCorrLinearTTProx.cc
 LinearTracking/STCorrLinearTTRMS.cc
 LinearTracking/STLinearTrackFinderAbstract.cc
 LinearTracking/STLinearTrackFinder.cc
