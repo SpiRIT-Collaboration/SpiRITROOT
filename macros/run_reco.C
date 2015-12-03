@@ -48,7 +48,7 @@ void run_reco
   // Set reconstruction tasks
   STDecoderTask *fDecoderTask = new STDecoderTask();
   fDecoderTask -> SetUseSeparatedData(fUseSeparatedData);
-  fDecoderTask -> SetInputPersistance(kTRUE);
+  fDecoderTask -> SetPersistence(kTRUE);
   fDecoderTask -> SetUseGainCalibration(useGainCalib);
 
   /* 
@@ -73,30 +73,29 @@ void run_reco
     }
   }
 
-  fDecoderTask -> SetFPNPedestal();
   if (fUseDecoder)
     fRun -> AddTask(fDecoderTask);
 
   STPSATask *fPSATask = new STPSATask();
-  fPSATask -> SetInputPersistance(kTRUE);
+  fPSATask -> SetPersistence(kTRUE);
   fPSATask -> SetThreshold(30);
   fRun -> AddTask(fPSATask);
 
   STHitClusteringTask *fClusteringTask = new STHitClusteringTask();
-  fRun -> AddTask(fClusteringTask);
+  //fRun -> AddTask(fClusteringTask);
 
   STSMTask* fSMTask = new STSMTask();
-  fSMTask -> SetInputPersistance(kTRUE);
+  fSMTask -> SetPersistence(kTRUE);
   fSMTask -> SetMode(STSMTask::kChange);
-  fRun -> AddTask(fSMTask);
+  //fRun -> AddTask(fSMTask);
 
   STLinearTrackingTask *fLinearTrackingTask = new STLinearTrackingTask();
-  fLinearTrackingTask -> SetInputPersistance(kTRUE);
+  fLinearTrackingTask -> SetPersistence(kTRUE);
   fRun -> AddTask(fLinearTrackingTask);
 /*
   STRiemannTrackingTask* fRiemannTrackingTask = new STRiemannTrackingTask();
   fRiemannTrackingTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ, 0);
-  fRiemannTrackingTask -> SetInputPersistance(kTRUE);
+  fRiemannTrackingTask -> SetPersistence(kTRUE);
   fRun -> AddTask(fRiemannTrackingTask);
 */
 

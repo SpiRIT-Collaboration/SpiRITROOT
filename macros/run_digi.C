@@ -22,16 +22,16 @@ void run_digi(TString name = "urqmd_short")
   // -----------------------------------------------------------------
   // Set digitization tasks
   STDriftTask* fDriftTask = new STDriftTask(); 
-  fDriftTask -> SetInputPersistance(kFALSE);
+  fDriftTask -> SetPersistence(kFALSE);
   fRun -> AddTask(fDriftTask);
 
   STPadResponseTask* fPadResponseTask = new STPadResponseTask(); 
-  fPadResponseTask -> SetInputPersistance(kFALSE);
+  fPadResponseTask -> SetPersistence(kFALSE);
   fPadResponseTask -> AssumeGausPRF();
   fRun -> AddTask(fPadResponseTask);
 
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
-  fElectronicsTask -> SetInputPersistance(kTRUE);
+  fElectronicsTask -> SetPersistence(kTRUE);
   fRun -> AddTask(fElectronicsTask);
 
 
