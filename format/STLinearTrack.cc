@@ -9,7 +9,6 @@
 ClassImp(STLinearTrack)
 
 STLinearTrack::STLinearTrack()
-: fHitPtrArray(NULL), fHitIDArray(NULL)
 {
   Reset();
 }
@@ -44,8 +43,8 @@ STLinearTrack::STLinearTrack(STLinearTrack *track)
   fChargeSum = track -> GetChargeSum();
   fNumHits = track -> GetNumHits();
 
-  fHitPtrArray = track -> GetHitPointerArray(); 
-  fHitIDArray  = track -> GetHitIDArray(); 
+  fHitPtrArray = *(track -> GetHitPointerArray()); 
+  fHitIDArray  = *(track -> GetHitIDArray()); 
 
   fRMSLine  = track -> GetRMSLine();
   fRMSPlane = track -> GetRMSPlane();
@@ -66,7 +65,6 @@ STLinearTrack::STLinearTrack(STLinearTrack *track)
 }
 
 STLinearTrack::STLinearTrack(Int_t trackID, STHit* hit)
-: fHitPtrArray(NULL), fHitIDArray(NULL)
 {
   Reset();
   fTrackID = trackID;
@@ -98,12 +96,6 @@ void STLinearTrack::Reset()
 
   fChargeSum = 0;
   fNumHits = 0;
-
-  if(fHitPtrArray == NULL) fHitPtrArray = new std::vector<STHit*>;
-  else                     fHitPtrArray -> clear();
-
-  if(fHitIDArray  == NULL) fHitIDArray = new std::vector<Int_t>;
-  else                     fHitIDArray -> clear();
 
   fRMSLine = -1;
   fRMSPlane = -1;
@@ -145,8 +137,8 @@ void STLinearTrack::AddHit(STHit *hit)
   fYCentroid *= 1./fChargeSum;
   fZCentroid *= 1./fChargeSum;
 
-  fHitPtrArray -> push_back(hit);
-  fHitIDArray -> push_back(hit -> GetHitID());
+  fHitPtrArray.push_back(hit);
+  fHitIDArray.push_back(hit -> GetHitID());
 
   fNumHits++;
 
@@ -261,11 +253,11 @@ Double_t STLinearTrack::GetZCentroid()  const { return fZCentroid; }
 Double_t STLinearTrack::GetChargeSum()  const { return fChargeSum; }
    Int_t STLinearTrack::GetNumHits()          { return fNumHits; }
 
-std::vector<Int_t>  *STLinearTrack::GetHitIDArray()      { return fHitIDArray; }
-std::vector<STHit*> *STLinearTrack::GetHitPointerArray() { return fHitPtrArray; }
+std::vector<Int_t>  *STLinearTrack::GetHitIDArray()      { return &fHitIDArray; }
+std::vector<STHit*> *STLinearTrack::GetHitPointerArray() { return &fHitPtrArray; }
 
-Int_t  STLinearTrack::GetHitID(Int_t i) { return fHitIDArray -> at(i); }
-STHit* STLinearTrack::GetHit(Int_t i)   { return fHitPtrArray -> at(i); }
+Int_t  STLinearTrack::GetHitID(Int_t i) { return fHitIDArray.at(i); }
+STHit* STLinearTrack::GetHit(Int_t i)   { return fHitPtrArray.at(i); }
 
 Double_t STLinearTrack::GetRMSLine()    const { return fRMSLine; }
 Double_t STLinearTrack::GetRMSPlane()   const { return fRMSPlane; }
