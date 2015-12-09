@@ -162,7 +162,7 @@ class STLinearTrack : public TObject
     Double_t fSumDistCZX; //! < SUM_i {(z_centroid - z_i) * (x_centroid - x_i) }
 
 
-  ClassDef(STLinearTrack, 3);
+  ClassDef(STLinearTrack, 4);
 };
 
 #endif
