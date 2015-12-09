@@ -54,7 +54,9 @@ class STPSA
     Int_t fPadLayers;         ///< number of total pad layers
 
     Int_t fNumTbs;            ///< the number of time buckets used in taking data
-    Int_t fNumTbsWindow;      ///< the number of time buckets used in window
+    Int_t fWindowNumTbs;      ///< the number of time buckets used in window
+    Int_t fWindowStartTb;     ///< start of time bucket of window
+    Int_t fWindowEndTb;       ///< end of time bucket of window
     Int_t fTBTime;            ///< time duration of a time bucket in ns
     Double_t fDriftVelocity;  ///< drift velocity of electron in cm/us
     Double_t fMaxDriftLength; ///< maximum drift length in mm

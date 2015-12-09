@@ -12,6 +12,7 @@
 
 // SpiRITROOT classes
 #include "STPSA.hh"
+#include "STParReader.hh"
 
 // FairRoot classes
 #include "FairRuntimeDb.h"
@@ -31,30 +32,52 @@ STPSA::STPSA()
   fLogger = FairLogger::GetLogger();
 
   FairRun *run = FairRun::Instance();
-  if (!run)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "No analysis run!");
 
-  FairRuntimeDb *db = run -> GetRuntimeDb();
-  if (!db)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "No runtime database!");
+  if (run)
+  {
+    FairRuntimeDb *db = run -> GetRuntimeDb();
+    if (!db)
+      fLogger -> Fatal(MESSAGE_ORIGIN, "No runtime database!");
 
-  fPar = (STDigiPar *) db -> getContainer("STDigiPar");
-  if (!fPar)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "STDigiPar not found!!");
+    fPar = (STDigiPar *) db -> getContainer("STDigiPar");
+    if (!fPar)
+      fLogger -> Fatal(MESSAGE_ORIGIN, "STDigiPar not found!!");
 
-  fPadPlaneX = fPar -> GetPadPlaneX();
-  fPadSizeX = fPar -> GetPadSizeX();
-  fPadSizeZ = fPar -> GetPadSizeZ();
-  fPadRows = fPar -> GetPadRows();
-  fPadLayers = fPar -> GetPadLayers();
+    fPadPlaneX      = fPar -> GetPadPlaneX();
+    fPadSizeX       = fPar -> GetPadSizeX();
+    fPadSizeZ       = fPar -> GetPadSizeZ();
+    fPadRows        = fPar -> GetPadRows();
+    fPadLayers      = fPar -> GetPadLayers();
+    fNumTbs         = fPar -> GetNumTbs();
+    fWindowNumTbs   = fPar -> GetWindowNumTbs();
+    fWindowStartTb  = fPar -> GetWindowStartTb();
+    fTBTime         = fPar -> GetTBTime();
+    fDriftVelocity  = fPar -> GetDriftVelocity();
+    fMaxDriftLength = fPar -> GetDriftLength();
 
-  fNumTbs = fPar -> GetNumTbs();
-  fNumTbsWindow = fPar -> GetWindowNumTbs();
-  fTBTime = fPar -> GetTBTime();
-  fDriftVelocity = fPar -> GetDriftVelocity();
-  fMaxDriftLength = fPar -> GetDriftLength();
+    fThreshold = -1;
+  }
 
-  fThreshold = -1;
+  else
+  {
+    TString workDir = gSystem -> Getenv("VMCWORKDIR");
+    TString parameterFile = workDir + "/parameters/ST.parameters.par";
+    STParReader *fParReader = new STParReader(parameterFile);
+
+    fPadPlaneX      = fParReader -> GetDoublePar("PadPlaneX");
+    fPadSizeX       = fParReader -> GetDoublePar("PadSizeX");
+    fPadSizeZ       = fParReader -> GetDoublePar("PadSizeZ");
+    fPadRows        = fParReader -> GetIntPar("PadRows");
+    fPadLayers      = fParReader -> GetIntPar("PadLayers");
+    fNumTbs         = fParReader -> GetIntPar("NumTbs");
+    fWindowNumTbs   = fParReader -> GetIntPar("WindowNumTbs");
+    fWindowStartTb  = fParReader -> GetIntPar("WindowStartTb");
+    fDriftVelocity  = fParReader -> GetDoublePar("DriftVelocity");
+    fMaxDriftLength = fParReader -> GetDoublePar("DriftLength");
+    fTBTime         = 40;
+  }
+
+  fWindowEndTb = fWindowStartTb + fWindowNumTbs;
 }
 
 STPSA::~STPSA()

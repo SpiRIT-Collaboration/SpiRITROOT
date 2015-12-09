@@ -25,9 +25,10 @@ class STPSAFastFit : public STPSA, public STPulse
 
     void Analyze(STRawEvent *rawEvent, STEvent *event);
     void PadAnalyzer(TClonesArray *hitArray);
+    void FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum);
 
   private:
-    void FitPulse(Double_t *buffer, Double_t tbStart, Double_t &chi2, Double_t &amp);
+    void FitPulse(Double_t *buffer, Double_t tbStart, Int_t ndf, Double_t &chi2, Double_t &amplitude);
 
   private:
     TClonesArray **fThreadHitArray; /// TClonesArray object
@@ -42,6 +43,8 @@ class STPSAFastFit : public STPSA, public STPulse
     STPad *fPad;
 
     Int_t fNDFTbs;
+    Int_t fIterMax;
+    Int_t fNumTbsCorrection;
 
   ClassDef(STPSAFastFit, 1)
 };
