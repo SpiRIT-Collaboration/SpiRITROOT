@@ -16,6 +16,8 @@
 #include "STPSADF.hh"
 #include "STPSAFast.hh"
 #include "STPSAFastFit.hh"
+#include "STGlobal.hh"
+#include "STDebugLogger.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -125,6 +127,9 @@ STPSATask::SetParContainers()
 void
 STPSATask::Exec(Option_t *opt)
 {
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStart("PSATask");
+#endif
   fEventArray -> Delete();
 
   if (fRawEventArray -> GetEntriesFast() == 0)
@@ -152,4 +157,7 @@ STPSATask::Exec(Option_t *opt)
                          rawEvent -> GetEventID(), event -> GetNumHits(), event -> GetNumClusters()));
     }
   }
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStop("PSATask");
+#endif
 }

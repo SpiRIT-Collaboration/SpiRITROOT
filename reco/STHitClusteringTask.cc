@@ -10,6 +10,8 @@
 #include "STEvent.hh"
 #include "STClusterizerScan.hh"
 #include "STClusterizerScan2.hh"
+#include "STGlobal.hh"
+#include "STDebugLogger.hh"
 
 // FairROOT classes
 #include "FairRun.h"
@@ -123,6 +125,9 @@ STHitClusteringTask::SetParContainers()
 void
 STHitClusteringTask::Exec(Option_t *opt)
 {
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStart("HitClusteringTask");
+#endif
   STEvent *event = (STEvent *) fEventArray -> At(0);
 
   if (event -> IsGood() == kFALSE) 
@@ -164,4 +169,7 @@ STHitClusteringTask::Exec(Option_t *opt)
                     Form("Event #%d : Reconstructed %d clusters.",
                          event -> GetEventID(), event -> GetNumClusters()));
   }
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStop("HitClusteringTask");
+#endif
 }

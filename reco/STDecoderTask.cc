@@ -11,6 +11,8 @@
 //-----------------------------------------------------------
 
 #include "STDecoderTask.hh"
+#include "STGlobal.hh"
+#include "STDebugLogger.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -157,6 +159,9 @@ STDecoderTask::SetParContainers()
 void
 STDecoderTask::Exec(Option_t *opt)
 {
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStart("DecoderTask");
+#endif
   fRawEventArray -> Delete();
 
   if (fRawEvent == NULL)
@@ -165,6 +170,9 @@ STDecoderTask::Exec(Option_t *opt)
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
 
   fRawEvent = NULL;
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStop("DecoderTask");
+#endif
 }
 
 Int_t

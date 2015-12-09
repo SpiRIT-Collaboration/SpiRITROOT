@@ -14,6 +14,8 @@
 #include "STGenfitTask.hh"
 #include "STRiemannTrack.hh"
 #include "STRiemannHit.hh"
+#include "STGlobal.hh"
+#include "STDebugLogger.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -133,6 +135,9 @@ STGenfitTask::SetParContainers()
 void
 STGenfitTask::Exec(Option_t *opt)
 {
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStart("GenfitTask");
+#endif
 #ifdef DEBUG
   fLogger -> Info(MESSAGE_ORIGIN, "Start STGenfitTask!");
 #endif
@@ -215,4 +220,7 @@ STGenfitTask::Exec(Option_t *opt)
       new ((*fVertexArray)[iVert]) genfit::GFRaveVertex(*vtx);
     }
   }
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStop("GenfitTask");
+#endif
 }

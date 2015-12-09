@@ -18,6 +18,7 @@
 #include "STDipTTCorrelator.hh"
 #include "STRiemannTTCorrelator.hh"
 #include "STEvent.hh"
+#include "STGlobal.hh"
 
 // FairROOT classes
 #include "FairRootManager.h"
@@ -253,6 +254,9 @@ STRiemannTrackingTask::SetParContainers()
 void
 STRiemannTrackingTask::Exec(Option_t *opt)
 {
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStart("RiemannTrackingTask");
+#endif
   // Clear buffers --------------------------------------------------------------------------------------
   if (fRiemannTrackArray == 0)
     fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find RiemannTrackArray!");
@@ -369,6 +373,9 @@ STRiemannTrackingTask::Exec(Option_t *opt)
 
   fLogger -> Info(MESSAGE_ORIGIN, Form("Event #%d : Found %d tracks, used %d(/%d) hits.", 
                        eventHCM -> GetEventID(), foundTracks, numUsedHit, numHit));
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStop("RiemannTrackingTask");
+#endif
 }
 
 

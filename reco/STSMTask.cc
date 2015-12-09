@@ -11,6 +11,8 @@
 
 // SPiRITROOT classes
 #include "STSMTask.hh"
+#include "STGlobal.hh"
+#include "STDebugLogger.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -81,6 +83,9 @@ STSMTask::SetParContainers()
 void
 STSMTask::Exec(Option_t *opt)
 {
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStart("SMTask");
+#endif
   fEventHCMArray -> Delete();
 
   if (fEventHCArray -> GetEntriesFast() == 0)
@@ -106,4 +111,7 @@ STSMTask::Exec(Option_t *opt)
 
   new ((*fEventHCMArray)[0]) STEvent(eventHCM);
   delete eventHCM;
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStop("SMTask");
+#endif
 }

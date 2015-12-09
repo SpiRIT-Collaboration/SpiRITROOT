@@ -5,6 +5,8 @@
 // SpiRITROOT classes
 #include "STEvent.hh"
 #include "STLinearTrackingTask.hh"
+#include "STGlobal.hh"
+#include "STDebugLogger.hh"
 
 // FairROOT classes
 #include "FairRootManager.h"
@@ -78,6 +80,9 @@ STLinearTrackingTask::SetParContainers()
 void
 STLinearTrackingTask::Exec(Option_t *opt)
 {
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStart("LinearTrackingTask");
+#endif
   if(!fTrackArray) 
     fLogger->Fatal(MESSAGE_ORIGIN,"No TrackArray!");
   fTrackArray -> Delete();
@@ -99,6 +104,9 @@ STLinearTrackingTask::Exec(Option_t *opt)
   fLogger -> Info(MESSAGE_ORIGIN, 
     Form("Event #%d : Found %d linear tracks", 
       event -> GetEventID(), fTrackArray -> GetEntriesFast()));
+#ifdef TASKTIMER
+  STDebugLogger::Instance() -> TimerStop("LinearTrackingTask");
+#endif
 }
 
 STLinearTrackFinderAbstract* STLinearTrackingTask::GetTrackFinder() { return fTrackFinder; }
