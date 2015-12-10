@@ -141,7 +141,7 @@ class STLinearTrack : public TObject
     Double_t fChargeSum; ///< charge sum
        Int_t fNumHits;
 
-    std::vector<STHit*> fHitPtrArray; //! < STHit pointer array
+    std::vector<STHit*> fHitPtrArray; /// < STHit pointer array
     std::vector<Int_t>  fHitIDArray;  //-> < hit id array
 
     Double_t fRMSLine;
