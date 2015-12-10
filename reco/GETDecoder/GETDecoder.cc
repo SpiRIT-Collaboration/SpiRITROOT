@@ -303,14 +303,14 @@ Int_t GETDecoder::GetNumFrames() {
 
 GETBasicFrame *GETDecoder::GetBasicFrame(Int_t frameID)
 {
-  fData.clear();
-
   if (frameID == -1)
     fTargetFrameInfoIdx++;
   else
     fTargetFrameInfoIdx = frameID;
 
   while (kTRUE) {
+    fData.clear();
+
     if (fIsDoneAnalyzing)
       if (fTargetFrameInfoIdx > fFrameInfoArray -> GetLast())
         return NULL;
@@ -365,14 +365,14 @@ GETBasicFrame *GETDecoder::GetBasicFrame(Int_t frameID)
 
 GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
 {
-  fData.clear();
-
   if (frameID == -1)
     fTargetFrameInfoIdx++;
   else
     fTargetFrameInfoIdx = frameID;
 
   while (kTRUE) {
+    fData.clear();
+
     if (fIsDoneAnalyzing)
       if (fTargetFrameInfoIdx > fCoboFrameInfoArray -> GetLast())
         return NULL;
@@ -467,14 +467,14 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
 
 GETLayeredFrame *GETDecoder::GetLayeredFrame(Int_t frameID)
 {
-  fData.clear();
-
   if (frameID == -1)
     fTargetFrameInfoIdx++;
   else
     fTargetFrameInfoIdx = frameID;
 
   while (kTRUE) {
+    fData.clear();
+
     if (fIsDoneAnalyzing)
       if (fTargetFrameInfoIdx > fFrameInfoArray -> GetLast())
         return NULL;
