@@ -165,7 +165,7 @@ STDecoderTask::Exec(Option_t *opt)
   fRawEventArray -> Delete();
 
   if (fRawEvent == NULL)
-    fRawEvent = fDecoder -> GetRawEvent(fEventID);
+    fRawEvent = fDecoder -> GetRawEvent(fEventID++);
 
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
 
