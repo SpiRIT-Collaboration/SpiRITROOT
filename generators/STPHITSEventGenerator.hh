@@ -40,6 +40,12 @@ class STPHITSEventGenerator : public FairGenerator
     /** Get current event number **/
     Long64_t GetCurrentEvent() ;
 
+    void SetSingleTrackEvent();
+
+    void SetEvent(Int_t event);
+
+    Int_t GetNumTracks(Int_t event);
+
     /** 
      * Abstract method in base class.
      * Reads event from the input file and pushes the tracks onto the stack. 
@@ -56,6 +62,9 @@ class STPHITSEventGenerator : public FairGenerator
         Double_t  fVz;             ///< x position of primary vertex
         Long64_t  fNumEvents;      ///< Total number of events
         Long64_t  fCurrentEvent;   ///< Current event number
+
+          Bool_t  fSingleTrackEventFlag;
+        Long64_t  fCurrentParticle;
 
     Int_t kfToPDG(Long64_t kfCode);
 
