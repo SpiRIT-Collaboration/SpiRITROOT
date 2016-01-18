@@ -10,6 +10,7 @@ ${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/par
 ${CMAKE_SOURCE_DIR}/reco
 ${CMAKE_SOURCE_DIR}/util
+${CMAKE_SOURCE_DIR}/reco/PulseShapeAnalyzer
 ${CMAKE_SOURCE_DIR}/reco/STConverter
 ${CMAKE_SOURCE_DIR}/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/reco/RiemannTracking
@@ -34,6 +35,9 @@ set(SRCS
 STEventManager.cc
 STEventManagerEditor.cc
 STEventDrawTask.cc
+STEveManager.cc
+STEveTask.cc
+STEveDrawTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
