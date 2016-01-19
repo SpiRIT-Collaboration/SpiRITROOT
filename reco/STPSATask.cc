@@ -36,7 +36,7 @@ STPSATask::STPSATask()
 
   fEventArray = new TClonesArray("STEvent");
 
-  fPSAMode = kAll;
+  fPSAMode = kFastFit;
   fThreshold = 0;
   fLayerCut = 0;
 }
