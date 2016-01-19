@@ -10,6 +10,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 #include "STPad.hh"
 
 ClassImp(STPad);
@@ -79,7 +81,7 @@ Bool_t  STPad::IsGainCalibrated()     { return fIsGainCalibrated; }
 Double_t *STPad::GetADC()
 {
   if (!fIsPedestalSubtracted) {
-    std::cout << "== Pedestal subtraction is not done!" << std::endl;
+    cout << "== Pedestal subtraction is not done!" << endl;
 
     return 0;
   }
@@ -90,10 +92,22 @@ Double_t *STPad::GetADC()
 Double_t STPad::GetADC(Int_t idx)
 {
   if (!fIsPedestalSubtracted) {
-    std::cout << "== Pedestal subtraction is not done!" << std::endl;
+    cout << "== Pedestal subtraction is not done!" << endl;
 
     return -4;
   }
 
   return fAdc[idx];
+}
+
+std::vector<STHit*> *STPad::GetHitPointerArray() { return &fHitArray; }
+
+void STPad::AddHit(STHit* hit) 
+{ 
+  fHitArray.push_back(hit); 
+}
+Int_t STPad::GetNumHits()      { return fHitArray.size();  }
+STHit *STPad::GetHit(Int_t hitNo)
+{
+  return (hitNo < GetNumHits() ? fHitArray[hitNo] : NULL);
 }

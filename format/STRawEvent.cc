@@ -99,3 +99,13 @@ STPad *STRawEvent::GetPad(Int_t row, Int_t layer)
 
   return 0;
 }
+
+void STRawEvent::SetHits(STEvent* event)
+{
+  Int_t numHits = event -> GetNumHits();
+  for (Int_t iHit = 0; iHit < numHits; iHit++)
+  {
+    STHit *hit = event -> GetHit(iHit);
+    GetPad(hit -> GetRow(), hit -> GetLayer()) -> AddHit(hit);
+  }
+}

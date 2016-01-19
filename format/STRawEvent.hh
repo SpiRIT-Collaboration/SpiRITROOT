@@ -15,6 +15,8 @@
 #include "TObject.h"
 
 #include "STPad.hh"
+#include "STEvent.hh"
+#include "STHit.hh"
 
 #include <vector>
 
@@ -43,6 +45,8 @@ class STRawEvent : public TNamed {
 
     STPad *GetPad(Int_t padNo);
     STPad *GetPad(Int_t row, Int_t layer); 
+
+    void SetHits(STEvent* event);
 
   private:
     Int_t fEventID;

@@ -14,6 +14,8 @@
 #include "TROOT.h"
 #include "TObject.h"
 
+#include "STHit.hh"
+
 class STPad : public TObject
 {
   public:
@@ -50,6 +52,11 @@ class STPad : public TObject
     Double_t *GetADC();
     Double_t GetADC(Int_t idx);
 
+    std::vector<STHit*> *GetHitPointerArray(); ///< Get hit ID array
+    void AddHit(STHit* hit);
+    Int_t GetNumHits();
+    STHit *GetHit(Int_t hitNo);
+
   private:
     Int_t fLayer;
     Int_t fRow;  
@@ -60,6 +67,8 @@ class STPad : public TObject
     Bool_t fIsPedestalSubtracted;
     Bool_t fIsGainCalibrated;
     Double_t fAdc[512];
+
+    std::vector<STHit*> fHitArray; //! < STHit pointer array
 
   ClassDef(STPad, 3);
 };
