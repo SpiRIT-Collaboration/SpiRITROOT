@@ -32,6 +32,7 @@ Gain:Int_t                      1270              # multiplicity
 UAMapFile:Int_t                 3
 AGETMapFile:Int_t               2
 GainCalibrationDataFile:Int_t   4
+LTParFile:Int_t                 5
 GCConstant:Double_t             3.576E-2
 GCLinear:Double_t               1.671E-3
 GCQuadratic:Double_t            -2.358E-8

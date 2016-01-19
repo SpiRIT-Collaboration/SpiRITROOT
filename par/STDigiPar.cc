@@ -42,6 +42,7 @@ Double_t STDigiPar::GetCoefDiffusionLong()           { return fCoefDiffusionLong
 Double_t STDigiPar::GetCoefDiffusionTrans()          { return fCoefDiffusionTrans; }
 Double_t STDigiPar::GetCoefAttachment()              { return fCoefAttachment; }
 Int_t    STDigiPar::GetGain()                        { return fGain; }
+TString  STDigiPar::GetLTParFileName()               { return fLTParFileName; }
 TString  STDigiPar::GetUAMapFileName()               { return fUAMapFileName; }
 TString  STDigiPar::GetAGETMapFileName()             { return fAGETMapFileName; }
 TString  STDigiPar::GetGainCalibrationDataFileName() { return fGainCalibrationDataFileName; }
@@ -151,6 +152,11 @@ STDigiPar::getParams(FairParamList *paramList)
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find Gain parameter!");
       return kFALSE;
     }
+    if (!(paramList -> fill("LTParFile", &fLTParFile))) {
+      fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find LTParFile parameter!");
+      return kFALSE;
+    }
+    fLTParFileName = GetFile(fLTParFile);
     if (!(paramList -> fill("UAMapFile", &fUAMapFile))) {
       fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find UAMapFile parameter!");
       return kFALSE;
@@ -230,6 +236,7 @@ STDigiPar::putParams(FairParamList *paramList)
   paramList -> add("CoefDiffusionTrans", fCoefDiffusionTrans);
   paramList -> add("CoefAttachment", fCoefAttachment);
   paramList -> add("Gain", fGain);
+  paramList -> add("LTParFile", fLTParFile);
   paramList -> add("UAMapFile", fUAMapFile);
   paramList -> add("AGETMapFile", fAGETMapFile);
   paramList -> add("GainCalibrationDataFile", fGainCalibrationDataFile);

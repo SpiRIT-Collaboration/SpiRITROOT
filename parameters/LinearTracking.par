@@ -1,0 +1,28 @@
+#====================================
+# Linear Tracking parameter set
+# (name:type(Int_t, Double_t) value)
+#====================================
+[LinearTrackingPar]
+#====================================
+NumHitsTrackCut:Int_t        30
+NumHitsFit:Int_t              8
+NumHitsCompare:Int_t         20
+NumHitsCompareMax:Int_t      50
+#====================================
+XConst:Double_t             1.1
+YConst:Double_t             3.0
+ZConst:Double_t             1.1
+#====================================
+ProxLineCut:Double_t         18
+ProxPlaneCut:Double_t       2.5
+ProxRCut:Double_t            20
+#====================================
+RMSLineCut:Double_t          12
+RMSPlaneCut:Double_t        2.5
+#====================================
+DirectionDotCut:Double_t    0.8
+NormalDotCut:Double_t       0.8
+#====================================
+PerpYCut:Double_t           120
+NumHitsVanishCut:Double_t     3
+#====================================

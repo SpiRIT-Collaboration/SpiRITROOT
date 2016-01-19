@@ -18,7 +18,7 @@ GatingWirePlaneY:Double_t       -14.0             # mm
 EField:Double_t                 0.0               # 
 FPNPedestalRMS:Double_t         5                 # RMS threshold value for FPN pedestal
 NumTbs:Int_t                    512               # The number of time buckets in the actual data
-WindowNumTbs:Int_t              512               # The number of time buckets of the window
+WindowNumTbs:Int_t              300               # The number of time buckets of the window
 WindowStartTb:Int_t             0                 # First time bucket number of the window
 SamplingRate:Int_t              25                # MHz
 DriftLength:Double_t            496.0             # mm
@@ -29,6 +29,11 @@ CoefDiffusionLong:Double_t      0.034             # cm^{-1/2}
 CoefDiffusionTrans:Double_t     0.024             # cm^{-1/2}
 CoefAttachment:Double_t         0.2               # cm^{-1/2}
 Gain:Int_t                      1270              # multiplicity
-UAMapFile:Int_t                 0
-AGETMapFile:Int_t               1
+UAMapFile:Int_t                 3
+AGETMapFile:Int_t               2
+GainCalibrationDataFile:Int_t   4
+LTParFile:Int_t                 5
+GCConstant:Double_t             3.576E-2
+GCLinear:Double_t               1.671E-3
+GCQuadratic:Double_t            -2.358E-8
 #########################################################################
