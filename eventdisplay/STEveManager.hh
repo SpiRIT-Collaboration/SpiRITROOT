@@ -42,6 +42,8 @@ class STEveManager : public TEveEventManager
   public : 
     enum STEveMode { kAll, kOverview, k3D };
 
+    STEveMode FindEveMode(TString mode);
+
     static STEveManager* Instance();
     STEveManager();
     ~STEveManager() {};
@@ -74,6 +76,7 @@ class STEveManager : public TEveEventManager
     void RunEvent(Long64_t entry); //!< Run event of entry
 
     // SETTERS
+    void SetEveMode(TString mode);            //!< Set eve mode
     void SetEveMode(STEveMode mode);          //!< Set eve mode
     void SetGeomFileManual(TString name);     //!< Set path to geometry file
     void SetVolumeTransparency(Int_t val);    //!< Set detector geometry transparency

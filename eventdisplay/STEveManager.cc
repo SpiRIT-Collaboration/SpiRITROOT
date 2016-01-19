@@ -97,10 +97,12 @@ void STEveManager::PrevEvent()   { RunEvent(fCurrentEventEntry - 1); }
 void STEveManager::RunEvent(Long64_t entry) 
 {
   fRun -> Run(entry);
+  gEve -> Redraw3D();
   fCurrentEventEntry = entry;
 }
 
-void STEveManager::SetEveMode(STEveMode mode)        { fEveMode      = mode; }
+void STEveManager::SetEveMode(TString mode)   { fEveMode = FindEveMode(mode); }
+void STEveManager::SetEveMode(STEveMode mode) { fEveMode = mode; }
 void STEveManager::SetGeomFileManual(TString name)   { fGeomFileName = name; }
 void STEveManager::SetVolumeTransparency(Int_t val)  { fTransparency = val; }
 void STEveManager::SetBackgroundColor(Color_t color) { fClearColor   = color; }
@@ -545,8 +547,8 @@ STEveManager::Build3DViewer()
 
   TGLViewer *dfViewer = gEve -> GetDefaultGLViewer();
 
-  if (dfViewer == NULL)
-    dfViewer = ((TEveViewer*) gEve -> GetDefaultViewer()) -> GetGLViewer();
+  //if (dfViewer == NULL)
+    //dfViewer = ((TEveViewer*) gEve -> GetDefaultViewer()) -> GetGLViewer();
 
   if (dfViewer == NULL)
     return;
@@ -633,3 +635,18 @@ void STEveManager::ClickOnOffClusterBox() { fEveTask -> RnrEveObjectTask("cluste
 void STEveManager::ClickOnOffRiemannHit() { fEveTask -> RnrEveObjectTask("riemannhit"); gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffLinear()     { fEveTask -> RnrEveObjectTask("linear");     gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffLinearHit()  { fEveTask -> RnrEveObjectTask("linearhit");  gEve -> Redraw3D(); }
+
+STEveManager::STEveMode 
+STEveManager::FindEveMode(TString mode)
+{
+  mode.ToLower();
+
+  if ( ((mode.Index("3d") >= 0) && (mode.Index("ov") >= 0)) 
+      || mode.Index("all") >= 0)
+    return kAll;
+
+  else if (mode.Index("3d") >= 0) return k3D;
+  else if (mode.Index("ov") >= 0) return kOverview;
+
+  return k3D;
+}

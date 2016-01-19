@@ -143,9 +143,6 @@ void STEveDrawTask::PushParameters()
 
 Double_t STEveDrawTask::Pulse(Double_t *x, Double_t *par)
 {
-  if ((x[0] == x[0]) == kFALSE) LOG(INFO) << "x is NAN! " << FairLogger::endl;
-  if ((par[0] == par[0]) == kFALSE) LOG(INFO) << "par0 is NAN! " << FairLogger::endl;
-  if ((par[1] == par[1]) == kFALSE) LOG(INFO) << "par1 is NAN! " << FairLogger::endl;
   return fPulse -> Pulse(x[0], par[0], par[1]);
 }
 
@@ -210,28 +207,42 @@ STEveDrawTask::Exec(Option_t* option)
   Reset();
 
   if (fEventArray != NULL)
+  {
     fEvent = (STEvent*) fEventArray -> At(0);
+  }
 
   if (fMCHitArray != NULL && fSetObject[kMC]) 
+  {
     DrawMCPoints();
+  }
 
   if (fDriftedElectronArray != NULL && fSetObject[kDigi]) 
+  {
     DrawDriftedElectrons();
+  }
 
   if (fSetObject[kHit] || fSetObject[kHitBox])
+  {
     DrawHitPoints();
+  }
 
   if (fSetObject[kCluster] || fSetObject[kClusterBox])
+  {
     DrawHitClusterPoints();
+  }
 
   if (fRiemannTrackArray != NULL && fSetObject[kRiemannHit])
+  {
     DrawRiemannHits();
+  }
 
-  if (fLinearTrackArray != NULL && 
-      (fSetObject[kLinear] || fSetObject[kLinearHit]))
+  if (fLinearTrackArray != NULL && (fSetObject[kLinear] || fSetObject[kLinearHit]))
+  {
     DrawLinearTracks();
+  }
 
-  gEve -> Redraw3D(kFALSE);
+  gEve -> Redraw3D();
+
   UpdateCvsPadPlane();
 }
 
@@ -262,6 +273,9 @@ STEveDrawTask::DrawMCPoints()
                                    point -> GetY(),
                                    point -> GetZ());
   }
+
+  if (nPoints > 0)
+    gEve -> ElementChanged(fPointSet[kMC]);
 }
 
 void 
@@ -293,6 +307,9 @@ STEveDrawTask::DrawDriftedElectrons()
 
     fPointSet[kDigi] -> SetNextPoint(x/10., y/10., z/10.);
   }
+
+  if (nPoints > 0)
+    gEve -> ElementChanged(fPointSet[kDigi]);
 }
 
 void 
@@ -357,7 +374,9 @@ STEveDrawTask::DrawHitPoints()
     y += fWindowYStart;
 
     if (fSetObject[kHit]) 
+    {
       fPointSet[kHit] -> SetNextPoint(position.X()/10., y, position.Z()/10.);
+    }
 
     if (fPadPlane != NULL)
       fPadPlane -> Fill(-position.X(), position.Z(), hit.GetCharge());
@@ -370,6 +389,15 @@ STEveDrawTask::DrawHitPoints()
 
       fBoxHitSet -> DigitValue(hit.GetCharge());
     }
+  }
+
+  if (nHits > 0)
+  {
+    if (fSetObject[kHit]) 
+      gEve -> ElementChanged(fPointSet[kHit]);
+
+    if (fSetObject[kHitBox]) 
+      gEve -> ElementChanged(fBoxHitSet);
   }
 }
 
@@ -429,24 +457,35 @@ STEveDrawTask::DrawHitClusterPoints()
 
     TVector3 sigma = cluster.GetPosSigma();
 
-    if (fSetObject[kCluster]) {
+    if (fSetObject[kCluster]) 
+    {
       fPointSet[kCluster] -> SetNextPoint(position.X()/10.,
                                           y,
                                           position.Z()/10.);
     }
 
-    Double_t xS =  sigma.X()/10.;
-    Double_t yS =  sigma.Y()/10.;
-    Double_t zS =  sigma.Z()/10.;
+    if (fSetObject[kClusterBox]) 
+    {
+      Double_t xS =  sigma.X()/10.;
+      Double_t yS =  sigma.Y()/10.;
+      Double_t zS =  sigma.Z()/10.;
 
-    Double_t xP =  position.X()/10. - xS/2.;
-    Double_t yP =                 y - yS/2.;
-    Double_t zP =  position.Z()/10. - zS/2.;
+      Double_t xP =  position.X()/10. - xS/2.;
+      Double_t yP =                 y - yS/2.;
+      Double_t zP =  position.Z()/10. - zS/2.;
 
-    if (fSetObject[kClusterBox]) {
       fBoxClusterSet -> AddBox(xP, yP, zP, xS, yS, zS);
       fBoxClusterSet -> DigitValue(cluster.GetCharge());
     }
+  }
+
+  if (nClusters > 0)
+  {
+    if (fSetObject[kCluster]) 
+      gEve -> ElementChanged(fPointSet[kCluster]);
+
+    if (fSetObject[kClusterBox]) 
+      gEve -> ElementChanged(fBoxClusterSet);
   }
 }
 
@@ -993,18 +1032,10 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer)
   fHistPad -> Draw();
 
   Int_t numHits = pad -> GetNumHits();
-  LOG(INFO) << "Number of hits: " << numHits << FairLogger::endl;
   if (numHits > fNumPulseFunction) numHits = fNumPulseFunction;
   for (Int_t iHit = 0; iHit < numHits; iHit++)
   {
     STHit* hit = pad -> GetHit(iHit);
-
-    LOG(DEBUG) << "Hit " << iHit   << " (" 
-               << hit -> GetHitID()  << ") " 
-               << hit -> GetTb()     << " " 
-               << hit -> GetCharge() << " "
-               << hit -> GetChi2()   << " " 
-               << hit -> GetNDF()    << FairLogger::endl;
 
     fPulseFunction[iHit] -> SetParameter(0, hit -> GetCharge());
     fPulseFunction[iHit] -> SetParameter(1, hit -> GetTb());
