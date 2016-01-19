@@ -60,6 +60,8 @@ class STLinearTrackFitter
     TVector3 GetPointOnY(STLinearTrack* track, Double_t y);
     TVector3 GetPointOnZ(STLinearTrack* track, Double_t z);
 
+    Double_t GetLengthOnTrack(STLinearTrack* track, STHit* hit);
+
   private:
     ODRFitter* fODRFitter;
 
@@ -74,8 +76,9 @@ class STHitSortByTrackDirection
 
   public:
     STHitSortByTrackDirection(TVector3 c, TVector3 d) : centroid(c), direction(d) {}
+
     Bool_t operator() (STHit* hit1, STHit *hit2)
-    { return ( (hit1 -> GetPosition() - centroid).Dot(direction) >
+    { return ( (hit1 -> GetPosition() - centroid).Dot(direction) <
                (hit2 -> GetPosition() - centroid).Dot(direction) ); }
 };
 

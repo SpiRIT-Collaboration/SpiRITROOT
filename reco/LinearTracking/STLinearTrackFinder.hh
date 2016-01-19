@@ -45,6 +45,8 @@ class STLinearTrackFinder : public STLinearTrackFinderAbstract
     Double_t fStretchXZ;
     Double_t fStretchY;
 
+    Int_t fNumTracks; ///< Number of created tracks ever.
+
   private:
     /**
      * Build track from hitArray. Push track into trackArray.

@@ -30,14 +30,14 @@ class STLinearTrack : public TObject
     void SetIsFitted(Bool_t val);    ///< Set fitted flag
     void SetIsSorted(Bool_t val);    ///< Set sorted flag
 
-    void SetVertex(TVector3 pos);    ///< Set position of vextex
+    void SetVertex(Int_t ith, TVector3 pos);    ///< Set position of vextex
     void SetDirection(TVector3 vec); ///< Set direction vector
     void SetNormal(TVector3 vec);    ///< Set normal vector
     void SetCentroid(TVector3 pos);  ///< Set centroid
 
-    void SetXVertex(Double_t x);     ///< Set x position of vextex
-    void SetYVertex(Double_t y);     ///< Set y position of vextex
-    void SetZVertex(Double_t z);     ///< Set z position of vextex
+    void SetXVertex(Int_t ith, Double_t x);     ///< Set x position of vextex
+    void SetYVertex(Int_t ith, Double_t y);     ///< Set y position of vextex
+    void SetZVertex(Int_t ith, Double_t z);     ///< Set z position of vextex
 
     void SetXDirection(Double_t x);  ///< Set x component of direction vector
     void SetYDirection(Double_t y);  ///< Set y component of direction vector
@@ -71,14 +71,14 @@ class STLinearTrack : public TObject
       Bool_t IsFitted()      const; ///< Get fitted flag
       Bool_t IsSorted()      const; ///< Get fitted flag
 
-    TVector3 GetVertex()     const; ///< Get position of vextex
+    TVector3 GetVertex(Int_t ith)     const; ///< Get position of vextex
     TVector3 GetDirection()  const; ///< Get direction vector
     TVector3 GetNormal()     const; ///< Get normal vector
     TVector3 GetCentroid()   const; ///< Get centroid
 
-    Double_t GetXVertex()    const; ///< Get x position of vextex
-    Double_t GetYVertex()    const; ///< Get y position of vextex
-    Double_t GetZVertex()    const; ///< Get z position of vextex
+    Double_t GetXVertex(Int_t ith)    const; ///< Get x position of vextex
+    Double_t GetYVertex(Int_t ith)    const; ///< Get y position of vextex
+    Double_t GetZVertex(Int_t ith)    const; ///< Get z position of vextex
 
     Double_t GetXDirection() const; ///< Get x component of direction vector
     Double_t GetYDirection() const; ///< Get y component of direction vector
@@ -122,9 +122,9 @@ class STLinearTrack : public TObject
     Bool_t fIsFitted;  ///< True if fitted.
     Bool_t fIsSorted;  ///< True if sorted.
 
-    Double_t fXVertex; //! < x position of vextex
-    Double_t fYVertex; //! < y position of vextex
-    Double_t fZVertex; //! < z position of vextex
+    Double_t fXVertex[2]; ///< x position of vextex
+    Double_t fYVertex[2]; ///< y position of vextex
+    Double_t fZVertex[2]; ///< z position of vextex
 
     Double_t fXCentroid; ///< x component of centroid
     Double_t fYCentroid; ///< y component of centroid
@@ -141,7 +141,8 @@ class STLinearTrack : public TObject
     Double_t fChargeSum; ///< charge sum
        Int_t fNumHits;
 
-    std::vector<STHit*> fHitPtrArray; //! < STHit pointer array
+    std::vector<STHit*> fHitPtrArray; //-> < STHit pointer array
+    //std::vector<STHit*> fHitPtrArray; //! < STHit pointer array
     std::vector<Int_t>  fHitIDArray;  //-> < hit id array
 
     Double_t fRMSLine;
@@ -162,7 +163,7 @@ class STLinearTrack : public TObject
     Double_t fSumDistCZX; //! < SUM_i {(z_centroid - z_i) * (x_centroid - x_i) }
 
 
-  ClassDef(STLinearTrack, 4);
+  ClassDef(STLinearTrack, 5);
 };
 
 #endif

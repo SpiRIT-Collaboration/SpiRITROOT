@@ -34,11 +34,11 @@ STCorrLinearTHProx::Correlate(STLinearTrack *track,
     return kFALSE;
 
   survive = kFALSE;
-  Double_t scaling = 1;
+  Double_t scaling = 2;
 
   if (numHitsCompare > fNumHitsCompare) {
     numHitsCompare = fNumHitsCompare;
-    scaling = 2;
+    scaling = 1;
   }
 
   Double_t xCut = scaling * fXProxCut;

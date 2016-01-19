@@ -6,6 +6,7 @@
 #include "FairRun.h"
 #include "FairRuntimeDb.h"
 #include "STDigiPar.hh"
+#include "STParReader.hh"
 
 ClassImp(STLinearTrackFinderAbstract)
 
@@ -24,14 +25,39 @@ STLinearTrackFinderAbstract::STLinearTrackFinderAbstract()
   fYUnit = tbTime * driftVel / 100.;
   fZUnit = par -> GetPadSizeZ();
 
-  SetNumHitsCut(20, 8, 10, 40);
-  SetProximityCutFactor(1.01, 2.0, 1.01);
-  SetProximityRCut(20);
-  SetRMSCut(18, 1);
-  SetProximityTrackCutFactor(6, 1);
-  SetDotProductCut(0.85, 0.9);
-  SetPerpYCut(200);
-  SetNumHitsVanishCut(3);
+  //SetNumHitsCut(20, 8, 10, 40);
+  //SetProximityCutFactor(1.01, 2.0, 1.01);
+  //SetProximityRCut(15);
+  //SetRMSCut(18, 1);
+  //SetProximityTrackCutFactor(6, 1);
+  //SetDotProductCut(0.85, 0.9);
+  //SetPerpYCut(200);
+  //SetNumHitsVanishCut(3);
+
+  TString parName = par -> GetLTParFileName();
+  STParReader *fLTPar = new STParReader(parName);
+
+  fNumHitsTrackCut   = fLTPar -> GetIntPar("NumHitsTrackCut");
+  fNumHitsFit        = fLTPar -> GetIntPar("NumHitsFit");
+  fNumHitsCompare    = fLTPar -> GetIntPar("NumHitsCompare");
+  fNumHitsCompareMax = fLTPar -> GetIntPar("NumHitsCompareMax");
+  Double_t xConst    = fLTPar -> GetDoublePar("XConst");
+  Double_t yConst    = fLTPar -> GetDoublePar("YConst");
+  Double_t zConst    = fLTPar -> GetDoublePar("ZConst");
+  fProxLineCut       = fLTPar -> GetDoublePar("ProxLineCut");
+  fProxPlaneCut      = fLTPar -> GetDoublePar("ProxPlaneCut");
+  fProxRCut          = fLTPar -> GetDoublePar("ProxRCut");
+  fRMSLineCut        = fLTPar -> GetDoublePar("RMSLineCut");
+  fRMSPlaneCut       = fLTPar -> GetDoublePar("RMSPlaneCut");
+  fDirectionDotCut   = fLTPar -> GetDoublePar("DirectionDotCut");
+  fNormalDotCut      = fLTPar -> GetDoublePar("NormalDotCut");
+  fPerpYCut          = fLTPar -> GetDoublePar("PerpYCut");
+  fNumHitsVanishCut  = fLTPar -> GetDoublePar("NumHitsVanishCut");
+
+  fProxXCut = xConst * fXUnit;
+  fProxYCut = yConst * fYUnit;
+  fProxZCut = zConst * fZUnit;
+  fRMSTrackCut = TMath::Sqrt(fRMSPlaneCut*fRMSPlaneCut + fRMSLineCut*fRMSLineCut);
 }
 
 void 

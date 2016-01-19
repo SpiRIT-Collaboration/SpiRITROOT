@@ -4,6 +4,9 @@
 
 #include "STLinearTrackFitter.hh"
 #include "STDebugLogger.hh"
+#include <iostream>
+
+using namespace std;
 
 STLinearTrackFitter::STLinearTrackFitter()
 {
@@ -43,6 +46,8 @@ STLinearTrackFitter::Fit(STLinearTrack* track1, STLinearTrack* track2,
 void 
 STLinearTrackFitter::FitAndSetTrack(STLinearTrack* track)
 {
+  Double_t xx = track -> GetSumDistCXX();
+
   SetDataToODRFitter(track);
   fODRFitter -> Solve();
 
@@ -297,6 +302,9 @@ STLinearTrackFitter::SortHits(STLinearTrack* track)
   for (Int_t i = 0; i < size; i++)
     idArray -> push_back(hitArray -> at(i) -> GetHitID());
 
+  track -> SetVertex(0, GetClosestPointOnTrack(track, hitArray -> at(0)  ));
+  track -> SetVertex(1, GetClosestPointOnTrack(track, hitArray -> back() ));
+
   track -> SetIsSorted(kTRUE);
 }
 
@@ -394,4 +402,14 @@ STLinearTrackFitter::GetPointOnZ(STLinearTrack* track, Double_t z)
   Double_t y = d * direction.Y() + centroid.Y();
 
   return TVector3(x,y,z);
+}
+
+Double_t
+STLinearTrackFitter::GetLengthOnTrack(STLinearTrack* track, STHit* hit)
+{
+  TVector3 direction = track -> GetDirection();
+  TVector3 centroid = track -> GetCentroid();
+  TVector3 v = centroid - hit -> GetPosition();
+
+  return direction.Dot(v);
 }

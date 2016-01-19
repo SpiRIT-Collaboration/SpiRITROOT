@@ -24,9 +24,13 @@ STLinearTrack::STLinearTrack(STLinearTrack *track)
   fIsFitted  = track -> IsFitted();
   fIsSorted  = track -> IsSorted();
 
-  fXVertex = track -> GetXVertex();
-  fYVertex = track -> GetYVertex();
-  fZVertex = track -> GetZVertex();
+  fXVertex[0] = track -> GetXVertex(0);
+  fYVertex[0] = track -> GetYVertex(0);
+  fZVertex[0] = track -> GetZVertex(0);
+
+  fXVertex[1] = track -> GetXVertex(1);
+  fYVertex[1] = track -> GetYVertex(1);
+  fZVertex[1] = track -> GetZVertex(1);
 
   fXCentroid = track -> GetXCentroid();
   fYCentroid = track -> GetYCentroid();
@@ -78,9 +82,13 @@ void STLinearTrack::Reset()
   fIsFitted  = kFALSE;
   fIsSorted  = kFALSE;
 
-  fXVertex = 0;
-  fYVertex = 0;
-  fZVertex = 0;
+  fXVertex[0] = 0;
+  fYVertex[0] = 0;
+  fZVertex[0] = 0;
+
+  fXVertex[1] = 0;
+  fYVertex[1] = 0;
+  fZVertex[1] = 0;
 
   fXCentroid = 0;
   fYCentroid = 0;
@@ -169,11 +177,11 @@ void STLinearTrack::SetIsPrimary(Bool_t val) { fIsPrimary = val; }
 void STLinearTrack::SetIsFitted(Bool_t val)  { fIsFitted  = val; }
 void STLinearTrack::SetIsSorted(Bool_t val)  { fIsSorted  = val; }
 
-void STLinearTrack::SetVertex(TVector3 pos)
+void STLinearTrack::SetVertex(Int_t ith, TVector3 pos)
 {
-  fXVertex = pos.X();
-  fYVertex = pos.Y();
-  fZVertex = pos.Z();
+  fXVertex[ith] = pos.X();
+  fYVertex[ith] = pos.Y();
+  fZVertex[ith] = pos.Z();
 }
 void STLinearTrack::SetDirection(TVector3 vec)
 {
@@ -194,9 +202,9 @@ void STLinearTrack::SetCentroid(TVector3 pos)
   fZCentroid = pos.Z();
 }
 
-void STLinearTrack::SetXVertex(Double_t x) { fXVertex = x; }
-void STLinearTrack::SetYVertex(Double_t y) { fYVertex = y; }
-void STLinearTrack::SetZVertex(Double_t z) { fZVertex = z; }
+void STLinearTrack::SetXVertex(Int_t ith, Double_t x) { fXVertex[ith] = x; }
+void STLinearTrack::SetYVertex(Int_t ith, Double_t y) { fYVertex[ith] = y; }
+void STLinearTrack::SetZVertex(Int_t ith, Double_t z) { fZVertex[ith] = z; }
 
 void STLinearTrack::SetXDirection(Double_t x) { fXDirection = x; }
 void STLinearTrack::SetYDirection(Double_t y) { fYDirection = y; }
@@ -229,14 +237,14 @@ void STLinearTrack::SetSumDistCZX(Double_t val) { fSumDistCZX = val; }
   Bool_t STLinearTrack::IsFitted()      const { return fIsFitted; }
   Bool_t STLinearTrack::IsSorted()      const { return fIsSorted; }
 
-TVector3 STLinearTrack::GetVertex()     const { return TVector3(fXVertex, fYVertex, fZVertex); }
+TVector3 STLinearTrack::GetVertex(Int_t ith)     const { return TVector3(fXVertex[ith], fYVertex[ith], fZVertex[ith]); }
 TVector3 STLinearTrack::GetDirection()  const { return TVector3(fXDirection, fYDirection, fZDirection); }
 TVector3 STLinearTrack::GetNormal()     const { return TVector3(fXNormal, fYNormal, fZNormal); }
 TVector3 STLinearTrack::GetCentroid()   const { return TVector3(fXCentroid, fYCentroid, fZCentroid); }
 
-Double_t STLinearTrack::GetXVertex()    const { return fXVertex; }
-Double_t STLinearTrack::GetYVertex()    const { return fYVertex; }
-Double_t STLinearTrack::GetZVertex()    const { return fZVertex; }
+Double_t STLinearTrack::GetXVertex(Int_t ith)    const { return fXVertex[ith]; }
+Double_t STLinearTrack::GetYVertex(Int_t ith)    const { return fYVertex[ith]; }
+Double_t STLinearTrack::GetZVertex(Int_t ith)    const { return fZVertex[ith]; }
 
 Double_t STLinearTrack::GetXDirection() const { return fXDirection; }
 Double_t STLinearTrack::GetYDirection() const { return fYDirection; }
