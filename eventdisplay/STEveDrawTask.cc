@@ -558,10 +558,12 @@ STEveDrawTask::DrawLinearTracks()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"Draw Linear Tracks");
 
-  if (fEvent == NULL) 
+  STLinearTrack *track = (STLinearTrack*) fLinearTrackArray -> At(0);
+  std::vector<STHit*> *hitPointerArray = track -> GetHitPointerArray();
+
+  if ((fEvent == NULL) && (hitPointerArray -> size() == 0))
     return;
 
-  STLinearTrack* track = NULL;
   STHit* hit = NULL;
 
   TEveLine* linearTrackLine = NULL;
@@ -603,8 +605,19 @@ STEveDrawTask::DrawLinearTracks()
     Int_t hitIDFirst = track -> GetHitID(0);
     Int_t hitIDLast  = track -> GetHitID(track -> GetNumHits()-1);
 
-    STHit *hitFirst = fEvent -> GetHit(hitIDFirst);
-    STHit *hitLast  = fEvent -> GetHit(hitIDLast);
+    STHit *hitFirst;
+    STHit *hitLast;
+
+    if (fEvent != NULL)
+    {
+      hitFirst = fEvent -> GetHit(hitIDFirst);
+      hitLast  = fEvent -> GetHit(hitIDLast);
+    }
+    else
+    {
+      hitFirst = track -> GetHit(hitIDFirst);
+      hitLast  = track -> GetHit(hitIDLast);
+    }
 
     TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
     TVector3 posLast  = fLTFitter -> GetClosestPointOnTrack(track, hitLast);
@@ -627,7 +640,11 @@ STEveDrawTask::DrawLinearTracks()
 
       for (Int_t iHit = 0; iHit < nHits; iHit++)
       {
-        hit = fEvent -> GetHit(track -> GetHitID(iHit));
+        if (fEvent != NULL)
+          hit = fEvent -> GetHit(track -> GetHitID(iHit));
+        else
+          hit = track -> GetHit(iHit);
+
         TVector3 position = hit -> GetPosition();
 
         linearPointSet -> SetNextPoint(position.X()/10.,
