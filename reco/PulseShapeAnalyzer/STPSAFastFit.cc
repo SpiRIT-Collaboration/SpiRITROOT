@@ -165,7 +165,7 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
   {
     Double_t diff = adc[iTb] - adc[iTb - 1];
 
-    if (diff > 2) {
+    if (diff > fThresholdOneTbStep) {
       if (adc[iTb] > fThreshold)
         countAscending++;
       else

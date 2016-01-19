@@ -61,7 +61,8 @@ class STPSA
     Double_t fDriftVelocity;  ///< drift velocity of electron in cm/us
     Double_t fMaxDriftLength; ///< maximum drift length in mm
 
-    Double_t fThreshold;         ///< threshold of ADC value
+    Double_t fThresholdOneTbStep; ///< threshold of ADC value
+    Double_t fThreshold;          ///< threshold of ADC value
     Int_t fLayerCut;
 
     Double_t CalculateX(Double_t row);      ///< Calculate x position in mm. This returns the center position of given pad row.

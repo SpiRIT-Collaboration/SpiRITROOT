@@ -103,7 +103,17 @@ STPSA::LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Dou
     chi2 += pow(x[iPoint]*slope + constant - y[iPoint], 2);
 }
 
-void STPSA::SetThreshold(Double_t threshold) { fThreshold = threshold; }
+void STPSA::SetThreshold(Double_t threshold) 
+{ 
+  fThreshold = threshold; 
+  fThresholdOneTbStep = fThreshold/5.;
+
+  if (fThresholdOneTbStep > 2) 
+    fThresholdOneTbStep = 2;
+
+  if (fThresholdOneTbStep < 1) 
+    fThresholdOneTbStep = 1;
+}
 void STPSA::SetLayerCut(Int_t layerCut)      { fLayerCut = layerCut; }
 
 Double_t
