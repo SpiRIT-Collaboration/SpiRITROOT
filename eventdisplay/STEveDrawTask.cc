@@ -93,19 +93,19 @@ STEveDrawTask::STEveDrawTask()
 
   fEveStyle[kRiemannHit]  = kFullCircle;
   fEveSize[kRiemannHit]   = 1.0;
-  fEveColor[kRiemannHit]  = 0;
+  fEveColor[kRiemannHit]  = -1;
   fRnrSelf[kRiemannHit]   = kFALSE;
   fSetObject[kRiemannHit] = kFALSE;
 
   fEveStyle[kLinear]  = 1;
   fEveSize[kLinear]   = 5;
-  fEveColor[kLinear]  = kRed;
+  fEveColor[kLinear]  = -1;
   fRnrSelf[kLinear]   = kFALSE;
   fSetObject[kLinear] = kFALSE;
 
   fEveStyle[kLinearHit]  = kFullCircle;
   fEveSize[kLinearHit]   = 0.5;
-  fEveColor[kLinearHit]  = 0;
+  fEveColor[kLinearHit]  = -1;
   fRnrSelf[kLinearHit]   = kFALSE;
   fSetObject[kLinearHit] = kFALSE;
 
@@ -511,7 +511,8 @@ STEveDrawTask::DrawRiemannHits()
     {
       Int_t idxTrack = iTrack + nTracksInBuffer;
       riemannPointSet = new TEvePointSet(Form("RiemannTrackHits_%d", idxTrack), 1, TEvePointSelectorConsumer::kTVT_XYZ);
-      riemannPointSet -> SetMarkerColor(GetColor(idxTrack));
+      if (fEveColor[kRiemannHit] == -1) riemannPointSet -> SetMarkerColor(GetColor(idxTrack));
+      else riemannPointSet -> SetMarkerColor(fEveColor[kRiemannHit]);
       riemannPointSet -> SetMarkerSize(fEveSize[kRiemannHit]);
       riemannPointSet -> SetMarkerStyle(fEveStyle[kRiemannHit]);
       riemannPointSet -> SetRnrSelf(fRnrSelf[kRiemannHit]);
@@ -579,8 +580,9 @@ STEveDrawTask::DrawLinearTracks()
     {
       Int_t idxTrack = iTrack + nTracksInBuffer;
       linearTrackLine = new TEveLine(Form("LinearLine_%d", idxTrack), 2, TEvePointSelectorConsumer::kTVT_XYZ);
+      if (fEveColor[kLinear] == -1) linearTrackLine -> SetLineColor(GetColor(idxTrack));
+      else linearTrackLine -> SetLineColor(fEveColor[kLinear]);
       linearTrackLine -> SetLineStyle(fEveStyle[kLinear]);
-      linearTrackLine -> SetLineColor(GetColor(idxTrack));
       linearTrackLine -> SetLineWidth(fEveSize[kLinear]);
       fLinearTrackSetArray.push_back(linearTrackLine);
       gEve -> AddElement(linearTrackLine);
@@ -588,7 +590,8 @@ STEveDrawTask::DrawLinearTracks()
       if (fSetObject[kLinearHit] == kTRUE)
       {
         linearPointSet = new TEvePointSet(Form("LinearHit_%d", idxTrack), 1, TEvePointSelectorConsumer::kTVT_XYZ);
-        linearPointSet -> SetMarkerColor(GetColor(iTrack));
+        if (fEveColor[kLinearHit] == -1) linearPointSet -> SetMarkerColor(GetColor(idxTrack));
+        else linearPointSet -> SetMarkerColor(fEveColor[kLinearHit]);
         linearPointSet -> SetMarkerSize(fEveSize[kLinearHit]);
         linearPointSet -> SetMarkerStyle(fEveStyle[kLinearHit]);
         fLinearHitSetArray.push_back(linearPointSet);
