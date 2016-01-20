@@ -1,8 +1,12 @@
 #include "STClusterizerScan.hh"
+#include "STLinearTrack.hh"
 
 #include "TMath.h"
 
 #include <iostream>
+#include <vector>
+
+#define DEBUG
 
 STClusterizerScan::STClusterizerScan()
 {
@@ -11,15 +15,18 @@ STClusterizerScan::STClusterizerScan()
   fHitClusterArray = new std::vector<STHitCluster *>;
   fHitClusterArray -> reserve(100);
 
-  SetVerticalCutTbUnit(0.8);
+  SetVerticalCutTbUnit(3);
+  //SetVerticalCutTbUnit(0.8);
   SetHorizontalCutPadUnit(4);
+  SetProximityCutInUnit(1.5, 2.5, 0.5);
+  SetSigmaCutInUnit(4.0, 4.0, 0.8);
 
   fClusterTemp = new STHitCluster();
 
 #ifdef DEBUG
   fCvs = new TCanvas("cvs","",1200,800);
   //fFrame = new TH2D("hist",";z;x;", 100,0,1500, 100,-500,500);
-  fFrame = new TH2D("hist",";z;x;", 100,600,900, 100,-500,-300);
+  fFrame = new TH2D("hist",";z;x;", 100,100,800, 100,-100,100);
   fFrame -> Draw();
   fGraphHit = new TGraph();
   fGraphHit -> SetMarkerColor(kGray+1);
@@ -69,11 +76,36 @@ void STClusterizerScan::SetParameters(Double_t *par)
 }
 
 void 
+STClusterizerScan::AnalyzeTrack(TClonesArray* trackArray, STEvent* eventOut)
+{
+  Int_t numTracks = trackArray -> GetEntries();
+
+  fHitClusterArray -> clear();
+  for (Int_t iTrack = 0; iTrack < numTracks; iTrack++)
+  {
+    STLinearTrack *track = (STLinearTrack*) trackArray -> At(iTrack);
+    std::vector<STHit*> *hitArrayFromTrack = track -> GetHitPointerArray();
+
+    fHitArray -> clear();
+
+    Int_t nHits = hitArrayFromTrack -> size();
+    for(Int_t iHit=0; iHit<nHits; iHit++) 
+    {
+      STHit *hit = hitArrayFromTrack -> at(iHit);
+      hit -> SetPosition(hit -> GetPosition() - fPrimaryVertex);
+      fHitArray -> push_back(hit);
+    }
+
+    AnalyzeHitArray(eventOut);
+  }
+}
+
+void 
 STClusterizerScan::Analyze(STEvent* eventIn, STEvent* eventOut)
 {
-  Double_t rCut = sqrt(  fZCut*fZCut
-                       + fVerticalCut*fVerticalCut 
-                       + fHorizontalCut*fHorizontalCut );
+  fRCut = sqrt(  fZCut*fZCut
+              + fVerticalCut*fVerticalCut 
+              + fHorizontalCut*fHorizontalCut );
 
   fLogger -> Debug(MESSAGE_ORIGIN,Form("Z-Cut: %f",fZCut));
   fLogger -> Debug(MESSAGE_ORIGIN,Form("Vertical-Cut: %f",fVerticalCut));
@@ -95,6 +127,20 @@ STClusterizerScan::Analyze(STEvent* eventIn, STEvent* eventOut)
 
   STHitSortRInv sortR;
   std::sort(fHitArray -> begin(), fHitArray -> end(), sortR);
+
+  AnalyzeHitArray(eventOut);
+
+  for(Int_t iHit=0; iHit<nHits; iHit++) 
+  {
+    STHit *hit = (STHit *) eventIn -> GetHit(iHit);
+    hit -> SetPosition(hit -> GetPosition() + fPrimaryVertex);
+  }
+}
+
+void 
+STClusterizerScan::AnalyzeHitArray(STEvent* eventOut)
+{
+  Int_t nHits = fHitArray -> size();
 
 #ifdef DEBUG
   //for(Int_t iHit=0; iHit<nHits; iHit++) 
@@ -163,7 +209,7 @@ STClusterizerScan::Analyze(STEvent* eventIn, STEvent* eventOut)
       STHitCluster *cluster = fHitClusterArray -> at(iCluster);
       
       Double_t rCluster = (cluster -> GetPosition()).Mag();
-      if( rCluster - rhoHit > rCut ) 
+      if( rCluster - rhoHit > fRCut ) 
       {
         AddClusterToEvent(eventOut, cluster);
         fHitClusterArray -> erase(fHitClusterArray -> begin() + iCluster);
@@ -240,12 +286,6 @@ STClusterizerScan::Analyze(STEvent* eventIn, STEvent* eventOut)
   {
     STHitCluster *cluster = fHitClusterArray -> at(iCluster);
     AddClusterToEvent(eventOut, cluster);
-  }
-
-  for(Int_t iHit=0; iHit<nHits; iHit++) 
-  {
-    STHit *hit = (STHit *) eventIn -> GetHit(iHit);
-    hit -> SetPosition(hit -> GetPosition() + fPrimaryVertex);
   }
 }
 

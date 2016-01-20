@@ -10,6 +10,7 @@
 #include "STEvent.hh"
 #include "STClusterizerScan.hh"
 #include "STClusterizerScan2.hh"
+#include "STClusterizerLinearTrack.hh"
 #include "STGlobal.hh"
 #include "STDebugLogger.hh"
 
@@ -79,11 +80,15 @@ STHitClusteringTask::Init()
     return kERROR;
   }
 
+  fEventArray = NULL;
   fEventArray = (TClonesArray *) ioMan -> GetObject("STEvent");
-  if (fEventArray == 0) {
+  if (fEventArray == NULL) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find STEvent array!");
     return kERROR;
   }
+
+  fLinearTrackArray = NULL;
+  fLinearTrackArray = (TClonesArray *) ioMan -> GetObject("STLinearTrack");
 
   fClusterizer = NULL;
   if (fClusterizerMode == kScan) {
@@ -93,6 +98,10 @@ STHitClusteringTask::Init()
   else if (fClusterizerMode == kScan2) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use STClusterizerScan2!");
     fClusterizer = new STClusterizerScan2();
+  }
+  else if (fClusterizerMode == kLT) {
+    fLogger -> Info(MESSAGE_ORIGIN, "Use STClusterizerLinearTrack!");
+    fClusterizer = new STClusterizerLinearTrack();
   }
 
   if (fClusterizer) {
@@ -136,13 +145,23 @@ STHitClusteringTask::Exec(Option_t *opt)
     return;
   }
 
-  if (fClusterizerMode != kX) 
+  if (fClusterizerMode == kLT)
   {
-    fClusterizer -> Analyze(event);
+    fClusterizer -> AnalyzeTrack(fLinearTrackArray, event);
+
     event -> SetIsClustered(kTRUE);
 
     fLogger -> Info(MESSAGE_ORIGIN, 
-                  Form("Event #%d : Reconstructed %d clusters.",
+                  Form("Event #%d : Reconstructed %d clusters (AnaTrack).",
+                       event -> GetEventID(), event -> GetNumClusters()));
+  }
+  else if (fClusterizerMode != kX) 
+  {
+    fClusterizer -> Analyze(event, event);
+    event -> SetIsClustered(kTRUE);
+
+    fLogger -> Info(MESSAGE_ORIGIN, 
+                  Form("Event #%d : Reconstructed %d clusters (Ana).",
                        event -> GetEventID(), event -> GetNumClusters()));
   } 
   else if (fClusterizerMode == kX)
@@ -166,7 +185,7 @@ STHitClusteringTask::Exec(Option_t *opt)
     event -> SetIsClustered(kTRUE);
 
     fLogger -> Info(MESSAGE_ORIGIN, 
-                    Form("Event #%d : Reconstructed %d clusters.",
+                    Form("Event #%d : Reconstructed %d clusters (X).",
                          event -> GetEventID(), event -> GetNumClusters()));
   }
 #ifdef TASKTIMER

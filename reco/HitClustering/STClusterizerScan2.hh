@@ -15,6 +15,8 @@ class STClusterizerScan2 : public STClusterizer
     ~STClusterizerScan2();
 
     void Analyze(STEvent* eventIn, STEvent* eventOut = NULL);
+    void AnalyzeTrack(TClonesArray* trackArray, STEvent* eventOut);
+    void AnalyzeHitArray(STEvent* eventOut);
 
   private:
     std::vector<STHit *> *fHitArray;

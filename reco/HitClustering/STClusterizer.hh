@@ -28,7 +28,8 @@ class STClusterizer
     STClusterizer();
     virtual ~STClusterizer();
 
-    virtual void Analyze(STEvent* eventIn, STEvent* eventOut = NULL) = 0;
+    virtual void Analyze(STEvent* eventIn, STEvent* eventOut = NULL) {}
+    virtual void AnalyzeTrack(TClonesArray* trackArray, STEvent* eventOut) {}
 
     void SetPrimaryVertex(TVector3 vertex);
 

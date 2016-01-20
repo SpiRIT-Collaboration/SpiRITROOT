@@ -75,6 +75,7 @@ PulseShapeAnalyzer/STPulse.cc
 HitClustering/STClusterizer.cc
 HitClustering/STClusterizerScan.cc
 HitClustering/STClusterizerScan2.cc
+HitClustering/STClusterizerLinearTrack.cc
 
 SystemManipulator/STSystemManipulator.cc
 

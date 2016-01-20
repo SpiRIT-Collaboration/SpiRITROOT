@@ -44,6 +44,7 @@
 #pragma link C++ class STClusterizer+;
 #pragma link C++ class STClusterizerScan+;
 #pragma link C++ class STClusterizerScan2+;
+#pragma link C++ class STClusterizerLinearTrack+;
 
 #pragma link C++ class STSMTask+;
 #pragma link C++ class STSystemManipulator+;

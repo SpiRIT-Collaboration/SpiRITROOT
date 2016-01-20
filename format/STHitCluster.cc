@@ -46,6 +46,7 @@ STHitCluster::STHitCluster(STHitCluster *cluster)
   fCovMatrix = cluster -> GetCovMatrix();
 
   fHitIDArray = *(cluster -> GetHitIDs());
+  fHitPtrArray = *(cluster -> GetHitPtrs());
 
   fCharge = cluster -> GetCharge();
 }
@@ -56,9 +57,10 @@ STHitCluster::~STHitCluster()
 
 void STHitCluster::SetCovMatrix(TMatrixD matrix) { fCovMatrix = matrix; } 
 
-     TMatrixD  STHitCluster::GetCovMatrix() const  { return fCovMatrix; }
-        Int_t  STHitCluster::GetNumHits()          { return fHitIDArray.size(); }
-vector<Int_t> *STHitCluster::GetHitIDs()           { return &fHitIDArray; }
+     TMatrixD   STHitCluster::GetCovMatrix() const  { return fCovMatrix; }
+        Int_t   STHitCluster::GetNumHits()          { return fHitIDArray.size(); }
+vector<Int_t>  *STHitCluster::GetHitIDs()           { return &fHitIDArray; }
+vector<STHit*> *STHitCluster::GetHitPtrs()          { return &fHitPtrArray; }
 
 void 
 STHitCluster::AddHit(STHit *hit)
@@ -79,6 +81,7 @@ STHitCluster::AddHit(STHit *hit)
   fCharge += charge;
 
   fHitIDArray.push_back(hit -> GetHitID());
+  fHitPtrArray.push_back(hit);
   hit -> SetClusterID(fClusterID);
 }
 

@@ -19,7 +19,9 @@ class STClusterizerScan : public STClusterizer
     STClusterizerScan();
     ~STClusterizerScan();
 
-    void Analyze(STEvent* eventIn, STEvent* eventOut = NULL);
+    void AnalyzeHitArray(STEvent* eventOut);
+    void Analyze(STEvent* eventIn, STEvent* eventOut);
+    void AnalyzeTrack(TClonesArray* trackArray, STEvent* eventOut);
     void SetParameters(Double_t *par);
 
     void SetVerticalCut(Double_t vCut);
@@ -39,6 +41,8 @@ class STClusterizerScan : public STClusterizer
 
     Double_t fVerticalCut;
     Double_t fHorizontalCut;
+
+    Double_t fRCut;
 
     void AddClusterToEvent(STEvent* eventOut, STHitCluster* cluster);
 

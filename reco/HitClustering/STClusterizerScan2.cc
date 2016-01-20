@@ -1,4 +1,5 @@
 #include "STClusterizerScan2.hh"
+#include "STLinearTrack.hh"
 #include <iostream>
 
 //#define DEBUGSCAN2CC
@@ -28,9 +29,6 @@ STClusterizerScan2::Analyze(STEvent* eventIn, STEvent* eventOut)
 {
   // Reset arrays
   fHitArray -> clear();
-  fHitClusterFinalArray -> clear();
-  fHitClusterTempArray -> clear();
-
 
 
   // Store arry and sort in R.
@@ -44,6 +42,55 @@ STClusterizerScan2::Analyze(STEvent* eventIn, STEvent* eventOut)
   STHitSortRInv sortR;
   std::sort(fHitArray -> begin(), fHitArray -> end(), sortR);
 
+  AnalyzeHitArray(eventOut);
+
+  // Reset hits back to it's original position
+  for (Int_t iHit=0; iHit<nHits; iHit++) 
+  {
+    STHit *hit = (STHit *) eventIn -> GetHit(iHit);
+    hit -> SetPosition(hit -> GetPosition() + fPrimaryVertex);
+  }
+}
+
+void 
+STClusterizerScan2::AnalyzeTrack(TClonesArray* trackArray, STEvent* eventOut)
+{
+  Int_t numTracks = trackArray -> GetEntries();
+
+  for (Int_t iTrack = 0; iTrack < numTracks; iTrack++)
+  {
+    STLinearTrack *track = (STLinearTrack*) trackArray -> At(iTrack);
+    std::vector<STHit*> *hitArrayFromTrack = track -> GetHitPointerArray();
+
+    fHitArray -> clear();
+
+    Int_t nHits = hitArrayFromTrack -> size();
+    for(Int_t iHit=0; iHit<nHits; iHit++) 
+    {
+      STHit *hit = hitArrayFromTrack -> at(iHit);
+      hit -> SetPosition(hit -> GetPosition() - fPrimaryVertex);
+      fHitArray -> push_back(hit);
+    }
+
+    //STHitSortRInv sortR;
+    //std::sort(fHitArray -> begin(), fHitArray -> end(), sortR);
+
+    AnalyzeHitArray(eventOut);
+
+    for (Int_t iHit=0; iHit<nHits; iHit++) 
+    {
+      STHit *hit = hitArrayFromTrack -> at(iHit);
+      hit -> SetPosition(hit -> GetPosition() + fPrimaryVertex);
+    }
+  }
+}
+
+void
+STClusterizerScan2::AnalyzeHitArray(STEvent* eventOut)
+{
+  fHitClusterFinalArray -> clear();
+  fHitClusterTempArray -> clear();
+
 
 
   Double_t rSizeTempArray = fZCut*4;
@@ -52,6 +99,7 @@ STClusterizerScan2::Analyze(STEvent* eventIn, STEvent* eventOut)
 
 
   // Loop through hits
+  Int_t nHits = fHitArray -> size();
   for (Int_t iHit=0; iHit<nHits; iHit++) 
   {
     STHit *hit = fHitArray -> back();
@@ -71,10 +119,12 @@ STClusterizerScan2::Analyze(STEvent* eventIn, STEvent* eventOut)
         for (Int_t jCluster=iCluster-1; jCluster>=0; jCluster--)
         {
           STHitClusterRich *cluster2 = fHitClusterTempArray -> at(jCluster);
-          Bool_t mergeCC = CorrelateCC(eventIn, cluster1, cluster2);
+          Bool_t mergeCC = CorrelateCC(eventOut, cluster1, cluster2);
+          //Bool_t mergeCC = CorrelateCC(eventIn, cluster1, cluster2);
           if (mergeCC) 
           {
-            MergeCC(eventIn, cluster1, cluster2);
+            MergeCC(eventOut, cluster1, cluster2);
+            //MergeCC(eventIn, cluster1, cluster2);
             fHitClusterTempArray -> erase(fHitClusterTempArray -> begin() + iCluster);
             break;
           }
@@ -139,10 +189,12 @@ STClusterizerScan2::Analyze(STEvent* eventIn, STEvent* eventOut)
     for (Int_t jCluster=iCluster-1; jCluster>=0; jCluster--)
     {
       STHitClusterRich *cluster2 = fHitClusterTempArray -> at(jCluster);
-      Bool_t mergeCC = CorrelateCC(eventIn, cluster1, cluster2);
+      Bool_t mergeCC = CorrelateCC(eventOut, cluster1, cluster2);
+      //Bool_t mergeCC = CorrelateCC(eventIn, cluster1, cluster2);
       if (mergeCC) 
       {
-        MergeCC(eventIn, cluster1, cluster2);
+        MergeCC(eventOut, cluster1, cluster2);
+        //MergeCC(eventIn, cluster1, cluster2);
         fHitClusterTempArray -> erase(fHitClusterTempArray -> begin() + iCluster);
         break;
       }
@@ -167,17 +219,8 @@ STClusterizerScan2::Analyze(STEvent* eventIn, STEvent* eventOut)
   for (Int_t iClusterFinal=0; iClusterFinal<nClustersFinal; iClusterFinal++)
   {
     STHitClusterRich *clusterFinal = fHitClusterFinalArray -> at(iClusterFinal);
-    AddClusterToEvent(eventIn, clusterFinal);
-  }
-
-
-
-
-  // Reset hits back to it's original position
-  for (Int_t iHit=0; iHit<nHits; iHit++) 
-  {
-    STHit *hit = (STHit *) eventIn -> GetHit(iHit);
-    hit -> SetPosition(hit -> GetPosition() + fPrimaryVertex);
+    //AddClusterToEvent(eventIn, clusterFinal);
+    AddClusterToEvent(eventOut, clusterFinal);
   }
 }
 
@@ -233,6 +276,11 @@ STClusterizerScan2::CorrelateCC(STEvent* eventIn,
   fClusterTemp -> SetCovMatrix(cluster2 -> GetCovMatrix());
   fClusterTemp -> SetCharge(cluster2 -> GetCharge());
 
+  std::vector<STHit*> *hitPtrs = cluster1 -> GetHitPtrs();
+  for (auto hit : *hitPtrs)
+    fClusterTemp -> AddHit(hit);
+
+  /*
   std::vector<Int_t> *hitIDs = cluster1 -> GetHitIDs();
   Int_t nHits = hitIDs -> size();
   for (Int_t iHit=0; iHit<nHits; iHit++)
@@ -241,6 +289,7 @@ STClusterizerScan2::CorrelateCC(STEvent* eventIn,
     STHit *hit = (STHit *) eventIn -> GetHit(hitID);
     fClusterTemp -> AddHit(hit);
   }
+  */
 
   if ( (fClusterTemp -> GetPosSigma()).X() > fSigmaXCut )
     return kFALSE;
@@ -334,6 +383,8 @@ void STClusterizerScan2::MergeCC(STEvent* eventIn,
                                  STHitClusterRich* cluster1,
                                  STHitClusterRich* cluster2)
 {
+  std::vector<STHit*> *hitPtrs = cluster1 -> GetHitPtrs();
+  /*
   std::vector<Int_t> *hitIDs = cluster1 -> GetHitIDs();
   Int_t nHits = hitIDs -> size();
   for (Int_t iHit=0; iHit<nHits; iHit++)
@@ -342,6 +393,10 @@ void STClusterizerScan2::MergeCC(STEvent* eventIn,
     STHit *hit = (STHit *) eventIn -> GetHit(hitID);
     cluster2 -> AddHit(hit);
   }
+  */
+
+  for (auto hit : *hitPtrs)
+    cluster2 -> AddHit(hit);
 }
 
 void STClusterizerScan2::AddClusterToEvent(STEvent* eventIn, STHitClusterRich* clusterRich)
