@@ -27,15 +27,17 @@ class STHitCluster : public STHit
 
     void SetCovMatrix(TMatrixD matrix);  ///< Set covariance matrix
 
-         TMatrixD  GetCovMatrix() const; ///< Get covariance matrix
-            Int_t  GetNumHits();         ///< Get number of hits
-    vector<Int_t> *GetHitIDs();          ///< Get vector array hit IDs
+         TMatrixD   GetCovMatrix() const; ///< Get covariance matrix
+            Int_t   GetNumHits();         ///< Get number of hits
+    vector<Int_t>  *GetHitIDs();          ///< Get vector array hit IDs
+    vector<STHit*> *GetHitPtrs();
 
     virtual void AddHit(STHit *hit);             ///< Add hit to cluster
 
   protected:
     TMatrixD fCovMatrix;                 ///< Cluster covariance matrix
-    vector<Int_t> fHitIDArray;           ///< Vector array of hit IDs
+    vector<Int_t>  fHitIDArray;           ///< Vector array of hit IDs
+    vector<STHit*> fHitPtrArray;          //! <
 
     /**
      * Calculate weighted mean for cluster position. (Weight = charge) <br>
