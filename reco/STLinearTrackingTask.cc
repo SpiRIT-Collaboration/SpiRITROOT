@@ -109,4 +109,4 @@ STLinearTrackingTask::Exec(Option_t *opt)
 #endif
 }
 
-STLinearTrackFinderAbstract* STLinearTrackingTask::GetTrackFinder() { return fTrackFinder; }
+STVTrackFinder* STLinearTrackingTask::GetTrackFinder() { return fTrackFinder; }

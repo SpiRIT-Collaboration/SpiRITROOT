@@ -19,6 +19,7 @@ ${CMAKE_SOURCE_DIR}/reco/SystemManipulator
 ${CMAKE_SOURCE_DIR}/reco/RiemannTracking
 ${CMAKE_SOURCE_DIR}/reco/HoughTracking
 ${CMAKE_SOURCE_DIR}/reco/Genfit
+${CMAKE_SOURCE_DIR}/reco/Tracking
 ${CMAKE_SOURCE_DIR}/reco/LinearTracking
 )
 
@@ -90,6 +91,8 @@ HoughTracking/STHoughSpaceHelix.cc
 
 Genfit/STSpacepointMeasurement.cc
 
+Tracking/STVTrackFinder.cc
+
 LinearTracking/STCorrLinearTHProx.cc
 LinearTracking/STCorrLinearTHPerp.cc
 LinearTracking/STCorrLinearTHRMS.cc
@@ -97,13 +100,13 @@ LinearTracking/STCorrLinearTTGeo.cc
 LinearTracking/STCorrLinearTTPerp.cc
 LinearTracking/STCorrLinearTTProx.cc
 LinearTracking/STCorrLinearTTRMS.cc
-LinearTracking/STLinearTrackFinderAbstract.cc
 LinearTracking/STLinearTrackFinder.cc
 LinearTracking/STLinearTrackFinder2.cc
 LinearTracking/STLinearTrackFitter.cc
 LinearTracking/ODRFitter.cc
 
 STDecoderTask.cc
+
 STPSATask.cc
 STHitClusteringTask.cc
 STSMTask.cc
