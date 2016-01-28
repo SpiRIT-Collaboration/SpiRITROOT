@@ -21,6 +21,8 @@
 
 using namespace std;
 
+//#define DEBUGLT
+
 ClassImp(STLinearTrackFinder)
 
 STLinearTrackFinder::STLinearTrackFinder()
@@ -30,15 +32,6 @@ STLinearTrackFinder::STLinearTrackFinder()
   fTrackBufferTemp = new vecTrk_t;
 
   fTrackClonesArray = new TClonesArray("STLinearTrack", 50);
-
-  //SetProximityCutFactor(1.1, 3.0, 1.1);
-  //SetProximityRCut(20);
-  //SetNumHitsCut(30, 8, 20, 50);
-  //SetRMSCut(12, 2.5);
-  //SetProximityTrackCutFactor(18, 2.5);
-  //SetDotProductCut(0.8, 0.8);
-  //SetPerpYCut(120);
-  //SetNumHitsVanishCut(3);
 
   fFitter = new STLinearTrackFitter();
 
@@ -150,6 +143,10 @@ STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *trackArray)
 void 
 STLinearTrackFinder::Build(vecTrk_t *trackArray, vecHit_t *hitArray, vecCTH_t *corrTH, Bool_t createNewTracks)
 {
+#ifdef DEBUGLT
+  LOG(INFO) << "Build()" << FairLogger::endl;
+#endif
+
   Int_t numHits = hitArray -> size();
   fTrackBufferTemp -> clear();
 
@@ -167,6 +164,7 @@ STLinearTrackFinder::Build(vecTrk_t *trackArray, vecHit_t *hitArray, vecCTH_t *c
     STLinearTrack* trackCandidate = NULL;
 
     Int_t numTracks = fTrackBufferTemp -> size();
+
     for (Int_t iTrack = 0; iTrack < numTracks; iTrack++)
     {
       Int_t idxTrack = numTracks - 1 - iTrack;
@@ -224,6 +222,9 @@ STLinearTrackFinder::Build(vecTrk_t *trackArray, vecHit_t *hitArray, vecCTH_t *c
 void
 STLinearTrackFinder::Merge(vecTrk_t *trackArray)
 {
+#ifdef DEBUGLT
+  fLogger -> Info(MESSAGE_ORIGIN,"Merge()");
+#endif
   Int_t numTracks = trackArray -> size();
 
   for (Int_t iTrack = 0; iTrack < numTracks; iTrack++)
@@ -271,6 +272,10 @@ STLinearTrackFinder::Merge(vecTrk_t *trackArray)
 void
 STLinearTrackFinder::Select(vecTrk_t *trackArray, vecTrk_t *trackArray2, vecHit_t *hitArray, Double_t thetaCut)
 {
+#ifdef DEBUGLT
+  fLogger -> Info(MESSAGE_ORIGIN,"Select()");
+#endif
+
   TVector3 pointingZ(0,0,1);
   Double_t cosineCut = TMath::Cos(thetaCut);
 

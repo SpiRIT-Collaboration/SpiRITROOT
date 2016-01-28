@@ -5,7 +5,7 @@
 #ifndef STLINEARTRACKFINDER2
 #define STLINEARTRACKFINDER2
 
-#include "STLinearTrackFinderAbstract.hh"
+#include "STVTrackFinder.hh"
 
 #include <vector>
 #include <iostream>
@@ -13,7 +13,7 @@
 #include <string>
 
 
-class STLinearTrackFinder2 : public STLinearTrackFinderAbstract
+class STLinearTrackFinder2 : public STVTrackFinder
 {
   public:
     STLinearTrackFinder2();

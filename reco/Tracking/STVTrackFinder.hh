@@ -1,9 +1,10 @@
 /**
+ * @brief  Track finder virtual class
  * @author JungWoo Lee
  */
 
-#ifndef STLINEARTRACKFINDERABSTRACT
-#define STLINEARTRACKFINDERABSTRACT
+#ifndef STVTRACKFINDER
+#define STVTRACKFINDER
 
 #include "STHit.hh"
 #include "STEvent.hh"
@@ -12,11 +13,11 @@
 
 #include "FairLogger.h"
 
-class STLinearTrackFinderAbstract
+class STVTrackFinder
 {
   public:
-    STLinearTrackFinderAbstract();
-    virtual ~STLinearTrackFinderAbstract() {} 
+    STVTrackFinder();
+    virtual ~STVTrackFinder() {} 
 
     /// Build tracks from event, add tracks in trackBuffer
     virtual void BuildTracks(STEvent*, std::vector<STLinearTrack*>*) = 0;
@@ -57,50 +58,8 @@ class STLinearTrackFinderAbstract
     Double_t fPerpYCut;
     Double_t fNumHitsVanishCut;
   
-  public:
-    /// Set number of hits cuts
-    /// @param numHitsTrackCut 
-    ///   Minimum number of hits-in-track for track to survive as final track
-    /// @param numHitsFit
-    ///   Minimum number of hits-in-track for fitting track
-    /// @param numHitsCompare
-    ///   Number of selected hits-in-track to correlate proximity with hit
-    /// @param numHitsCompareMax
-    ///   Maximum number of selected hits-in-track to correlate proximity with hit
-    virtual void SetNumHitsCut(Int_t numHitsTrackCut,
-                               Int_t numHitsFit,
-                               Int_t numHitsCompare,
-                               Int_t numHitsCompareMax);
 
-    /// Set factor for proximity cuts
-    /// @param xConst  x-proximity-cut = xConst * pad size x
-    /// @param yConst  y-proximity-cut = xConst * 1 time-bucket size
-    /// @param zConst  z-proximity-cut = zConst * pad size z
-    virtual void SetProximityCutFactor(Double_t xConst, 
-                                       Double_t yConst,
-                                       Double_t zConst);
-
-    virtual void SetProximityTrackCutFactor(Double_t proxLine, 
-                                            Double_t proxPlane);
-
-    virtual void SetProximityRCut(Double_t val);
-
-    /// Set RMS cuts
-    /// @param rmsLine   RMS cut for line
-    /// @param rmsPlane  RMS cut for Plane
-    virtual void SetRMSCut(Double_t rmsLineCut, 
-                           Double_t rmsPlaneCut);
-
-    /// Set dot product cut of direction and normal vector of two tracks (merge) 
-    /// @param directionDotCut  direction vector dot product cut for
-    /// @param normalDotCut     norma vector dot product cut for
-    virtual void SetDotProductCut(Double_t directionDotCut, 
-                                  Double_t normalDotCut);
-
-    virtual void SetPerpYCut(Double_t perpYCut);
-    virtual void SetNumHitsVanishCut(Double_t numHitsVanishCut);
-
-  ClassDef(STLinearTrackFinderAbstract, 1)
+  ClassDef(STVTrackFinder, 1)
 };
 
 #endif

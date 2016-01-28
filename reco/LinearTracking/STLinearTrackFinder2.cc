@@ -25,13 +25,6 @@ STLinearTrackFinder2::STLinearTrackFinder2()
   fTrackQueue = new std::vector<STLinearTrack*>;
 
   fLTFitter = new STLinearTrackFitter();
-
-  SetNumHitsCut(20, 8, 10000, 40);
-  SetProximityCutFactor(1.01, 3.0, 1.01);
-  SetProximityRCut(20);
-  SetRMSCut(18, 6);
-  SetDotProductCut(0.85, 0.9);
-  SetCutStretch(1,1);
 }
 
 void STLinearTrackFinder2::BuildTracks(STEvent* event,
@@ -78,11 +71,13 @@ void STLinearTrackFinder2::BuildTracks(STEvent* event,
   std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortChargeInv());
   std::sort(fHitQueue -> begin(), fHitQueue -> end(), STHitSortYInv());
 
-  SetProximityCutFactor(1.01, 5, 1.01);
+  fProxXCut = 1.01 * fXUnit;
+  fProxYCut = 5 * fYUnit;
+  fProxZCut = 1.01 * fZUnit;
   BuildTracksFromQueue(1);
   SelectTracks(fTrackQueue, fTrackQueue);
 
-  SetProximityCutFactor(1.01, 12, 1.01);
+  fProxYCut = 12 * fYUnit;
   BuildTracksFromQueue(1);
   SelectTracks(fTrackQueue, fTrackQueue);
   MergeTracks(fTrackQueue);

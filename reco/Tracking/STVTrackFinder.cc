@@ -2,15 +2,15 @@
  * @author JungWoo Lee
  */
 
-#include "STLinearTrackFinderAbstract.hh"
+#include "STVTrackFinder.hh"
 #include "FairRun.h"
 #include "FairRuntimeDb.h"
 #include "STDigiPar.hh"
 #include "STParReader.hh"
 
-ClassImp(STLinearTrackFinderAbstract)
+ClassImp(STVTrackFinder)
 
-STLinearTrackFinderAbstract::STLinearTrackFinderAbstract()
+STVTrackFinder::STVTrackFinder()
 {
   fLogger = FairLogger::GetLogger();
   FairRun *run = FairRun::Instance();
@@ -25,15 +25,6 @@ STLinearTrackFinderAbstract::STLinearTrackFinderAbstract()
   fYUnit = tbTime * driftVel / 100.;
   fZUnit = par -> GetPadSizeZ();
 
-  //SetNumHitsCut(20, 8, 10, 40);
-  //SetProximityCutFactor(1.01, 2.0, 1.01);
-  //SetProximityRCut(15);
-  //SetRMSCut(18, 1);
-  //SetProximityTrackCutFactor(6, 1);
-  //SetDotProductCut(0.85, 0.9);
-  //SetPerpYCut(200);
-  //SetNumHitsVanishCut(3);
-
   TString parName = par -> GetLTParFileName();
   STParReader *fLTPar = new STParReader(parName);
 
@@ -41,9 +32,6 @@ STLinearTrackFinderAbstract::STLinearTrackFinderAbstract()
   fNumHitsFit        = fLTPar -> GetIntPar("NumHitsFit");
   fNumHitsCompare    = fLTPar -> GetIntPar("NumHitsCompare");
   fNumHitsCompareMax = fLTPar -> GetIntPar("NumHitsCompareMax");
-  Double_t xConst    = fLTPar -> GetDoublePar("XConst");
-  Double_t yConst    = fLTPar -> GetDoublePar("YConst");
-  Double_t zConst    = fLTPar -> GetDoublePar("ZConst");
   fProxLineCut       = fLTPar -> GetDoublePar("ProxLineCut");
   fProxPlaneCut      = fLTPar -> GetDoublePar("ProxPlaneCut");
   fProxRCut          = fLTPar -> GetDoublePar("ProxRCut");
@@ -54,76 +42,12 @@ STLinearTrackFinderAbstract::STLinearTrackFinderAbstract()
   fPerpYCut          = fLTPar -> GetDoublePar("PerpYCut");
   fNumHitsVanishCut  = fLTPar -> GetDoublePar("NumHitsVanishCut");
 
+  Double_t xConst    = fLTPar -> GetDoublePar("XConst");
+  Double_t yConst    = fLTPar -> GetDoublePar("YConst");
+  Double_t zConst    = fLTPar -> GetDoublePar("ZConst");
+
   fProxXCut = xConst * fXUnit;
   fProxYCut = yConst * fYUnit;
   fProxZCut = zConst * fZUnit;
   fRMSTrackCut = TMath::Sqrt(fRMSPlaneCut*fRMSPlaneCut + fRMSLineCut*fRMSLineCut);
-}
-
-void 
-STLinearTrackFinderAbstract::SetNumHitsCut(
-  Int_t numHitsTrackCut,
-  Int_t numHitsFit,
-  Int_t numHitsCompare,
-  Int_t numHitsCompareMax)
-{
-  fNumHitsTrackCut = numHitsTrackCut;
-  fNumHitsFit = numHitsFit;
-  fNumHitsCompare = numHitsCompare;
-  fNumHitsCompareMax = numHitsCompareMax;
-}
-
-void 
-STLinearTrackFinderAbstract::SetProximityCutFactor(
-  Double_t xConst, 
-  Double_t yConst,
-  Double_t zConst)
-{
-  fProxXCut = xConst * fXUnit;
-  fProxYCut = yConst * fYUnit;
-  fProxZCut = zConst * fZUnit;
-}
-
-void
-STLinearTrackFinderAbstract::SetProximityTrackCutFactor(
-  Double_t proxLine,
-  Double_t proxPlane)
-{
-  fProxLineCut  = proxLine;
-  fProxPlaneCut = proxPlane;
-}
-
-void
-STLinearTrackFinderAbstract::SetProximityRCut(Double_t val)
-{
-  fProxRCut = val;
-}
-
-void 
-STLinearTrackFinderAbstract::SetRMSCut(Double_t rmsLineCut, Double_t rmsPlaneCut)
-{
-  fRMSLineCut  = rmsLineCut;
-  fRMSPlaneCut = rmsPlaneCut;
-  fRMSTrackCut = TMath::Sqrt(fRMSPlaneCut*fRMSPlaneCut + fRMSLineCut*fRMSLineCut);
-}
-
-void 
-STLinearTrackFinderAbstract::SetDotProductCut(
-  Double_t directionDotCut, 
-  Double_t normalDotCut)
-{
-  fDirectionDotCut = directionDotCut;
-  fNormalDotCut = normalDotCut;
-}
-
-void 
-STLinearTrackFinderAbstract::SetPerpYCut(Double_t perpYCut)
-{
-  fPerpYCut = perpYCut;
-}
-
-void 
-STLinearTrackFinderAbstract::SetNumHitsVanishCut(Double_t numHitsVanishCut)
-{
-  fNumHitsVanishCut = numHitsVanishCut;
 }

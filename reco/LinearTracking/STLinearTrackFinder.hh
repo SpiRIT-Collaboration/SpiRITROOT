@@ -1,7 +1,7 @@
 #ifndef STLINEARTRACKFINDER
 #define STLINEARTRACKFINDER
 
-#include "STLinearTrackFinderAbstract.hh"
+#include "STVTrackFinder.hh"
 #include "STLinearTrackingConf.hh"
 #include "TClonesArray.h"
 
@@ -19,7 +19,7 @@ typedef std::vector<STLinearTrack*>::iterator iterTrk_t;
  * @author JungWoo Lee
  */
 
-class STLinearTrackFinder : public STLinearTrackFinderAbstract
+class STLinearTrackFinder : public STVTrackFinder
 {
   public:
     STLinearTrackFinder();
@@ -83,52 +83,6 @@ class STLinearTrackFinder : public STLinearTrackFinderAbstract
      * Return hit from trackArray to hitArray
      */
     void ReturnHits(STLinearTrack *track, vecHit_t *hitArray);
-
-  /*
-  private:
-    Double_t fDNumTbs;
-
-    Int_t fDNumHitsTrackCut;
-    Int_t fDNumHitsFit;
-    Int_t fDNumHitsCompare;
-    Int_t fDNumHitsCompareMax;
-
-    Double_t fDProxXCut;
-    Double_t fDProxYCut;
-    Double_t fDProxZCut;
-    Double_t fDProxRCut;
-
-    Double_t fDProxLineCut;
-    Double_t fDProxPlaneCut;
-
-    Double_t fDRMSLineCut;
-    Double_t fDRMSPlaneCut;
-    Double_t fDRMSTrackCut;
-
-    Double_t fDDirectionDotCut;
-    Double_t fDNormalDotCut;
-
-  private:
-    void SetNumHitsCut(Int_t numHitsTrackCut,
-                       Int_t numHitsFit,
-                       Int_t numHitsCompare,
-                       Int_t numHitsCompareMax);
-
-    void SetProximityCutFactor(Double_t xConst, 
-                               Double_t yConst,
-                               Double_t zConst);
-
-    void SetProximityTrackCutFactor(Double_t proxLine, 
-                                    Double_t proxPlane);
-
-    void SetProximityRCut(Double_t val);
-
-    void SetRMSCut(Double_t rmsLineCut, 
-                   Double_t rmsPlaneCut);
-
-    void SetDotProductCut(Double_t directionDotCut, 
-                          Double_t normalDotCut);
-    */
 
   ClassDef(STLinearTrackFinder, 1)
 };
