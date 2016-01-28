@@ -41,7 +41,7 @@ STEveManager::STEveManager()
 {
   fLogger = FairLogger::GetLogger();
 
-  fEveMode = kOverview;
+  fEveMode = "ov";
 
   fCurrentEventEntry = -1;
 
@@ -101,8 +101,7 @@ void STEveManager::RunEvent(Long64_t entry)
   fCurrentEventEntry = entry;
 }
 
-void STEveManager::SetEveMode(TString mode)   { fEveMode = FindEveMode(mode); }
-void STEveManager::SetEveMode(STEveMode mode) { fEveMode = mode; }
+void STEveManager::SetEveMode(TString mode)          { fEveMode = mode; }
 void STEveManager::SetGeomFileManual(TString name)   { fGeomFileName = name; }
 void STEveManager::SetVolumeTransparency(Int_t val)  { fTransparency = val; }
 void STEveManager::SetBackgroundColor(Color_t color) { fClearColor   = color; }
@@ -120,7 +119,6 @@ void STEveManager::SetRowLayer(Int_t row, Int_t layer)
 }
 
 
-STEveManager::STEveMode STEveManager::GetEveMode() { return fEveMode; }
 TCanvas*  STEveManager::GetCvsPadPlane()           { return fCvsPadPlane; }
 TCanvas*  STEveManager::GetCvsPad()                { return fCvsPadADC; }
 TCanvas*  STEveManager::GetCvsPadADC()             { return fCvsPadADC; }
@@ -162,10 +160,9 @@ STEveManager::BuildFrame()
 {
   fLogger -> Debug(MESSAGE_ORIGIN, "Building TEve frame.");
 
-  if (fEveMode == kAll) 
+  if (EveMode("all"))
     TEveManager::Create(kTRUE, "V");
-
-  else if (fEveMode == kOverview || fEveMode == k3D)
+  else
     TEveManager::Create(kTRUE, "");
 
   gEve -> AddEvent(this);
@@ -189,7 +186,7 @@ STEveManager::BuildFrame()
 
   gEve -> GetMainWindow() -> Resize(width,height);
 
-  if (fEveMode == kOverview || fEveMode == kAll)
+  if (EveMode("ov"))
   {
     TEveWindowSlot* slotOverview = NULL;
     TEveWindowSlot* slot3D       = NULL;
@@ -240,14 +237,6 @@ STEveManager::BuildFrame()
     framePadADC -> SetElementName("pad");
     fCvsPadADC = ecvsPadADC -> GetCanvas();
   }
-  else if (fEveMode == k3D)
-  {
-    TEveViewer* viewer3D = gEve -> SpawnNewViewer("3D View", "");
-    viewer3D -> SetShowTitleBar(kFALSE);
-    viewer3D -> AddScene(gEve -> GetGlobalScene());
-    viewer3D -> AddScene(gEve -> GetEventScene());
-  }
-
 }
 
 void 
@@ -318,6 +307,14 @@ STEveManager::BuildMenu()
   frameEventControl -> AddFrame(buttonNextEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,1));
   frameEventControl -> AddFrame(buttonPreviousEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,1,3));
   frameEventControl -> AddFrame(buttonUpdate, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,3));
+
+  if (EveMode("sb"))
+  {
+    TGTextButton* buttonRun = new TGTextButton(frameEventControl, "Run Sub Task");
+    buttonRun -> Connect("Clicked()", "STEveManager", this, "RunEveSubTask()");
+    frameEventControl -> AddFrame(buttonRun, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,1,3));
+  }
+
 
   //frameMain -> AddFrame(frameEventControl, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
 
@@ -424,7 +421,7 @@ STEveManager::BuildMenu()
 
   fLogger -> Debug(MESSAGE_ORIGIN, "Building pad control frame.");
 
-  if (fEveMode != k3D)
+  if (EveMode("ov"))
   {
     TGGroupFrame* framePad = new TGGroupFrame(frameMain,"Pad");
     framePad -> SetTitlePos(TGGroupFrame::kLeft);
@@ -595,6 +592,19 @@ void STEveManager::SelectEventButton()
   if (fCurrentLinearSet)  fCurrentLinearSet  -> SetLimitValues(0, fNumLinearSet);
 }
 
+void STEveManager::RunEveSubTask()
+{
+  fEveTask -> Exec("sub");
+
+  fEveTask -> PushParametersTask();
+
+  if (fNumRiemannSet <= 0) fNumRiemannSet = 1;
+  if (fNumLinearSet <= 0)  fNumLinearSet = 1;
+
+  if (fCurrentRiemannSet) fCurrentRiemannSet -> SetLimitValues(0, fNumRiemannSet);
+  if (fCurrentLinearSet)  fCurrentLinearSet  -> SetLimitValues(0, fNumLinearSet);
+}
+
 void 
 STEveManager::SelectPad()
 {
@@ -636,17 +646,23 @@ void STEveManager::ClickOnOffRiemannHit() { fEveTask -> RnrEveObjectTask("rieman
 void STEveManager::ClickOnOffLinear()     { fEveTask -> RnrEveObjectTask("linear");     gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffLinearHit()  { fEveTask -> RnrEveObjectTask("linearhit");  gEve -> Redraw3D(); }
 
-STEveManager::STEveMode 
-STEveManager::FindEveMode(TString mode)
+Bool_t
+STEveManager::EveMode(TString mode)
 {
-  mode.ToLower();
+  fEveMode.ToLower();
 
-  if ( ((mode.Index("3d") >= 0) && (mode.Index("ov") >= 0)) 
-      || mode.Index("all") >= 0)
-    return kAll;
+  if (mode == "all") {
+    if ( ((fEveMode.Index("3d") >= 0) && (fEveMode.Index("ov") >= 0)) )
+      return kTRUE;
+    else 
+      return kFALSE;
+  }
+  if (mode == "sub" || mode == "sb") {
+    if (fEveMode.Index("sub") >= 0 || fEveMode.Index("sb") >=0 ) 
+      return kTRUE;
+  }
+  if (fEveMode.Index(mode) >= 0)
+    return kTRUE;
 
-  else if (mode.Index("3d") >= 0) return k3D;
-  else if (mode.Index("ov") >= 0) return kOverview;
-
-  return k3D;
+  return kFALSE;
 }

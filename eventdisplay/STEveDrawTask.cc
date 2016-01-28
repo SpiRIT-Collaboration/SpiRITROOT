@@ -21,38 +21,6 @@ STEveDrawTask::STEveDrawTask()
 {
   fInstance = this;
 
-  fEveManager = NULL;
-
-  fEvent = NULL;
-
-  fMCHitArray           = NULL;
-  fDriftedElectronArray = NULL;
-  fEventArray           = NULL;
-  fRiemannTrackArray    = NULL;
-  fLinearTrackArray     = NULL;
-  fRawEventArray        = NULL;
-
-  fRawEvent = NULL;
-
-  fSet2dPlotRangeFlag = kFALSE;
-  fSetDigiFileFlag    = kFALSE;
-
-  fCurrentEvent = -2; // avoid -1, will break.
-  fCurrentRow   = -1;
-  fCurrentLayer = -1;
-
-  fHistPad = NULL;
-  fCvsPad  = NULL;
-  fRangeMin = 0;
-  fRangeMax = 0;
-
-  fCvsPadPlane = NULL;
-  fPadPlane    = NULL;
-  fMinZ = 0;
-  fMaxZ = 1344;
-  fMinX = 432;
-  fMaxX = -432;
-
   for (Int_t i=0; i<fNumEveObject; i++)
   {
     fPointSet[i] = NULL;
@@ -62,71 +30,64 @@ STEveDrawTask::STEveDrawTask()
   }
 
   fEveStyle[kMC] = kFullCircle;
-  fEveSize[kMC]  = 1;
+  fEveSize [kMC] = 1;
   fEveColor[kMC] = kGray+2;
-  fRnrSelf[kMC]  = kFALSE;
+  fRnrSelf [kMC] = kFALSE;
 
   fEveStyle[kDigi] = 1;
-  fEveSize[kDigi]  = 1.;
+  fEveSize [kDigi] = 1.;
   fEveColor[kDigi] = kAzure-5;
-  fRnrSelf[kDigi]  = kFALSE;
+  fRnrSelf [kDigi] = kFALSE;
 
-  fEveStyle[kHit]   = kFullCircle;
-  fEveSize[kHit]    = 1.0;
-  fEveColor[kHit]   = kBlue;
-  fRnrSelf[kHit]    = kFALSE;
-  fSetObject[kHit]  = kFALSE;
+  fEveStyle[kHit] = kFullCircle;
+  fEveSize [kHit] = 1.0;
+  fEveColor[kHit] = kBlue;
+  fRnrSelf [kHit] = kFALSE;
 
-  fEveStyle[kHitBox]   = kFullCircle;
-  fEveSize[kHitBox]    = 0.5;
-  fEveColor[kHitBox]   = kBlue;
-  fRnrSelf[kHitBox]    = kFALSE;
-  fSetObject[kHitBox]  = kFALSE;
+  fEveStyle[kHitBox] = kFullCircle;
+  fEveSize [kHitBox] = 0.5;
+  fEveColor[kHitBox] = kBlue;
+  fRnrSelf [kHitBox] = kFALSE;
 
-  fEveStyle[kCluster]     = kFullCircle;
-  fEveSize[kCluster]      = 1.;
-  fEveColor[kCluster]     = kBlack;
-  fRnrSelf[kCluster]      = kFALSE;
-  fRnrSelf[kClusterBox]   = kFALSE;
-  fSetObject[kCluster]    = kFALSE;
-  fSetObject[kClusterBox] = kFALSE;
+  fEveStyle[kCluster] = kFullCircle;
+  fEveSize [kCluster] = 1.;
+  fEveColor[kCluster] = kBlack;
+  fRnrSelf [kCluster] = kFALSE;
+  fRnrSelf [kClusterBox] = kFALSE;
 
-  fEveStyle[kRiemannHit]  = kFullCircle;
-  fEveSize[kRiemannHit]   = 1.0;
-  fEveColor[kRiemannHit]  = -1;
-  fRnrSelf[kRiemannHit]   = kFALSE;
-  fSetObject[kRiemannHit] = kFALSE;
+  fEveStyle[kRiemannHit] = kFullCircle;
+  fEveSize [kRiemannHit] = 1.0;
+  fEveColor[kRiemannHit] = -1;
+  fRnrSelf [kRiemannHit] = kFALSE;
 
-  fEveStyle[kLinear]  = 1;
-  fEveSize[kLinear]   = 5;
-  fEveColor[kLinear]  = -1;
-  fRnrSelf[kLinear]   = kFALSE;
-  fSetObject[kLinear] = kFALSE;
+  fEveStyle[kLinear] = 1;
+  fEveSize [kLinear] = 5;
+  fEveColor[kLinear] = -1;
+  fRnrSelf [kLinear] = kFALSE;
 
-  fEveStyle[kLinearHit]  = kFullCircle;
-  fEveSize[kLinearHit]   = 0.5;
-  fEveColor[kLinearHit]  = -1;
-  fRnrSelf[kLinearHit]   = kFALSE;
-  fSetObject[kLinearHit] = kFALSE;
-
-  fBoxHitSet = NULL;
-  fBoxClusterSet = NULL;
+  fEveStyle[kLinearHit] = kFullCircle;
+  fEveSize [kLinearHit] = 0.5;
+  fEveColor[kLinearHit] = -1;
+  fRnrSelf [kLinearHit] = kFALSE;
 
   fPulse = new STPulse();
   fLTFitter = new STLinearTrackFitter();
-
-  for (Int_t i=0; i<fNumPulseFunction; i++)
-  {
-    fPulseFunction[i] = new TF1(Form("pulse_%d",i), this, &STEveDrawTask::Pulse, 0, 512, 2, "STEveDrawTask", "Pulse");
-    fPulseFunction[i] -> SetLineColor(kRed);
-    fPulseFunction[i] -> SetNpx(400);
-  }
+  fRGBAPalette = new TEveRGBAPalette(0, 4096);
 
   fPulseSum = new TGraph();
   fPulseSum -> SetLineColor(kBlack);
   fPulseSum -> SetLineWidth(2);
 
-  fRGBAPalette = new TEveRGBAPalette(0, 4096);
+  for (Int_t i = 0; i < fNumPulseFunction; i++)
+  {
+    fPulseFunction[i] = fPulse -> GetPulseFunction(Form("Pulse_%d",i));
+      /*
+      = new TF1(Form("pulse_%d",i), this, &STEveDrawTask::Pulse, 
+                     0, 512, 2, "STEveDrawTask", "Pulse");
+      */
+    fPulseFunction[i] -> SetLineColor(kRed);
+    fPulseFunction[i] -> SetNpx(400);
+  }
 }
 
 void STEveDrawTask::DrawADC(Int_t row, Int_t layer)
@@ -207,39 +168,25 @@ STEveDrawTask::Exec(Option_t* option)
   Reset();
 
   if (fEventArray != NULL)
-  {
     fEvent = (STEvent*) fEventArray -> At(0);
-  }
 
   if (fMCHitArray != NULL && fSetObject[kMC]) 
-  {
     DrawMCPoints();
-  }
 
   if (fDriftedElectronArray != NULL && fSetObject[kDigi]) 
-  {
     DrawDriftedElectrons();
-  }
 
   if (fSetObject[kHit] || fSetObject[kHitBox])
-  {
     DrawHitPoints();
-  }
 
   if (fSetObject[kCluster] || fSetObject[kClusterBox])
-  {
     DrawHitClusterPoints();
-  }
 
   if (fRiemannTrackArray != NULL && fSetObject[kRiemannHit])
-  {
     DrawRiemannHits();
-  }
 
   if (fLinearTrackArray != NULL && (fSetObject[kLinear] || fSetObject[kLinearHit]))
-  {
     DrawLinearTracks();
-  }
 
   gEve -> Redraw3D();
 
@@ -1037,14 +984,14 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer)
   Double_t* adc = pad -> GetADC();
 
   fHistPad -> SetTitle(Form("row: %d, layer: %d",row, layer));
-  fMaxAdcCurrentPad = 0;
+  Double_t maxAdcCurrentPad = 0;
   for (Int_t tb=0; tb<fNTbs; tb++) {
     Double_t val = adc[tb];
-    if (val > fMaxAdcCurrentPad) fMaxAdcCurrentPad = val;
+    if (val > maxAdcCurrentPad) maxAdcCurrentPad = val;
     fHistPad -> SetBinContent(tb+1, val);
   }
 
-  fHistPad -> SetMaximum(fMaxAdcCurrentPad * 1.1);
+  fHistPad -> SetMaximum(maxAdcCurrentPad * 1.1);
 
   Int_t nHits = fEvent -> GetNumHits();
 

@@ -115,55 +115,64 @@ class STEveDrawTask : public STEveTask
     Int_t BoolToInt(Bool_t val);
 
   private :
-    STEveManager* fEveManager;
+    /// Eve Manager pointer
+    STEveManager* fEveManager = NULL;
 
-    STEvent* fEvent;
+    /// Number entries
+    Long64_t fCurrentEvent = -2;
+    Int_t    fCurrentRow   = -1;
+    Int_t    fCurrentLayer = -1;
 
-    TClonesArray* fMCHitArray;
-    TClonesArray* fDriftedElectronArray;
-    TClonesArray* fEventArray;
-    TClonesArray* fRiemannTrackArray;
-    TClonesArray* fLinearTrackArray;
-    TClonesArray* fRawEventArray;
+    /// Flags
+    Bool_t fSet2dPlotRangeFlag = kFALSE;
 
-    STRawEvent* fRawEvent;
-
-    Bool_t fSet2dPlotRangeFlag;
-    Bool_t fSetDigiFileFlag;
-
-    Long64_t fCurrentEvent;
-    Int_t fCurrentRow;
-    Int_t fCurrentLayer;
-
-    STDigiPar* fPar;
+    /// DigiPar parameters
+    STDigiPar* fPar = NULL;
 
     Int_t    fNTbs;
     Double_t fXPadPlane;
     Double_t fTBTime;
     Double_t fDriftVelocity;
 
-    TCanvas* fCvsPad;
-    TH1D* fHistPad;
-    Double_t Pulse(Double_t *x, Double_t *par);
-    static const Int_t fNumPulseFunction = 10;
-    TF1* fPulseFunction[fNumPulseFunction];
-    TGraph* fPulseSum;
-    STPulse* fPulse;
-    Double_t fRangeMin;
-    Double_t fRangeMax;
-
-    TCanvas* fCvsPadPlane;
-    TH2D* fPadPlane;
-    Int_t fMinZ;
-    Int_t fMaxZ;
-    Int_t fMinX;
-    Int_t fMaxX;
-
-    Int_t fWindowTbStart;
-    Int_t fWindowTbEnd;
+    Int_t    fWindowTbStart;
+    Int_t    fWindowTbEnd;
     Double_t fWindowYStart;
     Double_t fWindowYEnd;
 
+    /// Containers
+    STEvent* fEvent = NULL;
+    STRawEvent* fRawEvent = NULL;
+
+    TClonesArray* fMCHitArray           = NULL;
+    TClonesArray* fDriftedElectronArray = NULL;
+    TClonesArray* fEventArray           = NULL;
+    TClonesArray* fRiemannTrackArray    = NULL;
+    TClonesArray* fLinearTrackArray     = NULL;
+    TClonesArray* fRawEventArray        = NULL;
+
+    /// Pad & Pulses
+    static const Int_t fNumPulseFunction = 10;
+    TF1 *fPulseFunction[fNumPulseFunction];
+    Double_t Pulse(Double_t *x, Double_t *par);
+
+    TCanvas *fCvsPad   = NULL;
+    TH1D    *fHistPad  = NULL;
+    TGraph  *fPulseSum = NULL;
+    STPulse *fPulse    = NULL;
+
+    Double_t fRangeMin = 0;
+    Double_t fRangeMax = 0;
+
+    /// Pad-Plane
+    TCanvas* fCvsPadPlane = NULL;
+    TH2D* fPadPlane       = NULL;
+
+    Int_t fMinZ =    0; 
+    Int_t fMaxZ = 1344;
+    Int_t fMinX =  432;
+    Int_t fMaxX = -432;
+
+    /// Objects
     static const Int_t fNumEveObject = 10;
 
     Bool_t   fSetObject[fNumEveObject];
@@ -175,19 +184,17 @@ class STEveDrawTask : public STEveTask
     Double_t fThresholdMax[fNumEveObject];
 
     TEvePointSet* fPointSet[fNumEveObject];
-
     TEveRGBAPalette *fRGBAPalette;
 
-    TEveBoxSet* fBoxHitSet;
-    TEveBoxSet* fBoxClusterSet;
+    TEveBoxSet* fBoxHitSet     = NULL;
+    TEveBoxSet* fBoxClusterSet = NULL;
 
     vector<TEvePointSet*> fRiemannSetArray;
     vector<TEvePointSet*> fLinearHitSetArray;
     vector<TEveLine*>     fLinearTrackSetArray;
 
-    STLinearTrackFitter* fLTFitter;
+    STLinearTrackFitter* fLTFitter = NULL;
 
-    Double_t fMaxAdcCurrentPad;
 
     static STEveDrawTask* fInstance;
 
