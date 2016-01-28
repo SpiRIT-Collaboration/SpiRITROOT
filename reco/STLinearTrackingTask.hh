@@ -13,7 +13,7 @@
 #include "STHit.hh"
 #include "STDigiPar.hh"
 #include "STLinearTrack.hh"
-#include "STLinearTrackFinderAbstract.hh"
+#include "STVTrackFinder.hh"
 #include "STLinearTrackFinder.hh"
 #include "STLinearTrackFinder2.hh"
 
@@ -35,7 +35,7 @@ class STLinearTrackingTask : public FairTask
 
     void SetPersistence(Bool_t value = kTRUE);
 
-    STLinearTrackFinderAbstract* GetTrackFinder();
+    STVTrackFinder* GetTrackFinder();
 
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
@@ -48,7 +48,7 @@ class STLinearTrackingTask : public FairTask
 
     STDigiPar *fPar; //!
 
-    STLinearTrackFinderAbstract* fTrackFinder; //!
+    STVTrackFinder* fTrackFinder; //!
 
   ClassDef(STLinearTrackingTask, 1);
 };
