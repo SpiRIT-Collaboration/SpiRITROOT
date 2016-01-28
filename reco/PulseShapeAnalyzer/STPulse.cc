@@ -24,8 +24,6 @@ STPulse::STPulse()
 Double_t 
 STPulse::Pulse(Double_t x, Double_t amp, Double_t tb)
 {
-  //x += 0.5;
-
   if (x < tb) 
     return 0;
 
@@ -63,6 +61,16 @@ STPulse::PulseF1(Double_t *x, Double_t *par)
 TF1*
 STPulse::GetPulseFunction(TString name)
 {
-  TF1* f1 = new TF1("PRRow", this, &STPulse::PulseF1, 0, 512, 2, "STPulse", "PulseF1");
+  TF1* f1 = new TF1(name, this, &STPulse::PulseF1, 0, 512, 2, "STPulse", "PulseF1");
+  return f1;
+}
+
+TF1*
+STPulse::GetPulseFunction(STHit* hit, TString name)
+{
+  if (name.IsNull()) 
+    name = Form("STPulse_%d", fIndex++);
+  TF1* f1 = GetPulseFunction(name);
+  f1 -> SetParameters(hit -> GetCharge(), hit -> GetTb());
   return f1;
 }
