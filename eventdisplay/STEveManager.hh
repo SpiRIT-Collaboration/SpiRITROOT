@@ -16,6 +16,7 @@
 
 #include "TEveEventManager.h"
 #include "TEveGValuators.h"
+#include "TEveViewer.h"
 #include "TGNumberEntry.h"
 #include "TGeoManager.h"
 #include "TGedFrame.h"
@@ -23,6 +24,7 @@
 #include "TGLayout.h"
 #include "TGButton.h"
 #include "TGLabel.h"
+#include "TGLViewer.h"
 #include "TGFrame.h"
 
 class TEveGValuator;
@@ -109,6 +111,8 @@ class STEveManager : public TEveEventManager
     void ClickOnOffLinear();
     void ClickOnOffLinearHit();
 
+    void Exit();
+
   private : // Frame
     TCanvas* fCvsPadPlane;  //!< Canvas for pad plane
     TCanvas* fCvsPadADC;    //!< Canvas for adc distribution of the pad
@@ -163,6 +167,8 @@ class STEveManager : public TEveEventManager
 
     Int_t fWindowTbStartDefault;
     Int_t fWindowTbEndDefault;
+
+    TEveViewer* fViewer3D;
 
 
     static STEveManager *fInstance;

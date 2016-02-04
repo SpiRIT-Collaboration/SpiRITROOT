@@ -77,38 +77,17 @@ STEveDrawTask::STEveDrawTask()
   fPulseSum = new TGraph();
   fPulseSum -> SetLineColor(kBlack);
   fPulseSum -> SetLineWidth(2);
-
-  for (Int_t i = 0; i < fNumPulseFunction; i++)
-  {
-    fPulseFunction[i] = fPulse -> GetPulseFunction(Form("Pulse_%d",i));
-      /*
-      = new TF1(Form("pulse_%d",i), this, &STEveDrawTask::Pulse, 
-                     0, 512, 2, "STEveDrawTask", "Pulse");
-      */
-    fPulseFunction[i] -> SetLineColor(kRed);
-    fPulseFunction[i] -> SetNpx(400);
-  }
 }
 
 void STEveDrawTask::DrawADC(Int_t row, Int_t layer)
 {
-  DrawPad(fCurrentRow, fCurrentLayer);
-  UpdatePadRange();
+  DrawPad(row, layer);
 }
 
 void STEveDrawTask::PushParameters()
 {
   fEveManager -> SetNumRiemannSet(fRiemannSetArray.size());
   fEveManager -> SetNumLinearSet(fLinearTrackSetArray.size());
-}
-
-Double_t STEveDrawTask::Pulse(Double_t *x, Double_t *par)
-{
-  return fPulse -> Pulse(x[0], par[0], par[1]);
-}
-
-STEveDrawTask::~STEveDrawTask()
-{
 }
 
 void 
@@ -191,6 +170,7 @@ STEveDrawTask::Exec(Option_t* option)
   gEve -> Redraw3D();
 
   UpdateCvsPadPlane();
+  DrawPad(fCurrentRow, fCurrentLayer);
 }
 
 void 
@@ -752,8 +732,6 @@ STEveDrawTask::Reset()
   {
     if(fPointSet[i]) {
       fPointSet[i] -> Reset();
-      //gEve -> RemoveElement(fPointSet[i], fEveManager);
-      //fPointSet[i] = NULL;
     }
   }
 
@@ -761,14 +739,12 @@ STEveDrawTask::Reset()
 
   if (fBoxHitSet) {
     fBoxHitSet -> Reset();
-    //gEve -> RemoveElement(fBoxHitSet, fEveManager);
   }
 
   fLogger -> Debug(MESSAGE_ORIGIN,"Reset box cluster set");
 
   if (fBoxClusterSet) {
     fBoxClusterSet -> Reset();
-    //gEve -> RemoveElement(fBoxClusterSet, fEveManager);
   }
 
   fLogger -> Debug(MESSAGE_ORIGIN,"Reset riemann set");
@@ -777,11 +753,9 @@ STEveDrawTask::Reset()
   for (Int_t i=0; i<nRiemannTracks; i++) 
   {
     TEvePointSet* riemannPointSet = fRiemannSetArray.at(i);
-    //gEve -> RemoveElement(riemannPointSet, fEveManager);
     riemannPointSet -> SetRnrSelf(kFALSE);
     riemannPointSet -> Reset();
   }
-  //fRiemannSetArray.clear();
 
   fLogger -> Debug(MESSAGE_ORIGIN,"Reset linear line set");
 
@@ -789,7 +763,6 @@ STEveDrawTask::Reset()
   for (Int_t i=0; i<nLinearTracks; i++) 
   {
     TEveLine* linearTrackLine = fLinearTrackSetArray.at(i);
-    //gEve -> RemoveElement(linearTrackLine, fEveManager);
     linearTrackLine -> SetRnrSelf(kFALSE);
     linearTrackLine -> Reset();
   }
@@ -800,13 +773,9 @@ STEveDrawTask::Reset()
   for (Int_t i=0; i<nLinearPoints; i++) 
   {
     TEvePointSet* pointSet = fLinearHitSetArray.at(i);
-    //gEve -> RemoveElement(point, fEveManager);
     pointSet -> SetRnrSelf(kFALSE);
     pointSet -> Reset();
   }
-
-  //fLinearTrackSetArray.clear();
-  //fLinearHitSetArray.clear();
 
   if (fPadPlane != NULL)
     fPadPlane -> Reset("");
@@ -976,6 +945,7 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer)
   {
     fCurrentEvent = currentEvent;
     fRawEvent = (STRawEvent*) fRawEventArray -> At(0);
+    fRawEvent -> ClearHits();
     fRawEvent -> SetHits(fEvent);
   }
   STPad* pad = fRawEvent -> GetPad(row, layer);
@@ -985,28 +955,40 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer)
 
   fHistPad -> SetTitle(Form("row: %d, layer: %d",row, layer));
   Double_t maxAdcCurrentPad = 0;
+  Double_t minAdcCurrentPad = 10000;
   for (Int_t tb=0; tb<fNTbs; tb++) {
     Double_t val = adc[tb];
     if (val > maxAdcCurrentPad) maxAdcCurrentPad = val;
+    if (val < minAdcCurrentPad) minAdcCurrentPad = val;
     fHistPad -> SetBinContent(tb+1, val);
   }
 
   fHistPad -> SetMaximum(maxAdcCurrentPad * 1.1);
-
-  Int_t nHits = fEvent -> GetNumHits();
+  fHistPad -> SetMinimum(minAdcCurrentPad * 1.05);
 
   fCvsPad -> cd();
   fHistPad -> Draw();
 
   Int_t numHits = pad -> GetNumHits();
-  if (numHits > fNumPulseFunction) numHits = fNumPulseFunction;
+  Int_t numMoreHits = numHits - fPulseFunctionArray.size();
+
+  if (numMoreHits > 0)
+  {
+    for (Int_t iPulse = 0; iPulse < numMoreHits; iPulse++) {
+      TF1* f = fPulse -> GetPulseFunction();
+      f -> SetNpx(400);
+      f -> SetLineColor(kRed);
+      fPulseFunctionArray.push_back(f);
+    }
+  }
+
   for (Int_t iHit = 0; iHit < numHits; iHit++)
   {
     STHit* hit = pad -> GetHit(iHit);
-
-    fPulseFunction[iHit] -> SetParameter(0, hit -> GetCharge());
-    fPulseFunction[iHit] -> SetParameter(1, hit -> GetTb());
-    fPulseFunction[iHit] -> Draw("same");
+    TF1* f = fPulseFunctionArray.at(iHit);
+    f -> SetParameter(0, hit -> GetCharge());
+    f -> SetParameter(1, hit -> GetTb());
+    f -> Draw("same");
   }
 
   fPulseSum -> Set(0);
@@ -1020,13 +1002,18 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer)
     xGraph += 0.1;
     yGraph  = 0;
     for (Int_t iHit = 0; iHit < numHits; iHit++)
-      yGraph += fPulseFunction[iHit] -> Eval(xGraph);
+    {
+      TF1* f = fPulseFunctionArray.at(iHit);
+      yGraph += f -> Eval(xGraph);
+    }
     fPulseSum -> SetPoint(countPoints++, xGraph, yGraph);
   }
   fPulseSum -> Draw("samel");
 
   fCvsPad -> Modified();
   fCvsPad -> Update();
+
+  UpdatePadRange();
 }
 
 void

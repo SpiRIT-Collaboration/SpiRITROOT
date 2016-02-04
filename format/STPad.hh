@@ -53,7 +53,9 @@ class STPad : public TObject
     Double_t GetADC(Int_t idx);
 
     std::vector<STHit*> *GetHitPointerArray(); ///< Get hit ID array
-    void AddHit(STHit* hit);
+
+     void AddHit(STHit* hit);
+     void ClearHits();
     Int_t GetNumHits();
     STHit *GetHit(Int_t hitNo);
 
@@ -70,7 +72,7 @@ class STPad : public TObject
 
     std::vector<STHit*> fHitArray; //! < STHit pointer array
 
-  ClassDef(STPad, 3);
+  ClassDef(STPad, 4);
 };
 
 #endif

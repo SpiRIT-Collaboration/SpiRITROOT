@@ -12,7 +12,6 @@
 #include "TEveProjectionManager.h"
 #include "TEveWindowManager.h"
 #include "TEveScene.h"
-#include "TEveViewer.h"
 #include "TEveWindow.h"
 #include "TEveBrowser.h"
 #include "TEveGedEditor.h"
@@ -21,10 +20,11 @@
 #include "TGString.h"
 #include "TGedEditor.h"
 #include "TGTab.h"
-#include "TGLViewer.h"
 #include "TGeoManager.h"
 #include "TVirtualX.h"
 #include "TGWindow.h"
+
+#include "TApplication.h"
 
 #include <iostream>
 
@@ -96,9 +96,9 @@ void STEveManager::NextEvent()   { RunEvent(fCurrentEventEntry + 1); }
 void STEveManager::PrevEvent()   { RunEvent(fCurrentEventEntry - 1); }
 void STEveManager::RunEvent(Long64_t entry) 
 {
+  fCurrentEventEntry = entry;
   fRun -> Run(entry);
   gEve -> Redraw3D();
-  fCurrentEventEntry = entry;
 }
 
 void STEveManager::SetEveMode(TString mode)          { fEveMode = mode; }
@@ -114,8 +114,8 @@ void STEveManager::SetNumRiemannSet(Int_t num)   { fNumRiemannSet = num; }
 void STEveManager::SetNumLinearSet(Int_t num)    { fNumLinearSet  = num; }
 void STEveManager::SetRowLayer(Int_t row, Int_t layer)
 {
-  fCurrentRow -> SetNumber(row);
-  fCurrentLayer -> SetNumber(layer);
+  fCurrentRow -> SetIntNumber(row);
+  fCurrentLayer -> SetIntNumber(layer);
 }
 
 
@@ -160,7 +160,7 @@ STEveManager::BuildFrame()
 {
   fLogger -> Debug(MESSAGE_ORIGIN, "Building TEve frame.");
 
-  if (EveMode("all"))
+  if (EveMode("3d"))
     TEveManager::Create(kTRUE, "V");
   else
     TEveManager::Create(kTRUE, "");
@@ -220,10 +220,10 @@ STEveManager::BuildFrame()
     slot3D -> SetShowTitleBar(kFALSE);
     slot3D -> MakeCurrent();
 
-    TEveViewer* viewer3D = gEve -> SpawnNewViewer("3D View", "");
-    viewer3D -> SetShowTitleBar(kFALSE);
-    viewer3D -> AddScene(gEve -> GetGlobalScene());
-    viewer3D -> AddScene(gEve -> GetEventScene());
+    fViewer3D = gEve -> SpawnNewViewer("3D View", "");
+    fViewer3D -> SetShowTitleBar(kFALSE);
+    fViewer3D -> AddScene(gEve -> GetGlobalScene());
+    fViewer3D -> AddScene(gEve -> GetEventScene());
 
     slotPadPlane = packOverview -> NewSlot();
     slotPadPlane -> SetShowTitleBar(kFALSE);
@@ -269,19 +269,14 @@ STEveManager::BuildMenu()
   fileName = last -> GetString();
 
   TGLabel* labelFileName = new TGLabel(frameEventControl, fileName);
-  TGLabel* labelEventID  = new TGLabel(frameEventControl, TString("No. of events : ") + Form("%d", fTotalNumEntries));
+  TGLabel* labelEventID  = new TGLabel(frameEventControl, TString("No. of events : ") + Form("%lld", fTotalNumEntries));
 
   frameEventControl -> AddFrame(labelFileName, new TGLayoutHints(kLHintsLeft, 5,5,5,1));
   frameEventControl -> AddFrame(labelEventID, new TGLayoutHints(kLHintsLeft, 5,5,1,3));
 
-  //frameMain -> AddFrame(frameEventControl, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
-
   /********************************************************************/
 
   fLogger -> Debug(MESSAGE_ORIGIN, "Building event update frame.");
-
-  //TGGroupFrame* frameEvent = new TGGroupFrame(frameMain,"Event",kVerticalFrame);
-  //frameEvent -> SetTitlePos(TGGroupFrame::kLeft);
 
   TGHorizontalFrame* frameEventEntry = new TGHorizontalFrame(frameEventControl);
   TGLabel* labelEvent = new TGLabel(frameEventEntry, "Current Event : ");
@@ -315,15 +310,9 @@ STEveManager::BuildMenu()
     frameEventControl -> AddFrame(buttonRun, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,1,3));
   }
 
-
-  //frameMain -> AddFrame(frameEventControl, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
-
   /********************************************************************/
 
   fLogger -> Debug(MESSAGE_ORIGIN, "Building Eve object control frame.");
-
-  //TGGroupFrame* frameEveControl = new TGGroupFrame(frameMain, "On/Off");
-  //frameEveControl -> SetTitlePos(TGGroupFrame::kLeft);
 
   TGHorizontalFrame* frameSimButtons = new TGHorizontalFrame(frameEventControl);
   {
@@ -426,29 +415,25 @@ STEveManager::BuildMenu()
     TGGroupFrame* framePad = new TGGroupFrame(frameMain,"Pad");
     framePad -> SetTitlePos(TGGroupFrame::kLeft);
 
-    TGHorizontalFrame* framePadRow = new TGHorizontalFrame(framePad);
-    TGLabel* labelRow   = new TGLabel(framePadRow, "row:");
-    fCurrentRow = new TGNumberEntry(framePadRow, 0., 6, -1,
+    TGHorizontalFrame* framePadRowLayer = new TGHorizontalFrame(framePad);
+    TGLabel* labelRow   = new TGLabel(framePadRowLayer, "row:");
+    fCurrentRow = new TGNumberEntry(framePadRowLayer, 0., 6, -1,
                                     TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
                                     TGNumberFormat::kNELLimitMinMax, 0, 107);
-    fCurrentRow -> Connect("ValueSet(Long_t)", "STEveManager", this, "SelectPad()");
-    framePadRow -> AddFrame(labelRow, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
-    framePadRow -> AddFrame(fCurrentRow, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
+    framePadRowLayer -> AddFrame(labelRow, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
+    framePadRowLayer -> AddFrame(fCurrentRow, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
 
-    //TGHorizontalFrame* framePadLayer = new TGHorizontalFrame(framePad);
-    TGLabel* labelLayer = new TGLabel(framePadRow, "layer:");
-    fCurrentLayer = new TGNumberEntry(framePadRow, 0., 6, -1,
+    TGLabel* labelLayer = new TGLabel(framePadRowLayer, "layer:");
+    fCurrentLayer = new TGNumberEntry(framePadRowLayer, 0., 6, -1,
                                       TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
                                       TGNumberFormat::kNELLimitMinMax, 0, 111);
-    fCurrentLayer -> Connect("ValueSet(Long_t)", "STEveManager", this, "SelectPad()");
-    framePadRow -> AddFrame(labelLayer, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 2, 1, 1));
-    framePadRow -> AddFrame(fCurrentLayer, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
+    framePadRowLayer -> AddFrame(labelLayer, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 2, 1, 1));
+    framePadRowLayer -> AddFrame(fCurrentLayer, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
 
     TGTextButton* buttonUpdatePad = new TGTextButton(framePad, "Update");
     buttonUpdatePad -> Connect("Clicked()", "STEveManager", this, "SelectPad()");
 
-    framePad -> AddFrame(framePadRow, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 0,0,10,3));
-    //framePad -> AddFrame(framePadLayer, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
+    framePad -> AddFrame(framePadRowLayer, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 0,0,10,3));
     framePad -> AddFrame(buttonUpdatePad, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,10,5));
 
     frameMain -> AddFrame(framePad, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
@@ -469,7 +454,6 @@ STEveManager::BuildMenu()
   frameWindowTbStart -> AddFrame(labelWindowTbStart, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
   frameWindowTbStart -> AddFrame(fCurrentWindowTbStart, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
 
-  //TGHorizontalFrame* frameWindowTbEnd = new TGHorizontalFrame(frameWindowTb);
   TGLabel* labelWindowTbEnd = new TGLabel(frameWindowTbStart, "end:");
   fCurrentWindowTbEnd = new TGNumberEntry(frameWindowTbStart, fWindowTbEndDefault, 6, -1,
                                   TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
@@ -487,12 +471,15 @@ STEveManager::BuildMenu()
   buttonResetWindowTb -> Connect("Clicked()", "STEveManager", this, "ResetWindowTb()");
 
   frameWindowTb -> AddFrame(frameWindowTbStart, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 0,0,10,3));
-  //frameWindowTb -> AddFrame(frameWindowTbEnd, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
   frameWindowTb -> AddFrame(buttonUpdateWindowTb, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,10,3));
   frameWindowTb -> AddFrame(buttonDefaultWindowTb, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,3,1));
   frameWindowTb -> AddFrame(buttonResetWindowTb, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,1,5));
 
   frameMain -> AddFrame(frameWindowTb, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
+
+  TGTextButton* buttonExit = new TGTextButton(frameMain, "Exit");
+  buttonExit -> Connect("Clicked()", "STEveManager", this, "Exit()");
+  frameMain -> AddFrame(buttonExit, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 20,20,5,5));
 
   frame -> AddFrame(frameMain, new TGLayoutHints(kLHintsTop, 0, 0, 2, 0));
   frame -> MapSubwindows();
@@ -544,8 +531,8 @@ STEveManager::Build3DViewer()
 
   TGLViewer *dfViewer = gEve -> GetDefaultGLViewer();
 
-  //if (dfViewer == NULL)
-    //dfViewer = ((TEveViewer*) gEve -> GetDefaultViewer()) -> GetGLViewer();
+  if (dfViewer == NULL)
+    dfViewer = ((TEveViewer*) gEve -> GetDefaultViewer()) -> GetGLViewer();
 
   if (dfViewer == NULL)
     return;
@@ -608,8 +595,7 @@ void STEveManager::RunEveSubTask()
 void 
 STEveManager::SelectPad()
 {
-  fEveTask -> DrawADC(fCurrentRow -> GetIntNumber(), 
-                      fCurrentLayer -> GetIntNumber());
+  fEveTask -> DrawADCTask(fCurrentRow -> GetIntNumber(), fCurrentLayer -> GetIntNumber());
 }
 
 void STEveManager::UpdateWindowTb()
@@ -651,7 +637,10 @@ STEveManager::EveMode(TString mode)
 {
   fEveMode.ToLower();
 
-  if (mode == "all") {
+  if (fEveMode == "all"){
+    return kTRUE;
+  }
+  else if (mode == "all") {
     if ( ((fEveMode.Index("3d") >= 0) && (fEveMode.Index("ov") >= 0)) )
       return kTRUE;
     else 
@@ -665,4 +654,10 @@ STEveManager::EveMode(TString mode)
     return kTRUE;
 
   return kFALSE;
+}
+
+void 
+STEveManager::Exit()
+{
+  gApplication -> Terminate();
 }

@@ -47,6 +47,7 @@ class STRawEvent : public TNamed {
     STPad *GetPad(Int_t row, Int_t layer); 
 
     void SetHits(STEvent* event);
+    void ClearHits();
 
   private:
     Int_t fEventID;
@@ -54,7 +55,7 @@ class STRawEvent : public TNamed {
 
     Bool_t fIsGood;
 
-  ClassDef(STRawEvent, 3);
+  ClassDef(STRawEvent, 4);
 };
 
 #endif

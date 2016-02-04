@@ -58,7 +58,7 @@ class STEveDrawTask : public STEveTask
     virtual Int_t RnrEveObject(TString name, Int_t option);
     virtual Int_t IsSet(TString name, Int_t option);
 
-    virtual ~STEveDrawTask();
+    virtual ~STEveDrawTask() {};
 
     virtual InitStatus Init();
     virtual void Exec(Option_t* option);
@@ -151,9 +151,7 @@ class STEveDrawTask : public STEveTask
     TClonesArray* fRawEventArray        = NULL;
 
     /// Pad & Pulses
-    static const Int_t fNumPulseFunction = 10;
-    TF1 *fPulseFunction[fNumPulseFunction];
-    Double_t Pulse(Double_t *x, Double_t *par);
+    vector<TF1*> fPulseFunctionArray;
 
     TCanvas *fCvsPad   = NULL;
     TH1D    *fHistPad  = NULL;
