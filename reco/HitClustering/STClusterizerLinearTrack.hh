@@ -16,9 +16,10 @@ class STClusterizerLinearTrack : public STClusterizer
     ~STClusterizerLinearTrack();
 
     void AnalyzeTrack(TClonesArray* trackArray, STEvent* eventOut);
+    void AnalyzeSingleTrack(STLinearTrack *track, TClonesArray *clusterArray);
 
   private:
-    STHitCluster* NewCluster(STHit* hit);
+    STHitCluster* NewCluster(STHit* hit, TClonesArray *array);
 
     TClonesArray *fClusterArray;
 

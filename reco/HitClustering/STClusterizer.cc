@@ -1,5 +1,6 @@
 // SpiRITROOT classes
 #include "STClusterizer.hh"
+#include "STParReader.hh"
 
 // FairRoot classes
 #include "FairRuntimeDb.h"
@@ -13,28 +14,53 @@ STClusterizer::STClusterizer()
   fLogger = FairLogger::GetLogger();
 
   FairRun *run = FairRun::Instance();
-  if (!run)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "No analysis run!");
 
-  FairRuntimeDb *db = run -> GetRuntimeDb();
-  if (!db)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "No runtime database!");
+  if (run)
+  {
+    FairRuntimeDb *db = run -> GetRuntimeDb();
+    if (!db)
+      fLogger -> Fatal(MESSAGE_ORIGIN, "No runtime database!");
 
-  STDigiPar* par = (STDigiPar *) db -> getContainer("STDigiPar");
-  if (!par)
-    fLogger -> Fatal(MESSAGE_ORIGIN, "STDigiPar not found!!");
+    STDigiPar* par = (STDigiPar *) db -> getContainer("STDigiPar");
+    if (!par)
+      fLogger -> Fatal(MESSAGE_ORIGIN, "STDigiPar not found!!");
 
-  fPrimaryVertex = TVector3(0., -213.3, -35.2);
+    fPrimaryVertex = TVector3(0., -213.3, -35.2);
 
-  fPadPlaneX      = par -> GetPadPlaneX();
-  fPadSizeX       = par -> GetPadSizeX();
-  fPadSizeZ       = par -> GetPadSizeZ();
-  fPadRows        = par -> GetPadRows();
-  fPadLayers      = par -> GetPadLayers();
-  fNumTbs         = par -> GetWindowNumTbs();
-  fTBTime         = par -> GetTBTime();
-  fDriftVelocity  = par -> GetDriftVelocity();
-  fMaxDriftLength = par -> GetDriftLength();
+    fPadPlaneX      = par -> GetPadPlaneX();
+    fPadSizeX       = par -> GetPadSizeX();
+    fPadSizeZ       = par -> GetPadSizeZ();
+    fPadRows        = par -> GetPadRows();
+    fPadLayers      = par -> GetPadLayers();
+    fNumTbs         = par -> GetWindowNumTbs();
+    fTBTime         = par -> GetTBTime();
+    fDriftVelocity  = par -> GetDriftVelocity();
+    fMaxDriftLength = par -> GetDriftLength();
+  }
+
+  else
+  {
+    TString workDir = gSystem -> Getenv("VMCWORKDIR");
+    TString parameterFile = workDir + "/parameters/ST.parameters.par";
+    STParReader *fParReader = new STParReader(parameterFile);
+
+    fPadPlaneX      = fParReader -> GetDoublePar("PadPlaneX");
+    fPadSizeX       = fParReader -> GetDoublePar("PadSizeX");
+    fPadSizeZ       = fParReader -> GetDoublePar("PadSizeZ");
+    fPadRows        = fParReader -> GetIntPar("PadRows");
+    fPadLayers      = fParReader -> GetIntPar("PadLayers");
+    fNumTbs         = fParReader -> GetIntPar("NumTbs");
+    fDriftVelocity  = fParReader -> GetDoublePar("DriftVelocity");
+    fMaxDriftLength = fParReader -> GetDoublePar("DriftLength");
+
+    Int_t samplingRate = fParReader -> GetIntPar("SamplingRate");
+    switch (samplingRate) {
+      case 25:  fTBTime = 40; break;
+      case 50:  fTBTime = 20; break;
+      case 100: fTBTime = 10; break;
+      default:  fTBTime = -1; break;
+    }
+  }
 
   fYTb = fTBTime * fDriftVelocity/100.;
 
