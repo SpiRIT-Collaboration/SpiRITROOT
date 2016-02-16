@@ -114,23 +114,17 @@ class STEveManager : public TEveEventManager
     void Exit();
 
   private : // Frame
-    TCanvas* fCvsPadPlane;  //!< Canvas for pad plane
-    TCanvas* fCvsPadADC;    //!< Canvas for adc distribution of the pad
+    TCanvas* fCvsPadPlane = NULL;  //!< Canvas for pad plane
+    TCanvas* fCvsPadADC   = NULL;  //!< Canvas for adc distribution of the pad
 
   private : // Button
-    TGNumberEntry *fCurrentEventNumberEntry;
-    TGNumberEntry *fCurrentWindowTbStart;
-    TGNumberEntry *fCurrentWindowTbEnd;
-
-    TGNumberEntry *fCurrentRiemannSet;
-    TGNumberEntry *fTempRiemannSet;
-
-    TGNumberEntry *fCurrentLinearSet;
-    TGNumberEntry *fTempLinearSet;
-
-    TGNumberEntry *fCurrentRow;
-    TGNumberEntry *fCurrentLayer;
-    TGLabel       *fEventTime;
+    TGNumberEntry *fCurrentEventNumberEntry = NULL;
+    TGNumberEntry *fCurrentWindowTbStart    = NULL;
+    TGNumberEntry *fCurrentWindowTbEnd      = NULL;
+    TGNumberEntry *fCurrentRiemannSet       = NULL;
+    TGNumberEntry *fCurrentLinearSet        = NULL;
+    TGNumberEntry *fCurrentRow              = NULL;
+    TGNumberEntry *fCurrentLayer            = NULL;
 
     TGCheckButton *fButtonOnOffMC;
     TGCheckButton *fButtonOnOffDigi;
@@ -168,7 +162,7 @@ class STEveManager : public TEveEventManager
     Int_t fWindowTbStartDefault;
     Int_t fWindowTbEndDefault;
 
-    TEveViewer* fViewer3D;
+    TEveViewer* fViewer3D = NULL;
 
 
     static STEveManager *fInstance;

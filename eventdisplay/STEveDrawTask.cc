@@ -50,7 +50,7 @@ STEveDrawTask::STEveDrawTask()
   fRnrSelf [kHitBox] = kFALSE;
 
   fEveStyle[kCluster] = kFullCircle;
-  fEveSize [kCluster] = 1.;
+  fEveSize [kCluster] = 1.5;
   fEveColor[kCluster] = kBlack;
   fRnrSelf [kCluster] = kFALSE;
   fRnrSelf [kClusterBox] = kFALSE;
@@ -112,6 +112,7 @@ STEveDrawTask::Init()
   fDriftedElectronArray = (TClonesArray*) ioMan -> GetObject("STDriftedElectron");
   fEventArray           = (TClonesArray*) ioMan -> GetObject("STEvent");
   fRiemannTrackArray    = (TClonesArray*) ioMan -> GetObject("STRiemannTrack");
+  //fLinearTrackArray     = (TClonesArray*) ioMan -> GetObject("STCurveTrack");
   fLinearTrackArray     = (TClonesArray*) ioMan -> GetObject("STLinearTrack");
   fRawEventArray        = (TClonesArray*) ioMan -> GetObject("STRawEvent");
 
@@ -170,7 +171,7 @@ STEveDrawTask::Exec(Option_t* option)
   gEve -> Redraw3D();
 
   UpdateCvsPadPlane();
-  DrawPad(fCurrentRow, fCurrentLayer);
+  DrawPad(fCurrentRow, fCurrentLayer, kTRUE);
 }
 
 void 
@@ -925,7 +926,7 @@ STEveDrawTask::DrawPadByPosition(Double_t x, Double_t z)
 }
 
 void
-STEveDrawTask::DrawPad(Int_t row, Int_t layer)
+STEveDrawTask::DrawPad(Int_t row, Int_t layer, Bool_t forceUpdate)
 {
   if (!fRawEventArray) return;
   if (fCvsPad == NULL)
@@ -933,9 +934,7 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer)
 
   Long64_t currentEvent = fEveManager -> GetCurrentEventEntry();
 
-  if (fCurrentEvent == currentEvent && 
-                row == fCurrentRow  && 
-              layer == fCurrentLayer)
+  if ((fCurrentEvent == currentEvent && row == fCurrentRow  && layer == fCurrentLayer) && !forceUpdate)
     return;
 
   fCurrentRow = row;

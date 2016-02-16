@@ -82,7 +82,7 @@ class STEveDrawTask : public STEveTask
 
     static void ClickSelectedPadPlane();
     void DrawPadByPosition(Double_t x, Double_t z);
-    void DrawPad(Int_t row, Int_t layer);
+    void DrawPad(Int_t row, Int_t layer, Bool_t forceUpdate = kFALSE);
     void UpdatePadRange();
 
     Int_t GetWindowTbStart();

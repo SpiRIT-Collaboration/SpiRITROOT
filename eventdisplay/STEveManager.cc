@@ -45,20 +45,6 @@ STEveManager::STEveManager()
 
   fCurrentEventEntry = -1;
 
-  fCvsPadPlane = NULL;
-  fCvsPadADC   = NULL;
-
-  fCurrentEventNumberEntry = NULL;
-  fCurrentWindowTbStart    = NULL;
-  fCurrentWindowTbEnd      = NULL;
-  fCurrentRiemannSet       = NULL;
-  fTempRiemannSet          = NULL;
-  fCurrentLinearSet        = NULL;
-  fTempLinearSet           = NULL;
-  fCurrentRow              = NULL;
-  fCurrentLayer            = NULL;
-  fEventTime               = NULL;
-
   fGeomFileName = "";
   fTransparency = 80;
   fClearColor   = kWhite;
@@ -170,7 +156,7 @@ STEveManager::BuildFrame()
   Int_t dummy;
   UInt_t width, height;
   UInt_t widthMax  = 1400;
-  UInt_t heightMax = 800;
+  UInt_t heightMax = 850;
   Double_t ratio = (Double_t)widthMax/heightMax;
 
   gVirtualX -> GetWindowSize(gClient -> GetRoot() -> GetId(), 
@@ -184,7 +170,7 @@ STEveManager::BuildFrame()
   else 
     height = (Int_t)(width/ratio);
 
-  gEve -> GetMainWindow() -> Resize(width,height);
+  gEve -> GetMainWindow() -> Resize(width, height);
 
   if (EveMode("ov"))
   {
@@ -201,7 +187,8 @@ STEveManager::BuildFrame()
     TEveWindowFrame* framePadPlane = NULL;
     TEveWindowFrame* framePadADC   = NULL;
 
-    gEve -> GetBrowser() -> SetTabTitle("Full 3D", TRootBrowser::kRight);
+    if (EveMode("all"))
+      gEve -> GetBrowser() -> SetTabTitle("Full 3D", TRootBrowser::kRight);
 
     slotOverview = TEveWindow::CreateWindowInTab(gEve -> GetBrowser() -> GetTabRight());
     slotOverview -> SetShowTitleBar(kFALSE);
@@ -236,6 +223,9 @@ STEveManager::BuildFrame()
     framePadADC = slotPadADC -> MakeFrame(ecvsPadADC);
     framePadADC -> SetElementName("pad");
     fCvsPadADC = ecvsPadADC -> GetCanvas();
+
+    if (EveMode("all"))
+      gEve -> GetBrowser() -> GetTabRight() -> SetTab(1);
   }
 }
 
@@ -359,7 +349,7 @@ STEveManager::BuildMenu()
     fButtonOnOffCluster = new TGCheckButton(frameClusterButtons, "Cluster");
     fButtonOnOffCluster -> Connect("Clicked()", "STEveManager", this, "ClickOnOffCluster()");
     frameClusterButtons -> AddFrame(fButtonOnOffCluster, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 3,3,2,2));
-    if (fEveTask -> IsSetTask("cluser") != 1)     
+    if (fEveTask -> IsSetTask("cluster") != 1)     
       fButtonOnOffCluster -> SetState(kButtonDisabled);
     else if (fEveTask -> RnrEveObjectTask("Cluster", 0) == 1)
       fButtonOnOffCluster -> SetState(kButtonDown);
@@ -429,6 +419,9 @@ STEveManager::BuildMenu()
                                       TGNumberFormat::kNELLimitMinMax, 0, 111);
     framePadRowLayer -> AddFrame(labelLayer, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 2, 1, 1));
     framePadRowLayer -> AddFrame(fCurrentLayer, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
+
+    fCurrentRow   -> Connect("ValueSet(Long_t)", "STEveManager", this, "SelectPad()");
+    fCurrentLayer -> Connect("ValueSet(Long_t)", "STEveManager", this, "SelectPad()");
 
     TGTextButton* buttonUpdatePad = new TGTextButton(framePad, "Update");
     buttonUpdatePad -> Connect("Clicked()", "STEveManager", this, "SelectPad()");
@@ -529,17 +522,25 @@ STEveManager::Build3DViewer()
 {
   fLogger -> Debug(MESSAGE_ORIGIN, "Building viewer.");
 
-  TGLViewer *dfViewer = gEve -> GetDefaultGLViewer();
+  if (fViewer3D == NULL)
+    fViewer3D = gEve -> GetDefaultViewer();
 
-  if (dfViewer == NULL)
-    dfViewer = ((TEveViewer*) gEve -> GetDefaultViewer()) -> GetGLViewer();
+  TGLViewer *dfViewer = fViewer3D -> GetGLViewer();
+  if (dfViewer) {
+    dfViewer -> SetClearColor(fClearColor);
+    dfViewer -> CurrentCamera().RotateRad(fHRotate, fVRotate);
+    dfViewer -> DoDraw(kFALSE);
+  }
 
-  if (dfViewer == NULL)
-    return;
-
-  dfViewer -> SetClearColor(fClearColor);
-  dfViewer -> CurrentCamera().RotateRad(fHRotate, fVRotate);
-  dfViewer -> DoDraw(kFALSE);
+  if (EveMode("all"))
+  {
+    TGLViewer *dfGLViewer = gEve -> GetDefaultGLViewer();
+    if (dfGLViewer) {
+      dfGLViewer -> SetClearColor(fClearColor);
+      dfGLViewer -> CurrentCamera().RotateRad(fHRotate, fVRotate);
+      dfGLViewer -> DoDraw(kFALSE);
+    }
+  }
 }
 
 void STEveManager::NextEventButton()  
@@ -637,7 +638,11 @@ STEveManager::EveMode(TString mode)
 {
   fEveMode.ToLower();
 
-  if (fEveMode == "all"){
+  if (mode == "sub" || mode == "sb") {
+    if (fEveMode.Index("sub") >= 0 || fEveMode.Index("sb") >=0 ) 
+      return kTRUE;
+  }
+  else if (fEveMode == "all"){
     return kTRUE;
   }
   else if (mode == "all") {
@@ -645,10 +650,6 @@ STEveManager::EveMode(TString mode)
       return kTRUE;
     else 
       return kFALSE;
-  }
-  if (mode == "sub" || mode == "sb") {
-    if (fEveMode.Index("sub") >= 0 || fEveMode.Index("sb") >=0 ) 
-      return kTRUE;
   }
   if (fEveMode.Index(mode) >= 0)
     return kTRUE;
