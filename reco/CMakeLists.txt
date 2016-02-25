@@ -21,6 +21,7 @@ ${CMAKE_SOURCE_DIR}/reco/HoughTracking
 ${CMAKE_SOURCE_DIR}/reco/Genfit
 ${CMAKE_SOURCE_DIR}/reco/Tracking
 ${CMAKE_SOURCE_DIR}/reco/LinearTracking
+${CMAKE_SOURCE_DIR}/reco/CurveTracking
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -77,6 +78,7 @@ HitClustering/STClusterizer.cc
 HitClustering/STClusterizerScan.cc
 HitClustering/STClusterizerScan2.cc
 HitClustering/STClusterizerLinearTrack.cc
+HitClustering/STClusterizerCurveTrack.cc
 
 SystemManipulator/STSystemManipulator.cc
 
@@ -115,6 +117,14 @@ STGenfitTask.cc
 STSource.cc
 
 STLinearTrackingTask.cc
+
+CurveTracking/STCurveTrackFinder.cc
+CurveTracking/STCurveTrackFitter.cc
+CurveTracking/STCorrCurveTHProx.cc
+CurveTracking/STCorrCurveTHPerp.cc
+CurveTracking/STCircleFitter.cc
+
+STCurveTrackingTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

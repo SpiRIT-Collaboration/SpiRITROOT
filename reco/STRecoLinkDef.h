@@ -45,6 +45,7 @@
 #pragma link C++ class STClusterizerScan+;
 #pragma link C++ class STClusterizerScan2+;
 #pragma link C++ class STClusterizerLinearTrack+;
+#pragma link C++ class STClusterizerCurveTrack+;
 
 #pragma link C++ class STSMTask+;
 #pragma link C++ class STSystemManipulator+;
@@ -60,6 +61,12 @@
 #pragma link C++ class STLinearTrackFitter+;
 #pragma link C++ class STLinearTrackingTask+;
 #pragma link C++ class ODRFitter+;
+
+#pragma link C++ class STCurveTrackingConf+;
+#pragma link C++ class STCurveTrackingTask+;
+#pragma link C++ class STCurveTrackFinder+;
+#pragma link C++ class STCurveTrackFitter+;
+#pragma link C++ class STCircleFitter+;
 
 #pragma link C++ class STHoughSpaceLine+;
 #pragma link C++ class STHoughSpaceHelix+;
