@@ -14,6 +14,7 @@
 // ST header
 #include "STElectronicsTask.hh"
 #include "STProcessManager.hh"
+#include "STPulse.hh"
 
 // C/C++ class headers
 #include <iostream>
@@ -73,12 +74,13 @@ STElectronicsTask::Init()
   TString pulserFileName = workDir + "/parameters/Pulser.dat";
 
   fNBinPulser = 0;
-  Double_t val;
+  STPulse *stpulse = new STPulse();
   ifstream pulserFile(pulserFileName.Data());
 
   Double_t coulombToEV = 6.241e18; 
   Double_t pulserConstant = fADCConstant*(fADCMaxUseable-fPedestalMean)/(fADCDynamicRange*coulombToEV);
-  while(pulserFile >> val) fPulser[fNBinPulser++] = pulserConstant*val;
+  for(Int_t i=0; i<100; i++) 
+    fPulser[fNBinPulser++] = pulserConstant * stpulse -> Pulse(i, 1, 0);
 
   return kSUCCESS;
 }

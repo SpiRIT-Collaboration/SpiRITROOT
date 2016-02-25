@@ -9,6 +9,8 @@ ${CMAKE_SOURCE_DIR}/par
 ${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/digi
 ${CMAKE_SOURCE_DIR}/util
+${CMAKE_SOURCE_DIR}/reco
+${CMAKE_SOURCE_DIR}/reco/PulseShapeAnalyzer
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -17,6 +19,7 @@ include_directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
 
 set(LINK_DIRECTORIES
 ${ROOT_LIBRARY_DIR}
+${GENFIT2_LIBRARY_DIR}
 ${FAIRROOT_LIBRARY_DIR}
 ) 
 
@@ -42,6 +45,7 @@ Set(DEPENDENCIES
   STPar
   STFormat
   STUtil
+  STReco
 )
 
 GENERATE_LIBRARY()

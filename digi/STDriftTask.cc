@@ -166,7 +166,7 @@ STDriftTask::Exec(Option_t* option)
           STDriftedElectron(fMCPoint->GetX()*10, dx,
                             fMCPoint->GetZ()*10, dz, 
                             fMCPoint->GetY()*10,
-                            fMCPoint->GetTime(), tDrift, dt,
+                            fMCPoint->GetTime(), tDrift, abs(dt),
                             iWire, zWire,
                             gain);
 
