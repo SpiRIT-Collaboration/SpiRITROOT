@@ -60,6 +60,7 @@ class STPSA
     Int_t fTBTime;            ///< time duration of a time bucket in ns
     Double_t fDriftVelocity;  ///< drift velocity of electron in cm/us
     Double_t fMaxDriftLength; ///< maximum drift length in mm
+    Double_t fTbToYConv;      ///< conversion factor from time bucket to y position
 
     Double_t fThresholdOneTbStep; ///< threshold of ADC value
     Double_t fThreshold;          ///< threshold of ADC value

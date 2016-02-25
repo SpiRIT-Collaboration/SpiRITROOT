@@ -15,16 +15,13 @@ using namespace std;
 //#define DEBUG
 //#define DEBUG_PEAKFINDING
 //#define DEBUG_FIT
-//#define DEBUG_NAN
+
+#define NEW_ITERATION_METHOD
 
 ClassImp(STPSAFastFit)
 
 STPSAFastFit::STPSAFastFit()
 {
-  fNDFTbs = 12;
-  fIterMax = 40;
-  fNumTbsCorrection = 50;
-
   fThreadHitArray = new TClonesArray*[NUMTHREAD];
   for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++)
     fThreadHitArray[iThread] = new TClonesArray("STHit", 100);
@@ -32,6 +29,9 @@ STPSAFastFit::STPSAFastFit()
   fPadReady = kFALSE;
   fPadTaken = kFALSE;
   fEnd = kFALSE;
+  
+  if (fWindowStartTb == 0)
+    fWindowStartTb = 1;
 }
 
 void
@@ -150,217 +150,302 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
   Double_t adc[512] = {0};
   memcpy(&adc, adcSource, sizeof(Double_t)*fNumTbs);
 
-  Int_t row = pad -> GetRow();
+  // Pad information
+  Int_t row   = pad -> GetRow();
   Int_t layer = pad -> GetLayer();
-  Double_t xPos = (row + 0.5) * fPadSizeX - fPadPlaneX/2.;
+  Double_t xPos = (row   + 0.5) * fPadSizeX - fPadPlaneX/2.;
   Double_t zPos = (layer + 0.5) * fPadSizeZ;
 
-  Int_t countAscending = 0;
+  // Found peak information
+  Int_t tbCurrent = fWindowStartTb;
+  Int_t tbStart;
+
+  // Fitted hit information
+  Double_t yHit;
+  Double_t tbHit;
+  Double_t amplitude;
+  Double_t squareSum;
+     Int_t ndf = fNDFTbs;
+
+  // Previous hit information
+  Double_t tbHitPre = 0;
+  Double_t amplitudePre = 0;
+
+  while (FindPeak(adc, tbCurrent, tbStart)) 
+  {
+    if(FitPulse(adc, tbStart, tbCurrent, tbHit, amplitude, squareSum, ndf) == kFALSE)
+      continue;
+
+#ifdef DEBUG_PEAKFINDING
+    LOG(INFO) 
+      << "Fitted Pulse,"
+      << " tb:" << tbStart
+      << " tbPeak:" << tbCurrent
+      << " tbHit:" << tbHit
+      << " amp:" << amplitude 
+      << " squareSum:" << squareSum 
+      << FairLogger::endl;
+#endif
+
+    if (TestPulse(adc, tbHitPre, amplitudePre, tbHit, amplitude)) 
+    {
+#ifdef DEBUG_PEAKFINDING
+      LOG(INFO) 
+        << "Found hit!"
+        << FairLogger::endl;
+#endif
+      yHit = tbHit * fTbToYConv;
+
+      STHit *hit = (STHit *) hitArray -> ConstructedAt(hitNum);
+      hit -> Clear();
+      if (amplitude > 3500) amplitude = 3500;
+      hit -> SetHit(hitNum, xPos, yHit, zPos, amplitude);
+      hit -> SetRow(row);
+      hit -> SetLayer(layer);
+      hit -> SetTb(tbHit);
+      hit -> SetChi2(squareSum);
+      hit -> SetNDF(ndf);
+      hitNum++;
+
+#ifdef DEBUG_PEAKFINDING
+      LOG(INFO) 
+        << " amp:" << amplitude 
+        << " tb:" << tbHit << "~" << tbHit + ndf << " (y=" << yHit << ")"
+        << " squareSum:" << squareSum 
+        << FairLogger::endl;
+#endif
+
+      tbHitPre = tbHit;
+      amplitudePre = amplitude;
+
+      tbCurrent = Int_t(tbHit) + 9;
+    }
+  }
+}
+
+Bool_t
+STPSAFastFit::FindPeak(Double_t *adc, 
+                          Int_t &tbCurrent, 
+                          Int_t &tbStart)
+{
+  Int_t countAscending      = 0;
   Int_t countAscendingBelow = 0;
 
-  Double_t amplitudePrePeak = 0;
-  Double_t tbStartPrePeak = 0;
-
-  for (Int_t iTb = fWindowStartTb; iTb < fWindowEndTb; iTb++)
+  for (; tbCurrent < fWindowEndTb; tbCurrent++)
   {
-    Double_t diff = adc[iTb] - adc[iTb - 1];
+    Double_t diff = adc[tbCurrent] - adc[tbCurrent - 1];
 
-    if (diff > fThresholdOneTbStep) {
-      if (adc[iTb] > fThreshold)
-        countAscending++;
-      else
-        countAscendingBelow++;
+    // If adc difference of step is above threshold
+    if (diff > fThresholdOneTbStep) 
+    {
+      if (adc[tbCurrent] > fThreshold) countAscending++;
+      else countAscendingBelow++;
     }
-    else {
-      if (countAscending < 5 || ((countAscendingBelow >= countAscending) && (-adc[iTb - 1 - countAscending - countAscendingBelow] > adc[iTb - 1]))) {
+    else 
+    {
+      // If acended step is below 5, 
+      // or negative pulse is bigger than the found pulse, continue
+      if (countAscending < 5 || ((countAscendingBelow >= countAscending) && (-adc[tbCurrent - 1 - countAscending - countAscendingBelow] > adc[tbCurrent - 1]))) 
+      {
         countAscending = 0;
         countAscendingBelow = 0;
         continue;
       }
 
-      Int_t tbPeak = iTb - 1;
-      Int_t tbStart = tbPeak - countAscending;
+      tbCurrent -= 1;
+      if (adc[tbCurrent] < fThreshold)
+        continue;
 
-#ifdef DEBUG_PEAKFINDING
-      LOG(INFO) << "Found peak " << tbPeak 
-                << ", starting from " << tbStart
-                << ", ascended " << countAscending
-                << ", ascended-below " << countAscendingBelow
-                << ", peak " << adc[iTb - 1]
-                << ", below-peak " << adc[iTb - 1 - countAscendingBelow] << FairLogger::endl;
-#endif
-
-      while (adc[tbStart] < adc[tbPeak] * 0.05){
+      // Peak is found!
+      tbStart = tbCurrent - countAscending;
+      while (adc[tbStart] < adc[tbCurrent] * 0.05)
         tbStart++;
-      }
-
-      Double_t tbStartPulse = tbStart + 0.5;
-
-      Double_t amplitude = 0;
-      Double_t chi2 = 0;
-      Int_t ndf = fNDFTbs;
-
-      Double_t chi2Temp = 0;
-      Double_t amplitudeTemp = 0;
-
-      Int_t countIteration = 0;
-
-      if (adc[tbPeak] > 3500) 
-      {
-        ndf = tbPeak - tbStart + 1;
-        FitPulse(adc, tbStartPulse, ndf, chi2, amplitude);
-#ifdef DEBUG_PEAKFINDING
-        LOG(INFO) << "Found saturated hit! (" << hitNum << ")"
-                  << " amp:" << amplitude 
-                  << " tb:" << tbStartPulse << "~" << tbStartPulse + ndf 
-                  << " chi2:" << chi2 << FairLogger::endl;
-#endif
-      }
-      else
-      {
-        Bool_t increasingTbFlag = kFALSE;
-
-        FitPulse(adc, tbStartPulse,       ndf, chi2,     amplitude);
-        FitPulse(adc, tbStartPulse + 0.1, ndf, chi2Temp, amplitudeTemp);
-
-        if (chi2Temp < chi2) {
-          chi2 = chi2Temp;
-          tbStartPulse = tbStartPulse + 0.1;
-          amplitude = amplitudeTemp;
-          increasingTbFlag = kTRUE;
-        }
-
-        countIteration = 2;
-
-        if (increasingTbFlag == kTRUE) 
-        {
-          while (1) 
-          {
-            if (countIteration > fIterMax)
-              break;
-
-            countIteration++;
-
-            FitPulse(adc, tbStartPulse + 0.1, ndf, chi2Temp, amplitudeTemp);
-            if (chi2Temp < chi2) {
-              chi2 = chi2Temp;
-              tbStartPulse += 0.1;
-              amplitude = amplitudeTemp;
-            }
-            else 
-              break;
-          }
-        }
-
-        else 
-        {
-          while (1)
-          {
-            if (countIteration > fIterMax)
-              break;
-
-            countIteration++;
-
-            FitPulse(adc, tbStartPulse - 0.1, ndf, chi2Temp, amplitudeTemp);
-            if (chi2Temp < chi2) {
-              chi2 = chi2Temp;
-              tbStartPulse -= 0.1;
-              amplitude = amplitudeTemp;
-            }
-            else 
-              break;
-          }
-        }
 
 #ifdef DEBUG_PEAKFINDING
-        LOG(INFO) << "Test hit! (" << hitNum << ")"
-                  << " amp:" << amplitude 
-                  << " tb:" << tbStartPulse << "~" << tbStartPulse + ndf 
-                  << " chi2:" << chi2 
-                  << " iter:" << countIteration << FairLogger::endl;
-#endif
-        if (amplitude < fThreshold) {
-          countAscending = 0;
-          countAscendingBelow = 0;
-          iTb = tbPeak;
-#ifdef DEBUG_PEAKFINDING
-          LOG(INFO) << "Amplitude smaller than threshold, "
-                    << amplitude << " < " << fThreshold
-                    << FairLogger::endl;
-          LOG(INFO) << "Restart peak finding from " << iTb << FairLogger::endl;
-#endif
-          continue;
-        }
-
-        if (amplitude < Pulse(tbStartPulse + 9, amplitudePrePeak, tbStartPrePeak) / 2.5) {
-          countAscending = 0;
-          countAscendingBelow = 0;
-          iTb = tbPeak;
-#ifdef DEBUG_PEAKFINDING
-          LOG(INFO) << "Previous peak shadows current peak, "
-                    << amplitude << " < " 
-                    << Pulse(tbStartPulse + 9, amplitudePrePeak, tbStartPrePeak) / 2.5 << FairLogger::endl;
-          LOG(INFO) << "Restart peak finding from " << iTb << FairLogger::endl;
+      LOG(INFO) 
+        << "Found peak " << tbCurrent 
+        << ", starting from " << tbStart
+        << ", ascended " << countAscending
+        << ", ascended-below " << countAscendingBelow
+        << ", peak " << adc[tbCurrent]
+        << ", below-peak " << adc[tbCurrent - countAscendingBelow] 
+        << FairLogger::endl;
 #endif
 
-          for (Int_t iTbPulse = -1; iTbPulse < fNumTbsCorrection; iTbPulse++) {
-            Int_t tb = Int_t(tbStartPulse) + iTbPulse;
-            adc[tb] -= Pulse(tb, amplitude, tbStartPulse);
-          }
-
-          continue;
-        }
-
-        for (Int_t iTbPulse = -1; iTbPulse < fNumTbsCorrection; iTbPulse++) {
-          Int_t tb = Int_t(tbStartPulse) + iTbPulse;
-          adc[tb] -= Pulse(tb, amplitude, tbStartPulse);
-        }
-#ifdef DEBUG_PEAKFINDING
-        LOG(INFO) << "Found hit! (" << hitNum << ")"
-                  << " amp:" << amplitude 
-                  << " tb:" << tbStartPulse << "~" << tbStartPulse + ndf 
-                  << " chi2:" << chi2 
-                  << " iter:" << countIteration << FairLogger::endl;
-#endif
-      }
-
-      Double_t yHit = -tbStartPulse * fTBTime * fDriftVelocity / 100.;
-
-#ifdef DEBUG_NAN
-      if ((xPos == xPos) == kFALSE) LOG(INFO) << "xPos is NAN! " << FairLogger::endl;
-      if ((yHit == yHit) == kFALSE) LOG(INFO) << "yHit is NAN! " << FairLogger::endl;
-      if ((zPos == zPos) == kFALSE) LOG(INFO) << "zPos is NAN! " << FairLogger::endl;
-      if ((amplitude == amplitude) == kFALSE) LOG(INFO) << "amplitude is NAN! " << FairLogger::endl;
-      if ((tbStartPulse == tbStartPulse) == kFALSE) LOG(INFO) << "tbStartPulse is NAN! " << FairLogger::endl;
-      if ((chi2 == chi2) == kFALSE) LOG(INFO) << "chi2 is NAN! " << FairLogger::endl;
-#endif
-
-      STHit *hit = (STHit *) hitArray -> ConstructedAt(hitNum);
-      hit -> Clear();
-      hit -> SetHit(hitNum, xPos, yHit, zPos, amplitude);
-      hit -> SetRow(row);
-      hit -> SetLayer(layer);
-      hit -> SetTb(tbStartPulse);
-      hit -> SetChi2(chi2);
-      hit -> SetNDF(ndf);
-
-      amplitudePrePeak = amplitude;
-      tbStartPrePeak = tbStartPulse;
-
-      hitNum++;
-      countAscending = 0;
-      countAscendingBelow = 0;
-      iTb = Int_t(tbStartPulse) + 9;
-
-#ifdef DEBUG_PEAKFINDING
-      LOG(INFO) << "Restart peak finding from " << iTb << FairLogger::endl;
-#endif
+      return kTRUE;
     }
   }
+
+  return kFALSE;
 }
 
+Bool_t
+STPSAFastFit::FitPulse(Double_t *adc, 
+                          Int_t tbStart,
+                          Int_t tbPeak,
+                       Double_t &tbHit, 
+                       Double_t &amplitude,
+                       Double_t &squareSum,
+                          Int_t &ndf)
+#ifdef NEW_ITERATION_METHOD
+{
+  Double_t adcPeak = adc[tbPeak];
+
+  if (adcPeak > 3500) // if peak value is larger than 3500(mostly saturated)
+  {
+    ndf = tbPeak - tbStart + 1;
+    LSFitPulse(adc, tbHit, ndf, squareSum, amplitude);
+
+    return kTRUE;
+  }
+
+  Double_t alpha   = fAlpha   / (adcPeak * adcPeak); // Weight of time-bucket step
+  Double_t betaCut = fBetaCut * (adcPeak * adcPeak); // Effective cut for beta
+
+  Double_t lsPre; // Least-squares of previous fit
+  Double_t lsCur; // Least-squares of current fit
+
+  Double_t beta = 0;    // -(lsCur-lsPre)/(tbCur-tbPre)/ndf.
+  Double_t dTb = - 0.1; // Time-bucket step to next fit
+
+  Double_t tbPre = tbStart + 1; // Pulse starting time-bucket of previous fit
+  Double_t tbCur = tbPre + dTb; // Pulse starting time-bucket of current fit
+
+  LSFitPulse(adc, tbPre, ndf, lsPre, amplitude);
+  LSFitPulse(adc, tbCur, ndf, lsCur, amplitude);
+
+  beta = -(lsCur - lsPre) / (tbCur - tbPre) / ndf;
+
+  lsPre = lsCur;
+  tbPre = tbCur;
+
+  Int_t numIteration = 1;
+  Bool_t doubleCheckFlag = kFALSE; // Checking flag to apply cut twice in a row
+
+  while(1)
+  {
+    dTb = alpha * beta;
+    if (dTb > 1) dTb = 1;
+    if (dTb < -1) dTb = -1;
+
+    tbCur = tbPre + dTb;
+    if (tbCur < 0 || tbCur > 511)
+      return kFALSE;
+
+    LSFitPulse(adc, tbCur, ndf, lsCur, amplitude);
+    beta = -(lsCur - lsPre) / (tbCur - tbPre) / ndf;
+
+    numIteration++;
+
+    if (abs(beta) < betaCut)
+    {
+      if (doubleCheckFlag == kTRUE)
+        break;
+      else
+        doubleCheckFlag = kTRUE;
+    }
+    else
+      doubleCheckFlag = kFALSE;
+
+    if (numIteration >= fIterMax)
+      break;
+
+    lsPre = lsCur;
+    tbPre = tbCur;
+  }
+
+  if (beta > 0) {
+    tbHit = tbPre;
+    squareSum = lsPre;
+  }
+  else {
+    tbHit = tbCur;
+    squareSum = lsCur;
+  }
+
+  return kTRUE;
+}
+#endif
+#ifndef NEW_ITERATION_METHOD
+{
+  tbHit = tbStart + 0.5;
+
+  ndf = fNDFTbs;
+  squareSum = 0;
+  amplitude = 0;
+  Double_t squareSum2 = 0;
+  Double_t amplitude2 = 0;
+
+  Int_t countIteration = 0;
+
+  // if peak value is larger than 3500(mostly saturated)
+  if (adc[tbPeak] > 3500) 
+  {
+    ndf = tbPeak - tbStart + 1;
+    LSFitPulse(adc, tbHit, ndf, squareSum, amplitude);
+
+    return kTRUE;
+  }
+
+  Bool_t increasingTbFlag = kFALSE;
+
+  LSFitPulse(adc, tbHit,       ndf, squareSum,  amplitude);
+  LSFitPulse(adc, tbHit + 0.1, ndf, squareSum2, amplitude2);
+
+  if (squareSum2 < squareSum) {
+    squareSum = squareSum2;
+    tbHit = tbHit + 0.1;
+    amplitude = amplitude2;
+    increasingTbFlag = kTRUE;
+  }
+
+  countIteration = 2;
+
+  if (increasingTbFlag == kTRUE) 
+  {
+    while (1) 
+    {
+      if (countIteration > fIterMax)
+        break;
+
+      countIteration++;
+
+      LSFitPulse(adc, tbHit + 0.1, ndf, squareSum2, amplitude2);
+      if (squareSum2 < squareSum) {
+        squareSum = squareSum2;
+        tbHit += 0.1;
+        amplitude = amplitude2;
+      }
+      else 
+        break;
+    }
+  }
+  else 
+  {
+    while (1)
+    {
+      if (countIteration > fIterMax)
+        break;
+
+      countIteration++;
+
+      LSFitPulse(adc, tbHit - 0.1, ndf, squareSum2, amplitude2);
+      if (squareSum2 < squareSum) {
+        squareSum = squareSum2;
+        tbHit -= 0.1;
+        amplitude = amplitude2;
+      }
+      else 
+        break;
+    }
+  }
+
+  return kTRUE;
+}
+#endif
+
 void 
-STPSAFastFit::FitPulse(Double_t *buffer, Double_t tbStart, Int_t ndf, Double_t &chi2, Double_t &amplitude)
+STPSAFastFit::LSFitPulse(Double_t *buffer, Double_t tbStart, Int_t ndf, Double_t &chi2, Double_t &amplitude)
 {
   Double_t refy = 0;
   Double_t ref2 = 0;
@@ -401,4 +486,48 @@ STPSAFastFit::FitPulse(Double_t *buffer, Double_t tbStart, Int_t ndf, Double_t &
             << " chi2:" << chi2 
             << " amp:" << amplitude << FairLogger::endl;
 #endif
+}
+
+Bool_t
+STPSAFastFit::TestPulse(Double_t *adc, 
+                        Double_t tbHitPre,
+                        Double_t amplitudePre, 
+                        Double_t tbHit, 
+                        Double_t amplitude)
+{
+  if (amplitude < fThreshold) 
+  {
+#ifdef DEBUG_PEAKFINDING
+    LOG(INFO) 
+      << "Amplitude smaller than threshold, "
+      << amplitude << " < " << fThreshold
+      << FairLogger::endl;
+#endif
+
+    return kFALSE;
+  }
+
+  if (amplitude < Pulse(tbHit + 9, amplitudePre, tbHitPre) / 2.5) 
+  {
+#ifdef DEBUG_PEAKFINDING
+    LOG(INFO) 
+      << "Previous peak shadows current peak, "
+      << amplitude << " < " 
+      << Pulse(tbHit + 9, amplitudePre, tbHitPre) / 2.5 << FairLogger::endl;
+#endif
+
+    for (Int_t iTbPulse = -1; iTbPulse < fNumTbsCorrection; iTbPulse++) {
+      Int_t tb = Int_t(tbHit) + iTbPulse;
+      adc[tb] -= Pulse(tb, amplitude, tbHit);
+    }
+
+    return kFALSE;
+  }
+
+  for (Int_t iTbPulse = -1; iTbPulse < fNumTbsCorrection; iTbPulse++) {
+    Int_t tb = Int_t(tbHit) + iTbPulse;
+    adc[tb] -= Pulse(tb, amplitude, tbHit);
+  }
+
+  return kTRUE;
 }

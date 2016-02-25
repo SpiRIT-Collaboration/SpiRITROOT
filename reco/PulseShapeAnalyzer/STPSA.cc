@@ -74,10 +74,19 @@ STPSA::STPSA()
     fWindowStartTb  = fParReader -> GetIntPar("WindowStartTb");
     fDriftVelocity  = fParReader -> GetDoublePar("DriftVelocity");
     fMaxDriftLength = fParReader -> GetDoublePar("DriftLength");
-    fTBTime         = 40;
+
+    Int_t samplingRate = fParReader -> GetIntPar("SamplingRate");
+    switch (samplingRate) {
+      case 25:  fTBTime = 40; break;
+      case 50:  fTBTime = 20; break;
+      case 100: fTBTime = 10; break;
+      default:  fTBTime = -1; break;
+    }
   }
 
   fWindowEndTb = fWindowStartTb + fWindowNumTbs;
+
+  fTbToYConv = -fTBTime * fDriftVelocity / 100.;
 }
 
 STPSA::~STPSA()
@@ -125,7 +134,7 @@ STPSA::CalculateX(Double_t row)
 Double_t
 STPSA::CalculateY(Double_t peakIdx)
 {
-  return -peakIdx*fTBTime*fDriftVelocity/100.;
+  return peakIdx * fTbToYConv;
 }
 
 Double_t
