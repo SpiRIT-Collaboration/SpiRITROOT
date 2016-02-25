@@ -18,6 +18,7 @@
 
 // SpiRITROOT classes 
 #include "STRiemannTrack.hh"
+#include "STCurveTrack.hh"
 #include "STHit.hh"
 #include "STRiemannSort.hh"
 #include "STRiemannTrackFinder.hh"
@@ -143,10 +144,12 @@ class STRiemannTrackingTask : public FairTask
     TClonesArray *fMvdArray;
     TClonesArray *fRiemannTrackArray;
     TClonesArray *fRiemannHitArray;
+    TClonesArray *fPreTrackArray;
 
     STDigiPar *fPar;
 
     std::vector<STHit *> *fHitBuffer;
+    std::vector<STHit *> *fHitBufferTemp;
     std::vector<STRiemannTrack *> fRiemannList;
 
     STRiemannTrackFinder *fTrackFinder;

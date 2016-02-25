@@ -9,6 +9,8 @@
  * @author  JungWoo Lee (Korea University) -- implementation for SpiRITROOT
  */
 
+#define PRETRACKING
+
 // SpiRITROOT classes
 #include "STRiemannTrackingTask.hh"
 #include "STRiemannHit.hh"
@@ -190,6 +192,10 @@ STRiemannTrackingTask::Init()
     return kERROR;
   }
 
+#ifdef PRETRACKING
+  fPreTrackArray = (TClonesArray *) ioMan -> GetObject("STCurveTrack");
+#endif
+
   fRiemannTrackArray = new TClonesArray("STRiemannTrack");
   ioMan -> Register("STRiemannTrack", "SPiRIT", fRiemannTrackArray, fIsPersistence);
 
@@ -232,6 +238,7 @@ STRiemannTrackingTask::Init()
   fTrackFinderCurl -> AddTTCorrelator(new STRiemannTTCorrelator(1.5*fTTPlaneCut, 20));
 
   fHitBuffer = new std::vector<STHit *>;
+  fHitBufferTemp = new std::vector<STHit *>;
 
   return kSUCCESS;
 }
@@ -288,13 +295,43 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   if (numHit == 0)
     fLogger -> Info(MESSAGE_ORIGIN, Form("Event #%d : Bad event. No hits to build tracks.", eventHCM -> GetEventID()));
 
+#ifndef PRETRACKING
   for (UInt_t iHit = 0; iHit < numHit; iHit++) {
     STHit *hit = (STHit *) eventHCM -> GetCluster(iHit); // TODO
     fHitBuffer -> push_back(hit);
   }
+#endif
 
   std::vector<STRiemannTrack *> riemannTemp; // temporary storage
   fLogger -> Debug(MESSAGE_ORIGIN, "Starting Pattern Reco...");
+
+
+
+  // Pre Build & Merge ----------------------------------------------------------------------------------
+#ifdef PRETRACKING
+  Int_t numPreTracks = fPreTrackArray -> GetEntriesFast();
+  for (Int_t iPreTrack = 0; iPreTrack < numPreTracks; iPreTrack++)
+  {
+    STCurveTrack *track = (STCurveTrack *) fPreTrackArray -> At(iPreTrack);
+
+    fHitBufferTemp -> clear();
+    Int_t numClusters = track -> GetNumClusters();
+    for (Int_t iCluster = 0; iCluster < numClusters; iCluster++) 
+    {
+      Int_t clusterID = track -> GetClusterID(iCluster);
+      STHit *hit = (STHit *) eventHCM -> GetCluster(clusterID);
+      fHitBufferTemp -> push_back(hit);
+    }
+
+    BuildTracks(fTrackFinder, fHitBufferTemp, &riemannTemp, STRiemannSort::kSortR, fMinHitsR, fMaxRMS);
+
+    Int_t numClustersLeft = fHitBufferTemp -> size();
+    for (Int_t iCluster = 0; iCluster < numClustersLeft; iCluster++) {
+      fHitBuffer -> push_back(fHitBufferTemp -> at(iCluster));
+    }
+  }
+#endif
+
 
 
 
@@ -304,6 +341,7 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   riemannTemp.clear();
 
   MergeTracks();
+  MergeCurlers();
 
 
 
@@ -317,6 +355,7 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   riemannTemp.clear();
 
   MergeTracks();
+  MergeCurlers();
 
 
 
@@ -332,10 +371,12 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   riemannTemp.clear();
 
   MergeTracks();
+  MergeCurlers();
 
 
 
   // Merge Curlers --------------------------------------------------------------------------------------
+  MergeTracks();
   MergeCurlers();
 
 
