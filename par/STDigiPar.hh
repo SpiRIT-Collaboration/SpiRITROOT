@@ -54,7 +54,7 @@ class STDigiPar : public FairParGenericSet
     Double_t GetCoefAttachment();
        Int_t GetGain();
 
-     TString GetLTParFileName();
+     TString GetTrackingParFileName();
      TString GetUAMapFileName();
      TString GetAGETMapFileName();
      TString GetGainCalibrationDataFileName();
@@ -96,8 +96,8 @@ class STDigiPar : public FairParGenericSet
 
      TString fUAMapFileName;
        Int_t fUAMapFile;
-     TString fLTParFileName;
-       Int_t fLTParFile;
+     TString fTrackingParFileName;
+       Int_t fTrackingParFile;
      TString fAGETMapFileName;
        Int_t fAGETMapFile;
      TString fGainCalibrationDataFileName;

@@ -4,17 +4,17 @@
 #====================================
 [LinearTrackingPar]
 #====================================
-NumHitsTrackCut:Int_t        30
+NumHitsTrackCut:Int_t        25
 NumHitsFit:Int_t              8
 NumHitsCompare:Int_t         20
-NumHitsCompareMax:Int_t      50
+NumHitsCompareMax:Int_t      25
 #====================================
-XConst:Double_t             1.1
-YConst:Double_t             3.0
-ZConst:Double_t             1.1
+XConst:Double_t             2.0
+YConst:Double_t             6.0
+ZConst:Double_t             2.0
 #====================================
-ProxLineCut:Double_t         18
-ProxPlaneCut:Double_t        12
+ProxLineCut:Double_t         12
+ProxPlaneCut:Double_t         2
 ProxRCut:Double_t            20
 #====================================
 RMSLineCut:Double_t          12
@@ -23,9 +23,19 @@ RMSPlaneCut:Double_t          8
 DirectionDotCut:Double_t    0.8
 NormalDotCut:Double_t       0.8
 #====================================
-PerpYCut:Double_t           120
+PerpYCut:Double_t           100
 NumHitsVanishCut:Double_t     3
 #====================================
-XVertexForTheta:Double_t   -1000
-YVertexForTheta:Double_t      0
-ZVertexForTheta:Double_t      0
+XVertex:Double_t   -450
+YVertex:Double_t   -21.33
+ZVertex:Double_t    780
+
+#XVertex:Double_t   500
+#YVertex:Double_t   -100
+#ZVertex:Double_t   0
+
+#XVertex:Double_t   0
+#YVertex:Double_t   -21.33
+#ZVertex:Double_t   -3.52
+#====================================
+NumHitsAtHead:Int_t          25
