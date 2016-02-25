@@ -795,9 +795,9 @@ STRiemannTrack::GetMom(Double_t Bz) const
     return 0;
 
   if (fSinDip < 1E-2)
-    return TMath::Abs(fRadius/1.E-2 * 0.0003 * Bz);
+    return TMath::Abs(fRadius/1.E-2 * 0.00003 * Bz);
 
-  return TMath::Abs(fRadius/fSinDip * 0.0003 * Bz);
+  return TMath::Abs(fRadius/fSinDip * 0.00003 * Bz);
 }
 
 TVector3 // Need to be studied
