@@ -11,6 +11,9 @@
 #include "STLinearTrack.hh"
 #include "STLinearTrackFitter.hh"
 
+#include "TClonesArray.h"
+#include "TVector3.h"
+
 #include "FairLogger.h"
 
 class STVTrackFinder
@@ -20,7 +23,8 @@ class STVTrackFinder
     virtual ~STVTrackFinder() {} 
 
     /// Build tracks from event, add tracks in trackBuffer
-    virtual void BuildTracks(STEvent*, std::vector<STLinearTrack*>*) = 0;
+    virtual void BuildTracks(STEvent*, std::vector<STLinearTrack*>*) {}
+    virtual void BuildTracks(STEvent*, TClonesArray*) {}
 
   protected:
     FairLogger *fLogger;
@@ -57,9 +61,13 @@ class STVTrackFinder
 
     Double_t fPerpYCut;
     Double_t fNumHitsVanishCut;
+
+    TVector3 fVertex;
+
+    Int_t fNumHitsAtHead;
   
 
-  ClassDef(STVTrackFinder, 1)
+  ClassDef(STVTrackFinder, 3)
 };
 
 #endif

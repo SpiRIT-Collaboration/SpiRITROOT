@@ -25,29 +25,36 @@ STVTrackFinder::STVTrackFinder()
   fYUnit = tbTime * driftVel / 100.;
   fZUnit = par -> GetPadSizeZ();
 
-  TString parName = par -> GetLTParFileName();
-  STParReader *fLTPar = new STParReader(parName);
+  TString parName = par -> GetTrackingParFileName();
+  STParReader *fTrackingPar = new STParReader(parName);
 
-  fNumHitsTrackCut   = fLTPar -> GetIntPar("NumHitsTrackCut");
-  fNumHitsFit        = fLTPar -> GetIntPar("NumHitsFit");
-  fNumHitsCompare    = fLTPar -> GetIntPar("NumHitsCompare");
-  fNumHitsCompareMax = fLTPar -> GetIntPar("NumHitsCompareMax");
-  fProxLineCut       = fLTPar -> GetDoublePar("ProxLineCut");
-  fProxPlaneCut      = fLTPar -> GetDoublePar("ProxPlaneCut");
-  fProxRCut          = fLTPar -> GetDoublePar("ProxRCut");
-  fRMSLineCut        = fLTPar -> GetDoublePar("RMSLineCut");
-  fRMSPlaneCut       = fLTPar -> GetDoublePar("RMSPlaneCut");
-  fDirectionDotCut   = fLTPar -> GetDoublePar("DirectionDotCut");
-  fNormalDotCut      = fLTPar -> GetDoublePar("NormalDotCut");
-  fPerpYCut          = fLTPar -> GetDoublePar("PerpYCut");
-  fNumHitsVanishCut  = fLTPar -> GetDoublePar("NumHitsVanishCut");
+  fNumHitsTrackCut   = fTrackingPar -> GetIntPar("NumHitsTrackCut");
+  fNumHitsFit        = fTrackingPar -> GetIntPar("NumHitsFit");
+  fNumHitsCompare    = fTrackingPar -> GetIntPar("NumHitsCompare");
+  fNumHitsCompareMax = fTrackingPar -> GetIntPar("NumHitsCompareMax");
+  fProxLineCut       = fTrackingPar -> GetDoublePar("ProxLineCut");
+  fProxPlaneCut      = fTrackingPar -> GetDoublePar("ProxPlaneCut");
+  fProxRCut          = fTrackingPar -> GetDoublePar("ProxRCut");
+  fRMSLineCut        = fTrackingPar -> GetDoublePar("RMSLineCut");
+  fRMSPlaneCut       = fTrackingPar -> GetDoublePar("RMSPlaneCut");
+  fDirectionDotCut   = fTrackingPar -> GetDoublePar("DirectionDotCut");
+  fNormalDotCut      = fTrackingPar -> GetDoublePar("NormalDotCut");
+  fPerpYCut          = fTrackingPar -> GetDoublePar("PerpYCut");
+  fNumHitsVanishCut  = fTrackingPar -> GetDoublePar("NumHitsVanishCut");
 
-  Double_t xConst    = fLTPar -> GetDoublePar("XConst");
-  Double_t yConst    = fLTPar -> GetDoublePar("YConst");
-  Double_t zConst    = fLTPar -> GetDoublePar("ZConst");
+  Double_t xConst    = fTrackingPar -> GetDoublePar("XConst");
+  Double_t yConst    = fTrackingPar -> GetDoublePar("YConst");
+  Double_t zConst    = fTrackingPar -> GetDoublePar("ZConst");
 
   fProxXCut = xConst * fXUnit;
   fProxYCut = yConst * fYUnit;
   fProxZCut = zConst * fZUnit;
-  fRMSTrackCut = TMath::Sqrt(fRMSPlaneCut*fRMSPlaneCut + fRMSLineCut*fRMSLineCut);
+
+  fRMSTrackCut = sqrt(fRMSPlaneCut*fRMSPlaneCut + fRMSLineCut*fRMSLineCut);
+
+  fVertex = TVector3(fTrackingPar -> GetDoublePar("XVertex"),
+                     fTrackingPar -> GetDoublePar("YVertex"),
+                     fTrackingPar -> GetDoublePar("ZVertex"));
+
+  fNumHitsAtHead = fTrackingPar -> GetIntPar("NumHitsAtHead");
 }
