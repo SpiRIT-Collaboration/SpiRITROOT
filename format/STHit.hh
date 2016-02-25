@@ -12,6 +12,7 @@
 
 #include "TObject.h"
 #include "TVector3.h"
+#include "TMath.h"
 
 class STHit : public TObject 
 {
@@ -96,16 +97,51 @@ class STHit : public TObject
   ClassDef(STHit, 4);
 };
 
+class STHitSortDirection
+{
+  public:
+    STHitSortDirection(TVector3 p):fP(p) {}
+
+    Bool_t operator() (STHit* hit1, STHit* hit2) 
+    { return hit1 -> GetPosition().Dot(fP) > hit2 -> GetPosition().Dot(fP); }
+
+  private:
+    TVector3 fP;
+};
+
+class STHitSortThetaFromP 
+{
+  public:
+    STHitSortThetaFromP(TVector3 p):fP(p) {}
+
+    Bool_t operator() (STHit* hit1, STHit* hit2) {
+      fP1 = hit1 -> GetPosition() - fP;
+      fP2 = hit2 -> GetPosition() - fP;
+      return TMath::ATan2(fP1.Z(),fP1.X()) > TMath::ATan2(fP2.Z(),fP2.X());
+    }
+
+  private:
+    TVector3 fP;
+    TVector3 fP1;
+    TVector3 fP2;
+};
+
 class STHitSortTheta {
   public:
-    Bool_t operator() (STHit* hit1, STHit* hit2)
-    { return hit1 -> GetPosition().Theta() > hit2 -> GetPosition().Theta(); }
+    Bool_t operator() (STHit* hit1, STHit* hit2) { 
+      Double_t t1 = TMath::ATan2(hit1 -> GetPosition().Z(), hit1 -> GetPosition().X());
+      Double_t t2 = TMath::ATan2(hit2 -> GetPosition().Z(), hit2 -> GetPosition().X());
+      return t1 > t2;
+    }
 };
 
 class STHitSortThetaInv {
   public:
-    Bool_t operator() (STHit* hit1, STHit* hit2)
-    { return hit1 -> GetPosition().Theta() < hit2 -> GetPosition().Theta(); }
+    Bool_t operator() (STHit* hit1, STHit* hit2) {
+      Double_t t1 = TMath::ATan2(hit1 -> GetPosition().Z(), hit1 -> GetPosition().X());
+      Double_t t2 = TMath::ATan2(hit2 -> GetPosition().Z(), hit2 -> GetPosition().X());
+      return t1 < t2;
+    }
 };
 
 class STHitSortR {
@@ -118,6 +154,21 @@ class STHitSortRInv {
   public:
     Bool_t operator() (STHit* hit1, STHit* hit2)
     { return hit1 -> GetPosition().Mag() < hit2 -> GetPosition().Mag(); }
+};
+
+class STHitSortRInvFromP {
+  public:
+    STHitSortRInvFromP(TVector3 p):fP(p) {}
+    Bool_t operator() (STHit* hit1, STHit* hit2){
+      fP1 = hit1 -> GetPosition() - fP;
+      fP2 = hit2 -> GetPosition() - fP;
+      return fP1.Mag() < fP2.Mag(); 
+    }
+
+  private:
+    TVector3 fP;
+    TVector3 fP1;
+    TVector3 fP2;
 };
 
 class STHitSortZ {
@@ -181,6 +232,32 @@ class STHitSortXYZInv
       }
       return hit1 -> GetPosition().Z() < hit2 -> GetPosition().Z(); 
     }
+};
+
+class STHitSortRho {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return (hit1 -> GetPosition().X() * hit1 -> GetPosition().X() + hit1 -> GetPosition().Z() * hit1 -> GetPosition().Z())
+      > (hit2 -> GetPosition().X() * hit2 -> GetPosition().X() + hit2 -> GetPosition().Z() * hit2 -> GetPosition().Z()); }
+};
+
+class STHitSortRhoInv {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return (hit1 -> GetPosition().X() * hit1 -> GetPosition().X() + hit1 -> GetPosition().Z() * hit1 -> GetPosition().Z())
+      < (hit2 -> GetPosition().X() * hit2 -> GetPosition().X() + hit2 -> GetPosition().Z() * hit2 -> GetPosition().Z()); }
+};
+
+class STHitSortLayer {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetLayer() > hit2 -> GetLayer(); }
+};
+
+class STHitSortRow {
+  public:
+    Bool_t operator() (STHit* hit1, STHit* hit2)
+    { return hit1 -> GetRow() > hit2 -> GetRow(); }
 };
 
 #endif
