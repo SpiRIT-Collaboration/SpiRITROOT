@@ -11,6 +11,7 @@
 #include "STClusterizerScan.hh"
 #include "STClusterizerScan2.hh"
 #include "STClusterizerLinearTrack.hh"
+#include "STClusterizerCurveTrack.hh"
 #include "STGlobal.hh"
 #include "STDebugLogger.hh"
 
@@ -87,8 +88,11 @@ STHitClusteringTask::Init()
     return kERROR;
   }
 
-  fLinearTrackArray = NULL;
-  fLinearTrackArray = (TClonesArray *) ioMan -> GetObject("STLinearTrack");
+  fTrackArray = NULL;
+  if (fClusterizerMode == kLT)
+    fTrackArray = (TClonesArray *) ioMan -> GetObject("STLinearTrack");
+  if (fClusterizerMode == kCT)
+    fTrackArray = (TClonesArray *) ioMan -> GetObject("STCurveTrack");
 
   fClusterizer = NULL;
   if (fClusterizerMode == kScan) {
@@ -102,6 +106,10 @@ STHitClusteringTask::Init()
   else if (fClusterizerMode == kLT) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use STClusterizerLinearTrack!");
     fClusterizer = new STClusterizerLinearTrack();
+  }
+  else if (fClusterizerMode == kCT) {
+    fLogger -> Info(MESSAGE_ORIGIN, "Use STClusterizerCurveTrack!");
+    fClusterizer = new STClusterizerCurveTrack();
   }
 
   if (fClusterizer) {
@@ -145,9 +153,9 @@ STHitClusteringTask::Exec(Option_t *opt)
     return;
   }
 
-  if (fClusterizerMode == kLT)
+  if (fClusterizerMode == kLT || fClusterizerMode == kCT)
   {
-    fClusterizer -> AnalyzeTrack(fLinearTrackArray, event);
+    fClusterizer -> AnalyzeTrack(fTrackArray, event);
 
     event -> SetIsClustered(kTRUE);
 

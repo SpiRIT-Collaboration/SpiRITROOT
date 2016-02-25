@@ -34,7 +34,7 @@ class STHitClusteringTask : public FairTask
     STHitClusteringTask();
     ~STHitClusteringTask();
 
-    enum STClusterizerMode { kX, kScan, kScan2, kLT };
+    enum STClusterizerMode { kX, kScan, kScan2, kLT, kCT };
 
     void SetVerbose(Int_t value = 1);
     
@@ -55,7 +55,7 @@ class STHitClusteringTask : public FairTask
     Bool_t fIsPersistence;  ///< Persistence check variable
 
     TClonesArray *fEventArray;    
-    TClonesArray *fLinearTrackArray;    
+    TClonesArray *fTrackArray;    
 
     STClusterizer *fClusterizer;   //!< Clusterizer pointer
     STClusterizerMode fClusterizerMode;

@@ -66,6 +66,8 @@ class STClusterizer
     Double_t fXLowCut;
     Double_t fXHighCut;
 
+    Int_t fNumHitsAtHead;
+
     FairLogger *fLogger;      //!< logger
 
 

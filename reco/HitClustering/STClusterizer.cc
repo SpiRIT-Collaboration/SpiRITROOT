@@ -36,6 +36,10 @@ STClusterizer::STClusterizer()
     fTBTime         = par -> GetTBTime();
     fDriftVelocity  = par -> GetDriftVelocity();
     fMaxDriftLength = par -> GetDriftLength();
+
+    TString parName = par -> GetTrackingParFileName();
+    STParReader *trackingPar = new STParReader(parName);
+    fNumHitsAtHead = trackingPar -> GetIntPar("NumHitsAtHead");
   }
 
   else
@@ -60,6 +64,10 @@ STClusterizer::STClusterizer()
       case 100: fTBTime = 10; break;
       default:  fTBTime = -1; break;
     }
+
+    TString parName = workDir + "/parameters/CurveTracking.par";
+    STParReader *trackingPar = new STParReader(parName);
+    fNumHitsAtHead = trackingPar -> GetIntPar("NumHitsAtHead");
   }
 
   fYTb = fTBTime * fDriftVelocity/100.;
