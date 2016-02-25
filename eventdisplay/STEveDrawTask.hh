@@ -31,9 +31,12 @@
 #include "STRiemannTrack.hh"
 #include "STLinearTrackFitter.hh"
 #include "STLinearTrack.hh"
+#include "STCurveTrackFitter.hh"
+#include "STCurveTrack.hh"
 #include "STRiemannHit.hh"
 #include "STRawEvent.hh"
 #include "STDigiPar.hh"
+#include "STParReader.hh"
 #include "STEvent.hh"
 #include "STMCPoint.hh"
 #include "STDriftedElectron.hh"
@@ -69,6 +72,7 @@ class STEveDrawTask : public STEveTask
 
     void SetSelfRiemannSet(Int_t iRiemannSet = -1, Bool_t offElse = kTRUE);
     void SetSelfLinearSet(Int_t iLinearSet = -1, Bool_t offElse = kTRUE);
+    void SetSelfCurveSet(Int_t iCurveSet = -1, Bool_t offElse = kTRUE);
     void SetObject(TString name, Bool_t set);
     void SetRendering(TString name, 
                        Bool_t rnr = kTRUE,
@@ -97,6 +101,8 @@ class STEveDrawTask : public STEveTask
     Int_t RenderRiemannHit(Int_t option);
     Int_t RenderLinear(Int_t option);
     Int_t RenderLinearHit(Int_t option);
+    Int_t RenderCurve(Int_t option);
+    Int_t RenderCurveHit(Int_t option);
 
   private :
     void DrawPadPlane();
@@ -109,6 +115,7 @@ class STEveDrawTask : public STEveTask
     void DrawHitClusterPoints();
     void DrawRiemannHits();
     void DrawLinearTracks();
+    void DrawCurveTracks();
 
     Color_t GetColor(Int_t);
 
@@ -139,6 +146,8 @@ class STEveDrawTask : public STEveTask
     Double_t fWindowYStart;
     Double_t fWindowYEnd;
 
+    Int_t fNumHitsAtHead;
+
     /// Containers
     STEvent* fEvent = NULL;
     STRawEvent* fRawEvent = NULL;
@@ -148,6 +157,7 @@ class STEveDrawTask : public STEveTask
     TClonesArray* fEventArray           = NULL;
     TClonesArray* fRiemannTrackArray    = NULL;
     TClonesArray* fLinearTrackArray     = NULL;
+    TClonesArray* fCurveTrackArray      = NULL;
     TClonesArray* fRawEventArray        = NULL;
 
     /// Pad & Pulses
@@ -171,8 +181,6 @@ class STEveDrawTask : public STEveTask
     Int_t fMaxX = -432;
 
     /// Objects
-    static const Int_t fNumEveObject = 10;
-
     Bool_t   fSetObject[fNumEveObject];
     Bool_t   fRnrSelf[fNumEveObject];
     Color_t  fEveColor[fNumEveObject];
@@ -190,8 +198,11 @@ class STEveDrawTask : public STEveTask
     vector<TEvePointSet*> fRiemannSetArray;
     vector<TEvePointSet*> fLinearHitSetArray;
     vector<TEveLine*>     fLinearTrackSetArray;
+    vector<TEvePointSet*> fCurveHitSetArray;
+    vector<TEveLine*>     fCurveTrackSetArray;
 
     STLinearTrackFitter* fLTFitter = NULL;
+    STCurveTrackFitter* fCTFitter = NULL;
 
 
     static STEveDrawTask* fInstance;

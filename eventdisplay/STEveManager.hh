@@ -26,6 +26,7 @@
 #include "TGLabel.h"
 #include "TGLViewer.h"
 #include "TGFrame.h"
+#include "TTimer.h"
 
 class TEveGValuator;
 class TGCheckButton;
@@ -83,6 +84,7 @@ class STEveManager : public TEveEventManager
     void SetViewerPoint(Double_t hRotate, Double_t vRotate);    //!< Set viewer point
     void SetNumRiemannSet(Int_t num);         //!< Set number of riemann set
     void SetNumLinearSet(Int_t num);          //!< Set number of linear set
+    void SetNumCurveSet(Int_t num);           //!< Set number of curve set
     void SetRowLayer(Int_t row, Int_t layer); //!< Set row & layer
 
     // GETTERS
@@ -100,6 +102,8 @@ class STEveManager : public TEveEventManager
     void ResetWindowTb();
     void DefaultWindowTb();
     void RunEveSubTask();
+    void RepeatEveSubTask();
+    void StopEveSubTask();
 
     void ClickOnOffMC();
     void ClickOnOffDigi();
@@ -110,6 +114,8 @@ class STEveManager : public TEveEventManager
     void ClickOnOffRiemannHit();
     void ClickOnOffLinear();
     void ClickOnOffLinearHit();
+    void ClickOnOffCurve();
+    void ClickOnOffCurveHit();
 
     void Exit();
 
@@ -123,6 +129,7 @@ class STEveManager : public TEveEventManager
     TGNumberEntry *fCurrentWindowTbEnd      = NULL;
     TGNumberEntry *fCurrentRiemannSet       = NULL;
     TGNumberEntry *fCurrentLinearSet        = NULL;
+    TGNumberEntry *fCurrentCurveSet         = NULL;
     TGNumberEntry *fCurrentRow              = NULL;
     TGNumberEntry *fCurrentLayer            = NULL;
 
@@ -135,6 +142,8 @@ class STEveManager : public TEveEventManager
     TGCheckButton *fButtonOnOffRiemannHit;
     TGCheckButton *fButtonOnOffLinear;
     TGCheckButton *fButtonOnOffLinearHit;
+    TGCheckButton *fButtonOnOffCurve;
+    TGCheckButton *fButtonOnOffCurveHit;
 
   private :
     FairLogger *fLogger;    //! < Logger
@@ -155,6 +164,7 @@ class STEveManager : public TEveEventManager
 
     Int_t fNumRiemannSet;
     Int_t fNumLinearSet;
+    Int_t fNumCurveSet;
 
     Int_t fWindowTbStart;
     Int_t fWindowTbEnd;
@@ -163,6 +173,8 @@ class STEveManager : public TEveEventManager
     Int_t fWindowTbEndDefault;
 
     TEveViewer* fViewer3D = NULL;
+
+    TTimer *fSubTaskTimer;
 
 
     static STEveManager *fInstance;

@@ -27,6 +27,7 @@
 #include "TApplication.h"
 
 #include <iostream>
+#include <unistd.h>
 
 class TGeoNode;
 
@@ -56,6 +57,9 @@ STEveManager::STEveManager()
   fRun = FairRunAna::Instance();
   if (fRun == NULL)
     fRun = new FairRunAna();
+
+  fSubTaskTimer = new TTimer(10);
+  fSubTaskTimer -> SetCommand("STEveManager::Instance() -> RunEveSubTask()");
 }
 
 void STEveManager::SetInputFile(TString name)    { fRun -> SetInputFile(name); }
@@ -98,6 +102,7 @@ void STEveManager::SetViewerPoint(Double_t hRotate, Double_t vRotate)
 }
 void STEveManager::SetNumRiemannSet(Int_t num)   { fNumRiemannSet = num; }
 void STEveManager::SetNumLinearSet(Int_t num)    { fNumLinearSet  = num; }
+void STEveManager::SetNumCurveSet(Int_t num)     { fNumCurveSet   = num; }
 void STEveManager::SetRowLayer(Int_t row, Int_t layer)
 {
   fCurrentRow -> SetIntNumber(row);
@@ -212,13 +217,13 @@ STEveManager::BuildFrame()
     fViewer3D -> AddScene(gEve -> GetGlobalScene());
     fViewer3D -> AddScene(gEve -> GetEventScene());
 
-    slotPadPlane = packOverview -> NewSlot();
+    slotPadPlane = packOverview -> NewSlotWithWeight(.7);
     slotPadPlane -> SetShowTitleBar(kFALSE);
     framePadPlane = slotPadPlane -> MakeFrame(ecvsPadPlane);
     framePadPlane -> SetElementName("SpiRIT Pad Plane");
     fCvsPadPlane = ecvsPadPlane -> GetCanvas();
 
-    slotPadADC = packLeft -> NewSlotWithWeight(.6);
+    slotPadADC = packLeft -> NewSlotWithWeight(.4);
     slotPadADC -> SetShowTitleBar(kFALSE);
     framePadADC = slotPadADC -> MakeFrame(ecvsPadADC);
     framePadADC -> SetElementName("pad");
@@ -296,8 +301,10 @@ STEveManager::BuildMenu()
   if (EveMode("sb"))
   {
     TGTextButton* buttonRun = new TGTextButton(frameEventControl, "Run Sub Task");
-    buttonRun -> Connect("Clicked()", "STEveManager", this, "RunEveSubTask()");
-    frameEventControl -> AddFrame(buttonRun, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,1,3));
+    //buttonRun -> Connect("Clicked()", "STEveManager", this, "RunEveSubTask()");
+    buttonRun -> Connect("Pressed()", "STEveManager", this, "RepeatEveSubTask()");
+    buttonRun -> Connect("Released()", "STEveManager", this, "StopEveSubTask()");
+    frameEventControl -> AddFrame(buttonRun, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,3));
   }
 
   /********************************************************************/
@@ -393,6 +400,26 @@ STEveManager::BuildMenu()
       fButtonOnOffLinearHit -> SetState(kButtonDown);
   }
   frameEventControl -> AddFrame(frameLinearButtons, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY | kLHintsExpandX, 1,1,1,1));
+
+  TGHorizontalFrame* frameCurveButtons = new TGHorizontalFrame(frameEventControl);
+  {
+    fButtonOnOffCurve = new TGCheckButton(frameCurveButtons, "Curve-Track");
+    fButtonOnOffCurve -> Connect("Clicked()", "STEveManager", this, "ClickOnOffCurve()");
+    frameCurveButtons -> AddFrame(fButtonOnOffCurve, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 3,3,2,2));
+    if (fEveTask -> IsSetTask("curve") != 1)     
+      fButtonOnOffCurve -> SetState(kButtonDisabled);
+    else if (fEveTask -> RnrEveObjectTask("Curve", 0) == 1)
+      fButtonOnOffCurve -> SetState(kButtonDown);
+
+    fButtonOnOffCurveHit = new TGCheckButton(frameCurveButtons, "Curve-Hit");
+    fButtonOnOffCurveHit -> Connect("Clicked()", "STEveManager", this, "ClickOnOffCurveHit()");
+    frameCurveButtons -> AddFrame(fButtonOnOffCurveHit, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 3,3,2,2));
+    if (fEveTask -> IsSetTask("curvehit") != 1)  
+      fButtonOnOffCurveHit  -> SetState(kButtonDisabled);
+    else if (fEveTask -> RnrEveObjectTask("CurveHit", 0) == 1)
+      fButtonOnOffCurveHit -> SetState(kButtonDown);
+  }
+  frameEventControl -> AddFrame(frameCurveButtons, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY | kLHintsExpandX, 1,1,1,1));
 
   frameMain -> AddFrame(frameEventControl, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
 
@@ -575,22 +602,36 @@ void STEveManager::SelectEventButton()
 
   if (fNumRiemannSet <= 0) fNumRiemannSet = 1;
   if (fNumLinearSet <= 0)  fNumLinearSet = 1;
+  if (fNumCurveSet <= 0)   fNumCurveSet = 1;
 
   if (fCurrentRiemannSet) fCurrentRiemannSet -> SetLimitValues(0, fNumRiemannSet);
   if (fCurrentLinearSet)  fCurrentLinearSet  -> SetLimitValues(0, fNumLinearSet);
+  if (fCurrentCurveSet)   fCurrentCurveSet   -> SetLimitValues(0, fNumCurveSet);
 }
 
 void STEveManager::RunEveSubTask()
 {
-  fEveTask -> Exec("sub");
+  fMainTask -> ExecuteTask("sub");
 
   fEveTask -> PushParametersTask();
 
   if (fNumRiemannSet <= 0) fNumRiemannSet = 1;
   if (fNumLinearSet <= 0)  fNumLinearSet = 1;
+  if (fNumCurveSet <= 0)  fNumCurveSet = 1;
 
   if (fCurrentRiemannSet) fCurrentRiemannSet -> SetLimitValues(0, fNumRiemannSet);
   if (fCurrentLinearSet)  fCurrentLinearSet  -> SetLimitValues(0, fNumLinearSet);
+  if (fCurrentCurveSet)   fCurrentCurveSet   -> SetLimitValues(0, fNumCurveSet);
+}
+
+void STEveManager::RepeatEveSubTask()
+{
+  fSubTaskTimer -> TurnOn();
+}
+
+void STEveManager::StopEveSubTask()
+{
+  fSubTaskTimer -> TurnOff();
 }
 
 void 
@@ -632,6 +673,8 @@ void STEveManager::ClickOnOffClusterBox() { fEveTask -> RnrEveObjectTask("cluste
 void STEveManager::ClickOnOffRiemannHit() { fEveTask -> RnrEveObjectTask("riemannhit"); gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffLinear()     { fEveTask -> RnrEveObjectTask("linear");     gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffLinearHit()  { fEveTask -> RnrEveObjectTask("linearhit");  gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffCurve()      { fEveTask -> RnrEveObjectTask("curve");      gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffCurveHit()   { fEveTask -> RnrEveObjectTask("curvehit");   gEve -> Redraw3D(); }
 
 Bool_t
 STEveManager::EveMode(TString mode)

@@ -70,8 +70,19 @@ STEveDrawTask::STEveDrawTask()
   fEveColor[kLinearHit] = -1;
   fRnrSelf [kLinearHit] = kFALSE;
 
+  fEveStyle[kCurve] = 1;
+  fEveSize [kCurve] = 5;
+  fEveColor[kCurve] = -1;
+  fRnrSelf [kCurve] = kFALSE;
+
+  fEveStyle[kCurveHit] = kFullCircle;
+  fEveSize [kCurveHit] = 0.5;
+  fEveColor[kCurveHit] = -1;
+  fRnrSelf [kCurveHit] = kFALSE;
+
   fPulse = new STPulse();
   fLTFitter = new STLinearTrackFitter();
+  fCTFitter = new STCurveTrackFitter();
   fRGBAPalette = new TEveRGBAPalette(0, 4096);
 
   fPulseSum = new TGraph();
@@ -88,6 +99,7 @@ void STEveDrawTask::PushParameters()
 {
   fEveManager -> SetNumRiemannSet(fRiemannSetArray.size());
   fEveManager -> SetNumLinearSet(fLinearTrackSetArray.size());
+  fEveManager -> SetNumCurveSet(fCurveTrackSetArray.size());
 }
 
 void 
@@ -112,8 +124,8 @@ STEveDrawTask::Init()
   fDriftedElectronArray = (TClonesArray*) ioMan -> GetObject("STDriftedElectron");
   fEventArray           = (TClonesArray*) ioMan -> GetObject("STEvent");
   fRiemannTrackArray    = (TClonesArray*) ioMan -> GetObject("STRiemannTrack");
-  //fLinearTrackArray     = (TClonesArray*) ioMan -> GetObject("STCurveTrack");
   fLinearTrackArray     = (TClonesArray*) ioMan -> GetObject("STLinearTrack");
+  fCurveTrackArray      = (TClonesArray*) ioMan -> GetObject("STCurveTrack");
   fRawEventArray        = (TClonesArray*) ioMan -> GetObject("STRawEvent");
 
   gStyle -> SetPalette(55);
@@ -133,6 +145,11 @@ STEveDrawTask::Init()
 
   fWindowYStart = fWindowTbStart    * fTBTime * fDriftVelocity / 10.;
   fWindowYEnd   = fWindowTbEnd * fTBTime * fDriftVelocity / 10.;
+
+  TString trackingParName = fPar -> GetTrackingParFileName();
+  STParReader *trackingPar = new STParReader(trackingParName);
+
+  fNumHitsAtHead = trackingPar -> GetIntPar("NumHitsAtHead");
 
   fCvsPad = fEveManager -> GetCvsPad();
   SetHistPad();
@@ -167,6 +184,9 @@ STEveDrawTask::Exec(Option_t* option)
 
   if (fLinearTrackArray != NULL && (fSetObject[kLinear] || fSetObject[kLinearHit]))
     DrawLinearTracks();
+
+  if (fCurveTrackArray != NULL && (fSetObject[kCurve] || fSetObject[kCurveHit]))
+    DrawCurveTracks();
 
   gEve -> Redraw3D();
 
@@ -588,6 +608,118 @@ STEveDrawTask::DrawLinearTracks()
   }
 }
 
+void
+STEveDrawTask::DrawCurveTracks()
+{
+  fLogger -> Debug(MESSAGE_ORIGIN,"Draw Curve Tracks");
+
+  STCurveTrack *track = (STCurveTrack*) fCurveTrackArray -> At(0);
+  std::vector<STHit*> *hitPointerArray = track -> GetHitPointerArray();
+
+  if ((fEvent == NULL) && (hitPointerArray -> size() == 0))
+    return;
+
+  STHit* hit = NULL;
+
+  TEveLine* curveTrackLine = NULL;
+  TEvePointSet* curvePointSet = NULL;
+
+  Int_t nTracks = fCurveTrackArray -> GetEntries();
+  Int_t nTracksInBuffer = fCurveTrackSetArray.size();
+
+  if (nTracksInBuffer < nTracks)
+  {
+    Int_t diffNumTracks = nTracks - nTracksInBuffer;
+    for (Int_t iTrack = 0; iTrack < diffNumTracks; iTrack++)
+    {
+      Int_t idxTrack = iTrack + nTracksInBuffer;
+      curveTrackLine = new TEveLine(Form("CurveLine_%d", idxTrack), 2, TEvePointSelectorConsumer::kTVT_XYZ);
+      if (fEveColor[kCurve] == -1) curveTrackLine -> SetLineColor(GetColor(idxTrack));
+      else curveTrackLine -> SetLineColor(fEveColor[kCurve]);
+      curveTrackLine -> SetLineStyle(fEveStyle[kCurve]);
+      curveTrackLine -> SetLineWidth(fEveSize[kCurve]);
+      fCurveTrackSetArray.push_back(curveTrackLine);
+      gEve -> AddElement(curveTrackLine);
+
+      if (fSetObject[kCurveHit] == kTRUE)
+      {
+        curvePointSet = new TEvePointSet(Form("CurveHit_%d", idxTrack), 1, TEvePointSelectorConsumer::kTVT_XYZ);
+        if (fEveColor[kCurveHit] == -1) curvePointSet -> SetMarkerColor(GetColor(idxTrack));
+        else curvePointSet -> SetMarkerColor(fEveColor[kCurveHit]);
+        curvePointSet -> SetMarkerSize(fEveSize[kCurveHit]);
+        curvePointSet -> SetMarkerStyle(fEveStyle[kCurveHit]);
+        fCurveHitSetArray.push_back(curvePointSet);
+        gEve -> AddElement(curvePointSet);
+      }
+    }
+  }
+
+  for (Int_t iTrack = 0; iTrack < nTracks; iTrack++)
+  {
+    track = (STCurveTrack*) fCurveTrackArray -> At(iTrack);
+    Int_t nHits = track -> GetNumHits();
+
+    Int_t firstHitIDPosition = 0;
+    Int_t lastHitIDPosition = track -> GetNumHits() - 1;
+
+    if (lastHitIDPosition > fNumHitsAtHead)
+      firstHitIDPosition = lastHitIDPosition - fNumHitsAtHead;
+
+    Int_t hitIDFirst = track -> GetHitID(firstHitIDPosition);
+    Int_t hitIDLast  = track -> GetHitID(lastHitIDPosition);
+
+    STHit *hitFirst;
+    STHit *hitLast;
+
+    if (fEvent != NULL)
+    {
+      hitFirst = fEvent -> GetHit(hitIDFirst);
+      hitLast  = fEvent -> GetHit(hitIDLast);
+    }
+    else
+    {
+      hitFirst = track -> GetHit(firstHitIDPosition);
+      hitLast  = track -> GetHit(lastHitIDPosition);
+    }
+
+    TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
+    TVector3 posLast  = fLTFitter -> GetClosestPointOnTrack(track, hitLast);
+
+    Double_t yFirst = posFirst.Y()/10.;
+    yFirst += fWindowYStart;
+    Double_t yLast = posLast.Y()/10.;
+    yLast += fWindowYStart;
+
+    curveTrackLine = fCurveTrackSetArray.at(iTrack);
+
+    curveTrackLine -> SetNextPoint(posFirst.X()/10., yFirst, posFirst.Z()/10.);
+    curveTrackLine -> SetNextPoint(posLast.X()/10., yLast, posLast.Z()/10.);
+
+    curveTrackLine -> SetRnrSelf(fRnrSelf[kCurve]);
+
+    if (fSetObject[kCurveHit] == kTRUE)
+    {
+      curvePointSet = fCurveHitSetArray.at(iTrack);
+
+      for (Int_t iHit = 0; iHit < nHits; iHit++)
+      {
+        if (fEvent != NULL)
+          hit = fEvent -> GetHit(track -> GetHitID(iHit));
+        else
+          hit = track -> GetHit(iHit);
+
+        TVector3 position = hit -> GetPosition();
+
+        curvePointSet -> SetNextPoint(position.X()/10.,
+                                       position.Y()/10. + fWindowYStart,
+                                       position.Z()/10.);
+      }
+
+      curvePointSet -> SetRnrSelf(fRnrSelf[kCurveHit]);
+    }
+  }
+}
+
 void 
 STEveDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
 {
@@ -685,6 +817,66 @@ STEveDrawTask::SetSelfLinearSet(Int_t iLinearSet, Bool_t offElse)
 }
 
 void 
+STEveDrawTask::SetSelfCurveSet(Int_t iCurveSet, Bool_t offElse)
+{
+  Int_t nCurveTrackSets = fCurveTrackSetArray.size();
+  Int_t nCurveHitSets = fCurveHitSetArray.size();
+
+  if (iCurveSet == -1) 
+  {
+    if (!offElse)
+    {
+      for (Int_t i=0; i<nCurveHitSets; i++)
+      {
+        TEvePointSet* pointSet = fCurveHitSetArray.at(i);
+        pointSet -> SetRnrSelf(fRnrSelf[kCurveHit]);
+      }
+      for (Int_t i=0; i<nCurveTrackSets; i++)
+      {
+        TEveLine* curveTrackLine = fCurveTrackSetArray.at(i);
+        curveTrackLine -> SetRnrSelf(kTRUE);
+      }
+    }
+    else
+    {
+      for (Int_t i=0; i<nCurveHitSets; i++)
+      {
+        TEvePointSet* pointSet = fCurveHitSetArray.at(i);
+        pointSet -> SetRnrSelf(kFALSE);
+      }
+      for (Int_t i=0; i<nCurveTrackSets; i++)
+      {
+        TEveLine* curveTrackLine = fCurveTrackSetArray.at(i);
+        curveTrackLine -> SetRnrSelf(kFALSE);
+      }
+    }
+  }
+
+  else 
+  {
+    for (Int_t i=0; i<nCurveHitSets; i++)
+    {
+      TEvePointSet* pointSet = fCurveHitSetArray.at(i);
+
+      if (i==iCurveSet) 
+        pointSet -> SetRnrSelf(fRnrSelf[kCurveHit]);
+      else if (offElse) 
+        pointSet -> SetRnrSelf(kFALSE);
+    }
+
+    for (Int_t i=0; i<nCurveTrackSets; i++)
+    {
+      TEveLine* curveTrackLine = fCurveTrackSetArray.at(i);
+
+      if (i==iCurveSet) 
+        curveTrackLine -> SetRnrSelf(kTRUE);
+      else if (offElse) 
+        curveTrackLine -> SetRnrSelf(kFALSE);
+    }
+  }
+}
+
+void 
 STEveDrawTask::SetRendering(TString name, Bool_t rnr, Double_t thresholdMin, Double_t thresholdMax)
 {
   STEveObject eveObj = GetEveObject(name);
@@ -774,6 +966,26 @@ STEveDrawTask::Reset()
   for (Int_t i=0; i<nLinearPoints; i++) 
   {
     TEvePointSet* pointSet = fLinearHitSetArray.at(i);
+    pointSet -> SetRnrSelf(kFALSE);
+    pointSet -> Reset();
+  }
+
+  fLogger -> Debug(MESSAGE_ORIGIN,"Reset curve line set");
+
+  Int_t nCurveTracks = fCurveTrackSetArray.size();
+  for (Int_t i=0; i<nCurveTracks; i++) 
+  {
+    TEveLine* curveTrackLine = fCurveTrackSetArray.at(i);
+    curveTrackLine -> SetRnrSelf(kFALSE);
+    curveTrackLine -> Reset();
+  }
+
+  fLogger -> Debug(MESSAGE_ORIGIN,"Reset curve point set");
+
+  Int_t nCurvePoints = fCurveHitSetArray.size();
+  for (Int_t i=0; i<nCurvePoints; i++) 
+  {
+    TEvePointSet* pointSet = fCurveHitSetArray.at(i);
     pointSet -> SetRnrSelf(kFALSE);
     pointSet -> Reset();
   }
@@ -1085,6 +1297,8 @@ STEveDrawTask::RnrEveObject(TString name, Int_t option)
   else if (name == "riemannhit") return RenderRiemannHit(option);
   else if (name == "linear")     return RenderLinear(option);
   else if (name == "linearhit")  return RenderLinearHit(option);
+  else if (name == "curve")      return RenderCurve(option);
+  else if (name == "curvehit")   return RenderCurveHit(option);
 
   return -1;
 }
@@ -1103,6 +1317,8 @@ STEveDrawTask::IsSet(TString name, Int_t option)
   else if (name == "riemannhit") return BoolToInt(fSetObject[kRiemannHit]);
   else if (name == "linear")     return BoolToInt(fSetObject[kLinear]);
   else if (name == "linearhit")  return BoolToInt(fSetObject[kLinearHit]);
+  else if (name == "curve")      return BoolToInt(fSetObject[kCurve]);
+  else if (name == "curvehit")   return BoolToInt(fSetObject[kCurveHit]);
 
   return -1;
 }
@@ -1264,6 +1480,52 @@ STEveDrawTask::RenderLinearHit(Int_t option)
   }
 
   return BoolToInt(fRnrSelf[kLinearHit]);
+}
+
+Int_t 
+STEveDrawTask::RenderCurve(Int_t option)
+{
+  if (option == 0)
+    return BoolToInt(fRnrSelf[kCurve]);
+
+  Int_t nCurveTrackSets = fCurveTrackSetArray.size();
+  if (nCurveTrackSets == 0)
+    return -1;
+
+  fRnrSelf[kCurve] = !fRnrSelf[kCurve];
+  for (Int_t i=0; i<nCurveTrackSets; i++)
+  {
+    TEveLine* curveTrackLine = fCurveTrackSetArray.at(i);
+    if (curveTrackLine -> Size() == 0)
+      curveTrackLine -> SetRnrSelf(kFALSE);
+    else
+      curveTrackLine -> SetRnrSelf(fRnrSelf[kCurve]);
+  }
+
+  return BoolToInt(fRnrSelf[kCurve]);
+}
+
+Int_t 
+STEveDrawTask::RenderCurveHit(Int_t option)
+{
+  if (option == 0)
+    return BoolToInt(fRnrSelf[kCurveHit]);
+
+  Int_t nCurveHitSets = fCurveHitSetArray.size();
+  if (nCurveHitSets == 0)
+    return -1;
+
+  fRnrSelf[kCurveHit] = !fRnrSelf[kCurveHit];
+  for (Int_t i=0; i<nCurveHitSets; i++)
+  {
+    TEvePointSet* pointSet = fCurveHitSetArray.at(i);
+    if (pointSet -> Size() == 0)
+      pointSet -> SetRnrSelf(kFALSE);
+    else
+      pointSet -> SetRnrSelf(fRnrSelf[kCurveHit]);
+  }
+
+  return BoolToInt(fRnrSelf[kCurveHit]);
 }
 
 Int_t STEveDrawTask::BoolToInt(Bool_t val) 

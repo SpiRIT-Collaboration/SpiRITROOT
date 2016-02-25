@@ -15,6 +15,7 @@ ${CMAKE_SOURCE_DIR}/reco/STConverter
 ${CMAKE_SOURCE_DIR}/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/reco/RiemannTracking
 ${CMAKE_SOURCE_DIR}/reco/LinearTracking
+${CMAKE_SOURCE_DIR}/reco/CurveTracking
 )
 
 include_directories(${INCLUDE_DIRECTORIES})

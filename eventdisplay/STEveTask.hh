@@ -21,7 +21,9 @@ class STEveTask : public FairTask
       kRiemannHit  = 5,
       kLinear      = 6,
       kLinearHit   = 7,
-      kHitBox      = 8
+      kCurve       = 8,
+      kCurveHit    = 9,
+      kHitBox      = 10
     };
 
     STEveObject GetEveObject(TString name);
@@ -40,6 +42,9 @@ class STEveTask : public FairTask
 
     virtual Int_t IsSetTask(TString name, Int_t option = 1);
     virtual Int_t IsSet(TString name, Int_t option) { return -1; }
+
+  protected:
+    static const Int_t fNumEveObject = 12;
 
 
   ClassDef(STEveTask, 1);
