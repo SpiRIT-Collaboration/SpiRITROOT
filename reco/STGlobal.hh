@@ -5,6 +5,10 @@
 // If not set, in ADC vs Pulser voltage.
 #define VVSADC
 #define NUMTHREAD 12
+
 //#define TASKTIMER
+
+//#define SUBTASK_CURVETRACKING
+//#define DEBUG_CURVE
 
 #endif
