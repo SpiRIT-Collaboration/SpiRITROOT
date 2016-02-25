@@ -2,6 +2,8 @@
 /// @author JungWoo Lee
 
 #include "ODRFitter.hh"
+#include <iostream>
+using namespace std;
 
 ClassImp(ODRFitter)
 
@@ -108,6 +110,7 @@ void ODRFitter::ChooseEigenValue(Int_t iEV)
   fRMSLine = TMath::Sqrt(fRMSLine);
 
   fRMSPlane = (*fEigenValues)[iEV] / (fWeightSum - 2*fWeightSum/fNumPoints);
+  if (fRMSPlane < 0) fRMSPlane = 0;
   fRMSPlane = TMath::Sqrt(fRMSPlane);
 }
 

@@ -36,9 +36,9 @@ class STLinearTrackFitter
     void MergeAndSetTrack(STLinearTrack* track1, STLinearTrack* track2);
 
     /// Set data for fitting
-    void SetDataToODRFitter(STLinearTrack* track);
-    void SetDataToODRFitter(STLinearTrack* track, STHit* hit);
-    void SetDataToODRFitter(STLinearTrack* track1, STLinearTrack* track2);
+    virtual void SetDataToODRFitter(STLinearTrack* track);
+    virtual void SetDataToODRFitter(STLinearTrack* track, STHit* hit);
+    virtual void SetDataToODRFitter(STLinearTrack* track1, STLinearTrack* track2);
 
     void SortHits(STLinearTrack* track);
 
@@ -46,6 +46,7 @@ class STLinearTrackFitter
     /// (having the shortest distance from track to hit.)
     TVector3 PerpLine(STLinearTrack* track, STHit* hit);
     TVector3 PerpLine(STLinearTrack* track, TVector3 hitPos);
+    Double_t PerpDistLine(STLinearTrack* track, TVector3 hitPos);
 
     /// Calculate and return perpendicular vector to the track plane
     TVector3 PerpPlane(STLinearTrack* track, STHit* hit);
@@ -62,10 +63,10 @@ class STLinearTrackFitter
 
     Double_t GetLengthOnTrack(STLinearTrack* track, STHit* hit);
 
-  private:
+  protected:
     ODRFitter* fODRFitter;
 
-  ClassDef(STLinearTrackFitter, 2)
+  ClassDef(STLinearTrackFitter, 3)
 };
 
 class STHitSortByTrackDirection 

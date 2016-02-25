@@ -5,6 +5,7 @@
 #include "STLinearTrack.hh"
 #include "STLinearTrackFitter.hh"
 #include "STDebugLogger.hh"
+#include "STGlobal.hh"
 
 class STCorrLinearTH 
 {
@@ -13,6 +14,7 @@ class STCorrLinearTH
 
   public:
     STCorrLinearTH():fLTFitter(new STLinearTrackFitter()) {}
+    STCorrLinearTH(STLinearTrackFitter *fitter):fLTFitter(fitter) {}
     virtual ~STCorrLinearTH() {}
 
     virtual Bool_t Correlate(STLinearTrack *track, 
