@@ -20,10 +20,11 @@ class STLinearTrack : public TObject
     STLinearTrack();
     STLinearTrack(STLinearTrack *track);
     STLinearTrack(Int_t trackID, STHit* hit);
-    ~STLinearTrack();
+    virtual ~STLinearTrack();
 
-    void Reset();
-    void AddHit(STHit *hit);         ///< Add hit and update parameters
+    virtual void Reset();
+
+    virtual void AddHit(STHit *hit); ///< Add hit and update parameters
 
     void SetTrackID(Int_t id);       ///< Set track ID
     void SetIsPrimary(Bool_t val);   ///< Set track primary flag
@@ -53,18 +54,6 @@ class STLinearTrack : public TObject
     void SetRMSLine (Double_t rms);
     void SetRMSPlane(Double_t rms);
 
-    void SetSumDistCX(Double_t val);
-    void SetSumDistCY(Double_t val);
-    void SetSumDistCZ(Double_t val);
-
-    void SetSumDistCXX(Double_t val);
-    void SetSumDistCYY(Double_t val);
-    void SetSumDistCZZ(Double_t val);
-
-    void SetSumDistCXY(Double_t val);
-    void SetSumDistCYZ(Double_t val);
-    void SetSumDistCZX(Double_t val);
-
 
        Int_t GetTrackID()    const; ///< Get track ID
       Bool_t IsPrimary()     const; ///< Get track primary flag
@@ -93,7 +82,8 @@ class STLinearTrack : public TObject
     Double_t GetZCentroid()  const; ///< Get z component of centroid
 
     Double_t GetChargeSum()  const; ///< Get charge sum 
-       Int_t GetNumHits();          ///< Get number of hits
+    virtual Int_t GetNumHits();     ///< Get number of hits
+    virtual Int_t GetNumHitsRemoved();
 
     std::vector<Int_t>  *GetHitIDArray();      ///< Get hit ID array
     std::vector<STHit*> *GetHitPointerArray(); ///< Get hit ID array
@@ -104,19 +94,27 @@ class STLinearTrack : public TObject
     Double_t GetRMSLine()    const;
     Double_t GetRMSPlane()   const;
 
-    Double_t GetSumDistCX()  const;
-    Double_t GetSumDistCY()  const;
-    Double_t GetSumDistCZ()  const;
+    Double_t GetSumDistCXX() const; ///< SUM_i {(x_centroid-x_i)*(x_centroid-x_i) }
+    Double_t GetSumDistCYY() const; ///< SUM_i {(y_centroid-y_i)*(y_centroid-y_i) }
+    Double_t GetSumDistCZZ() const; ///< SUM_i {(z_centroid-z_i)*(z_centroid-z_i) }
 
-    Double_t GetSumDistCXX() const;
-    Double_t GetSumDistCYY() const;
-    Double_t GetSumDistCZZ() const;
+    Double_t GetSumDistCXY() const; ///< SUM_i {(x_centroid-x_i)*(y_centroid-y_i) }
+    Double_t GetSumDistCYZ() const; ///< SUM_i {(y_centroid-y_i)*(z_centroid-z_i) }
+    Double_t GetSumDistCZX() const; ///< SUM_i {(z_centroid-z_i)*(x_centroid-x_i) }
 
-    Double_t GetSumDistCXY() const;
-    Double_t GetSumDistCYZ() const;
-    Double_t GetSumDistCZX() const;
+    Double_t GetExpectationX()  const;
+    Double_t GetExpectationY()  const;
+    Double_t GetExpectationZ()  const;
 
-  private:
+    Double_t GetExpectationXX() const;
+    Double_t GetExpectationYY() const;
+    Double_t GetExpectationZZ() const;
+
+    Double_t GetExpectationXY() const;
+    Double_t GetExpectationYZ() const;
+    Double_t GetExpectationZX() const;
+
+  protected:
     Int_t  fTrackID;   ///< Track ID.
     Bool_t fIsPrimary; ///< True if track is primary track.
     Bool_t fIsFitted;  ///< True if fitted.
@@ -125,10 +123,6 @@ class STLinearTrack : public TObject
     Double_t fXVertex[2]; ///< x position of vextex
     Double_t fYVertex[2]; ///< y position of vextex
     Double_t fZVertex[2]; ///< z position of vextex
-
-    Double_t fXCentroid; ///< x component of centroid
-    Double_t fYCentroid; ///< y component of centroid
-    Double_t fZCentroid; ///< z component of centroid
 
     Double_t fXDirection; ///< x component of direction vector
     Double_t fYDirection; ///< y component of direction vector
@@ -142,7 +136,6 @@ class STLinearTrack : public TObject
        Int_t fNumHits;
 
     std::vector<STHit*> fHitPtrArray; //-> < STHit pointer array
-    //std::vector<STHit*> fHitPtrArray; //! < STHit pointer array
     std::vector<Int_t>  fHitIDArray;  //-> < hit id array
 
     Double_t fRMSLine;
@@ -150,20 +143,20 @@ class STLinearTrack : public TObject
 
     // For track fit ___________________________________________________________
 
-    Double_t fSumDistCX;  //! < SUM_i (x_centroid - x_i)
-    Double_t fSumDistCY;  //! < SUM_i (y_centroid - y_i)
-    Double_t fSumDistCZ;  //! < SUM_i (z_centroid - z_i)
+    Double_t fExpectationX; ///< Expectation value of x
+    Double_t fExpectationY; ///< Expectation value of y
+    Double_t fExpectationZ; ///< Expectation value of z
 
-    Double_t fSumDistCXX; //! < SUM_i {(x_centroid - x_i) * (x_centroid - x_i) }
-    Double_t fSumDistCYY; //! < SUM_i {(y_centroid - y_i) * (y_centroid - y_i) }
-    Double_t fSumDistCZZ; //! < SUM_i {(z_centroid - z_i) * (z_centroid - z_i) }
+    Double_t fExpectationXX; ///< Expectation value of x^2
+    Double_t fExpectationYY; ///< Expectation value of y^2
+    Double_t fExpectationZZ; ///< Expectation value of z^2
 
-    Double_t fSumDistCXY; //! < SUM_i {(x_centroid - x_i) * (y_centroid - y_i) }
-    Double_t fSumDistCYZ; //! < SUM_i {(y_centroid - y_i) * (z_centroid - z_i) }
-    Double_t fSumDistCZX; //! < SUM_i {(z_centroid - z_i) * (x_centroid - x_i) }
+    Double_t fExpectationXY; ///< Expectation value of xy
+    Double_t fExpectationYZ; ///< Expectation value of yz
+    Double_t fExpectationZX; ///< Expectation value of zx
 
 
-  ClassDef(STLinearTrack, 5);
+  ClassDef(STLinearTrack, 7);
 };
 
 #endif
