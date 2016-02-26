@@ -14,7 +14,7 @@ YConst:Double_t             6.0
 ZConst:Double_t             2.0
 #====================================
 ProxLineCut:Double_t         12
-ProxPlaneCut:Double_t         2
+ProxPlaneCut:Double_t         5
 ProxRCut:Double_t            20
 #====================================
 RMSLineCut:Double_t          12
@@ -23,19 +23,11 @@ RMSPlaneCut:Double_t          8
 DirectionDotCut:Double_t    0.8
 NormalDotCut:Double_t       0.8
 #====================================
-PerpYCut:Double_t           100
+PerpYCut:Double_t           250
 NumHitsVanishCut:Double_t     3
 #====================================
-XVertex:Double_t   -450
-YVertex:Double_t   -21.33
-ZVertex:Double_t    780
-
-#XVertex:Double_t   500
-#YVertex:Double_t   -100
-#ZVertex:Double_t   0
-
-#XVertex:Double_t   0
-#YVertex:Double_t   -21.33
-#ZVertex:Double_t   -3.52
+XVertex:Double_t           -450
+YVertex:Double_t           -300
+ZVertex:Double_t            780
 #====================================
 NumHitsAtHead:Int_t          25
