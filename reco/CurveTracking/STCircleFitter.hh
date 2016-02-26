@@ -27,7 +27,8 @@ class STCircleFitter
     Bool_t FitData(std::vector<STHit*> *hitArray,
                    Double_t &xCenter, 
                    Double_t &zCenter, 
-                   Double_t &radius);
+                   Double_t &radius,
+                   Double_t &rms);
 
   private:
     ClassDef(STCircleFitter, 1)

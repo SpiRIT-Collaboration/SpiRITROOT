@@ -12,7 +12,8 @@ Bool_t
 STCircleFitter::FitData(std::vector<STHit*> *hitArray,
                      Double_t &xCenter, 
                      Double_t &zCenter, 
-                     Double_t &radius)
+                     Double_t &radius,
+                     Double_t &rms)
 {
   Double_t expectationX = 0;
   Double_t expectationZ = 0;
@@ -80,6 +81,18 @@ STCircleFitter::FitData(std::vector<STHit*> *hitArray,
   zCenter = vC + expectationZ;
 
   radius = sqrt(uC * uC + vC * vC + expectationU2 + expectationV2);
+
+  Double_t S = 0;
+  for (auto hit : *hitArray)
+  {
+    TVector3 pos = hit -> GetPosition();
+    Double_t d = radius - sqrt((pos.X() - xCenter)*(pos.X() - xCenter) 
+                             + (pos.Z() - zCenter)*(pos.Z() - zCenter));
+    S += hit -> GetCharge() * d * d;
+  }
+
+  rms = sqrt(S / (chargeSum * (hitArray -> size() - 3)));
+
 
   return kTRUE;
 }
