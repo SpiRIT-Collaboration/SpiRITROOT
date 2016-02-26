@@ -16,7 +16,7 @@ using namespace std;
 //#define DEBUG_PEAKFINDING
 //#define DEBUG_FIT
 
-#define NEW_ITERATION_METHOD
+//#define NEW_ITERATION_METHOD
 
 ClassImp(STPSAFastFit)
 
