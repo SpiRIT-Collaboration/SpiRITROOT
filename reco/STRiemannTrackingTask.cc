@@ -341,7 +341,6 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   riemannTemp.clear();
 
   MergeTracks();
-  MergeCurlers();
 
 
 
@@ -355,7 +354,6 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   riemannTemp.clear();
 
   MergeTracks();
-  MergeCurlers();
 
 
 
@@ -371,7 +369,6 @@ STRiemannTrackingTask::Exec(Option_t *opt)
   riemannTemp.clear();
 
   MergeTracks();
-  MergeCurlers();
 
 
 

@@ -41,7 +41,7 @@ STEveDrawTask::STEveDrawTask()
 
   fEveStyle[kHit] = kFullCircle;
   fEveSize [kHit] = 1.0;
-  fEveColor[kHit] = kBlue;
+  fEveColor[kHit] = kGray;
   fRnrSelf [kHit] = kFALSE;
 
   fEveStyle[kHitBox] = kFullCircle;
@@ -282,7 +282,7 @@ STEveDrawTask::DrawHitPoints()
     fPointSet[kHit] -> SetMarkerColor(fEveColor[kHit]);
     fPointSet[kHit] -> SetMarkerSize(fEveSize[kHit]);
     fPointSet[kHit] -> SetMarkerStyle(fEveStyle[kHit]);
-    fPointSet[kHit] -> SetMainTransparency(80);
+    fPointSet[kHit] -> SetMainTransparency(50);
     fPointSet[kHit] -> SetRnrSelf(fRnrSelf[kHit]);
   }
 

@@ -23,9 +23,9 @@
 
 void run_reco
 (
-  TString          name = "urqmd_short",
-  TString      dataFile = "",
-  TString parameterFile = "ST.parameters.RIKEN_20151021.par",
+  TString          name = "run1278",
+  TString      dataFile = "list_run1278.txt",
+  TString parameterFile = "ST.parameters.Cosmic201602.par",
    Bool_t  useGainCalib = kFALSE
 )
 {
@@ -78,26 +78,27 @@ void run_reco
 
   STPSATask *fPSATask = new STPSATask();
   fPSATask -> SetPersistence(kTRUE);
-  fPSATask -> SetThreshold(30);
+  fPSATask -> SetThreshold(10);
   fRun -> AddTask(fPSATask);
 
-  STHitClusteringTask *fClusteringTask = new STHitClusteringTask();
-  //fRun -> AddTask(fClusteringTask);
+  STCurveTrackingTask *tracking = new STCurveTrackingTask();
+  tracking -> SetPersistence(kTRUE);
+  fRun -> AddTask(tracking);
+
+  STHitClusteringTask *clustering = new STHitClusteringTask();
+  clustering -> SetPersistence(kTRUE);
+  clustering -> SetClusterizerMode(STHitClusteringTask::kCT);
+  fRun -> AddTask(clustering);
 
   STSMTask* fSMTask = new STSMTask();
   fSMTask -> SetPersistence(kTRUE);
   fSMTask -> SetMode(STSMTask::kChange);
-  //fRun -> AddTask(fSMTask);
+  fRun -> AddTask(fSMTask);
 
-  STLinearTrackingTask *fLinearTrackingTask = new STLinearTrackingTask();
-  fLinearTrackingTask -> SetPersistence(kTRUE);
-  fRun -> AddTask(fLinearTrackingTask);
-/*
   STRiemannTrackingTask* fRiemannTrackingTask = new STRiemannTrackingTask();
   fRiemannTrackingTask -> SetSortingParameters(kTRUE,STRiemannSort::kSortZ, 0);
   fRiemannTrackingTask -> SetPersistence(kTRUE);
   fRun -> AddTask(fRiemannTrackingTask);
-*/
 
 
   //////////////////////////////////////////////////////////
