@@ -39,7 +39,7 @@ STVTrackFinder::STVTrackFinder()
   fRMSPlaneCut       = fTrackingPar -> GetDoublePar("RMSPlaneCut");
   fDirectionDotCut   = fTrackingPar -> GetDoublePar("DirectionDotCut");
   fNormalDotCut      = fTrackingPar -> GetDoublePar("NormalDotCut");
-  fPerpYCut          = fTrackingPar -> GetDoublePar("PerpYCut");
+  fRadialCut         = fTrackingPar -> GetDoublePar("RadialCut");
   fNumHitsVanishCut  = fTrackingPar -> GetDoublePar("NumHitsVanishCut");
 
   Double_t xConst    = fTrackingPar -> GetDoublePar("XConst");

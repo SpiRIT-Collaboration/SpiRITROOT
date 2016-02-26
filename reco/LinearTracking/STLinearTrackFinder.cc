@@ -101,7 +101,7 @@ STLinearTrackFinder::BuildTracks(STEvent *event, vecTrk_t *trackArray)
     STHit *hit = event -> GetHit(iHit);
 
     TVector3 p = hit -> GetPosition();
-    if (TMath::Sqrt(p.X()*p.X() + p.Z()*p.Z()) < fPerpYCut)
+    if (TMath::Sqrt(p.X()*p.X() + p.Z()*p.Z()) < fRadialCut)
       continue;
 
     fHitQueue -> push_back(hit);

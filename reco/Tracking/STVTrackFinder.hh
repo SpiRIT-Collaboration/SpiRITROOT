@@ -59,7 +59,7 @@ class STVTrackFinder
     Double_t fDirectionDotCut;
     Double_t fNormalDotCut;
 
-    Double_t fPerpYCut;
+    Double_t fRadialCut;
     Double_t fNumHitsVanishCut;
 
     TVector3 fVertex;

@@ -23,7 +23,7 @@ RMSPlaneCut:Double_t          8
 DirectionDotCut:Double_t    0.8
 NormalDotCut:Double_t       0.8
 #====================================
-PerpYCut:Double_t           250
+RadialCut:Double_t           250
 NumHitsVanishCut:Double_t     3
 #====================================
 XVertex:Double_t           -450

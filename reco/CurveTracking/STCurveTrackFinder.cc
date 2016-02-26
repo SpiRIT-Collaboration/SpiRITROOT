@@ -69,7 +69,7 @@ STCurveTrackFinder::Init(STEvent *event, TClonesArray *trackArray)
     STHit *hit = event -> GetHit(iHit);
 
     TVector3 p = hit -> GetPosition() - fVertex;
-    if (sqrt(p.X()*p.X() + p.Z()*p.Z() + p.Y()*p.Y()) < fPerpYCut)
+    if (sqrt(p.X()*p.X() + p.Z()*p.Z() + p.Y()*p.Y()) < fRadialCut)
       continue;
 
     fHitBuffer -> push_back(hit);
