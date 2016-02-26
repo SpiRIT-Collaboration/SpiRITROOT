@@ -36,6 +36,8 @@ class STCurveTrackFinder : public STVTrackFinder
     TClonesArray *fTrackArrayTemp1;
     TClonesArray *fTrackArrayTemp2;
 
+    Int_t fNumTracks;
+
 
   ClassDef(STCurveTrackFinder, 1)
 };

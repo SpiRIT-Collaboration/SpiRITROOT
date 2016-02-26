@@ -42,6 +42,7 @@ STCurveTrackFinder::BuildTracks(STEvent *event, TClonesArray *trackArray)
   fTrackArrayAna = fTrackArrayTemp2;
   Int_t numTracks = fTrackArrayTemp1 -> GetEntriesFast();
 
+  fNumTracks = 0;
   for (Int_t iTrack = 0; iTrack < numTracks; iTrack++)
   {
     STCurveTrack *track = (STCurveTrack *) fTrackArrayTemp1 -> At(iTrack);
@@ -52,7 +53,6 @@ STCurveTrackFinder::BuildTracks(STEvent *event, TClonesArray *trackArray)
     while (AnaNextHit()) {}
     trackArray -> AbsorbObjects(fTrackArrayAna);
   }
-  trackArray -> AbsorbObjects(fTrackArrayAna);
 }
 
 void 
@@ -69,7 +69,7 @@ STCurveTrackFinder::Init(STEvent *event, TClonesArray *trackArray)
     STHit *hit = event -> GetHit(iHit);
 
     TVector3 p = hit -> GetPosition() - fVertex;
-    if (sqrt(p.X()*p.X() + p.Z()*p.Z()) < fPerpYCut)
+    if (sqrt(p.X()*p.X() + p.Z()*p.Z() + p.Y()*p.Y()) < fPerpYCut)
       continue;
 
     fHitBuffer -> push_back(hit);
@@ -79,6 +79,8 @@ STCurveTrackFinder::Init(STEvent *event, TClonesArray *trackArray)
   std::sort(fHitBuffer -> begin(), fHitBuffer -> end(), sorting);
 
   fHitBufferAna = fHitBuffer;
+
+  fNumTracks = 0;
 }
 
 Bool_t
@@ -143,11 +145,11 @@ STCurveTrackFinder::AnaNextHit()
   }
   else
   {
-    Int_t idx = fTrackArrayAna -> GetEntriesFast();
-    STCurveTrack* track = new ((*fTrackArrayAna)[idx]) STCurveTrack(idx,hit);
+    STCurveTrack* track = new ((*fTrackArrayAna)[fTrackArrayAna -> GetEntriesFast()]) STCurveTrack(fNumTracks, hit);
 #ifdef DEBUG_CURVE
     cout << "New Track-" << track -> GetTrackID() << endl;
 #endif
+    fNumTracks++;
   }
 
 #ifdef DEBUG_CURVE
