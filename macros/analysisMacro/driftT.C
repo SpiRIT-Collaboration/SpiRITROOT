@@ -4,10 +4,10 @@ void driftT(){
   // load the file  
   /////////////////////
   TChain *chain = new TChain("cbmsim");
-  chain->Add("/home/giordano/ShareWindows/run0928_skimmed.reco.root");
+  chain->Add("./data/run1278.reco.root");
 
   TClonesArray* eventArray = NULL;
-  chain-> SetBranchAddress("STEvent", &eventArray);
+  chain-> SetBranchAddress("STEventHCM", &eventArray);
 
   // output histogram
   TH1F* h1 = new TH1F("h1","time bucket dist",512,0,511);
@@ -15,13 +15,14 @@ void driftT(){
   Int_t nentries = chain->GetEntries();
   std::cout << "Num. events: " << nentries << std::endl;
 
-  for(int i=0 ; i < nentries ; i++){
+  //  for(int i=0 ; i < nentries ; i++){
+  for(int i=0 ; i < 1 ; i++){
     chain -> GetEntry(i);
     
     STEvent *fEvent;
     fEvent = (STEvent*)eventArray->At(0);
     Int_t nhits = fEvent -> GetNumHits();
-
+   
     if (fEvent->IsGood()==kFALSE)
       continue;
 
@@ -33,7 +34,7 @@ void driftT(){
     Double_t zpos = vect.Z();
     Double_t ypos = vect.Y();
     Double_t tb = hit->GetTb(); 
- 
+    
     h1->Fill(tb);
     }
   }
