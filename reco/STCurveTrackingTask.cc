@@ -50,7 +50,7 @@ STCurveTrackingTask::Init()
     return kERROR;
   }
   
-  fTrackArray = new TClonesArray("STCurveTrack");
+  fTrackArray = new TClonesArray("STCurveTrack", 20);
 
   ioMan -> Register("STCurveTrack", "SPiRIT", fTrackArray, fIsPersistence);
 
@@ -98,8 +98,6 @@ STCurveTrackingTask::Exec(Option_t *opt)
   STDebugLogger::Instance() -> TimerStart("CurveTrackingTask");
 #endif
 
-  if(!fTrackArray) 
-    fLogger->Fatal(MESSAGE_ORIGIN,"No TrackArray!");
   fTrackArray -> Delete();
 
   STEvent *event = (STEvent *) fEventArray -> At(0);
@@ -109,6 +107,7 @@ STCurveTrackingTask::Exec(Option_t *opt)
   fLogger -> Info(MESSAGE_ORIGIN, 
     Form("Event #%d : Found %d curve tracks", 
       event -> GetEventID(), fTrackArray -> GetEntriesFast()));
+
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStop("CurveTrackingTask");
 #endif

@@ -34,7 +34,8 @@ STCurveTrackFinder::STCurveTrackFinder()
 void 
 STCurveTrackFinder::BuildTracks(STEvent *event, TClonesArray *trackArray)
 {
-  fTrackArrayTemp1 -> Clear();
+  fTrackArrayTemp1 -> Clear("C");
+  fTrackArrayTemp2 -> Clear("C");
 
   Init(event, fTrackArrayTemp1);
   while (AnaNextHit()) {}
