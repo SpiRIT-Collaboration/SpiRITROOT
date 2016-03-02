@@ -12,6 +12,7 @@ STClusterizerCurveTrack::STClusterizerCurveTrack()
   fTrackFitter = new STCurveTrackFitter();
   fTrackFitter -> SetNumHitsAtHead(fNumHitsAtHead);
   fCircleFitter = new STCircleFitter();
+  fTracker = new STCurveTrack();
 }
 
 STClusterizerCurveTrack::~STClusterizerCurveTrack()
@@ -101,22 +102,22 @@ STClusterizerCurveTrack::AnalyzeSingleTrack(STCurveTrack *track, TClonesArray *c
   if (numHitsAtHead > numHitsInTrack)
     numHitsAtHead = numHitsInTrack;
 
-  STCurveTrack *tracker = new STCurveTrack();
+  fTracker -> Clear();
   for (Int_t iHit = 0; iHit < numHitsAtHead; iHit++) {
     hit = hitArrayFromTrack -> at(iHit);
-    tracker -> AddHit(hit);
+    fTracker -> AddHit(hit);
   }
-  fTrackFitter -> FitAndSetCurveTrack(tracker);
+  fTrackFitter -> FitAndSetCurveTrack(fTracker);
 
   for (Int_t iHit = 1; iHit < numHitsInTrack; iHit++)
   {
     curHit = hitArrayFromTrack -> at(iHit);
     if (iHit >= numHitsAtHead)
     {
-      tracker -> AddHit(curHit);
-      fTrackFitter -> FitAndSetCurveTrack(tracker);
+      fTracker -> AddHit(curHit);
+      fTrackFitter -> FitAndSetCurveTrack(fTracker);
     }
-    TVector3 direction = tracker -> GetDirection();
+    TVector3 direction = fTracker -> GetDirection();
 
     Double_t length = preHit -> GetPosition().Dot(direction) - curHit -> GetPosition().Dot(direction);
     length = abs(length);

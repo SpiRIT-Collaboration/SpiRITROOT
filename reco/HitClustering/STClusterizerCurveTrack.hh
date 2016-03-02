@@ -27,6 +27,8 @@ class STClusterizerCurveTrack : public STClusterizer
     STCurveTrackFitter *fTrackFitter;
     STCircleFitter *fCircleFitter;
 
+    STCurveTrack *fTracker;
+
   ClassDef(STClusterizerCurveTrack, 1)
 };
 
