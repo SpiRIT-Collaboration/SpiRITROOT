@@ -81,6 +81,7 @@ class STPSAFastFit : public STPSA, public STPulse
      * least square fit of amplitude of the pulse using LSFitPulse().
      */
     Int_t fNDFTbs = 12;
+    Int_t fTbStartCut;
 
     /**
      * Maximum number of iteration alowed for fitting parameter tbStart.

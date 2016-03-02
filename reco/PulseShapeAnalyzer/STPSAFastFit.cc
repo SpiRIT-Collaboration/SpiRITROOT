@@ -16,7 +16,7 @@ using namespace std;
 //#define DEBUG_PEAKFINDING
 //#define DEBUG_FIT
 
-//#define NEW_ITERATION_METHOD
+#define NEW_ITERATION_METHOD
 
 ClassImp(STPSAFastFit)
 
@@ -32,6 +32,8 @@ STPSAFastFit::STPSAFastFit()
   
   if (fWindowStartTb == 0)
     fWindowStartTb = 1;
+
+  fTbStartCut = 512 - fNDFTbs - 1;
 }
 
 void
@@ -173,7 +175,10 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
 
   while (FindPeak(adc, tbCurrent, tbStart)) 
   {
-    if(FitPulse(adc, tbStart, tbCurrent, tbHit, amplitude, squareSum, ndf) == kFALSE)
+    if (tbStart > fTbStartCut - 1)
+      break;
+
+    if (FitPulse(adc, tbStart, tbCurrent, tbHit, amplitude, squareSum, ndf) == kFALSE)
       continue;
 
 #ifdef DEBUG_PEAKFINDING
@@ -293,10 +298,8 @@ STPSAFastFit::FitPulse(Double_t *adc,
 
   if (adcPeak > 3500) // if peak value is larger than 3500(mostly saturated)
   {
-    ndf = tbPeak - tbStart + 1;
-    LSFitPulse(adc, tbHit, ndf, squareSum, amplitude);
-
-    return kTRUE;
+    ndf = tbPeak - tbStart;
+    if (ndf > fNDFTbs) ndf = fNDFTbs;
   }
 
   Double_t alpha   = fAlpha   / (adcPeak * adcPeak); // Weight of time-bucket step
@@ -322,14 +325,14 @@ STPSAFastFit::FitPulse(Double_t *adc,
   Int_t numIteration = 1;
   Bool_t doubleCheckFlag = kFALSE; // Checking flag to apply cut twice in a row
 
-  while(1)
+  while (1)
   {
     dTb = alpha * beta;
     if (dTb > 1) dTb = 1;
     if (dTb < -1) dTb = -1;
 
     tbCur = tbPre + dTb;
-    if (tbCur < 0 || tbCur > 511)
+    if (tbCur < 0 || tbCur > fTbStartCut)
       return kFALSE;
 
     LSFitPulse(adc, tbCur, ndf, lsCur, amplitude);
@@ -382,6 +385,7 @@ STPSAFastFit::FitPulse(Double_t *adc,
   if (adc[tbPeak] > 3500) 
   {
     ndf = tbPeak - tbStart + 1;
+    if (ndf > fNDFTbs) ndf = fNDFTbs;
     LSFitPulse(adc, tbHit, ndf, squareSum, amplitude);
 
     return kTRUE;
@@ -403,7 +407,7 @@ STPSAFastFit::FitPulse(Double_t *adc,
 
   if (increasingTbFlag == kTRUE) 
   {
-    while (1) 
+    while (tbHit > fTbStartCut) 
     {
       if (countIteration > fIterMax)
         break;
@@ -422,7 +426,7 @@ STPSAFastFit::FitPulse(Double_t *adc,
   }
   else 
   {
-    while (1)
+    while (tbHit > fTbStartCut) 
     {
       if (countIteration > fIterMax)
         break;
@@ -495,6 +499,11 @@ STPSAFastFit::TestPulse(Double_t *adc,
                         Double_t tbHit, 
                         Double_t amplitude)
 {
+  Int_t numTbsCorrection = fNumTbsCorrection;
+
+  if (numTbsCorrection + Int_t(tbHit) >= 512)
+    numTbsCorrection = 512 - Int_t(tbHit);
+
   if (amplitude < fThreshold) 
   {
 #ifdef DEBUG_PEAKFINDING
@@ -516,7 +525,7 @@ STPSAFastFit::TestPulse(Double_t *adc,
       << Pulse(tbHit + 9, amplitudePre, tbHitPre) / 2.5 << FairLogger::endl;
 #endif
 
-    for (Int_t iTbPulse = -1; iTbPulse < fNumTbsCorrection; iTbPulse++) {
+    for (Int_t iTbPulse = -1; iTbPulse < numTbsCorrection; iTbPulse++) {
       Int_t tb = Int_t(tbHit) + iTbPulse;
       adc[tb] -= Pulse(tb, amplitude, tbHit);
     }
@@ -524,7 +533,7 @@ STPSAFastFit::TestPulse(Double_t *adc,
     return kFALSE;
   }
 
-  for (Int_t iTbPulse = -1; iTbPulse < fNumTbsCorrection; iTbPulse++) {
+  for (Int_t iTbPulse = -1; iTbPulse < numTbsCorrection; iTbPulse++) {
     Int_t tb = Int_t(tbHit) + iTbPulse;
     adc[tb] -= Pulse(tb, amplitude, tbHit);
   }
