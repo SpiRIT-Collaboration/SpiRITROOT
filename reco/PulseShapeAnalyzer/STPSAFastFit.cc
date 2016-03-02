@@ -495,6 +495,11 @@ STPSAFastFit::TestPulse(Double_t *adc,
                         Double_t tbHit, 
                         Double_t amplitude)
 {
+  Int_t numTbsCorrection = fNumTbsCorrection;
+
+  if (numTbsCorrection + Int_t(tbHit) >= 512)
+    numTbsCorrection = 512 - Int_t(tbHit);
+
   if (amplitude < fThreshold) 
   {
 #ifdef DEBUG_PEAKFINDING
@@ -516,7 +521,7 @@ STPSAFastFit::TestPulse(Double_t *adc,
       << Pulse(tbHit + 9, amplitudePre, tbHitPre) / 2.5 << FairLogger::endl;
 #endif
 
-    for (Int_t iTbPulse = -1; iTbPulse < fNumTbsCorrection; iTbPulse++) {
+    for (Int_t iTbPulse = -1; iTbPulse < numTbsCorrection; iTbPulse++) {
       Int_t tb = Int_t(tbHit) + iTbPulse;
       adc[tb] -= Pulse(tb, amplitude, tbHit);
     }
@@ -524,7 +529,7 @@ STPSAFastFit::TestPulse(Double_t *adc,
     return kFALSE;
   }
 
-  for (Int_t iTbPulse = -1; iTbPulse < fNumTbsCorrection; iTbPulse++) {
+  for (Int_t iTbPulse = -1; iTbPulse < numTbsCorrection; iTbPulse++) {
     Int_t tb = Int_t(tbHit) + iTbPulse;
     adc[tb] -= Pulse(tb, amplitude, tbHit);
   }

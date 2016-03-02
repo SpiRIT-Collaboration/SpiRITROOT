@@ -85,6 +85,8 @@ STPSA::STPSA()
   }
 
   fWindowEndTb = fWindowStartTb + fWindowNumTbs;
+  if (fWindowEndTb > 512) 
+    fWindowEndTb = 512;
 
   fTbToYConv = -fTBTime * fDriftVelocity / 100.;
 }
