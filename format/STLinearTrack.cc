@@ -69,7 +69,7 @@ STLinearTrack::STLinearTrack(Int_t trackID, STHit* hit)
   AddHit(hit);
 }
 
-void STLinearTrack::Clear(Option_t *)
+void STLinearTrack::Clear(Option_t *option)
 {
   fTrackID   = -1;
   fIsPrimary = kFALSE;
@@ -112,7 +112,10 @@ void STLinearTrack::Clear(Option_t *)
 
   fHitIDArray.clear();
 
-  DeleteHits();
+  if (TString(option) == "C")
+    DeleteHits();
+  else
+    fHitPtrArray.clear();
 }
 
 void STLinearTrack::DeleteHits()

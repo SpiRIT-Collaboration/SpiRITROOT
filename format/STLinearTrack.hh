@@ -22,8 +22,8 @@ class STLinearTrack : public TObject
     STLinearTrack(Int_t trackID, STHit* hit);
     virtual ~STLinearTrack();
 
-    virtual void Rest() { Clear(); }
-    virtual void Clear(Option_t * = "");
+    virtual void Reset() { Clear(); }
+    virtual void Clear(Option_t *option = "");
 
     virtual void DeleteHits();
 
@@ -159,7 +159,7 @@ class STLinearTrack : public TObject
     Double_t fExpectationZX; ///< Expectation value of zx
 
 
-  ClassDef(STLinearTrack, 7);
+  ClassDef(STLinearTrack, 8);
 };
 
 #endif

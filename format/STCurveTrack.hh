@@ -24,7 +24,7 @@ class STCurveTrack : public STLinearTrack
     STCurveTrack(Int_t trackID, STHit* hit);
     virtual ~STCurveTrack();
 
-    virtual void Clear(Option_t * = "");
+    virtual void Clear(Option_t *option = "");
 
     void DeleteClusters();
 
@@ -46,7 +46,7 @@ class STCurveTrack : public STLinearTrack
     std::vector<Int_t> fClusterIDArray;
     std::vector<STHitCluster*> fClusterPtrArray; //!
 
-  ClassDef(STCurveTrack, 1);
+  ClassDef(STCurveTrack, 2);
 };
 
 #endif

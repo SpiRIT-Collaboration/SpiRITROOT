@@ -74,7 +74,7 @@ STCurveTrack::STCurveTrack(Int_t trackID, STHit* hit)
   AddHit(hit);
 }
 
-void STCurveTrack::Clear(Option_t *)
+void STCurveTrack::Clear(Option_t *option)
 {
   fTrackID   = -1;
   fIsPrimary = kFALSE;
@@ -119,8 +119,14 @@ void STCurveTrack::Clear(Option_t *)
   fHitIDArray.clear();
   fClusterIDArray.clear();
 
-  DeleteHits();
-  DeleteClusters();
+  if (TString(option) == "C") {
+    DeleteHits();
+    DeleteClusters();
+  }
+  else {
+    fHitPtrArray.clear();
+    fClusterPtrArray.clear();
+  }
 }
 
 void STCurveTrack::DeleteClusters()
