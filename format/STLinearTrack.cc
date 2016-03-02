@@ -10,7 +10,7 @@ ClassImp(STLinearTrack)
 
 STLinearTrack::STLinearTrack()
 {
-  Reset();
+  Clear();
 }
 
 STLinearTrack::~STLinearTrack()
@@ -64,12 +64,12 @@ STLinearTrack::STLinearTrack(STLinearTrack *track)
 
 STLinearTrack::STLinearTrack(Int_t trackID, STHit* hit)
 {
-  Reset();
+  Clear();
   fTrackID = trackID;
   AddHit(hit);
 }
 
-void STLinearTrack::Reset()
+void STLinearTrack::Clear(Option_t *)
 {
   fTrackID   = -1;
   fIsPrimary = kFALSE;
@@ -110,8 +110,18 @@ void STLinearTrack::Reset()
   fExpectationYZ = 0;
   fExpectationZX = 0;
 
-  fHitPtrArray.clear();
   fHitIDArray.clear();
+
+  DeleteHits();
+}
+
+void STLinearTrack::DeleteHits()
+{
+  UInt_t size1 = fHitPtrArray.size();
+  for (UInt_t iHit = 0; iHit < size1; iHit++)
+    delete fHitPtrArray[iHit];
+
+  fHitPtrArray.clear();
 }
 
 void STLinearTrack::AddHit(STHit *hit)

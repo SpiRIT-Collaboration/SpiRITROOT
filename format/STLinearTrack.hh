@@ -22,7 +22,10 @@ class STLinearTrack : public TObject
     STLinearTrack(Int_t trackID, STHit* hit);
     virtual ~STLinearTrack();
 
-    virtual void Reset();
+    virtual void Rest() { Clear(); }
+    virtual void Clear(Option_t * = "");
+
+    virtual void DeleteHits();
 
     virtual void AddHit(STHit *hit); ///< Add hit and update parameters
 

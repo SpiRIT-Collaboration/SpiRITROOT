@@ -10,7 +10,7 @@ ClassImp(STCurveTrack)
 
 STCurveTrack::STCurveTrack()
 {
-  Reset();
+  Clear();
 }
 
 STCurveTrack::~STCurveTrack()
@@ -46,6 +46,9 @@ STCurveTrack::STCurveTrack(STCurveTrack *track)
   fHitPtrArray = *(track -> GetHitPointerArray()); 
   fHitIDArray  = *(track -> GetHitIDArray()); 
 
+  fClusterPtrArray = *(track -> GetClusterPointerArray()); 
+  fClusterIDArray  = *(track -> GetClusterIDArray()); 
+
   fRMSLine  = track -> GetRMSLine();
   fRMSPlane = track -> GetRMSPlane();
 
@@ -66,12 +69,12 @@ STCurveTrack::STCurveTrack(STCurveTrack *track)
 
 STCurveTrack::STCurveTrack(Int_t trackID, STHit* hit)
 {
-  Reset();
+  Clear();
   fTrackID = trackID;
   AddHit(hit);
 }
 
-void STCurveTrack::Reset()
+void STCurveTrack::Clear(Option_t *)
 {
   fTrackID   = -1;
   fIsPrimary = kFALSE;
@@ -113,10 +116,19 @@ void STCurveTrack::Reset()
   fExpectationYZ = 0;
   fExpectationZX = 0;
 
-  fHitPtrArray.clear();
   fHitIDArray.clear();
-
   fClusterIDArray.clear();
+
+  DeleteHits();
+  DeleteClusters();
+}
+
+void STCurveTrack::DeleteClusters()
+{
+  UInt_t size1 = fClusterPtrArray.size();
+  for (UInt_t iCluster = 0; iCluster < size1; iCluster++)
+    delete fClusterPtrArray[iCluster];
+
   fClusterPtrArray.clear();
 }
 

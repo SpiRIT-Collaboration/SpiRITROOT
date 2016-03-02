@@ -24,7 +24,9 @@ class STCurveTrack : public STLinearTrack
     STCurveTrack(Int_t trackID, STHit* hit);
     virtual ~STCurveTrack();
 
-    virtual void Reset();
+    virtual void Clear(Option_t * = "");
+
+    void DeleteClusters();
 
     void RemoveHit(STHit *hit);
     Int_t GetNumHitsRemoved() const;
