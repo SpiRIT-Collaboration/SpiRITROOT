@@ -3,6 +3,7 @@
 
 // ROOT classes
 #include "Rtypes.h"
+#include "STGlobal.hh"
 
 // SpiRITROOT classes
 class STRiemannTrack;

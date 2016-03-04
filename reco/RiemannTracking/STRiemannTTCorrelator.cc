@@ -68,6 +68,14 @@ STRiemannTTCorrelator::Correlate(STRiemannTrack *track1,
 
   matchQuality = rms;
 
+#ifdef SUBTASK_RIEMANN
+  STDebugLogger::InstanceX() -> Print("RiemannTT", 
+    Form("rms: %f, plane cut: %f", rms, fPlaneCut*scaling));
+  STDebugLogger::InstanceX() -> Print("RiemannTT", 
+    Form("track-1 rms: %f", track1 -> DistRMS()));
+  STDebugLogger::InstanceX() -> Print("RiemannTT", 
+    Form("track-2 rms: %f", track2 -> DistRMS()));
+#endif
   if (rms > fPlaneCut*scaling) 
   {
     survive = kFALSE;

@@ -122,6 +122,8 @@ class STRiemannTrackingTask : public FairTask
 
     void SetPersistence(Bool_t value = kTRUE);
 
+    void SetSubTaskTracks(Int_t id1, Int_t id2);
+
 
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
@@ -141,7 +143,6 @@ class STRiemannTrackingTask : public FairTask
     void MergeCurlers();
 
     TClonesArray *fEventHCMArray;
-    TClonesArray *fMvdArray;
     TClonesArray *fRiemannTrackArray;
     TClonesArray *fRiemannHitArray;
     TClonesArray *fPreTrackArray;
@@ -183,6 +184,7 @@ class STRiemannTrackingTask : public FairTask
     UInt_t fMinHitsPhi;
 
     Double_t fMaxRMS;
+
 
   ClassDef(STRiemannTrackingTask, 1);
 };

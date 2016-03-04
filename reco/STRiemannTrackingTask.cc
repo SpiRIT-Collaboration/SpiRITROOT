@@ -32,6 +32,9 @@
 // STL
 #include <map>
 #include <cmath>
+#include <iostream>
+
+using namespace std;
 
 // ROOT classes
 #include "TFile.h"
@@ -196,8 +199,14 @@ STRiemannTrackingTask::Init()
   fPreTrackArray = (TClonesArray *) ioMan -> GetObject("STCurveTrack");
 #endif
 
+#ifdef SUBTASK_RIEMANN
+  fRiemannTrackArray = (TClonesArray *) ioMan -> GetObject("STRiemannTrack");
+#endif
+
+#ifndef SUBTASK_RIEMANN
   fRiemannTrackArray = new TClonesArray("STRiemannTrack");
   ioMan -> Register("STRiemannTrack", "SPiRIT", fRiemannTrackArray, fIsPersistence);
+#endif
 
   fRiemannHitArray = new TClonesArray("STRiemannHit");
   ioMan -> Register("STRiemannHit", "SPiRIT", fRiemannHitArray, kFALSE);
@@ -261,6 +270,33 @@ STRiemannTrackingTask::SetParContainers()
 void
 STRiemannTrackingTask::Exec(Option_t *opt)
 {
+#ifdef SUBTASK_RIEMANN
+  if (opt == TString("sub")) 
+  {
+    fRiemannList.clear();
+
+    STRiemannTrack *track;
+    Int_t subNum1 = -1;
+    Int_t subNum2 = -1;
+
+    STDebugLogger::InstanceX() -> GetIntPar("SubNum1", subNum1);
+    STDebugLogger::InstanceX() -> GetIntPar("SubNum2", subNum2);
+
+    track = (STRiemannTrack *) fRiemannTrackArray -> At(subNum1);
+    fRiemannList.push_back(track);
+    track = (STRiemannTrack *) fRiemannTrackArray -> At(subNum2);
+    fRiemannList.push_back(track);
+
+    cout << endl;
+    fLogger -> Info(MESSAGE_ORIGIN, 
+      Form("Running sub task with track %d and %d", subNum1, subNum2));
+
+    MergeTracks();
+  }
+
+  return;
+#endif
+
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStart("RiemannTrackingTask");
 #endif
@@ -336,6 +372,7 @@ STRiemannTrackingTask::Exec(Option_t *opt)
 
 
   // 1st Build & Merge ----------------------------------------------------------------------------------
+
   BuildTracks(fTrackFinder, fHitBuffer, &riemannTemp, STRiemannSort::kSortR, fMinHitsR, fMaxRMS);
   BuildTracks(fTrackFinder, fHitBuffer, &riemannTemp, STRiemannSort::kSortZ, fMinHitsZ, 0.7*fMaxRMS);
   riemannTemp.clear();

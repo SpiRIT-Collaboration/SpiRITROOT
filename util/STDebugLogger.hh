@@ -22,6 +22,7 @@ class STDebugLogger
   public:
     static STDebugLogger* Create(TString name = "st_debug_logger");
     static STDebugLogger* Instance();
+    static STDebugLogger* InstanceX();
 
     STDebugLogger();
     STDebugLogger(TString name);
@@ -68,6 +69,12 @@ class STDebugLogger
     void Print(TString header, TString message);
     /////////////////////////////////////////////
 
+
+    ///////////////////////////////////////////////
+    void SetIntPar(TString name, Int_t val);
+    Bool_t GetIntPar(TString name, Int_t &val);
+    ///////////////////////////////////////////////
+
   private:
     ////////////////////////////////////
     TFile* fOutFile;
@@ -92,6 +99,12 @@ class STDebugLogger
 
     ////////////////////////////////////////
     std::map<TString, TObject*> fMapObject;
+    ////////////////////////////////////////
+
+
+    ////////////////////////////////////////
+    std::map<TString, Int_t> fMapIntPar;
+    std::map<TString, Int_t>::iterator fItMapIntPar;
     ////////////////////////////////////////
 
     static STDebugLogger* fInstance;

@@ -4,6 +4,7 @@
  */
 
 #include "STEveManager.hh"
+#include "STDebugLogger.hh"
 
 #include "FairParAsciiFileIo.h"
 
@@ -114,6 +115,16 @@ TCanvas*  STEveManager::GetCvsPadPlane()           { return fCvsPadPlane; }
 TCanvas*  STEveManager::GetCvsPad()                { return fCvsPadADC; }
 TCanvas*  STEveManager::GetCvsPadADC()             { return fCvsPadADC; }
 Long64_t  STEveManager::GetCurrentEventEntry()     { return fCurrentEventEntry; }
+
+void STEveManager::UpdateSubNumberEntry1() 
+{ 
+  STDebugLogger::InstanceX() -> SetIntPar("SubNum1", fSubNumberEntry1 -> GetIntNumber());
+}
+
+void STEveManager::UpdateSubNumberEntry2() 
+{
+  STDebugLogger::InstanceX() -> SetIntPar("SubNum2", fSubNumberEntry2 -> GetIntNumber());
+}
 
 void 
 STEveManager::Init(Int_t option, Int_t level, Int_t nNodes)
@@ -300,10 +311,35 @@ STEveManager::BuildMenu()
 
   if (EveMode("sb"))
   {
+    TGHorizontalFrame* frameSubNumberEntry = new TGHorizontalFrame(frameEventControl);
+    {
+      TGLabel* labelSubNum1 = new TGLabel(frameSubNumberEntry, "#1:");
+      TGLabel* labelSubNum2 = new TGLabel(frameSubNumberEntry, "#2:");
+
+      fSubNumberEntry1 = new TGNumberEntry(frameSubNumberEntry, 0., 6, -1,
+          TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
+          TGNumberFormat::kNELLimitMinMax, 0, 10000);
+      fSubNumberEntry2 = new TGNumberEntry(frameSubNumberEntry, 0., 6, -1,
+          TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative,
+          TGNumberFormat::kNELLimitMinMax, 0, 10000);
+
+      frameSubNumberEntry -> AddFrame(labelSubNum1, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1, 2, 1, 1));
+      frameSubNumberEntry -> AddFrame(fSubNumberEntry1, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
+      frameSubNumberEntry -> AddFrame(labelSubNum2, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 2, 1, 1));
+      frameSubNumberEntry -> AddFrame(fSubNumberEntry2, new TGLayoutHints(kLHintsLeft, 1, 1, 1, 1));
+
+      STDebugLogger::InstanceX() -> SetIntPar("SubNum1", 0);
+      STDebugLogger::InstanceX() -> SetIntPar("SubNum2", 0);
+
+      fSubNumberEntry1 -> Connect("ValueSet(Long_t)", "STEveManager", this, "UpdateSubNumberEntry1()");
+      fSubNumberEntry2 -> Connect("ValueSet(Long_t)", "STEveManager", this, "UpdateSubNumberEntry2()");
+    }
+
     TGTextButton* buttonRun = new TGTextButton(frameEventControl, "Run Sub Task");
-    //buttonRun -> Connect("Clicked()", "STEveManager", this, "RunEveSubTask()");
     buttonRun -> Connect("Pressed()", "STEveManager", this, "RepeatEveSubTask()");
     buttonRun -> Connect("Released()", "STEveManager", this, "StopEveSubTask()");
+
+    frameEventControl -> AddFrame(frameSubNumberEntry, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10,2,5,1));
     frameEventControl -> AddFrame(buttonRun, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,3));
   }
 

@@ -26,6 +26,14 @@ STDebugLogger* STDebugLogger::Instance()
   return fInstance;
 }
 
+STDebugLogger* STDebugLogger::InstanceX() 
+{
+  if (fInstance == NULL)
+    fInstance = new STDebugLogger("");
+
+  return fInstance;
+}
+
 STDebugLogger::STDebugLogger()
 {
   if (fInstance != NULL) throw;
@@ -40,9 +48,12 @@ STDebugLogger::STDebugLogger(TString name)
   if (fInstance != NULL) throw;
   fInstance = this;
 
-  name = name + ".root";
-  fOutFile = new TFile(name,"RECREATE");
-  fMaxBranchIdx = 0;
+  if (name != "")
+  {
+    name = name + ".root";
+    fOutFile = new TFile(name,"RECREATE");
+    fMaxBranchIdx = 0;
+  }
 }
 
 STDebugLogger::~STDebugLogger()
@@ -57,6 +68,9 @@ STDebugLogger::~STDebugLogger()
 void 
 STDebugLogger::Write()
 {
+  if (fOutFile == NULL)
+    return;
+
   fOutFile -> cd();
 
   Int_t total_time = 0;
@@ -191,12 +205,14 @@ STDebugLogger::FillTree(TString name, Int_t nVal, Double_t *val, TString *bname)
   fMapTree[name] -> Fill();
 }
 
-void STDebugLogger::TimerStart(TString name)
+void 
+STDebugLogger::TimerStart(TString name)
 {
   fTimeStamp[name] = std::chrono::high_resolution_clock::now();
 }
 
-void STDebugLogger::TimerStop(TString name) 
+void 
+STDebugLogger::TimerStop(TString name) 
 { 
   st_time_t stamp = fTimeStamp[name];
   st_time_t now = std::chrono::high_resolution_clock::now();
@@ -208,21 +224,43 @@ void STDebugLogger::TimerStop(TString name)
 void 
 STDebugLogger::SetObject(TString name, TObject* object)
 {
-  if (fMapObject[name] == NULL)
+  //if (fMapObject[name] == NULL)
     fMapObject[name] = object;
 }
 
 TObject* STDebugLogger::GetObject(TString name) { return fMapObject[name] != NULL ? fMapObject[name] : NULL; }
 
+void 
+STDebugLogger::SetIntPar(TString name, Int_t val)
+{
+  //fItMapIntPar = fMapIntPar.find(name);
+  //if (fItMapIntPar != fMapIntPar.end())
+    fMapIntPar[name] = val;
+}
 
-void STDebugLogger::Print(TString message)
+Bool_t 
+STDebugLogger::GetIntPar(TString name, Int_t &val) 
+{ 
+  fItMapIntPar = fMapIntPar.find(name);
+  if (fItMapIntPar != fMapIntPar.end()) {
+    val = fItMapIntPar -> second;
+    return kTRUE;
+  }
+
+  return kFALSE;
+}
+
+
+void 
+STDebugLogger::Print(TString message)
 {
   cout << "\033[1m\033[32m[STLOG]\033[0m "
        << message 
        << endl;
 }
 
-void STDebugLogger::Print(TString header, TString message)
+void 
+STDebugLogger::Print(TString header, TString message)
 {
   cout << "\033[1m\033[32m["
        << header

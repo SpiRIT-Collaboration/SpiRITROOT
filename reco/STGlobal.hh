@@ -8,6 +8,7 @@
 
 //#define TASKTIMER
 
+//#define SUBTASK_RIEMANN
 //#define SUBTASK_CURVETRACKING
 //#define DEBUG_CURVE
 

@@ -93,6 +93,9 @@ class STEveManager : public TEveEventManager
     TCanvas*  GetCvsPadADC();
     Long64_t  GetCurrentEventEntry();
 
+    void UpdateSubNumberEntry1();
+    void UpdateSubNumberEntry2();
+
     // BUTTONS
     void NextEventButton();
     void PrevEventButton();
@@ -132,6 +135,8 @@ class STEveManager : public TEveEventManager
     TGNumberEntry *fCurrentCurveSet         = NULL;
     TGNumberEntry *fCurrentRow              = NULL;
     TGNumberEntry *fCurrentLayer            = NULL;
+    TGNumberEntry *fSubNumberEntry1         = NULL;
+    TGNumberEntry *fSubNumberEntry2         = NULL;
 
     TGCheckButton *fButtonOnOffMC;
     TGCheckButton *fButtonOnOffDigi;

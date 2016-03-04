@@ -28,6 +28,7 @@
 #include "STRiemannTTCorrelator.hh"
 #include "STProximityHTCorrelator.hh"
 #include "STRiemannSort.hh"
+#include "STGlobal.hh"
 
 // STL
 #include <algorithm>
@@ -40,7 +41,9 @@ using namespace std;
 
 //#define UPTOHIT
 //#define DEBUGHT 1
-//#define DEBUGTT 1
+#ifdef SUBTASK_RIEMANN
+#define DEBUGTT 1
+#endif
 //#define DEBUG 1
 
 // Class Member definitions -----------
@@ -432,10 +435,6 @@ STRiemannTrackFinder::BuildTracks(vector<STHit *> &hitList, vector<STRiemannTrac
 
 void
 STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
-  #ifdef DEBUGTT
-    std::cout << "STRiemannTrackFinder::mergeTracks" << std::endl;
-  #endif
-
   UInt_t numTracks = candList.size();
   #ifdef DEBUGTT
   std::cout << "STRiemannTrackFinder::mergeTracks: " << numTracks << " track to merge\n";
@@ -510,8 +509,14 @@ STRiemannTrackFinder::MergeTracks(vector<STRiemannTrack *> &candList){
         #ifdef DEBUGTT
           if (!applicable)
             std::cout << " TT correlator " << iCor << " NOT applicable" << std::endl;
-          else
-            std::cout << " TT correlator " << iCor << "  IS applicable; survived " << survive << " with MatchQuality " << matchQuality << std::endl;
+          else {
+            std::cout << " TT correlator " << iCor << "  IS applicable" << std::endl;
+
+            if (!survive)
+              std::cout << " -> Dead! with MatchQuality " << matchQuality << std::endl;
+            else
+              std::cout << " -> Survive! with MatchQuality " << matchQuality << std::endl;
+          }
         #endif
 
         if (!applicable) {

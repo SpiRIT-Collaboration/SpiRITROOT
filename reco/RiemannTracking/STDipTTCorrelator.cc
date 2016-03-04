@@ -57,6 +57,10 @@ STDipTTCorrelator::Correlate(STRiemannTrack* track1,
 
     if (phiDiff2 < phiDiff1) phiDiff1 = phiDiff2;
 
+#ifdef SUBTASK_RIEMANN
+    STDebugLogger::InstanceX() -> Print("DipTT", 
+      Form("phi diff: %f, dip cut: %f", phiDiff1, fDipCut*scaling));
+#endif
     if (phiDiff1 > fDipCut*scaling) 
     {
       survive = kFALSE;
@@ -88,6 +92,10 @@ STDipTTCorrelator::Correlate(STRiemannTrack* track1,
   if (d1121 < dist) {dist = d1121; back1 = kFALSE; back2 = kFALSE;}
   if (d112n < dist) {dist = d112n; back1 = kFALSE; back2 = kTRUE;}
 
+#ifdef SUBTASK_RIEMANN
+  STDebugLogger::InstanceX() -> Print("DipTT", 
+    Form("prox: %f, prox cut: %f", dist, fProxCut));
+#endif
   // check proximity
   if (dist > fProxCut) 
   {
@@ -128,6 +136,10 @@ STDipTTCorrelator::Correlate(STRiemannTrack* track1,
     scaling += 1;
 
 
+#ifdef SUBTASK_RIEMANN
+  STDebugLogger::InstanceX() -> Print("DipTT", 
+    Form("dist: %f, helix cut: %f", hDist, fHelixCut*scaling));
+#endif
     if (hDist > fHelixCut*scaling) {
       survive = kFALSE;
 #ifdef DEBUGRIEMANNCUTS
@@ -158,6 +170,10 @@ STDipTTCorrelator::Correlate(STRiemannTrack* track1,
 
   matchQuality = maxhDist;
 
+#ifdef SUBTASK_RIEMANN
+  STDebugLogger::InstanceX() -> Print("DipTT", 
+    Form("max dist: %f, helix cut: %f", maxhDist, fHelixCut));
+#endif
   if (maxhDist > fHelixCut) 
   {
     survive = kFALSE;
