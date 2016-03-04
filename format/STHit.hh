@@ -162,7 +162,13 @@ class STHitSortRInvFromP {
     Bool_t operator() (STHit* hit1, STHit* hit2){
       fP1 = hit1 -> GetPosition() - fP;
       fP2 = hit2 -> GetPosition() - fP;
-      return fP1.Mag() < fP2.Mag(); 
+      if (fP1.Mag() == fP2.Mag()) {
+        if (fP1.X() == fP2.X()) {
+          if (fP1.Y() == fP2.Y()) {
+            return fP1.Z() > fP2.Z();
+          } return fP1.Y() > fP2.Z();
+        } return fP1.X() > fP2.X();
+      } return fP1.Mag() < fP2.Mag(); 
     }
 
   private:
