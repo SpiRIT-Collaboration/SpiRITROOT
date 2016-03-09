@@ -325,7 +325,7 @@ STPSAFastFit::FitPulse(Double_t *adc,
   Int_t numIteration = 1;
   Bool_t doubleCheckFlag = kFALSE; // Checking flag to apply cut twice in a row
 
-  while (1)
+  while (dTb != 0)
   {
     dTb = alpha * beta;
     if (dTb > 1) dTb = 1;
