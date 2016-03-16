@@ -113,7 +113,7 @@ void run_mc
   // -----------------------------------------------------------------
   // Event generator
   STEventGenGenerator* fEvent = new STEventGenGenerator(event);
-  fEvent -> SetPrimaryVertex(0, -21.33, -8.9);
+  fEvent -> SetPrimaryVertex(0, -21.33, -.89);
 
   FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();
   fGenerator -> AddGenerator(fEvent);
