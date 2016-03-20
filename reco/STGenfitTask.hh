@@ -31,6 +31,7 @@
 #include "TGeoMaterialInterface.h"
 #include "MeasurementFactory.h"
 #include "MeasurementProducer.h"
+#include "EventDisplay.h"
 
 // ROOT classes
 #include "TClonesArray.h" 
@@ -40,14 +41,18 @@ class STGenfitTask : public FairTask {
     STGenfitTask();
     ~STGenfitTask();
 
+    void SetMinIterations(Int_t value);
     void SetMaxIterations(Int_t value);
     void SetFindVertex(Bool_t value = kTRUE);
+    void SetDisplay(Bool_t value = kTRUE);
 
     virtual InitStatus Init();
     virtual void SetParContainers();
     virtual void Exec(Option_t *opt);
 
     void SetPersistence(Bool_t value = kTRUE);
+
+    void OpenDisplay();
 
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
@@ -67,11 +72,15 @@ class STGenfitTask : public FairTask {
     genfit::MeasurementProducer<STHitCluster, genfit::STSpacepointMeasurement> *fMeasurementProducer;
     genfit::MeasurementFactory<genfit::AbsMeasurement> *fMeasurementFactory;
 
+    Int_t fMinIterations;
     Int_t fMaxIterations;
     genfit::AbsKalmanFitter *fFitter;
 
     Bool_t fIsFindVertex;
     genfit::GFRaveVertexFactory *fVertexFactory;
+
+    Bool_t fIsDisplay;
+    genfit::EventDisplay *fDisplay;
 
   ClassDef(STGenfitTask, 1);
 };
