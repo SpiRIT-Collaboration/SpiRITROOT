@@ -51,7 +51,7 @@ void STTrack::AdddEdx(Double_t value)                            { fdEdx.push_ba
 void STTrack::SetChi2(Double_t value)                            { fChi2 = value; }
 void STTrack::SetNDF(Int_t value)                                { fNDF = value; }
 
-void STTrack::AddHitID(Double_t value)                            { fHitIDArray.push_back(value); }
+void STTrack::AddHitID(Int_t value)                              { fHitIDArray.push_back(value); }
 
 Int_t STTrack::GetParentID()                    { return fParentID; }
 Int_t STTrack::GetTrackID()                     { return fTrackID; }
@@ -79,4 +79,4 @@ std::vector<Double_t> *STTrack::GetdEdxArray()  { return &fdEdx; }
 Double_t STTrack::GetChi2()                     { return fChi2; }
 Int_t STTrack::GetNDF()                         { return fNDF; }
 
-std::vector<Double_t> *STTrack::GetHitIDArray() { return &fHitIDArray; }
+std::vector<Int_t> *STTrack::GetHitIDArray()    { return &fHitIDArray; }

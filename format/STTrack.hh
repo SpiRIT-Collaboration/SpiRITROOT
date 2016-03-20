@@ -37,7 +37,7 @@ class STTrack : public TObject {
     void SetTrackLength(Double_t value);
     void SetNDF(Int_t value);
 
-    void AddHitID(Double_t value);
+    void AddHitID(Int_t value);
 
     Int_t GetParentID();
     Int_t GetTrackID();
@@ -65,7 +65,7 @@ class STTrack : public TObject {
     Double_t GetChi2();
     Int_t GetNDF();
 
-    std::vector<Double_t> *GetHitIDArray();
+    std::vector<Int_t> *GetHitIDArray();
 
   private:
     Int_t fParentID;
