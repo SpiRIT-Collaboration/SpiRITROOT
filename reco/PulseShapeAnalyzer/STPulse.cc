@@ -14,9 +14,8 @@ STPulse::STPulse()
   Initialize(fileName);
 }
 
-STPulse::STPulse(TString fileName, Double_t step)
+STPulse::STPulse(TString fileName)
 {
-  fStep = step;
   Initialize(fileName);
 }
 
@@ -26,16 +25,18 @@ void STPulse::Initialize(TString fileName)
 
   Double_t value;
   Double_t max = 0;
+  fNumDataPoints = 0;
 
+  file >> fStep;
   while (file >> value) {
     if (max < value) {
       max = value; 
-      fTbAtMax = fNumDataPoint * fStep;
+      fTbAtMax = fNumDataPoints * fStep;
     }
-    fNumDataPoint++;
+    fNumDataPoints++;
   }
 
-  if (fNumDataPoint == 0 || max == 0) {
+  if (fNumDataPoints == 0 || max == 0) {
     cout << "*** Error occured while initializing the pulse!" << endl;
     cout << "*** Check the file: " << fileName << endl;
     return;
@@ -45,17 +46,49 @@ void STPulse::Initialize(TString fileName)
   if (max != 1)
     c = 1./max;
 
-  fPulseData = new Double_t[fNumDataPoint];
+  fPulseData = new Double_t[fNumDataPoints];
 
   file.clear();
   file.seekg(0, ios::beg);
 
-  for(Int_t iData = 0; iData < fNumDataPoint; iData++){
+  file >> fStep;
+  for(Int_t iData = 0; iData < fNumDataPoints; iData++){
     file >> value;
     fPulseData[iData] = c * value;
   }
 
   file.close();
+
+  fNumAscending = 0;
+  fThresholdTbStep = 5000.;
+
+  Bool_t ascending = kFALSE;
+  for(Int_t iData = 0; iData < fNumDataPoints;)
+  {
+    value = fPulseData[iData];
+    Double_t tb = iData * fStep;
+
+    if (ascending == kFALSE && value > fThresholdRatio) {
+      ascending = kTRUE;
+      fTbAtThreshold = tb;
+    }
+    if (ascending == kTRUE && iData * fStep > fTbAtMax)
+      break;
+
+    if (ascending)
+    {
+      if (value < fThresholdTbStep)
+        fThresholdTbStep = value;
+      fNumAscending++;
+      iData += Int_t(1/fStep);
+    }
+    else
+      iData += 1;
+  }
+
+  fNumAscending = Int_t(fNumAscending * 3./4.);
+
+  fNumF1 = 0;
 }
 
 Double_t 
@@ -67,7 +100,7 @@ STPulse::Pulse(Double_t x, Double_t amp, Double_t tb0)
 
   Int_t tbInStep = tb / fStep;
 
-  if (tbInStep > fNumDataPoint - 2) 
+  if (tbInStep > fNumDataPoints - 2) 
     return 0;
 
   Double_t r = (tb / fStep) - tbInStep;
@@ -84,7 +117,7 @@ STPulse::PulseF1(Double_t *x, Double_t *par)
     return 0;
 
   Int_t tbInStep = tb / fStep;
-  if (tbInStep > fNumDataPoint - 2)
+  if (tbInStep > fNumDataPoints - 2)
     return 0;
 
   Double_t r = (tb / fStep) - tbInStep;
@@ -108,4 +141,26 @@ STPulse::GetPulseFunction(STHit* hit, TString name)
   TF1* f1 = GetPulseFunction(name);
   f1 -> SetParameters(hit -> GetCharge(), hit -> GetTb());
   return f1;
+}
+
+Double_t  STPulse::GetTbAtThreshold()   { return fTbAtThreshold;   }
+Double_t  STPulse::GetTbAtMax()         { return fTbAtMax;         }
+   Int_t  STPulse::GetNumAscending()    { return fNumAscending;    }
+Double_t  STPulse::GetThresholdTbStep() { return fThresholdTbStep; }
+   Int_t  STPulse::GetNumDataPoints()   { return fNumDataPoints;   }
+Double_t *STPulse::GetPulseData()       { return fPulseData;       }
+
+void 
+STPulse::Print()
+{
+  cout << "[STPulse INFO]" << endl;
+  cout << " == Number of data points : " << fNumDataPoints << endl;
+  cout << " == Step size between data points : " << fStep << endl;
+  cout << " == Threshold for one timebucket step : " << fThresholdTbStep << endl; 
+  cout << " == Number of timebucket while rising : " << fNumAscending << endl;
+  cout << " == Timebucket at threshold (" << setw(3) << fThresholdRatio 
+       << " of peak) : " << fTbAtThreshold << endl; 
+  cout << " == Timebucket at peak : " << fTbAtMax << endl; 
+  cout << " == Timebucket difference from threshold to peak : " 
+       << fTbAtMax - fTbAtThreshold << endl; 
 }

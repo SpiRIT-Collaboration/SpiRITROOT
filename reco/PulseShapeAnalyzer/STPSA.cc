@@ -82,6 +82,8 @@ STPSA::STPSA()
       case 100: fTBTime = 10; break;
       default:  fTBTime = -1; break;
     }
+
+    fThreshold = 20;
   }
 
   fWindowEndTb = fWindowStartTb + fWindowNumTbs;

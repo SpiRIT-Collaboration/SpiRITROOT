@@ -110,7 +110,7 @@ class STPSAFastFit : public STPSA, public STPulse
      *
      * for beta, see fBetaCut.
      */
-    Double_t fAlpha = 20.; ///< The step of 
+    Double_t fAlpha = 20.;
 
     /**
      * The default cut for beta. If beta becomes lower than fBetaCut

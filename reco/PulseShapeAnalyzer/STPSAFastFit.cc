@@ -13,6 +13,7 @@ using namespace std;
 #include "RVersion.h"
 
 //#define DEBUG
+//#define DEBUG_WHERE
 //#define DEBUG_PEAKFINDING
 //#define DEBUG_FIT
 
@@ -34,6 +35,8 @@ STPSAFastFit::STPSAFastFit()
     fWindowStartTb = 1;
 
   fTbStartCut = 512 - fNDFTbs - 1;
+
+  fThresholdOneTbStep = fThresholdTbStep * fThreshold;
 }
 
 void
@@ -173,6 +176,9 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
   Double_t tbHitPre = 0;
   Double_t amplitudePre = 0;
 
+#ifdef DEBUG_WHERE
+  LOG(INFO) << "Start" << FairLogger::endl;
+#endif
   while (FindPeak(adc, tbCurrent, tbStart)) 
   {
     if (tbStart > fTbStartCut - 1)
@@ -226,6 +232,9 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
       tbCurrent = Int_t(tbHit) + 9;
     }
   }
+#ifdef DEBUG_WHERE
+  LOG(INFO) << "END" << FairLogger::endl;
+#endif
 }
 
 Bool_t
@@ -233,6 +242,9 @@ STPSAFastFit::FindPeak(Double_t *adc,
                           Int_t &tbCurrent, 
                           Int_t &tbStart)
 {
+#ifdef DEBUG_WHERE
+    LOG(INFO) << " Find peak" << FairLogger::endl;
+#endif
   Int_t countAscending      = 0;
   Int_t countAscendingBelow = 0;
 
@@ -250,7 +262,7 @@ STPSAFastFit::FindPeak(Double_t *adc,
     {
       // If acended step is below 5, 
       // or negative pulse is bigger than the found pulse, continue
-      if (countAscending < 5 || ((countAscendingBelow >= countAscending) && (-adc[tbCurrent - 1 - countAscending - countAscendingBelow] > adc[tbCurrent - 1]))) 
+      if (countAscending < fNumAscending || ((countAscendingBelow >= countAscending) && (-adc[tbCurrent - 1 - countAscending - countAscendingBelow] > adc[tbCurrent - 1]))) 
       {
         countAscending = 0;
         countAscendingBelow = 0;
@@ -276,6 +288,9 @@ STPSAFastFit::FindPeak(Double_t *adc,
         << ", below-peak " << adc[tbCurrent - countAscendingBelow] 
         << FairLogger::endl;
 #endif
+#ifdef DEBUG_WHERE
+    LOG(INFO) << " Peak is found!" << FairLogger::endl;
+#endif
 
       return kTRUE;
     }
@@ -294,6 +309,9 @@ STPSAFastFit::FitPulse(Double_t *adc,
                           Int_t &ndf)
 #ifdef NEW_ITERATION_METHOD
 {
+#ifdef DEBUG_WHERE
+    LOG(INFO) << " Fit pulse" << FairLogger::endl;
+#endif
   Double_t adcPeak = adc[tbPeak];
 
   if (adcPeak > 3500) // if peak value is larger than 3500(mostly saturated)
@@ -325,7 +343,7 @@ STPSAFastFit::FitPulse(Double_t *adc,
   Int_t numIteration = 1;
   Bool_t doubleCheckFlag = kFALSE; // Checking flag to apply cut twice in a row
 
-  while (dTb != 0)
+  while (dTb != 0 && lsCur != lsPre)
   {
     dTb = alpha * beta;
     if (dTb > 1) dTb = 1;
@@ -333,7 +351,12 @@ STPSAFastFit::FitPulse(Double_t *adc,
 
     tbCur = tbPre + dTb;
     if (tbCur < 0 || tbCur > fTbStartCut)
+    {
+#ifdef DEBUG_WHERE
+      LOG(INFO) << " Out of bound while fitting" << FairLogger::endl;
+#endif
       return kFALSE;
+    }
 
     LSFitPulse(adc, tbCur, ndf, lsCur, amplitude);
     beta = -(lsCur - lsPre) / (tbCur - tbPre) / ndf;
@@ -365,6 +388,10 @@ STPSAFastFit::FitPulse(Double_t *adc,
     tbHit = tbCur;
     squareSum = lsCur;
   }
+
+#ifdef DEBUG_WHERE
+    LOG(INFO) << " Pulse is fitted!" << FairLogger::endl;
+#endif
 
   return kTRUE;
 }
@@ -461,6 +488,14 @@ STPSAFastFit::LSFitPulse(Double_t *buffer, Double_t tbStart, Int_t ndf, Double_t
     Double_t ref = Pulse(tb + 0.5, 1, tbStart);
     refy += ref * y;
     ref2 += ref * ref;
+#ifdef DEBUG_FIT
+    LOG(INFO) << "LSFit-" << iTbPulse
+              << " tbStart:" << tbStart
+              << " y:" << y 
+              << " ref:" << ref 
+              << " refy:" << refy 
+              << " ref2:" << ref2 << FairLogger::endl;
+#endif
   }
 
   if (ref2 == 0)
@@ -499,6 +534,9 @@ STPSAFastFit::TestPulse(Double_t *adc,
                         Double_t tbHit, 
                         Double_t amplitude)
 {
+#ifdef DEBUG_WHERE
+    LOG(INFO) << " Test fit" << FairLogger::endl;
+#endif
   Int_t numTbsCorrection = fNumTbsCorrection;
 
   if (numTbsCorrection + Int_t(tbHit) >= 512)
@@ -537,6 +575,10 @@ STPSAFastFit::TestPulse(Double_t *adc,
     Int_t tb = Int_t(tbHit) + iTbPulse;
     adc[tb] -= Pulse(tb, amplitude, tbHit);
   }
+
+#ifdef DEBUG_WHERE
+    LOG(INFO) << " Fit is valid!" << FairLogger::endl;
+#endif
 
   return kTRUE;
 }
