@@ -1,6 +1,5 @@
 // SpiRITROOT classes
 #include "STPSAFastFit.hh"
-#include "STGlobal.hh"
 
 // STL
 #include <cmath>
@@ -151,6 +150,7 @@ void STPSAFastFit::PadAnalyzer(TClonesArray *hitArray)
 void 
 STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
 {
+#ifndef DEBUG_PSA_ITERATION
   Double_t *adcSource = pad -> GetADC();
   Double_t adc[512] = {0};
   memcpy(&adc, adcSource, sizeof(Double_t)*fNumTbs);
@@ -235,6 +235,8 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
 #ifdef DEBUG_WHERE
   LOG(INFO) << "END" << FairLogger::endl;
 #endif
+
+#endif
 }
 
 Bool_t
@@ -299,6 +301,17 @@ STPSAFastFit::FindPeak(Double_t *adc,
   return kFALSE;
 }
 
+#ifdef DEBUG_PSA_ITERATION
+Bool_t
+STPSAFastFit::FitPulse(Double_t *adc, 
+                          Int_t tbStart,
+                          Int_t tbPeak,
+                       Double_t &tbHit, 
+                       Double_t &amplitude,
+                       Double_t &squareSum,
+                          Int_t &ndf,
+                          Int_t &option)
+#else
 Bool_t
 STPSAFastFit::FitPulse(Double_t *adc, 
                           Int_t tbStart,
@@ -307,10 +320,11 @@ STPSAFastFit::FitPulse(Double_t *adc,
                        Double_t &amplitude,
                        Double_t &squareSum,
                           Int_t &ndf)
+#endif
 #ifdef NEW_ITERATION_METHOD
 {
 #ifdef DEBUG_WHERE
-    LOG(INFO) << " Fit pulse" << FairLogger::endl;
+  LOG(INFO) << " Fit pulse" << FairLogger::endl;
 #endif
   Double_t adcPeak = adc[tbPeak];
 
@@ -333,18 +347,32 @@ STPSAFastFit::FitPulse(Double_t *adc,
   Double_t tbCur = tbPre + dTb; // Pulse starting time-bucket of current fit
 
   LSFitPulse(adc, tbPre, ndf, lsPre, amplitude);
+#ifdef DEBUG_PSA_ITERATION
+  if (option == 0) {
+    tbHit = tbPre;
+    squareSum = lsPre;
+    return kTRUE;
+  }
+#endif
   LSFitPulse(adc, tbCur, ndf, lsCur, amplitude);
+#ifdef DEBUG_PSA_ITERATION
+  if (option == 1) {
+    tbHit = tbCur;
+    squareSum = lsCur;
+    return kTRUE;
+  }
+#endif
 
   beta = -(lsCur - lsPre) / (tbCur - tbPre) / ndf;
-
-  lsPre = lsCur;
-  tbPre = tbCur;
 
   Int_t numIteration = 1;
   Bool_t doubleCheckFlag = kFALSE; // Checking flag to apply cut twice in a row
 
   while (dTb != 0 && lsCur != lsPre)
   {
+    lsPre = lsCur;
+    tbPre = tbCur;
+
     dTb = alpha * beta;
     if (dTb > 1) dTb = 1;
     if (dTb < -1) dTb = -1;
@@ -352,7 +380,7 @@ STPSAFastFit::FitPulse(Double_t *adc,
     tbCur = tbPre + dTb;
     if (tbCur < 0 || tbCur > fTbStartCut)
     {
-#ifdef DEBUG_WHERE
+#if defined(DEBUG_WHERE) || defined(DEBUG_PSA_ITERATION)
       LOG(INFO) << " Out of bound while fitting" << FairLogger::endl;
 #endif
       return kFALSE;
@@ -362,6 +390,14 @@ STPSAFastFit::FitPulse(Double_t *adc,
     beta = -(lsCur - lsPre) / (tbCur - tbPre) / ndf;
 
     numIteration++;
+
+#ifdef DEBUG_PSA_ITERATION
+    if (option == numIteration) {
+      tbHit = tbCur;
+      squareSum = lsCur;
+      return kTRUE;
+    }
+#endif
 
     if (abs(beta) < betaCut)
     {
@@ -375,9 +411,6 @@ STPSAFastFit::FitPulse(Double_t *adc,
 
     if (numIteration >= fIterMax)
       break;
-
-    lsPre = lsCur;
-    tbPre = tbCur;
   }
 
   if (beta > 0) {
@@ -390,7 +423,10 @@ STPSAFastFit::FitPulse(Double_t *adc,
   }
 
 #ifdef DEBUG_WHERE
-    LOG(INFO) << " Pulse is fitted!" << FairLogger::endl;
+  LOG(INFO) << " Pulse is fitted!" << FairLogger::endl;
+#endif
+#ifdef DEBUG_PSA_ITERATION
+  return kFALSE;
 #endif
 
   return kTRUE;

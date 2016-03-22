@@ -12,4 +12,6 @@
 //#define SUBTASK_CURVETRACKING
 //#define DEBUG_CURVE
 
+//#define DEBUG_PSA_ITERATION
+
 #endif

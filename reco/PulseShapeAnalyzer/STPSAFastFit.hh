@@ -9,6 +9,7 @@
 // SpiRITROOT classes
 #include "STPSA.hh"
 #include "STPulse.hh"
+#include "STGlobal.hh"
 
 // ROOT classes
 #include "TSpectrum.h"
@@ -46,9 +47,15 @@ class STPSAFastFit : public STPSA, public STPulse
      * Perform least square fitting with the the pulse around tbStart ~ tbPeak.
      * This process is Iteration based process using method LSFitPuse();
      */
+#ifdef DEBUG_PSA_ITERATION
+    Bool_t FitPulse(Double_t *adc, Int_t tbStart, Int_t tbPeak,
+                    Double_t &tbHit, Double_t &amplitude, 
+                    Double_t &squareSum, Int_t &ndf, Int_t &option);
+#else
     Bool_t FitPulse(Double_t *adc, Int_t tbStart, Int_t tbPeak,
                     Double_t &tbHit, Double_t &amplitude, 
                     Double_t &squareSum, Int_t &ndf);
+#endif
 
     /**
      * Perform least square fitting with the fixed parameter tbStart and ndf.
