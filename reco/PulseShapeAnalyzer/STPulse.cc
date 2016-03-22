@@ -62,31 +62,34 @@ void STPulse::Initialize(TString fileName)
   fNumAscending = 0;
   fThresholdTbStep = 5000.;
 
+  Double_t valuePre = 0, valueCur = 0;
   Bool_t ascending = kFALSE;
   for(Int_t iData = 0; iData < fNumDataPoints;)
   {
-    value = fPulseData[iData];
+    valuePre = valueCur;
+    valueCur = fPulseData[iData];
     Double_t tb = iData * fStep;
 
-    if (ascending == kFALSE && value > fThresholdRatio) {
+    if (ascending == kFALSE && valueCur > fThresholdRatio) {
       ascending = kTRUE;
       fTbAtThreshold = tb;
+      iData += Int_t(1/fStep);
+      continue;
     }
-    if (ascending == kTRUE && iData * fStep > fTbAtMax)
+    else if (ascending == kTRUE && valueCur > 0.9)
       break;
 
     if (ascending)
     {
-      if (value < fThresholdTbStep)
-        fThresholdTbStep = value;
+      Double_t valDiff = valueCur - valuePre;
+      if (valDiff < fThresholdTbStep)
+        fThresholdTbStep = valDiff;
       fNumAscending++;
       iData += Int_t(1/fStep);
     }
     else
       iData += 1;
   }
-
-  fNumAscending = Int_t(fNumAscending * 3./4.);
 
   fNumF1 = 0;
 }
