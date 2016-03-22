@@ -2,12 +2,12 @@
 # Linear Tracking parameter set
 # (name:type(Int_t, Double_t) value)
 #====================================
-[LinearTrackingPar]
+[CurveTrackingPar]
 #====================================
 NumHitsTrackCut:Int_t        25
 NumHitsFit:Int_t              8
 NumHitsCompare:Int_t         20
-NumHitsCompareMax:Int_t      25
+NumHitsCompareMax:Int_t      50
 #====================================
 XConst:Double_t             2.0
 YConst:Double_t             6.0

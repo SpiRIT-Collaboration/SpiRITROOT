@@ -2,7 +2,7 @@
 # Linear Tracking parameter set
 # (name:type(Int_t, Double_t) value)
 #====================================
-[LinearTrackingPar]
+[CurveTrackingPar]
 #====================================
 NumHitsTrackCut:Int_t        25
 NumHitsFit:Int_t              8
