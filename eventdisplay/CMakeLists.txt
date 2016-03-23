@@ -3,6 +3,7 @@
 set(INCLUDE_DIRECTORIES
 ${ROOT_INCLUDE_DIR} 
 ${BASE_INCLUDE_DIRECTORIES}
+${GENFIT2_INCLUDE_DIR}
 ${ANAROOT_INCLUDE_DIR}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/eventdisplay
