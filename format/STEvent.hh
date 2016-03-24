@@ -18,7 +18,6 @@
 
 #include "STHit.hh"
 #include "STHitCluster.hh"
-#include "Track.h"
 #include "GFRaveVertexFactory.h"
 //#include "STTrack.hh"
 
@@ -40,9 +39,6 @@ class STEvent : public TNamed {
   void SetClusterArray(vector<STHitCluster> *clusterArray);
   void AddVertex(genfit::GFRaveVertex* vertex);
   void SetVertexArray(vector<genfit::GFRaveVertex> * vertexArray);
-  void AddFitTrack(genfit::Track *fitTrack);
-  void SetFitTrackArray(vector<genfit::Track >* fitTrackArray);
-
   //    void AddTrack(STTrack *track);
   //    void SetTrackArray(vector<STTrack> &trackArray);
   
@@ -70,11 +66,6 @@ class STEvent : public TNamed {
   void RemoveVertex(Int_t vertexNo);
   vector<genfit::GFRaveVertex> *GetVertexArray();
 
-  Int_t GetNumFitTracks();
-  genfit::Track *GetFitTrack(Int_t fitTrackNo);
-  void RemoveFitTrack(Int_t fitTrackNo);
-  vector<genfit::Track> *GetFitTrackArray();
-  
   //    Int_t GetNumTracks();
   //    STTrack *GetTrack(Int_t trackNo);
   //    STTrack *RemoveTrack(Int_t trackNo);
@@ -98,7 +89,6 @@ private:
   vector<STHit> fHitArray;
   vector<STHitCluster> fClusterArray;
   vector<genfit::GFRaveVertex> fVertexArray;
-  vector<genfit::Track> fFitTrackArray;
   //    vector<STTrack> fTrackArray;
 
   ClassDef(STEvent, 2);

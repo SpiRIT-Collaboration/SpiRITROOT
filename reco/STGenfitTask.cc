@@ -256,8 +256,6 @@ STGenfitTask::Exec(Option_t *opt)
       tracks.push_back(trackFit);
 //      new ((*fTrackArray)[fTrackArray -> GetEntriesFast()]) genfit::Track(*trackFit);
 
-//      event -> AddFitTrack(trackFit);
-
     } catch (genfit::Exception &e) {
       std::cerr << e.what();
       std::cerr << "Exception, next track" << std::endl;

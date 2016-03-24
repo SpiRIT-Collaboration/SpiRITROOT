@@ -44,7 +44,6 @@ STEvent::STEvent(STEvent *object)
   fIsGood = object -> IsGood();
   
   fVertexArray = *(object -> GetVertexArray());
-  fFitTrackArray = *(object -> GetFitTrackArray());
 
 }
 
@@ -66,7 +65,6 @@ Bool_t STEvent::IsGood()                     { return fIsGood; }
 
 Int_t STEvent::GetNumClusters()              { return fClusterArray.size(); }
 Int_t STEvent::GetNumVertex()                { return fVertexArray.size(); }
-Int_t STEvent::GetNumFitTracks()             { return fFitTrackArray.size(); }
 
 // setters
 void STEvent::SetEventID(Int_t evtid)                             { fEventID = evtid; } 
@@ -76,8 +74,6 @@ void STEvent::AddCluster(STHitCluster *cluster)                   { fClusterArra
 void STEvent::SetClusterArray(vector<STHitCluster> *clusterArray) { fClusterArray = *clusterArray; }
 void STEvent::AddVertex(genfit::GFRaveVertex* vertex)             { fVertexArray.push_back(*vertex); } 
 void STEvent::SetVertexArray(vector<genfit::GFRaveVertex> *vertexArray) { fVertexArray = *vertexArray; }
-void STEvent::AddFitTrack(genfit::Track* track)                   { fFitTrackArray.push_back(*track); } 
-void STEvent::SetFitTrackArray(vector<genfit::Track> *fitTrackArray) { fFitTrackArray = *fitTrackArray; }
 
 // getters
 Int_t STEvent::GetEventID() { return fEventID; }
@@ -145,25 +141,3 @@ vector<genfit::GFRaveVertex> *STEvent::GetVertexArray()
   return &fVertexArray;
 }
 
-// genfit track stuff
-
-genfit::Track *STEvent::GetFitTrack(Int_t fitTrackNo)
-{
-  if (!(fitTrackNo < GetNumFitTracks()))
-    return NULL;
-  
-  return &fFitTrackArray[fitTrackNo];
-}
-
-void STEvent::RemoveFitTrack(Int_t fitTrackNo)
-{
-  if (!(fitTrackNo < GetNumFitTracks()))
-    return;
-
-  fFitTrackArray.erase(fFitTrackArray.begin() + fitTrackNo);
-}
-
-vector<genfit::Track> *STEvent::GetFitTrackArray()
-{
-  return &fFitTrackArray;
-}

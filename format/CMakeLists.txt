@@ -1,7 +1,8 @@
 # Create a library called "libSTFormat" which includes the source files given in the array .
 
 set(INCLUDE_DIRECTORIES
-${ROOT_INCLUDE_DIR} 
+${ROOT_INCLUDE_DIR}
+${GENFIT2_INCLUDE_DIR}
 ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/format
@@ -13,6 +14,7 @@ include_directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
 
 set(LINK_DIRECTORIES
 ${ROOT_LIBRARY_DIR}
+${GENFIT2_LIBRARY_DIR}
 ${FAIRROOT_LIBRARY_DIR}
 ) 
 
@@ -43,7 +45,8 @@ Set(DEPENDENCIES
     Base
     Stack
 # Add all library names your code depending on.
-# Basically those are the libraries in the header files' directory.
+# Basically those are the libraries in the header files' directory
+    genfit2	    
 )
 
 GENERATE_LIBRARY()
