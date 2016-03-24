@@ -18,7 +18,10 @@
 
 #include "STHit.hh"
 #include "STHitCluster.hh"
+#include "Track.h"
+#include "GFRaveVertexFactory.h"
 //#include "STTrack.hh"
+
 
 using std::vector;
 
@@ -28,57 +31,75 @@ class STEvent : public TNamed {
     STEvent(STEvent *object);
     ~STEvent();
 
-    // setters
-    void SetEventID(Int_t evtid);
-    void AddHit(STHit *hit);
-    void SetHitArray(vector<STHit> *hitArray);
-    void AddCluster(STHitCluster *cluster);
-    void SetClusterArray(vector<STHitCluster> *clusterArray);
-//    void AddTrack(STTrack *track);
-//    void SetTrackArray(vector<STTrack> &trackArray);
+  // setters
+  void SetEventID(Int_t evtid);
 
-    void SetIsClustered(Bool_t value);
-    void SetIsTracked(Bool_t value);
-    void SetIsChanged(Bool_t value);
+  void AddHit(STHit *hit);
+  void SetHitArray(vector<STHit> *hitArray);
+  void AddCluster(STHitCluster *cluster);
+  void SetClusterArray(vector<STHitCluster> *clusterArray);
+  void AddVertex(genfit::GFRaveVertex* vertex);
+  void SetVertexArray(vector<genfit::GFRaveVertex> * vertexArray);
+  void AddFitTrack(genfit::Track *fitTrack);
+  void SetFitTrackArray(vector<genfit::Track >* fitTrackArray);
 
-    void SetIsGood(Bool_t value);
+  //    void AddTrack(STTrack *track);
+  //    void SetTrackArray(vector<STTrack> &trackArray);
+  
+  void SetIsClustered(Bool_t value);
+  void SetIsTracked(Bool_t value);
+  void SetIsChanged(Bool_t value);
+  
+  void SetIsGood(Bool_t value);
+  
+  // getters
+  Int_t GetEventID();
+  
+  Int_t GetNumHits();
+  STHit *GetHit(Int_t hitNo);
+  void RemoveHit(Int_t hitNo);
+  vector<STHit> *GetHitArray();
 
-    // getters
-    Int_t GetEventID();
+  Int_t GetNumClusters();
+  STHitCluster *GetCluster(Int_t clusterNo);
+  void RemoveCluster(Int_t clusterNo);
+  vector<STHitCluster> *GetClusterArray();
+  
+  Int_t GetNumVertex();
+  genfit::GFRaveVertex *GetVertex(Int_t vertexNo);
+  void RemoveVertex(Int_t vertexNo);
+  vector<genfit::GFRaveVertex> *GetVertexArray();
 
-    Int_t GetNumHits();
-    STHit *GetHit(Int_t hitNo);
-    void RemoveHit(Int_t hitNo);
-    vector<STHit> *GetHitArray();
+  Int_t GetNumFitTracks();
+  genfit::Track *GetFitTrack(Int_t fitTrackNo);
+  void RemoveFitTrack(Int_t fitTrackNo);
+  vector<genfit::Track> *GetFitTrackArray();
+  
+  //    Int_t GetNumTracks();
+  //    STTrack *GetTrack(Int_t trackNo);
+  //    STTrack *RemoveTrack(Int_t trackNo);
+  //    vector<STTrack> *GetTrackArray();
 
-    Int_t GetNumClusters();
-    STHitCluster *GetCluster(Int_t clusterNo);
-    void RemoveCluster(Int_t clusterNo);
-    vector<STHitCluster> *GetClusterArray();
+  Bool_t IsClustered();
+  Bool_t IsTracked();
+  Bool_t IsChanged();
 
-//    Int_t GetNumTracks();
-//    STTrack *GetTrack(Int_t trackNo);
-//    STTrack *RemoveTrack(Int_t trackNo);
-//    vector<STTrack> *GetTrackArray();
+  Bool_t IsGood();
+  
+private:
+  Bool_t fIsClustered;
+  Bool_t fIsTracked;
+  Bool_t fIsChanged;
 
-    Bool_t IsClustered();
-    Bool_t IsTracked();
-    Bool_t IsChanged();
-
-    Bool_t IsGood();
-
-  private:
-    Bool_t fIsClustered;
-    Bool_t fIsTracked;
-    Bool_t fIsChanged;
-
-    Bool_t fIsGood;
-
-    Int_t fEventID;
-
-    vector<STHit> fHitArray;
-    vector<STHitCluster> fClusterArray;
-//    vector<STTrack> fTrackArray;
+  Bool_t fIsGood;
+  
+  Int_t fEventID;
+  
+  vector<STHit> fHitArray;
+  vector<STHitCluster> fClusterArray;
+  vector<genfit::GFRaveVertex> fVertexArray;
+  vector<genfit::Track> fFitTrackArray;
+  //    vector<STTrack> fTrackArray;
 
   ClassDef(STEvent, 2);
 };

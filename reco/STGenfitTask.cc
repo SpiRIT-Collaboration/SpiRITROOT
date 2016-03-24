@@ -256,6 +256,8 @@ STGenfitTask::Exec(Option_t *opt)
       tracks.push_back(trackFit);
 //      new ((*fTrackArray)[fTrackArray -> GetEntriesFast()]) genfit::Track(*trackFit);
 
+//      event -> AddFitTrack(trackFit);
+
     } catch (genfit::Exception &e) {
       std::cerr << e.what();
       std::cerr << "Exception, next track" << std::endl;
@@ -272,6 +274,8 @@ STGenfitTask::Exec(Option_t *opt)
       vertices[iVert] -> getPos().Print();
 
       new ((*fVertexArray)[iVert]) genfit::GFRaveVertex(*vtx);
+
+      event -> AddVertex(vtx);
     }
   }
 
