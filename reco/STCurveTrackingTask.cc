@@ -102,6 +102,12 @@ STCurveTrackingTask::Exec(Option_t *opt)
 
   STEvent *event = (STEvent *) fEventArray -> At(0);
 
+  if (event -> IsGood() == kFALSE)
+  {
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Event #%d : Bad event!", event -> GetEventID()));
+    return;
+  }
+
   fTrackFinder -> BuildTracks(event, fTrackArray);
 
   fLogger -> Info(MESSAGE_ORIGIN, 
