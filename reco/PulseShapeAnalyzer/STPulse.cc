@@ -92,6 +92,9 @@ void STPulse::Initialize(TString fileName)
   }
 
   fNumF1 = 0;
+
+  if (fNumAscending < 2)
+    fNumAscending = 2;
 }
 
 Double_t 
