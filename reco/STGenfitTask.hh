@@ -24,6 +24,7 @@
 // GENFIT2 classes
 #include "AbsKalmanFitter.h"
 #include "KalmanFitterRefTrack.h"
+#include "DAF.h"
 #include "GFRaveVertexFactory.h"
 #include "ConstField.h"
 #include "FieldManager.h"
@@ -81,7 +82,7 @@ class STGenfitTask : public FairTask {
 
     Bool_t fIsDisplay;
     genfit::EventDisplay *fDisplay;
-
+  
   ClassDef(STGenfitTask, 1);
 };
 
