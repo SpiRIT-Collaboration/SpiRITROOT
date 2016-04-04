@@ -18,7 +18,7 @@ TString fOutputFilename = "";
 Int_t fFPNThreshold = 5;
 
 // The number of time buckets in a channel
-Int_t fNumTbs = 256;
+Int_t fNumTbs = 512;
 
 // Set the directory path where the data files are.
 TString fDataDir = ".";
@@ -32,7 +32,7 @@ Bool_t fUseSeparatedData = kTRUE;
 // If set use separated data files, data file list should be set. 
 // Voltage list, data file list and data dir above are neglected.
 // Only data used in the list file below.
-TString fDataList = "list.txt";
+TString fDataList = "";
 
 //////////////////////////////////////////////////////////
 //                                                      //
@@ -40,7 +40,7 @@ TString fDataList = "list.txt";
 //                                                      //
 //////////////////////////////////////////////////////////
 
-void makeGainCalibration() {
+void makeGGNoiseData() {
   TString workDir = gSystem -> Getenv("VMCWORKDIR");
   TString parameterDir = workDir + "/parameters/";
 
@@ -50,17 +50,17 @@ void makeGainCalibration() {
   fGenerator -> SetFPNPedestal(fFPNThreshold);
 
   if (!fUseSeparatedData) 
-    fGenerator -> AddData(fDataDir + "/" + fData[iData]);
+    fGenerator -> AddData(fDataDir + "/" + fData);
   else {
     std::ifstream listFile(fDataList.Data());
     TString dataFileWithPath;
     Int_t iCobo = -1;
     while (dataFileWithPath.ReadLine(listFile)) {
       if (dataFileWithPath.Contains("s."))
-        fDecoderTask -> AddData(dataFileWithPath, iCobo);
+        fGenerator -> AddData(dataFileWithPath, iCobo);
       else {
         iCobo++;
-        fDecoderTask -> AddData(dataFileWithPath, iCobo);
+        fGenerator -> AddData(dataFileWithPath, iCobo);
       }
     }
   }
