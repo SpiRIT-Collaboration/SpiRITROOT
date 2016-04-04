@@ -61,6 +61,7 @@ void STDecoderTask::SetNumTbs(Int_t numTbs)                                     
 void STDecoderTask::AddData(TString filename, Int_t coboIdx)                                  { fDataList[coboIdx].push_back(filename); }
 void STDecoderTask::SetData(Int_t value)                                                      { fDataNum = value; }
 void STDecoderTask::SetFPNPedestal(Double_t pedestalRMS)                                      { fFPNPedestalRMS = pedestalRMS; }
+void STDecoderTask::SetGGNoiseData(TString filename)                                          { fGGNoiseFile = filename; }
 void STDecoderTask::SetUseGainCalibration(Bool_t value)                                       { fUseGainCalibration = value; }
 void STDecoderTask::SetGainCalibrationData(TString filename)                                  { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)  { fGainConstant = constant; fGainLinear = linear; fGainQuadratic = quadratic; }
@@ -105,6 +106,12 @@ STDecoderTask::Init()
     fFPNPedestalRMS = fPar -> GetFPNPedestalRMS();
 
   fDecoder -> SetFPNPedestal(fFPNPedestalRMS);
+
+  if (!fGGNoiseFile.EqualTo("")) {
+    fDecoder -> SetGGNoiseData(fGGNoiseFile);
+    // This method should be after SetNumTbs() and SetFPNPedestal()
+    fDecoder -> InitGGNoiseSubtractor();
+  }
 
   if (fGainCalibrationFile.EqualTo("") && fUseGainCalibration == kFALSE)
     fLogger -> Info(MESSAGE_ORIGIN, "Gain not calibrated!");
