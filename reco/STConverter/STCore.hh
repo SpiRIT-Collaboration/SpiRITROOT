@@ -83,7 +83,7 @@ class STCore : public TObject {
     Bool_t fIsData;
 
     STPedestal *fPedestalPtr[12];
-    STGGNoiseSubtractor *fGGNoisePtr;
+    STGGNoiseSubtractor *fGGNoisePtr[12];
     Bool_t fIsSetGGNoiseData;
     Bool_t fIsNegativePolarity;
     Double_t fFPNSigmaThreshold;
