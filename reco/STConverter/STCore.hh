@@ -19,6 +19,7 @@
 #include "STMap.hh"
 #include "STPedestal.hh"
 #include "STGainCalibration.hh"
+#include "STGGNoiseSubtractor.hh"
 #include "STPlot.hh"
 
 #include "GETDecoder.hh"
@@ -44,6 +45,9 @@ class STCore : public TObject {
     TString GetDataName(Int_t index, Int_t coboIdx = 0);
     void SetNumTbs(Int_t value);
     void SetFPNPedestal(Double_t sigmaThreshold = 5);
+
+    void SetGGNoiseData(TString ggNoiseData);
+    Bool_t InitGGNoiseSubtractor();
 
     Bool_t SetGainCalibrationData(TString filename, TString dataType = "f");
     void SetGainReference(Int_t row, Int_t layer);
@@ -79,6 +83,8 @@ class STCore : public TObject {
     Bool_t fIsData;
 
     STPedestal *fPedestalPtr[12];
+    STGGNoiseSubtractor *fGGNoisePtr;
+    Bool_t fIsSetGGNoiseData;
     Bool_t fIsNegativePolarity;
     Double_t fFPNSigmaThreshold;
 
