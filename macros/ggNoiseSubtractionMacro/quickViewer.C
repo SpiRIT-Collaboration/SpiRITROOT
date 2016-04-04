@@ -21,6 +21,9 @@ Bool_t fUseGainCalibration = kTRUE;
 // FPN pedestal range selection threshold
 Int_t fFPNThreshold = 5;
 
+// Set the gating grid noise data. If left blank, it will use FPN pedestal.
+TString fGGNoiseData = "";
+
 //////////////////////////////////////////////////////////
 //                                                      //
 //   Don't edit the below if you don't know about it.   //
@@ -74,6 +77,11 @@ void quickViewer() {
   fCore -> SetAGETMap(fPar -> GetFilePar(fPar -> GetIntPar("AGETMapFile")));
   fCore -> SetFPNPedestal(fFPNThreshold);
   fCore -> SetData(0);
+
+  if (!fGGNoiseData.IsNull()) {
+    fCore -> SetGGNoiseData(fGGNoiseData);
+    fCore -> InitGGNoiseSubtractor();
+  }
 
   fPlot = fCore -> GetSTPlot();
   if (fUseGainCalibration) {
