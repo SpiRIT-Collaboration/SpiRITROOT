@@ -19,17 +19,17 @@
 class STGGNoiseSubtractor {
   public:
     STGGNoiseSubtractor();
-    STGGNoiseSubtractor(TString ggNoiseData, Int_t numTbs = 512, Double_t rmsCut = 5);
+    STGGNoiseSubtractor(TString ggNoiseData, Int_t numTbs = 512, Double_t sigma = 5);
     ~STGGNoiseSubtractor() {};
 
     Bool_t Init();
 
     void SetGGNoiseData(TString ggNoiseData);
     void SetNumTbs(Int_t numTbs);
-    void SetRMSCut(Double_t rmsCut);
+    void SetSigmaThreshold(Double_t SigmaThreshold);
 
     Bool_t IsSetGGNoiseData();
-    Bool_t SubtractNoise(Int_t row, Int_t layer, Double_t *adc);
+    Bool_t SubtractNoise(Int_t row, Int_t layer, Int_t *rawadc, Double_t *adc);
 
   private:
     TString fGGNoiseFile;
@@ -40,7 +40,7 @@ class STGGNoiseSubtractor {
     Double_t ***fNoise;
     Double_t **fMean;
 
-    Double_t fRmsCut;
+    Double_t fSigmaThreshold;
     Int_t fNumTbs;
 
     Bool_t fIsGGNoiseData;
