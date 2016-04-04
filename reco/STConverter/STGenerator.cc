@@ -234,6 +234,10 @@ STGenerator::StartProcess()
     fCore -> SetData(0);
 
     GeneratePedestalData();
+  } else if (fMode == kGGNoise) {
+    fCore -> SetData(0);
+
+    GenerateGatingGridNoiseData();
   }
   else if (fMode == kGain)
     GenerateGainCalibrationData();
@@ -480,24 +484,29 @@ STGenerator::GenerateGatingGridNoiseData()
   TTree *outTree = new TTree("GatingGridNoiseData", "Gating Grid Noise Data Tree");
   outTree -> Branch("row", &row);
   outTree -> Branch("layer", &layer);
-  outTree -> Branch("noise", noise, "noise[512]/D");
-  outTree -> Branch("noiseSigma", sigma, "sigma[512]/D");
+  outTree -> Branch("noise", &noise, "noise[512]/D");
+  outTree -> Branch("noiseSigma", &sigma, "sigma[512]/D");
 
   GETMath *math = new GETMath();
   STRawEvent *noiseEvent = new STRawEvent();
   STRawEvent *sigmaEvent = new STRawEvent();
   STPad *noisePad = new STPad();
   STPad *sigmaPad = new STPad();
+
+  noiseEvent -> SetEventID(0);
+  sigmaEvent -> SetEventID(0);
   for (Int_t iPad = 0; iPad < 108*112; iPad++) {
     row = iPad%108;
-    layer = iPad/112;
+    layer = iPad/108;
 
     noisePad -> SetRow(row);
     noisePad -> SetLayer(layer);
+    noisePad -> SetPedestalSubtracted(kTRUE);
     noiseEvent -> SetPad(noisePad);
 
     sigmaPad -> SetRow(row);
     sigmaPad -> SetLayer(layer);
+    sigmaPad -> SetPedestalSubtracted(kTRUE);
     sigmaEvent -> SetPad(sigmaPad);
   }
 
@@ -523,9 +532,16 @@ STGenerator::GenerateGatingGridNoiseData()
       for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
         math -> Reset();
         math -> Set(noiseEvent -> GetEventID(), noisePad -> GetADC(iTb), sigmaPad -> GetADC(iTb));
+
+//        cout << "noiseEvent -> GetEventID():" << noiseEvent -> GetEventID();
+//        cout << " noisePad -> GetADC(iTb):" << noisePad -> GetADC(iTb);
+//        cout << " sigmaPad -> GetADC(iTb):" << sigmaPad -> GetADC(iTb) << endl;
+
         math -> Add(rawadc[iTb]);
         noisePad -> SetADC(iTb, math -> GetMean());
         sigmaPad -> SetADC(iTb, math -> GetRMS2());
+
+//        cout << "row:" << row << " layer:" << layer << " iTb:" << iTb << " rawadc:" << rawadc[iTb] << " noise:" << math -> GetMean() << " sigma:" << math -> GetRMS() << endl;
       }
     }
 
@@ -536,10 +552,12 @@ STGenerator::GenerateGatingGridNoiseData()
   for (row = 0; row < fRows; row++) {
     for (layer = 0; layer < fLayers; layer++) {
       noisePad = noiseEvent -> GetPad(layer*108 + row); 
-      
-      memcpy(noise, noisePad -> GetADC(), sizeof(Double_t)*fNumTbs);
       sigmaPad = sigmaEvent -> GetPad(layer*108 + row); 
-      memcpy(sigma, sigmaPad -> GetADC(), sizeof(Double_t)*fNumTbs);
+
+      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+        noise[iTb] = noisePad -> GetADC(iTb);
+        sigma[iTb] = TMath::Sqrt(sigmaPad -> GetADC(iTb));
+      }
 
       outTree -> Fill();
     }
