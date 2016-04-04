@@ -63,6 +63,7 @@ STConverter/STMapTest.cc
 STConverter/STPlot.cc
 STConverter/STParReader.cc
 STConverter/STStatic.cc
+STConverter/STGGNoiseSubtractor.cc
 
 PulseShapeAnalyzer/STPSA.cc
 PulseShapeAnalyzer/STPSASimple.cc
