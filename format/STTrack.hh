@@ -27,6 +27,9 @@ class STTrack : public TObject {
     void SetVertex(TVector3 vector);
     void SetVertex(Double_t x, Double_t y, Double_t z);
 
+    void SetBeamVertex(TVector3 vector);
+    void SetBeamVertex(Double_t x, Double_t y, Double_t z);
+
     void SetMomentum(TVector3 vector);
     void SetMomentum(Double_t px, Double_t py, Double_t pz);
 
@@ -50,6 +53,10 @@ class STTrack : public TObject {
     Double_t GetVx();
     Double_t GetVy();
     Double_t GetVz();
+    TVector3 GetBeamVertex();
+    Double_t GetBeamVx();
+    Double_t GetBeamVy();
+    Double_t GetBeamVz();
 
     TVector3 GetMomentum();
     Double_t GetP();
@@ -78,6 +85,10 @@ class STTrack : public TObject {
     Double_t fVx;
     Double_t fVy;
     Double_t fVz;
+
+    Double_t fBeamVx;
+    Double_t fBeamVy;
+    Double_t fBeamVz;
 
     Double_t fPx;
     Double_t fPy;

@@ -291,8 +291,20 @@ STGenfitTask::Exec(Option_t *opt)
 	std::cout << "##################################################" << std::endl;
 	*/
 
+	// beam profile extrapolation
+	TVector3 target(0, -21.33, -0.89);
+	TVector3 ntarget(0, 0, 1);
+	
+	genfit::StateOnPlane state = trackFit -> getFittedState();
+	genfit::SharedPlanePtr plane;
+	plane = genfit::SharedPlanePtr(new genfit::DetPlane(target, ntarget));
+       	trackRep -> extrapolateToPlane(state, plane); 
+	//	std::cout << state.getPos().X() << " " << state.getPos().Y() << " " << state.getPos().Z() << std::endl;
+	TVector3 beampos = state.getPos();
+
 	STTrack *recoTrack = (STTrack *) fTrackArray -> ConstructedAt(fTrackArray -> GetEntriesFast());
 	recoTrack -> SetVertex(recopos*10.);
+	recoTrack -> SetBeamVertex(beampos*10.);
 	recoTrack -> SetMomentum(recop*1000.);
 	recoTrack -> SetPID(trackFit -> getFittedState().getPDG());
 	recoTrack -> SetMass(938.27);

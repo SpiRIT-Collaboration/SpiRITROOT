@@ -22,6 +22,10 @@ STTrack::STTrack()
   fVy = 0;
   fVz = 0;
 
+  fBeamVx = 0;
+  fBeamVy = 0;
+  fBeamVz = 0;
+
   fPx = 0;
   fPy = 0;
   fPz = 0;
@@ -40,6 +44,9 @@ void STTrack::SetMass(Double_t value)                            { fMass = value
 
 void STTrack::SetVertex(TVector3 vector)                         { fVx = vector.X(); fVy = vector.Y(); fVz = vector.Z(); }
 void STTrack::SetVertex(Double_t x, Double_t y, Double_t z)      { fVx = x; fVy = y; fVz = z; }
+
+void STTrack::SetBeamVertex(TVector3 vector)                         { fBeamVx = vector.X(); fBeamVy = vector.Y(); fBeamVz = vector.Z(); }
+void STTrack::SetBeamVertex(Double_t x, Double_t y, Double_t z)      { fBeamVx = x; fBeamVy = y; fBeamVz = z; }
 
 void STTrack::SetMomentum(TVector3 vector)                       { fPx = vector.X(); fPy = vector.Y(); fPz = vector.Z(); }
 void STTrack::SetMomentum(Double_t px, Double_t py, Double_t pz) { fPx = px; fPy = py; fPz = pz; }
@@ -61,9 +68,13 @@ Int_t STTrack::GetPID()                         { return fPID; }
 Double_t STTrack::GetMass()                     { return fMass; }
 
 TVector3 STTrack::GetVertex()                   { return TVector3(fVx, fVy, fVz); }
+TVector3 STTrack::GetBeamVertex()               { return TVector3(fBeamVx, fBeamVy, fBeamVz); }
 Double_t STTrack::GetVx()                       { return fVx; }
 Double_t STTrack::GetVy()                       { return fVy; }
 Double_t STTrack::GetVz()                       { return fVz; }
+Double_t STTrack::GetBeamVx()                   { return fBeamVx; }
+Double_t STTrack::GetBeamVy()                   { return fBeamVy; }
+Double_t STTrack::GetBeamVz()                   { return fBeamVz; }
 
 TVector3 STTrack::GetMomentum()                 { return TVector3(fPx, fPy, fPz); }
 Double_t STTrack::GetP()                        { return GetMomentum().Mag(); }
