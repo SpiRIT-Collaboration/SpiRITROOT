@@ -15,6 +15,7 @@
 #include "STRiemannTrack.hh"
 #include "STRiemannHit.hh"
 #include "STTrack.hh"
+#include "STTrackCandidate.hh"
 #include "STGlobal.hh"
 #include "STDebugLogger.hh"
 
@@ -38,6 +39,7 @@
 #include "TMath.h"
 #include "TGeoManager.h"
 #include "Math/DistFunc.h"
+#include "TDatabasePDG.h"
 
 //#define DEBUG
 
@@ -70,6 +72,27 @@ STGenfitTask::STGenfitTask()
   fIsDisplay = kFALSE;
   fDisplay = NULL;
   
+  fPDGCandidates.push_back(2212);
+  fPDGCandidates.push_back(211);
+  fPDGCandidates.push_back(-211);
+  fPDGCandidates.push_back(1000010020);
+  fPDGCandidates.push_back(1000010030);
+  fPDGCandidates.push_back(1000020040);
+  fPDGCandidates.push_back(1000020030);
+
+  TDatabasePDG* pdgDB = TDatabasePDG::Instance();
+
+  const Double_t kAu2Gev = 0.9314943228;
+  const Double_t khSlash = 1.0545726663e-27;
+  const Double_t kErg2Gev = 1/1.6021773349e-3;
+  const Double_t khShGev = khSlash*kErg2Gev;
+  const Double_t kYear2Sec = 3600*24*365.25;
+
+  pdgDB->AddParticle("Deuteron","Deuteron",2*kAu2Gev+8.071e-3,kTRUE, 0,3,"Ion",1000010020);
+  pdgDB->AddParticle("Triton","Triton",3*kAu2Gev+14.931e-3,kFALSE, khShGev/(12.33*kYear2Sec),3,"Ion",1000010030);
+  pdgDB->AddParticle("Alpha","Alpha",4*kAu2Gev+2.424e-3,kTRUE, khShGev/(12.33*kYear2Sec),6,"Ion",1000020040);
+  pdgDB->AddParticle("HE3","HE3",3*kAu2Gev+14.931e-3,kFALSE, 0,6,"Ion",1000020030);
+
 }
 
 STGenfitTask::~STGenfitTask()
@@ -112,7 +135,7 @@ STGenfitTask::Init()
 
   if (fIsFindVertex == kTRUE) {
     fVertexFactory = new genfit::GFRaveVertexFactory(/* verbosity */ 2, /* useVacuumPropagator */ kFALSE);
-    //    fVertexFactory -> setMethod("kalman-smoothing:1");
+    //fVertexFactory -> setMethod("kalman-smoothing:1");
     fVertexFactory -> setMethod("avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5");
 
     ioMan -> Register("STVertex", "SPiRIT", fVertexArray, fIsPersistence);
@@ -125,9 +148,9 @@ STGenfitTask::Init()
   genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.)); // 0.5 T = 5 kGauss
   genfit::MaterialEffects *materialEffects = genfit::MaterialEffects::getInstance();
   materialEffects -> init(new genfit::TGeoMaterialInterface());
-//  materialEffects -> setNoiseCoulomb(kFALSE);
-//  materialEffects -> setNoiseBrems(kFALSE);
-//  materialEffects -> setNoiseBetheBloch(kFALSE);
+  //materialEffects -> setNoiseCoulomb(kFALSE);
+  //materialEffects -> setNoiseBrems(kFALSE);
+  //materialEffects -> setNoiseBetheBloch(kFALSE);
 
   if (fIsDisplay)
     fDisplay = genfit::EventDisplay::getInstance();
@@ -233,93 +256,122 @@ STGenfitTask::Exec(Option_t *opt)
       //      covSeed(iComp, iComp) = 0.5*0.5;
       covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
 
-    trackCand.setPosMomSeedAndPdgCode(posSeed, momSeed, 2212);
     trackCand.setCovSeed(covSeed);
-    
-    try {
-      
-	genfit::RKTrackRep *trackRep = new genfit::RKTrackRep(2212);
-	genfit::Track *trackFit = new genfit::Track(trackCand, *fMeasurementFactory, trackRep);
-	fFitter -> processTrack(trackFit);
+    //trackCand.setPosMomSeedAndPdgCode(posSeed, momSeed, 2212);
+    trackCand.setPosMomSeed(posSeed, momSeed, 1);
 
-	Bool_t isFit, isFitFull, isFitPart, hasChanged, isPruned;
-	Int_t nfail;
-	Double_t pval;
+    genfit::Track *trackBest = nullptr;
+    STTrackCandidate *trackCandidateBest = nullptr;
+    Double_t chi2NdfBest = 1.e10;
 
-	/*
-	isFit = trackFit -> getFitStatus(trackRep)->isFitted();
-	isFitFull = trackFit -> getFitStatus(trackRep)->isFitConvergedFully();
-	isFitPart = trackFit -> getFitStatus(trackRep)->isFitConvergedPartially();
-	nfail = trackFit -> getFitStatus(trackRep)->getNFailedPoints();
-	pval = trackFit -> getFitStatus(trackRep)->getPVal();
-	hasChanged = trackFit -> getFitStatus(trackRep)->hasTrackChanged();
-	isPruned = trackFit -> getFitStatus(trackRep)->isTrackPruned();
+    Int_t trackID = fTrackArray -> GetEntriesFast();
 
-	std::cout << "Is Fitted:\t" << isFit << std::endl;
-	std::cout << "Is FitConvergedFully:\t" << isFitFull << std::endl;
-	std::cout << "Is FitConvergedPartially:\t" << isFitPart << std::endl;
-	std::cout << "getNFailedPoints:\t" << nfail << std::endl;
-	std::cout << "pval:\t" << pval << std::endl;
-	std::cout << "hasTrackChanged:\t" << hasChanged << std::endl;
-	std::cout << "isTrackPruned:\t" << isPruned << std::endl;
-	*/
+    STTrack *recoTrack = (STTrack *) fTrackArray -> ConstructedAt(trackID);
+    recoTrack -> SetTrackID(trackID);
+    recoTrack -> SetRiemannID(iTrackCand);
 
-	assert(trackFit -> checkConsistency());
-	
-	TVector3 recopos(0,0,0);
-	TVector3 recop(0,0,0);
-	TMatrixDSym covv(6,6);
-	Int_t charge;
-	Double_t prob;
-	Double_t probmin = -1.;
-	Int_t pdgId;
-	
-	Double_t bChi2, fChi2, bNdf, fNdf;
-	fFitter -> getChiSquNdf(trackFit, trackFit -> getCardinalRep(), bChi2, fChi2, bNdf, fNdf);
-	
-	trackFit -> getFittedState().getPosMomCov(recopos, recop, covv);
-	charge = trackFit -> getFittedState().getCharge();
+    for (auto pdgCand : fPDGCandidates) {
+      trackCand.setPdgCode(pdgCand);
 
-	/*
-	//	pdgId = trackFit -> getFittedState().getPDG();
-	std::cout << "##################################################" << std::endl;
-	std::cout << "Riemann: " << riemannTrack -> GetMom(5.)*1000 << " MeV/c  " << std::endl;
-	std::cout << "Genfit total momentum: " << recop.Mag()*1000 << " MeV/c" << std::endl;
-	std::cout << std::endl << "Reconstructed position: (" << recopos.X() << "," << recopos.Y() << "," << recopos.Z() << ")" << std::endl;
-	std::cout << "Reconstructed momentum: (" << recop.X() << "," << recop.Y() << "," << recop.Z() << ")" << std::endl;
-	std::cout << "Particle charge: " << charge << std::endl;
-	std::cout << "##################################################" << std::endl;
-	*/
+      try {
+        genfit::RKTrackRep *trackRep = new genfit::RKTrackRep(pdgCand);
+        genfit::Track *trackFit = new genfit::Track(trackCand, *fMeasurementFactory, trackRep);
+        fFitter -> processTrack(trackFit);
 
-	// beam profile extrapolation
-	TVector3 target(0, -21.33, -0.89);
-	TVector3 ntarget(0, 0, 1);
-	
-	genfit::StateOnPlane state = trackFit -> getFittedState();
-	genfit::SharedPlanePtr plane;
-	plane = genfit::SharedPlanePtr(new genfit::DetPlane(target, ntarget));
-       	trackRep -> extrapolateToPlane(state, plane); 
-	//	std::cout << state.getPos().X() << " " << state.getPos().Y() << " " << state.getPos().Z() << std::endl;
-	TVector3 beampos = state.getPos();
+        Bool_t isFit, isFitFull, isFitPart, hasChanged, isPruned;
+        Int_t nfail;
+        Double_t pval;
 
-	STTrack *recoTrack = (STTrack *) fTrackArray -> ConstructedAt(fTrackArray -> GetEntriesFast());
-	recoTrack -> SetVertex(recopos*10.);
-	recoTrack -> SetBeamVertex(beampos*10.);
-	recoTrack -> SetMomentum(recop*1000.);
-	recoTrack -> SetPID(trackFit -> getFittedState().getPDG());
-	recoTrack -> SetMass(938.27);
-	recoTrack -> SetChi2(fChi2);
-	recoTrack -> SetNDF(fNdf);
-	recoTrack -> SetCharge(trackFit -> getFittedState().getCharge());
-	recoTrack -> SetTrackLength(trackFit -> getTrackLen());
-	
-	tracks.push_back(trackFit);
-	  // new ((*fTrackArray)[fTrackArray -> GetEntriesFast()]) genfit::Track(*trackFit);
-	
-    } catch (genfit::Exception &e) {
-      std::cerr << e.what();
-      std::cerr << "Exception, next track" << std::endl;
-      continue;
+        /*
+        isFit = trackFit -> getFitStatus(trackRep)->isFitted();
+        isFitFull = trackFit -> getFitStatus(trackRep)->isFitConvergedFully();
+        isFitPart = trackFit -> getFitStatus(trackRep)->isFitConvergedPartially();
+        nfail = trackFit -> getFitStatus(trackRep)->getNFailedPoints();
+        pval = trackFit -> getFitStatus(trackRep)->getPVal();
+        hasChanged = trackFit -> getFitStatus(trackRep)->hasTrackChanged();
+        isPruned = trackFit -> getFitStatus(trackRep)->isTrackPruned();
+
+        std::cout << "Is Fitted:\t" << isFit << std::endl;
+        std::cout << "Is FitConvergedFully:\t" << isFitFull << std::endl;
+        std::cout << "Is FitConvergedPartially:\t" << isFitPart << std::endl;
+        std::cout << "getNFailedPoints:\t" << nfail << std::endl;
+        std::cout << "pval:\t" << pval << std::endl;
+        std::cout << "hasTrackChanged:\t" << hasChanged << std::endl;
+        std::cout << "isTrackPruned:\t" << isPruned << std::endl;
+        */
+
+        assert(trackFit -> checkConsistency());
+
+        TVector3 recopos(0,0,0);
+        TVector3 recop(0,0,0);
+        TMatrixDSym covv(6,6);
+        Int_t charge;
+        Double_t prob;
+        Double_t probmin = -1.;
+        Int_t pdgId;
+
+        Double_t bChi2, fChi2, bNdf, fNdf;
+        fFitter -> getChiSquNdf(trackFit, trackFit -> getCardinalRep(), bChi2, fChi2, bNdf, fNdf);
+
+        trackFit -> getFittedState().getPosMomCov(recopos, recop, covv);
+        charge = trackFit -> getFittedState().getCharge();
+
+        /*
+        //pdgId = trackFit -> getFittedState().getPDG();
+        std::cout << "##################################################" << std::endl;
+        std::cout << "Riemann: " << riemannTrack -> GetMom(5.)*1000 << " MeV/c  " << std::endl;
+        std::cout << "Genfit total momentum: " << recop.Mag()*1000 << " MeV/c" << std::endl;
+        std::cout << std::endl << "Reconstructed position: (" << recopos.X() << "," << recopos.Y() << "," << recopos.Z() << ")" << std::endl;
+        std::cout << "Reconstructed momentum: (" << recop.X() << "," << recop.Y() << "," << recop.Z() << ")" << std::endl;
+        std::cout << "Particle charge: " << charge << std::endl;
+        std::cout << "##################################################" << std::endl;
+         */
+
+        // beam profile extrapolation
+        TVector3 target(0, -21.33, -0.89);
+        TVector3 ntarget(0, 0, 1);
+
+        genfit::StateOnPlane state = trackFit -> getFittedState();
+        genfit::SharedPlanePtr plane;
+        plane = genfit::SharedPlanePtr(new genfit::DetPlane(target, ntarget));
+        trackRep -> extrapolateToPlane(state, plane); 
+        //std::cout << state.getPos().X() << " " << state.getPos().Y() << " " << state.getPos().Z() << std::endl;
+        TVector3 beampos = state.getPos();
+
+        STTrackCandidate *recoTrackCand = new STTrackCandidate();
+        recoTrackCand -> SetVertex(recopos*10.);
+        recoTrackCand -> SetBeamVertex(beampos*10.);
+        recoTrackCand -> SetMomentum(recop*1000.);
+        recoTrackCand -> SetPID(trackFit -> getFittedState().getPDG());
+        //recoTrackCand -> SetMass(938.27);
+        recoTrackCand -> SetMass(trackFit -> getFittedState().getMass()*1000);
+        recoTrackCand -> SetChi2(fChi2);
+        recoTrackCand -> SetNDF(fNdf);
+        recoTrackCand -> SetCharge(trackFit -> getFittedState().getCharge());
+        recoTrackCand -> SetTrackLength(trackFit -> getTrackLen());
+
+        recoTrack -> AddTrackCandidate(recoTrackCand);
+
+        // new ((*fTrackArray)[fTrackArray -> GetEntriesFast()]) genfit::Track(*trackFit);
+
+        if (chi2NdfBest > fChi2/fNdf) {
+          chi2NdfBest = fChi2/fNdf;
+          trackBest = trackFit;
+          trackCandidateBest = recoTrackCand;
+        }
+
+      } catch (genfit::Exception &e) {
+        //std::cerr << e.what();
+        //std::cerr << "Exception, next track" << std::endl;
+        continue;
+      }
+    }
+
+    if (trackBest != nullptr) 
+    {
+      recoTrack -> SetIsFitted();
+      recoTrack -> SelectTrackCandidate(trackCandidateBest);
+      tracks.push_back(trackBest);
     }
   }
 
@@ -329,7 +381,7 @@ STGenfitTask::Exec(Option_t *opt)
 
     for (UInt_t iVert = 0; iVert < vertices.size(); iVert++) {
       genfit::GFRaveVertex* vtx = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
-      vertices[iVert] -> getPos().Print();
+      //vertices[iVert] -> getPos().Print();
 
       new ((*fVertexArray)[iVert]) genfit::GFRaveVertex(*vtx);
 

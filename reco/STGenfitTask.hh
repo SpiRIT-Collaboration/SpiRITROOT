@@ -82,6 +82,8 @@ class STGenfitTask : public FairTask {
 
     Bool_t fIsDisplay;
     genfit::EventDisplay *fDisplay;
+
+    vector<Int_t> fPDGCandidates;
   
   ClassDef(STGenfitTask, 1);
 };
