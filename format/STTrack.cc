@@ -14,6 +14,8 @@ STTrack::STTrack()
   fParentID = -1;
   fTrackID = -1;
   fRiemannID = -1;
+
+  fIsFitted = kFALSE;
   
   fPID = -1;
   fMass = -1;
@@ -31,6 +33,9 @@ STTrack::STTrack()
   fPz = 0;
 
   fCharge = 0;
+  fTrackLength = -1;
+  fdEdxTotal = -1;
+
   fChi2 = -1;
   fNDF = -1;
 }
@@ -38,6 +43,8 @@ STTrack::STTrack()
 void STTrack::SetParentID(Int_t value)                           { fParentID = value; }
 void STTrack::SetTrackID(Int_t value)                            { fTrackID = value; }
 void STTrack::SetRiemannID(Int_t value)                          { fRiemannID = value; }
+
+void STTrack::SetIsFitted(Bool_t value)                          { fIsFitted = value; }
 
 void STTrack::SetPID(Int_t value)                                { fPID = value; }
 void STTrack::SetMass(Double_t value)                            { fMass = value; }
@@ -52,17 +59,23 @@ void STTrack::SetMomentum(TVector3 vector)                       { fPx = vector.
 void STTrack::SetMomentum(Double_t px, Double_t py, Double_t pz) { fPx = px; fPy = py; fPz = pz; }
 
 void STTrack::SetCharge(Int_t value)                             { fCharge = value; }
+void STTrack::AdddEdx(Double_t value)                            { fdEdxArray.push_back(value); }
+
 void STTrack::SetTrackLength(Double_t value)                     { fTrackLength = value; }
-void STTrack::AdddEdx(Double_t value)                            { fdEdx.push_back(value); }
+void STTrack::SetTotaldEdx(Double_t value)                       { fdEdxTotal = value; }
 
 void STTrack::SetChi2(Double_t value)                            { fChi2 = value; }
 void STTrack::SetNDF(Int_t value)                                { fNDF = value; }
 
 void STTrack::AddHitID(Int_t value)                              { fHitIDArray.push_back(value); }
 
+void STTrack::AddTrackCandidate(STTrackCandidate *track)         { fTrackCandidateArray.push_back(track); }
+
 Int_t STTrack::GetParentID()                    { return fParentID; }
 Int_t STTrack::GetTrackID()                     { return fTrackID; }
 Int_t STTrack::GetRiemannID()                   { return fRiemannID; }
+
+Bool_t STTrack::IsFitted()                      { return fIsFitted; }
 
 Int_t STTrack::GetPID()                         { return fPID; }
 Double_t STTrack::GetMass()                     { return fMass; }
@@ -85,9 +98,52 @@ Double_t STTrack::GetPz()                       { return fPz; }
 
 Int_t STTrack::GetCharge()                      { return fCharge; }
 Double_t STTrack::GetTrackLength()              { return fTrackLength; }
-std::vector<Double_t> *STTrack::GetdEdxArray()  { return &fdEdx; }
+std::vector<Double_t> *STTrack::GetdEdxArray()  { return &fdEdxArray; }
+
+Double_t STTrack::GetTotaldEdx()                { return fdEdxTotal; }
 
 Double_t STTrack::GetChi2()                     { return fChi2; }
 Int_t STTrack::GetNDF()                         { return fNDF; }
 
 std::vector<Int_t> *STTrack::GetHitIDArray()    { return &fHitIDArray; }
+
+std::vector<STTrackCandidate *> *STTrack::GetTrackCandidateArray() { return &fTrackCandidateArray; }
+
+Int_t STTrack::GetNumTrackCandidates() { return fTrackCandidateArray.size(); }
+
+STTrackCandidate *STTrack::GetTrackCandidate(Int_t idx)
+{
+  return fTrackCandidateArray.size() > idx ? fTrackCandidateArray[idx] : nullptr;
+}
+
+Bool_t STTrack::SelectTrackCandidate(Int_t idx)
+{
+  if (fTrackCandidateArray.size() < idx) 
+    return kFALSE;
+
+  SelectTrackCandidate(fTrackCandidateArray[idx]);
+  return kTRUE;
+}
+
+void STTrack::SelectTrackCandidate(STTrackCandidate *track)
+{
+  fPID = track -> GetPID();
+  fMass = track -> GetMass();
+
+  SetVertex(track -> GetVertex());
+  SetBeamVertex(track -> GetBeamVertex());
+  SetMomentum(track -> GetMomentum());
+
+  fCharge = track -> GetCharge();
+  fTrackLength = track -> GetTrackLength();
+
+  fTrackLength = track -> GetTotaldEdx();
+  fChi2 = track -> GetChi2();
+  fNDF = track -> GetNDF();
+
+  fdEdxArray.clear();
+  std::vector<Double_t> *tempArray = track -> GetdEdxArray();
+  Int_t n = tempArray -> size();
+  for (Int_t i = 0; i < n; i++)
+    fdEdxArray.push_back(tempArray -> at(i));
+}

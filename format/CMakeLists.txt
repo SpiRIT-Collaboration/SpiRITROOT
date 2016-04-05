@@ -35,6 +35,7 @@ STDriftedElectron.cc
 STLinearTrack.cc
 STCurveTrack.cc
 STTrack.cc
+STTrackCandidate.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

@@ -1,29 +1,15 @@
-/**
- * @brief STTrack Class
- *
- * @author JungWoo Lee
- */
+#ifndef STTRACKCANDIDATE
+#define STTRACKCANDIDATE
 
-#ifndef STTRACK
-#define STTRACK
-
-#include "TObject.h"
+#include "Rtypes.h"
 #include "TVector3.h"
-
-#include "STTrackCandidate.hh"
 
 #include <vector>
 
-class STTrack : public TObject {
+class STTrackCandidate {
   public:
-    STTrack();
-    virtual ~STTrack() {};
-
-    void SetParentID(Int_t value);
-    void SetTrackID(Int_t value);
-    void SetRiemannID(Int_t value);
-
-    void SetIsFitted(Bool_t value = kTRUE);
+    STTrackCandidate();
+    ~STTrackCandidate() {};
 
     void SetPID(Int_t value);
     void SetMass(Double_t value);
@@ -46,16 +32,6 @@ class STTrack : public TObject {
     void SetChi2(Double_t value);
     void SetNDF(Int_t value);
 
-    void AddHitID(Int_t value);
-
-    void AddTrackCandidate(STTrackCandidate *track);
-
-    Int_t GetParentID();
-    Int_t GetTrackID();
-    Int_t GetRiemannID();
-
-    Bool_t IsFitted();
-
     Int_t GetPID();
     Double_t GetMass();
 
@@ -76,31 +52,14 @@ class STTrack : public TObject {
     Double_t GetPz();
 
     Int_t GetCharge();
-    std::vector<Double_t> *GetdEdxArray();
-
     Double_t GetTrackLength();
+    std::vector<Double_t> *GetdEdxArray();
     Double_t GetTotaldEdx();
 
     Double_t GetChi2();
     Int_t GetNDF();
 
-    std::vector<Int_t> *GetHitIDArray();
-
-    std::vector<STTrackCandidate *> *GetTrackCandidateArray();
-
-    Int_t GetNumTrackCandidates();
-    STTrackCandidate *GetTrackCandidate(Int_t idx);
-
-    Bool_t SelectTrackCandidate(Int_t idx);
-    void SelectTrackCandidate(STTrackCandidate *track);
-
   private:
-    Int_t fParentID;
-    Int_t fTrackID;
-    Int_t fRiemannID;
-
-    Bool_t fIsFitted;
-
     Int_t fPID;
     Double_t fMass;
 
@@ -124,11 +83,7 @@ class STTrack : public TObject {
     Double_t fChi2;
     Int_t fNDF;
 
-    std::vector<Int_t> fHitIDArray;
-
-    std::vector<STTrackCandidate *> fTrackCandidateArray;
-
-  ClassDef(STTrack, 2)
+  ClassDef(STTrackCandidate, 1)
 };
 
 #endif
