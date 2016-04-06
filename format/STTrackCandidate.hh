@@ -1,12 +1,12 @@
 #ifndef STTRACKCANDIDATE
 #define STTRACKCANDIDATE
 
-#include "Rtypes.h"
+#include "TObject.h"
 #include "TVector3.h"
 
 #include <vector>
 
-class STTrackCandidate {
+class STTrackCandidate : public TObject {
   public:
     STTrackCandidate();
     ~STTrackCandidate() {};
@@ -85,7 +85,7 @@ class STTrackCandidate {
     Double_t GetChi2();
     Int_t GetNDF();
 
-  private:
+  protected:
     Int_t fPID;
     Double_t fMass;
     Int_t fCharge;
@@ -122,7 +122,7 @@ class STTrackCandidate {
     Double_t fChi2;
     Int_t fNDF;
 
-  ClassDef(STTrackCandidate, 1)
+  ClassDef(STTrackCandidate, 2)
 };
 
 #endif

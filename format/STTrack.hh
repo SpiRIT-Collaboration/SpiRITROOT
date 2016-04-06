@@ -7,14 +7,13 @@
 #ifndef STTRACK
 #define STTRACK
 
-#include "TObject.h"
 #include "TVector3.h"
 
 #include "STTrackCandidate.hh"
 
 #include <vector>
 
-class STTrack : public TObject {
+class STTrack : public STTrackCandidate {
   public:
     STTrack();
     virtual ~STTrack() {};
@@ -25,29 +24,7 @@ class STTrack : public TObject {
 
     void SetIsFitted(Bool_t value = kTRUE);
 
-    void SetPID(Int_t value);
-    void SetMass(Double_t value);
-    void SetCharge(Int_t value);
-
-    void SetVertex(TVector3 vector);
-    void SetVertex(Double_t x, Double_t y, Double_t z);
-
-    void SetBeamVertex(TVector3 vector);
-    void SetBeamVertex(Double_t x, Double_t y, Double_t z);
-
-    void SetMomentum(TVector3 vector);
-    void SetMomentum(Double_t px, Double_t py, Double_t pz);
-
-    void AdddEdx(Double_t value);
-
-    void SetTrackLength(Double_t value);
-    void SetTotaldEdx(Double_t value);
-
-    void SetChi2(Double_t value);
-    void SetNDF(Int_t value);
-
     void AddHitID(Int_t value);
-
     void AddTrackCandidate(STTrackCandidate *track);
 
     Int_t GetParentID();
@@ -56,36 +33,7 @@ class STTrack : public TObject {
 
     Bool_t IsFitted();
 
-    Int_t GetPID();
-    Double_t GetMass();
-    Int_t GetCharge();
-
-    TVector3 GetVertex();
-    Double_t GetVx();
-    Double_t GetVy();
-    Double_t GetVz();
-    TVector3 GetBeamVertex();
-    Double_t GetBeamVx();
-    Double_t GetBeamVy();
-    Double_t GetBeamVz();
-
-    TVector3 GetMomentum();
-    Double_t GetP();
-    Double_t GetPt();
-    Double_t GetPx();
-    Double_t GetPy();
-    Double_t GetPz();
-
-    std::vector<Double_t> *GetdEdxArray();
-
-    Double_t GetTrackLength();
-    Double_t GetTotaldEdx();
-
-    Double_t GetChi2();
-    Int_t GetNDF();
-
     std::vector<Int_t> *GetHitIDArray();
-
     std::vector<STTrackCandidate *> *GetTrackCandidateArray();
 
     Int_t GetNumTrackCandidates();
@@ -101,34 +49,10 @@ class STTrack : public TObject {
 
     Bool_t fIsFitted;
 
-    Int_t fPID;
-    Double_t fMass;
-    Int_t fCharge;
-
-    Double_t fVx;
-    Double_t fVy;
-    Double_t fVz;
-
-    Double_t fBeamVx;
-    Double_t fBeamVy;
-    Double_t fBeamVz;
-
-    Double_t fPx;
-    Double_t fPy;
-    Double_t fPz;
-
-    Double_t fTrackLength;
-    std::vector<Double_t> fdEdxArray;
-    Double_t fdEdxTotal;
-
-    Double_t fChi2;
-    Int_t fNDF;
-
     std::vector<Int_t> fHitIDArray;
-
     std::vector<STTrackCandidate *> fTrackCandidateArray;
 
-  ClassDef(STTrack, 2)
+  ClassDef(STTrack, 3)
 };
 
 #endif

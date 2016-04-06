@@ -4,6 +4,7 @@ ClassImp(STTrackCandidate)
 
 STTrackCandidate::STTrackCandidate()
 {
+  // Units: mm, MeV, e(charge)
   fPID = -1;
   fMass = -1;
   fCharge = 0;
@@ -19,6 +20,12 @@ STTrackCandidate::STTrackCandidate()
   fKyotoLx = 0;
   fKyotoLy = 0;
   fKyotoLz = 0;
+  fKyotoRx = 0;
+  fKyotoRy = 0;
+  fKyotoRz = 0;
+  fKatanax = 0;
+  fKatanay = 0;
+  fKatanaz = 0;
 
   fPx = 0;
   fPy = 0;
@@ -104,4 +111,4 @@ std::vector<Double_t> *STTrackCandidate::GetdEdxArray()  { return &fdEdxArray; }
 Double_t STTrackCandidate::GetTotaldEdx()                { return fdEdxTotal; }
 
 Double_t STTrackCandidate::GetChi2()                     { return fChi2; }
-Int_t STTrackCandidate::GetNDF()                     { return fNDF; }
+Int_t STTrackCandidate::GetNDF()                         { return fNDF; }
