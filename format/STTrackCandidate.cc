@@ -44,6 +44,8 @@ void STTrackCandidate::SetBeamMomentum(TVector3 vector)                     { fB
 void STTrackCandidate::SetBeamMomentum(Double_t x, Double_t y, Double_t z)  { fBeamMomx = x; fBeamMomy = y; fBeamMomz = z; }
 
 void STTrackCandidate::SetKyotoLHit(TVector3 vector)                         { fKyotoLx = vector.X(); fKyotoLy = vector.Y(); fKyotoLz = vector.Z(); }
+void STTrackCandidate::SetKyotoRHit(TVector3 vector)                         { fKyotoRx = vector.X(); fKyotoRy = vector.Y(); fKyotoRz = vector.Z(); }
+void STTrackCandidate::SetKatanaHit(TVector3 vector)                         { fKatanax = vector.X(); fKatanay = vector.Y(); fKatanaz = vector.Z(); }
 
 void STTrackCandidate::SetMomentum(TVector3 vector)                       { fPx = vector.X(); fPy = vector.Y(); fPz = vector.Z(); }
 void STTrackCandidate::SetMomentum(Double_t px, Double_t py, Double_t pz) { fPx = px; fPy = py; fPz = pz; }
@@ -78,6 +80,16 @@ TVector3 STTrackCandidate::GetKyotoLHit()                { return TVector3(fKyot
 Double_t STTrackCandidate::GetKyotoLHitX()               { return fKyotoLx; }
 Double_t STTrackCandidate::GetKyotoLHitY()               { return fKyotoLy; }
 Double_t STTrackCandidate::GetKyotoLHitZ()               { return fKyotoLz; }
+
+TVector3 STTrackCandidate::GetKyotoRHit()                { return TVector3(fKyotoRx, fKyotoRy, fKyotoRz); }
+Double_t STTrackCandidate::GetKyotoRHitX()               { return fKyotoRx; }
+Double_t STTrackCandidate::GetKyotoRHitY()               { return fKyotoRy; }
+Double_t STTrackCandidate::GetKyotoRHitZ()               { return fKyotoRz; }
+
+TVector3 STTrackCandidate::GetKatanaHit()                { return TVector3(fKatanax, fKatanay, fKatanaz); }
+Double_t STTrackCandidate::GetKatanaHitX()               { return fKatanax; }
+Double_t STTrackCandidate::GetKatanaHitY()               { return fKatanay; }
+Double_t STTrackCandidate::GetKatanaHitZ()               { return fKatanaz; }
 
 TVector3 STTrackCandidate::GetMomentum()                 { return TVector3(fPx, fPy, fPz); }
 Double_t STTrackCandidate::GetP()                        { return GetMomentum().Mag(); }
