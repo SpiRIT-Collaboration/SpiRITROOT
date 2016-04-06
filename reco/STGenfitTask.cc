@@ -342,7 +342,9 @@ STGenfitTask::Exec(Option_t *opt)
         std::cout << "##################################################" << std::endl;
          */
 
+	//////////////////////////////////////
         // beam profile extrapolation
+	//////////////////////////////////////
         TVector3 target(0, -21.33, -0.89);
         TVector3 ntarget(0, 0, 1);
 
@@ -353,9 +355,22 @@ STGenfitTask::Exec(Option_t *opt)
         //std::cout << state.getPos().X() << " " << state.getPos().Y() << " " << state.getPos().Z() << std::endl;
         TVector3 beampos = state.getPos();
 
+	////////////////////////////////////////
+        // kyoto left extrapolation
+	////////////////////////////////////////
+	TVector3 paddleL(75.8, -21.33, 84.2);
+        TVector3 npaddleL(1, 0, 0);
+	genfit::StateOnPlane stateL = gfTrackFit -> getFittedState();
+	genfit::SharedPlanePtr planeL;
+        planeL = genfit::SharedPlanePtr(new genfit::DetPlane(paddleL, npaddleL));
+        trackRep -> extrapolateToPlane(stateL, planeL); 
+        //      std::cout << stateL.getPos().X() << " " << stateL.getPos().Y() << " " << stateL.getPos().Z() << std::endl;
+        TVector3 KyotoLpos = stateL.getPos();
+
         STTrackCandidate *recoTrackCand = new STTrackCandidate();
         recoTrackCand -> SetVertex(recopos*10.);
         recoTrackCand -> SetBeamVertex(beampos*10.);
+	recoTrack -> SetKyotoLHit(KyotoLpos*10.);
         recoTrackCand -> SetMomentum(recop*1000.);
         recoTrackCand -> SetPID(gfTrackFit -> getFittedState().getPDG());
         recoTrackCand -> SetMass(gfTrackFit -> getFittedState().getMass()*1000);
@@ -399,7 +414,7 @@ STGenfitTask::Exec(Option_t *opt)
 
     for (UInt_t iVert = 0; iVert < vertices.size(); iVert++) {
       genfit::GFRaveVertex* vtx = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
-      //vertices[iVert] -> getPos().Print();
+      vertices[iVert] -> getPos().Print();
 
       new ((*fVertexArray)[iVert]) genfit::GFRaveVertex(*vtx);
 
