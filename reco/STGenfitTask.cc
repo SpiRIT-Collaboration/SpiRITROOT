@@ -358,6 +358,7 @@ STGenfitTask::Exec(Option_t *opt)
 	////////////////////////////////////////
         // kyoto left extrapolation
 	////////////////////////////////////////
+	/*
 	TVector3 paddleL(75.8, -21.33, 84.5);
         TVector3 npaddleL(-1, 0, 0);
 	genfit::StateOnPlane stateL = gfTrackFit -> getFittedState();
@@ -365,6 +366,7 @@ STGenfitTask::Exec(Option_t *opt)
         planeL = genfit::SharedPlanePtr(new genfit::DetPlane(paddleL, npaddleL));
         trackRep -> extrapolateToPlane(stateL, planeL); 
         TVector3 KyotoLpos = stateL.getPos();
+	*/
 
 	////////////////////////////////////////
         // kyoto right extrapolation
@@ -392,9 +394,9 @@ STGenfitTask::Exec(Option_t *opt)
         recoTrackCand -> SetVertex(recopos*10.);
         recoTrackCand -> SetBeamVertex(beampos*10.);
 	recoTrackCand -> SetBeamMomentum(beammom*10.);
-	recoTrackCand -> SetKyotoLHit(KyotoLpos*10.);
-	recoTrackCand -> SetKyotoRHit(KyotoLpos*10.);
-	recoTrackCand -> SetKatanaHit(KyotoLpos*10.);
+	//	recoTrackCand -> SetKyotoLHit(KyotoLpos*10.);
+	recoTrackCand -> SetKyotoRHit(KyotoRpos*10.);
+	recoTrackCand -> SetKatanaHit(Katanapos*10.);
         recoTrackCand -> SetMomentum(recop*1000.);
         recoTrackCand -> SetPID(gfTrackFit -> getFittedState().getPDG());
         recoTrackCand -> SetMass(gfTrackFit -> getFittedState().getMass()*1000);
