@@ -72,12 +72,12 @@ STGenfitTask::STGenfitTask()
   fDisplay = NULL;
   
   fPDGCandidates.push_back(2212);
-  fPDGCandidates.push_back(211);
-  fPDGCandidates.push_back(-211);
-  fPDGCandidates.push_back(1000010020);
-  fPDGCandidates.push_back(1000010030);
-  fPDGCandidates.push_back(1000020040);
-  fPDGCandidates.push_back(1000020030);
+  //fPDGCandidates.push_back(211);
+  //fPDGCandidates.push_back(-211);
+  //fPDGCandidates.push_back(1000010020);
+  //fPDGCandidates.push_back(1000010030);
+  //fPDGCandidates.push_back(1000020040);
+  //fPDGCandidates.push_back(1000020030);
 
   TDatabasePDG* pdgDB = TDatabasePDG::Instance();
 
@@ -261,7 +261,7 @@ STGenfitTask::Exec(Option_t *opt)
 
     genfit::Track *trackBest = nullptr;
     STTrackCandidate *stTrackCandBest = nullptr;
-    Double_t chi2NdfBest = 1.e10;
+    Double_t bestProbability = 0;
 
     Int_t trackID = fTrackArray -> GetEntriesFast();
 
@@ -342,9 +342,9 @@ STGenfitTask::Exec(Option_t *opt)
         std::cout << "##################################################" << std::endl;
          */
 
-	//////////////////////////////////////
+        //////////////////////////////////////
         // beam profile extrapolation
-	//////////////////////////////////////
+        //////////////////////////////////////
         TVector3 target(0, -21.33, -0.89);
         TVector3 ntarget(0, 0, 1);
 
@@ -355,71 +355,77 @@ STGenfitTask::Exec(Option_t *opt)
         TVector3 beampos = state.getPos();
         TVector3 beammom = state.getMom();
 
-	////////////////////////////////////////
+        ////////////////////////////////////////
         // kyoto left extrapolation
-	////////////////////////////////////////
-	/*
-	TVector3 paddleL(75.8, -21.33, 84.5);
+        ////////////////////////////////////////
+        /*
+        TVector3 paddleL(75.8, -21.33, 84.5);
         TVector3 npaddleL(-1, 0, 0);
-	genfit::StateOnPlane stateL = gfTrackFit -> getFittedState();
-	genfit::SharedPlanePtr planeL;
+        genfit::StateOnPlane stateL = gfTrackFit -> getFittedState();
+        genfit::SharedPlanePtr planeL;
         planeL = genfit::SharedPlanePtr(new genfit::DetPlane(paddleL, npaddleL));
         trackRep -> extrapolateToPlane(stateL, planeL); 
         TVector3 KyotoLpos = stateL.getPos();
 
-	////////////////////////////////////////
+        ////////////////////////////////////////
         // kyoto right extrapolation
-	////////////////////////////////////////
-	TVector3 paddleR(-75.8, -21.33, 84.5);
+        ////////////////////////////////////////
+        TVector3 paddleR(-75.8, -21.33, 84.5);
         TVector3 npaddleR(1, 0, 0);
-	genfit::StateOnPlane stateR = gfTrackFit -> getFittedState();
-	genfit::SharedPlanePtr planeR;
+        genfit::StateOnPlane stateR = gfTrackFit -> getFittedState();
+        genfit::SharedPlanePtr planeR;
         planeR = genfit::SharedPlanePtr(new genfit::DetPlane(paddleR, npaddleR));
         trackRep -> extrapolateToPlane(stateR, planeR); 
         TVector3 KyotoRpos = stateR.getPos();
-	*/
+        */
 
-	////////////////////////////////////////
+        ////////////////////////////////////////
         // katana extrapolation
-	////////////////////////////////////////
-	TVector3 paddleK(-20, -21.33, 186.7);
+        ////////////////////////////////////////
+        TVector3 paddleK(-20, -21.33, 186.7);
         TVector3 npaddleK(0, 0, -1);
-	genfit::StateOnPlane stateK = gfTrackFit -> getFittedState();
-	genfit::SharedPlanePtr planeK;
+        genfit::StateOnPlane stateK = gfTrackFit -> getFittedState();
+        genfit::SharedPlanePtr planeK;
         planeK = genfit::SharedPlanePtr(new genfit::DetPlane(paddleK, npaddleK));
         trackRep -> extrapolateToPlane(stateK, planeK); 
         TVector3 Katanapos = stateK.getPos();
 
-        STTrackCandidate *recoTrackCand = new STTrackCandidate();
-        recoTrackCand -> SetVertex(recopos*10.);
-        recoTrackCand -> SetBeamVertex(beampos*10.);
-	recoTrackCand -> SetBeamMomentum(beammom);
-	//	recoTrackCand -> SetKyotoLHit(KyotoLpos*10.);
-	//	recoTrackCand -> SetKyotoRHit(KyotoRpos*10.);
-	recoTrackCand -> SetKatanaHit(Katanapos*10.);
-        recoTrackCand -> SetMomentum(recop*1000.);
-        recoTrackCand -> SetPID(gfTrackFit -> getFittedState().getPDG());
-        recoTrackCand -> SetMass(gfTrackFit -> getFittedState().getMass()*1000);
-        recoTrackCand -> SetCharge(gfTrackFit -> getFittedState().getCharge());
-        recoTrackCand -> SetChi2(fChi2);
-        recoTrackCand -> SetNDF(fNdf);
-        //recoTrackCand -> SetTrackLength(gfTrackFit -> getTrackLen());
-        recoTrackCand -> SetTrackLength(totalLength); // TODO
-        recoTrackCand -> SetTotaldEdx(totaldEdx); // TODO
+        Double_t probability = gfTrackFit -> getFitStatus(trackRep) -> getPVal();
 
-        recoTrack -> AddTrackCandidate(recoTrackCand);
+        if (probability > 0)
+        {
+          STTrackCandidate *recoTrackCand = new STTrackCandidate();
+          recoTrackCand -> SetVertex(recopos*10.);
+          recoTrackCand -> SetBeamVertex(beampos*10.);
+          recoTrackCand -> SetBeamMomentum(beammom);
+          //	recoTrackCand -> SetKyotoLHit(KyotoLpos*10.);
+          //	recoTrackCand -> SetKyotoRHit(KyotoRpos*10.);
+          recoTrackCand -> SetKatanaHit(Katanapos*10.);
+          recoTrackCand -> SetMomentum(recop*1000.);
+          recoTrackCand -> SetPID(gfTrackFit -> getFittedState().getPDG());
+          recoTrackCand -> SetMass(gfTrackFit -> getFittedState().getMass()*1000);
+          recoTrackCand -> SetCharge(gfTrackFit -> getFittedState().getCharge());
+          recoTrackCand -> SetProbability(probability);
+          recoTrackCand -> SetChi2(fChi2);
+          recoTrackCand -> SetNDF(fNdf);
+          //recoTrackCand -> SetTrackLength(gfTrackFit -> getTrackLen());
+          recoTrackCand -> SetTrackLength(totalLength); // TODO
+          recoTrackCand -> SetTotaldEdx(totaldEdx); // TODO
 
-        // new ((*fTrackArray)[fTrackArray -> GetEntriesFast()]) genfit::Track(*gfTrackFit);
+          recoTrack -> AddTrackCandidate(recoTrackCand);
 
-        if (chi2NdfBest > fChi2/fNdf) {
-          chi2NdfBest = fChi2/fNdf;
-          trackBest = gfTrackFit;
-          stTrackCandBest = recoTrackCand;
+          // new ((*fTrackArray)[fTrackArray -> GetEntriesFast()]) genfit::Track(*gfTrackFit);
+
+          if (bestProbability < probability) {
+            bestProbability = probability;
+            trackBest = gfTrackFit;
+            stTrackCandBest = recoTrackCand;
+          }
         }
 
       } catch (genfit::Exception &e) {
-        //std::cerr << e.what();
-        //std::cerr << "Exception, next track" << std::endl;
+        std::cerr << e.what();
+        std::cerr << "Exception, next track" << std::endl;
         continue;
       }
     }
