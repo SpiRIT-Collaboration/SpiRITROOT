@@ -55,6 +55,11 @@ STEveDrawTask::STEveDrawTask()
   fRnrSelf [kCluster] = kFALSE;
   fRnrSelf [kClusterBox] = kFALSE;
 
+  fEveStyle[kRiemannTrack] = 1;
+  fEveSize [kRiemannTrack] = 5;
+  fEveColor[kRiemannTrack] = -1;
+  fRnrSelf [kRiemannTrack] = kFALSE;
+
   fEveStyle[kRiemannHit] = kFullCircle;
   fEveSize [kRiemannHit] = 1.0;
   fEveColor[kRiemannHit] = -1;
@@ -79,6 +84,11 @@ STEveDrawTask::STEveDrawTask()
   fEveSize [kCurveHit] = 0.5;
   fEveColor[kCurveHit] = -1;
   fRnrSelf [kCurveHit] = kFALSE;
+
+  fEveStyle[kRecoTrack] = 1;
+  fEveSize [kRecoTrack] = 5;
+  fEveColor[kRecoTrack] = -1;
+  fRnrSelf [kRecoTrack] = kFALSE;
 
   fPulse = new STPulse();
   fLTFitter = new STLinearTrackFitter();
@@ -127,6 +137,7 @@ STEveDrawTask::Init()
   fLinearTrackArray     = (TClonesArray*) ioMan -> GetObject("STLinearTrack");
   fCurveTrackArray      = (TClonesArray*) ioMan -> GetObject("STCurveTrack");
   fRawEventArray        = (TClonesArray*) ioMan -> GetObject("STRawEvent");
+  fRecoTrackArray       = (TClonesArray*) ioMan -> GetObject("STTrack");
 
   gStyle -> SetPalette(55);
   fCvsPadPlane = fEveManager -> GetCvsPadPlane();
@@ -179,7 +190,7 @@ STEveDrawTask::Exec(Option_t* option)
   if (fSetObject[kCluster] || fSetObject[kClusterBox])
     DrawHitClusterPoints();
 
-  if (fRiemannTrackArray != NULL && fSetObject[kRiemannHit])
+  if (fRiemannTrackArray != NULL && (fSetObject[kRiemannHit] || fSetObject[kRiemannTrack]))
     DrawRiemannHits();
 
   if (fLinearTrackArray != NULL && (fSetObject[kLinear] || fSetObject[kLinearHit]))
@@ -187,6 +198,9 @@ STEveDrawTask::Exec(Option_t* option)
 
   if (fCurveTrackArray != NULL && (fSetObject[kCurve] || fSetObject[kCurveHit]))
     DrawCurveTracks();
+
+  if (fRecoTrackArray != NULL && (fSetObject[kRecoTrack] || fSetObject[kRecoTrack]))
+    DrawRecoTracks();
 
   gEve -> Redraw3D();
 
@@ -445,46 +459,98 @@ STEveDrawTask::DrawRiemannHits()
   STRiemannTrack* track = NULL;
   STHit* rHit = NULL;
   TEvePointSet* riemannPointSet = NULL;
+  TEveLine* riemannTrackLine = NULL;
 
-  if (fEvent == NULL) 
+  if (fEvent == NULL) {
+    fLogger -> Debug(MESSAGE_ORIGIN, "STEvent is needed for riemann track!");
     return;
+  }
 
-  Int_t nTracks = fRiemannTrackArray -> GetEntries();
-  Int_t nTracksInBuffer = fRiemannSetArray.size();
-
-  if (nTracksInBuffer < nTracks)
+  if (fSetObject[kRiemannHit]) 
   {
-    Int_t diffNumTracks = nTracks - nTracksInBuffer;
-    for (Int_t iTrack = 0; iTrack < diffNumTracks; iTrack++)
+    Int_t nTracks = fRiemannTrackArray -> GetEntries();
+    Int_t nTracksInBuffer = fRiemannSetArray.size();
+
+    if (nTracksInBuffer < nTracks)
     {
-      Int_t idxTrack = iTrack + nTracksInBuffer;
-      riemannPointSet = new TEvePointSet(Form("RiemannTrackHits_%d", idxTrack), 1, TEvePointSelectorConsumer::kTVT_XYZ);
-      if (fEveColor[kRiemannHit] == -1) riemannPointSet -> SetMarkerColor(GetColor(idxTrack));
-      else riemannPointSet -> SetMarkerColor(fEveColor[kRiemannHit]);
-      riemannPointSet -> SetMarkerSize(fEveSize[kRiemannHit]);
-      riemannPointSet -> SetMarkerStyle(fEveStyle[kRiemannHit]);
+      Int_t diffNumTracks = nTracks - nTracksInBuffer;
+      for (Int_t iTrack = 0; iTrack < diffNumTracks; iTrack++)
+      {
+        Int_t idxTrack = iTrack + nTracksInBuffer;
+        riemannPointSet = new TEvePointSet(Form("RiemannTrackHits_%d", idxTrack), 1, TEvePointSelectorConsumer::kTVT_XYZ);
+        if (fEveColor[kRiemannHit] == -1) riemannPointSet -> SetMarkerColor(GetColor(idxTrack));
+        else riemannPointSet -> SetMarkerColor(fEveColor[kRiemannHit]);
+        riemannPointSet -> SetMarkerSize(fEveSize[kRiemannHit]);
+        riemannPointSet -> SetMarkerStyle(fEveStyle[kRiemannHit]);
+        riemannPointSet -> SetRnrSelf(fRnrSelf[kRiemannHit]);
+        fRiemannSetArray.push_back(riemannPointSet);
+        gEve -> AddElement(riemannPointSet);
+      }
+    }
+
+    for (Int_t iTrack = 0; iTrack < nTracks; iTrack++) 
+    {
+      track = (STRiemannTrack*) fRiemannTrackArray -> At(iTrack);
+      Int_t nClusters = track -> GetNumHits();
+
+      riemannPointSet = fRiemannSetArray.at(iTrack);
+
+      for (Int_t iCluster = 0; iCluster < nClusters; iCluster++)
+      {
+        rHit = track -> GetHit(iCluster) -> GetHit();
+
+        if (rHit -> GetCharge() < fThresholdMin[kRiemannHit] || 
+            rHit -> GetCharge() > fThresholdMax[kRiemannHit])
+          continue;
+
+        Int_t id = rHit -> GetClusterID();
+        STHitCluster oCluster = fEvent -> GetClusterArray() -> at(id);
+
+        TVector3 position = oCluster.GetPosition();
+
+        Double_t y = position.Y()/10.;
+        if (y > -fWindowYStart || y < -fWindowYEnd)
+          continue;
+        y += fWindowYStart;
+
+        riemannPointSet -> SetNextPoint(position.X()/10.,
+                                        y,
+                                        position.Z()/10.);
+      }
       riemannPointSet -> SetRnrSelf(fRnrSelf[kRiemannHit]);
-      fRiemannSetArray.push_back(riemannPointSet);
-      gEve -> AddElement(riemannPointSet);
     }
   }
 
-  for (Int_t iTrack=0; iTrack<nTracks; iTrack++) 
+  if (fSetObject[kRiemannTrack]) 
   {
-    track = (STRiemannTrack*) fRiemannTrackArray -> At(iTrack);
-    Int_t nClusters = track -> GetNumHits();
+    Int_t nTracks = fRiemannTrackArray -> GetEntries();
+    Int_t nTracksInBuffer = fRiemannTrackSetArray.size();
 
-    riemannPointSet = fRiemannSetArray.at(iTrack);
-
-    for (Int_t iCluster=0; iCluster<nClusters; iCluster++)
+    if (nTracksInBuffer < nTracks)
     {
-      rHit = track -> GetHit(iCluster) -> GetHit();
+      Int_t diffNumTracks = nTracks - nTracksInBuffer;
+      for (Int_t iTrack = 0; iTrack < diffNumTracks; iTrack++)
+      {
+        Int_t idxTrack = iTrack + nTracksInBuffer;
+        riemannTrackLine = new TEveLine(Form("RiemannTrackLine_%d", idxTrack));
+        if (fEveColor[kRiemannTrack] == -1) riemannTrackLine -> SetMarkerColor(GetColor(idxTrack));
+        else riemannTrackLine -> SetMarkerColor(fEveColor[kRiemannTrack]);
+        riemannTrackLine -> SetMarkerSize(fEveSize[kRiemannTrack]);
+        riemannTrackLine -> SetMarkerStyle(fEveStyle[kRiemannTrack]);
+        riemannTrackLine -> SetRnrSelf(fRnrSelf[kRiemannTrack]);
+        fRiemannTrackSetArray.push_back(riemannTrackLine);
+        gEve -> AddElement(riemannTrackLine);
+      }
+    }
 
-      if (rHit -> GetCharge() < fThresholdMin[kRiemannHit] || 
-          rHit -> GetCharge() > fThresholdMax[kRiemannHit])
-        continue;
+    for (Int_t iTrack = 0; iTrack < nTracks; iTrack++) 
+    {
+      track = (STRiemannTrack*) fRiemannTrackArray -> At(iTrack);
+      Int_t nClusters = track -> GetNumHits();
 
-      Int_t id = rHit -> GetClusterID();
+      riemannTrackLine = fRiemannTrackSetArray.at(iTrack);
+
+      Int_t id = 0;
       STHitCluster oCluster = fEvent -> GetClusterArray() -> at(id);
 
       TVector3 position = oCluster.GetPosition();
@@ -494,11 +560,15 @@ STEveDrawTask::DrawRiemannHits()
         continue;
       y += fWindowYStart;
 
-      riemannPointSet -> SetNextPoint(position.X()/10.,
-                                      y,
-                                      position.Z()/10.);
+      riemannTrackLine -> SetNextPoint(position.X()/10.,
+                                       y,
+                                       position.Z()/10.);
+      //while (1)
+      //{
+      //}
+
+      riemannTrackLine -> SetRnrSelf(fRnrSelf[kRiemannTrack]);
     }
-    riemannPointSet -> SetRnrSelf(fRnrSelf[kRiemannHit]);
   }
 }
 
@@ -659,43 +729,44 @@ STEveDrawTask::DrawCurveTracks()
     track = (STCurveTrack*) fCurveTrackArray -> At(iTrack);
     Int_t nHits = track -> GetNumHits();
 
-    Int_t firstHitIDPosition = 0;
-    Int_t lastHitIDPosition = track -> GetNumHits() - 1;
-
-    if (lastHitIDPosition > fNumHitsAtHead)
-      firstHitIDPosition = lastHitIDPosition - fNumHitsAtHead;
-
-    Int_t hitIDFirst = track -> GetHitID(firstHitIDPosition);
-    Int_t hitIDLast  = track -> GetHitID(lastHitIDPosition);
-
-    STHit *hitFirst;
-    STHit *hitLast;
-
-    if (fEvent != NULL)
+    if (track -> IsFitted() == kTRUE)
     {
-      hitFirst = fEvent -> GetHit(hitIDFirst);
-      hitLast  = fEvent -> GetHit(hitIDLast);
+      Int_t firstHitIDPosition = 0;
+      Int_t lastHitIDPosition = track -> GetNumHits() - 1;
+
+      if (lastHitIDPosition > fNumHitsAtHead)
+        firstHitIDPosition = lastHitIDPosition - fNumHitsAtHead;
+
+      Int_t hitIDFirst = track -> GetHitID(firstHitIDPosition);
+      Int_t hitIDLast  = track -> GetHitID(lastHitIDPosition);
+
+      STHit *hitFirst;
+      STHit *hitLast;
+
+      if (fEvent != NULL)
+      {
+        hitFirst = fEvent -> GetHit(hitIDFirst);
+        hitLast  = fEvent -> GetHit(hitIDLast);
+      }
+      else
+      {
+        hitFirst = track -> GetHit(firstHitIDPosition);
+        hitLast  = track -> GetHit(lastHitIDPosition);
+      }
+
+      TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
+      TVector3 posLast  = fLTFitter -> GetClosestPointOnTrack(track, hitLast);
+
+      Double_t yFirst = posFirst.Y()/10.;
+      yFirst += fWindowYStart;
+      Double_t yLast = posLast.Y()/10.;
+      yLast += fWindowYStart;
+
+      curveTrackLine = fCurveTrackSetArray.at(iTrack);
+      curveTrackLine -> SetNextPoint(posFirst.X()/10., yFirst, posFirst.Z()/10.);
+      curveTrackLine -> SetNextPoint(posLast.X()/10., yLast, posLast.Z()/10.);
+      curveTrackLine -> SetRnrSelf(fRnrSelf[kCurve]);
     }
-    else
-    {
-      hitFirst = track -> GetHit(firstHitIDPosition);
-      hitLast  = track -> GetHit(lastHitIDPosition);
-    }
-
-    TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
-    TVector3 posLast  = fLTFitter -> GetClosestPointOnTrack(track, hitLast);
-
-    Double_t yFirst = posFirst.Y()/10.;
-    yFirst += fWindowYStart;
-    Double_t yLast = posLast.Y()/10.;
-    yLast += fWindowYStart;
-
-    curveTrackLine = fCurveTrackSetArray.at(iTrack);
-
-    curveTrackLine -> SetNextPoint(posFirst.X()/10., yFirst, posFirst.Z()/10.);
-    curveTrackLine -> SetNextPoint(posLast.X()/10., yLast, posLast.Z()/10.);
-
-    curveTrackLine -> SetRnrSelf(fRnrSelf[kCurve]);
 
     if (fSetObject[kCurveHit] == kTRUE)
     {
@@ -720,10 +791,49 @@ STEveDrawTask::DrawCurveTracks()
   }
 }
 
+void
+STEveDrawTask::DrawRecoTracks()
+{
+  fLogger -> Debug(MESSAGE_ORIGIN,"Draw Reco Tracks");
+
+  STTrack* track = NULL;
+  TEveLine* recoTrackLine = NULL;
+
+  Int_t nTracks = fRecoTrackArray -> GetEntries();
+  Int_t nTracksInBuffer = fRecoTrackSetArray.size();
+
+  if (nTracksInBuffer < nTracks)
+  {
+    Int_t diffNumTracks = nTracks - nTracksInBuffer;
+    for (Int_t iTrack = 0; iTrack < diffNumTracks; iTrack++)
+    {
+      Int_t idxTrack = iTrack + nTracksInBuffer;
+      recoTrackLine = new TEveLine(Form("RecoTrack_%d", idxTrack));
+      if (fEveColor[kRecoTrack] == -1) recoTrackLine -> SetMarkerColor(GetColor(idxTrack));
+      else recoTrackLine -> SetMarkerColor(fEveColor[kRecoTrack]);
+      recoTrackLine -> SetMarkerSize(fEveSize[kRecoTrack]);
+      recoTrackLine -> SetMarkerStyle(fEveStyle[kRecoTrack]);
+      recoTrackLine -> SetRnrSelf(fRnrSelf[kRecoTrack]);
+      fRecoTrackSetArray.push_back(recoTrackLine);
+      gEve -> AddElement(recoTrackLine);
+    }
+  }
+
+  for (Int_t iTrack = 0; iTrack < nTracks; iTrack++) 
+  {
+    track = (STTrack*) fRecoTrackArray -> At(iTrack);
+
+    recoTrackLine = fRecoTrackSetArray.at(iTrack);
+    //recoTrackLine -> SetNextPoint(position.X()/10., y, position.Z()/10.);
+    recoTrackLine -> SetRnrSelf(fRnrSelf[kRecoTrack]);
+  }
+}
+
 void 
 STEveDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
 {
   Int_t nRiemannSets = fRiemannSetArray.size();
+  Int_t nRiemannTrackLineSets = fRiemannTrackSetArray.size();
 
   if (iRiemannSet == -1) 
   {
@@ -734,6 +844,11 @@ STEveDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
         TEvePointSet* riemannPointSet = fRiemannSetArray.at(i);
         riemannPointSet -> SetRnrSelf(kTRUE);
       }
+      for (Int_t i=0; i<nRiemannTrackLineSets; i++)
+      {
+        TEveLine* riemannTrackLine = fRiemannTrackSetArray.at(i);
+        riemannTrackLine -> SetRnrSelf(kTRUE);
+      }
     }
     else
     {
@@ -741,6 +856,11 @@ STEveDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
       {
         TEvePointSet* riemannPointSet = fRiemannSetArray.at(i);
         riemannPointSet -> SetRnrSelf(kFALSE);
+      }
+      for (Int_t i=0; i<nRiemannTrackLineSets; i++)
+      {
+        TEveLine* riemannTrackLine = fRiemannTrackSetArray.at(i);
+        riemannTrackLine -> SetRnrSelf(kFALSE);
       }
     }
   }
@@ -752,6 +872,12 @@ STEveDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
       TEvePointSet* riemannPointSet = fRiemannSetArray.at(i);
       if (i==iRiemannSet) riemannPointSet -> SetRnrSelf(kTRUE);
       else if (offElse) riemannPointSet -> SetRnrSelf(kFALSE);
+    }
+    for (Int_t i=0; i<nRiemannTrackLineSets; i++)
+    {
+      TEveLine* riemannTrackLine = fRiemannTrackSetArray.at(i);
+      if (i==iRiemannSet) riemannTrackLine -> SetRnrSelf(kTRUE);
+      else if (offElse) riemannTrackLine -> SetRnrSelf(kFALSE);
     }
   }
 }
@@ -877,6 +1003,42 @@ STEveDrawTask::SetSelfCurveSet(Int_t iCurveSet, Bool_t offElse)
 }
 
 void 
+STEveDrawTask::SetSelfRecoTrackSet(Int_t iRecoTrackSet, Bool_t offElse)
+{
+  Int_t nRecoTrackSets = fRecoTrackSetArray.size();
+
+  if (iRecoTrackSet == -1) 
+  {
+    if (!offElse)
+    {
+      for (Int_t i=0; i<nRecoTrackSets; i++)
+      {
+        TEveLine* recoTrackLine = fRecoTrackSetArray.at(i);
+        recoTrackLine -> SetRnrSelf(kTRUE);
+      }
+    }
+    else
+    {
+      for (Int_t i=0; i<nRecoTrackSets; i++)
+      {
+        TEveLine* recoTrackLine = fRecoTrackSetArray.at(i);
+        recoTrackLine -> SetRnrSelf(kFALSE);
+      }
+    }
+  }
+
+  else 
+  {
+    for (Int_t i=0; i<nRecoTrackSets; i++)
+    {
+      TEveLine* recoTrackLine = fRecoTrackSetArray.at(i);
+      if (i==iRecoTrackSet) recoTrackLine -> SetRnrSelf(kTRUE);
+      else if (offElse) recoTrackLine -> SetRnrSelf(kFALSE);
+    }
+  }
+}
+
+void 
 STEveDrawTask::SetRendering(TString name, Bool_t rnr, Double_t thresholdMin, Double_t thresholdMax)
 {
   STEveObject eveObj = GetEveObject(name);
@@ -950,6 +1112,16 @@ STEveDrawTask::Reset()
     riemannPointSet -> Reset();
   }
 
+  fLogger -> Debug(MESSAGE_ORIGIN,"Reset riemann track line set");
+
+  Int_t nRiemannTrackLines = fRiemannTrackSetArray.size();
+  for (Int_t i=0; i<nRiemannTrackLines; i++) 
+  {
+    TEveLine* riemannTrackLine = fRiemannTrackSetArray.at(i);
+    riemannTrackLine -> SetRnrSelf(kFALSE);
+    riemannTrackLine -> Reset();
+  }
+
   fLogger -> Debug(MESSAGE_ORIGIN,"Reset linear line set");
 
   Int_t nLinearTracks = fLinearTrackSetArray.size();
@@ -988,6 +1160,16 @@ STEveDrawTask::Reset()
     TEvePointSet* pointSet = fCurveHitSetArray.at(i);
     pointSet -> SetRnrSelf(kFALSE);
     pointSet -> Reset();
+  }
+
+  fLogger -> Debug(MESSAGE_ORIGIN,"Reset reco track line set");
+
+  Int_t nRecoTrackLines = fRecoTrackSetArray.size();
+  for (Int_t i=0; i<nRecoTrackLines; i++) 
+  {
+    TEveLine* recoTrackLine = fRecoTrackSetArray.at(i);
+    recoTrackLine -> SetRnrSelf(kFALSE);
+    recoTrackLine -> Reset();
   }
 
   if (fPadPlane != NULL)
@@ -1288,17 +1470,19 @@ STEveDrawTask::RnrEveObject(TString name, Int_t option)
 {
   name.ToLower();
 
-       if (name == "mc")         return RenderMC(option);
-  else if (name == "digi")       return RenderDigi(option);
-  else if (name == "hit")        return RenderHit(option);
-  else if (name == "hitbox")     return RenderHitBox(option);
-  else if (name == "cluster")    return RenderCluster(option);
-  else if (name == "clusterbox") return RenderClusterBox(option);
-  else if (name == "riemannhit") return RenderRiemannHit(option);
-  else if (name == "linear")     return RenderLinear(option);
-  else if (name == "linearhit")  return RenderLinearHit(option);
-  else if (name == "curve")      return RenderCurve(option);
-  else if (name == "curvehit")   return RenderCurveHit(option);
+       if (name == "mc")           return RenderMC(option);
+  else if (name == "digi")         return RenderDigi(option);
+  else if (name == "hit")          return RenderHit(option);
+  else if (name == "hitbox")       return RenderHitBox(option);
+  else if (name == "cluster")      return RenderCluster(option);
+  else if (name == "clusterbox")   return RenderClusterBox(option);
+  else if (name == "riemanntrack") return RenderRiemannTrack(option);
+  else if (name == "riemannhit")   return RenderRiemannHit(option);
+  else if (name == "linear")       return RenderLinear(option);
+  else if (name == "linearhit")    return RenderLinearHit(option);
+  else if (name == "curve")        return RenderCurve(option);
+  else if (name == "curvehit")     return RenderCurveHit(option);
+  else if (name == "recotrack")    return RenderRecoTrack(option);
 
   return -1;
 }
@@ -1308,17 +1492,19 @@ STEveDrawTask::IsSet(TString name, Int_t option)
 {
   name.ToLower();
 
-       if (name == "mc")         return BoolToInt(fSetObject[kMC]);
-  else if (name == "digi")       return BoolToInt(fSetObject[kDigi]);
-  else if (name == "hit")        return BoolToInt(fSetObject[kHit]);
-  else if (name == "hitbox")     return BoolToInt(fSetObject[kHitBox]);
-  else if (name == "cluster")    return BoolToInt(fSetObject[kCluster]);
-  else if (name == "clusterbox") return BoolToInt(fSetObject[kClusterBox]);
-  else if (name == "riemannhit") return BoolToInt(fSetObject[kRiemannHit]);
-  else if (name == "linear")     return BoolToInt(fSetObject[kLinear]);
-  else if (name == "linearhit")  return BoolToInt(fSetObject[kLinearHit]);
-  else if (name == "curve")      return BoolToInt(fSetObject[kCurve]);
-  else if (name == "curvehit")   return BoolToInt(fSetObject[kCurveHit]);
+       if (name == "mc")           return BoolToInt(fSetObject[kMC]);
+  else if (name == "digi")         return BoolToInt(fSetObject[kDigi]);
+  else if (name == "hit")          return BoolToInt(fSetObject[kHit]);
+  else if (name == "hitbox")       return BoolToInt(fSetObject[kHitBox]);
+  else if (name == "cluster")      return BoolToInt(fSetObject[kCluster]);
+  else if (name == "clusterbox")   return BoolToInt(fSetObject[kClusterBox]);
+  else if (name == "riemanntrack") return BoolToInt(fSetObject[kRiemannTrack]);
+  else if (name == "riemannhit")   return BoolToInt(fSetObject[kRiemannHit]);
+  else if (name == "linear")       return BoolToInt(fSetObject[kLinear]);
+  else if (name == "linearhit")    return BoolToInt(fSetObject[kLinearHit]);
+  else if (name == "curve")        return BoolToInt(fSetObject[kCurve]);
+  else if (name == "curvehit")     return BoolToInt(fSetObject[kCurveHit]);
+  else if (name == "recotrack")    return BoolToInt(fSetObject[kRecoTrack]);
 
   return -1;
 }
@@ -1411,6 +1597,29 @@ STEveDrawTask::RenderClusterBox(Int_t option)
   fBoxClusterSet -> SetRnrSelf(fRnrSelf[kClusterBox]);
 
   return BoolToInt(fRnrSelf[kClusterBox]);
+}
+
+Int_t 
+STEveDrawTask::RenderRiemannTrack(Int_t option)
+{
+  if (option == 0)
+    return BoolToInt(fRnrSelf[kRiemannTrack]);
+
+  Int_t nRiemannTrackSets = fRiemannTrackSetArray.size();
+  if (nRiemannTrackSets == 0)
+    return -1;
+
+  fRnrSelf[kRiemannTrack] = !fRnrSelf[kRiemannTrack];
+  for (Int_t i=0; i<nRiemannTrackSets; i++)
+  {
+    TEveLine* riemannTrackLine = fRiemannTrackSetArray.at(i);
+    if (riemannTrackLine -> Size() == 0)
+      riemannTrackLine -> SetRnrSelf(kFALSE);
+    else
+      riemannTrackLine -> SetRnrSelf(fRnrSelf[kRiemannTrack]);
+  }
+
+  return BoolToInt(fRnrSelf[kRiemannTrack]);
 }
 
 Int_t 
@@ -1526,6 +1735,29 @@ STEveDrawTask::RenderCurveHit(Int_t option)
   }
 
   return BoolToInt(fRnrSelf[kCurveHit]);
+}
+
+Int_t 
+STEveDrawTask::RenderRecoTrack(Int_t option)
+{
+  if (option == 0)
+    return BoolToInt(fRnrSelf[kRecoTrack]);
+
+  Int_t nRecoTrackSets = fRecoTrackSetArray.size();
+  if (nRecoTrackSets == 0)
+    return -1;
+
+  fRnrSelf[kRecoTrack] = !fRnrSelf[kRecoTrack];
+  for (Int_t i=0; i<nRecoTrackSets; i++)
+  {
+    TEveLine* recoTrackLine = fRecoTrackSetArray.at(i);
+    if (recoTrackLine -> Size() == 0)
+      recoTrackLine -> SetRnrSelf(kFALSE);
+    else
+      recoTrackLine -> SetRnrSelf(fRnrSelf[kRecoTrack]);
+  }
+
+  return BoolToInt(fRnrSelf[kRecoTrack]);
 }
 
 Int_t STEveDrawTask::BoolToInt(Bool_t val) 

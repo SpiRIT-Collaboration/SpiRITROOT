@@ -28,6 +28,7 @@
 
 // SPiRIT class headers
 #include "STEveManager.hh"
+#include "STTrack.hh"
 #include "STRiemannTrack.hh"
 #include "STLinearTrackFitter.hh"
 #include "STLinearTrack.hh"
@@ -73,6 +74,7 @@ class STEveDrawTask : public STEveTask
     void SetSelfRiemannSet(Int_t iRiemannSet = -1, Bool_t offElse = kTRUE);
     void SetSelfLinearSet(Int_t iLinearSet = -1, Bool_t offElse = kTRUE);
     void SetSelfCurveSet(Int_t iCurveSet = -1, Bool_t offElse = kTRUE);
+    void SetSelfRecoTrackSet(Int_t iCurveSet = -1, Bool_t offElse = kTRUE);
     void SetObject(TString name, Bool_t set);
     void SetRendering(TString name, 
                        Bool_t rnr = kTRUE,
@@ -98,11 +100,13 @@ class STEveDrawTask : public STEveTask
     Int_t RenderHitBox(Int_t option);
     Int_t RenderCluster(Int_t option);
     Int_t RenderClusterBox(Int_t option);
+    Int_t RenderRiemannTrack(Int_t option);
     Int_t RenderRiemannHit(Int_t option);
     Int_t RenderLinear(Int_t option);
     Int_t RenderLinearHit(Int_t option);
     Int_t RenderCurve(Int_t option);
     Int_t RenderCurveHit(Int_t option);
+    Int_t RenderRecoTrack(Int_t option);
 
   private :
     void DrawPadPlane();
@@ -116,6 +120,7 @@ class STEveDrawTask : public STEveTask
     void DrawRiemannHits();
     void DrawLinearTracks();
     void DrawCurveTracks();
+    void DrawRecoTracks();
 
     Color_t GetColor(Int_t);
 
@@ -158,6 +163,7 @@ class STEveDrawTask : public STEveTask
     TClonesArray* fRiemannTrackArray    = NULL;
     TClonesArray* fLinearTrackArray     = NULL;
     TClonesArray* fCurveTrackArray      = NULL;
+    TClonesArray* fRecoTrackArray       = NULL;
     TClonesArray* fRawEventArray        = NULL;
 
     /// Pad & Pulses
@@ -196,10 +202,12 @@ class STEveDrawTask : public STEveTask
     TEveBoxSet* fBoxClusterSet = NULL;
 
     vector<TEvePointSet*> fRiemannSetArray;
+    vector<TEveLine*>     fRiemannTrackSetArray;
     vector<TEvePointSet*> fLinearHitSetArray;
     vector<TEveLine*>     fLinearTrackSetArray;
     vector<TEvePointSet*> fCurveHitSetArray;
     vector<TEveLine*>     fCurveTrackSetArray;
+    vector<TEveLine*>     fRecoTrackSetArray;
 
     STLinearTrackFitter* fLTFitter = NULL;
     STCurveTrackFitter* fCTFitter = NULL;

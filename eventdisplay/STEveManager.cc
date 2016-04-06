@@ -407,15 +407,25 @@ STEveManager::BuildMenu()
   }
   frameEventControl -> AddFrame(frameClusterButtons, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY | kLHintsExpandX, 1,1,1,1));
 
+  TGHorizontalFrame* frameRiemannButtons = new TGHorizontalFrame(frameEventControl);
   {
-    fButtonOnOffRiemannHit = new TGCheckButton(frameEventControl, "Rieimann-Hit");
+    fButtonOnOffRiemannTrack = new TGCheckButton(frameRiemannButtons, "Riemann-T");
+    fButtonOnOffRiemannTrack -> Connect("Clicked()", "STEveManager", this, "ClickOnOffRiemannTrack()");
+    frameRiemannButtons -> AddFrame(fButtonOnOffRiemannTrack, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 3,3,2,2));
+    if (fEveTask -> IsSetTask("riemannhit") != 1) 
+      fButtonOnOffRiemannTrack -> SetState(kButtonDisabled);
+    else if (fEveTask -> RnrEveObjectTask("RiemannHit", 0) == 1)
+      fButtonOnOffRiemannTrack -> SetState(kButtonDown);
+
+    fButtonOnOffRiemannHit = new TGCheckButton(frameRiemannButtons, "Riemann-H");
     fButtonOnOffRiemannHit -> Connect("Clicked()", "STEveManager", this, "ClickOnOffRiemannHit()");
-    frameEventControl -> AddFrame(fButtonOnOffRiemannHit, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,2,2));
+    frameRiemannButtons -> AddFrame(fButtonOnOffRiemannHit, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 3,3,2,2));
     if (fEveTask -> IsSetTask("riemannhit") != 1) 
       fButtonOnOffRiemannHit -> SetState(kButtonDisabled);
     else if (fEveTask -> RnrEveObjectTask("RiemannHit", 0) == 1)
       fButtonOnOffRiemannHit -> SetState(kButtonDown);
   }
+  frameEventControl -> AddFrame(frameRiemannButtons, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY | kLHintsExpandX, 1,1,1,1));
 
   TGHorizontalFrame* frameLinearButtons = new TGHorizontalFrame(frameEventControl);
   {
@@ -456,6 +466,18 @@ STEveManager::BuildMenu()
       fButtonOnOffCurveHit -> SetState(kButtonDown);
   }
   frameEventControl -> AddFrame(frameCurveButtons, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY | kLHintsExpandX, 1,1,1,1));
+
+  TGHorizontalFrame* frameRecoButtons = new TGHorizontalFrame(frameEventControl);
+  {
+    fButtonOnOffRecoTrack = new TGCheckButton(frameRecoButtons, "Reco-Track");
+    fButtonOnOffRecoTrack -> Connect("Clicked()", "STEveManager", this, "ClickOnOffRecoTrack()");
+    frameRecoButtons -> AddFrame(fButtonOnOffRecoTrack, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 3,3,2,2));
+    if (fEveTask -> IsSetTask("curvehit") != 1)  
+      fButtonOnOffRecoTrack  -> SetState(kButtonDisabled);
+    else if (fEveTask -> RnrEveObjectTask("RecoTrack", 0) == 1)
+      fButtonOnOffRecoTrack -> SetState(kButtonDown);
+  }
+  frameEventControl -> AddFrame(frameRecoButtons, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY | kLHintsExpandX, 1,1,1,1));
 
   frameMain -> AddFrame(frameEventControl, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
 
@@ -700,17 +722,19 @@ STEveManager::DefaultWindowTb()
   UpdateEvent();
 }
 
-void STEveManager::ClickOnOffMC()         { fEveTask -> RnrEveObjectTask("mc");         gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffDigi()       { fEveTask -> RnrEveObjectTask("digi");       gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffHit()        { fEveTask -> RnrEveObjectTask("hit");        gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffHitBox()     { fEveTask -> RnrEveObjectTask("hitbox");     gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffCluster()    { fEveTask -> RnrEveObjectTask("cluster");    gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffClusterBox() { fEveTask -> RnrEveObjectTask("clusterbox"); gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffRiemannHit() { fEveTask -> RnrEveObjectTask("riemannhit"); gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffLinear()     { fEveTask -> RnrEveObjectTask("linear");     gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffLinearHit()  { fEveTask -> RnrEveObjectTask("linearhit");  gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffCurve()      { fEveTask -> RnrEveObjectTask("curve");      gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffCurveHit()   { fEveTask -> RnrEveObjectTask("curvehit");   gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffMC()           { fEveTask -> RnrEveObjectTask("mc");           gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffDigi()         { fEveTask -> RnrEveObjectTask("digi");         gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffHit()          { fEveTask -> RnrEveObjectTask("hit");          gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffHitBox()       { fEveTask -> RnrEveObjectTask("hitbox");       gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffCluster()      { fEveTask -> RnrEveObjectTask("cluster");      gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffClusterBox()   { fEveTask -> RnrEveObjectTask("clusterbox");   gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffRiemannTrack() { fEveTask -> RnrEveObjectTask("riemanntrack"); gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffRiemannHit()   { fEveTask -> RnrEveObjectTask("riemannhit");   gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffLinear()       { fEveTask -> RnrEveObjectTask("linear");       gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffLinearHit()    { fEveTask -> RnrEveObjectTask("linearhit");    gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffCurve()        { fEveTask -> RnrEveObjectTask("curve");        gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffCurveHit()     { fEveTask -> RnrEveObjectTask("curvehit");     gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffRecoTrack()    { fEveTask -> RnrEveObjectTask("recoTrack");    gEve -> Redraw3D(); }
 
 Bool_t
 STEveManager::EveMode(TString mode)

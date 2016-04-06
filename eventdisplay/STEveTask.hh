@@ -12,18 +12,20 @@ class STEveTask : public FairTask
 
     enum STEveObject
     {
-      kNon         = -1,
-      kMC          = 0,
-      kDigi        = 1,
-      kHit         = 2,
-      kCluster     = 3,
-      kClusterBox  = 4,
-      kRiemannHit  = 5,
-      kLinear      = 6,
-      kLinearHit   = 7,
-      kCurve       = 8,
-      kCurveHit    = 9,
-      kHitBox      = 10
+      kNon          = -1,
+      kMC           = 0,
+      kDigi         = 1,
+      kHit          = 2,
+      kCluster      = 3,
+      kClusterBox   = 4,
+      kRiemannTrack = 5,
+      kRiemannHit   = 6,
+      kLinear       = 7,
+      kLinearHit    = 8,
+      kCurve        = 9,
+      kCurveHit     = 10,
+      kHitBox       = 11,
+      kRecoTrack    = 12
     };
 
     STEveObject GetEveObject(TString name);
@@ -44,10 +46,10 @@ class STEveTask : public FairTask
     virtual Int_t IsSet(TString name, Int_t option) { return -1; }
 
   protected:
-    static const Int_t fNumEveObject = 12;
+    static const Int_t fNumEveObject = 14;
 
 
-  ClassDef(STEveTask, 1);
+  ClassDef(STEveTask, 2);
 };
 
 #endif

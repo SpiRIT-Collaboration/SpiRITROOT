@@ -7,17 +7,19 @@ STEveTask::GetEveObject(TString name)
 {
   name.ToLower();
 
-       if (name == "mc")         return kMC;
-  else if (name == "digi")       return kDigi;
-  else if (name == "hit")        return kHit;
-  else if (name == "hitbox")     return kHitBox;
-  else if (name == "cluster")    return kCluster;
-  else if (name == "clusterbox") return kClusterBox;
-  else if (name == "riemannhit") return kRiemannHit;
-  else if (name == "linear")     return kLinear;
-  else if (name == "linearhit")  return kLinearHit;
-  else if (name == "curve")      return kCurve;
-  else if (name == "curvehit")   return kCurveHit;
+       if (name == "mc")           return kMC;
+  else if (name == "digi")         return kDigi;
+  else if (name == "hit")          return kHit;
+  else if (name == "hitbox")       return kHitBox;
+  else if (name == "cluster")      return kCluster;
+  else if (name == "clusterbox")   return kClusterBox;
+  else if (name == "riemanntrack") return kRiemannTrack;
+  else if (name == "riemannhit")   return kRiemannHit;
+  else if (name == "linear")       return kLinear;
+  else if (name == "linearhit")    return kLinearHit;
+  else if (name == "curve")        return kCurve;
+  else if (name == "curvehit")     return kCurveHit;
+  else if (name == "recoTrack")    return kRecoTrack;
 
   return kNon;
 }

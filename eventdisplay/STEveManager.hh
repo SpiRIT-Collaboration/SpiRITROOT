@@ -114,11 +114,13 @@ class STEveManager : public TEveEventManager
     void ClickOnOffHitBox();
     void ClickOnOffCluster();
     void ClickOnOffClusterBox();
+    void ClickOnOffRiemannTrack();
     void ClickOnOffRiemannHit();
     void ClickOnOffLinear();
     void ClickOnOffLinearHit();
     void ClickOnOffCurve();
     void ClickOnOffCurveHit();
+    void ClickOnOffRecoTrack();
 
     void Exit();
 
@@ -144,11 +146,13 @@ class STEveManager : public TEveEventManager
     TGCheckButton *fButtonOnOffHitBox;
     TGCheckButton *fButtonOnOffCluster;
     TGCheckButton *fButtonOnOffClusterBox;
+    TGCheckButton *fButtonOnOffRiemannTrack;
     TGCheckButton *fButtonOnOffRiemannHit;
     TGCheckButton *fButtonOnOffLinear;
     TGCheckButton *fButtonOnOffLinearHit;
     TGCheckButton *fButtonOnOffCurve;
     TGCheckButton *fButtonOnOffCurveHit;
+    TGCheckButton *fButtonOnOffRecoTrack;
 
   private :
     FairLogger *fLogger;    //! < Logger
