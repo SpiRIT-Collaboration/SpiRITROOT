@@ -9,7 +9,9 @@
 class STTrackCandidate : public TObject {
   public:
     STTrackCandidate();
-    ~STTrackCandidate() {};
+    virtual ~STTrackCandidate() {};
+
+    void SetTrackCandidate(STTrackCandidate *track);
 
     void SetPID(Int_t value);
     void SetMass(Double_t value);
@@ -38,6 +40,7 @@ class STTrackCandidate : public TObject {
     void SetTrackLength(Double_t value);
     void SetTotaldEdx(Double_t value);
 
+    void SetProbability(Double_t value);
     void SetChi2(Double_t value);
     void SetNDF(Int_t value);
 
@@ -82,6 +85,7 @@ class STTrackCandidate : public TObject {
     std::vector<Double_t> *GetdEdxArray();
     Double_t GetTotaldEdx();
 
+    Double_t GetProbability();
     Double_t GetChi2();
     Int_t GetNDF();
 
@@ -119,6 +123,7 @@ class STTrackCandidate : public TObject {
     std::vector<Double_t> fdEdxArray;
     Double_t fdEdxTotal;
 
+    Double_t fProbability;
     Double_t fChi2;
     Int_t fNDF;
 

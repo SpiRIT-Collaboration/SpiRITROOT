@@ -39,6 +39,7 @@ STTrackCandidate::STTrackCandidate()
   fTrackLength = -1;
   fdEdxTotal = -1;
 
+  fProbability = 0;
   fChi2 = -1;
   fNDF = -1;
 }
@@ -52,8 +53,7 @@ void STTrackCandidate::SetVertex(Double_t x, Double_t y, Double_t z)      { fVx 
 
 void STTrackCandidate::SetBeamVertex(TVector3 vector)                     { fBeamVx = vector.X(); fBeamVy = vector.Y(); fBeamVz = vector.Z(); }
 void STTrackCandidate::SetBeamVertex(Double_t x, Double_t y, Double_t z)  { fBeamVx = x; fBeamVy = y; fBeamVz = z; }
-void STTrackCandidate::SetBeamMomentum(TVector3 vector)                   { fBeamMomx = vector.X(); fBeamMomy = vector.Y(); fBeamMomz = vector.Z(); 
-}
+void STTrackCandidate::SetBeamMomentum(TVector3 vector)                   { fBeamMomx = vector.X(); fBeamMomy = vector.Y(); fBeamMomz = vector.Z(); }
 void STTrackCandidate::SetBeamMomentum(Double_t x, Double_t y, Double_t z)  { fBeamMomx = x; fBeamMomy = y; fBeamMomz = z; }
 
 void STTrackCandidate::SetKyotoLHit(TVector3 vector)                         { fKyotoLx = vector.X(); fKyotoLy = vector.Y(); fKyotoLz = vector.Z(); }
@@ -67,6 +67,7 @@ void STTrackCandidate::AdddEdx(Double_t value)                            { fdEd
 void STTrackCandidate::SetTrackLength(Double_t value)                     { fTrackLength = value; }
 void STTrackCandidate::SetTotaldEdx(Double_t value)                       { fdEdxTotal = value; }
 
+void STTrackCandidate::SetProbability(Double_t value)                     { fProbability = value; }
 void STTrackCandidate::SetChi2(Double_t value)                            { fChi2 = value; }
 void STTrackCandidate::SetNDF(Int_t value)                                { fNDF = value; }
 
@@ -116,5 +117,33 @@ std::vector<Double_t> *STTrackCandidate::GetdEdxArray()  { return &fdEdxArray; }
 
 Double_t STTrackCandidate::GetTotaldEdx()                { return fdEdxTotal; }
 
+Double_t STTrackCandidate::GetProbability()              { return fProbability; }
 Double_t STTrackCandidate::GetChi2()                     { return fChi2; }
 Int_t STTrackCandidate::GetNDF()                         { return fNDF; }
+
+void STTrackCandidate::SetTrackCandidate(STTrackCandidate *track)
+{
+  fPID = track -> GetPID();
+  fMass = track -> GetMass();
+  fCharge = track -> GetCharge();
+
+  SetVertex(track -> GetVertex());
+  SetBeamVertex(track -> GetBeamVertex());
+  SetBeamMomentum(track -> GetBeamMomentum());
+  SetKyotoLHit(track -> GetKyotoLHit());
+  SetKyotoRHit(track -> GetKyotoRHit());
+  SetKatanaHit(track -> GetKatanaHit());
+  SetMomentum(track -> GetMomentum());
+
+  fTrackLength = track -> GetTrackLength();
+  fdEdxTotal = track -> GetTotaldEdx();
+  fProbability = track -> GetProbability();
+  fChi2 = track -> GetChi2();
+  fNDF = track -> GetNDF();
+
+  fdEdxArray.clear();
+  std::vector<Double_t> *tempArray = track -> GetdEdxArray();
+  Int_t n = tempArray -> size();
+  for (Int_t i = 0; i < n; i++)
+    fdEdxArray.push_back(tempArray -> at(i));
+}

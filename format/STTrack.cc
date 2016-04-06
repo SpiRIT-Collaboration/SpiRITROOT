@@ -1,5 +1,5 @@
 /**
-x * @brief STTrack Class
+ * @brief STTrack Class
  *
  * @author JungWoo Lee
  */
@@ -12,14 +12,14 @@ STTrack::STTrack()
 {
 }
 
-void STTrack::SetParentID(Int_t value)                           { fParentID = value; }
-void STTrack::SetTrackID(Int_t value)                            { fTrackID = value; }
-void STTrack::SetRiemannID(Int_t value)                          { fRiemannID = value; }
+void STTrack::SetParentID(Int_t value)                   { fParentID = value; }
+void STTrack::SetTrackID(Int_t value)                    { fTrackID = value; }
+void STTrack::SetRiemannID(Int_t value)                  { fRiemannID = value; }
 
-void STTrack::SetIsFitted(Bool_t value)                          { fIsFitted = value; }
+void STTrack::SetIsFitted(Bool_t value)                  { fIsFitted = value; }
 
-void STTrack::AddHitID(Int_t value)                              { fHitIDArray.push_back(value); }
-void STTrack::AddTrackCandidate(STTrackCandidate *track)         { fTrackCandidateArray.push_back(track); }
+void STTrack::AddHitID(Int_t value)                      { fHitIDArray.push_back(value); }
+void STTrack::AddTrackCandidate(STTrackCandidate *track) { fTrackCandidateArray.push_back(track); }
 
 Int_t STTrack::GetParentID()                    { return fParentID; }
 Int_t STTrack::GetTrackID()                     { return fTrackID; }
@@ -46,28 +46,4 @@ Bool_t STTrack::SelectTrackCandidate(Int_t idx)
   return kTRUE;
 }
 
-void STTrack::SelectTrackCandidate(STTrackCandidate *track)
-{
-  fPID = track -> GetPID();
-  fMass = track -> GetMass();
-  fCharge = track -> GetCharge();
-
-  SetVertex(track -> GetVertex());
-  SetBeamVertex(track -> GetBeamVertex());
-  SetKyotoLHit(track -> GetKyotoLHit());
-  SetKyotoRHit(track -> GetKyotoRHit());
-  SetKatanaHit(track -> GetKatanaHit());
-  SetMomentum(track -> GetMomentum());
-
-  fTrackLength = track -> GetTrackLength();
-
-  fTrackLength = track -> GetTotaldEdx();
-  fChi2 = track -> GetChi2();
-  fNDF = track -> GetNDF();
-
-  fdEdxArray.clear();
-  std::vector<Double_t> *tempArray = track -> GetdEdxArray();
-  Int_t n = tempArray -> size();
-  for (Int_t i = 0; i < n; i++)
-    fdEdxArray.push_back(tempArray -> at(i));
-}
+void STTrack::SelectTrackCandidate(STTrackCandidate *track) { SetTrackCandidate(track); }
