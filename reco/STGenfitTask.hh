@@ -20,6 +20,7 @@
 #include "STDigiPar.hh"
 #include "STHitCluster.hh"
 #include "STSpacepointMeasurement.hh"
+#include "STRiemannTrack.hh"
 
 // GENFIT2 classes
 #include "AbsKalmanFitter.h"
@@ -54,6 +55,8 @@ class STGenfitTask : public FairTask {
     void SetPersistence(Bool_t value = kTRUE);
 
     void OpenDisplay();
+
+    Bool_t GetdEdxFromRiemann(STEvent *event, STRiemannTrack *track, Double_t &totalLength, Int_t &totalEloss);
 
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable

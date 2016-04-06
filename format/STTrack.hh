@@ -27,6 +27,7 @@ class STTrack : public TObject {
 
     void SetPID(Int_t value);
     void SetMass(Double_t value);
+    void SetCharge(Int_t value);
 
     void SetVertex(TVector3 vector);
     void SetVertex(Double_t x, Double_t y, Double_t z);
@@ -37,7 +38,6 @@ class STTrack : public TObject {
     void SetMomentum(TVector3 vector);
     void SetMomentum(Double_t px, Double_t py, Double_t pz);
 
-    void SetCharge(Int_t value);
     void AdddEdx(Double_t value);
 
     void SetTrackLength(Double_t value);
@@ -58,6 +58,7 @@ class STTrack : public TObject {
 
     Int_t GetPID();
     Double_t GetMass();
+    Int_t GetCharge();
 
     TVector3 GetVertex();
     Double_t GetVx();
@@ -75,7 +76,6 @@ class STTrack : public TObject {
     Double_t GetPy();
     Double_t GetPz();
 
-    Int_t GetCharge();
     std::vector<Double_t> *GetdEdxArray();
 
     Double_t GetTrackLength();
@@ -103,6 +103,7 @@ class STTrack : public TObject {
 
     Int_t fPID;
     Double_t fMass;
+    Int_t fCharge;
 
     Double_t fVx;
     Double_t fVy;
@@ -116,7 +117,6 @@ class STTrack : public TObject {
     Double_t fPy;
     Double_t fPz;
 
-    Int_t fCharge;
     Double_t fTrackLength;
     std::vector<Double_t> fdEdxArray;
     Double_t fdEdxTotal;

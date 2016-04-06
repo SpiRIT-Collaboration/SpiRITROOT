@@ -19,6 +19,7 @@ STTrack::STTrack()
   
   fPID = -1;
   fMass = -1;
+  fCharge = 0;
   
   fVx = 0;
   fVy = 0;
@@ -32,7 +33,6 @@ STTrack::STTrack()
   fPy = 0;
   fPz = 0;
 
-  fCharge = 0;
   fTrackLength = -1;
   fdEdxTotal = -1;
 
@@ -48,6 +48,7 @@ void STTrack::SetIsFitted(Bool_t value)                          { fIsFitted = v
 
 void STTrack::SetPID(Int_t value)                                { fPID = value; }
 void STTrack::SetMass(Double_t value)                            { fMass = value; }
+void STTrack::SetCharge(Int_t value)                             { fCharge = value; }
 
 void STTrack::SetVertex(TVector3 vector)                         { fVx = vector.X(); fVy = vector.Y(); fVz = vector.Z(); }
 void STTrack::SetVertex(Double_t x, Double_t y, Double_t z)      { fVx = x; fVy = y; fVz = z; }
@@ -58,7 +59,6 @@ void STTrack::SetBeamVertex(Double_t x, Double_t y, Double_t z)      { fBeamVx =
 void STTrack::SetMomentum(TVector3 vector)                       { fPx = vector.X(); fPy = vector.Y(); fPz = vector.Z(); }
 void STTrack::SetMomentum(Double_t px, Double_t py, Double_t pz) { fPx = px; fPy = py; fPz = pz; }
 
-void STTrack::SetCharge(Int_t value)                             { fCharge = value; }
 void STTrack::AdddEdx(Double_t value)                            { fdEdxArray.push_back(value); }
 
 void STTrack::SetTrackLength(Double_t value)                     { fTrackLength = value; }
@@ -79,6 +79,7 @@ Bool_t STTrack::IsFitted()                      { return fIsFitted; }
 
 Int_t STTrack::GetPID()                         { return fPID; }
 Double_t STTrack::GetMass()                     { return fMass; }
+Int_t STTrack::GetCharge()                      { return fCharge; }
 
 TVector3 STTrack::GetVertex()                   { return TVector3(fVx, fVy, fVz); }
 TVector3 STTrack::GetBeamVertex()               { return TVector3(fBeamVx, fBeamVy, fBeamVz); }
@@ -96,7 +97,6 @@ Double_t STTrack::GetPx()                       { return fPx; }
 Double_t STTrack::GetPy()                       { return fPy; }
 Double_t STTrack::GetPz()                       { return fPz; }
 
-Int_t STTrack::GetCharge()                      { return fCharge; }
 Double_t STTrack::GetTrackLength()              { return fTrackLength; }
 std::vector<Double_t> *STTrack::GetdEdxArray()  { return &fdEdxArray; }
 
@@ -129,12 +129,12 @@ void STTrack::SelectTrackCandidate(STTrackCandidate *track)
 {
   fPID = track -> GetPID();
   fMass = track -> GetMass();
+  fCharge = track -> GetCharge();
 
   SetVertex(track -> GetVertex());
   SetBeamVertex(track -> GetBeamVertex());
   SetMomentum(track -> GetMomentum());
 
-  fCharge = track -> GetCharge();
   fTrackLength = track -> GetTrackLength();
 
   fTrackLength = track -> GetTotaldEdx();

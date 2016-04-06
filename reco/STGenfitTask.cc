@@ -12,7 +12,6 @@
 // SPiRITROOT classes
 #include "STEvent.hh"
 #include "STGenfitTask.hh"
-#include "STRiemannTrack.hh"
 #include "STRiemannHit.hh"
 #include "STTrack.hh"
 #include "STTrackCandidate.hh"
@@ -209,7 +208,7 @@ STGenfitTask::Exec(Option_t *opt)
 
     fHitClusterArray -> Delete();
 
-    genfit::TrackCand trackCand;
+    genfit::TrackCand gfTrackCand;
 
     UInt_t numHits = riemannTrack -> GetNumHits();
 
@@ -237,7 +236,7 @@ STGenfitTask::Exec(Option_t *opt)
       cluster = clusters.at(iHit);
 
       new ((*fHitClusterArray)[iHit]) STHitCluster(*cluster);
-      trackCand.addHit(fTPCDetID, iHit);
+      gfTrackCand.addHit(fTPCDetID, iHit);
     }
 
     Double_t dip = riemannTrack -> GetDip();
@@ -256,12 +255,12 @@ STGenfitTask::Exec(Option_t *opt)
       //      covSeed(iComp, iComp) = 0.5*0.5;
       covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
 
-    trackCand.setCovSeed(covSeed);
-    //trackCand.setPosMomSeedAndPdgCode(posSeed, momSeed, 2212);
-    trackCand.setPosMomSeed(posSeed, momSeed, 1);
+    gfTrackCand.setCovSeed(covSeed);
+    //gfTrackCand.setPosMomSeedAndPdgCode(posSeed, momSeed, 2212);
+    gfTrackCand.setPosMomSeed(posSeed, momSeed, 1);
 
     genfit::Track *trackBest = nullptr;
-    STTrackCandidate *trackCandidateBest = nullptr;
+    STTrackCandidate *stTrackCandBest = nullptr;
     Double_t chi2NdfBest = 1.e10;
 
     Int_t trackID = fTrackArray -> GetEntriesFast();
@@ -270,26 +269,42 @@ STGenfitTask::Exec(Option_t *opt)
     recoTrack -> SetTrackID(trackID);
     recoTrack -> SetRiemannID(iTrackCand);
 
+    Double_t totalLength = 0;
+    Int_t totalEloss = 0;
+    Int_t totaldEdx = 0;
+
+    Bool_t getdedx = GetdEdxFromRiemann(event, riemannTrack, totalLength, totalEloss);
+
+    if (getdedx == kFALSE || totalLength < 0) {
+      totalLength = -1;
+      totaldEdx = -1;
+    }
+    else
+      totaldEdx = totalEloss/totalLength;
+
+    recoTrack -> SetTrackLength(totalLength);
+    recoTrack -> SetTotaldEdx(totaldEdx);
+
     for (auto pdgCand : fPDGCandidates) {
-      trackCand.setPdgCode(pdgCand);
+      gfTrackCand.setPdgCode(pdgCand);
 
       try {
         genfit::RKTrackRep *trackRep = new genfit::RKTrackRep(pdgCand);
-        genfit::Track *trackFit = new genfit::Track(trackCand, *fMeasurementFactory, trackRep);
-        fFitter -> processTrack(trackFit);
+        genfit::Track *gfTrackFit = new genfit::Track(gfTrackCand, *fMeasurementFactory, trackRep);
+        fFitter -> processTrack(gfTrackFit);
 
         Bool_t isFit, isFitFull, isFitPart, hasChanged, isPruned;
         Int_t nfail;
         Double_t pval;
 
         /*
-        isFit = trackFit -> getFitStatus(trackRep)->isFitted();
-        isFitFull = trackFit -> getFitStatus(trackRep)->isFitConvergedFully();
-        isFitPart = trackFit -> getFitStatus(trackRep)->isFitConvergedPartially();
-        nfail = trackFit -> getFitStatus(trackRep)->getNFailedPoints();
-        pval = trackFit -> getFitStatus(trackRep)->getPVal();
-        hasChanged = trackFit -> getFitStatus(trackRep)->hasTrackChanged();
-        isPruned = trackFit -> getFitStatus(trackRep)->isTrackPruned();
+        isFit = gfTrackFit -> getFitStatus(trackRep)->isFitted();
+        isFitFull = gfTrackFit -> getFitStatus(trackRep)->isFitConvergedFully();
+        isFitPart = gfTrackFit -> getFitStatus(trackRep)->isFitConvergedPartially();
+        nfail = gfTrackFit -> getFitStatus(trackRep)->getNFailedPoints();
+        pval = gfTrackFit -> getFitStatus(trackRep)->getPVal();
+        hasChanged = gfTrackFit -> getFitStatus(trackRep)->hasTrackChanged();
+        isPruned = gfTrackFit -> getFitStatus(trackRep)->isTrackPruned();
 
         std::cout << "Is Fitted:\t" << isFit << std::endl;
         std::cout << "Is FitConvergedFully:\t" << isFitFull << std::endl;
@@ -300,7 +315,7 @@ STGenfitTask::Exec(Option_t *opt)
         std::cout << "isTrackPruned:\t" << isPruned << std::endl;
         */
 
-        assert(trackFit -> checkConsistency());
+        assert(gfTrackFit -> checkConsistency());
 
         TVector3 recopos(0,0,0);
         TVector3 recop(0,0,0);
@@ -311,13 +326,13 @@ STGenfitTask::Exec(Option_t *opt)
         Int_t pdgId;
 
         Double_t bChi2, fChi2, bNdf, fNdf;
-        fFitter -> getChiSquNdf(trackFit, trackFit -> getCardinalRep(), bChi2, fChi2, bNdf, fNdf);
+        fFitter -> getChiSquNdf(gfTrackFit, gfTrackFit -> getCardinalRep(), bChi2, fChi2, bNdf, fNdf);
 
-        trackFit -> getFittedState().getPosMomCov(recopos, recop, covv);
-        charge = trackFit -> getFittedState().getCharge();
+        gfTrackFit -> getFittedState().getPosMomCov(recopos, recop, covv);
+        charge = gfTrackFit -> getFittedState().getCharge();
 
         /*
-        //pdgId = trackFit -> getFittedState().getPDG();
+        //pdgId = gfTrackFit -> getFittedState().getPDG();
         std::cout << "##################################################" << std::endl;
         std::cout << "Riemann: " << riemannTrack -> GetMom(5.)*1000 << " MeV/c  " << std::endl;
         std::cout << "Genfit total momentum: " << recop.Mag()*1000 << " MeV/c" << std::endl;
@@ -331,7 +346,7 @@ STGenfitTask::Exec(Option_t *opt)
         TVector3 target(0, -21.33, -0.89);
         TVector3 ntarget(0, 0, 1);
 
-        genfit::StateOnPlane state = trackFit -> getFittedState();
+        genfit::StateOnPlane state = gfTrackFit -> getFittedState();
         genfit::SharedPlanePtr plane;
         plane = genfit::SharedPlanePtr(new genfit::DetPlane(target, ntarget));
         trackRep -> extrapolateToPlane(state, plane); 
@@ -342,22 +357,23 @@ STGenfitTask::Exec(Option_t *opt)
         recoTrackCand -> SetVertex(recopos*10.);
         recoTrackCand -> SetBeamVertex(beampos*10.);
         recoTrackCand -> SetMomentum(recop*1000.);
-        recoTrackCand -> SetPID(trackFit -> getFittedState().getPDG());
-        //recoTrackCand -> SetMass(938.27);
-        recoTrackCand -> SetMass(trackFit -> getFittedState().getMass()*1000);
+        recoTrackCand -> SetPID(gfTrackFit -> getFittedState().getPDG());
+        recoTrackCand -> SetMass(gfTrackFit -> getFittedState().getMass()*1000);
+        recoTrackCand -> SetCharge(gfTrackFit -> getFittedState().getCharge());
         recoTrackCand -> SetChi2(fChi2);
         recoTrackCand -> SetNDF(fNdf);
-        recoTrackCand -> SetCharge(trackFit -> getFittedState().getCharge());
-        recoTrackCand -> SetTrackLength(trackFit -> getTrackLen());
+        //recoTrackCand -> SetTrackLength(gfTrackFit -> getTrackLen());
+        recoTrackCand -> SetTrackLength(totalLength); // TODO
+        recoTrackCand -> SetTotaldEdx(totaldEdx); // TODO
 
         recoTrack -> AddTrackCandidate(recoTrackCand);
 
-        // new ((*fTrackArray)[fTrackArray -> GetEntriesFast()]) genfit::Track(*trackFit);
+        // new ((*fTrackArray)[fTrackArray -> GetEntriesFast()]) genfit::Track(*gfTrackFit);
 
         if (chi2NdfBest > fChi2/fNdf) {
           chi2NdfBest = fChi2/fNdf;
-          trackBest = trackFit;
-          trackCandidateBest = recoTrackCand;
+          trackBest = gfTrackFit;
+          stTrackCandBest = recoTrackCand;
         }
 
       } catch (genfit::Exception &e) {
@@ -370,9 +386,11 @@ STGenfitTask::Exec(Option_t *opt)
     if (trackBest != nullptr) 
     {
       recoTrack -> SetIsFitted();
-      recoTrack -> SelectTrackCandidate(trackCandidateBest);
+      recoTrack -> SelectTrackCandidate(stTrackCandBest);
       tracks.push_back(trackBest);
     }
+    else 
+      recoTrack -> SetNDF(numHits);
   }
 
   vector<genfit::GFRaveVertex *> vertices;
@@ -400,4 +418,64 @@ void
 STGenfitTask::OpenDisplay() {
   if (fIsDisplay)
     fDisplay -> open();
+}
+
+Bool_t
+STGenfitTask::GetdEdxFromRiemann(STEvent *event, STRiemannTrack *track, Double_t &totalLength, Int_t &totalEloss)
+{
+  const std::vector<STRiemannHit *> *hitArray = track -> GetHits();
+
+  totalLength = 0; // total length of track
+  totalEloss = 0; // total charge of track
+
+  Int_t numHits = hitArray -> size();
+  if(numHits <= 3) 
+    return kFALSE; 
+
+  for (Int_t iHit = 0; iHit < numHits; iHit++) {
+
+    STRiemannHit *hit = hitArray -> at(iHit);
+    //gets hit in rotated frame, rotated frame is the STRiemann frame.
+    STHit *hitrotated = (STHit *)hit->GetHit();
+    Int_t clusID = hitrotated -> GetClusterID();
+
+    //STHitCluster is in the TPC normal coordinate frame
+    STHitCluster *hitcluster = (STHitCluster *) event->GetCluster(clusID);
+
+    //Position vectors in the Helix frame
+    TVector3 pos_0; // k-1 hit
+    TVector3 pos_k; // current hit, k
+    TVector3 pos_1; // k+1 hit
+
+    TVector3 dl; // difference between pos_0 and pos_k vectors
+    TVector3 dl_1; // difference between pos_k and pos_1 vectors
+
+    TVector3 dir; // dir vector of k_th position 
+    TVector3 temp; // junk dir vector
+
+    //calculation of path length with GetPosDirOnHelix() function
+    if((iHit+1) < numHits && (iHit-1) > 0){ //taking care of the end points
+
+      // These directions are in the rotated frame of STRiemannHit
+      // But the path lengths should not change even in a rotated frame
+      // Do not use the pos dir vectors from these to calculate angles
+
+      track->GetPosDirOnHelix(iHit-1,pos_0,temp);
+      track->GetPosDirOnHelix(iHit,pos_k,dir);
+      track->GetPosDirOnHelix(iHit+1,pos_1,temp);
+
+      dl=pos_k-pos_0;
+      dl_1=pos_1-pos_k;
+
+      Double_t mag = dl.Mag();
+      Double_t mag_1 = dl_1.Mag();
+
+      Double_t clusterlength = (mag+mag_1)/2; // half the distance from k-1 to k and from k to k+1
+
+      totalLength += clusterlength; // total distance along track for mean dE/dx 
+      totalEloss += hitcluster->GetCharge();
+    }
+  }
+
+  return kTRUE;
 }
