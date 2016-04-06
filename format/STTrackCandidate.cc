@@ -1,4 +1,5 @@
 #include "STTrackCandidate.hh"
+#include <iostream>
 
 ClassImp(STTrackCandidate)
 
@@ -16,6 +17,10 @@ STTrackCandidate::STTrackCandidate()
   fBeamVx = 0;
   fBeamVy = 0;
   fBeamVz = 0;
+
+  fBeamMomx = 0;
+  fBeamMomy = 0;
+  fBeamMomz = 0;
 
   fKyotoLx = 0;
   fKyotoLy = 0;
@@ -47,7 +52,8 @@ void STTrackCandidate::SetVertex(Double_t x, Double_t y, Double_t z)      { fVx 
 
 void STTrackCandidate::SetBeamVertex(TVector3 vector)                     { fBeamVx = vector.X(); fBeamVy = vector.Y(); fBeamVz = vector.Z(); }
 void STTrackCandidate::SetBeamVertex(Double_t x, Double_t y, Double_t z)  { fBeamVx = x; fBeamVy = y; fBeamVz = z; }
-void STTrackCandidate::SetBeamMomentum(TVector3 vector)                     { fBeamMomx = vector.X(); fBeamMomy = vector.Y(); fBeamMomz = vector.Z(); }
+void STTrackCandidate::SetBeamMomentum(TVector3 vector)                   { fBeamMomx = vector.X(); fBeamMomy = vector.Y(); fBeamMomz = vector.Z(); 
+}
 void STTrackCandidate::SetBeamMomentum(Double_t x, Double_t y, Double_t z)  { fBeamMomx = x; fBeamMomy = y; fBeamMomz = z; }
 
 void STTrackCandidate::SetKyotoLHit(TVector3 vector)                         { fKyotoLx = vector.X(); fKyotoLy = vector.Y(); fKyotoLz = vector.Z(); }
