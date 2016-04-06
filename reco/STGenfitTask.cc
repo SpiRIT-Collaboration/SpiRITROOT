@@ -352,25 +352,49 @@ STGenfitTask::Exec(Option_t *opt)
         genfit::SharedPlanePtr plane;
         plane = genfit::SharedPlanePtr(new genfit::DetPlane(target, ntarget));
         trackRep -> extrapolateToPlane(state, plane); 
-        //std::cout << state.getPos().X() << " " << state.getPos().Y() << " " << state.getPos().Z() << std::endl;
         TVector3 beampos = state.getPos();
+        TVector3 beammom = state.getMom();
 
 	////////////////////////////////////////
         // kyoto left extrapolation
 	////////////////////////////////////////
-	TVector3 paddleL(75.8, -21.33, 84.2);
-        TVector3 npaddleL(1, 0, 0);
+	TVector3 paddleL(75.8, -21.33, 84.5);
+        TVector3 npaddleL(-1, 0, 0);
 	genfit::StateOnPlane stateL = gfTrackFit -> getFittedState();
 	genfit::SharedPlanePtr planeL;
         planeL = genfit::SharedPlanePtr(new genfit::DetPlane(paddleL, npaddleL));
         trackRep -> extrapolateToPlane(stateL, planeL); 
-        //      std::cout << stateL.getPos().X() << " " << stateL.getPos().Y() << " " << stateL.getPos().Z() << std::endl;
         TVector3 KyotoLpos = stateL.getPos();
+
+	////////////////////////////////////////
+        // kyoto right extrapolation
+	////////////////////////////////////////
+	TVector3 paddleR(-75.8, -21.33, 84.5);
+        TVector3 npaddleR(1, 0, 0);
+	genfit::StateOnPlane stateR = gfTrackFit -> getFittedState();
+	genfit::SharedPlanePtr planeR;
+        planeR = genfit::SharedPlanePtr(new genfit::DetPlane(paddleR, npaddleR));
+        trackRep -> extrapolateToPlane(stateR, planeR); 
+        TVector3 KyotoRpos = stateR.getPos();
+
+	////////////////////////////////////////
+        // katana extrapolation
+	////////////////////////////////////////
+	TVector3 paddleK(-20, -21.33, 186.7);
+        TVector3 npaddleK(1, 0, 0);
+	genfit::StateOnPlane stateK = gfTrackFit -> getFittedState();
+	genfit::SharedPlanePtr planeK;
+        planeK = genfit::SharedPlanePtr(new genfit::DetPlane(paddleK, npaddleK));
+        trackRep -> extrapolateToPlane(stateK, planeK); 
+        TVector3 Katanapos = stateK.getPos();
 
         STTrackCandidate *recoTrackCand = new STTrackCandidate();
         recoTrackCand -> SetVertex(recopos*10.);
         recoTrackCand -> SetBeamVertex(beampos*10.);
-	recoTrack -> SetKyotoLHit(KyotoLpos*10.);
+	recoTrackCand -> SetBeamMomentum(beammom*10.);
+	recoTrackCand -> SetKyotoLHit(KyotoLpos*10.);
+	recoTrackCand -> SetKyotoRHit(KyotoLpos*10.);
+	recoTrackCand -> SetKatanaHit(KyotoLpos*10.);
         recoTrackCand -> SetMomentum(recop*1000.);
         recoTrackCand -> SetPID(gfTrackFit -> getFittedState().getPDG());
         recoTrackCand -> SetMass(gfTrackFit -> getFittedState().getMass()*1000);

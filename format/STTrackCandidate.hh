@@ -20,6 +20,15 @@ class STTrackCandidate {
 
     void SetBeamVertex(TVector3 vector);
     void SetBeamVertex(Double_t x, Double_t y, Double_t z);
+    void SetBeamMomentum(TVector3 vector);
+    void SetBeamMomentum(Double_t x, Double_t y, Double_t z);
+
+    void SetKyotoLHit(TVector3 vector);
+    void SetKyotoLHit(Double_t x, Double_t y, Double_t z);
+    void SetKyotoRHit(TVector3 vector);
+    void SetKyotoRHit(Double_t x, Double_t y, Double_t z);
+    void SetKatanaHit(TVector3 vector);
+    void SetKatanaHit(Double_t x, Double_t y, Double_t z);
 
     void SetMomentum(TVector3 vector);
     void SetMomentum(Double_t px, Double_t py, Double_t pz);
@@ -44,6 +53,23 @@ class STTrackCandidate {
     Double_t GetBeamVx();
     Double_t GetBeamVy();
     Double_t GetBeamVz();
+    TVector3 GetBeamMomentum();
+    Double_t GetBeamMomx();
+    Double_t GetBeamMomy();
+    Double_t GetBeamMomz();
+
+    TVector3 GetKyotoLHit();
+    Double_t GetKyotoLHitX();
+    Double_t GetKyotoLHitY();
+    Double_t GetKyotoLHitZ();
+    TVector3 GetKyotoRHit();
+    Double_t GetKyotoRHitX();
+    Double_t GetKyotoRHitY();
+    Double_t GetKyotoRHitZ();
+    TVector3 GetKatanaHit();
+    Double_t GetKatanaHitX();
+    Double_t GetKatanaHitY();
+    Double_t GetKatanaHitZ();
 
     TVector3 GetMomentum();
     Double_t GetP();
@@ -71,6 +97,19 @@ class STTrackCandidate {
     Double_t fBeamVx;
     Double_t fBeamVy;
     Double_t fBeamVz;
+    Double_t fBeamMomx;
+    Double_t fBeamMomy;
+    Double_t fBeamMomz;
+
+    Double_t fKyotoLx;
+    Double_t fKyotoLy;
+    Double_t fKyotoLz;
+    Double_t fKyotoRx;
+    Double_t fKyotoRy;
+    Double_t fKyotoRz;
+    Double_t fKatanax;
+    Double_t fKatanay;
+    Double_t fKatanaz;
 
     Double_t fPx;
     Double_t fPy;

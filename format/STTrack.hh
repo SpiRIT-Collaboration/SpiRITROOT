@@ -35,9 +35,6 @@ class STTrack : public TObject {
     void SetBeamVertex(TVector3 vector);
     void SetBeamVertex(Double_t x, Double_t y, Double_t z);
 
-    void SetKyotoLHit(TVector3 vector);
-    void SetKyotoLHit(Double_t x, Double_t y, Double_t z);
-
     void SetMomentum(TVector3 vector);
     void SetMomentum(Double_t px, Double_t py, Double_t pz);
 
@@ -71,11 +68,6 @@ class STTrack : public TObject {
     Double_t GetBeamVx();
     Double_t GetBeamVy();
     Double_t GetBeamVz();
-
-    TVector3 GetKyotoLHit();
-    Double_t GetKyotoLHitX();
-    Double_t GetKyotoLHitY();
-    Double_t GetKyotoLHitZ();
 
     TVector3 GetMomentum();
     Double_t GetP();
@@ -120,10 +112,6 @@ class STTrack : public TObject {
     Double_t fBeamVx;
     Double_t fBeamVy;
     Double_t fBeamVz;
-
-    Double_t fKyotoLx;
-    Double_t fKyotoLy;
-    Double_t fKyotoLz;
 
     Double_t fPx;
     Double_t fPy;

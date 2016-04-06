@@ -16,6 +16,10 @@ STTrackCandidate::STTrackCandidate()
   fBeamVy = 0;
   fBeamVz = 0;
 
+  fKyotoLx = 0;
+  fKyotoLy = 0;
+  fKyotoLz = 0;
+
   fPx = 0;
   fPy = 0;
   fPz = 0;
@@ -36,6 +40,10 @@ void STTrackCandidate::SetVertex(Double_t x, Double_t y, Double_t z)      { fVx 
 
 void STTrackCandidate::SetBeamVertex(TVector3 vector)                     { fBeamVx = vector.X(); fBeamVy = vector.Y(); fBeamVz = vector.Z(); }
 void STTrackCandidate::SetBeamVertex(Double_t x, Double_t y, Double_t z)  { fBeamVx = x; fBeamVy = y; fBeamVz = z; }
+void STTrackCandidate::SetBeamMomentum(TVector3 vector)                     { fBeamMomx = vector.X(); fBeamMomy = vector.Y(); fBeamMomz = vector.Z(); }
+void STTrackCandidate::SetBeamMomentum(Double_t x, Double_t y, Double_t z)  { fBeamMomx = x; fBeamMomy = y; fBeamMomz = z; }
+
+void STTrackCandidate::SetKyotoLHit(TVector3 vector)                         { fKyotoLx = vector.X(); fKyotoLy = vector.Y(); fKyotoLz = vector.Z(); }
 
 void STTrackCandidate::SetMomentum(TVector3 vector)                       { fPx = vector.X(); fPy = vector.Y(); fPz = vector.Z(); }
 void STTrackCandidate::SetMomentum(Double_t px, Double_t py, Double_t pz) { fPx = px; fPy = py; fPz = pz; }
@@ -60,6 +68,16 @@ Double_t STTrackCandidate::GetVz()                       { return fVz; }
 Double_t STTrackCandidate::GetBeamVx()                   { return fBeamVx; }
 Double_t STTrackCandidate::GetBeamVy()                   { return fBeamVy; }
 Double_t STTrackCandidate::GetBeamVz()                   { return fBeamVz; }
+
+TVector3 STTrackCandidate::GetBeamMomentum()             { return TVector3(fBeamMomx, fBeamMomy, fBeamMomz); }
+Double_t STTrackCandidate::GetBeamMomx()                   { return fBeamMomx; }
+Double_t STTrackCandidate::GetBeamMomy()                   { return fBeamMomy; }
+Double_t STTrackCandidate::GetBeamMomz()                   { return fBeamMomz; }
+
+TVector3 STTrackCandidate::GetKyotoLHit()                { return TVector3(fKyotoLx, fKyotoLy, fKyotoLz); }
+Double_t STTrackCandidate::GetKyotoLHitX()               { return fKyotoLx; }
+Double_t STTrackCandidate::GetKyotoLHitY()               { return fKyotoLy; }
+Double_t STTrackCandidate::GetKyotoLHitZ()               { return fKyotoLz; }
 
 TVector3 STTrackCandidate::GetMomentum()                 { return TVector3(fPx, fPy, fPz); }
 Double_t STTrackCandidate::GetP()                        { return GetMomentum().Mag(); }

@@ -1,5 +1,5 @@
 /**
- * @brief STTrack Class
+x * @brief STTrack Class
  *
  * @author JungWoo Lee
  */
@@ -29,10 +29,6 @@ STTrack::STTrack()
   fBeamVy = 0;
   fBeamVz = 0;
 
-  fKyotoLx = 0;
-  fKyotoLy = 0;
-  fKyotoLz = 0;
-
   fPx = 0;
   fPy = 0;
   fPz = 0;
@@ -59,8 +55,6 @@ void STTrack::SetVertex(Double_t x, Double_t y, Double_t z)      { fVx = x; fVy 
 
 void STTrack::SetBeamVertex(TVector3 vector)                         { fBeamVx = vector.X(); fBeamVy = vector.Y(); fBeamVz = vector.Z(); }
 void STTrack::SetBeamVertex(Double_t x, Double_t y, Double_t z)      { fBeamVx = x; fBeamVy = y; fBeamVz = z; }
-
-void STTrack::SetKyotoLHit(TVector3 vector)                         { fKyotoLx = vector.X(); fKyotoLy = vector.Y(); fKyotoLz = vector.Z(); }
 
 void STTrack::SetMomentum(TVector3 vector)                       { fPx = vector.X(); fPy = vector.Y(); fPz = vector.Z(); }
 void STTrack::SetMomentum(Double_t px, Double_t py, Double_t pz) { fPx = px; fPy = py; fPz = pz; }
@@ -89,7 +83,6 @@ Int_t STTrack::GetCharge()                      { return fCharge; }
 
 TVector3 STTrack::GetVertex()                   { return TVector3(fVx, fVy, fVz); }
 TVector3 STTrack::GetBeamVertex()               { return TVector3(fBeamVx, fBeamVy, fBeamVz); }
-TVector3 STTrack::GetKyotoLHit()                { return TVector3(fKyotoLx, fKyotoLy, fKyotoLz); }
 
 Double_t STTrack::GetVx()                       { return fVx; }
 Double_t STTrack::GetVy()                       { return fVy; }
@@ -97,10 +90,6 @@ Double_t STTrack::GetVz()                       { return fVz; }
 Double_t STTrack::GetBeamVx()                   { return fBeamVx; }
 Double_t STTrack::GetBeamVy()                   { return fBeamVy; }
 Double_t STTrack::GetBeamVz()                   { return fBeamVz; }
-
-Double_t STTrack::GetKyotoLHitX()               { return fKyotoLx; }
-Double_t STTrack::GetKyotoLHitY()               { return fKyotoLy; }
-Double_t STTrack::GetKyotoLHitZ()               { return fKyotoLz; }
 
 TVector3 STTrack::GetMomentum()                 { return TVector3(fPx, fPy, fPz); }
 Double_t STTrack::GetP()                        { return GetMomentum().Mag(); }
