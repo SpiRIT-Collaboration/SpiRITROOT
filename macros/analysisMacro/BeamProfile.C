@@ -2,11 +2,10 @@ void BeamProfile() {
 
   auto fChain = new TChain("cbmsim");
 
-  fChain -> Add("./data/filename.reco.root");
+  fChain -> Add("../data/filename.reco.root");
 
   TClonesArray *trackArray = NULL;
   fChain -> SetBranchAddress("STTrack", &trackArray);
-
 
   auto counter = 0;
 
@@ -14,9 +13,23 @@ void BeamProfile() {
   cout << "Number of events generated: " << nEvents << endl;
 
   TH2F* h1 = new TH2F("h1","Beam XY", 100, -3, 3, 100, -25, -18);
+  h1->GetXaxis()->SetTitle("x (cm)");
+  h1->GetYaxis()->SetTitle("y (cm)");
+  h1->SetStats(0);
   TH2F* h2 = new TH2F("h2","Katana Hit Map", 200, -40., 40., 200, -50, 0);
+  h2->GetXaxis()->SetTitle("x (cm)");
+  h2->GetYaxis()->SetTitle("y (cm)");
+  h2->SetStats(0);
   TH1F* h3 = new TH1F("h3","Angle XZ", 200,-15,15);
+  h3->GetXaxis()->SetTitle("angle XZ (degrees)");
+  h3->SetStats(0);
   TH1F* h4 = new TH1F("h4","Angle YZ", 200,-15,15);
+  h4->GetXaxis()->SetTitle("angle YZ (degrees)");
+  h4->SetStats(0);
+
+  TCanvas* c1 = new TCanvas("c1","",800,800);
+  c1->Divide(2,2);
+  const Int_t kUPDATE = 10;
   
   for (Int_t iEvent = 0; iEvent < nEvents; iEvent++) 
     {
@@ -62,16 +75,34 @@ void BeamProfile() {
 
 	  h2->Fill(xK, yK);
 
-
 	}
+      
+      if (iEvent && (iEvent%kUPDATE) == 0) {
+        if (iEvent == kUPDATE){ 
+	  c1->cd(1);
+	  h1->Draw("colz");
+	  c1->cd(2);
+	  h2->Draw("colz");
+	  c1->cd(3);
+	  h3->Draw();
+	  c1->cd(4);
+	  h4->Draw();
+	}
+        c1->cd(1)->Modified();
+        c1->cd(1)->Update();
+        c1->cd(2)->Modified();
+        c1->cd(2)->Update();
+        c1->cd(3)->Modified();
+        c1->cd(3)->Update();
+        c1->cd(4)->Modified();
+        c1->cd(4)->Update();
+      }
+      
+      
     }
 
-  TCanvas* c1 = new TCanvas();
-  c1->cd();
-  h1->GetXaxis()->SetTitle("x (cm)");
-  h1->GetYaxis()->SetTitle("y (cm)");
-  h1->SetStats(0);
-  h1->Draw("colz");
+  // For some LOLZ
+  c1->cd(1);
   TLine* l1 = new TLine(-1.5,-19.33,1.5,-19.33);
   TLine* l2 = new TLine(1.5,-23.33,1.5,-19.33);
   TLine* l3 = new TLine(1.5,-23.33,-1.5,-23.33);
@@ -88,24 +119,5 @@ void BeamProfile() {
   l4->SetLineColor(2);
   l4->SetLineWidth(4);
   l4->Draw("SAME");
-
-  TCanvas* c2 = new TCanvas();
-  c2->cd();
-  h2->GetXaxis()->SetTitle("x (cm)");
-  h2->GetYaxis()->SetTitle("y (cm)");
-  h2->SetStats(0);
-  h2->Draw("colz");
-
-  TCanvas* c3 = new TCanvas();
-  c3->cd();
-  h3->GetXaxis()->SetTitle("angle XZ (degrees)");
-  h3->SetStats(0);
-  h3->Draw();
-
-  TCanvas* c4 = new TCanvas();
-  c4->cd();
-  h4->GetXaxis()->SetTitle("angle YZ (degrees)");
-  h4->SetStats(0);
-  h4->Draw();
 
 }
