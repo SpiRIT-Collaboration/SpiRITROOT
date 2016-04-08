@@ -472,7 +472,7 @@ STEveManager::BuildMenu()
     fButtonOnOffRecoTrack = new TGCheckButton(frameRecoButtons, "Reco-Track");
     fButtonOnOffRecoTrack -> Connect("Clicked()", "STEveManager", this, "ClickOnOffRecoTrack()");
     frameRecoButtons -> AddFrame(fButtonOnOffRecoTrack, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 3,3,2,2));
-    if (fEveTask -> IsSetTask("curvehit") != 1)  
+    if (fEveTask -> IsSetTask("recotrack") != 1)  
       fButtonOnOffRecoTrack  -> SetState(kButtonDisabled);
     else if (fEveTask -> RnrEveObjectTask("RecoTrack", 0) == 1)
       fButtonOnOffRecoTrack -> SetState(kButtonDown);

@@ -19,7 +19,7 @@ STEveTask::GetEveObject(TString name)
   else if (name == "linearhit")    return kLinearHit;
   else if (name == "curve")        return kCurve;
   else if (name == "curvehit")     return kCurveHit;
-  else if (name == "recoTrack")    return kRecoTrack;
+  else if (name == "recotrack")    return kRecoTrack;
 
   return kNon;
 }

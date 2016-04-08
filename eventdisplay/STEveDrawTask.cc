@@ -87,12 +87,14 @@ STEveDrawTask::STEveDrawTask()
 
   fEveStyle[kRecoTrack] = 1;
   fEveSize [kRecoTrack] = 5;
-  fEveColor[kRecoTrack] = -1;
+  fEveColor[kRecoTrack] = kRed;
   fRnrSelf [kRecoTrack] = kFALSE;
 
   fPulse = new STPulse();
   fLTFitter = new STLinearTrackFitter();
   fCTFitter = new STCurveTrackFitter();
+  fGenfitTraj = new STGenfitTrajectory();
+
   fRGBAPalette = new TEveRGBAPalette(0, 4096);
 
   fPulseSum = new TGraph();
@@ -199,7 +201,7 @@ STEveDrawTask::Exec(Option_t* option)
   if (fCurveTrackArray != NULL && (fSetObject[kCurve] || fSetObject[kCurveHit]))
     DrawCurveTracks();
 
-  if (fRecoTrackArray != NULL && (fSetObject[kRecoTrack] || fSetObject[kRecoTrack]))
+  if (fRecoTrackArray != NULL && (fSetObject[kRecoTrack]))
     DrawRecoTracks();
 
   gEve -> Redraw3D();
@@ -796,6 +798,9 @@ STEveDrawTask::DrawRecoTracks()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"Draw Reco Tracks");
 
+  if (fEvent == NULL)
+    return;
+
   STTrack* track = NULL;
   TEveLine* recoTrackLine = NULL;
 
@@ -809,8 +814,8 @@ STEveDrawTask::DrawRecoTracks()
     {
       Int_t idxTrack = iTrack + nTracksInBuffer;
       recoTrackLine = new TEveLine(Form("RecoTrack_%d", idxTrack));
-      if (fEveColor[kRecoTrack] == -1) recoTrackLine -> SetMarkerColor(GetColor(idxTrack));
-      else recoTrackLine -> SetMarkerColor(fEveColor[kRecoTrack]);
+      if (fEveColor[kRecoTrack] == -1) recoTrackLine -> SetLineColor(GetColor(idxTrack));
+      else recoTrackLine -> SetLineColor(fEveColor[kRecoTrack]);
       recoTrackLine -> SetMarkerSize(fEveSize[kRecoTrack]);
       recoTrackLine -> SetMarkerStyle(fEveStyle[kRecoTrack]);
       recoTrackLine -> SetRnrSelf(fRnrSelf[kRecoTrack]);
@@ -820,11 +825,42 @@ STEveDrawTask::DrawRecoTracks()
   }
 
   for (Int_t iTrack = 0; iTrack < nTracks; iTrack++) 
+  //for (Int_t iTrack = 0; iTrack < 1; iTrack++) 
   {
     track = (STTrack*) fRecoTrackArray -> At(iTrack);
 
+    if (track -> GetNDF() < 5)
+      continue;
+
     recoTrackLine = fRecoTrackSetArray.at(iTrack);
-    //recoTrackLine -> SetNextPoint(position.X()/10., y, position.Z()/10.);
+
+    Bool_t isFitted = track -> IsFitted();
+    if (!isFitted) 
+      continue;
+
+    isFitted = fGenfitTraj -> SetTrack(fEvent, track);
+    if (!isFitted) 
+      continue;
+
+    for (Int_t i = 0; i < 100; i++) {
+      TVector3 position;
+      Bool_t isExtrapolated = fGenfitTraj -> ExtrapolateTrack(i, position);
+      if (!isExtrapolated)
+        break;
+
+      //position = 0.1 * position;
+
+      Double_t y = position.Y();
+      if (y > -fWindowYStart || y < -fWindowYEnd)
+        continue;
+      y += fWindowYStart;
+
+      if (position.X() < -80 || position.X() > 80 || y > 5 || y < -55 || position.Z() < -10 || position.Z() > 150)
+        break;
+
+      recoTrackLine -> SetNextPoint(position.X(), y, position.Z());
+    }
+
     recoTrackLine -> SetRnrSelf(fRnrSelf[kRecoTrack]);
   }
 }

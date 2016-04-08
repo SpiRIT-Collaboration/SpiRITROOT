@@ -44,6 +44,7 @@
 #include "STHit.hh"
 #include "STPad.hh"
 #include "STPulse.hh"
+#include "STGenfitTrajectory.hh"
 
 // STL class headers
 #include <vector>
@@ -211,6 +212,8 @@ class STEveDrawTask : public STEveTask
 
     STLinearTrackFitter* fLTFitter = NULL;
     STCurveTrackFitter* fCTFitter = NULL;
+
+    STGenfitTrajectory *fGenfitTraj = NULL;
 
 
     static STEveDrawTask* fInstance;
