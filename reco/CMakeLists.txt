@@ -9,6 +9,7 @@ ${CMAKE_SOURCE_DIR}/mc
 ${CMAKE_SOURCE_DIR}/stack
 ${CMAKE_SOURCE_DIR}/par
 ${CMAKE_SOURCE_DIR}/format
+${CMAKE_SOURCE_DIR}/tool
 ${CMAKE_SOURCE_DIR}/util
 ${CMAKE_SOURCE_DIR}/reco
 ${CMAKE_SOURCE_DIR}/reco/GETDecoder
@@ -92,6 +93,7 @@ HoughTracking/STHoughSpaceLine.cc
 HoughTracking/STHoughSpaceHelix.cc
 
 Genfit/STSpacepointMeasurement.cc
+Genfit/STGenfitTrajectory.cc
 
 Tracking/STVTrackFinder.cc
 
@@ -137,6 +139,7 @@ Set(DEPENDENCIES
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
     STFormat
+    STTool
     STPar
     STUtil
     Spectrum
