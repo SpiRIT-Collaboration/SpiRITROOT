@@ -10,6 +10,11 @@ ClassImp(STTrack)
 
 STTrack::STTrack() 
 {
+  fParentID = -1;
+  fTrackID = -1;
+  fRiemannID = -1;
+
+  fIsFitted = kFALSE;
 }
 
 void STTrack::SetParentID(Int_t value)                   { fParentID = value; }
