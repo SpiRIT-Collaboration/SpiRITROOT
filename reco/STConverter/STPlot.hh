@@ -16,6 +16,7 @@
 #include "STCore.hh"
 #include "STRawEvent.hh"
 #include "STPad.hh"
+#include "STPSAFastFit.hh"
 
 #include "TCanvas.h"
 #include "TH2D.h"
@@ -53,6 +54,9 @@ class STPlot : public TObject
     void SetPadplaneTitle(TString title);
     void SetSideviewTitle(TString title);
 
+    void SetTbLowCut(Int_t value);
+    void SetADCHighCut(Double_t value);
+
   private:
     STCore *fCore;
     STMap *fMap;
@@ -88,6 +92,12 @@ class STPlot : public TObject
 
     TMarker *fMarkerPadplane;
     TMarker *fMarkerSideview;
+
+    STPSAFastFit *fPSA;
+    TClonesArray *fHitArray;
+
+    Int_t fWindowStartTb;
+    Double_t fADCThreshold;
 
   ClassDef(STPlot, 1);
 };

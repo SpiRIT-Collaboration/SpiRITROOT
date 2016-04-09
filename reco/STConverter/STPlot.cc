@@ -23,6 +23,8 @@
 
 #include <iostream>
 
+#define USECUT
+
 ClassImp(STPlot)
 
 STPlot::STPlot()
@@ -69,6 +71,11 @@ void STPlot::Clear()
 
   fMarkerPadplane = new TMarker();
   fMarkerSideview = new TMarker();
+
+  fPSA = new STPSAFastFit();
+  fHitArray = new TClonesArray("STHit");
+
+  fADCThreshold = 5000;
 }
 
 Bool_t STPlot::CheckEvent()
@@ -125,17 +132,38 @@ TCanvas *STPlot::DrawPadplane(Int_t eventID)
   for (Int_t iPad = 0; iPad < numPads; iPad++) {
     STPad *aPad = fEvent -> GetPad(iPad);
 
+    Double_t maxADC = 0.1;
+
+#ifdef USECUT
+    fHitArray -> Clear("C");
+    Int_t idx = 0;
+    fPSA -> FindHits(aPad, fHitArray, idx);
+
+    Int_t numHits = fHitArray -> GetEntriesFast();
+    for (Int_t iHit = 0; iHit < numHits; iHit++)
+    {
+      STHit *hit = (STHit *) fHitArray -> At(iHit);
+      Double_t charge = hit -> GetCharge();
+      if (charge < fADCThreshold && charge > maxADC)
+        maxADC = charge;
+    }
+#else
     Double_t *adc = aPad -> GetADC();
 
-    Double_t maxADC = 0;
     for (Int_t i = 0; i < fNumTbs; i++) {
       if (maxADC < aPad -> GetADC(i))
         maxADC = aPad -> GetADC(i);
     }
+#endif
 
     fPadplaneHist -> SetBinContent(aPad -> GetLayer() + 1, aPad -> GetRow() + 1, maxADC);
+
     if (maxADC > max) max = maxADC;
   }
+
+#ifdef USECUT
+  fPadplaneHist -> SetBinContent(1,1,0);
+#endif
 
   fPadplaneHist -> SetTitle(Form(Form("%s", fPadplaneTitle.Data()), fEvent -> GetEventID()));
   fPadplaneHist -> GetZaxis() -> SetRangeUser(0.1, fPadplaneHist -> GetBinContent(fPadplaneHist -> GetMaximumBin()) + 100);
@@ -352,6 +380,24 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
 
   fPadCvs -> Modified();
   fPadCvs -> Update();
+
+#ifdef USECUT
+  fHitArray -> Clear("C");
+  Int_t idx = 0;
+  fPSA -> FindHits(pad, fHitArray, idx);
+
+  Int_t numHits = fHitArray -> GetEntriesFast();
+  for (Int_t iHit = 0; iHit < numHits; iHit++)
+  {
+    STHit *hit = (STHit *) fHitArray -> At(iHit);
+    TF1 *pulse = fPSA -> GetPulseFunction(hit);
+    pulse -> SetLineColor(7);
+    pulse -> Draw("same");
+  }
+
+  fPadCvs -> Modified();
+  fPadCvs -> Update();
+#endif
 }
 
 void STPlot::DrawLayer(Int_t layerNo)
@@ -616,3 +662,6 @@ void STPlot::PrepareLayerHist()
     graph -> Draw("L SAME");
   }
 }
+
+void STPlot::SetTbLowCut(Int_t value) { fPSA -> SetWindowStartTb(value); }
+void STPlot::SetADCHighCut(Double_t value) { fADCThreshold = value; }

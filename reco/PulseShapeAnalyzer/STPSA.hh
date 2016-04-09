@@ -43,6 +43,8 @@ class STPSA
     virtual void Analyze(STRawEvent *rawEvent, STEvent *event) = 0;
     virtual void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope, Double_t &chi2);
 
+    void SetWindowStartTb(Int_t value);
+
   protected:
     FairLogger *fLogger;      ///< logger pointer
     STDigiPar *fPar;          ///< parameter container

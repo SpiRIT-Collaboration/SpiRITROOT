@@ -146,3 +146,5 @@ STPSA::CalculateZ(Double_t layer)
 {
   return (layer + 0.5)*fPadSizeZ;
 }
+
+void STPSA::SetWindowStartTb(Int_t value) { fWindowStartTb = value; }
