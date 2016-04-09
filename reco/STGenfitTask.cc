@@ -72,7 +72,7 @@ STGenfitTask::STGenfitTask()
   fDisplay = NULL;
   
   //fPDGCandidates = STDatabasePDG::Instance() -> GetPDGCandidateArray();
-  fPDGCandidates -> push_back(2212);
+  //fPDGCandidates -> push_back(2212);
 }
 
 STGenfitTask::~STGenfitTask()
@@ -263,11 +263,13 @@ STGenfitTask::Exec(Option_t *opt)
     recoTrack -> SetTotaldEdx(totaldEdx);
 
     Bool_t fitisgood = kFALSE;
-    genfit::RKTrackRep *trackRep = new genfit::RKTrackRep(2212);
-    genfit::Track *gfTrackFit = new genfit::Track(gfTrackCand, *fMeasurementFactory, trackRep);
-
+    genfit::RKTrackRep *trackRep;
+    genfit::Track * gfTrackFit;
     try {
+      trackRep = new genfit::RKTrackRep(2212);
+      gfTrackFit = new genfit::Track(gfTrackCand, *fMeasurementFactory, trackRep);
       fFitter -> processTrack(gfTrackFit);
+      gfTrackFit -> getFittedState();
       fitisgood = kTRUE;
     } catch (genfit::Exception &e) {
       //std::cerr << e.what();
@@ -309,10 +311,14 @@ STGenfitTask::Exec(Option_t *opt)
       Int_t pdgId;
 
       Double_t bChi2, fChi2, bNdf, fNdf;
-      fFitter -> getChiSquNdf(gfTrackFit, gfTrackFit -> getCardinalRep(), bChi2, fChi2, bNdf, fNdf);
 
-      gfTrackFit -> getFittedState().getPosMomCov(recopos, recop, covv);
-      charge = gfTrackFit -> getFittedState().getCharge();
+      try 
+      { 
+        fFitter -> getChiSquNdf(gfTrackFit, trackRep, bChi2, fChi2, bNdf, fNdf);
+
+        gfTrackFit -> getFittedState().getPosMomCov(recopos, recop, covv);
+        charge = gfTrackFit -> getFittedState().getCharge();
+      } catch (genfit::Exception &e) { }
 
       /*
       //pdgId = gfTrackFit -> getFittedState().getPDG();
@@ -386,8 +392,8 @@ STGenfitTask::Exec(Option_t *opt)
         recoTrackCand -> SetVertex(recopos*10.);
         recoTrackCand -> SetBeamVertex(beampos*10.);
         recoTrackCand -> SetBeamMomentum(beammom);
-        //	recoTrackCand -> SetKyotoLHit(KyotoLpos*10.);
-        //	recoTrackCand -> SetKyotoRHit(KyotoRpos*10.);
+        recoTrackCand -> SetKyotoLHit(KyotoLpos*10.);
+        recoTrackCand -> SetKyotoRHit(KyotoRpos*10.);
         recoTrackCand -> SetKatanaHit(Katanapos*10.);
         recoTrackCand -> SetMomentum(recop*1000.);
         recoTrackCand -> SetPID(gfTrackFit -> getFittedState().getPDG());
