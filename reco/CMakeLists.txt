@@ -93,7 +93,7 @@ HoughTracking/STHoughSpaceLine.cc
 HoughTracking/STHoughSpaceHelix.cc
 
 Genfit/STSpacepointMeasurement.cc
-Genfit/STGenfitTrajectory.cc
+Genfit/STGenfitTest.cc
 
 Tracking/STVTrackFinder.cc
 

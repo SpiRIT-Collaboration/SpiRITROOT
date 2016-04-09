@@ -71,7 +71,8 @@ STGenfitTask::STGenfitTask()
   fIsDisplay = kFALSE;
   fDisplay = NULL;
   
-  fPDGCandidates = STDatabasePDG::Instance() -> GetPDGCandidateArray();
+  //fPDGCandidates = STDatabasePDG::Instance() -> GetPDGCandidateArray();
+  fPDGCandidates -> push_back(2212);
 }
 
 STGenfitTask::~STGenfitTask()
@@ -261,20 +262,20 @@ STGenfitTask::Exec(Option_t *opt)
     recoTrack -> SetTrackLength(totalLength);
     recoTrack -> SetTotaldEdx(totaldEdx);
 
+    Bool_t fitisgood = kFALSE;
+    genfit::RKTrackRep *trackRep = new genfit::RKTrackRep(2212);
+    genfit::Track *gfTrackFit = new genfit::Track(gfTrackCand, *fMeasurementFactory, trackRep);
+
     try {
-      genfit::Track *gfTrackFit = new genfit::Track(gfTrackCand, *fMeasurementFactory);
-
-      genfit::RKTrackRep *trackRep;
-      for (auto pdgCand : *fPDGCandidates) 
-      {
-        trackRep = new genfit::RKTrackRep(pdgCand);
-        gfTrackFit -> addTrackRep(trackRep);
-      }
       fFitter -> processTrack(gfTrackFit);
+      fitisgood = kTRUE;
+    } catch (genfit::Exception &e) {
+      //std::cerr << e.what();
+      //std::cerr << "Exception, next track" << std::endl;
+    }
 
-      gfTrackFit -> determineCardinalRep();
-      trackRep = (genfit::RKTrackRep *) gfTrackFit -> getCardinalRep();
-
+    if (fitisgood)
+    {
       Bool_t isFit, isFitFull, isFitPart, hasChanged, isPruned;
       Int_t nfail;
       Double_t pval;
@@ -333,20 +334,21 @@ STGenfitTask::Exec(Option_t *opt)
       genfit::StateOnPlane state = gfTrackFit -> getFittedState();
       genfit::SharedPlanePtr plane;
       plane = genfit::SharedPlanePtr(new genfit::DetPlane(target, ntarget));
-      trackRep -> extrapolateToPlane(state, plane); 
+      try { trackRep -> extrapolateToPlane(state, plane); } 
+      catch (genfit::Exception &e) { }
       TVector3 beampos = state.getPos();
       TVector3 beammom = state.getMom();
 
       ////////////////////////////////////////
       // kyoto left extrapolation
       ////////////////////////////////////////
-      /*
       TVector3 paddleL(75.8, -21.33, 84.5);
       TVector3 npaddleL(-1, 0, 0);
       genfit::StateOnPlane stateL = gfTrackFit -> getFittedState();
       genfit::SharedPlanePtr planeL;
       planeL = genfit::SharedPlanePtr(new genfit::DetPlane(paddleL, npaddleL));
-      trackRep -> extrapolateToPlane(stateL, planeL); 
+      try { trackRep -> extrapolateToPlane(stateL, planeL); }
+      catch (genfit::Exception &e) { }
       TVector3 KyotoLpos = stateL.getPos();
 
       ////////////////////////////////////////
@@ -357,9 +359,9 @@ STGenfitTask::Exec(Option_t *opt)
       genfit::StateOnPlane stateR = gfTrackFit -> getFittedState();
       genfit::SharedPlanePtr planeR;
       planeR = genfit::SharedPlanePtr(new genfit::DetPlane(paddleR, npaddleR));
-      trackRep -> extrapolateToPlane(stateR, planeR); 
+      try { trackRep -> extrapolateToPlane(stateR, planeR); }
+      catch (genfit::Exception &e) { }
       TVector3 KyotoRpos = stateR.getPos();
-      */
 
       ////////////////////////////////////////
       // katana extrapolation
@@ -369,10 +371,12 @@ STGenfitTask::Exec(Option_t *opt)
       genfit::StateOnPlane stateK = gfTrackFit -> getFittedState();
       genfit::SharedPlanePtr planeK;
       planeK = genfit::SharedPlanePtr(new genfit::DetPlane(paddleK, npaddleK));
-      trackRep -> extrapolateToPlane(stateK, planeK, true); 
+      try { trackRep -> extrapolateToPlane(stateK, planeK, true); }
+      catch (genfit::Exception &e) { }
       TVector3 Katanapos = stateK.getPos();
 
-      trackRep -> extrapolateToPlane(state, plane); 
+      try { trackRep -> extrapolateToPlane(state, plane); } 
+      catch (genfit::Exception &e) { }
 
       Double_t probability = gfTrackFit -> getFitStatus(trackRep) -> getPVal();
 
@@ -404,11 +408,8 @@ STGenfitTask::Exec(Option_t *opt)
 
       tracks.push_back(gfTrackFit);
       recoTrack -> SetIsFitted();
-
-    } catch (genfit::Exception &e) {
-      //std::cerr << e.what();
-      //std::cerr << "Exception, next track" << std::endl;
     }
+
     recoTrack -> SetNDF(numHits);
   }
 

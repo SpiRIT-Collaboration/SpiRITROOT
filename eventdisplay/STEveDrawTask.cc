@@ -93,7 +93,7 @@ STEveDrawTask::STEveDrawTask()
   fPulse = new STPulse();
   fLTFitter = new STLinearTrackFitter();
   fCTFitter = new STCurveTrackFitter();
-  fGenfitTraj = new STGenfitTrajectory();
+  fGenfitTest = new STGenfitTest();
 
   fRGBAPalette = new TEveRGBAPalette(0, 4096);
 
@@ -838,13 +838,13 @@ STEveDrawTask::DrawRecoTracks()
     if (!isFitted) 
       continue;
 
-    isFitted = fGenfitTraj -> SetTrack(fEvent, track);
+    isFitted = fGenfitTest -> SetTrack(fEvent, track);
     if (!isFitted) 
       continue;
 
     for (Int_t i = 0; i < 100; i++) {
       TVector3 position;
-      Bool_t isExtrapolated = fGenfitTraj -> ExtrapolateTrack(i, position);
+      Bool_t isExtrapolated = fGenfitTest -> ExtrapolateTrack(i, position);
       if (!isExtrapolated)
         break;
 
