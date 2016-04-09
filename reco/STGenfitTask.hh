@@ -21,6 +21,7 @@
 #include "STHitCluster.hh"
 #include "STSpacepointMeasurement.hh"
 #include "STRiemannTrack.hh"
+#include "STGenfitTest.hh"
 
 // GENFIT2 classes
 #include "AbsKalmanFitter.h"
@@ -54,9 +55,7 @@ class STGenfitTask : public FairTask {
 
     void SetPersistence(Bool_t value = kTRUE);
 
-    void OpenDisplay();
-
-    Bool_t GetdEdxFromRiemann(STEvent *event, STRiemannTrack *track, Double_t &totalLength, Int_t &totalEloss);
+    void OpenDisplay() {};
 
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
@@ -73,21 +72,16 @@ class STGenfitTask : public FairTask {
 
     Int_t fTPCDetID;
 
-    genfit::MeasurementProducer<STHitCluster, genfit::STSpacepointMeasurement> *fMeasurementProducer;
-    genfit::MeasurementFactory<genfit::AbsMeasurement> *fMeasurementFactory;
+    STGenfitTest *fGenfitTest;
 
     Int_t fMinIterations;
     Int_t fMaxIterations;
-    genfit::AbsKalmanFitter *fFitter;
 
     Bool_t fIsFindVertex;
     genfit::GFRaveVertexFactory *fVertexFactory;
 
     Bool_t fIsDisplay;
-    genfit::EventDisplay *fDisplay;
 
-    vector<Int_t> *fPDGCandidates;
-  
   ClassDef(STGenfitTask, 1);
 };
 

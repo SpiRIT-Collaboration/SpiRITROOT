@@ -1,5 +1,5 @@
-#ifndef STGENFITTRAJECTORY
-#define STGENFITTRAJECTORY
+#ifndef STGENFITTEST
+#define STGENFITTEST
 
 // SPiRITROOT classes
 #include "STHitCluster.hh"
@@ -24,22 +24,29 @@
 
 #include "TClonesArray.h" 
 
-class STGenfitTrajectory
+class STGenfitTest
 {
   public:
-    STGenfitTrajectory();
-    ~STGenfitTrajectory();
+    STGenfitTest();
+    ~STGenfitTest();
 
-    Bool_t SetTrack(STTrack *recoTrack, STEvent *event, STRiemannTrack *riemannTrack);
-    Bool_t ProcessTrack(genfit::Track *genfitTrack);
+    void Init();
 
+    void SetMinIterations(Int_t value);
+    void SetMaxIterations(Int_t value);
+
+    genfit::Track* FitTrack(STTrack *recoTrack, STEvent *event, STRiemannTrack *riemannTrack);
     Bool_t SetTrack(STEvent *event, STTrack *recoTrack);
     Bool_t ExtrapolateTrack(Double_t distance, TVector3 &position);
 
   private:
+    Bool_t ProcessTrack(genfit::Track *genfitTrack);
+    void SetTrackParameters(STTrack *recotrack, genfit::Track *genfitTrack, STEvent *event, STRiemannTrack *riemannTrack);
+    void FindAndSetExtrapolation(STTrackCandidate *recoTrackCand);
+    Bool_t GetdEdxFromRiemann(STEvent *event, STRiemannTrack *track, Double_t &totalLength, Int_t &totalEloss);
+
+  private:
     Int_t fTPCDetID;
-    Int_t fMinIterations;
-    Int_t fMaxIterations;
 
     TClonesArray *fHitClusterArray;
     TClonesArray *fGenfitTrackArray;
@@ -56,10 +63,14 @@ class STGenfitTrajectory
     genfit::SharedPlanePtr fKatanaPlane;
 
     genfit::RKTrackRep *fCurrentTrackRep;
-    genfit::StateOnPlane fCurrentFitState;
+    genfit::MeasuredStateOnPlane fCurrentFitState;
+    genfit::FitStatus *fCurrentFitStatus;
+
+    STTrackCandidate *fRecoTrackCand;
+
     Int_t fCurrentDirection;
 
-  ClassDef(STGenfitTrajectory, 1)
+  ClassDef(STGenfitTest, 1)
 };
 
 #endif
