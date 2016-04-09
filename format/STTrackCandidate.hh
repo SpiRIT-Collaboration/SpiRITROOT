@@ -40,7 +40,7 @@ class STTrackCandidate : public TObject {
     void SetTrackLength(Double_t value);
     void SetTotaldEdx(Double_t value);
 
-    void SetProbability(Double_t value);
+    void SetRiemanndEdx(Double_t value);
     void SetChi2(Double_t value);
     void SetNDF(Int_t value);
 
@@ -74,8 +74,8 @@ class STTrackCandidate : public TObject {
     Double_t GetKatanaHitY();
     Double_t GetKatanaHitZ();
 
-    TVector3 GetMomentum();
-    Double_t GetP();
+    TVector3 GetMomentum() const;
+    Double_t GetP() const;
     Double_t GetPt();
     Double_t GetPx();
     Double_t GetPy();
@@ -85,7 +85,7 @@ class STTrackCandidate : public TObject {
     std::vector<Double_t> *GetdEdxArray();
     Double_t GetTotaldEdx();
 
-    Double_t GetProbability();
+    Double_t GetRiemanndEdx();
     Double_t GetChi2();
     Int_t GetNDF();
 
@@ -123,7 +123,7 @@ class STTrackCandidate : public TObject {
     std::vector<Double_t> fdEdxArray;
     Double_t fdEdxTotal;
 
-    Double_t fProbability;
+    Double_t fRiemanndEdx;
     Double_t fChi2;
     Int_t fNDF;
 

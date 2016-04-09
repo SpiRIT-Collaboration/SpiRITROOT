@@ -39,7 +39,7 @@ STTrackCandidate::STTrackCandidate()
   fTrackLength = -1;
   fdEdxTotal = -1;
 
-  fProbability = 0;
+  fRiemanndEdx = 0;
   fChi2 = -1;
   fNDF = -1;
 }
@@ -67,7 +67,7 @@ void STTrackCandidate::AdddEdx(Double_t value)                            { fdEd
 void STTrackCandidate::SetTrackLength(Double_t value)                     { fTrackLength = value; }
 void STTrackCandidate::SetTotaldEdx(Double_t value)                       { fdEdxTotal = value; }
 
-void STTrackCandidate::SetProbability(Double_t value)                     { fProbability = value; }
+void STTrackCandidate::SetRiemanndEdx(Double_t value)                     { fRiemanndEdx = value; }
 void STTrackCandidate::SetChi2(Double_t value)                            { fChi2 = value; }
 void STTrackCandidate::SetNDF(Int_t value)                                { fNDF = value; }
 
@@ -105,8 +105,8 @@ Double_t STTrackCandidate::GetKatanaHitX()               { return fKatanax; }
 Double_t STTrackCandidate::GetKatanaHitY()               { return fKatanay; }
 Double_t STTrackCandidate::GetKatanaHitZ()               { return fKatanaz; }
 
-TVector3 STTrackCandidate::GetMomentum()                 { return TVector3(fPx, fPy, fPz); }
-Double_t STTrackCandidate::GetP()                        { return GetMomentum().Mag(); }
+TVector3 STTrackCandidate::GetMomentum() const           { return TVector3(fPx, fPy, fPz); }
+Double_t STTrackCandidate::GetP() const                  { return GetMomentum().Mag(); }
 Double_t STTrackCandidate::GetPt()                       { return GetMomentum().Perp(); }
 Double_t STTrackCandidate::GetPx()                       { return fPx; }
 Double_t STTrackCandidate::GetPy()                       { return fPy; }
@@ -117,7 +117,7 @@ std::vector<Double_t> *STTrackCandidate::GetdEdxArray()  { return &fdEdxArray; }
 
 Double_t STTrackCandidate::GetTotaldEdx()                { return fdEdxTotal; }
 
-Double_t STTrackCandidate::GetProbability()              { return fProbability; }
+Double_t STTrackCandidate::GetRiemanndEdx()              { return fRiemanndEdx; }
 Double_t STTrackCandidate::GetChi2()                     { return fChi2; }
 Int_t STTrackCandidate::GetNDF()                         { return fNDF; }
 
@@ -137,7 +137,7 @@ void STTrackCandidate::SetTrackCandidate(STTrackCandidate *track)
 
   fTrackLength = track -> GetTrackLength();
   fdEdxTotal = track -> GetTotaldEdx();
-  fProbability = track -> GetProbability();
+  fRiemanndEdx = track -> GetRiemanndEdx();
   fChi2 = track -> GetChi2();
   fNDF = track -> GetNDF();
 

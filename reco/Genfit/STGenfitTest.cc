@@ -234,7 +234,7 @@ STGenfitTest::SetTrackParameters(STTrack *recoTrack, genfit::Track *genfitTrack,
     recoTrack -> SetChi2(fChi2);
     recoTrack -> SetNDF(fNdf);
     recoTrack -> SetTrackLength(totalLength);
-    recoTrack -> SetTotaldEdx(totaldEdx);
+    recoTrack -> SetRiemanndEdx(totaldEdx);
 
     FindAndSetExtrapolation(recoTrack);
 #else
@@ -248,6 +248,7 @@ STGenfitTest::SetTrackParameters(STTrack *recoTrack, genfit::Track *genfitTrack,
     fRecoTrackCand -> SetNDF(fNdf);
     fRecoTrackCand -> SetTrackLength(totalLength);
     fRecoTrackCand -> SetTotaldEdx(totaldEdx);
+    fRecoTrackCand -> SetRiemanndEdx(totaldEdx);
 
     FindAndSetExtrapolation(fRecoTrackCand);
     recoTrack -> AddTrackCandidate(fRecoTrackCand);
