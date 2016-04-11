@@ -5,5 +5,6 @@
 #pragma link off all functions;
 
 #pragma link C++ class STDatabasePDG;
+#pragma link C++ class STCircleFitter+;
 
 #endif

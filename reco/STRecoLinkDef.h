@@ -66,7 +66,6 @@
 #pragma link C++ class STCurveTrackingTask+;
 #pragma link C++ class STCurveTrackFinder+;
 #pragma link C++ class STCurveTrackFitter+;
-#pragma link C++ class STCircleFitter+;
 
 #pragma link C++ class STHoughSpaceLine+;
 #pragma link C++ class STHoughSpaceHelix+;

@@ -124,7 +124,6 @@ CurveTracking/STCurveTrackFinder.cc
 CurveTracking/STCurveTrackFitter.cc
 CurveTracking/STCorrCurveTHProx.cc
 CurveTracking/STCorrCurveTHPerp.cc
-CurveTracking/STCircleFitter.cc
 
 STCurveTrackingTask.cc
 )
