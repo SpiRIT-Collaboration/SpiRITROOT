@@ -23,12 +23,32 @@ class STCircleFitter
     STCircleFitter() {};
     ~STCircleFitter() {};
 
-    /// This method assume circle lies on the xz plane.
+    /// This method Assume circle lies on the xz plane. (TPC convension)
     Bool_t FitData(std::vector<STHit*> *hitArray,
                    Double_t &xCenter, 
                    Double_t &zCenter, 
                    Double_t &radius,
                    Double_t &rms);
+
+    /** 
+     * General method.
+     *
+     * TVector3 in data array needs 3 components:
+     * @param x first axis value
+     * @param y second axis value
+     * @param z weight of the point
+     *
+     * Set ouput parameters to:
+     * @param xCenter first axis center of the fitted circle
+     * @param yCenter second axis center of the fitted circle
+     * @param radius  radius of the fitted circle
+     * @param rms     root mean square of the fit
+     */
+    Bool_t Fit(std::vector<TVector3> *data,
+               Double_t &xCenter, 
+               Double_t &yCenter, 
+               Double_t &radius,
+               Double_t &rms);
 
   private:
     ClassDef(STCircleFitter, 1)

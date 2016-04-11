@@ -1,5 +1,7 @@
+# Create a library called "libSTTool" which includes the source files given in the array .
 set(INCLUDE_DIRECTORIES
 ${ROOT_INCLUDE_DIR} 
+${GENFIT2_INCLUDE_DIR}
 ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/tool
@@ -22,6 +24,7 @@ set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
 STDatabasePDG.cc
 STCircleFitter.cc
+ODRFitter.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

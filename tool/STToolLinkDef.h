@@ -6,5 +6,6 @@
 
 #pragma link C++ class STDatabasePDG;
 #pragma link C++ class STCircleFitter+;
+#pragma link C++ class ODRFitter+;
 
 #endif

@@ -60,7 +60,6 @@
 #pragma link C++ class STLinearTrackFinder2+;
 #pragma link C++ class STLinearTrackFitter+;
 #pragma link C++ class STLinearTrackingTask+;
-#pragma link C++ class ODRFitter+;
 
 #pragma link C++ class STCurveTrackingConf+;
 #pragma link C++ class STCurveTrackingTask+;

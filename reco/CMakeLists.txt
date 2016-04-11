@@ -107,7 +107,6 @@ LinearTracking/STCorrLinearTTRMS.cc
 LinearTracking/STLinearTrackFinder.cc
 LinearTracking/STLinearTrackFinder2.cc
 LinearTracking/STLinearTrackFitter.cc
-LinearTracking/ODRFitter.cc
 
 STDecoderTask.cc
 
