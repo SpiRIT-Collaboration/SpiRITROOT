@@ -357,6 +357,7 @@ STGenfitTest::SetTrack(STEvent *event, STTrack *recoTrack)
     fKalmanFitter -> processTrack(genfitTrack);
   } catch (genfit::Exception &e) {
     return kFALSE;
+  }
 
   try {
     fCurrentFitState = genfitTrack -> getFittedState();
@@ -364,6 +365,7 @@ STGenfitTest::SetTrack(STEvent *event, STTrack *recoTrack)
   } catch (genfit::Exception &e) {
     return kFALSE;
   }
+
   fitted = kTRUE;
 
   fCurrentDirection = 1;
