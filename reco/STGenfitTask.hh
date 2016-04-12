@@ -57,7 +57,7 @@ class STGenfitTask : public FairTask {
 
     void OpenDisplay() {};
 
-    void SetTargetPosition(TVector3 position, TVector3 normal);
+    void SetTargetPlane(TVector3 position, TVector3 normal);
 
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable

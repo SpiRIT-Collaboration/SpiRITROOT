@@ -84,7 +84,7 @@ STGenfitTest::Init()
   fGenfitTrackArray -> Delete();
 }
 
-void STGenfitTest::SetTargetPosition(TVector3 position, TVector3 normal)
+void STGenfitTest::SetTargetPlane(TVector3 position, TVector3 normal)
 {
   fTargetPlane = genfit::SharedPlanePtr(new genfit::DetPlane(position, normal));
 }

@@ -182,7 +182,7 @@ STGenfitTask::Exec(Option_t *opt)
 #endif
 }
 
-void STGenfitTask::SetTargetPosition(TVector3 position, TVector3 normal)
+void STGenfitTask::SetTargetPlane(TVector3 position, TVector3 normal)
 {
-  fGenfitTest -> SetTargetPosition(position, normal);
+  fGenfitTest -> SetTargetPlane(position, normal);
 }
