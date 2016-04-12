@@ -181,3 +181,8 @@ STGenfitTask::Exec(Option_t *opt)
   STDebugLogger::Instance() -> TimerStop("GenfitTask");
 #endif
 }
+
+void STGenfitTask::SetTargetPosition(TVector3 position, TVector3 normal)
+{
+  fGenfitTest -> SetTargetPosition(position, normal);
+}

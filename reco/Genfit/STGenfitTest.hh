@@ -31,6 +31,7 @@ class STGenfitTest
     ~STGenfitTest();
 
     void Init();
+    void SetTargetPosition(TVector3 position, TVector3 normal);
 
     void SetMinIterations(Int_t value);
     void SetMaxIterations(Int_t value);
