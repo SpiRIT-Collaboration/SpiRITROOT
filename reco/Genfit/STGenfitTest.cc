@@ -108,9 +108,9 @@ STGenfitTest::FitTrack(STTrack *recoTrack,
   for (UInt_t iHit = 0; iHit < numHits; iHit++) 
   {
     Int_t id = riemannTrack -> GetHit(iHit) -> GetHit() -> GetClusterID();
-    STHitCluster cluster = event -> GetCluster(id);
+    STHitCluster *cluster = event -> GetCluster(id);
 
-    new ((*fHitClusterArray)[iHit]) STHitCluster(&cluster);
+    new ((*fHitClusterArray)[iHit]) STHitCluster(*cluster);
     trackCand.addHit(fTPCDetID, iHit);
 
     recoTrack -> AddHitID(id);
