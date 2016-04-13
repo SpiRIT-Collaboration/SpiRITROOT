@@ -105,6 +105,9 @@ STGenfitTest::FitTrack(STTrack *recoTrack,
   genfit::TrackCand trackCand;
 
   UInt_t numHits = riemannTrack -> GetNumHits();
+  if (numHits < 3) 
+    return nullptr;
+
   for (UInt_t iHit = 0; iHit < numHits; iHit++) 
   {
     Int_t id = riemannTrack -> GetHit(iHit) -> GetHit() -> GetClusterID();
@@ -115,7 +118,6 @@ STGenfitTest::FitTrack(STTrack *recoTrack,
 
     recoTrack -> AddHitID(id);
   }
-  recoTrack -> SetNDF(numHits);
 
   // Initial parameter setting
   // TODO : improve initial parameter
@@ -151,7 +153,6 @@ STGenfitTest::FitTrack(STTrack *recoTrack,
   if (!isFitted)
     return nullptr;
 
-  recoTrack -> SetIsFitted();
   SetTrackParameters(recoTrack, genfitTrack, event, riemannTrack);
 
   return genfitTrack;
@@ -217,6 +218,9 @@ STGenfitTest::SetTrackParameters(STTrack *recoTrack, genfit::Track *genfitTrack,
       continue;
     }
 
+    if (fNdf < 3)
+      continue;
+
     Int_t totalEloss = 0;
     Double_t totaldEdx = 0;
     Double_t totalLength = 0;
@@ -266,6 +270,7 @@ STGenfitTest::SetTrackParameters(STTrack *recoTrack, genfit::Track *genfitTrack,
       bestTrackCandidate = fRecoTrackCand;
     }
 #endif
+    recoTrack -> SetIsFitted();
   }
 
 #ifndef JUSTPROTON
@@ -404,7 +409,7 @@ STGenfitTest::GetdEdxFromRiemann(STEvent *event, STRiemannTrack *track, Double_t
   totalEloss = 0; // total charge of track
 
   Int_t numHits = hitArray -> size();
-  if(numHits <= 3) 
+  if(numHits < 3) 
     return kFALSE; 
 
   for (Int_t iHit = 0; iHit < numHits; iHit++) {
