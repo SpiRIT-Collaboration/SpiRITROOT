@@ -177,8 +177,7 @@ STCircleFitter::Fit(std::vector<TVector3> *data,
     S += point.Z() * d * d;
   }
 
-  rms = sqrt(S / (weightSum * (data -> size() - 3)));
-
+  rms = sqrt(S / (weightSum * (1 - 3/data -> size())));
 
   return kTRUE;
 }
