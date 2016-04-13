@@ -23,6 +23,7 @@ link_directories(${LINK_DIRECTORIES})
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
 STDatabasePDG.cc
+STRiemannFitter.cc
 STCircleFitter.cc
 ODRFitter.cc
 )

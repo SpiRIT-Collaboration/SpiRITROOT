@@ -91,7 +91,7 @@ STCircleFitter::FitData(std::vector<STHit*> *hitArray,
     S += hit -> GetCharge() * d * d;
   }
 
-  rms = sqrt(S / (chargeSum * (hitArray -> size() - 3)));
+  rms = sqrt(S / (chargeSum * (1 - 3/hitArray -> size())));
 
 
   return kTRUE;
