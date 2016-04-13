@@ -101,6 +101,24 @@ void BeamProfile() {
       
     }
 
+  c1->cd(1);
+  h1->Draw("colz");
+  c1->cd(2);
+  h2->Draw("colz");
+  c1->cd(3);
+  h3->Draw();
+  c1->cd(4);
+  h4->Draw();
+
+  c1->cd(1)->Modified();
+  c1->cd(1)->Update();
+  c1->cd(2)->Modified();
+  c1->cd(2)->Update();
+  c1->cd(3)->Modified();
+  c1->cd(3)->Update();
+  c1->cd(4)->Modified();
+  c1->cd(4)->Update();
+
   // For some LOLZ
   c1->cd(1);
   TLine* l1 = new TLine(-1.5,-19.33,1.5,-19.33);
