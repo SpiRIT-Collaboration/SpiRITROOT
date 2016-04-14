@@ -135,7 +135,7 @@ STGenfitTask::Exec(Option_t *opt)
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStart("GenfitTask");
 #endif
-  fTrackArray -> Delete();
+  fTrackArray -> Clear("C");
 
   if (fRiemannTrackArray -> GetEntriesFast() == 0)
     return;
@@ -169,14 +169,11 @@ STGenfitTask::Exec(Option_t *opt)
     fVertexFactory -> findVertices(&vertices, genfitTrackArray);
 
     for (UInt_t iVert = 0; iVert < vertices.size(); iVert++) {
-      genfit::GFRaveVertex* vtx = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
-      vertices[iVert] -> getPos().Print();
-
-      new ((*fVertexArray)[iVert]) genfit::GFRaveVertex(*vtx);
-
-      event -> AddVertex(vtx);
+      event -> AddVertex(vertices[iVert]);
+      delete vertices[iVert];
     }
   }
+
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStop("GenfitTask");
 #endif
