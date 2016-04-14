@@ -10,11 +10,7 @@ ClassImp(STTrack)
 
 STTrack::STTrack() 
 {
-  fParentID = -1;
-  fTrackID = -1;
-  fRiemannID = -1;
-
-  fIsFitted = kFALSE;
+  Clear();
 }
 
 void STTrack::SetParentID(Int_t value)                   { fParentID = value; }
@@ -25,6 +21,44 @@ void STTrack::SetIsFitted(Bool_t value)                  { fIsFitted = value; }
 
 void STTrack::AddHitID(Int_t value)                      { fHitIDArray.push_back(value); }
 void STTrack::AddTrackCandidate(STTrackCandidate *track) { fTrackCandidateArray.push_back(track); }
+
+void STTrack::DetermineBestCandidate()
+{
+  Double_t bestChi2 = 1.e10;
+  STTrackCandidate *bestCandidate = nullptr;
+  for (auto cand : fTrackCandidateArray) {
+    if (cand -> GetChi2() < bestChi2) {
+      bestChi2 = cand -> GetChi2();
+      bestCandidate = cand;
+    }
+  }
+  if (bestCandidate != nullptr)
+    SetTrackCandidate(bestCandidate);
+}
+
+void STTrack::Clear(Option_t *option)
+{
+  fParentID = -1;
+  fTrackID = -1;
+  fRiemannID = -1;
+
+  fIsFitted = kFALSE;
+
+  fHitIDArray.clear();
+
+  if (TString(option) == "C")
+    DeleteCandidates();
+  else
+    fTrackCandidateArray.clear();
+}
+
+void STTrack::DeleteCandidates()
+{
+  for (auto cand : fTrackCandidateArray)
+    delete cand;
+
+  fTrackCandidateArray.clear();
+}
 
 Int_t STTrack::GetParentID()                    { return fParentID; }
 Int_t STTrack::GetTrackID()                     { return fTrackID; }

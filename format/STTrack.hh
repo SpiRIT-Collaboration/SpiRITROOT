@@ -18,6 +18,9 @@ class STTrack : public STTrackCandidate {
     STTrack();
     virtual ~STTrack() {};
 
+    virtual void Clear(Option_t *option = "");
+    void DeleteCandidates();
+
     void SetParentID(Int_t value);
     void SetTrackID(Int_t value);
     void SetRiemannID(Int_t value);
@@ -26,6 +29,7 @@ class STTrack : public STTrackCandidate {
 
     void AddHitID(Int_t value);
     void AddTrackCandidate(STTrackCandidate *track);
+    void DetermineBestCandidate();
 
     Int_t GetParentID();
     Int_t GetTrackID();
@@ -52,7 +56,7 @@ class STTrack : public STTrackCandidate {
     std::vector<Int_t> fHitIDArray;
     std::vector<STTrackCandidate *> fTrackCandidateArray;
 
-  ClassDef(STTrack, 3)
+  ClassDef(STTrack, 4)
 };
 
 #endif
