@@ -50,6 +50,7 @@ GETDecoder/GETTopologyFrame.cc
 GETDecoder/GETBasicFrame.cc
 GETDecoder/GETCoboFrame.cc
 GETDecoder/GETLayeredFrame.cc
+GETDecoder/GETMutantFrame.cc
 
 GETDecoder/GETMath.cc
 GETDecoder/GETFileChecker.cc

@@ -13,6 +13,7 @@
 #pragma link C++ class GETBasicFrame+;
 #pragma link C++ class GETCoboFrame+;
 #pragma link C++ class GETLayeredFrame+;
+#pragma link C++ class GETMutantFrame+;
 #pragma link C++ class GETFileChecker+;
 #pragma link C++ class GETMath+;
 
