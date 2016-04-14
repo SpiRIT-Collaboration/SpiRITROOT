@@ -91,6 +91,11 @@ class GETDecoder
     //! Write current frame
     void WriteFrame();
 
+    //! Write metadata into ROOT file
+    void SaveMetaData(TString filename = "", Int_t coboIdx = -1); 
+    //! Load metadata from ROOT file
+    void LoadMetaData(TString filename); 
+
   private:
     //! Initialize variables used in the class.
     void Initialize();
