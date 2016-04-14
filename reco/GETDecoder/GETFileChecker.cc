@@ -21,7 +21,7 @@
 #include <iostream>
 
 TString
-GETFileChecker::CheckFile(TString filename)
+GETFileChecker::CheckFile(TString filename, Bool_t print)
 {
   if (filename(0, 1) == "~")
     filename.Replace(0, 1, gSystem -> HomeDirectory());
@@ -51,11 +51,13 @@ GETFileChecker::CheckFile(TString filename)
 
   nextData = gSystem -> Which(path, tempDataFile);
   if (!nextData.EqualTo("")) {
-    std::cout << "== [GETFileChecker] File exist: " << filename << std::endl;
+    if (print)
+      std::cout << "== [GETFileChecker] File exist: " << filename << std::endl;
 
     return nextData.Data();
   } else {
-    std::cout << "== [GETFileChecker] File does not exist: " << filename << std::endl;
+    if (print)
+      std::cout << "== [GETFileChecker] File does not exist: " << filename << std::endl;
 
     return "";
   }

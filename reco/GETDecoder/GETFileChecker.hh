@@ -15,7 +15,7 @@
 
 class GETFileChecker {
   public:
-    static TString CheckFile(TString filename);
+    static TString CheckFile(TString filename, Bool_t print = kTRUE);
 
   ClassDef(GETFileChecker, 1)
 };

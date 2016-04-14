@@ -5,6 +5,10 @@
 //    Genie Jhang ( geniejhang@majimak.com )
 //  
 //  Log:
+//    - 2016. 03. 23
+//      MUTANT frame added
+//    - 2015. 11. 09
+//      Start writing new! class
 //    - 2013. 09. 23
 //      Start writing class
 // =================================================
@@ -12,6 +16,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <sstream>
 #include <cmath>
 #include <arpa/inet.h>
 
@@ -28,7 +33,8 @@ ClassImp(GETDecoder);
 GETDecoder::GETDecoder()
 :fFrameInfoArray(NULL), fCoboFrameInfoArray(NULL), fFrameInfo(NULL), fCoboFrameInfo(NULL),
  fHeaderBase(NULL), fBasicFrameHeader(NULL), fLayerHeader(NULL),
- fTopologyFrame(NULL), fBasicFrame(NULL), fCoboFrame(NULL), fLayeredFrame(NULL)
+ fTopologyFrame(NULL), fBasicFrame(NULL), fCoboFrame(NULL), fLayeredFrame(NULL),
+ fMutantFrame(NULL)
 {
   /**
     * If you use this constructor, you have to add the rawdata using
@@ -41,7 +47,8 @@ GETDecoder::GETDecoder()
 GETDecoder::GETDecoder(TString filename)
 :fFrameInfoArray(NULL), fCoboFrameInfoArray(NULL), fFrameInfo(NULL), fCoboFrameInfo(NULL),
  fHeaderBase(NULL), fBasicFrameHeader(NULL), fLayerHeader(NULL),
- fTopologyFrame(NULL), fBasicFrame(NULL), fCoboFrame(NULL), fLayeredFrame(NULL)
+ fTopologyFrame(NULL), fBasicFrame(NULL), fCoboFrame(NULL), fLayeredFrame(NULL),
+ fMutantFrame(NULL)
 {
   /**
     * Automatically add the rawdata file to the list
@@ -103,6 +110,9 @@ void GETDecoder::Initialize()
   if (    fLayeredFrame == NULL) fLayeredFrame = new GETLayeredFrame();
   else                           fLayeredFrame -> Clear();
 
+  if (     fMutantFrame == NULL) fMutantFrame = new GETMutantFrame();
+  else                           fMutantFrame -> Clear();
+
   fPrevDataID = 0;
   fPrevPosition = 0;
 }
@@ -133,6 +143,7 @@ void GETDecoder::Clear() {
           fBasicFrame -> Clear();
            fCoboFrame -> Clear();
         fLayeredFrame -> Clear();
+         fMutantFrame -> Clear();
   
   if (fIsContinuousData) {
 
@@ -211,38 +222,40 @@ Bool_t GETDecoder::SetData(Int_t index)
   if (!fIsDataInfo) {
     fHeaderBase -> Read(fData, kTRUE);
 
-    if (fHeaderBase -> IsBlob())
-      fTopologyFrame -> Read(fData);
-
     std::cout << "== [GETDecoder] Frame Type: ";
-    if (fTopologyFrame -> IsBlob()) {
-      fFrameType = kCobo;
-      std::cout << "Cobo frame (Max. 4 frames)" << std::endl;
-    } else {
-      fHeaderBase -> Read(fData, kTRUE);
-      switch (fHeaderBase -> GetFrameType()) {
-        case GETFRAMEMERGEDBYID:
-          fFrameType = kMergedID;
-          std::cout << "Event ID merged frame" << std::endl;
-          break;
+    switch (fHeaderBase -> GetFrameType()) {
+      case GETFRAMETOPOLOGY:
+        fFrameType = kCobo;
+        fTopologyFrame -> Read(fData);
+        std::cout << "Cobo frame (Max. 4 frames)" << std::endl;
+        break;
 
-        case GETFRAMEMERGEDBYTIME:
-          fFrameType = kMergedTime;
-          std::cout << "Event time merged frame" << std::endl;
-          break;
+      case GETFRAMEMERGEDBYID:
+        fFrameType = kMergedID;
+        std::cout << "Event ID merged frame" << std::endl;
+        break;
 
-        default:
-          fFrameType = kBasic;
-          std::cout << "Basic frame" << std::endl;
-          break;
-      }
+      case GETFRAMEMERGEDBYTIME:
+        fFrameType = kMergedTime;
+        std::cout << "Event time merged frame" << std::endl;
+        break;
+
+      case GETFRAMEMUTANT:
+        fFrameType = kMutant;
+        std::cout << "MUTANT frame" << std::endl;
+        break;
+
+      default:
+        fFrameType = kBasic;
+        std::cout << "Basic frame" << std::endl;
+        break;
     }
 
     fIsDataInfo = kTRUE;
   } else {
     fHeaderBase -> Read(fData, kTRUE);
 
-    if (fHeaderBase -> IsBlob())
+    if (fHeaderBase -> GetFrameType() == GETFRAMETOPOLOGY)
       fTopologyFrame -> Read(fData);
   }
 
@@ -290,6 +303,7 @@ Int_t GETDecoder::GetNumFrames() {
        case kBasic:
        case kMergedID:
        case kMergedTime:
+       case kMutant:
          return fFrameInfoArray -> GetEntriesFast(); 
          break;
 
@@ -541,6 +555,65 @@ GETLayeredFrame *GETDecoder::GetLayeredFrame(Int_t frameID)
 //  return GetLayeredFrame(fTargetFrameInfoIdx);
 }
 
+GETMutantFrame *GETDecoder::GetMutantFrame(Int_t frameID)
+{
+  if (frameID == -1)
+    fTargetFrameInfoIdx++;
+  else
+    fTargetFrameInfoIdx = frameID;
+
+  while (kTRUE) {
+    fData.clear();
+
+    if (fIsDoneAnalyzing)
+      if (fTargetFrameInfoIdx > fFrameInfoArray -> GetLast())
+        return NULL;
+
+    if (fFrameInfoIdx > fTargetFrameInfoIdx)
+      fFrameInfoIdx = fTargetFrameInfoIdx;
+
+    fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(fFrameInfoIdx);
+    while (fFrameInfo -> IsFill()) {
+
+#ifdef DEBUG
+      cout << "fFrameInfoIdx: " << fFrameInfoIdx << " fTargetFrameInfoIdx: " << fTargetFrameInfoIdx << endl;
+#endif
+
+      if (fFrameInfoIdx == fTargetFrameInfoIdx) {
+        BackupCurrentState();
+
+        if (fFrameInfo -> GetDataID() != fCurrentDataID)
+          SetData(fFrameInfo -> GetDataID());
+   
+        fData.seekg(fFrameInfo -> GetStartByte());
+        fMutantFrame -> Read(fData);
+
+        RestorePreviousState();
+
+#ifdef DEBUG
+      cout << "Returned event ID: " << fMutantFrame -> GetEventNumber() << endl;
+#endif
+
+        return fMutantFrame;
+      } else
+        fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(++fFrameInfoIdx);
+    }
+
+    ULong64_t startByte = fData.tellg();
+
+    fMutantFrame -> Read(fData);
+
+    ULong64_t endByte = startByte + fMutantFrame -> GetFrameSize();
+
+    fFrameInfo -> SetDataID(fCurrentDataID);
+    fFrameInfo -> SetStartByte(startByte);
+    fFrameInfo -> SetEndByte(endByte);
+    fFrameInfo -> SetEventID(fMutantFrame -> GetEventNumber());
+
+    CheckEndOfData();
+  }
+}
+
 void GETDecoder::PrintFrameInfo(Int_t frameID) {
   if (frameID == -1) {
     for (Int_t iEntry = 0; iEntry < fFrameInfoArray -> GetEntriesFast(); iEntry++)
@@ -676,4 +749,14 @@ void GETDecoder::RestorePreviousState() {
     SetData(fPrevDataID);
 
   fData.seekg(fPrevPosition);
+}
+
+
+void GETDecoder::SetPseudoTopologyFrame(Int_t asadMask, Bool_t check) {
+  Char_t bytes[] = { 0x40, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x07, 0x00, 0x00, (Char_t)(asadMask&0xf), 0x00, 0x00 };
+  std::stringstream topology(std::string(std::begin(bytes), std::end(bytes)));
+
+  fTopologyFrame -> Read(*((ifstream *) &topology));
+  if (check)
+    fTopologyFrame -> Print();
 }
