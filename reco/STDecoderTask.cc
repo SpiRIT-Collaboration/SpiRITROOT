@@ -28,6 +28,8 @@ STDecoderTask::STDecoderTask()
   fLogger = FairLogger::GetLogger();
 
   fDecoder = NULL;
+  for (Int_t iCobo = 0; iCobo < 12; iCobo++)
+    fMetaData[iCobo] = "";
   fDataNum = 0;
 
   fFPNPedestalRMS = -1;
@@ -59,6 +61,7 @@ STDecoderTask::~STDecoderTask()
 void STDecoderTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }
 void STDecoderTask::SetNumTbs(Int_t numTbs)                                                   { fNumTbs = numTbs; fExternalNumTbs = kTRUE; }
 void STDecoderTask::AddData(TString filename, Int_t coboIdx)                                  { fDataList[coboIdx].push_back(filename); }
+void STDecoderTask::SetMetaData(TString filename, Int_t coboIdx)                              { fMetaData[coboIdx] = filename; }
 void STDecoderTask::SetData(Int_t value)                                                      { fDataNum = value; }
 void STDecoderTask::SetFPNPedestal(Double_t pedestalRMS)                                      { fFPNPedestalRMS = pedestalRMS; }
 void STDecoderTask::SetUseGainCalibration(Bool_t value)                                       { fUseGainCalibration = value; }
@@ -92,6 +95,14 @@ STDecoderTask::Init()
         fDecoder -> AddData(fDataList[iCobo].at(iFile), iCobo);
 
   fDecoder -> SetData(fDataNum);
+
+  if (!fMetaData[0].IsNull()) {
+    fDecoder -> LoadMetaData(fMetaData[0], 0);
+
+    if (fIsSeparatedData)
+      for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+        fDecoder -> LoadMetaData(fMetaData[iCobo], iCobo);
+  }
 
   if (fExternalNumTbs)
     fDecoder -> SetNumTbs(fNumTbs);

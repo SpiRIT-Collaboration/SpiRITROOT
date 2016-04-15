@@ -51,6 +51,8 @@ class STDecoderTask : public FairTask {
     void SetNumTbs(Int_t numTbs);
     /// Adding raw data file to the list
     void AddData(TString filename, Int_t coboIdx = 0);
+    /// Setting meta data
+    void SetMetaData(TString filename, Int_t coboIdx = 0);
     /// Setting which data to be decoded
     void SetData(Int_t value);
     /// Setting the FPN RMS value cut for pedestal region taking
@@ -91,6 +93,7 @@ class STDecoderTask : public FairTask {
     STCore *fDecoder;                   ///< STConverter pointer
 
     vector<TString> fDataList[12];      ///< Raw data file list
+    TString fMetaData[12];              ///< Meta data files
     Int_t fDataNum;                     ///< Set which number in data list to be decoded
 
     Double_t fFPNPedestalRMS;           ///< RMS cut of baseline matching part selection
