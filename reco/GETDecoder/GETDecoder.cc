@@ -25,6 +25,7 @@
 #include "TTree.h"
 #include "TObjArray.h"
 #include "TObjString.h"
+#include "TSystem.h"
 
 #include "GETDecoder.hh"
 
@@ -759,13 +760,7 @@ void GETDecoder::SetPseudoTopologyFrame(Int_t asadMask, Bool_t check) {
     fTopologyFrame -> Print();
 }
 
-void GETDecoder::SaveMetaData(TString filename, Int_t coboIdx) {
-  if (filename.IsNull()) {
-    TObjArray *split = fDataList.at(0).Tokenize("/");
-    filename = Form("%s.meta%s.root", ((TObjString *) split -> Last()) -> String().Data(), (coboIdx == -1 ? "" : Form(".C%d", coboIdx)));
-    delete split;
-  }
-
+void GETDecoder::GoToEnd() {
   switch (fFrameType) {
     case kCobo:
       GetCoboFrame(10000000);
@@ -777,16 +772,28 @@ void GETDecoder::SaveMetaData(TString filename, Int_t coboIdx) {
     case kBasic:
       GetBasicFrame(10000000);
       break;
+    case kMutant:
+      GetMutantFrame(10000000);
+      break;
     default:
       std::cout << "== [GETDecoder] Nothing to store!" << std::endl;
       break;
   }
+}
 
-  TFile *metaFile = new TFile(filename, "recreate");
+void GETDecoder::SaveMetaData(Int_t runNo, TString filename, Int_t coboIdx) {
+  if (filename.IsNull()) {
+    TObjArray *split = fDataList.at(0).Tokenize("/");
+    filename = Form("metadata/%s.meta%s.root", ((TObjString *) split -> Last()) -> String().Data(), (coboIdx == -1 ? "" : Form(".C%d", coboIdx)));
+    delete split;
+  }
+
+  gSystem -> Exec(Form("mkdir -p run_%04d/metadata", runNo));
+  TFile *metaFile = new TFile(Form("run_%04d/%s", runNo, filename.Data()), "recreate");
 
   UInt_t dataID = 0, eventID = 0, deltaT = 0;
   ULong64_t eventTime = 0, startByte = 0, endByte = 0;
-  TTree *metaTree = new TTree("MetaData", "Meta data tree");
+  TTree *metaTree = new TTree("MetaData", Form("Meta data tree for CoBo %d", coboIdx));
   metaTree -> Branch("dataID", &dataID);
   metaTree -> Branch("eventID", &eventID);
   metaTree -> Branch("eventTime", &eventTime);
@@ -806,10 +813,15 @@ void GETDecoder::SaveMetaData(TString filename, Int_t coboIdx) {
 
     metaTree -> Fill();
   }
+
   metaFile -> Write();
 
   delete metaTree;
   delete metaFile;
+
+  std::ofstream listFile(Form("run_%04d/metadataList.txt", runNo), std::ios::app);
+  listFile << filename << endl;
+  listFile.close();
 }
 
 void GETDecoder::LoadMetaData(TString filename) {

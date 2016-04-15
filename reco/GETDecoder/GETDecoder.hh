@@ -91,8 +91,10 @@ class GETDecoder
     //! Write current frame
     void WriteFrame();
 
+    //! Scan up to the end of file
+    void GoToEnd();
     //! Write metadata into ROOT file
-    void SaveMetaData(TString filename = "", Int_t coboIdx = -1); 
+    void SaveMetaData(Int_t runNo, TString filename = "", Int_t coboIdx = -1);
     //! Load metadata from ROOT file
     void LoadMetaData(TString filename); 
 
