@@ -112,6 +112,7 @@ void GETDecoder::Clear() {
 
   fIsDoneAnalyzing = kFALSE;
   fIsDataInfo = kFALSE;
+  fIsMetaData = kFALSE;
 
   fDataSize = 0;
   fCurrentDataID = -1;
