@@ -13,6 +13,8 @@ then
 fi
 
 RUN=$1
+DATAPATH=/data/Q15264/rawdata # RICC
+#DATAPATH=/data # SPANA01
 printf -v RUN "%04g" $RUN
 
 OUTPUT=list_run$RUN\.txt
@@ -22,7 +24,7 @@ echo "== Creating list as $OUTPUT. Please be patient."
 
 for COBO in $(seq -f "%02g" 0 11);
 do
-  ls /data/Q15264/rawdata/spdaq0?/narval/cobo$COBO/run_$RUN*s >> $OUTPUT
+  ls $DATAPATH/spdaq0?/narval/cobo$COBO/run_$RUN*s >> $OUTPUT
   for FILENUM in {1..100};
   do
     RESULT=`ls /data/Q15264/rawdata/spdaq0?/narval/cobo$COBO/run_$RUN*s.$FILENUM 2> /dev/null`
