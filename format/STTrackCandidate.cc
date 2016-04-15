@@ -5,6 +5,11 @@ ClassImp(STTrackCandidate)
 
 STTrackCandidate::STTrackCandidate()
 {
+  Clear();
+}
+
+void STTrackCandidate::Clear(Option_t *option)
+{
   // Units: mm, MeV, e(charge)
   fPID = -1;
   fMass = -1;
@@ -42,6 +47,8 @@ STTrackCandidate::STTrackCandidate()
   fRiemanndEdx = 0;
   fChi2 = -1;
   fNDF = -1;
+
+  fdEdxArray.clear();
 }
 
 void STTrackCandidate::SetPID(Int_t value)                                { fPID = value; }
@@ -120,6 +127,48 @@ Double_t STTrackCandidate::GetTotaldEdx()                { return fdEdxTotal; }
 Double_t STTrackCandidate::GetRiemanndEdx()              { return fRiemanndEdx; }
 Double_t STTrackCandidate::GetChi2()                     { return fChi2; }
 Int_t STTrackCandidate::GetNDF()                         { return fNDF; }
+
+Int_t STTrackCandidate::GetdEdxWithCut(Double_t &dEdx, Int_t &numUsedPoints, Double_t lowCut, Double_t highCut, Int_t numCut)
+{
+  Int_t cutApplied = -1;
+
+  numUsedPoints = fdEdxArray.size();
+
+  Int_t idxLow = 0;
+  Int_t idxHigh = numUsedPoints;
+
+  if (numUsedPoints >= numCut)
+  {
+    sort(fdEdxArray.begin(), fdEdxArray.end());
+
+    Int_t numLowCut  = Int_t(numUsedPoints * lowCut);
+    Int_t numHighCut = Int_t(numUsedPoints * highCut);
+
+    Bool_t useLowCut = kFALSE;
+
+    if (idxHigh - numHighCut >= numCut) {
+      idxHigh -= numHighCut;
+      cutApplied = 1;
+
+      if (idxHigh - numLowCut >= numCut){
+        idxLow += numLowCut;
+        cutApplied = 2;
+      }
+    }
+    else
+      cutApplied = 0;
+
+    numUsedPoints = idxHigh - idxLow;
+
+  }
+
+  dEdx = 0;
+  for (Int_t idEdx = idxLow; idEdx < idxHigh; idEdx++)
+    dEdx += fdEdxArray.at(idEdx);
+  dEdx = dEdx/numUsedPoints;
+
+  return cutApplied;
+}
 
 void STTrackCandidate::SetTrackCandidate(STTrackCandidate *track)
 {

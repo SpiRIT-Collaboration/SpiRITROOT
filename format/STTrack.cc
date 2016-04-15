@@ -38,6 +38,8 @@ void STTrack::DetermineBestCandidate()
 
 void STTrack::Clear(Option_t *option)
 {
+  STTrackCandidate::Clear();
+
   fParentID = -1;
   fTrackID = -1;
   fRiemannID = -1;
