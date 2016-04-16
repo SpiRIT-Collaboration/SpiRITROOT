@@ -86,7 +86,7 @@ STGenfitTest::Init()
 
 void STGenfitTest::SetTargetPlane(TVector3 position, TVector3 normal)
 {
-  fTargetPlane = genfit::SharedPlanePtr(new genfit::DetPlane(position, normal));
+  fTargetPlane = genfit::SharedPlanePtr(new genfit::DetPlane(0.1*position, 0.1*normal));
 }
 
 void STGenfitTest::SetMinIterations(Int_t value) { 
