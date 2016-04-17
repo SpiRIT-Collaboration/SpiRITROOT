@@ -35,7 +35,6 @@ class STCore : public TObject {
 
     void Initialize();
 
-    // setters
     Bool_t AddData(TString filename, Int_t coboIdx = 0);
     void SetPositivePolarity(Bool_t value = kTRUE);
     Bool_t SetData(Int_t value);
@@ -59,7 +58,6 @@ class STCore : public TObject {
     Bool_t SetWriteFile(TString filename, Int_t coboIdx = 0, Bool_t overwrite = kFALSE);
     void WriteData();
 
-    // getters
     STRawEvent *GetRawEvent(Long64_t eventID = -1);       ///< Returns STRawEvent object filled with the data
     Int_t GetEventID();                                   ///< Returns the current event ID
     Int_t GetNumTbs(Int_t coboIdx = 0);                   ///< Returns the number of time buckets of the data
@@ -67,9 +65,13 @@ class STCore : public TObject {
     STMap *GetSTMap();
     STPlot *GetSTPlot();
 
-    Int_t GetFPNChannel(Int_t chIdx);
+    void GoToEnd(Int_t coboIdx = 0);
+    void GenerateMetaData(Int_t runNo);
+    void LoadMetaData(TString filename, Int_t coboIdx = -1);
 
   private:
+    Int_t GetFPNChannel(Int_t chIdx);
+
     STMap *fMapPtr;
     STPlot *fPlotPtr;
 

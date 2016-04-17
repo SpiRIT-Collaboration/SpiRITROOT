@@ -421,6 +421,55 @@ STPlot *STCore::GetSTPlot()
   return fPlotPtr;
 }
 
+void STCore::GoToEnd(Int_t coboIdx)
+{
+  fDecoderPtr[coboIdx] -> GoToEnd();
+}
+
+void STCore::GenerateMetaData(Int_t runNo)
+{
+  if (fIsSeparatedData) {
+    std::thread cobo0([this]() { this -> GoToEnd(0); });
+    std::thread cobo1([this]() { this -> GoToEnd(1); });
+    std::thread cobo2([this]() { this -> GoToEnd(2); });
+    std::thread cobo3([this]() { this -> GoToEnd(3); });
+    std::thread cobo4([this]() { this -> GoToEnd(4); });
+    std::thread cobo5([this]() { this -> GoToEnd(5); });
+    std::thread cobo6([this]() { this -> GoToEnd(6); });
+    std::thread cobo7([this]() { this -> GoToEnd(7); });
+    std::thread cobo8([this]() { this -> GoToEnd(8); });
+    std::thread cobo9([this]() { this -> GoToEnd(9); });
+    std::thread cobo10([this]() { this -> GoToEnd(10); });
+    std::thread cobo11([this]() { this -> GoToEnd(11); });
+    cobo0.join();
+    cobo1.join();
+    cobo2.join();
+    cobo3.join();
+    cobo4.join();
+    cobo5.join();
+    cobo6.join();
+    cobo7.join();
+    cobo8.join();
+    cobo9.join();
+    cobo10.join();
+    cobo11.join();
+
+    for (Int_t iCobo = 0; iCobo < 12; iCobo++)
+      fDecoderPtr[iCobo] -> SaveMetaData(runNo, "", iCobo);
+  } else {
+    fDecoderPtr[0] -> GoToEnd();
+    fDecoderPtr[0] -> SaveMetaData(runNo);
+  }
+}
+
+void STCore::LoadMetaData(TString filename, Int_t coboIdx)
+{
+  if (coboIdx == -1)
+    fDecoderPtr[0] -> LoadMetaData(filename);
+  else
+    fDecoderPtr[coboIdx] -> LoadMetaData(filename);
+}
+
 Int_t STCore::GetFPNChannel(Int_t chIdx)
 {
   Int_t fpn = -1;
