@@ -11,6 +11,8 @@ class STTrackCandidate : public TObject {
     STTrackCandidate();
     virtual ~STTrackCandidate() {};
 
+    virtual void Clear(Option_t *option = "");
+
     void SetTrackCandidate(STTrackCandidate *track);
 
     void SetPID(Int_t value);
@@ -88,6 +90,24 @@ class STTrackCandidate : public TObject {
     Double_t GetRiemanndEdx();
     Double_t GetChi2();
     Int_t GetNDF();
+
+    /**
+     * Calculate dEdx with applied cuts from fdEdxArray.
+     * Even if the condition is not satisfied with the cut,
+     * dEdx calculation is done and applied condition satus
+     * is noticed by the return value.
+     * @param return  2: All cuts satistified and applied.
+     *                1: lowCut not satistified and removed.
+     *                0: lowCut, highCut not satistified and removed.
+     *               -1: No cut is applied.
+     * Input parameters:
+     * @param dEdx           Returns calculated dEdx.
+     * @param numUsedPoints  Returns number of used points to calculate dEdx.
+     * @param lowCut         Lower cut of dEdx in ratio(0~1).
+     * @param highCut        High  cut of dEdx in ratio(0~1).
+     * @param numCut         Cut for number of used points to calculate dEdx.
+     */
+    Int_t GetdEdxWithCut(Double_t &dEdx, Int_t &numUsedPoints, Double_t lowCut = 0, Double_t highCut = 1, Int_t numCut = 1);
 
   protected:
     Int_t fPID;

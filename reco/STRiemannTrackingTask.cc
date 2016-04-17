@@ -523,7 +523,17 @@ void STRiemannTrackingTask::BuildTracks(STRiemannTrackFinder *trackfinder,
       // track has been found before ( -> hits were taken out) 
       // but does not pass quality criteria anymore -> fill hits back into buffer
         for (UInt_t iHit = 0; iHit < nHits; iHit++) {
-          hitbuffer -> push_back(trk -> GetHit(iHit) -> GetHit());
+          Bool_t exist = kFALSE;
+          STHit *hitReturn = trk -> GetHit(iHit) -> GetHit();
+          Int_t idReturn = hitReturn -> GetClusterID();
+          for (auto hit : *hitbuffer) {
+            if (hit -> GetClusterID() == idReturn) {
+              exist = kTRUE;
+              break;
+            }
+          }
+          if (!exist)
+            hitbuffer -> push_back(hitReturn);
         }
       }
 

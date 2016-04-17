@@ -86,7 +86,7 @@ STGenfitTest::Init()
 
 void STGenfitTest::SetTargetPlane(TVector3 position, TVector3 normal)
 {
-  fTargetPlane = genfit::SharedPlanePtr(new genfit::DetPlane(position, normal));
+  fTargetPlane = genfit::SharedPlanePtr(new genfit::DetPlane(0.1*position, 0.1*normal));
 }
 
 void STGenfitTest::SetMinIterations(Int_t value) { 
@@ -221,18 +221,10 @@ STGenfitTest::SetTrackParameters(STTrack *recoTrack, genfit::Track *genfitTrack,
     if (fNdf < 3)
       continue;
 
-    Int_t totalEloss = 0;
-    Double_t totaldEdx = 0;
+    Double_t totaldEdxRiemann = 0;
     Double_t totalLength = 0;
-    {
-      Bool_t good = GetdEdxFromRiemann(event, riemannTrack, totalLength, totalEloss);
 
-      if (good == kFALSE || totalLength < 0) {
-        totalLength = -1; 
-        totaldEdx = -1; 
-      } else 
-        totaldEdx = totalEloss/totalLength;
-    }
+    CalculatedEdxFromRiemann(event, riemannTrack, totalLength, totaldEdxRiemann);
 
 #ifdef JUSTPROTON
     recoTrack -> SetVertex(posReco*10.);
@@ -243,9 +235,10 @@ STGenfitTest::SetTrackParameters(STTrack *recoTrack, genfit::Track *genfitTrack,
     recoTrack -> SetChi2(fChi2);
     recoTrack -> SetNDF(fNdf);
     recoTrack -> SetTrackLength(totalLength);
-    recoTrack -> SetRiemanndEdx(totaldEdx);
+    recoTrack -> SetRiemanndEdx(totaldEdxRiemann);
 
     FindAndSetExtrapolation(recoTrack);
+    CalculatedEdx(recoTrack, genfitTrack);
 #else
     fRecoTrackCand = new STTrackCandidate();
     fRecoTrackCand -> SetVertex(posReco*10.);
@@ -256,10 +249,10 @@ STGenfitTest::SetTrackParameters(STTrack *recoTrack, genfit::Track *genfitTrack,
     fRecoTrackCand -> SetChi2(fChi2);
     fRecoTrackCand -> SetNDF(fNdf);
     fRecoTrackCand -> SetTrackLength(totalLength);
-    fRecoTrackCand -> SetTotaldEdx(totaldEdx);
-    fRecoTrackCand -> SetRiemanndEdx(totaldEdx);
+    fRecoTrackCand -> SetRiemanndEdx(totaldEdxRiemann);
 
     FindAndSetExtrapolation(fRecoTrackCand);
+    CalculatedEdx(fRecoTrackCand, genfitTrack);
     recoTrack -> AddTrackCandidate(fRecoTrackCand);
 
     if (CardinalTrackRep != nullptr && CardinalTrackRep == fCurrentTrackRep) {
@@ -317,7 +310,7 @@ STGenfitTest::FindAndSetExtrapolation(STTrackCandidate *recoTrackCand)
   recoTrackCand -> SetKatanaHit(posKatana*10.);
 }
 
-Bool_t 
+Bool_t
 STGenfitTest::SetTrack(STEvent *event, STTrack *recoTrack)
 {
   fHitClusterArray -> Delete();
@@ -401,16 +394,86 @@ STGenfitTest::ExtrapolateTrack(Double_t distance, TVector3 &position)
 }
 
 Bool_t 
-STGenfitTest::GetdEdxFromRiemann(STEvent *event, STRiemannTrack *track, Double_t &totalLength, Int_t &totalEloss)
+STGenfitTest::CalculatedEdx(STTrack *recoTrack, genfit::Track *genfitTrack)
+{
+  fCurrentFitState = genfitTrack -> getFittedState();
+
+  std::vector<genfit::TrackPoint *> pointArray = genfitTrack -> getPointsWithMeasurement();
+
+  Int_t numPoints = pointArray.size();
+  if (numPoints < 3)
+    return kFALSE;
+
+  genfit::STSpacepointMeasurement *point;
+
+  Double_t dEdx = 0;
+  Double_t dEdxTotal = 0;
+
+  Double_t charge = 0;
+  Double_t lengthTotal = 0;
+  Double_t lengthNextHalf = 0;
+
+  Int_t idx = 0;
+  point = (genfit::STSpacepointMeasurement *) pointArray.at(idx) -> getRawMeasurement(0);
+  idx++;
+
+  try {
+    fCurrentTrackRep -> extrapolateToMeasurement(fCurrentFitState, point);
+  } catch (genfit::Exception &e) {
+    recoTrack -> SetTotaldEdx(-1);
+    return kFALSE;
+  }
+
+  charge = point -> GetCharge();
+  charge = charge/2.;
+
+  while (idx < numPoints)
+  {
+    point = (genfit::STSpacepointMeasurement *) pointArray.at(idx) -> getRawMeasurement(0);
+    idx++;
+
+    try {
+      lengthNextHalf = (fCurrentTrackRep -> extrapolateToMeasurement(fCurrentFitState, point))/2.;
+    } catch (genfit::Exception &e) {
+      recoTrack -> SetTotaldEdx(-1);
+      return kFALSE;
+    }
+
+    lengthTotal += lengthNextHalf;
+
+    dEdx = charge/lengthTotal/10.;
+    dEdxTotal += dEdx;
+    recoTrack -> AdddEdx(dEdx);
+
+    lengthTotal = lengthNextHalf;
+    charge = point -> GetCharge();
+  }
+
+  charge = charge/2.;
+  dEdx = charge/lengthTotal/10.;
+  dEdxTotal += dEdx;
+  recoTrack -> AdddEdx(dEdx);
+
+  dEdxTotal = dEdxTotal/numPoints;
+  recoTrack -> SetTotaldEdx(dEdxTotal);
+
+  return kTRUE;
+}
+
+Bool_t
+STGenfitTest::CalculatedEdxFromRiemann(STEvent *event, STRiemannTrack *track, Double_t &totalLength, Double_t &totaldEdx)
 {
   const std::vector<STRiemannHit *> *hitArray = track -> GetHits();
 
-  totalLength = 0; // total length of track
-  totalEloss = 0; // total charge of track
+  totalLength = -1;
+  totaldEdx = -1;
 
   Int_t numHits = hitArray -> size();
   if(numHits < 3) 
     return kFALSE; 
+
+  totalLength = 0;
+  Double_t totalEloss = 0;
 
   for (Int_t iHit = 0; iHit < numHits; iHit++) {
 
@@ -456,6 +519,12 @@ STGenfitTest::GetdEdxFromRiemann(STEvent *event, STRiemannTrack *track, Double_t
       totalEloss += hitcluster->GetCharge();
     }
   }
+
+  if (totalLength <= 0) {
+    totalLength = -1;
+    totaldEdx = -1;
+  } else
+    totaldEdx = totalEloss/totalLength;
 
   return kTRUE;
 }

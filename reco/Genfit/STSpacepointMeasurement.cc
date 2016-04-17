@@ -53,6 +53,8 @@ STSpacepointMeasurement::STSpacepointMeasurement(const STHitCluster *detHit, con
   detId_ = hit -> getDetId();
   hitId_ = hit -> getHitId();
 
+  fCharge = detHit -> GetCharge();
+
   this -> initG();
 }
 
@@ -60,5 +62,7 @@ AbsMeasurement *STSpacepointMeasurement::clone() const
 {
   return new STSpacepointMeasurement(*this);
 }
+
+Double_t STSpacepointMeasurement::GetCharge() { return fCharge; }
 
 } /* End of namespace genfit */

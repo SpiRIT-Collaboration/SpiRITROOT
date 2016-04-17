@@ -42,6 +42,11 @@ class STSpacepointMeasurement : public SpacepointMeasurement {
 
     virtual AbsMeasurement* clone() const;
 
+    Double_t GetCharge();
+
+  private:
+    Double_t fCharge;
+
   ClassDef(STSpacepointMeasurement, 1)
 };
 
