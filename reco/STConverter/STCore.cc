@@ -57,6 +57,12 @@ void STCore::Initialize()
   for (Int_t iCobo = 1; iCobo < 12; iCobo++)
     fPedestalPtr[iCobo] = NULL;
 
+  fGGNoisePtr[0] = new STGGNoiseSubtractor();
+  for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+    fGGNoisePtr[iCobo] = NULL;
+
+  fIsSetGGNoiseData = kFALSE;
+
   fPlotPtr = NULL;
 
   fDecoderPtr[0] = new GETDecoder();
@@ -94,9 +100,6 @@ Bool_t STCore::SetData(Int_t value)
 
   if (fIsSeparatedData) {
     for (Int_t iCobo = 1; iCobo < 12; iCobo++) {
-      if (fPedestalPtr[iCobo] == NULL)
-        fPedestalPtr[iCobo] = new STPedestal();
-
       fIsData &= fDecoderPtr[iCobo] -> SetData(value);
       frameType = fDecoderPtr[iCobo] -> GetFrameType();
 
@@ -137,17 +140,45 @@ void STCore::SetNumTbs(Int_t value)
 {
   fNumTbs = value;
   fDecoderPtr[0] -> SetNumTbs(value);
+  fGGNoisePtr[0] -> SetNumTbs(value);
 
   if (fIsSeparatedData)
-    for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+    for (Int_t iCobo = 1; iCobo < 12; iCobo++) {
       fDecoderPtr[iCobo] -> SetNumTbs(value);
+      fGGNoisePtr[iCobo] -> SetNumTbs(value);
+    }
 }
 
 void STCore::SetFPNPedestal(Double_t sigmaThreshold)
 {
   fFPNSigmaThreshold = sigmaThreshold;
+  fGGNoisePtr[0] -> SetSigmaThreshold(fFPNSigmaThreshold);
+  for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+    fGGNoisePtr[iCobo] -> SetSigmaThreshold(fFPNSigmaThreshold);
+
+  if (fIsSeparatedData)
 
   std::cout << "== [STCore] Using FPN pedestal is set!" << std::endl;
+}
+
+void STCore::SetGGNoiseData(TString ggNoiseData)
+{
+  fGGNoisePtr[0] -> SetGGNoiseData(ggNoiseData);
+  for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+    fGGNoisePtr[iCobo] -> SetGGNoiseData(ggNoiseData);
+
+  std::cout << "== [STCore] Gating grid noise data is set!" << std::endl;
+}
+
+Bool_t STCore::InitGGNoiseSubtractor()
+{
+  fIsSetGGNoiseData = fGGNoisePtr[0] -> Init();
+  for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+    fIsSetGGNoiseData &= fGGNoisePtr[iCobo] -> Init();
+  
+  std::cout << "== [STCore] Gating grid noise subtractor is initialized! FPN Pedestal subtraction is disabled!" << std::endl;
+
+  return fIsSetGGNoiseData;
 }
 
 Bool_t STCore::SetGainCalibrationData(TString filename, TString dataType)
@@ -224,7 +255,10 @@ void STCore::ProcessCobo(Int_t coboIdx)
 
         Int_t fpnCh = GetFPNChannel(iCh);
         Double_t adc[512] = {0};
-        fPedestalPtr[coboIdx] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
+        if (!fIsSetGGNoiseData)
+          fPedestalPtr[coboIdx] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
+        else
+          fGGNoisePtr[coboIdx] -> SubtractNoise(row, layer, rawadc, adc);
 
         if (fIsGainCalibrationData)
           fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
@@ -361,7 +395,11 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
 
           Int_t fpnCh = GetFPNChannel(iCh);
           Double_t adc[512] = {0};
-          Bool_t good = fPedestalPtr[0] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
+          Bool_t good = kFALSE;
+          if (!fIsSetGGNoiseData)
+            good = fPedestalPtr[0] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
+          else
+            fGGNoisePtr[0] -> SubtractNoise(row, layer, rawadc, adc);
 
           if (fIsGainCalibrationData)
             fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
@@ -403,6 +441,8 @@ void STCore::SetUseSeparatedData(Bool_t value) {
 //    fDecoderPtr[0] -> SetDebugMode(1);
     for (Int_t iCobo = 1; iCobo < 12; iCobo++) {
       fDecoderPtr[iCobo] = new GETDecoder();
+      fPedestalPtr[iCobo] = new STPedestal();
+      fGGNoisePtr[iCobo] = new STGGNoiseSubtractor();
 //      fDecoderPtr[iCobo] -> SetDebugMode(1);
     }
   }

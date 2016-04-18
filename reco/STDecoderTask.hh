@@ -57,6 +57,8 @@ class STDecoderTask : public FairTask {
     void SetData(Int_t value);
     /// Setting the FPN RMS value cut for pedestal region taking
     void SetFPNPedestal(Double_t rms);
+    /// Setting the gating grid nose data file
+    void SetGGNoiseData(TString filename);
     /// Setting use gain calibration data file. If there's no file specified by user using two methods below, it'll use the one in parameter files.
     void SetUseGainCalibration(Bool_t value = kTRUE);
     /// Setting gain calibration data file. If not set, gain is not calibrated.
@@ -97,6 +99,8 @@ class STDecoderTask : public FairTask {
     Int_t fDataNum;                     ///< Set which number in data list to be decoded
 
     Double_t fFPNPedestalRMS;           ///< RMS cut of baseline matching part selection
+
+    TString fGGNoiseFile;               ///< Gating grid noise data file
 
     Bool_t fUseGainCalibration;         ///< Use gain calibration data
     TString fGainCalibrationFile;       ///< Gain calibration data file name

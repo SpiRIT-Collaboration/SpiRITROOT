@@ -84,6 +84,8 @@ STGenerator::SetMode(TString mode)
       cerr << "Pedestal!";
     else if (fMode == kGain)
       cerr << "Gain!";
+    else if (fMode == kGGNoise)
+      cerr << "GG Noise!";
     cout << endl;
     cerr << "== [STGenerator] Create another instance to use the other mode!" << endl;
 
@@ -95,6 +97,8 @@ STGenerator::SetMode(TString mode)
     fMode = kPedestal;
   } else if (mode.EqualTo("gain"))
     fMode = kGain;
+  else if (mode.EqualTo("ggnoise"))
+    fMode = kGGNoise;
   else {
     fMode = kError;
 
@@ -230,6 +234,10 @@ STGenerator::StartProcess()
     fCore -> SetData(0);
 
     GeneratePedestalData();
+  } else if (fMode == kGGNoise) {
+    fCore -> SetData(0);
+
+    GenerateGatingGridNoiseData();
   }
   else if (fMode == kGain)
     GenerateGainCalibrationData();
@@ -452,9 +460,9 @@ STGenerator::GenerateGainCalibrationData()
     }
   }
 
-  delete means;
-  delete sigmas;
-  delete padHist;
+  delete [] means;
+  delete [] sigmas;
+  delete [] padHist;
 
   outFile -> Write();
   checkingFile -> Write();
@@ -462,6 +470,103 @@ STGenerator::GenerateGainCalibrationData()
 
   fOutputFile.ReplaceAll(".root", ".checking.root");
   cout << "== Gain calibration checking data " << fOutputFile << " Created!" << endl;
+}
+
+void
+STGenerator::GenerateGatingGridNoiseData()
+{
+  TFile *outFile = new TFile(fOutputFile, "recreate");
+
+  Int_t row, layer;
+  Double_t noise[512] = {0};
+  Double_t sigma[512] = {0};
+
+  TTree *outTree = new TTree("GatingGridNoiseData", "Gating Grid Noise Data Tree");
+  outTree -> Branch("row", &row);
+  outTree -> Branch("layer", &layer);
+  outTree -> Branch("noise", &noise, "noise[512]/D");
+  outTree -> Branch("noiseSigma", &sigma, "sigma[512]/D");
+
+  GETMath *math = new GETMath();
+  STRawEvent *noiseEvent = new STRawEvent();
+  STRawEvent *sigmaEvent = new STRawEvent();
+  STPad *noisePad = new STPad();
+  STPad *sigmaPad = new STPad();
+
+  noiseEvent -> SetEventID(0);
+  sigmaEvent -> SetEventID(0);
+  for (Int_t iPad = 0; iPad < 108*112; iPad++) {
+    row = iPad%108;
+    layer = iPad/108;
+
+    noisePad -> SetRow(row);
+    noisePad -> SetLayer(layer);
+    noisePad -> SetPedestalSubtracted(kTRUE);
+    noiseEvent -> SetPad(noisePad);
+
+    sigmaPad -> SetRow(row);
+    sigmaPad -> SetLayer(layer);
+    sigmaPad -> SetPedestalSubtracted(kTRUE);
+    sigmaEvent -> SetPad(sigmaPad);
+  }
+
+  STRawEvent *event = NULL;
+  while ((event = fCore -> GetRawEvent())) {
+    Int_t numPads = event -> GetNumPads();
+
+    Int_t eventid = event -> GetEventID();
+    if (eventid%100 == 0) 
+      cout << "Processing event ID: " << eventid << endl;
+
+    for (Int_t iPad = 0; iPad < numPads; iPad++) {
+      STPad *pad = event -> GetPad(iPad);
+
+      row = pad -> GetRow();
+      layer = pad -> GetLayer();
+
+      noisePad = noiseEvent -> GetPad(layer*108 + row); 
+      sigmaPad = sigmaEvent -> GetPad(layer*108 + row); 
+
+      Int_t *rawadc = pad -> GetRawADC();
+
+      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+        math -> Reset();
+        math -> Set(noiseEvent -> GetEventID(), noisePad -> GetADC(iTb), sigmaPad -> GetADC(iTb));
+
+//        cout << "noiseEvent -> GetEventID():" << noiseEvent -> GetEventID();
+//        cout << " noisePad -> GetADC(iTb):" << noisePad -> GetADC(iTb);
+//        cout << " sigmaPad -> GetADC(iTb):" << sigmaPad -> GetADC(iTb) << endl;
+
+        math -> Add(rawadc[iTb]);
+        noisePad -> SetADC(iTb, math -> GetMean());
+        sigmaPad -> SetADC(iTb, math -> GetRMS2());
+
+//        cout << "row:" << row << " layer:" << layer << " iTb:" << iTb << " rawadc:" << rawadc[iTb] << " noise:" << math -> GetMean() << " sigma:" << math -> GetRMS() << endl;
+      }
+    }
+
+    noiseEvent -> SetEventID(noiseEvent -> GetEventID() + 1);
+  }
+
+  cout << "== [STGenerator] Creating gating grid noise data: " << fOutputFile << endl;
+  for (row = 0; row < fRows; row++) {
+    for (layer = 0; layer < fLayers; layer++) {
+      noisePad = noiseEvent -> GetPad(layer*108 + row); 
+      sigmaPad = sigmaEvent -> GetPad(layer*108 + row); 
+
+      for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
+        noise[iTb] = noisePad -> GetADC(iTb);
+        sigma[iTb] = TMath::Sqrt(sigmaPad -> GetADC(iTb));
+      }
+
+      outTree -> Fill();
+    }
+  }
+
+  outFile -> Write();
+  delete outFile;
+
+  cout << "== [STGenerator] Gating grid noise data " << fOutputFile << " Created!" << endl;
 }
 
 void
@@ -478,8 +583,8 @@ STGenerator::Print()
 
     cout << "============================================" << endl;
     cout << " Mode: ";
-    if (fMode == kPedestal) {
-      cout << "Pedetal data generator mode" << endl;
+    if (fMode == kPedestal || fMode == kGGNoise) {
+      cout << (fMode == kPedestal ? "Pedetal" : "Gating grid noise") << " data generator mode" << endl;
       cout << " Output File: " << fOutputFile << endl;
       cout << " Data list:" << endl;
       for (Int_t iData = 0; iData < numData; iData++)
@@ -497,8 +602,8 @@ STGenerator::Print()
 
     cout << "============================================" << endl;
     cout << " Mode: ";
-    if (fMode == kPedestal) {
-      cout << "Pedetal data generator mode" << endl;
+    if (fMode == kPedestal || fMode == kGGNoise) {
+      cout << (fMode == kPedestal ? "Pedetal" : "Gating grid noise") << " data generator mode" << endl;
       cout << " Output File: " << fOutputFile << endl;
       cout << " Data list:" << endl;
       if (!fIsSeparatedData)

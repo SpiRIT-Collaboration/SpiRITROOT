@@ -23,6 +23,7 @@ STGGNoiseSubtractor::STGGNoiseSubtractor()
 {
   fGGNoiseFile = "";
   fOpenFile = nullptr;
+  fNumTbs = 512;
 
   fNoise = new Double_t**[112];
   fMean = new Double_t*[108];
@@ -39,12 +40,12 @@ STGGNoiseSubtractor::STGGNoiseSubtractor()
   fMath = new GETMath();
 }
 
-STGGNoiseSubtractor::STGGNoiseSubtractor(TString ggNoiseData, Int_t numTbs, Double_t rmsCut)
+STGGNoiseSubtractor::STGGNoiseSubtractor(TString ggNoiseData, Int_t numTbs, Double_t sigma)
 :STGGNoiseSubtractor()
 {
   SetGGNoiseData(fGGNoiseFile);
   SetNumTbs(numTbs);
-  SetRMSCut(rmsCut);
+  SetSigmaThreshold(sigma);
   Init();
 }
 
@@ -52,17 +53,17 @@ Bool_t STGGNoiseSubtractor::Init()
 {
   fOpenFile = new TFile(fGGNoiseFile);
 
-  if (fOpenFile -> FindObjectAny("GatingGridNoise") == nullptr) {
+  if (fOpenFile -> FindObjectAny("GatingGridNoiseData") == nullptr) {
     fOpenFile -> Close();
     delete fOpenFile;
     fOpenFile = nullptr;
 
-    std::cout << "[STGGNoiseSubtractor] GatingGridNoise tree doesn't exist!" << std::endl;
+    std::cout << "== [STGGNoiseSubtractor] GatingGridNoiseData tree doesn't exist!" << std::endl;
 
     return kFALSE;
   }
 
-  TTreeReader reader("GatingGridNoise", fOpenFile);
+  TTreeReader reader("GatingGridNoiseData", fOpenFile);
   TTreeReaderValue<Int_t> row(reader, "row");
   TTreeReaderValue<Int_t> layer(reader, "layer");
   TTreeReaderArray<Double_t> noise(reader, "noise");
@@ -74,21 +75,21 @@ Bool_t STGGNoiseSubtractor::Init()
     for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
       fNoise[*row][*layer][iTb] = noise[iTb];
 
-    startTb = 1;
+    startTb = 3;
 
     while (1) {
       fMath -> Reset();
       for (Int_t iTb = startTb; iTb < startTb + averageTbs; iTb++)
         fMath -> Add(fNoise[*row][*layer][iTb]);
 
-      if (fMath -> GetRMS() < fRmsCut)
+      if (fMath -> GetRMS() < fSigmaThreshold)
         break;
 
       startTb++;
 
       if (startTb > fNumTbs - averageTbs - 2) {
-        std::cout << "= [STGGNoiseSubtractor] There's no part in (row=" << *row << ",layer=";
-        std::cout << *layer << " noise satisfying sigma threshold " << fRmsCut << "!" << std::endl;
+        std::cout << "== [STGGNoiseSubtractor] There's no part in (row=" << *row << ",layer=";
+        std::cout << *layer << " noise satisfying sigma threshold " << fSigmaThreshold << "!" << std::endl;
 
         fIsGGNoiseData = kFALSE;
         return IsSetGGNoiseData();
@@ -104,28 +105,28 @@ Bool_t STGGNoiseSubtractor::Init()
 
   void STGGNoiseSubtractor::SetGGNoiseData(TString ggNoiseData) { fGGNoiseFile = ggNoiseData; }
   void STGGNoiseSubtractor::SetNumTbs(Int_t numTbs)             { fNumTbs = numTbs; }
-  void STGGNoiseSubtractor::SetRMSCut(Double_t rmsCut)          { fRmsCut = rmsCut; }
+  void STGGNoiseSubtractor::SetSigmaThreshold(Double_t sigma)   { fSigmaThreshold = sigma; }
 
 Bool_t STGGNoiseSubtractor::IsSetGGNoiseData()                  { return fIsGGNoiseData; }
 
-Bool_t STGGNoiseSubtractor::SubtractNoise(Int_t row, Int_t layer, Double_t *adc)
+Bool_t STGGNoiseSubtractor::SubtractNoise(Int_t row, Int_t layer, Int_t *rawadc, Double_t *adc)
 {
-  Int_t startTb = 1;
+  Int_t startTb = 3;
   Int_t averageTbs = 10;
 
   while (1) {
     fMath -> Reset();
     for (Int_t iTb = startTb; iTb < startTb + averageTbs; iTb++)
-      fMath -> Add(adc[iTb]);
+      fMath -> Add(rawadc[iTb]);
 
-    if (fMath -> GetRMS() < fRmsCut)
+    if (fMath -> GetRMS() < fSigmaThreshold)
       break;
 
     startTb++;
 
     if (startTb > fNumTbs - averageTbs - 2) {
-      std::cout << "= [STGGNoiseSubtractor] There's no part in (row=" << row << ",layer=";
-      std::cout << layer << " signal satisfying sigma threshold " << fRmsCut << "!" << std::endl;
+      std::cout << "== [STGGNoiseSubtractor] There's no part in (row=" << row << ",layer=";
+      std::cout << layer << " signal satisfying sigma threshold " << fSigmaThreshold << "!" << std::endl;
 
       return kFALSE;
     }
@@ -133,8 +134,10 @@ Bool_t STGGNoiseSubtractor::SubtractNoise(Int_t row, Int_t layer, Double_t *adc)
 
   Double_t baselineDiff = fMath -> GetMean() - fMean[row][layer];
 
+//  std::cout << "Signal baseline:" << fMath -> GetMean() << " Noise baseline:" << fMean[row][layer] << " diff:" << baselineDiff << std::endl;
+
   for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-    adc[iTb] -= baselineDiff + fNoise[row][layer][iTb];
+    adc[iTb] = rawadc[iTb] - (baselineDiff + fNoise[row][layer][iTb]);
 
   return kTRUE;
 }
