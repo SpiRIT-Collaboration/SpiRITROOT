@@ -40,9 +40,9 @@ void STTrack::Clear(Option_t *option)
 {
   STTrackCandidate::Clear();
 
-  fParentID = -1;
-  fTrackID = -1;
-  fRiemannID = -1;
+  fParentID = -99999;
+  fTrackID = -99999;
+  fRiemannID = -99999;
 
   fIsFitted = kFALSE;
 

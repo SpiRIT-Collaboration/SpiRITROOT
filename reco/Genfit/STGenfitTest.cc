@@ -206,8 +206,8 @@ STGenfitTest::SetTrackParameters(STTrack *recoTrack, genfit::Track *genfitTrack,
     if (fCurrentFitStatus -> isFitted() == kFALSE || fCurrentFitStatus -> isFitConverged() == kFALSE)
       continue;
 
-    TVector3 posReco(0,0,0);
-    TVector3 momReco(0,0,0);
+    TVector3 posReco(-99999,-99999,-99999);
+    TVector3 momReco(-99999,-99999,-99999);
     TMatrixDSym covMat(6,6);
     Double_t bChi2 = 0, fChi2 = 0, bNdf = 0, fNdf = 0;
 
@@ -277,37 +277,45 @@ STGenfitTest::SetTrackParameters(STTrack *recoTrack, genfit::Track *genfitTrack,
 void 
 STGenfitTest::FindAndSetExtrapolation(STTrackCandidate *recoTrackCand)
 {
-  TVector3 momTarget(0,0,0);
-  TVector3 posTarget(0,0,0);
+  TVector3 momTarget(-99999,-99999,-99999);
+  TVector3 posTarget(-99999,-99999,-99999);
   try { 
     fCurrentTrackRep -> extrapolateToPlane(fCurrentFitState, fTargetPlane); 
     momTarget = fCurrentFitState.getMom();
+    recoTrackCand -> SetBeamMomentum(momTarget);
     posTarget = fCurrentFitState.getPos();
-  } catch (genfit::Exception &e) {}
+    recoTrackCand -> SetBeamVertex(posTarget*10.);
+  } catch (genfit::Exception &e) {
+    return;
+  }
 
-  TVector3 posKyotoL(0,0,0);
+  TVector3 posKyotoL(-99999,-99999,-99999);
   try { 
     fCurrentTrackRep -> extrapolateToPlane(fCurrentFitState, fKyotoLPlane); 
     posKyotoL = fCurrentFitState.getPos();
-  } catch (genfit::Exception &e) {}
+    recoTrackCand -> SetKyotoLHit(posKyotoL*10.);
+  } catch (genfit::Exception &e) {
+    return;
+  }
 
-  TVector3 posKyotoR(0,0,0);
+  TVector3 posKyotoR(-99999,-99999,-99999);
   try { 
     fCurrentTrackRep -> extrapolateToPlane(fCurrentFitState, fKyotoRPlane); 
     posKyotoR = fCurrentFitState.getPos();
-  } catch (genfit::Exception &e) {}
+    recoTrackCand -> SetKyotoRHit(posKyotoR*10.);
+  } catch (genfit::Exception &e) {
+    return;
+  }
 
-  TVector3 posKatana(0,0,0);
+  TVector3 posKatana(-99999,-99999,-99999);
   try { 
     fCurrentTrackRep -> extrapolateToPlane(fCurrentFitState, fKatanaPlane); 
     posKatana = fCurrentFitState.getPos();
-  } catch (genfit::Exception &e) {}
+    recoTrackCand -> SetKatanaHit(posKatana*10.);
+  } catch (genfit::Exception &e) {
+    return;
+  }
 
-  recoTrackCand -> SetBeamMomentum(momTarget);
-  recoTrackCand -> SetBeamVertex(posTarget*10.);
-  recoTrackCand -> SetKyotoLHit(posKyotoL*10.);
-  recoTrackCand -> SetKyotoRHit(posKyotoR*10.);
-  recoTrackCand -> SetKatanaHit(posKatana*10.);
 }
 
 Bool_t

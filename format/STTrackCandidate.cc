@@ -11,42 +11,42 @@ STTrackCandidate::STTrackCandidate()
 void STTrackCandidate::Clear(Option_t *option)
 {
   // Units: mm, MeV, e(charge)
-  fPID = -1;
-  fMass = -1;
-  fCharge = 0;
+  fPID = -99999;
+  fMass = -99999;
+  fCharge = -99999;
 
-  fVx = 0;
-  fVy = 0;
-  fVz = 0;
+  fVx = -99999;
+  fVy = -99999;
+  fVz = -99999;
 
-  fBeamVx = 0;
-  fBeamVy = 0;
-  fBeamVz = 0;
+  fBeamVx = -99999;
+  fBeamVy = -99999;
+  fBeamVz = -99999;
 
-  fBeamMomx = 0;
-  fBeamMomy = 0;
-  fBeamMomz = 0;
+  fBeamMomx = -99999;
+  fBeamMomy = -99999;
+  fBeamMomz = -99999;
 
-  fKyotoLx = 0;
-  fKyotoLy = 0;
-  fKyotoLz = 0;
-  fKyotoRx = 0;
-  fKyotoRy = 0;
-  fKyotoRz = 0;
-  fKatanax = 0;
-  fKatanay = 0;
-  fKatanaz = 0;
+  fKyotoLx = -99999;
+  fKyotoLy = -99999;
+  fKyotoLz = -99999;
+  fKyotoRx = -99999;
+  fKyotoRy = -99999;
+  fKyotoRz = -99999;
+  fKatanax = -99999;
+  fKatanay = -99999;
+  fKatanaz = -99999;
 
-  fPx = 0;
-  fPy = 0;
-  fPz = 0;
+  fPx = -99999;
+  fPy = -99999;
+  fPz = -99999;
 
-  fTrackLength = -1;
-  fdEdxTotal = -1;
+  fTrackLength = -99999;
+  fdEdxTotal = -99999;
 
-  fRiemanndEdx = 0;
-  fChi2 = -1;
-  fNDF = -1;
+  fRiemanndEdx = -99999;
+  fChi2 = -99999;
+  fNDF = -99999;
 
   fdEdxArray.clear();
 }
