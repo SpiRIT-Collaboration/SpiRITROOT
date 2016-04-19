@@ -12,7 +12,7 @@
 TString fParameterFile = "ST.parameters.par";
 
 // Voltage list
-Double_t fVoltage[] = {1.0, 2.0, 3.0, 4.0, 5.0};
+Double_t fNumVoltages = 20;
 
 // Data file list
 TString fData[] = {"pulser1.dat",
@@ -25,7 +25,7 @@ TString fData[] = {"pulser1.dat",
 Bool_t fUseSeparatedData = kTRUE;
 
 // Set the raw data file with path. If the file having txt with its extension, the macro will load separated data files in the list automatically.
-TString fDataList = "";
+TString fDataList = "list.txt";
 
 // FPN pedestal range selection threshold
 Int_t fFPNThreshold = 5;
@@ -55,12 +55,10 @@ void dataCalibrationCheck() {
   std::vector<Double_t> fVoltages;
 
   if (!fUseSeparatedData) {
-    fNumPulserData = sizeof(fVoltage)/sizeof(Double_t);
-
     for (Int_t iCore = 0; iCore < 2; iCore++) {
-      fCore[iCore] = new STCore*[fNumPulserData];
+      fCore[iCore] = new STCore*[fNumVoltages];
 
-      for (Int_t iData = 0; iData < fNumPulserData; iData++)
+      for (Int_t iData = 0; iData < fNumVoltages; iData++)
         fCore[iCore][iData] = new STCore(fData[iData]);
     }
   } else {
@@ -167,9 +165,27 @@ void dataCalibrationCheck() {
   TCanvas *fCvs = new TCanvas("cvs", "", 1200, 560);
   fCvs -> Divide(2, 1);
   fCvs -> cd(1);
+  gPad -> SetRightMargin(gPad -> GetRightMargin() + 0.01);
+  gPad -> SetLeftMargin(gPad -> GetRightMargin() + 0.01);
+  hist[0] -> SetTitle("Before gain calibration");
+  hist[0] -> GetXaxis() -> SetTitle("ADC (ADC Ch.)");
+  hist[0] -> GetXaxis() -> SetTitleOffset(hist[0] -> GetXaxis() -> GetTitleOffset() + 0.5);
+  hist[0] -> GetXaxis() -> CenterTitle();
+  hist[0] -> GetYaxis() -> SetTitle("Pulser Voltage (V)");
+  hist[0] -> GetYaxis() -> SetTitleOffset(hist[0] -> GetYaxis() -> GetTitleOffset() + 0.4);
+  hist[0] -> GetYaxis() -> CenterTitle();
   hist[0] -> Draw("colz");
   fReferenceLine -> Draw("same");
   fCvs -> cd(2);
+  gPad -> SetRightMargin(gPad -> GetRightMargin() + 0.01);
+  gPad -> SetLeftMargin(gPad -> GetRightMargin() + 0.01);
+  hist[1] -> SetTitle("After gain calibration");
+  hist[1] -> GetXaxis() -> SetTitle("ADC (ADC Ch.)");
+  hist[1] -> GetXaxis() -> SetTitleOffset(hist[1] -> GetXaxis() -> GetTitleOffset() + 0.5);
+  hist[1] -> GetXaxis() -> CenterTitle();
+  hist[1] -> GetYaxis() -> SetTitle("Pulser Voltage (V)");
+  hist[1] -> GetYaxis() -> SetTitleOffset(hist[1] -> GetYaxis() -> GetTitleOffset() + 0.4);
+  hist[1] -> GetYaxis() -> CenterTitle();
   hist[1] -> Draw("colz");
   fReferenceLine -> Draw("same");
 }
