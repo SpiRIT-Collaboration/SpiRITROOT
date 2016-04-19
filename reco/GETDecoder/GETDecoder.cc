@@ -545,8 +545,7 @@ GETLayeredFrame *GETDecoder::GetLayeredFrame(Int_t frameID)
         fFrameInfo -> SetDeltaT(fLayerHeader -> GetDeltaT());
         break;
 
-      case kBasic:
-      case kCobo:
+      default:
         std::cerr << "== " << __func__ << " This is serious error!" << std::endl;
         break;
     }
