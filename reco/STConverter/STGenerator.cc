@@ -236,6 +236,7 @@ STGenerator::StartProcess()
     GeneratePedestalData();
   } else if (fMode == kGGNoise) {
     fCore -> SetData(0);
+    fCore -> SetGGNoiseGenerationMode();
 
     GenerateGatingGridNoiseData();
   }
