@@ -13,8 +13,17 @@ then
 fi
 
 RUN=$1
-DATAPATH=/data/Q15264/rawdata # RICC
-#DATAPATH=/data # SPANA01
+LOCATION=${HOSTNAME:0:4}
+if [ $LOCATION == "span" ]
+then
+  DATAPATH=/data/Q15264/rawdata # RICC
+elif [ $LOCATION == "ricc" ]
+then
+  DATAPATH=/data # SPANA01
+else
+  DATAPATH=/WHERE/YOU/WANT
+fi
+
 printf -v RUN "%04g" $RUN
 
 OUTPUT=list_run$RUN\.txt
