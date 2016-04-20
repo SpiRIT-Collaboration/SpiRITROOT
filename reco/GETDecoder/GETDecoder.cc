@@ -392,7 +392,8 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
     fData.clear();
 
     if (fIsDoneAnalyzing)
-      if (fTargetFrameInfoIdx > fCoboFrameInfoArray -> GetLast())
+      if (fTargetFrameInfoIdx > fCoboFrameInfoArray -> GetLast()
+          || (fTargetFrameInfoIdx == fCoboFrameInfoArray -> GetLast() && ((GETFrameInfo *) fCoboFrameInfoArray -> Last()) -> GetNumFrames() != fTopologyFrame -> GetAsadMask().count()))
         return NULL;
 
     if (fCoboFrameInfoIdx > fTargetFrameInfoIdx)
