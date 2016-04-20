@@ -16,10 +16,10 @@ RUN=$1
 LOCATION=${HOSTNAME:0:4}
 if [ $LOCATION == "span" ]
 then
-  DATAPATH=/data/Q15264/rawdata # RICC
+  DATAPATH=/data # SPANA01
 elif [ $LOCATION == "ricc" ]
 then
-  DATAPATH=/data # SPANA01
+  DATAPATH=/data/Q15264/rawdata # RICC
 else
   DATAPATH=/WHERE/YOU/WANT
 fi
