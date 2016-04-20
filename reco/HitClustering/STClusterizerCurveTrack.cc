@@ -1,5 +1,6 @@
 #include "STClusterizerCurveTrack.hh"
 #include "STCurveTrack.hh"
+#include "STDebugLogger.hh"
 
 #include <iostream>
 using namespace std;
@@ -11,7 +12,7 @@ STClusterizerCurveTrack::STClusterizerCurveTrack()
   fClusterArray = new TClonesArray("STHitCluster", 50);
   fTrackFitter = new STCurveTrackFitter();
   fTrackFitter -> SetNumHitsAtHead(fNumHitsAtHead);
-  fCircleFitter = new STCircleFitter();
+  fRiemannFitter = new STRiemannFitter();
   fTracker = new STCurveTrack();
 }
 
@@ -72,22 +73,24 @@ STClusterizerCurveTrack::AnalyzeSingleTrack(STCurveTrack *track, TClonesArray *c
     return;
   }
 
-  Double_t xCenter, zCenter, radius, rms;
-  Bool_t fitted = fCircleFitter -> FitData(hitArrayFromTrack, xCenter, zCenter, radius, rms);
+  Double_t xCenter, zCenter, radius, rms, rmsP;
+  Bool_t fitted = fRiemannFitter -> FitData(hitArrayFromTrack, xCenter, zCenter, radius, rms, rmsP);
+#ifdef DEBUG_CURVE_CLUSTERING
+    cout << "track: " << track -> GetTrackID() << " rms: " << setw(10) << rms;
+    STDebugLogger::Instance() -> FillHist1("rms",rms,100,0,50);
+#endif
 
-  if (fitted == kTRUE && rms < 1)
+  if (fitted == kTRUE && rms < 15)
   {
 #ifdef DEBUG_CURVE_CLUSTERING
-    cout << "track: " << track -> GetTrackID() << " rms: " << rms
-      << " Circle fit O, using theta sort" << endl;
+    cout << " Circle fit O, using theta sort" << endl;
 #endif
     STHitSortThetaFromP sorting(TVector3(xCenter, 0, zCenter));
     std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
   } 
   else {
 #ifdef DEBUG_CURVE_CLUSTERING
-    cout << "track: " << track -> GetTrackID() << " rms: " << rms
-      << " Circle fit X, using direction sort" << endl;
+    cout << " Circle fit X, using direction sort" << endl;
 #endif
     fTrackFitter -> FitAndSetTrack(track);
     STHitSortDirection sorting(track -> GetDirection());

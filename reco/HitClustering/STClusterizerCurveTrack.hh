@@ -4,6 +4,7 @@
 #include "STClusterizer.hh"
 #include "STCurveTrackFitter.hh"
 #include "STCircleFitter.hh"
+#include "STRiemannFitter.hh"
 
 #include "STHitCluster.hh"
 
@@ -25,7 +26,7 @@ class STClusterizerCurveTrack : public STClusterizer
     TClonesArray *fClusterArray;
 
     STCurveTrackFitter *fTrackFitter;
-    STCircleFitter *fCircleFitter;
+    STRiemannFitter *fRiemannFitter;
 
     STCurveTrack *fTracker;
 
