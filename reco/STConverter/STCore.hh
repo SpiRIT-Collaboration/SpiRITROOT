@@ -45,6 +45,7 @@ class STCore : public TObject {
     void SetNumTbs(Int_t value);
     void SetFPNPedestal(Double_t sigmaThreshold = 5);
 
+    void SetGGNoiseGenerationMode(Bool_t value = kTRUE);
     void SetGGNoiseData(TString ggNoiseData);
     Bool_t InitGGNoiseSubtractor();
 
@@ -86,6 +87,7 @@ class STCore : public TObject {
 
     STPedestal *fPedestalPtr[12];
     STGGNoiseSubtractor *fGGNoisePtr[12];
+    Bool_t fIsGGNoiseGenerationMode;
     Bool_t fIsSetGGNoiseData;
     Bool_t fIsNegativePolarity;
     Double_t fFPNSigmaThreshold;

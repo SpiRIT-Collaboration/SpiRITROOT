@@ -61,6 +61,7 @@ void STCore::Initialize()
   for (Int_t iCobo = 1; iCobo < 12; iCobo++)
     fGGNoisePtr[iCobo] = NULL;
 
+  fIsGGNoiseGenerationMode = kFALSE;
   fIsSetGGNoiseData = kFALSE;
 
   fPlotPtr = NULL;
@@ -161,6 +162,8 @@ void STCore::SetFPNPedestal(Double_t sigmaThreshold)
   std::cout << "== [STCore] Using FPN pedestal is set!" << std::endl;
 }
 
+void STCore::SetGGNoiseGenerationMode(Bool_t value) { fIsGGNoiseGenerationMode = value; }
+
 void STCore::SetGGNoiseData(TString ggNoiseData)
 {
   fGGNoisePtr[0] -> SetGGNoiseData(ggNoiseData);
@@ -236,7 +239,6 @@ void STCore::ProcessCobo(Int_t coboIdx)
   for (Int_t iFrame = 0; iFrame < numFrames; iFrame++) {
     GETBasicFrame *frame = coboFrame -> GetFrame(iFrame);
 
-
     Int_t coboID = frame -> GetCoboID();
     Int_t asadID = frame -> GetAsadID();
 
@@ -255,10 +257,12 @@ void STCore::ProcessCobo(Int_t coboIdx)
 
         Int_t fpnCh = GetFPNChannel(iCh);
         Double_t adc[512] = {0};
-        if (!fIsSetGGNoiseData)
-          fPedestalPtr[coboIdx] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
-        else
-          fGGNoisePtr[coboIdx] -> SubtractNoise(row, layer, rawadc, adc);
+        if (!fIsGGNoiseGenerationMode) {
+          if (!fIsSetGGNoiseData)
+            fPedestalPtr[coboIdx] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
+          else
+            fGGNoisePtr[coboIdx] -> SubtractNoise(row, layer, rawadc, adc);
+        }
 
         if (fIsGainCalibrationData)
           fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
@@ -396,10 +400,12 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
           Int_t fpnCh = GetFPNChannel(iCh);
           Double_t adc[512] = {0};
           Bool_t good = kFALSE;
-          if (!fIsSetGGNoiseData)
-            good = fPedestalPtr[0] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
-          else
-            fGGNoisePtr[0] -> SubtractNoise(row, layer, rawadc, adc);
+          if (!fIsGGNoiseGenerationMode) {
+            if (!fIsSetGGNoiseData)
+              good = fPedestalPtr[0] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
+            else
+              fGGNoisePtr[0] -> SubtractNoise(row, layer, rawadc, adc);
+          }
 
           if (fIsGainCalibrationData)
             fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
