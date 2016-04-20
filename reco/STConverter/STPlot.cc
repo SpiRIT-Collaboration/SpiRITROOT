@@ -381,7 +381,7 @@ void STPlot::DrawPad(Int_t row, Int_t layer)
   fPadCvs -> Modified();
   fPadCvs -> Update();
 
-#ifdef USECUT
+#ifdef DRAW_PULSE
   fHitArray -> Clear("C");
   Int_t idx = 0;
   fPSA -> FindHits(pad, fHitArray, idx);
