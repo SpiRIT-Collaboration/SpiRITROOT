@@ -22,7 +22,6 @@ class STRiemannFitter
 
     /// This method assume circle lies on the xz plane.
     Bool_t FitData(std::vector<STHit*> *hitArray,
-                   Double_t RSR,
                    Double_t &xCenter, 
                    Double_t &zCenter, 
                    Double_t &radius,
@@ -39,14 +38,12 @@ class STRiemannFitter
      *
      * Set ouput parameters to:
      * @param xCenter  first axis center of the fitted circle
-     * @param RSR      riemann sphere radius
      * @param yCenter  second axis center of the fitted circle
      * @param radius   radius of the fitted circle
      * @param rms      root mean square of the circle fit
      * @param rmsPlane root mean square of the plane fit on riemann sphere
      */
     Bool_t Fit(std::vector<TVector3> *data,
-               Double_t RSR,
                Double_t &xCenter, 
                Double_t &yCenter, 
                Double_t &radius,

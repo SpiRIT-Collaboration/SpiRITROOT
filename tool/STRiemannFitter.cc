@@ -9,24 +9,50 @@ STRiemannFitter::STRiemannFitter()
 
 Bool_t 
 STRiemannFitter::FitData(std::vector<STHit*> *hitArray,
-                         Double_t RSR,
                          Double_t &xCenter, 
                          Double_t &zCenter, 
                          Double_t &radius,
                          Double_t &rms,
                          Double_t &rmsP)
 {
+  if (hitArray -> size() < 3)
+    return kFALSE;
+
   fODRFitter -> Reset();
 
-  Double_t xMapMean  = 0;
-  Double_t yMapMean  = 0;
-  Double_t zMapMean  = 0;
+  Double_t xMean = 0;
+  Double_t yMean = 0;
+  Double_t xCov = 0;
+  Double_t yCov = 0;
   Double_t weightSum = 0;
 
   for (auto hit : *hitArray)
   {
     Double_t x = hit -> GetPosition().X();
     Double_t y = hit -> GetPosition().Z();
+    Double_t w = hit -> GetCharge();
+
+    xMean = (weightSum / (weightSum + w)) * xMean + (w * x / (weightSum + w));
+    yMean = (weightSum / (weightSum + w)) * yMean + (w * y / (weightSum + w));
+
+    if (weightSum != 0) {
+      xCov = (weightSum / (weightSum + w)) * xCov + (w * (x - xMean) / weightSum);
+      yCov = (weightSum / (weightSum + w)) * yCov + (w * (y - yMean) / weightSum);
+    }
+
+    weightSum += w;
+  }
+
+  Double_t RSR = 2*sqrt((xCov * xCov) + (yCov * yCov));
+
+  Double_t xMapMean  = 0;
+  Double_t yMapMean  = 0;
+  Double_t zMapMean  = 0;
+
+  for (auto hit : *hitArray)
+  {
+    Double_t x = hit -> GetPosition().X() - xMean;
+    Double_t y = hit -> GetPosition().Z() - yMean;
     Double_t w = hit -> GetCharge();
 
     Double_t rEff = sqrt(x*x + y*y) / (2*RSR);
@@ -39,8 +65,6 @@ STRiemannFitter::FitData(std::vector<STHit*> *hitArray,
     xMapMean += w * xMap;
     yMapMean += w * yMap;
     zMapMean += w * zMap;
-
-    weightSum += w;
   }
 
   xMapMean = xMapMean / weightSum;
@@ -52,8 +76,8 @@ STRiemannFitter::FitData(std::vector<STHit*> *hitArray,
 
   for (auto hit : *hitArray)
   {
-    Double_t x = hit -> GetPosition().X();
-    Double_t y = hit -> GetPosition().Z();
+    Double_t x = hit -> GetPosition().X() - xMean;
+    Double_t y = hit -> GetPosition().Z() - yMean;
     Double_t w = hit -> GetCharge();
 
     Double_t rEff = sqrt(x*x + y*y) / (2*RSR);
@@ -76,6 +100,25 @@ STRiemannFitter::FitData(std::vector<STHit*> *hitArray,
   fODRFitter -> ChooseEigenValue(0); TVector3 uOnPlane = fODRFitter -> GetDirection();
   fODRFitter -> ChooseEigenValue(1); TVector3 vOnPlane = fODRFitter -> GetDirection();
   fODRFitter -> ChooseEigenValue(2); TVector3 nToPlane = fODRFitter -> GetDirection();
+
+  /* XXX 
+   * CAREFUL WHEN YOU CHANGE THE CODE!!!
+   * Especially when you change the riemann sphere position on the plane.
+   *
+   * Following condition select out perfect line fit.
+   * This is possible because "if data fits in perfect line", 
+   * the point (xMean, yMean) lie on the fit line 
+   * which is where riemann sphere is sitting on.
+  */
+
+  if (nToPlane.X() * nToPlane.X() + nToPlane.Y() * nToPlane.Y() == 1) {
+    xCenter = nToPlane.Y();
+    zCenter = nToPlane.X();
+    radius = 0;
+    rms = 0;
+    rmsP = 0;
+    return kTRUE;
+  }
 
   rmsP = fODRFitter -> GetRMSPlane();
 
@@ -114,8 +157,8 @@ STRiemannFitter::FitData(std::vector<STHit*> *hitArray,
   // Fit Circle Center
   TVector3 FCC = 0.5 * (louuInvMap + highInvMap);
 
-  xCenter = FCC.X();
-  zCenter = FCC.Y();
+  xCenter = FCC.X() + xMean;
+  zCenter = FCC.Y() + yMean;
   radius = 0.5 * (louuInvMap - highInvMap).Mag();
 
   Double_t S = 0;
@@ -134,24 +177,50 @@ STRiemannFitter::FitData(std::vector<STHit*> *hitArray,
 
 Bool_t 
 STRiemannFitter::Fit(std::vector<TVector3> *data,
-                     Double_t RSR,
                      Double_t &xCenter, 
                      Double_t &yCenter, 
                      Double_t &radius,
                      Double_t &rms,
                      Double_t &rmsP)
 {
+  if (data -> size() < 3)
+    return kFALSE;
+
   fODRFitter -> Reset();
 
-  Double_t xMapMean  = 0;
-  Double_t yMapMean  = 0;
-  Double_t zMapMean  = 0;
+  Double_t xMean = 0;
+  Double_t yMean = 0;
+  Double_t xCov = 0;
+  Double_t yCov = 0;
   Double_t weightSum = 0;
 
   for (auto point : *data)
   {
     Double_t x = point.X();
     Double_t y = point.Y();
+    Double_t w = point.Z();
+
+    xMean = (weightSum / (weightSum + w)) * xMean + (w * x / (weightSum + w));
+    yMean = (weightSum / (weightSum + w)) * yMean + (w * y / (weightSum + w));
+
+    if (weightSum != 0) {
+      xCov = (weightSum / (weightSum + w)) * xCov + (w * (x - xMean) / weightSum);
+      yCov = (weightSum / (weightSum + w)) * yCov + (w * (y - yMean) / weightSum);
+    }
+
+    weightSum += w;
+  }
+
+  Double_t RSR = 2*sqrt((xCov * xCov) + (yCov * yCov));
+
+  Double_t xMapMean  = 0;
+  Double_t yMapMean  = 0;
+  Double_t zMapMean  = 0;
+
+  for (auto point : *data)
+  {
+    Double_t x = point.X() - xMean;
+    Double_t y = point.Y() - yMean;
     Double_t w = point.Z();
 
     Double_t rEff = sqrt(x*x + y*y) / (2*RSR);
@@ -164,8 +233,6 @@ STRiemannFitter::Fit(std::vector<TVector3> *data,
     xMapMean += w * xMap;
     yMapMean += w * yMap;
     zMapMean += w * zMap;
-
-    weightSum += w;
   }
 
   xMapMean = xMapMean / weightSum;
@@ -177,8 +244,8 @@ STRiemannFitter::Fit(std::vector<TVector3> *data,
 
   for (auto point : *data)
   {
-    Double_t x = point.X();
-    Double_t y = point.Y();
+    Double_t x = point.X() - xMean;
+    Double_t y = point.Y() - yMean;
     Double_t w = point.Z();
 
     Double_t rEff = sqrt(x*x + y*y) / (2*RSR);
@@ -201,6 +268,25 @@ STRiemannFitter::Fit(std::vector<TVector3> *data,
   fODRFitter -> ChooseEigenValue(0); TVector3 uOnPlane = fODRFitter -> GetDirection();
   fODRFitter -> ChooseEigenValue(1); TVector3 vOnPlane = fODRFitter -> GetDirection();
   fODRFitter -> ChooseEigenValue(2); TVector3 nToPlane = fODRFitter -> GetDirection();
+
+  /* XXX 
+   * CAREFUL WHEN YOU CHANGE THE CODE!!!
+   * Especially when you change the riemann sphere position on the plane.
+   *
+   * Following condition select out perfect line fit.
+   * This is possible because "if data fits in perfect line", 
+   * the point (xMean, yMean) lie on the fit line 
+   * which is where riemann sphere is sitting on.
+  */
+
+  if (nToPlane.X() * nToPlane.X() + nToPlane.Y() * nToPlane.Y() == 1) {
+    xCenter = nToPlane.Y();
+    yCenter = nToPlane.X();
+    radius = 0;
+    rms = 0;
+    rmsP = 0;
+    return kTRUE;
+  }
 
   rmsP = fODRFitter -> GetRMSPlane();
 
@@ -239,8 +325,8 @@ STRiemannFitter::Fit(std::vector<TVector3> *data,
   // Fit Circle Center
   TVector3 FCC = 0.5 * (louuInvMap + highInvMap);
 
-  xCenter = FCC.X();
-  yCenter = FCC.Y();
+  xCenter = FCC.X() + xMean;
+  yCenter = FCC.Y() + yMean;
   radius = 0.5 * (louuInvMap - highInvMap).Mag();
 
   Double_t S = 0;
