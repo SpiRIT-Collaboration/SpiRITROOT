@@ -138,7 +138,7 @@ Bool_t STGGNoiseSubtractor::SubtractNoise(Int_t row, Int_t layer, Int_t *rawadc,
 //  std::cout << "Signal baseline:" << fMath -> GetMean() << " Noise baseline:" << fMean[row][layer] << " diff:" << baselineDiff << std::endl;
 
   for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-    if (isNegative)
+    if (fIsNegative)
       adc[iTb] = (baselineDiff + fNoise[row][layer][iTb]) - rawadc[iTb];
     else
       adc[iTb] = rawadc[iTb] - (baselineDiff + fNoise[row][layer][iTb]);
