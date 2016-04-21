@@ -243,15 +243,15 @@ TCanvas *STPlot::DrawSideview(Int_t eventID)
     Double_t *adc = aPad -> GetADC();
 
     for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
-      Double_t prevADC = fSideviewHist -> GetBinContent(aPad -> GetLayer() + 1, fNumTbs - iTb);
+      Double_t prevADC = fSideviewHist -> GetBinContent(aPad -> GetLayer() + 1, 512 - iTb);
       Double_t currADC = aPad -> GetADC(iTb);
       if (prevADC < currADC)
-        fSideviewHist -> SetBinContent(aPad -> GetLayer() + 1, fNumTbs - iTb, currADC);
+        fSideviewHist -> SetBinContent(aPad -> GetLayer() + 1, 512 - iTb, currADC);
     }
   }
 
   fSideviewHist -> SetTitle(Form(Form("%s", fSideviewTitle.Data()), fEvent -> GetEventID()));
-  fSideviewHist -> GetYaxis() -> SetRangeUser(0, -fNumTbs);
+  fSideviewHist -> GetYaxis() -> SetRangeUser(-fNumTbs, 0);
   fSideviewHist -> GetZaxis() -> SetRangeUser(fSideviewHist -> GetBinContent(fSideviewHist -> GetMinimumBin()) - 10, fSideviewHist -> GetBinContent(fSideviewHist -> GetMaximumBin()) + 100);
   fSideviewHist -> SetContour(50);
 
