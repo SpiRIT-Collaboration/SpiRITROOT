@@ -107,6 +107,8 @@ void quickViewer() {
   fCore -> SetFPNPedestal(fFPNThreshold);
   fCore -> SetData(0);
 
+  fCore -> SetNumTbs(fPar -> GetIntPar("NumTbs"));
+
   if (!fGGNoiseData.IsNull()) {
     fCore -> SetGGNoiseData(fGGNoiseData);
     fCore -> InitGGNoiseSubtractor();
