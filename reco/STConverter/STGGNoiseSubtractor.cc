@@ -24,6 +24,7 @@ STGGNoiseSubtractor::STGGNoiseSubtractor()
   fGGNoiseFile = "";
   fOpenFile = nullptr;
   fNumTbs = 512;
+  fIsNegative = kTRUE;
 
   fNoise = new Double_t**[112];
   fMean = new Double_t*[108];
@@ -107,6 +108,7 @@ Bool_t STGGNoiseSubtractor::Init()
   void STGGNoiseSubtractor::SetGGNoiseData(TString ggNoiseData) { fGGNoiseFile = ggNoiseData; }
   void STGGNoiseSubtractor::SetNumTbs(Int_t numTbs)             { fNumTbs = numTbs; }
   void STGGNoiseSubtractor::SetSigmaThreshold(Double_t sigma)   { fSigmaThreshold = sigma; }
+  void STGGNoiseSubtractor::SetPolarity(Bool_t value)           { fIsNegative = value; }
 
 Bool_t STGGNoiseSubtractor::IsSetGGNoiseData()                  { return fIsGGNoiseData; }
 
@@ -137,11 +139,12 @@ Bool_t STGGNoiseSubtractor::SubtractNoise(Int_t row, Int_t layer, Int_t *rawadc,
 
 //  std::cout << "Signal baseline:" << fMath -> GetMean() << " Noise baseline:" << fMean[row][layer] << " diff:" << baselineDiff << std::endl;
 
-  for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+  for (Int_t iTb = 0; iTb < fNumTbs; iTb++) {
     if (fIsNegative)
       adc[iTb] = (baselineDiff + fNoise[row][layer][iTb]) - rawadc[iTb];
     else
       adc[iTb] = rawadc[iTb] - (baselineDiff + fNoise[row][layer][iTb]);
+  }
 
   return kTRUE;
 }
