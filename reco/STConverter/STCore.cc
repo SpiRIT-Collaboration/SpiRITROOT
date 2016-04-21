@@ -92,6 +92,10 @@ Bool_t STCore::AddData(TString filename, Int_t coboIdx)
 void STCore::SetPositivePolarity(Bool_t value)
 {
   fIsNegativePolarity = !value;
+
+  fGGNoisePtr[0] -> SetPolarity(!value);
+  for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+    fGGNoisePtr[iCobo] -> SetPolarity(!value);
 }
 
 Bool_t STCore::SetData(Int_t value)
@@ -255,22 +259,21 @@ void STCore::ProcessCobo(Int_t coboIdx)
         for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
           pad -> SetRawADC(iTb, rawadc[iTb]);
 
+        pad -> SetPedestalSubtracted(kTRUE);
+
         Int_t fpnCh = GetFPNChannel(iCh);
-        Double_t adc[512] = {0};
         if (!fIsGGNoiseGenerationMode) {
           if (!fIsSetGGNoiseData)
-            fPedestalPtr[coboIdx] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
+            fPedestalPtr[coboIdx] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, pad -> GetADC(), fFPNSigmaThreshold);
           else
-            fGGNoisePtr[coboIdx] -> SubtractNoise(row, layer, rawadc, adc);
+            fGGNoisePtr[coboIdx] -> SubtractNoise(row, layer, rawadc, pad -> GetADC());
         }
 
         if (fIsGainCalibrationData)
-          fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
+          fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, pad -> GetADC());
 
-        for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-          pad -> SetADC(iTb, adc[iTb]);
-
-        pad -> SetPedestalSubtracted(kTRUE);
+//        for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+//          pad -> SetADC(iTb, adc[iTb]);
       }
     }
   }
