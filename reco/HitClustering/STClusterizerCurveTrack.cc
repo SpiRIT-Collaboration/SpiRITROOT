@@ -1,11 +1,5 @@
 #include "STClusterizerCurveTrack.hh"
 #include "STCurveTrack.hh"
-#include "STDebugLogger.hh"
-
-#include <iostream>
-using namespace std;
-
-//#define DEBUG_CURVE_CLUSTERING
 
 STClusterizerCurveTrack::STClusterizerCurveTrack()
 {
@@ -73,25 +67,22 @@ STClusterizerCurveTrack::AnalyzeSingleTrack(STCurveTrack *track, TClonesArray *c
     return;
   }
 
-  Double_t xCenter, zCenter, radius, rms, rmsP;
+  Double_t xCenter = 0, zCenter = 0, radius = 0, rms = 0, rmsP = 0;
   Bool_t fitted = fRiemannFitter -> FitData(hitArrayFromTrack, xCenter, zCenter, radius, rms, rmsP);
-#ifdef DEBUG_CURVE_CLUSTERING
-    cout << "track: " << track -> GetTrackID() << " rms: " << setw(10) << rms;
-    STDebugLogger::Instance() -> FillHist1("rms",rms,100,0,50);
-#endif
 
-  if (fitted == kTRUE && rms < 15)
+  if (fitted == kTRUE && rms < 12)
   {
-#ifdef DEBUG_CURVE_CLUSTERING
-    cout << " Circle fit O, using theta sort" << endl;
-#endif
-    STHitSortThetaFromP sorting(TVector3(xCenter, 0, zCenter));
-    std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
+    if (radius == 0) {
+      STHitSortDirection sorting(TVector3(xCenter, 0, zCenter));
+      std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
+    }
+    else {
+      STHitSortThetaFromP sorting(TVector3(xCenter, 0, zCenter));
+      std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
+    }
   } 
-  else {
-#ifdef DEBUG_CURVE_CLUSTERING
-    cout << " Circle fit X, using direction sort" << endl;
-#endif
+  else
+  {
     fTrackFitter -> FitAndSetTrack(track);
     STHitSortDirection sorting(track -> GetDirection());
     std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
@@ -122,8 +113,7 @@ STClusterizerCurveTrack::AnalyzeSingleTrack(STCurveTrack *track, TClonesArray *c
     }
     TVector3 direction = fTracker -> GetDirection();
 
-    Double_t length = preHit -> GetPosition().Dot(direction) - curHit -> GetPosition().Dot(direction);
-    length = abs(length);
+    Double_t length = std::abs(preHit -> GetPosition().Dot(direction) - curHit -> GetPosition().Dot(direction));
 
     if (length > 12)
     {
