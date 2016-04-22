@@ -107,7 +107,10 @@ class STTrackCandidate : public TObject {
      * @param highCut        High  cut of dEdx in ratio(0~1).
      * @param numCut         Cut for number of used points to calculate dEdx.
      */
-    Int_t GetdEdxWithCut(Double_t &dEdx, Int_t &numUsedPoints, Double_t lowCut = 0, Double_t highCut = 1, Int_t numCut = 1);
+    Int_t GetdEdxWithCut(Double_t &dEdx, Int_t &numUsedPoints, Double_t lowCut, Double_t highCut, Int_t numCut);
+
+    Double_t GetdEdxWithCut(Double_t lowCut, Double_t highCut);
+
 
   protected:
     Int_t fPID;

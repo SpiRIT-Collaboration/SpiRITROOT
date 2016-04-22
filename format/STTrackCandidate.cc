@@ -170,6 +170,17 @@ Int_t STTrackCandidate::GetdEdxWithCut(Double_t &dEdx, Int_t &numUsedPoints, Dou
   return cutApplied;
 }
 
+Double_t STTrackCandidate::GetdEdxWithCut(Double_t lowCut, Double_t highCut)
+{
+  Int_t numPoints;
+  Double_t dEdx;
+
+  if (GetdEdxWithCut(dEdx, numPoints, lowCut, highCut, 1) == 2)
+    return dEdx;
+
+  return -1;
+}
+
 void STTrackCandidate::SetTrackCandidate(STTrackCandidate *track)
 {
   fPID = track -> GetPID();
