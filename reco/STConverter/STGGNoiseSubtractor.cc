@@ -91,7 +91,7 @@ Bool_t STGGNoiseSubtractor::Init()
 
       if (startTb > fNumTbs - averageTbs - 2) {
         std::cout << "== [STGGNoiseSubtractor] There's no part in (row=" << *row << ",layer=";
-        std::cout << *layer << " noise satisfying sigma threshold " << fSigmaThreshold << "!" << std::endl;
+        std::cout << *layer << ") noise satisfying sigma threshold " << fSigmaThreshold << "!" << std::endl;
 
         fIsGGNoiseData = kFALSE;
         return IsSetGGNoiseData();
@@ -129,7 +129,7 @@ Bool_t STGGNoiseSubtractor::SubtractNoise(Int_t row, Int_t layer, Int_t *rawadc,
 
     if (startTb > fNumTbs - averageTbs - 2) {
       std::cout << "== [STGGNoiseSubtractor] There's no part in (row=" << row << ",layer=";
-      std::cout << layer << " signal satisfying sigma threshold " << fSigmaThreshold << "!" << std::endl;
+      std::cout << layer << ") signal satisfying sigma threshold " << fSigmaThreshold << "!" << std::endl;
 
       return kFALSE;
     }
