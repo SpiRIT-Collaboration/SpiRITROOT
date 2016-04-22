@@ -62,7 +62,7 @@ void quickViewer() {
     dataFile = Form("%s/run_%04d/dataList.txt", supplementPath.Data(), runNo);
     metaFile = Form("%s/run_%04d/metadataList.txt", supplementPath.Data(), runNo);
   } else {
-    if (GETFileChecker::CheckFile(Form("list_run%04d.txt", runNo)))
+    if (GETFileChecker::CheckFile(Form("list_run%04d.txt", runNo)).IsNull())
       gSystem -> Exec(Form("./createList.sh %d", runNo));
 
     dataFile = Form("list_run%04d.txt", runNo);
