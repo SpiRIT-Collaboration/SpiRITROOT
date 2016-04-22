@@ -73,7 +73,10 @@ void STCore::Initialize()
   fIsData = kFALSE;
   fFPNSigmaThreshold = 5;
 
-  fGainCalibrationPtr = new STGainCalibration();
+  fGainCalibrationPtr[0] = new STGainCalibration();
+  for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+    fGainCalibrationPtr[iCobo] = nullptr;
+
   fIsGainCalibrationData = kFALSE;
 
   fNumTbs = 512;
@@ -161,8 +164,6 @@ void STCore::SetFPNPedestal(Double_t sigmaThreshold)
   for (Int_t iCobo = 1; iCobo < 12; iCobo++)
     fGGNoisePtr[iCobo] -> SetSigmaThreshold(fFPNSigmaThreshold);
 
-  if (fIsSeparatedData)
-
   std::cout << "== [STCore] Using FPN pedestal is set!" << std::endl;
 }
 
@@ -190,7 +191,10 @@ Bool_t STCore::InitGGNoiseSubtractor()
 
 Bool_t STCore::SetGainCalibrationData(TString filename, TString dataType)
 {
-  fIsGainCalibrationData = fGainCalibrationPtr -> SetGainCalibrationData(filename, dataType);
+  fIsGainCalibrationData = fGainCalibrationPtr[0] -> SetGainCalibrationData(filename, dataType);
+  if (fIsSeparatedData)
+    for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+      fIsGainCalibrationData |= fGainCalibrationPtr[iCobo] -> SetGainCalibrationData(filename, dataType);
 
   std::cout << "== [STCore] Gain calibration data is set!" << std::endl;
   return fIsGainCalibrationData;
@@ -204,7 +208,10 @@ void STCore::SetGainReference(Int_t row, Int_t layer)
     return;
   }
 
-  fGainCalibrationPtr -> SetGainReference(row, layer);
+  fGainCalibrationPtr[0] -> SetGainReference(row, layer);
+  if (fIsSeparatedData)
+    for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+      fGainCalibrationPtr[iCobo] -> SetGainReference(row, layer);
 }
 
 void STCore::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)
@@ -215,7 +222,10 @@ void STCore::SetGainReference(Double_t constant, Double_t linear, Double_t quadr
     return;
   }
 
-  fGainCalibrationPtr -> SetGainReference(constant, linear, quadratic);
+  fGainCalibrationPtr[0] -> SetGainReference(constant, linear, quadratic);
+  if (fIsSeparatedData)
+    for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+      fGainCalibrationPtr[iCobo] -> SetGainReference(constant, linear, quadratic);
 }
 
 Bool_t STCore::SetUAMap(TString filename)
@@ -270,7 +280,7 @@ void STCore::ProcessCobo(Int_t coboIdx)
         }
 
         if (fIsGainCalibrationData)
-          fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, pad -> GetADC());
+          fGainCalibrationPtr[coboIdx] -> CalibrateADC(row, layer, fNumTbs, pad -> GetADC());
 
 //        for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
 //          pad -> SetADC(iTb, adc[iTb]);
@@ -411,7 +421,7 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
           }
 
           if (fIsGainCalibrationData)
-            fGainCalibrationPtr -> CalibrateADC(row, layer, fNumTbs, adc);
+            fGainCalibrationPtr[0] -> CalibrateADC(row, layer, fNumTbs, adc);
 
           for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
             pad -> SetADC(iTb, adc[iTb]);
@@ -451,6 +461,7 @@ void STCore::SetUseSeparatedData(Bool_t value) {
     for (Int_t iCobo = 1; iCobo < 12; iCobo++) {
       fDecoderPtr[iCobo] = new GETDecoder();
       fPedestalPtr[iCobo] = new STPedestal();
+      fGainCalibrationPtr[iCobo] = new STGainCalibration();
       fGGNoisePtr[iCobo] = new STGGNoiseSubtractor();
 //      fDecoderPtr[iCobo] -> SetDebugMode(1);
     }

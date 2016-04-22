@@ -92,7 +92,7 @@ class STCore : public TObject {
     Bool_t fIsNegativePolarity;
     Double_t fFPNSigmaThreshold;
 
-    STGainCalibration *fGainCalibrationPtr;
+    STGainCalibration *fGainCalibrationPtr[12];
     Bool_t fIsGainCalibrationData;
 
     STRawEvent *fRawEventPtr;
