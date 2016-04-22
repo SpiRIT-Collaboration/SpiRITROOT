@@ -50,6 +50,7 @@ void run_reco_genfit
   fDecoderTask -> SetUseSeparatedData(fUseSeparatedData);
   fDecoderTask -> SetPersistence(kTRUE);
   fDecoderTask -> SetUseGainCalibration(useGainCalib);
+  fDecoderTask -> SetGGNoiseData("");
 
   /* 
   // For manual setup of gain calibraiton
