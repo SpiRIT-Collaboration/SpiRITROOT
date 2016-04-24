@@ -2,7 +2,7 @@ void BeamProfile() {
 
   auto fChain = new TChain("cbmsim");
 
-  fChain -> Add("../data/filename.reco.root");
+  fChain -> Add("../data/runXXX.reco.root");
 
   TClonesArray *trackArray = NULL;
   fChain -> SetBranchAddress("STTrack", &trackArray);
@@ -46,35 +46,37 @@ void BeamProfile() {
 
 	  STTrack *trackFromArray = (STTrack*) trackArray -> At(iTrack);
 
-	  //////////////////////////////
-	  // beam at target position
-	  //////////////////////////////
-	  Double_t x = trackFromArray->GetBeamVx()/10;
-	  Double_t y = trackFromArray->GetBeamVy()/10;
-	  Double_t z = trackFromArray->GetBeamVz()/10;
-
-	  Double_t px = trackFromArray->GetBeamMomentum().X();
-	  Double_t py = trackFromArray->GetBeamMomentum().Y();
-	  Double_t pz = trackFromArray->GetBeamMomentum().Z();
-
-	  h1->Fill(x, y);
-
-	  // beam exit angles
-	  Double_t angle_1 = TMath::ATan(px/pz);
-	  Double_t angle_2 = TMath::ATan(py/pz);
-
-	  h3->Fill(angle_1);
-	  h4->Fill(angle_2);
-
-	  //////////////////////////////
-	  // beam at katana position
-	  //////////////////////////////
-	  Double_t xK = trackFromArray->GetKatanaHitX()/10;
-          Double_t yK = trackFromArray->GetKatanaHitY()/10;
-          Double_t zK = trackFromArray->GetKatanaHitZ()/10;
-
-	  h2->Fill(xK, yK);
-
+	  if (trackFromArray -> IsFitted()){
+	    //////////////////////////////
+	    // beam at target position
+	    //////////////////////////////
+	    Double_t x = trackFromArray->GetBeamVx()/10;
+	    Double_t y = trackFromArray->GetBeamVy()/10;
+	    Double_t z = trackFromArray->GetBeamVz()/10;
+	    
+	    Double_t px = trackFromArray->GetBeamMomentum().X();
+	    Double_t py = trackFromArray->GetBeamMomentum().Y();
+	    Double_t pz = trackFromArray->GetBeamMomentum().Z();
+	    
+	    h1->Fill(x, y);
+	    
+	    // beam exit angles
+	    Double_t angle_1 = TMath::ATan(px/pz);
+	    Double_t angle_2 = TMath::ATan(py/pz);
+	    
+	    h3->Fill(angle_1);
+	    h4->Fill(angle_2);
+	    
+	    //////////////////////////////
+	    // beam at katana position
+	    //////////////////////////////
+	    Double_t xK = trackFromArray->GetKatanaHitX()/10;
+	    Double_t yK = trackFromArray->GetKatanaHitY()/10;
+	    Double_t zK = trackFromArray->GetKatanaHitZ()/10;
+	    
+	    h2->Fill(-xK, yK);
+	  }
+	  
 	}
       
       if (iEvent && (iEvent%kUPDATE) == 0) {
@@ -118,24 +120,5 @@ void BeamProfile() {
   c1->cd(3)->Update();
   c1->cd(4)->Modified();
   c1->cd(4)->Update();
-
-  // For some LOLZ
-  c1->cd(1);
-  TLine* l1 = new TLine(-1.5,-19.33,1.5,-19.33);
-  TLine* l2 = new TLine(1.5,-23.33,1.5,-19.33);
-  TLine* l3 = new TLine(1.5,-23.33,-1.5,-23.33);
-  TLine* l4 = new TLine(-1.5,-23.33,-1.5,-19.33);
-  l1->SetLineColor(2);
-  l1->SetLineWidth(4);
-  l1->Draw("SAME");
-  l2->SetLineColor(2);
-  l2->SetLineWidth(4);
-  l2->Draw("SAME");
-  l3->SetLineColor(2);
-  l3->SetLineWidth(4);
-  l3->Draw("SAME");
-  l4->SetLineColor(2);
-  l4->SetLineWidth(4);
-  l4->Draw("SAME");
 
 }
