@@ -54,6 +54,7 @@ class STPlot : public TObject
     void SetPadplaneTitle(TString title);
     void SetSideviewTitle(TString title);
 
+    void SetUseCut(Bool_t value);
     void SetTbLowCut(Int_t value);
     void SetADCHighCut(Double_t value);
 
@@ -96,7 +97,7 @@ class STPlot : public TObject
     STPSAFastFit *fPSA;
     TClonesArray *fHitArray;
 
-    Int_t fWindowStartTb;
+    Bool_t fUseCut;
     Double_t fADCThreshold;
 
   ClassDef(STPlot, 1);
