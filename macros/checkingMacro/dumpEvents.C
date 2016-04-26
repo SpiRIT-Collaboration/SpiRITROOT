@@ -140,7 +140,8 @@ void dumpEvents() {
   if (fStart == 0 && fEnd == 0)
     while (next());
   else {
-    for (Int_t iEvent = fStart; iEvent < fEnd; iEvent++)
-      next(iEvent);
+    next(fStart);
+    for (Int_t iEvent = fStart + 1; iEvent < fEnd; iEvent++)
+      next();
   }
 }
