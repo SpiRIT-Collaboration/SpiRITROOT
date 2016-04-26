@@ -126,11 +126,11 @@ void quickViewer() {
 
   fPlot = fCore -> GetSTPlot();
   if (fUseGainCalibration) {
-    fPlot -> SetPadplaneTitle("Event ID: %d (Gain calibrated) - Top view");
-    fPlot -> SetSideviewTitle("Event ID: %d (Gain calibrated) - Beam right view");
+    fPlot -> SetPadplaneTitle(Form("Run#%04d - Event ID: %d (Gain calibrated) - Top view", runNo));
+    fPlot -> SetSideviewTitle(Form("Run#%04d - Event ID: %d (Gain calibrated) - Beam right view", runNo));
   } else {
-    fPlot -> SetPadplaneTitle("Event ID: %d (Gain not calibrated) - Top view");
-    fPlot -> SetSideviewTitle("Event ID: %d (Gain not calibrated) - Beam right view");
+    fPlot -> SetPadplaneTitle(Form("Run#%04d - Event ID: %d (Gain not calibrated) - Top view", runNo));
+    fPlot -> SetSideviewTitle(Form("Run#%04d - Event ID: %d (Gain not calibrated) - Beam right view", runNo));
   }
   fPlot -> DrawPadplane();
   fPlot -> DrawSideview(fCore -> GetEventID());
