@@ -1,6 +1,8 @@
 #include "STClusterizerCurveTrack.hh"
 #include "STCurveTrack.hh"
 
+#define CLUSTERBYLAYER
+
 STClusterizerCurveTrack::STClusterizerCurveTrack()
 {
   fClusterArray = new TClonesArray("STHitCluster", 50);
@@ -67,6 +69,25 @@ STClusterizerCurveTrack::AnalyzeSingleTrack(STCurveTrack *track, TClonesArray *c
     return;
   }
 
+#ifdef CLUSTERBYLAYER
+  STHitSortLayer sorting;
+  std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
+
+  hit = hitArrayFromTrack -> at(0);
+  Int_t currentLayer = hit -> GetLayer();
+  cluster = NewCluster(hit, clusterArray);
+
+  for (Int_t iHit = 1; iHit < numHitsInTrack; iHit++)
+  {
+    hit = hitArrayFromTrack -> at(iHit);
+    if (hit -> GetLayer() != currentLayer)
+    {
+      currentLayer = hit -> GetLayer();
+      cluster = NewCluster(hit, clusterArray);
+    }
+    cluster -> AddHit(hit);
+  }
+#else
   Double_t xCenter = 0, zCenter = 0, radius = 0, rms = 0, rmsP = 0;
   Bool_t fitted = fRiemannFitter -> FitData(hitArrayFromTrack, xCenter, zCenter, radius, rms, rmsP);
 
@@ -124,6 +145,7 @@ STClusterizerCurveTrack::AnalyzeSingleTrack(STCurveTrack *track, TClonesArray *c
       cluster -> AddHit(curHit);
     }
   }
+#endif
 }
 
 STHitCluster*
