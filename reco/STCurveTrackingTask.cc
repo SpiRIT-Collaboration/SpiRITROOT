@@ -29,6 +29,12 @@ STCurveTrackingTask::STCurveTrackingTask()
   fLogger = FairLogger::GetLogger();
 }
 
+STCurveTrackingTask::STCurveTrackingTask(Bool_t persistence)
+:STCurveTrackingTask()
+{
+  fIsPersistence = persistence;
+}
+
 void STCurveTrackingTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
 
 STCurveTrackingTask::~STCurveTrackingTask()

@@ -31,10 +31,11 @@ using std::vector;
 class STHitClusteringTask : public FairTask
 {
   public:
-    STHitClusteringTask();
-    ~STHitClusteringTask();
-
     enum STClusterizerMode { kX, kScan, kScan2, kLT, kCT };
+
+    STHitClusteringTask();
+    STHitClusteringTask(Bool_t persistence, STClusterizerMode mode = STHitClusteringTask::kCT);
+    ~STHitClusteringTask();
 
     void SetVerbose(Int_t value = 1);
     

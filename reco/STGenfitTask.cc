@@ -56,12 +56,18 @@ STGenfitTask::STGenfitTask()
   fEventArray = NULL;
   fRiemannTrackArray = NULL;
 
-  fIsFindVertex = kFALSE;
+  fIsFindVertex = kTRUE;
   fVertexFactory = NULL;
 
   fIsDisplay = kFALSE;
 
   fGenfitTest = new STGenfitTest();
+}
+
+STGenfitTask::STGenfitTask(Bool_t persistence)
+:STGenfitTask()
+{
+  fIsPersistence = persistence;
 }
 
 STGenfitTask::~STGenfitTask()

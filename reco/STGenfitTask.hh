@@ -42,6 +42,7 @@
 class STGenfitTask : public FairTask {
   public:
     STGenfitTask();
+    STGenfitTask(Bool_t persistence);
     ~STGenfitTask();
 
     void SetMinIterations(Int_t value);

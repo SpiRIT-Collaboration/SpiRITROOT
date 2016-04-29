@@ -31,6 +31,7 @@ class STRiemannTrackingTask : public FairTask
 {
   public:
     STRiemannTrackingTask();
+    STRiemannTrackingTask(Bool_t persistence);
     ~STRiemannTrackingTask();
 
     /** Set sorting parameters

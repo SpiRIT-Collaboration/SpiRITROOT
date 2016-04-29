@@ -41,6 +41,13 @@ STPSATask::STPSATask()
   fLayerCut = 0;
 }
 
+STPSATask::STPSATask(Bool_t persistence, Double_t threshold)
+:STPSATask()
+{
+  fIsPersistence = persistence;
+  fThreshold = threshold;
+}
+
 STPSATask::~STPSATask()
 {
 }

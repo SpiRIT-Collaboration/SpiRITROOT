@@ -36,6 +36,13 @@ STSMTask::STSMTask()
   fSMMode = kChange;
 }
 
+STSMTask::STSMTask(Bool_t persistence, ESMMode mode)
+:STSMTask()
+{
+  fIsPersistence = persistence;
+  fSMMode = mode;
+}
+
 STSMTask::~STSMTask()
 {
 }

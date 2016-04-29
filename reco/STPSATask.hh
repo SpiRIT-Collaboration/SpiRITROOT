@@ -25,6 +25,7 @@ class STPSATask : public FairTask
 {
   public:
     STPSATask();
+    STPSATask(Bool_t persistence, Double_t threshold);
     ~STPSATask();
 
     enum STPSAMode { kSimple, kAll, kLayer, kOPTICS ,kDF, kFast, kFastFit};

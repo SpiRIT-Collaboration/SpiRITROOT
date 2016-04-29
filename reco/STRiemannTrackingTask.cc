@@ -54,6 +54,14 @@ STRiemannTrackingTask::STRiemannTrackingTask()
   fLogger = FairLogger::GetLogger();
 
   UseDefaultParameterSet();
+
+  SetSortingParameters(kTRUE,STRiemannSort::kSortZ, 0);
+}
+
+STRiemannTrackingTask::STRiemannTrackingTask(Bool_t persistence)
+:STRiemannTrackingTask()
+{
+  fIsPersistence = persistence;
 }
 
 STRiemannTrackingTask::~STRiemannTrackingTask()

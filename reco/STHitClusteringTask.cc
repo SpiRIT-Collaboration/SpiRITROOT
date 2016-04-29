@@ -40,7 +40,14 @@ STHitClusteringTask::STHitClusteringTask()
   fSetSigmaCut = kFALSE;
   fSetEdgeCut  = kFALSE;
 
-  fClusterizerMode = kScan2;
+  fClusterizerMode = kCT;
+}
+
+STHitClusteringTask::STHitClusteringTask(Bool_t persistence, STClusterizerMode mode)
+:STHitClusteringTask()
+{
+  fIsPersistence = persistence;
+  fClusterizerMode = mode;
 }
 
 STHitClusteringTask::~STHitClusteringTask()

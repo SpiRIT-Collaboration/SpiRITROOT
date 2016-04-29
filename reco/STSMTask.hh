@@ -26,10 +26,11 @@
 
 class STSMTask : public FairTask {
   public:
-    STSMTask();
-    ~STSMTask();
-
     enum ESMMode { kChange, kRestore };
+
+    STSMTask();
+    STSMTask(Bool_t persistence, ESMMode mode = STSMTask::kChange);
+    ~STSMTask();
 
     virtual InitStatus Init();
     virtual void SetParContainers();

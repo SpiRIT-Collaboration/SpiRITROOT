@@ -27,6 +27,7 @@ class STCurveTrackingTask : public FairTask
 {
   public:
     STCurveTrackingTask();
+    STCurveTrackingTask(Bool_t persistence);
     ~STCurveTrackingTask();
 
     virtual InitStatus Init();
