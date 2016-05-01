@@ -37,12 +37,13 @@ class STGenfitTest
     void SetMaxIterations(Int_t value);
 
     genfit::Track* FitTrack(STTrack *recoTrack, STEvent *event, STRiemannTrack *riemannTrack);
+    void SetTrackParameters(STTrack *recotrack, genfit::Track *genfitTrack, STEvent *event, STRiemannTrack *riemannTrack);
+
     Bool_t SetTrack(STEvent *event, STTrack *recoTrack);
     Bool_t ExtrapolateTrack(Double_t distance, TVector3 &position);
 
   private:
     Bool_t ProcessTrack(genfit::Track *genfitTrack);
-    void SetTrackParameters(STTrack *recotrack, genfit::Track *genfitTrack, STEvent *event, STRiemannTrack *riemannTrack);
     void FindAndSetExtrapolation(STTrackCandidate *recoTrackCand);
     Bool_t CalculatedEdxFromRiemann(STEvent *event, STRiemannTrack *track, Double_t &totalLength, Double_t &totaldEdx);
     Bool_t CalculatedEdx(STTrack *recoTrack, genfit::Track *genfitTrack);

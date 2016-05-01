@@ -286,7 +286,6 @@ STGenfitTest::FindAndSetExtrapolation(STTrackCandidate *recoTrackCand)
     posTarget = fCurrentFitState.getPos();
     recoTrackCand -> SetBeamVertex(posTarget*10.);
   } catch (genfit::Exception &e) {
-    return;
   }
 
   TVector3 posKyotoL(-99999,-99999,-99999);
@@ -295,7 +294,6 @@ STGenfitTest::FindAndSetExtrapolation(STTrackCandidate *recoTrackCand)
     posKyotoL = fCurrentFitState.getPos();
     recoTrackCand -> SetKyotoLHit(posKyotoL*10.);
   } catch (genfit::Exception &e) {
-    return;
   }
 
   TVector3 posKyotoR(-99999,-99999,-99999);
@@ -304,7 +302,6 @@ STGenfitTest::FindAndSetExtrapolation(STTrackCandidate *recoTrackCand)
     posKyotoR = fCurrentFitState.getPos();
     recoTrackCand -> SetKyotoRHit(posKyotoR*10.);
   } catch (genfit::Exception &e) {
-    return;
   }
 
   TVector3 posKatana(-99999,-99999,-99999);
@@ -313,7 +310,6 @@ STGenfitTest::FindAndSetExtrapolation(STTrackCandidate *recoTrackCand)
     posKatana = fCurrentFitState.getPos();
     recoTrackCand -> SetKatanaHit(posKatana*10.);
   } catch (genfit::Exception &e) {
-    return;
   }
 
 }
