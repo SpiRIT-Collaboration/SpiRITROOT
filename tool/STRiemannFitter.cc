@@ -36,14 +36,14 @@ STRiemannFitter::FitData(std::vector<STHit*> *hitArray,
     yMean = (weightSum / (weightSum + w)) * yMean + (w * y / (weightSum + w));
 
     if (weightSum != 0) {
-      xCov = (weightSum / (weightSum + w)) * xCov + (w * (x - xMean) / weightSum);
-      yCov = (weightSum / (weightSum + w)) * yCov + (w * (y - yMean) / weightSum);
+      xCov = (weightSum / (weightSum + w)) * xCov + (w * (x - xMean) * (x - xMean) / weightSum);
+      yCov = (weightSum / (weightSum + w)) * yCov + (w * (y - yMean) * (y - yMean) / weightSum);
     }
 
     weightSum += w;
   }
 
-  Double_t RSR = 2*sqrt((xCov * xCov) + (yCov * yCov));
+  Double_t RSR = 2 * sqrt(xCov + yCov);
 
   Double_t xMapMean  = 0;
   Double_t yMapMean  = 0;
@@ -204,14 +204,14 @@ STRiemannFitter::Fit(std::vector<TVector3> *data,
     yMean = (weightSum / (weightSum + w)) * yMean + (w * y / (weightSum + w));
 
     if (weightSum != 0) {
-      xCov = (weightSum / (weightSum + w)) * xCov + (w * (x - xMean) / weightSum);
-      yCov = (weightSum / (weightSum + w)) * yCov + (w * (y - yMean) / weightSum);
+      xCov = (weightSum / (weightSum + w)) * xCov + (w * (x - xMean) * (x - xMean) / weightSum);
+      yCov = (weightSum / (weightSum + w)) * yCov + (w * (y - yMean) * (y - yMean) / weightSum);
     }
 
     weightSum += w;
   }
 
-  Double_t RSR = 2*sqrt((xCov * xCov) + (yCov * yCov));
+  Double_t RSR = 2*sqrt(xCov + yCov);
 
   Double_t xMapMean  = 0;
   Double_t yMapMean  = 0;
