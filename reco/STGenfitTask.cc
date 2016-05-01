@@ -175,8 +175,10 @@ STGenfitTask::Exec(Option_t *opt)
     fVertexFactory -> findVertices(&vertices, genfitTrackArray);
 
     for (UInt_t iVert = 0; iVert < vertices.size(); iVert++) {
-      event -> AddVertex(vertices[iVert]);
-      delete vertices[iVert];
+      genfit::GFRaveVertex* vtx = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
+      new ((*fVertexArray)[iVert]) genfit::GFRaveVertex(*vtx);
+      event -> AddVertex(vtx);
+      delete vtx;
     }
   }
 
