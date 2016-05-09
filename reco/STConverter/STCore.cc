@@ -269,21 +269,22 @@ void STCore::ProcessCobo(Int_t coboIdx)
         for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
           pad -> SetRawADC(iTb, rawadc[iTb]);
 
-        pad -> SetPedestalSubtracted(kTRUE);
-
         Int_t fpnCh = GetFPNChannel(iCh);
+        Double_t adc[512] = {0};
         if (!fIsGGNoiseGenerationMode) {
           if (!fIsSetGGNoiseData)
-            fPedestalPtr[coboIdx] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, pad -> GetADC(), fFPNSigmaThreshold);
+            fPedestalPtr[coboIdx] -> SubtractPedestal(fNumTbs, frame -> GetSample(iAget, fpnCh), rawadc, adc, fFPNSigmaThreshold);
           else
-            fGGNoisePtr[coboIdx] -> SubtractNoise(row, layer, rawadc, pad -> GetADC());
+            fGGNoisePtr[coboIdx] -> SubtractNoise(row, layer, rawadc, adc);
         }
 
         if (fIsGainCalibrationData)
-          fGainCalibrationPtr[coboIdx] -> CalibrateADC(row, layer, fNumTbs, pad -> GetADC());
+          fGainCalibrationPtr[coboIdx] -> CalibrateADC(row, layer, fNumTbs, adc);
 
-//        for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-//          pad -> SetADC(iTb, adc[iTb]);
+        for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+          pad -> SetADC(iTb, adc[iTb]);
+
+        pad -> SetPedestalSubtracted(kTRUE);
       }
     }
   }
