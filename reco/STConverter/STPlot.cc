@@ -91,8 +91,6 @@ Bool_t STPlot::CheckEvent()
 void STPlot::SetEvent(STRawEvent *anEvent)
 {
   fEvent = anEvent;
-
-  std::cerr << "== [STPlot] Default number of time buckets is 512." << std::endl;
 }
 
 void STPlot::SetNumTbs(Int_t numTbs)
@@ -398,11 +396,11 @@ void STPlot::DrawLayer(Int_t layerNo)
     Double_t *adc = aPad -> GetADC();
 
     for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
-      fLayerHist -> SetBinContent(108 - aPad -> GetRow(), fNumTbs - iTb, aPad -> GetADC(iTb));
+      fLayerHist -> SetBinContent(108 - aPad -> GetRow(), 512 - iTb, aPad -> GetADC(iTb));
   }
 
   fLayerHist -> SetTitle(Form("Event ID: %d - Layer: %d - Upstream view", fEvent -> GetEventID(), layerNo));
-  fLayerHist -> GetYaxis() -> SetRangeUser(0, -fNumTbs);
+  fLayerHist -> GetYaxis() -> SetRangeUser(-fNumTbs, 0);
 
   fLayerCvs -> Modified();
   fLayerCvs -> Update();
