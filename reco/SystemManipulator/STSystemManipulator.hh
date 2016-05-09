@@ -29,6 +29,8 @@ class STSystemManipulator {
     STEvent *Change(STEvent *event);
     STEvent *Restore(STEvent *event);
 
+    void Change(TClonesArray *in, TClonesArray *out);
+
   private:
     void Translate(TVector3 &vector, Bool_t restore = 0);
     void Exchange(TVector3 &vector, Bool_t restore = 0);

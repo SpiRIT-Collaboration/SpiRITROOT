@@ -85,6 +85,29 @@ STSystemManipulator::Change(STEvent *event)
   return newEvent;
 }
 
+void
+STSystemManipulator::Change(TClonesArray *in, TClonesArray *out)
+{
+  Int_t numClusters = in -> GetEntriesFast();
+  for (Int_t iCluster = 0; iCluster < numClusters; iCluster++) {
+    STHitCluster *hit = (STHitCluster *) in -> At(iCluster);
+    STHitCluster *smhit = new ((*out)[out->GetEntriesFast()]) STHitCluster(hit);
+
+    TVector3 pos = smhit -> GetPosition();
+    Translate(pos);
+    Exchange(pos);
+    smhit -> SetPosition(pos);
+
+    TVector3 posSigma = smhit -> GetPosSigma();
+    Exchange(posSigma);
+    smhit -> SetPosSigma(posSigma);
+
+    TMatrixD covMatrix = smhit -> GetCovMatrix();
+    Exchange(covMatrix);
+    smhit -> SetCovMatrix(covMatrix);
+  }
+}
+
 STEvent *
 STSystemManipulator::Restore(STEvent *event)
 {
