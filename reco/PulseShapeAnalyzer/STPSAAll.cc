@@ -52,7 +52,7 @@ STPSAAll::Analyze(STRawEvent *rawEvent, STEvent *event)
 
     fPad = rawEvent -> GetPad(iPad);
 
-    if (fPad -> GetLayer() <= fLayerCut) {
+    if (fPad -> GetLayer() <= fLayerLowCut) {
       lock.unlock();
       continue;
     }

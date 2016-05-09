@@ -25,6 +25,7 @@ class STPSAFastFit : public STPSA, public STPulse
     STPSAFastFit();
 
     void Analyze(STRawEvent *rawEvent, STEvent *event);
+    void Analyze(STRawEvent *rawEvent, TClonesArray *hitArray);
     void PadAnalyzer(TClonesArray *hitArray);
 
     /** 

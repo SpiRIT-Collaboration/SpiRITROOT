@@ -30,7 +30,7 @@ STPSADF::Analyze(STRawEvent *rawEvent, STEvent *event)
     STPad *pad = rawEvent -> GetPad(iPad);
 
     Int_t layer = pad -> GetLayer();
-    if (layer <= fLayerCut)
+    if (layer <= fLayerLowCut)
       continue;
 
     Double_t xPos = CalculateX(pad -> GetRow());

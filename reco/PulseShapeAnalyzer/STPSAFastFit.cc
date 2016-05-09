@@ -64,7 +64,7 @@ STPSAFastFit::Analyze(STRawEvent *rawEvent, STEvent *event)
 
     fPad = rawEvent -> GetPad(iPad);
 
-    if (fPad -> GetLayer() <= fLayerCut) {
+    if (fPad -> GetLayer() <= fLayerLowCut) {
       lock.unlock();
       continue;
     }
@@ -106,7 +106,88 @@ STPSAFastFit::Analyze(STRawEvent *rawEvent, STEvent *event)
     for (Int_t iHit = 0; iHit < numHits; iHit++) {
       STHit *hit = (STHit *) fThreadHitArray[iThread] -> At(iHit);
       hit -> SetHitID(hitNum++);
+
+      Double_t x = hit -> GetZ();
+      Double_t y = hit -> GetY();
+
       event -> AddHit(hit);
+    }
+  }
+}
+
+void
+STPSAFastFit::Analyze(STRawEvent *rawEvent, TClonesArray *hitArray)
+{
+  fPadReady = kFALSE;
+  fPadTaken = kFALSE;
+  fEnd = kFALSE;
+
+  Int_t numPads = rawEvent -> GetNumPads();
+
+#ifdef DEBUG
+  LOG(INFO) << "Start to create threads!" << FairLogger::endl;
+#endif
+
+  std::thread thread[NUMTHREAD];
+  for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++)
+    thread[iThread] = std::thread([this](TClonesArray *array) { this -> PadAnalyzer(array); }, fThreadHitArray[iThread]);
+
+#ifdef DEBUG
+  LOG(INFO) << "Successfully created threads!" << FairLogger::endl;
+#endif
+
+  for (Int_t iPad = 0; iPad < numPads; iPad++) {
+    std::unique_lock<std::mutex> lock(fMutex);
+
+    fPad = rawEvent -> GetPad(iPad);
+
+    if (fPad -> GetLayer() <= fLayerLowCut) {
+      lock.unlock();
+      continue;
+    }
+
+    fPadReady = kTRUE;
+    fPadTaken = kFALSE;
+
+#ifdef DEBUG
+  LOG(INFO) << "Passing pad: " << iPad << FairLogger::endl;
+#endif
+
+    fCondVariable.notify_one();
+    fCondVariable.wait(lock, [this] { return fPadTaken; });
+  }
+
+#ifdef DEBUG
+  LOG(INFO) << "Scheduling analysis is done! Join the threads." << FairLogger::endl;
+#endif
+
+  fEnd = kTRUE;
+  for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++) {
+
+#ifdef DEBUG
+  LOG(INFO) << "Thread: " << iThread << " is not joinable!"  << FairLogger::endl;
+#endif
+
+      fCondVariable.notify_all();
+      thread[iThread].join();
+  }
+
+#ifdef DEBUG
+  LOG(INFO) << "Joining completed! Merging data!"  << FairLogger::endl;
+#endif
+
+  Int_t hitNum = 0;
+  for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++) {
+    Int_t numHits = fThreadHitArray[iThread] -> GetEntriesFast();
+
+    for (Int_t iHit = 0; iHit < numHits; iHit++) {
+      STHit *hit = (STHit *) fThreadHitArray[iThread] -> At(iHit);
+      hit -> SetHitID(hitNum++);
+
+      Double_t x = hit -> GetZ();
+      Double_t y = hit -> GetY();
+
+      new ((*hitArray)[hitArray->GetEntriesFast()]) STHit(hit);
     }
   }
 }

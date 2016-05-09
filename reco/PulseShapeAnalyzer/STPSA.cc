@@ -127,7 +127,11 @@ void STPSA::SetThreshold(Double_t threshold)
   if (fThresholdOneTbStep < 1) 
     fThresholdOneTbStep = 1;
 }
-void STPSA::SetLayerCut(Int_t layerCut)      { fLayerCut = layerCut; }
+void STPSA::SetLayerCut(Int_t layerLowCut, Int_t layerHighCut)
+{ 
+  fLayerLowCut = layerLowCut; 
+  fLayerHighCut = layerHighCut; 
+}
 
 Double_t
 STPSA::CalculateX(Double_t row)

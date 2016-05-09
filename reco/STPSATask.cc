@@ -38,7 +38,8 @@ STPSATask::STPSATask()
 
   fPSAMode = kFastFit;
   fThreshold = 0;
-  fLayerCut = 0;
+  fLayerLowCut = -1;
+  fLayerHighCut = 112;
 }
 
 STPSATask::STPSATask(Bool_t persistence, Double_t threshold)
@@ -55,7 +56,12 @@ STPSATask::~STPSATask()
 void STPSATask::SetPersistence(Bool_t value)     { fIsPersistence = value; }
 void STPSATask::SetPSAMode(STPSAMode mode)       { fPSAMode = mode; }
 void STPSATask::SetThreshold(Double_t threshold) { fThreshold = threshold; }
-void STPSATask::SetLayerCut(Double_t layerCut)   { fLayerCut = layerCut; }
+void STPSATask::SetLayerCut(Int_t lowCut, Int_t highCut)
+{
+  fLayerLowCut = lowCut;
+  fLayerHighCut = highCut;
+}
+
 
 STPSA* STPSATask::GetPSA() { return fPSA; }
 
@@ -108,7 +114,7 @@ STPSATask::Init()
 
 
   fPSA -> SetThreshold((Int_t)fThreshold);
-  fPSA -> SetLayerCut(fLayerCut);
+  fPSA -> SetLayerCut(fLayerLowCut, fLayerHighCut);
 
   ioMan -> Register("STEvent", "SPiRIT", fEventArray, fIsPersistence);
 

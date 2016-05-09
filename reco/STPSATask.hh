@@ -32,7 +32,7 @@ class STPSATask : public FairTask
 
     void SetPSAMode(STPSAMode mode);
     void SetThreshold(Double_t threshold);
-    void SetLayerCut(Double_t layerCut);
+    void SetLayerCut(Int_t lowCut, Int_t highCut);
 
     virtual InitStatus Init();
     virtual void SetParContainers();
@@ -52,7 +52,8 @@ class STPSATask : public FairTask
     STPSAMode fPSAMode;
     
     Double_t fThreshold;
-    Int_t    fLayerCut;
+    Int_t    fLayerLowCut;
+    Int_t    fLayerHighCut;
 
     STDigiPar *fPar;   //!
     FairLogger *fLogger;   //!

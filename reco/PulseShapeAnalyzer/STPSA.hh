@@ -38,9 +38,10 @@ class STPSA
 
     //! Setting threshold
     void SetThreshold(Double_t threshold);
-    void SetLayerCut(Int_t layerCut);
+    void SetLayerCut(Int_t layerLowCut, Int_t layerHighCut = 112);
 
     virtual void Analyze(STRawEvent *rawEvent, STEvent *event) = 0;
+    virtual void Analyze(STRawEvent *rawEvent, TClonesArray *hitArray) {};
     virtual void LSLFit(Int_t numPoints, Double_t *x, Double_t *y, Double_t &constant, Double_t &slope, Double_t &chi2);
 
     void SetWindowStartTb(Int_t value);
@@ -66,7 +67,8 @@ class STPSA
 
     Double_t fThresholdOneTbStep; ///< threshold of ADC value
     Double_t fThreshold;          ///< threshold of ADC value
-    Int_t fLayerCut;
+    Int_t fLayerLowCut;
+    Int_t fLayerHighCut;
 
     Double_t CalculateX(Double_t row);      ///< Calculate x position in mm. This returns the center position of given pad row.
     Double_t CalculateY(Double_t peakIdx);  ///< Calculate y position in mm using the peak index.
