@@ -18,5 +18,7 @@
 #pragma link C++ class STCurveTrack+;
 #pragma link C++ class STTrack+;
 #pragma link C++ class STTrackCandidate+;
+#pragma link C++ class STEventHeader+;
+#pragma link C++ class STHelixTrack+;
 
 #endif
