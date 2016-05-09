@@ -48,10 +48,6 @@ STHit::STHit(STHit *hit)
   fNDF = hit -> GetNDF();
 }
 
-STHit::~STHit()
-{
-}
-
 void STHit::Clear(Option_t *)
 {
   fIsClustered = kFALSE;

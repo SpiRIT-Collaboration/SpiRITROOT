@@ -21,7 +21,7 @@ class STHit : public TObject
     STHit(STHit *hit);
     STHit(Int_t hitID, TVector3 vec, Double_t charge);
     STHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t charge);
-    ~STHit();
+    virtual ~STHit() {}
 
     /// Hit setter
     void SetHit(Int_t hitID, TVector3 vec, Double_t charge);
@@ -32,7 +32,7 @@ class STHit : public TObject
 
     void SetIsClustered(Bool_t value = kTRUE);               ///< Clustered flag setter
     void SetHitID(Int_t hitID);                              ///< Hit ID setter
-    void SetClusterID(Int_t clusterID);                      ///< Cluster stter
+    virtual void SetClusterID(Int_t clusterID);              ///< Cluster stter
     void SetTrackID(Int_t trackID);                          ///< Track ID setter
     void SetX(Double_t x);                                   ///< x position setter
     void SetY(Double_t y);                                   ///< y position setter

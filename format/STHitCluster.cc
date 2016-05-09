@@ -33,10 +33,12 @@ STHitCluster::STHitCluster()
 
 STHitCluster::STHitCluster(STHitCluster *cluster)
 {
+  fIsClustered = cluster -> IsClustered();
   fClusterID = cluster -> GetClusterID();
+  fTrackID = cluster -> GetTrackID();
 
   fX = cluster -> GetX();
-  fY = cluster -> GetZ();
+  fY = cluster -> GetY();
   fZ = cluster -> GetZ();
   fDx = cluster -> GetDx();
   fDy = cluster -> GetDy();
@@ -49,10 +51,6 @@ STHitCluster::STHitCluster(STHitCluster *cluster)
   fHitPtrArray = *(cluster -> GetHitPtrs());
 
   fCharge = cluster -> GetCharge();
-}
-
-STHitCluster::~STHitCluster()
-{
 }
 
 void STHitCluster::SetCovMatrix(TMatrixD matrix) { fCovMatrix = matrix; } 
@@ -142,3 +140,10 @@ void STHitCluster::CalculateCovMatrix(TVector3 hitPos)
   }
 }
 */
+
+void STHitCluster::SetClusterID(Int_t clusterID)
+{
+  STHit::SetClusterID(clusterID);
+  for (auto hit : fHitPtrArray)
+    hit -> SetClusterID(clusterID);
+}

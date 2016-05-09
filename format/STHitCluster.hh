@@ -23,7 +23,7 @@ class STHitCluster : public STHit
   public:
     STHitCluster();
     STHitCluster(STHitCluster *cluster);
-    ~STHitCluster();
+    virtual ~STHitCluster() {}
 
     void SetCovMatrix(TMatrixD matrix);  ///< Set covariance matrix
 
@@ -33,6 +33,8 @@ class STHitCluster : public STHit
     vector<STHit*> *GetHitPtrs();
 
     virtual void AddHit(STHit *hit);             ///< Add hit to cluster
+
+    virtual void SetClusterID(Int_t clusterID);
 
   protected:
     TMatrixD fCovMatrix;                 ///< Cluster covariance matrix
