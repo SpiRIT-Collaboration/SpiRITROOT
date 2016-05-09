@@ -4,6 +4,15 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
+#pragma link C++ class STRecoTask+;
+#pragma link C++ class STEventPreviewTask+;
+#pragma link C++ class STPSAETask+;
+#pragma link C++ class STCurveTrackingETask+;
+#pragma link C++ class STHitClusteringCTTask+;
+#pragma link C++ class STSMETask+;
+#pragma link C++ class STRiemannTrackingETask+;
+#pragma link C++ class STGenfitETask+;
+
 #pragma link C++ class GETDecoder+;
 #pragma link C++ class GETFrameInfo+;
 #pragma link C++ class GETHeaderBase+;
@@ -73,6 +82,7 @@
 
 #pragma link C++ class genfit::STSpacepointMeasurement+;
 #pragma link C++ class STGenfitTest+;
+#pragma link C++ class STGenfitTestE+;
 #pragma link C++ class STGenfitTask+;
 
 #pragma link C++ class STSource+;

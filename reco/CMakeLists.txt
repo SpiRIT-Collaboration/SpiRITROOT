@@ -23,6 +23,8 @@ ${CMAKE_SOURCE_DIR}/reco/Genfit
 ${CMAKE_SOURCE_DIR}/reco/Tracking
 ${CMAKE_SOURCE_DIR}/reco/LinearTracking
 ${CMAKE_SOURCE_DIR}/reco/CurveTracking
+${CMAKE_SOURCE_DIR}/reco/HelixTracker
+${CMAKE_SOURCE_DIR}/reco/Task
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -39,6 +41,15 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
+Task/STRecoTask.cc
+Task/STEventPreviewTask.cc
+Task/STPSAETask.cc
+Task/STCurveTrackingETask.cc
+Task/STHitClusteringCTTask.cc
+Task/STSMETask.cc
+Task/STRiemannTrackingETask.cc
+Task/STGenfitETask.cc
+
 GETDecoder/GETDecoder.cc
 GETDecoder/GETFrameInfo.cc
 
@@ -96,6 +107,7 @@ HoughTracking/STHoughSpaceHelix.cc
 
 Genfit/STSpacepointMeasurement.cc
 Genfit/STGenfitTest.cc
+Genfit/STGenfitTestE.cc
 
 Tracking/STVTrackFinder.cc
 
