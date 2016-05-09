@@ -18,6 +18,7 @@ class STClusterizerCurveTrack : public STClusterizer
     ~STClusterizerCurveTrack();
 
     void AnalyzeTrack(TClonesArray* trackArray, STEvent* eventOut);
+    void AnalyzeTrack(TClonesArray *trackArray, TClonesArray *clusterArray);
     void AnalyzeSingleTrack(STCurveTrack *track, TClonesArray *clusterArray);
 
   private:

@@ -49,6 +49,40 @@ STClusterizerCurveTrack::AnalyzeTrack(TClonesArray* trackArray, STEvent* eventOu
 }
 
 void 
+STClusterizerCurveTrack::AnalyzeTrack(TClonesArray *trackArray, TClonesArray *clusterArray)
+{
+  Int_t numTracks = trackArray -> GetEntries();
+
+  Int_t index = 0;
+
+  for (Int_t iTrack = 0; iTrack < numTracks; iTrack++)
+  {
+    fClusterArray -> Clear();
+
+    STCurveTrack *track = (STCurveTrack*) trackArray -> At(iTrack);
+    AnalyzeSingleTrack(track, fClusterArray);
+
+    Int_t numClusters = fClusterArray -> GetEntriesFast();
+    for (Int_t iCluster = 0; iCluster < numClusters; iCluster++)
+    {
+      STHitCluster *cluster = (STHitCluster *) fClusterArray -> At(iCluster);
+
+      Double_t x = (cluster -> GetPosition()).X();
+      if (x > fXHighCut || x < fXLowCut) {
+        continue;
+      }
+
+      cluster -> SetClusterID(index);
+      STHitCluster *in = new ((*clusterArray)[index]) STHitCluster(cluster);
+      in -> SetClusterID(index);
+      track -> AddCluster(in);
+
+      index++;
+    }
+  }
+}
+
+void 
 STClusterizerCurveTrack::AnalyzeSingleTrack(STCurveTrack *track, TClonesArray *clusterArray)
 {
   Int_t numHitsInTrack = track -> GetNumHits();
