@@ -71,6 +71,8 @@ class STDecoderTask : public FairTask {
     void SetUseSeparatedData(Bool_t value = kTRUE);
     /// Setting event id for STSource
     void SetEventID(Long64_t eventid = -1);
+    /// Setting raw data file list
+    void SetDataList(TString list);
 
     Long64_t GetEventID();
 

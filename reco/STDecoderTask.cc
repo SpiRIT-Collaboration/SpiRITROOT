@@ -71,6 +71,21 @@ void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_
 void STDecoderTask::SetUseSeparatedData(Bool_t value)                                         { fIsSeparatedData = value; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
 
+void STDecoderTask::SetDataList(TString list)
+{
+  std::ifstream listFile(list.Data());
+  TString dataFileWithPath;
+  Int_t iCobo = -1;
+  while (dataFileWithPath.ReadLine(listFile)) {
+    if (dataFileWithPath.Contains("s."))
+      this -> AddData(dataFileWithPath, iCobo);
+    else {
+      iCobo++;
+      this -> AddData(dataFileWithPath, iCobo);
+    }
+  }
+}
+
 Long64_t STDecoderTask::GetEventID() { return fEventIDLast; }
 
 InitStatus
