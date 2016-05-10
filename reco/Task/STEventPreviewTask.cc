@@ -67,7 +67,7 @@ void STEventPreviewTask::LayerTest(STRawEvent *rawEvent)
 
     Double_t *adc = pad -> GetADC();
     for (Int_t iTb = 100; iTb < 130; iTb++)
-      charge[pad -> GetLayer()/28+1] += adc[iTb];
+      charge[pad -> GetLayer()/28] += adc[iTb];
   }
 
   if (charge[0] > charge[1] && charge[1] > charge[2] && charge[2] > charge[3])
