@@ -8,7 +8,7 @@ class STEventPreviewTask : public STRecoTask
 {
   public:
     STEventPreviewTask();
-    STEventPreviewTask(Bool_t persistence);
+    STEventPreviewTask(Bool_t persistence, Bool_t identifyEvent = false);
 
     ~STEventPreviewTask();
 
@@ -20,6 +20,8 @@ class STEventPreviewTask : public STRecoTask
 
   private:
     TClonesArray *fRawEventArray = nullptr;
+
+    Bool_t fIdentifyEvent = false;
 
   ClassDef(STEventPreviewTask, 1)
 };

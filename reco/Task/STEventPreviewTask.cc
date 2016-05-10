@@ -8,9 +8,10 @@ STEventPreviewTask::STEventPreviewTask()
 {
 }
 
-STEventPreviewTask::STEventPreviewTask(Bool_t persistence)
+STEventPreviewTask::STEventPreviewTask(Bool_t persistence, Bool_t identifyEvent)
 : STRecoTask("Event Preivew Task", 1, persistence)
 {
+  fIdentifyEvent = identifyEvent;
 }
 
 STEventPreviewTask::~STEventPreviewTask()
@@ -40,9 +41,11 @@ void STEventPreviewTask::Exec(Option_t *opt)
 
   STRawEvent *rawEvent = (STRawEvent *) fRawEventArray -> At(0);
   fEventHeader -> SetEventID(rawEvent -> GetEventID());
-  LayerTest(rawEvent);
 
-  TString status = "Not set";
+  if (fIdentifyEvent)
+    LayerTest(rawEvent);
+
+  TString status = "Unidentified Event";
        if (fEventHeader -> IsEmptyEvent())        status = "Empty Event";
   else if (fEventHeader -> IsCollisionEvent())    status = "Collision Event";
   else if (fEventHeader -> IsActiveTargetEvent()) status = "Active Target Event";
