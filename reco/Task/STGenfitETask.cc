@@ -18,9 +18,10 @@ STGenfitETask::STGenfitETask()
 {
 }
 
-STGenfitETask::STGenfitETask(Bool_t persistence)
+STGenfitETask::STGenfitETask(Bool_t persistence, Bool_t removeNoVertexEvent)
 : STRecoTask("GENFIT Task", 1, persistence)
 {
+  fRemoveNoVertexEvent = removeNoVertexEvent;
 }
 
 STGenfitETask::~STGenfitETask()
@@ -139,12 +140,16 @@ void STGenfitETask::Exec(Option_t *opt)
     delete vertex;
   }
 
-  Int_t numRecoTracks = fTrackArray -> GetEntriesFast();
-  for (Int_t iReco = 0; iReco < numRecoTracks; iReco++)
+  if (fRemoveNoVertexEvent)
   {
-    STTrack *recoTrack = (STTrack *) fTrackArray -> At(iReco);
-    if (recoTrack -> GetParentID() < 0)
-      fTrackArray -> Remove(recoTrack);
+    Int_t numRecoTracks = fTrackArray -> GetEntriesFast();
+    for (Int_t iReco = 0; iReco < numRecoTracks; iReco++) {
+      STTrack *recoTrack = (STTrack *) fTrackArray -> At(iReco);
+      if (recoTrack -> GetParentID() < 0)
+        fTrackArray -> Remove(recoTrack);
+    }
+    fTrackArray -> Compress();
   }
-  fTrackArray -> Compress();
 }
+
+void STGenfitETask::SetRemoveNoVertexEvent(Bool_t val) { fRemoveNoVertexEvent = val; }

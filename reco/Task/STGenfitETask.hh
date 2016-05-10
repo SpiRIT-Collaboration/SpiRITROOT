@@ -9,7 +9,7 @@ class STGenfitETask : public STRecoTask
 {
   public:
     STGenfitETask();
-    STGenfitETask(Bool_t persistence);
+    STGenfitETask(Bool_t persistence, Bool_t removeNoVertexEvent = false);
     ~STGenfitETask();
 
     void SetIterationCut(Int_t min, Int_t max);
@@ -17,13 +17,15 @@ class STGenfitETask : public STRecoTask
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
 
-    void SetTargetPlane(TVector3 position, TVector3 normal);
+    void SetRemoveNoVertexEvent(Bool_t val = true);
 
   private:
     TClonesArray *fTrackArray = nullptr;
     TClonesArray *fVertexArray = nullptr;
     TClonesArray *fRiemannTrackArray = nullptr;
     TClonesArray *fHitClusterArray = nullptr;
+
+    Bool_t fRemoveNoVertexEvent = false;
 
     STGenfitTestE *fGenfitTest;
 
