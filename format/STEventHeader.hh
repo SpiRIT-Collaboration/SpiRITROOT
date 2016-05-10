@@ -7,6 +7,7 @@ class STEventHeader : public TNamed
 {
   public:
     STEventHeader();
+    virtual ~STEventHeader() {};
 
     virtual void Clear(Option_t *option = "");
     virtual void Print(Option_t *option = "") const;
