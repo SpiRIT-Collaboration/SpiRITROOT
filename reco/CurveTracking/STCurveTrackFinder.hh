@@ -20,8 +20,10 @@ class STCurveTrackFinder : public STVTrackFinder
     ~STCurveTrackFinder() {}
 
     void BuildTracks(STEvent *event, TClonesArray *trackArray);
+    void BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray);
 
     void Init(STEvent *event, TClonesArray *trackArray);
+    void Init(TClonesArray *hitArray, TClonesArray *trackArray);
     Bool_t AnaNextHit();
 
   private:

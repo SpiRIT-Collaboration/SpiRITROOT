@@ -31,7 +31,7 @@ STCurveTrackFinder::STCurveTrackFinder()
   fTrackArrayTemp2 = new TClonesArray("STCurveTrack", 20);
 }
 
-void 
+void
 STCurveTrackFinder::BuildTracks(STEvent *event, TClonesArray *trackArray)
 {
   fTrackArrayTemp1 -> Clear("C");
@@ -56,7 +56,32 @@ STCurveTrackFinder::BuildTracks(STEvent *event, TClonesArray *trackArray)
   }
 }
 
-void 
+void
+STCurveTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray)
+{
+  fTrackArrayTemp1 -> Clear("C");
+  fTrackArrayTemp2 -> Clear("C");
+
+  Init(hitArray, fTrackArrayTemp1);
+  while (AnaNextHit()) {}
+
+  fTrackArrayAna = fTrackArrayTemp2;
+  Int_t numTracks = fTrackArrayTemp1 -> GetEntriesFast();
+
+  fNumTracks = 0;
+  for (Int_t iTrack = 0; iTrack < numTracks; iTrack++)
+  {
+    STCurveTrack *track = (STCurveTrack *) fTrackArrayTemp1 -> At(iTrack);
+
+    fTrackArrayAna -> Clear();
+    fHitBufferAna = track -> GetHitPointerArray();
+
+    while (AnaNextHit()) {}
+    trackArray -> AbsorbObjects(fTrackArrayAna);
+  }
+}
+
+void
 STCurveTrackFinder::Init(STEvent *event, TClonesArray *trackArray)
 {
   fTrackArrayAna = trackArray;
@@ -68,6 +93,34 @@ STCurveTrackFinder::Init(STEvent *event, TClonesArray *trackArray)
 
   for (Int_t iHit = 0; iHit < numHits; iHit++) {
     STHit *hit = event -> GetHit(iHit);
+
+    TVector3 p = hit -> GetPosition() - fVertex;
+    if (sqrt(p.X()*p.X() + p.Z()*p.Z() + p.Y()*p.Y()) < fRadialCut)
+      continue;
+
+    fHitBuffer -> push_back(hit);
+  }
+
+  STHitSortRInvFromP sorting(fVertex);
+  std::sort(fHitBuffer -> begin(), fHitBuffer -> end(), sorting);
+
+  fHitBufferAna = fHitBuffer;
+
+  fNumTracks = 0;
+}
+
+void
+STCurveTrackFinder::Init(TClonesArray *hitArray, TClonesArray *trackArray)
+{
+  fTrackArrayAna = trackArray;
+  fHitBuffer -> clear();
+
+  Int_t numHits = hitArray -> GetEntriesFast();
+  if (numHits == 0)
+    return;
+
+  for (Int_t iHit = 0; iHit < numHits; iHit++) {
+    STHit *hit = (STHit *) hitArray -> At(iHit);
 
     TVector3 p = hit -> GetPosition() - fVertex;
     if (sqrt(p.X()*p.X() + p.Z()*p.Z() + p.Y()*p.Y()) < fRadialCut)
