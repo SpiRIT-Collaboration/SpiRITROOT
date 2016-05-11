@@ -22,6 +22,8 @@ class STPSAETask : public STRecoTask
     void SetThreshold(Double_t threshold);
     void SetLayerCut(Int_t lowCut, Int_t highCut);
 
+    void SetNumHitsLowLimit(Int_t limit);
+
   private:
     TClonesArray *fRawEventArray = nullptr;
     TClonesArray *fHitArray = nullptr;
@@ -31,6 +33,8 @@ class STPSAETask : public STRecoTask
     Double_t fThreshold = 20;
     Int_t fLayerLowCut  = -1;
     Int_t fLayerHighCut = 112;
+
+    Int_t fNumHitsLowLimit = 0;
 
   ClassDef(STPSAETask, 1)
 };

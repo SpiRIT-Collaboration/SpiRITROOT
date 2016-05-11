@@ -16,11 +16,15 @@ class STCurveTrackingETask : public STRecoTask
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
 
+    void SetNumTracksLowLimit(Int_t limit);
+
   private:
     TClonesArray *fHitArray = nullptr;
     TClonesArray *fTrackArray = nullptr;
 
     STCurveTrackFinder* fTrackFinder;
+
+    Int_t fNumTracksLowLimit = 0;
 
   ClassDef(STCurveTrackingETask, 1)
 };

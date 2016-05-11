@@ -32,6 +32,8 @@ void STPSAETask::SetLayerCut(Int_t lowCut, Int_t highCut)
   fLayerHighCut = highCut;
 }
 
+void STPSAETask::SetNumHitsLowLimit(Int_t limit) { fNumHitsLowLimit = limit; }
+
 InitStatus STPSAETask::Init()
 {
   if (STRecoTask::Init() == kERROR)
@@ -64,9 +66,9 @@ void STPSAETask::Exec(Option_t *opt)
 
   fPSA -> Analyze(rawEvent, fHitArray);
 
-  if (fHitArray -> GetEntriesFast() < 1000) {
+  if (fHitArray -> GetEntriesFast() < fNumHitsLowLimit) {
     fEventHeader -> SetIsBadEvent();
-    LOG(INFO) << Space() << "Found less than 1000 hits. Bad event!" << FairLogger::endl;
+    LOG(INFO) << Space() << "Found less than " << fNUmHitsLowLimit << " hits. Bad event!" << FairLogger::endl;
     fHitArray -> Delete();
     return;
   }

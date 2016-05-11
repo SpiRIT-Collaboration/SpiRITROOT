@@ -20,6 +20,8 @@ STCurveTrackingETask::~STCurveTrackingETask()
 {
 }
 
+void STCurveTrackingETask::SetNumTracksLowLimit(Int_t limit) { fNumTracksLowLimit = limit; }
+
 InitStatus STCurveTrackingETask::Init()
 {
   if (STRecoTask::Init() == kERROR)
@@ -48,9 +50,9 @@ void STCurveTrackingETask::Exec(Option_t *opt)
 
   fTrackFinder -> BuildTracks(fHitArray, fTrackArray);
 
-  if (fTrackArray -> GetEntriesFast() < 5) {
+  if (fTrackArray -> GetEntriesFast() < fNumTracksLowLimit) {
     fEventHeader -> SetIsBadEvent();
-    LOG(INFO) << Space() << "Found less than 5 curve tracks. Bad event!" << FairLogger::endl;
+    LOG(INFO) << Space() << "Found less than " << fNumTracksLowLimit << " curve tracks. Bad event!" << FairLogger::endl;
     fTrackArray -> Delete();
     return;
   }
