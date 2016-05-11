@@ -415,15 +415,6 @@ void STRiemannTrackingETask::Exec(Option_t *opt)
     }
   }
 
-  if (fRiemannTrackArray -> GetEntriesFast() < 5) {
-    fEventHeader -> SetIsBadEvent();
-    LOG(INFO) << Space() << "Found less than 5 riemann tracks. Bad event!" << FairLogger::endl;
-    fRiemannTrackArray -> Delete();
-    fRiemannHitArray -> Delete();
-    return;
-  }
-
-  //fLogger -> Info(MESSAGE_ORIGIN, Form("        %d riemann-tracks found. %d clusters used", foundTracks, numUsedHit));
   LOG(INFO) << Space() << "STRiemannTrack " << foundTracks << FairLogger::endl;
 }
 
