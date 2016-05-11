@@ -64,7 +64,7 @@ STPSAFastFit::Analyze(STRawEvent *rawEvent, STEvent *event)
 
     fPad = rawEvent -> GetPad(iPad);
 
-    if (fPad -> GetLayer() <= fLayerLowCut) {
+    if (fPad -> GetLayer() <= fLayerLowCut || fPad -> GetLayer() >= fLayerHighCut ) {
       lock.unlock();
       continue;
     }
