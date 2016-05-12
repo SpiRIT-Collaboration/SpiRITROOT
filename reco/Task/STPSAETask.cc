@@ -68,7 +68,7 @@ void STPSAETask::Exec(Option_t *opt)
 
   if (fHitArray -> GetEntriesFast() < fNumHitsLowLimit) {
     fEventHeader -> SetIsBadEvent();
-    LOG(INFO) << Space() << "Found less than " << fNUmHitsLowLimit << " hits. Bad event!" << FairLogger::endl;
+    LOG(INFO) << Space() << "Found less than " << fNumHitsLowLimit << " hits. Bad event!" << FairLogger::endl;
     fHitArray -> Delete();
     return;
   }
