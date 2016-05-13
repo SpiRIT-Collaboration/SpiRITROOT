@@ -158,9 +158,17 @@ STGenfitTestE::ProcessTrack(genfit::Track *gfTrack)
 void 
 STGenfitTestE::SetTrack(STTrack *recoTrack, genfit::Track *gfTrack)
 {
-  genfit::RKTrackRep *trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
-  genfit::MeasuredStateOnPlane fitState = gfTrack -> getFittedState();
-  genfit::FitStatus *fitStatus = gfTrack -> getFitStatus(trackRep);
+  genfit::RKTrackRep *trackRep;
+  genfit::MeasuredStateOnPlane fitState;
+  genfit::FitStatus *fitStatus;
+
+  try {
+    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+    fitState = gfTrack -> getFittedState();
+    fitStatus = gfTrack -> getFitStatus(trackRep);
+  } catch (genfit::Exception &e) {
+    return;
+  }
 
   if (fitStatus -> isFitted() == kFALSE || fitStatus -> isFitConverged() == kFALSE)
     return;
@@ -200,8 +208,15 @@ STGenfitTestE::SetTrack(STTrack *recoTrack, genfit::Track *gfTrack)
 void 
 STGenfitTestE::ProcessExtrapolation(STTrack *recoTrack, genfit::Track *gfTrack)
 {
-  genfit::RKTrackRep *trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
-  genfit::MeasuredStateOnPlane fitState = gfTrack -> getFittedState();
+  genfit::RKTrackRep *trackRep;
+  genfit::MeasuredStateOnPlane fitState;
+
+  try {
+    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+    fitState = gfTrack -> getFittedState();
+  } catch (genfit::Exception &e) {
+    return;
+  }
 
   TVector3 momTarget(-99999,-99999,-99999);
   TVector3 posTarget(-99999,-99999,-99999);
@@ -242,8 +257,15 @@ STGenfitTestE::ProcessExtrapolation(STTrack *recoTrack, genfit::Track *gfTrack)
 Bool_t 
 STGenfitTestE::CalculatedEdx(STTrack *recoTrack, genfit::Track *gfTrack)
 {
-  genfit::MeasuredStateOnPlane fitState = gfTrack -> getFittedState();
-  genfit::RKTrackRep *trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+  genfit::RKTrackRep *trackRep;
+  genfit::MeasuredStateOnPlane fitState;
+
+  try {
+    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+    fitState = gfTrack -> getFittedState();
+  } catch (genfit::Exception &e) {
+    return kFALSE;
+  }
 
   std::vector<genfit::TrackPoint *> hitArray = gfTrack -> getPointsWithMeasurement();
 
