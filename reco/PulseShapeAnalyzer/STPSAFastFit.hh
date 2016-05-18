@@ -23,6 +23,10 @@ class STPSAFastFit : public STPSA, public STPulse
 {
   public:
     STPSAFastFit();
+    STPSAFastFit(TString pulseData);
+    STPSAFastFit(Int_t shapingTime);
+
+    void Init();
 
     void Analyze(STRawEvent *rawEvent, STEvent *event);
     void Analyze(STRawEvent *rawEvent, TClonesArray *hitArray);
@@ -84,11 +88,6 @@ class STPSAFastFit : public STPSA, public STPulse
 
     STPad *fPad;
 
-    /**
-     * Number of degree of freedom on time-bucket when performing
-     * least square fit of amplitude of the pulse using LSFitPulse().
-     */
-    Int_t fNDFTbs = 12;
     Int_t fTbStartCut;
 
     /**

@@ -21,6 +21,25 @@ using namespace std;
 ClassImp(STPSAFastFit)
 
 STPSAFastFit::STPSAFastFit()
+: STPulse()
+{
+  Init();
+}
+
+STPSAFastFit::STPSAFastFit(TString pulseData)
+: STPulse(pulseData)
+{
+  Init();
+}
+
+STPSAFastFit::STPSAFastFit(Int_t shapingTime)
+: STPulse(shapingTime)
+{
+  Init();
+}
+
+void
+STPSAFastFit::Init()
 {
   fThreadHitArray = new TClonesArray*[NUMTHREAD];
   for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++)

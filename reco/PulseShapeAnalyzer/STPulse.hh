@@ -4,6 +4,8 @@
 #include "TF1.h"
 #include "Rtypes.h"
 #include "STHit.hh"
+#include "STSamplePoint.hh"
+#include "TGraph.h"
 
 class STPulse
 {
@@ -14,9 +16,11 @@ class STPulse
     /**
      * Construct STPulse with fileName and step.
      * step is the difference of the time-bucket between data points.
-     * See fStep.
+     * See fStepSize.
      */
     STPulse(TString fileName);
+
+    STPulse(Int_t shapingTime);
 
     ~STPulse() {}
 
@@ -30,13 +34,18 @@ class STPulse
     TF1* GetPulseFunction(STHit* hit, TString name = "");
 
     Double_t  GetTbAtThreshold();
+    Double_t  GetTbAtTail();
     Double_t  GetTbAtMax();
        Int_t  GetNumAscending();
     Double_t  GetThresholdTbStep();
        Int_t  GetNumDataPoints();
-    Double_t *GetPulseData();
+    Double_t  GetStepSize();
+
+    STSamplePoint **GetPulseData();
 
     void Print();
+
+    void SavePulseData(TString name, Bool_t smoothTail = true);
 
   private:
     /** Initialize data and parameters. */
@@ -46,7 +55,10 @@ class STPulse
     Double_t PulseF1(Double_t *x, Double_t *par);
 
     /** The Pulse data points Will be updated as STPulse is initialized. */
-    Double_t *fPulseData;
+    STSamplePoint *fPulseData;
+
+    /** Shaping time. */
+    Int_t fShapingTime;
 
     /** Number of data points. Will be updated as STPulse is initialized. */
     Int_t fNumDataPoints;
@@ -54,15 +66,15 @@ class STPulse
     /** 
      * Step of data points in 1 time-bucket unit for current data file.
      * Should be smaller than 1.
-     * The data points are parted by (fStep * [time-bucket]) from each other.
+     * The data points are parted by (fStepSize * [time-bucket]) from each other.
      */
-    Double_t fStep;
+    Double_t fStepSize;
 
     /** Ratio height compare to peak height where pulse starts to rise **/
     Double_t fThresholdRatio = 0.05;
 
     /** Number of the pulse function(TF1*) created by this class */
-    Int_t fNumF1;
+    Int_t fNumF1 = 0;
 
   protected:
     /** 
@@ -70,6 +82,9 @@ class STPulse
      * Will be updated as STPulse is initialized.
      */
     Double_t fTbAtThreshold;
+
+    /** Time-bucket just before the tail starts. */
+    Double_t fTbAtTail;
 
     /** 
      * Time-bucket at peak from start of the pulse.
@@ -83,7 +98,18 @@ class STPulse
     /** Threshold of one timebucket step while risiing **/
     Double_t fThresholdTbStep;
 
-  ClassDef(STPulse, 3)
+    /**
+     * Number of degree of freedom on time-bucket when performing
+     * least square fit of amplitude of the pulse using LSFitPulse().
+     */
+    Int_t fNDFTbs;
+
+  private:
+    TF1 *fTailFunction = nullptr;
+
+    TGraph *fTailGraph = nullptr;
+
+  ClassDef(STPulse, 4)
 };
 
 #endif

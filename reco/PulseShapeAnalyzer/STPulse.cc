@@ -2,15 +2,17 @@
 #include "TSystem.h"
 #include <fstream>
 #include <iostream>
-
+#include <fstream>
+#include <string>
+#include <sstream>
 using namespace std;
 
 ClassImp(STPulse)
 
 STPulse::STPulse()
 {
-  TString sysFile = gSystem -> Getenv("VMCWORKDIR");
-  TString fileName = sysFile + "/parameters/PulserFitted.dat";
+  TString spiritroot = gSystem -> Getenv("VMCWORKDIR");
+  TString fileName = spiritroot + "/parameters/pulser_default.dat";
   Initialize(fileName);
 }
 
@@ -19,82 +21,79 @@ STPulse::STPulse(TString fileName)
   Initialize(fileName);
 }
 
+STPulse::STPulse(Int_t shapingTime)
+{
+  TString spiritroot = gSystem -> Getenv("VMCWORKDIR");
+
+  TString fileName = spiritroot + "/parameters/pulser_default.dat";;
+  if (shapingTime == 117)
+    fileName = spiritroot + "/parameters/pulser_117ns.dat";
+  else if (shapingTime == 232)
+    fileName = spiritroot + "/parameters/pulser_232ns.dat";
+
+  Initialize(fileName);
+}
+
 void STPulse::Initialize(TString fileName)
 {
-  std::ifstream file(fileName);
+  ifstream file(fileName);
+  string line;
 
-  Double_t value;
-  Double_t max = 0;
-  fNumDataPoints = 0;
+  while (getline(file, line) && line.find("#") == 0) {}
+  istringstream ss(line);
+  ss >> fShapingTime >> fNumDataPoints >> fStepSize >> fNumAscending >> fNDFTbs;
 
-  file >> fStep;
-  while (file >> value) {
-    if (max < value) {
-      max = value; 
-      fTbAtMax = fNumDataPoints * fStep;
-    }
-    fNumDataPoints++;
-  }
-
-  if (fNumDataPoints == 0 || max == 0) {
+  if (fNumDataPoints < 20 || fStepSize > 1)
+  {
     cout << "*** Error occured while initializing the pulse!" << endl;
-    cout << "*** Check the file: " << fileName << endl;
+    cout << "*** Check file: " << fileName << endl;
     return;
   }
 
-  Double_t c = 1;
-  if (max != 1)
-    c = 1./max;
+  fPulseData = new STSamplePoint[fNumDataPoints];
 
-  fPulseData = new Double_t[fNumDataPoints];
+  Double_t max = 0;
+  for (Int_t iData = 0; iData < fNumDataPoints; iData++)
+  {
+    getline(file, line);
+    if (line.find("#") == 0) {
+      iData--;
+      continue;
+    }
 
-  file.clear();
-  file.seekg(0, ios::beg);
+    fPulseData[iData].Init(line);
+    Double_t value = fPulseData[iData].fValue;
 
-  file >> fStep;
-  for(Int_t iData = 0; iData < fNumDataPoints; iData++){
-    file >> value;
-    fPulseData[iData] = c * value;
+    if (value > max) {
+      max = value;
+      fTbAtMax = iData * fStepSize;
+    }
+  }
+
+  Double_t c = 1/max;
+  Double_t valuePre = 0, valueCur = 0;
+  fTbAtThreshold = 0;
+  fTbAtTail = 0;
+
+  for (Int_t iData = 0; iData < fNumDataPoints; iData++)
+  {
+    fPulseData[iData].fValue = c * fPulseData[iData].fValue;
+
+    valuePre = valueCur;
+    valueCur = fPulseData[iData].fValue;
+
+    if (fTbAtThreshold == 0 && valueCur > fThresholdRatio)
+    {
+      fTbAtThreshold = iData * fStepSize;
+      Int_t next = iData + 1/fStepSize;
+      fThresholdTbStep = fPulseData[next].fValue - fPulseData[iData].fValue;
+    }
+
+    if (fTbAtTail == 0 && valueCur < valuePre && valueCur < 0.1)
+      fTbAtTail = iData * fStepSize;
   }
 
   file.close();
-
-  fNumAscending = 0;
-  fThresholdTbStep = 5000.;
-
-  Double_t valuePre = 0, valueCur = 0;
-  Bool_t ascending = kFALSE;
-  for(Int_t iData = 0; iData < fNumDataPoints;)
-  {
-    valuePre = valueCur;
-    valueCur = fPulseData[iData];
-    Double_t tb = iData * fStep;
-
-    if (ascending == kFALSE && valueCur > fThresholdRatio) {
-      ascending = kTRUE;
-      fTbAtThreshold = tb;
-      iData += Int_t(1/fStep);
-      continue;
-    }
-    else if (ascending == kTRUE && valueCur > 0.9)
-      break;
-
-    if (ascending)
-    {
-      Double_t valDiff = valueCur - valuePre;
-      if (valDiff < fThresholdTbStep)
-        fThresholdTbStep = valDiff;
-      fNumAscending++;
-      iData += Int_t(1/fStep);
-    }
-    else
-      iData += 1;
-  }
-
-  fNumF1 = 0;
-
-  if (fNumAscending < 2)
-    fNumAscending = 2;
 }
 
 Double_t 
@@ -104,13 +103,13 @@ STPulse::Pulse(Double_t x, Double_t amp, Double_t tb0)
   if (tb < 0) 
     return 0;
 
-  Int_t tbInStep = tb / fStep;
+  Int_t tbInStep = tb / fStepSize;
 
   if (tbInStep > fNumDataPoints - 2) 
     return 0;
 
-  Double_t r = (tb / fStep) - tbInStep;
-  Double_t val = r * fPulseData[tbInStep + 1] + (1 - r) * fPulseData[tbInStep];
+  Double_t r = (tb / fStepSize) - tbInStep;
+  Double_t val = r * fPulseData[tbInStep + 1].fValue + (1 - r) * fPulseData[tbInStep].fValue;
 
   return amp * val;
 }
@@ -122,12 +121,12 @@ STPulse::PulseF1(Double_t *x, Double_t *par)
   if (tb < 0) 
     return 0;
 
-  Int_t tbInStep = tb / fStep;
+  Int_t tbInStep = tb / fStepSize;
   if (tbInStep > fNumDataPoints - 2)
     return 0;
 
-  Double_t r = (tb / fStep) - tbInStep;
-  Double_t val = r * fPulseData[tbInStep + 1] + (1 - r) * fPulseData[tbInStep];
+  Double_t r = (tb / fStepSize) - tbInStep;
+  Double_t val = r * fPulseData[tbInStep + 1].fValue + (1 - r) * fPulseData[tbInStep].fValue;
 
   return par[0] * val;
 }
@@ -150,18 +149,22 @@ STPulse::GetPulseFunction(STHit* hit, TString name)
 }
 
 Double_t  STPulse::GetTbAtThreshold()   { return fTbAtThreshold;   }
+Double_t  STPulse::GetTbAtTail()        { return fTbAtTail;        }
 Double_t  STPulse::GetTbAtMax()         { return fTbAtMax;         }
    Int_t  STPulse::GetNumAscending()    { return fNumAscending;    }
 Double_t  STPulse::GetThresholdTbStep() { return fThresholdTbStep; }
    Int_t  STPulse::GetNumDataPoints()   { return fNumDataPoints;   }
-Double_t *STPulse::GetPulseData()       { return fPulseData;       }
+Double_t  STPulse::GetStepSize()        { return fStepSize;        }
 
-void 
+STSamplePoint **STPulse::GetPulseData()  { return &fPulseData; }
+
+void
 STPulse::Print()
 {
   cout << "[STPulse INFO]" << endl;
+  cout << " == Shaping time : " << fShapingTime << " ns" << endl;
   cout << " == Number of data points : " << fNumDataPoints << endl;
-  cout << " == Step size between data points : " << fStep << endl;
+  cout << " == Step size between data points : " << fStepSize << endl;
   cout << " == Threshold for one timebucket step : " << fThresholdTbStep << endl; 
   cout << " == Number of timebucket while rising : " << fNumAscending << endl;
   cout << " == Timebucket at threshold (" << setw(3) << fThresholdRatio 
@@ -169,4 +172,54 @@ STPulse::Print()
   cout << " == Timebucket at peak : " << fTbAtMax << endl; 
   cout << " == Timebucket difference from threshold to peak : " 
        << fTbAtMax - fTbAtThreshold << endl; 
+}
+
+void
+STPulse::SavePulseData(TString name, Bool_t smoothTail)
+{
+  Double_t max = 0;
+  for (Int_t iData = 0; iData < fNumDataPoints; iData++) {
+    if (fPulseData[iData].fValue > max)
+      max = fPulseData[iData].fValue;
+  }
+
+  Double_t c = 1/max;
+  if (max != 1) {
+    for (Int_t iData = 0; iData < fNumDataPoints; iData++)
+      fPulseData[iData].fValue = c * fPulseData[iData].fValue;
+  }
+
+  if (smoothTail) {
+    if (fTailFunction == nullptr)
+      fTailFunction = new TF1("tail", "x*landau(0)", fTbAtTail - 1, fNumDataPoints - 1);
+
+    fTailFunction -> SetParameters(1, 4, 1);
+
+    if (fTailGraph == nullptr)
+      fTailGraph = new TGraph();
+
+    fTailGraph -> Clear();
+    fTailGraph -> Set(0);
+
+    Int_t iTailStart = (Int_t)(fTbAtTail/fStepSize);
+    for (Int_t iData = iTailStart; iData < fNumDataPoints; iData++)
+      fTailGraph -> SetPoint(fTailGraph -> GetN(), iData * fStepSize, fPulseData[iData].fValue);
+
+    fTailGraph -> Fit(fTailFunction, "R");
+
+    for (Int_t iData = iTailStart; iData < fNumDataPoints; iData++)
+      fPulseData[iData].fValue = fTailFunction -> Eval(iData * fStepSize);
+  }
+
+  ofstream file(name.Data());
+  file << "#(shaping time) (number of data points) (step size) (rising tb threshold number) (default ndf)" << endl;
+  file << fShapingTime << " " << fNumDataPoints << " " << fStepSize << " " << fNumAscending << " " << fNDFTbs << endl;
+
+  file << "#(value) (rms) (total weight)" << endl;
+  for (Int_t iData = 0; iData < fNumDataPoints; iData++) {
+    STSamplePoint sample = fPulseData[iData];
+    file << sample.GetSummary() << endl;
+  }
+
+  file.close();
 }
