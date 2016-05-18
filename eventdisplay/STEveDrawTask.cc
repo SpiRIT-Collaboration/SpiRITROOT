@@ -90,7 +90,6 @@ STEveDrawTask::STEveDrawTask()
   fEveColor[kRecoTrack] = kRed;
   fRnrSelf [kRecoTrack] = kFALSE;
 
-  fPulse = new STPulse();
   fLTFitter = new STLinearTrackFitter();
   fCTFitter = new STCurveTrackFitter();
   fGenfitTest = new STGenfitTest();
@@ -167,6 +166,8 @@ STEveDrawTask::Init()
   STParReader *trackingPar = new STParReader(trackingParName);
 
   fNumHitsAtHead = trackingPar -> GetIntPar("NumHitsAtHead");
+
+  fPulse = new STPulse(fPulseData);
 
   fCvsPad = fEveManager -> GetCvsPad();
   SetHistPad();
@@ -1558,6 +1559,8 @@ STEveDrawTask::SetThresholdRange(TString name, Double_t min, Double_t max)
   fThresholdMin[eveObj] = min;
   fThresholdMax[eveObj] = max;
 }
+
+void STEveDrawTask::SetPulserData(TString pulserData) { fPulseData = pulserData; }
 
 void 
 STEveDrawTask::UpdateWindowTb(Int_t start, Int_t end) 

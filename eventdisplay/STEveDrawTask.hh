@@ -86,6 +86,7 @@ class STEveDrawTask : public STEveTask
                         Size_t size  = -1, 
                        Color_t color = -1);
     void SetThresholdRange(TString name, Double_t min, Double_t max);
+    void SetPulserData(TString pulserData);
 
     static void ClickSelectedPadPlane();
     void DrawPadByPosition(Double_t x, Double_t z);
@@ -177,6 +178,8 @@ class STEveDrawTask : public STEveTask
     TH1D    *fHistPad  = NULL;
     TGraph  *fPulseSum = NULL;
     STPulse *fPulse    = NULL;
+
+    TString fPulseData = "";
 
     Double_t fRangeMin = 0;
     Double_t fRangeMax = 0;
