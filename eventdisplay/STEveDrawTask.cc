@@ -437,7 +437,7 @@ STEveDrawTask::DrawHitClusterPoints()
 
     if (useEvent)
       cluster = fEvent -> GetCluster(iCluster);
-    if (useEvent)
+    else
       cluster = (STHitCluster *) fHitClusterArray -> At(iCluster);
 
     if (cluster -> GetCharge() < fThresholdMin[kCluster] || 
