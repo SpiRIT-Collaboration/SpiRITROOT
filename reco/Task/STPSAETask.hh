@@ -48,7 +48,7 @@ class STPSAETask : public STRecoTask
     TString fPulserDataName = "";
     Int_t fShapingTime  = 117;
 
-    Int_t fNumHitsLowLimit = 0;
+    Int_t fNumHitsLowLimit = 1;
 
   ClassDef(STPSAETask, 1)
 };

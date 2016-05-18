@@ -24,7 +24,7 @@ class STCurveTrackingETask : public STRecoTask
 
     STCurveTrackFinder* fTrackFinder;
 
-    Int_t fNumTracksLowLimit = 0;
+    Int_t fNumTracksLowLimit = 1;
 
   ClassDef(STCurveTrackingETask, 1)
 };
