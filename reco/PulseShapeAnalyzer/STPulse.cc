@@ -23,19 +23,21 @@ STPulse::STPulse(TString fileName)
 
 STPulse::STPulse(Int_t shapingTime)
 {
-  TString spiritroot = gSystem -> Getenv("VMCWORKDIR");
-
-  TString fileName = spiritroot + "/parameters/pulser_default.dat";;
+  TString fileName = "pulser_default.dat";;
   if (shapingTime == 117)
-    fileName = spiritroot + "/parameters/pulser_117ns.dat";
+    fileName = "pulser_117ns.dat";
   else if (shapingTime == 232)
-    fileName = spiritroot + "/parameters/pulser_232ns.dat";
+    fileName = "pulser_232ns.dat";
 
   Initialize(fileName);
 }
 
 void STPulse::Initialize(TString fileName)
 {
+  TString spiritroot = gSystem -> Getenv("VMCWORKDIR");
+
+  fileName = spiritroot + "/parameters/" + fileName;
+
   ifstream file(fileName);
   string line;
 
