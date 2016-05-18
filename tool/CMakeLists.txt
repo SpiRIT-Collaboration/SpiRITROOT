@@ -25,7 +25,10 @@ set(SRCS
 STDatabasePDG.cc
 STRiemannFitter.cc
 STCircleFitter.cc
+STPadPlaneMap.cc
 ODRFitter.cc
+STHelixTrackFitter.cc
+STSamplePoint.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
