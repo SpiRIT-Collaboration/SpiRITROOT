@@ -29,9 +29,10 @@ void run_reco_experiment
   if (TString(gSystem -> Which(".", raw)).IsNull() && !fUseMeta)
     gSystem -> Exec("./createList.sh "+sRunNo);
 
+  TString metaFile;
   if (fUseMeta) {
     raw = Form("%s/run_%04d/dataList.txt", fSupplePath.Data(), fRunNo);
-    TString metaFile = Form("%s/run_%04d/metadataList.txt", fSupplePath.Data(), fRunNo);
+    metaFile = Form("%s/run_%04d/metadataList.txt", fSupplePath.Data(), fRunNo);
   }
 
   FairLogger *logger = FairLogger::GetLogger();
