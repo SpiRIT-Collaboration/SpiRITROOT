@@ -392,12 +392,12 @@ STGenfitTest::SetTrack(TClonesArray *array, STTrack *recoTrack)
   UInt_t numHits = hitIDArray -> size(); 
   for (UInt_t iHit = 0; iHit < numHits; iHit++) 
   {
-    STHitCluster *cluster = (STHitCluster *) array -> At(iHit);
+    STHitCluster *cluster = (STHitCluster *) array -> At(hitIDArray -> at(iHit));
     new ((*fHitClusterArray)[iHit]) STHitCluster(*cluster);
     trackCand.addHit(fTPCDetID, iHit);
   }
 
-  STHitCluster *firstCluster = (STHitCluster *) array -> At(0);
+  STHitCluster *firstCluster = (STHitCluster *) array -> At(hitIDArray -> at(0));
 
   TVector3 posSeed = firstCluster -> GetPosition();
   posSeed.SetMag(posSeed.Mag()/10.);
