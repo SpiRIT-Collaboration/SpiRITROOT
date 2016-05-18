@@ -12,7 +12,7 @@ ClassImp(STPulse)
 STPulse::STPulse()
 {
   TString spiritroot = gSystem -> Getenv("VMCWORKDIR");
-  TString fileName = spiritroot + "/parameters/pulser_default.dat";
+  TString fileName = "pulser_default.dat";
   Initialize(fileName);
 }
 
