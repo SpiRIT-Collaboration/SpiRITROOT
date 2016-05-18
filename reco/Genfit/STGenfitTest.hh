@@ -40,6 +40,7 @@ class STGenfitTest
     void SetTrackParameters(STTrack *recotrack, genfit::Track *genfitTrack, STEvent *event, STRiemannTrack *riemannTrack);
 
     Bool_t SetTrack(STEvent *event, STTrack *recoTrack);
+    Bool_t SetTrack(TClonesArray *array, STTrack *recoTrack);
     Bool_t ExtrapolateTrack(Double_t distance, TVector3 &position);
 
   private:

@@ -167,6 +167,9 @@ class STEveDrawTask : public STEveTask
     TClonesArray* fRecoTrackArray       = NULL;
     TClonesArray* fRawEventArray        = NULL;
 
+    TClonesArray* fHitArray             = nullptr;
+    TClonesArray* fHitClusterArray      = nullptr;
+
     /// Pad & Pulses
     vector<TF1*> fPulseFunctionArray;
 

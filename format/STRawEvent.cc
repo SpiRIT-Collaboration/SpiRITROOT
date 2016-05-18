@@ -110,6 +110,16 @@ void STRawEvent::SetHits(STEvent* event)
   }
 }
 
+void STRawEvent::SetHits(TClonesArray *array)
+{
+  Int_t numHits = array -> GetEntries();
+  for (Int_t iHit = 0; iHit < numHits; iHit++)
+  {
+    STHit *hit = (STHit *) array -> At(iHit);
+    GetPad(hit -> GetRow(), hit -> GetLayer()) -> AddHit(hit);
+  }
+}
+
 void STRawEvent::ClearHits()
 {
   for (Int_t iPad = 0; iPad < GetNumPads(); iPad++) 

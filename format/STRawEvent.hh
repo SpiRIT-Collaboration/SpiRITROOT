@@ -13,6 +13,7 @@
 
 #include "TROOT.h"
 #include "TObject.h"
+#include "TClonesArray.h"
 
 #include "STPad.hh"
 #include "STEvent.hh"
@@ -47,6 +48,7 @@ class STRawEvent : public TNamed {
     STPad *GetPad(Int_t row, Int_t layer); 
 
     void SetHits(STEvent* event);
+    void SetHits(TClonesArray *array);
     void ClearHits();
 
   private:

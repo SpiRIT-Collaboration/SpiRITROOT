@@ -382,6 +382,74 @@ STGenfitTest::SetTrack(STEvent *event, STTrack *recoTrack)
   return fitted;
 }
 
+Bool_t
+STGenfitTest::SetTrack(TClonesArray *array, STTrack *recoTrack)
+{
+  fHitClusterArray -> Delete();
+  std::vector<Int_t> *hitIDArray = recoTrack -> GetHitIDArray();
+  genfit::TrackCand trackCand;
+
+  UInt_t numHits = hitIDArray -> size(); 
+  for (UInt_t iHit = 0; iHit < numHits; iHit++) 
+  {
+    STHitCluster *cluster = (STHitCluster *) array -> At(iHit);
+    new ((*fHitClusterArray)[iHit]) STHitCluster(*cluster);
+    trackCand.addHit(fTPCDetID, iHit);
+  }
+
+  STHitCluster *firstCluster = (STHitCluster *) array -> At(0);
+
+  TVector3 posSeed = firstCluster -> GetPosition();
+  posSeed.SetMag(posSeed.Mag()/10.);
+
+  TMatrixDSym covSeed(6);
+  TMatrixD covMatrix = firstCluster -> GetCovMatrix();
+  for (Int_t iComp = 0; iComp < 3; iComp++) 
+    covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
+  for (Int_t iComp = 3; iComp < 6; iComp++) 
+    covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
+
+  Double_t pTot = recoTrack -> GetP();
+  if (pTot == 0) 
+    return kFALSE;
+
+  Double_t pZ = recoTrack -> GetPz();
+  TVector3 momSeed(0., 0., pTot);
+  momSeed.SetTheta(TMath::Pi()/2. - TMath::ACos(pZ/pTot));
+
+  trackCand.setCovSeed(covSeed);
+  trackCand.setPosMomSeed(posSeed, momSeed, 1);
+
+  Bool_t fitted = kFALSE;
+
+  Int_t pdg = recoTrack -> GetPID();
+  fCurrentTrackRep = new genfit::RKTrackRep(pdg); 
+
+  fGenfitTrackArray -> Delete();
+  genfit::Track *genfitTrack = new ((*fGenfitTrackArray)[0]) genfit::Track(trackCand, *fMeasurementFactory, fCurrentTrackRep);
+
+  try {
+    fKalmanFitter -> processTrack(genfitTrack);
+  } catch (genfit::Exception &e) {
+    return kFALSE;
+  }
+
+  try {
+    fCurrentFitState = genfitTrack -> getFittedState();
+    fCurrentTrackRep -> extrapolateToPlane(fCurrentFitState, fTargetPlane); 
+  } catch (genfit::Exception &e) {
+    return kFALSE;
+  }
+
+  fitted = kTRUE;
+
+  fCurrentDirection = 1;
+  if (fCurrentTrackRep -> getDir(fCurrentFitState).Z() < 0)
+    fCurrentDirection = -1;
+
+  return fitted;
+}
+
 Bool_t 
 STGenfitTest::ExtrapolateTrack(Double_t distance, TVector3 &position)
 {

@@ -141,7 +141,11 @@ STEveDrawTask::Init()
   fRawEventArray        = (TClonesArray*) ioMan -> GetObject("STRawEvent");
   fRecoTrackArray       = (TClonesArray*) ioMan -> GetObject("STTrack");
 
-  gStyle -> SetPalette(55);
+  fHitArray             = (TClonesArray*) ioMan -> GetObject("STHit");
+  fHitClusterArray      = (TClonesArray*) ioMan -> GetObject("STHitCluster");
+
+  //gStyle -> SetPalette(0);
+  //gStyle -> SetPalette(kInvertedDarkBodyRadiator);
   fCvsPadPlane = fEveManager -> GetCvsPadPlane();
   if (fCvsPadPlane != NULL)
     fCvsPadPlane -> AddExec("ex", "STEveDrawTask::ClickSelectedPadPlane()");
@@ -281,10 +285,19 @@ STEveDrawTask::DrawHitPoints()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"DrawHitPoints()");
 
-  if (fEvent == NULL) 
-    return;
+  Int_t nHits = 0;
 
-  Int_t nHits = fEvent -> GetNumHits();
+  Bool_t useEvent = true;
+  if (fEvent != NULL) {
+    nHits = fEvent -> GetNumHits();
+    useEvent = true;
+  }
+  else if (fHitArray != nullptr) {
+    nHits = fHitArray -> GetEntries();
+    useEvent = false;
+  }
+  else
+    return;
 
   if (fSetObject[kHit]) 
   {
@@ -323,15 +336,20 @@ STEveDrawTask::DrawHitPoints()
 
   for (Int_t iHit=0; iHit<nHits; iHit++)
   {
-    STHit hit = fEvent -> GetHitArray() -> at(iHit);
+    STHit *hit;
 
-    if (hit.GetCharge() < fThresholdMin[kHit] || 
-        hit.GetCharge() > fThresholdMax[kHit])
+    if (useEvent)
+      hit = fEvent -> GetHit(iHit);
+    else
+      hit = (STHit *) fHitArray -> At(iHit);
+
+    if (hit -> GetCharge() < fThresholdMin[kHit] || 
+        hit -> GetCharge() > fThresholdMax[kHit])
       continue;
 
-    TVector3 position = hit.GetPosition();
+    TVector3 position = hit -> GetPosition();
 
-    if (hit.GetTb() < fWindowTbStart || hit.GetTb() > fWindowTbEnd)
+    if (hit -> GetTb() < fWindowTbStart || hit -> GetTb() > fWindowTbEnd)
       continue;
 
     Double_t y = position.Y()/10.;
@@ -343,7 +361,7 @@ STEveDrawTask::DrawHitPoints()
     }
 
     if (fPadPlane != NULL)
-      fPadPlane -> Fill(-position.X(), position.Z(), hit.GetCharge());
+      fPadPlane -> Fill(-position.X(), position.Z(), hit -> GetCharge());
 
     if (fSetObject[kHitBox]) 
     {
@@ -351,7 +369,7 @@ STEveDrawTask::DrawHitPoints()
                            y - fBoxHitSet -> GetDefHeight()/2., 
                            position.Z()/10. - fBoxHitSet -> GetDefDepth()/2.);
 
-      fBoxHitSet -> DigitValue(hit.GetCharge());
+      fBoxHitSet -> DigitValue(hit -> GetCharge());
     }
   }
 
@@ -370,10 +388,19 @@ STEveDrawTask::DrawHitClusterPoints()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"DrawHitClusterPoints()");
 
-  if (fEvent == NULL) 
-    return;
+  Int_t nClusters = 0;
 
-  Int_t nClusters = fEvent -> GetNumClusters();
+  Bool_t useEvent = true;
+  if (fEvent != NULL) {
+    nClusters = fEvent -> GetNumClusters();
+    useEvent = true;
+  }
+  else if (fHitClusterArray != nullptr) {
+    nClusters = fHitClusterArray -> GetEntries();
+    useEvent = false;
+  }
+  else
+    return;
 
   if (fSetObject[kClusterBox]) {
     if (fBoxClusterSet == NULL)
@@ -406,20 +433,25 @@ STEveDrawTask::DrawHitClusterPoints()
   fLogger -> Debug(MESSAGE_ORIGIN,Form("Number of clusters: %d",nClusters));
   for (Int_t iCluster=0; iCluster<nClusters; iCluster++)
   {
-    STHitCluster cluster = fEvent -> GetClusterArray() -> at(iCluster);
+    STHitCluster *cluster;
 
-    if (cluster.GetCharge() < fThresholdMin[kCluster] || 
-        cluster.GetCharge() > fThresholdMax[kCluster])
+    if (useEvent)
+      cluster = fEvent -> GetCluster(iCluster);
+    if (useEvent)
+      cluster = (STHitCluster *) fHitClusterArray -> At(iCluster);
+
+    if (cluster -> GetCharge() < fThresholdMin[kCluster] || 
+        cluster -> GetCharge() > fThresholdMax[kCluster])
       continue;
 
-    TVector3 position = cluster.GetPosition();
+    TVector3 position = cluster -> GetPosition();
 
     Double_t y = position.Y()/10.;
     if (y > -fWindowYStart || y < -fWindowYEnd)
       continue;
     y += fWindowYStart;
 
-    TVector3 sigma = cluster.GetPosSigma();
+    TVector3 sigma = cluster -> GetPosSigma();
 
     if (fSetObject[kCluster]) 
     {
@@ -439,7 +471,7 @@ STEveDrawTask::DrawHitClusterPoints()
       Double_t zP =  position.Z()/10. - zS/2.;
 
       fBoxClusterSet -> AddBox(xP, yP, zP, xS, yS, zS);
-      fBoxClusterSet -> DigitValue(cluster.GetCharge());
+      fBoxClusterSet -> DigitValue(cluster -> GetCharge());
     }
   }
 
@@ -463,7 +495,7 @@ STEveDrawTask::DrawRiemannHits()
   TEvePointSet* riemannPointSet = NULL;
   TEveLine* riemannTrackLine = NULL;
 
-  if (fEvent == NULL) {
+  if (fEvent == NULL && fHitClusterArray == nullptr) {
     fLogger -> Debug(MESSAGE_ORIGIN, "STEvent is needed for riemann track!");
     return;
   }
@@ -506,7 +538,11 @@ STEveDrawTask::DrawRiemannHits()
           continue;
 
         Int_t id = rHit -> GetClusterID();
-        STHitCluster oCluster = fEvent -> GetClusterArray() -> at(id);
+        STHitCluster oCluster;
+        if (fEvent != NULL)
+          oCluster = fEvent -> GetClusterArray() -> at(id);
+        else
+          oCluster = (STHitCluster *) fHitClusterArray -> At(id);
 
         TVector3 position = oCluster.GetPosition();
 
@@ -553,7 +589,11 @@ STEveDrawTask::DrawRiemannHits()
       riemannTrackLine = fRiemannTrackSetArray.at(iTrack);
 
       Int_t id = 0;
-      STHitCluster oCluster = fEvent -> GetClusterArray() -> at(id);
+      STHitCluster oCluster;
+      if (fEvent != NULL)
+        oCluster = fEvent -> GetClusterArray() -> at(id);
+      else
+        oCluster = (STHitCluster *) fHitClusterArray -> At(id);
 
       TVector3 position = oCluster.GetPosition();
 
@@ -685,10 +725,20 @@ STEveDrawTask::DrawCurveTracks()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"Draw Curve Tracks");
 
+
   STCurveTrack *track = (STCurveTrack*) fCurveTrackArray -> At(0);
   std::vector<STHit*> *hitPointerArray = track -> GetHitPointerArray();
 
-  if ((fEvent == NULL) && (hitPointerArray -> size() == 0))
+  Bool_t useTrackData = true;
+  if (hitPointerArray -> size() == 0)
+    useTrackData = false;
+
+  Bool_t useEvent = true;
+  if (fEvent != NULL)
+    useEvent = true;
+  else if (fHitArray != nullptr)
+    useEvent = false;
+  else
     return;
 
   STHit* hit = NULL;
@@ -745,15 +795,20 @@ STEveDrawTask::DrawCurveTracks()
       STHit *hitFirst;
       STHit *hitLast;
 
-      if (fEvent != NULL)
+      if (useTrackData)
+      {
+        hitFirst = track -> GetHit(firstHitIDPosition);
+        hitLast  = track -> GetHit(lastHitIDPosition);
+      }
+      else if (useEvent)
       {
         hitFirst = fEvent -> GetHit(hitIDFirst);
         hitLast  = fEvent -> GetHit(hitIDLast);
       }
       else
       {
-        hitFirst = track -> GetHit(firstHitIDPosition);
-        hitLast  = track -> GetHit(lastHitIDPosition);
+        hitFirst = (STHit *) fHitArray -> At(hitIDFirst);
+        hitLast  = (STHit *) fHitArray -> At(hitIDLast);
       }
 
       TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
@@ -776,10 +831,12 @@ STEveDrawTask::DrawCurveTracks()
 
       for (Int_t iHit = 0; iHit < nHits; iHit++)
       {
-        if (fEvent != NULL)
+        if (useTrackData)
+          hit = track -> GetHit(iHit);
+        else if (useEvent)
           hit = fEvent -> GetHit(track -> GetHitID(iHit));
         else
-          hit = track -> GetHit(iHit);
+          hit = (STHit *) fHitArray -> At(iHit);
 
         TVector3 position = hit -> GetPosition();
 
@@ -798,7 +855,7 @@ STEveDrawTask::DrawRecoTracks()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"Draw Reco Tracks");
 
-  if (fEvent == NULL)
+  if (fEvent == NULL && fHitClusterArray == nullptr)
     return;
 
   STTrack* track = NULL;
@@ -838,7 +895,10 @@ STEveDrawTask::DrawRecoTracks()
     if (!isFitted) 
       continue;
 
-    isFitted = fGenfitTest -> SetTrack(fEvent, track);
+    if (fEvent != NULL)
+      isFitted = fGenfitTest -> SetTrack(fEvent, track);
+    else
+      isFitted = fGenfitTest -> SetTrack(fHitClusterArray, track);
     if (!isFitted) 
       continue;
 
@@ -1375,7 +1435,10 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer, Bool_t forceUpdate)
     fCurrentEvent = currentEvent;
     fRawEvent = (STRawEvent*) fRawEventArray -> At(0);
     fRawEvent -> ClearHits();
-    fRawEvent -> SetHits(fEvent);
+    if (fEvent != NULL)
+      fRawEvent -> SetHits(fEvent);
+    else if (fHitArray != nullptr)
+      fRawEvent -> SetHits(fHitArray);
   }
   STPad* pad = fRawEvent -> GetPad(row, layer);
   if (pad == NULL) 
