@@ -12,10 +12,21 @@ STPSAETask::STPSAETask()
 {
 }
 
-STPSAETask::STPSAETask(Bool_t persistence, Double_t threshold, Int_t layerLowCut, Int_t layerHighCut)
+STPSAETask::STPSAETask(Bool_t persistence, Int_t shapingTime, Double_t threshold, Int_t layerLowCut, Int_t layerHighCut)
 : STRecoTask("PSA Task", 1, persistence)
 {
   fThreshold = threshold;
+  fShapingTime = shapingTime;
+  fLayerLowCut = layerLowCut;
+  fLayerHighCut = layerHighCut;
+}
+
+
+STPSAETask::STPSAETask(Bool_t persistence, TString pulserData, Double_t threshold, Int_t layerLowCut, Int_t layerHighCut)
+: STRecoTask("PSA Task", 1, persistence)
+{
+  fThreshold = threshold;
+  fPulserDataName = pulserData;
   fLayerLowCut = layerLowCut;
   fLayerHighCut = layerHighCut;
 }
@@ -31,6 +42,9 @@ void STPSAETask::SetLayerCut(Int_t lowCut, Int_t highCut)
   fLayerLowCut = lowCut;
   fLayerHighCut = highCut;
 }
+
+void STPSAETask::SetPulserData(TString pulserData) { fPulserDataName = pulserData; }
+void STPSAETask::UseDefautPulserData(Int_t shapingTime) { fShapingTime = shapingTime; }
 
 void STPSAETask::SetNumHitsLowLimit(Int_t limit) { fNumHitsLowLimit = limit; }
 
@@ -48,7 +62,10 @@ InitStatus STPSAETask::Init()
   fHitArray = new TClonesArray("STHit", 1000);
   fRootManager -> Register("STHit", "SpiRIT", fHitArray, fIsPersistence);
 
-  fPSA = new STPSAFastFit();
+  if (!fPulserDataName.IsNull())
+    fPSA = new STPSAFastFit(fPulserDataName);
+  else
+    fPSA = new STPSAFastFit(fShapingTime);
   fPSA -> SetThreshold(fThreshold);
   fPSA -> SetLayerCut(fLayerLowCut, fLayerHighCut);
 

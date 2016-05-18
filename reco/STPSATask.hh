@@ -42,6 +42,9 @@ class STPSATask : public FairTask
 
     STPSA* GetPSA();
 
+    void SetPulserData(TString pulserData);
+    void UseDefautPulserData(Int_t shapingTime);
+
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
 
@@ -58,6 +61,8 @@ class STPSATask : public FairTask
     STDigiPar *fPar;   //!
     FairLogger *fLogger;   //!
     
+    TString fPulserDataName;
+    Int_t fShapingTime;
 
   ClassDef(STPSATask, 1);
 };

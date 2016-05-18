@@ -40,6 +40,9 @@ STPSATask::STPSATask()
   fThreshold = 0;
   fLayerLowCut = -1;
   fLayerHighCut = 112;
+
+  fPulserDataName = "";
+  fShapingTime = 117;
 }
 
 STPSATask::STPSATask(Bool_t persistence, Double_t threshold)
@@ -62,6 +65,8 @@ void STPSATask::SetLayerCut(Int_t lowCut, Int_t highCut)
   fLayerHighCut = highCut;
 }
 
+void STPSATask::SetPulserData(TString pulserData) { fPulserDataName = pulserData; }
+void STPSATask::UseDefautPulserData(Int_t shapingTime) { fShapingTime = shapingTime; }
 
 STPSA* STPSATask::GetPSA() { return fPSA; }
 
@@ -106,7 +111,10 @@ STPSATask::Init()
   }
   else if (fPSAMode == kFastFit) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use STPSAFastFit!");
-    fPSA = new STPSAFastFit();
+    if (!fPulserDataName.IsNull())
+      fPSA = new STPSAFastFit(fPulserDataName);
+    else
+      fPSA = new STPSAFastFit(fShapingTime);
   }
   else {
     fLogger -> Fatal(MESSAGE_ORIGIN, "No Matching PSAMode!");

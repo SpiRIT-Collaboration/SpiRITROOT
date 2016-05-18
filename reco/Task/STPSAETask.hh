@@ -9,8 +9,16 @@ class STPSAETask : public STRecoTask
 {
   public:
     STPSAETask();
+
     STPSAETask(Bool_t persistence, 
+               Int_t shapingTime,
                Double_t threshold = 0, 
+               Int_t layerLowCut = -1,
+               Int_t layerHighCut = -1);
+
+    STPSAETask(Bool_t persistence,
+               TString pulserData,
+               Double_t threshold = 0,
                Int_t layerLowCut = -1,
                Int_t layerHighCut = -1);
 
@@ -24,6 +32,9 @@ class STPSAETask : public STRecoTask
 
     void SetNumHitsLowLimit(Int_t limit);
 
+    void SetPulserData(TString pulserData);
+    void UseDefautPulserData(Int_t shapingTime);
+
   private:
     TClonesArray *fRawEventArray = nullptr;
     TClonesArray *fHitArray = nullptr;
@@ -33,6 +44,9 @@ class STPSAETask : public STRecoTask
     Double_t fThreshold = 20;
     Int_t fLayerLowCut  = -1;
     Int_t fLayerHighCut = 112;
+
+    TString fPulserDataName = "";
+    Int_t fShapingTime  = 117;
 
     Int_t fNumHitsLowLimit = 0;
 
