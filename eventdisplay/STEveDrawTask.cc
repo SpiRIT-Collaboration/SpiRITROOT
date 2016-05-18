@@ -619,6 +619,10 @@ STEveDrawTask::DrawLinearTracks()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"Draw Linear Tracks");
 
+  Int_t nTracks = fLinearTrackArray -> GetEntries();
+  if (nTracks == 0)
+    return;
+
   STLinearTrack *track = (STLinearTrack*) fLinearTrackArray -> At(0);
   std::vector<STHit*> *hitPointerArray = track -> GetHitPointerArray();
 
@@ -630,7 +634,6 @@ STEveDrawTask::DrawLinearTracks()
   TEveLine* linearTrackLine = NULL;
   TEvePointSet* linearPointSet = NULL;
 
-  Int_t nTracks = fLinearTrackArray -> GetEntries();
   Int_t nTracksInBuffer = fLinearTrackSetArray.size();
 
   if (nTracksInBuffer < nTracks)
@@ -725,6 +728,9 @@ STEveDrawTask::DrawCurveTracks()
 {
   fLogger -> Debug(MESSAGE_ORIGIN,"Draw Curve Tracks");
 
+  Int_t nTracks = fCurveTrackArray -> GetEntries();
+  if (nTracks == 0)
+    return;
 
   STCurveTrack *track = (STCurveTrack*) fCurveTrackArray -> At(0);
   std::vector<STHit*> *hitPointerArray = track -> GetHitPointerArray();
@@ -746,7 +752,6 @@ STEveDrawTask::DrawCurveTracks()
   TEveLine* curveTrackLine = NULL;
   TEvePointSet* curvePointSet = NULL;
 
-  Int_t nTracks = fCurveTrackArray -> GetEntries();
   Int_t nTracksInBuffer = fCurveTrackSetArray.size();
 
   if (nTracksInBuffer < nTracks)
