@@ -4,6 +4,8 @@ void run_reco_experiment
   Int_t fNumEventsInRun = 5000,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 1000,
+  Bool_t fUseMeta = kFALSE,
+  TString fSupplePath = "/data/Q16264/rawdataSupplement",
   TString fParameterFile = "ST.parameters.Commissioning_201604.par"
 )
 {
@@ -24,13 +26,16 @@ void run_reco_experiment
   TString out = pathToData+"run"+sRunNo+"_s"+sSplitNo+"_n"+sNumEvents+".reco.root"; 
   TString log = pathToData+"run"+sRunNo+"_s"+sSplitNo+"_n"+sNumEvents+".log"; 
 
-  if (TString(gSystem -> Which(".", raw)).IsNull())
+  if (TString(gSystem -> Which(".", raw)).IsNull() && !fUseMeta)
     gSystem -> Exec("./createList.sh "+sRunNo);
 
+  if (fUseMeta) {
+    raw = Form("%s/run_%04d/dataList.txt", fSupplePath.Data(), fRunNo);
+    TString metaFile = Form("%s/run_%04d/metadataList.txt", fSupplePath.Data(), fRunNo);
+  }
+
   FairLogger *logger = FairLogger::GetLogger();
-  logger -> SetLogFileName(log);
   logger -> SetLogToScreen(true);
-  logger -> SetLogToFile(true);
 
   FairParAsciiFileIo* parReader = new FairParAsciiFileIo();
   parReader -> open(par);
@@ -48,6 +53,16 @@ void run_reco_experiment
   decoder -> SetDataList(raw);
   decoder -> SetEventID(start);
 
+  if (fUseMeta) {
+    std::ifstream metalistFile(metaFile.Data());
+    TString dataFileWithPath;
+    for (Int_t iCobo = 0; iCobo < 12; iCobo++) {
+      dataFileWithPath.ReadLine(metalistFile);
+      dataFileWithPath = Form("%s/run_%04d/%s", fSupplePath.Data(), fRunNo, dataFileWithPath.Data());
+      decoder -> SetMetaData(dataFileWithPath, iCobo);
+    }
+  }
+
   STEventPreviewTask *preview = new STEventPreviewTask();
   preview -> SetPersistence(false);
 
@@ -55,6 +70,7 @@ void run_reco_experiment
   psa -> SetPersistence(false);
   psa -> SetThreshold(30);
   psa -> SetLayerCut(-1, 90);
+  psa -> SetPulserData("pulser_117ns.dat");
 
   STCurveTrackingETask *curve = new STCurveTrackingETask();
   curve -> SetPersistence(false);
