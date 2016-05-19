@@ -16,15 +16,14 @@ void run_reco_experiment
 
   TString sRunNo     = TString::Itoa(fRunNo, 10);
   TString sSplitNo   = TString::Itoa(fSplitNo, 10);
-  TString sNumEvents = TString::Itoa(fNumEventsInSplit, 10);
 
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
   TString pathToData = spiritroot+"macros/data/";
   TString par = spiritroot+"parameters/"+fParameterFile;
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root";
   TString raw = TString(gSystem -> Getenv("PWD"))+"/list_run"+sRunNo+".txt";
-  TString out = pathToData+"run"+sRunNo+"_s"+sSplitNo+"_n"+sNumEvents+".reco.root"; 
-  TString log = pathToData+"run"+sRunNo+"_s"+sSplitNo+"_n"+sNumEvents+".log"; 
+  TString out = pathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.root"; 
+  TString log = pathToData+"run"+sRunNo+"_s"+sSplitNo+".log"; 
 
   if (TString(gSystem -> Which(".", raw)).IsNull() && !fUseMeta)
     gSystem -> Exec("./createList.sh "+sRunNo);
