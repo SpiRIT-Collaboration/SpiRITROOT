@@ -41,6 +41,7 @@ STHelixTrack.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
+Set(HEADERS ${HEADERS} STSlimPad.hh)
 
 Set(LINKDEF STFormatLinkDef.h)
 Set(LIBRARY_NAME STFormat)

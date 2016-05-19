@@ -21,4 +21,9 @@
 #pragma link C++ class STEventHeader+;
 #pragma link C++ class STHelixTrack+;
 
+#pragma link C++ class STSlimPad+;
+#pragma link C++ class std::vector<Short_t>+;
+#pragma link C++ class std::vector<Float_t>+;
+#pragma link C++ class std::vector<STSlimPad>+;
+
 #endif
