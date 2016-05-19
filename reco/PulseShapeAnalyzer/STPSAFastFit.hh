@@ -79,14 +79,11 @@ class STPSAFastFit : public STPSA, public STPulse
   private:
     TClonesArray **fThreadHitArray; ///< TClonesArray object for thread
 
-    Bool_t fPadReady;
-    Bool_t fPadTaken;
-    Bool_t fEnd;
+    Int_t fPadIndex;
+    Int_t fNumPads;
+    std::vector<STPad> *fPadArray;
 
     std::mutex fMutex;
-    std::condition_variable fCondVariable;
-
-    STPad *fPad;
 
     Int_t fTbStartCut;
 

@@ -45,9 +45,8 @@ STPSAFastFit::Init()
   for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++)
     fThreadHitArray[iThread] = new TClonesArray("STHit", 100);
 
-  fPadReady = kFALSE;
-  fPadTaken = kFALSE;
-  fEnd = kFALSE;
+  fPadIndex = 0;
+  fNumPads = 0;
   
   if (fWindowStartTb == 0)
     fWindowStartTb = 1;
@@ -60,11 +59,9 @@ STPSAFastFit::Init()
 void
 STPSAFastFit::Analyze(STRawEvent *rawEvent, STEvent *event)
 {
-  fPadReady = kFALSE;
-  fPadTaken = kFALSE;
-  fEnd = kFALSE;
-
-  Int_t numPads = rawEvent -> GetNumPads();
+  fNumPads = rawEvent -> GetNumPads();
+  fPadArray = rawEvent -> GetPads();
+  fPadIndex = 0;
 
 #ifdef DEBUG
   LOG(INFO) << "Start to create threads!" << FairLogger::endl;
@@ -78,39 +75,12 @@ STPSAFastFit::Analyze(STRawEvent *rawEvent, STEvent *event)
   LOG(INFO) << "Successfully created threads!" << FairLogger::endl;
 #endif
 
-  for (Int_t iPad = 0; iPad < numPads; iPad++) {
-    std::unique_lock<std::mutex> lock(fMutex);
-
-    fPad = rawEvent -> GetPad(iPad);
-
-    if (fPad -> GetLayer() <= fLayerLowCut || fPad -> GetLayer() >= fLayerHighCut ) {
-      lock.unlock();
-      continue;
-    }
-
-    fPadReady = kTRUE;
-    fPadTaken = kFALSE;
-
-#ifdef DEBUG
-  LOG(INFO) << "Passing pad: " << iPad << FairLogger::endl;
-#endif
-
-    fCondVariable.notify_one();
-    fCondVariable.wait(lock, [this] { return fPadTaken; });
-  }
-
-#ifdef DEBUG
-  LOG(INFO) << "Scheduling analysis is done! Join the threads." << FairLogger::endl;
-#endif
-
-  fEnd = kTRUE;
   for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++) {
 
 #ifdef DEBUG
   LOG(INFO) << "Thread: " << iThread << " is not joinable!"  << FairLogger::endl;
 #endif
 
-      fCondVariable.notify_all();
       thread[iThread].join();
   }
 
@@ -137,11 +107,9 @@ STPSAFastFit::Analyze(STRawEvent *rawEvent, STEvent *event)
 void
 STPSAFastFit::Analyze(STRawEvent *rawEvent, TClonesArray *hitArray)
 {
-  fPadReady = kFALSE;
-  fPadTaken = kFALSE;
-  fEnd = kFALSE;
-
-  Int_t numPads = rawEvent -> GetNumPads();
+  fNumPads = rawEvent -> GetNumPads();
+  fPadArray = rawEvent -> GetPads();
+  fPadIndex = 0;
 
 #ifdef DEBUG
   LOG(INFO) << "Start to create threads!" << FairLogger::endl;
@@ -155,39 +123,12 @@ STPSAFastFit::Analyze(STRawEvent *rawEvent, TClonesArray *hitArray)
   LOG(INFO) << "Successfully created threads!" << FairLogger::endl;
 #endif
 
-  for (Int_t iPad = 0; iPad < numPads; iPad++) {
-    std::unique_lock<std::mutex> lock(fMutex);
-
-    fPad = rawEvent -> GetPad(iPad);
-
-    if (fPad -> GetLayer() <= fLayerLowCut) {
-      lock.unlock();
-      continue;
-    }
-
-    fPadReady = kTRUE;
-    fPadTaken = kFALSE;
-
-#ifdef DEBUG
-  LOG(INFO) << "Passing pad: " << iPad << FairLogger::endl;
-#endif
-
-    fCondVariable.notify_one();
-    fCondVariable.wait(lock, [this] { return fPadTaken; });
-  }
-
-#ifdef DEBUG
-  LOG(INFO) << "Scheduling analysis is done! Join the threads." << FairLogger::endl;
-#endif
-
-  fEnd = kTRUE;
   for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++) {
 
 #ifdef DEBUG
   LOG(INFO) << "Thread: " << iThread << " is not joinable!"  << FairLogger::endl;
 #endif
 
-      fCondVariable.notify_all();
       thread[iThread].join();
   }
 
@@ -218,26 +159,24 @@ void STPSAFastFit::PadAnalyzer(TClonesArray *hitArray)
   hitArray -> Clear("C");
 
   while (1) {
-    std::unique_lock<std::mutex> lock(fMutex);
-    fCondVariable.wait(lock, [this] { return (fEnd ? fEnd : fPadReady); });
+    STPad *pad = nullptr;
 
-    if (fEnd) {
+    {
+      std::lock_guard<std::mutex> lock(fMutex);
+      if (fPadIndex == fNumPads) {
 
 #ifdef DEBUG
-    LOG(INFO) << "End signal received!" << FairLogger::endl;
+  LOG(INFO) << "Thread ended!" << FairLogger::endl;
 #endif
 
-      break;
+        return;
+      }
+
+      pad = &(fPadArray -> at(fPadIndex++));
+
+      if (pad -> GetLayer() <= fLayerLowCut || pad -> GetLayer() >= fLayerHighCut )
+        continue;
     }
-
-    STPad *pad = fPad; 
-    fPad = NULL;
-
-    fPadReady = kFALSE;
-    fPadTaken = kTRUE;
-
-    lock.unlock();
-    fCondVariable.notify_all();
 
     FindHits(pad, hitArray, hitNum);
   }
