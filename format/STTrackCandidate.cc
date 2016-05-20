@@ -130,44 +130,23 @@ Int_t STTrackCandidate::GetNDF()                         { return fNDF; }
 
 Int_t STTrackCandidate::GetdEdxWithCut(Double_t &dEdx, Int_t &numUsedPoints, Double_t lowCut, Double_t highCut, Int_t numCut)
 {
-  Int_t cutApplied = -1;
-
   numUsedPoints = fdEdxArray.size();
 
-  Int_t idxLow = 0;
-  Int_t idxHigh = numUsedPoints;
+  sort(fdEdxArray.begin(), fdEdxArray.end());
 
-  if (numUsedPoints >= numCut)
-  {
-    sort(fdEdxArray.begin(), fdEdxArray.end());
+  Int_t idxLow = Int_t(numUsedPoints * lowCut);
+  Int_t idxHigh = Int_t(numUsedPoints * highCut);
 
-    Int_t numLowCut  = Int_t(numUsedPoints * lowCut);
-    Int_t numHighCut = Int_t(numUsedPoints * highCut);
-
-    Bool_t useLowCut = kFALSE;
-
-    if (idxHigh - numHighCut >= numCut) {
-      idxHigh -= numHighCut;
-      cutApplied = 1;
-
-      if (idxHigh - numLowCut >= numCut){
-        idxLow += numLowCut;
-        cutApplied = 2;
-      }
-    }
-    else
-      cutApplied = 0;
-
-    numUsedPoints = idxHigh - idxLow;
-
-  }
+  numUsedPoints = idxHigh - idxLow;
+  if (numUsedPoints < numCut)
+    return -1;
 
   dEdx = 0;
   for (Int_t idEdx = idxLow; idEdx < idxHigh; idEdx++)
-    dEdx += fdEdxArray.at(idEdx);
+    dEdx += fdEdxArray[idEdx];
   dEdx = dEdx/numUsedPoints;
 
-  return cutApplied;
+  return 2;
 }
 
 Double_t STTrackCandidate::GetdEdxWithCut(Double_t lowCut, Double_t highCut)
