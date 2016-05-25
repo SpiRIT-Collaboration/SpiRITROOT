@@ -22,7 +22,7 @@ Int_t fEnd = 100;   // End event number.
 Bool_t fUseGainCalibration = kFALSE;
 
 // FPN pedestal range selection threshold
-Int_t fFPNThreshold = 5;
+Int_t fFPNThreshold = 10;
 
 // Set the gating grid noise data. If left blank, it will use FPN pedestal.
 TString fGGNoiseData = "";
@@ -50,17 +50,48 @@ STCore *fCore = NULL;
 STPlot *fPlot = NULL;
 
 TCanvas *fCvs = NULL;
+TImage *logo = TImage::Open(Form("%s/input/SpiRIT-logo.pdf", gSystem -> Getenv("VMCWORKDIR")));
 
 TCanvas *next(Int_t eventID = -1) {
   fCvs = fPlot -> DrawPadplane(eventID);
+  /* 
+  // z axis range modification
+  TH2D *hist = nullptr;
+  TList *list = fCvs -> GetListOfPrimitives();
+  for (Int_t i = 0; i < list -> GetEntries(); i++) {
+    if (TString(list -> At(i) -> IsA() -> GetName()).EqualTo("TH2D")) {
+      hist = (TH2D *) list -> At(i);
+      break;
+    }
+  }
+  hist -> GetZaxis() -> SetRangeUser(0, 600);
+  fCvs -> Modified();
+  fCvs -> Update();
+  */
   fCvs -> SaveAs(Form("run_%04d/r%04de%05d_top.png", fRunNo, fRunNo, fCore -> GetEventID()));
   fCvs = fPlot -> DrawSideview(fCore -> GetEventID());
+  /* 
+  // z axis range modification
+  hist = nullptr;
+  list = fCvs -> GetListOfPrimitives();
+  for (Int_t i = 0; i < list -> GetEntries(); i++) {
+    if (TString(list -> At(i) -> IsA() -> GetName()).EqualTo("TH2D")) {
+      hist = (TH2D *) list -> At(i);
+      break;
+    }
+  }
+  hist -> GetZaxis() -> SetRangeUser(0, 600);
+  fCvs -> Modified();
+  fCvs -> Update();
+  */
   fCvs -> SaveAs(Form("run_%04d/r%04de%05d_side.png", fRunNo, fRunNo, fCore -> GetEventID()));
 
   return fCvs;
 }
 
 void dumpEvents() {
+  gStyle -> SetCanvasPreferGL(kTRUE);
+
   if (!(gSystem -> Getenv("RUN"))) {
     cout << endl;
     cout << cYELLOW << "== Usage: " << cNORMAL << "RUN=" << cRED << "####" << cNORMAL << " root dumpEvents.C -b -q -l" << endl;
@@ -137,11 +168,60 @@ void dumpEvents() {
     fPlot -> SetSideviewTitle(Form("Run#%04d - Event ID: %%d (Gain not calibrated) - Beam right view", fRunNo));
   }
 
+  fCvs = fPlot -> DrawPadplane();
+  TPad *logoPad = new TPad("logo", "", 0.540232, 0.0828729, 0.616845, 0.143765);
+  logoPad -> SetRightMargin(0.05);
+  logoPad -> SetTopMargin(0.05);
+  logoPad -> SetLeftMargin(0.05);
+  logoPad -> SetBottomMargin(0.01);
+  logoPad -> Draw("same");
+  logoPad -> cd();
+  logo -> Draw();
+  /* 
+  // z axis range modification
+  TH2D *hist = nullptr;
+  TList *list = fCvs -> GetListOfPrimitives();
+  for (Int_t i = 0; i < list -> GetEntries(); i++) {
+    if (TString(list -> At(i) -> IsA() -> GetName()).EqualTo("TH2D")) {
+      hist = (TH2D *) list -> At(i);
+      break;
+    }
+  }
+  hist -> GetZaxis() -> SetRangeUser(0, 600);
+  fCvs -> Modified();
+  fCvs -> Update();
+  */
+  fCvs -> SaveAs(Form("run_%04d/r%04de%05d_top.png", fRunNo, fRunNo, fCore -> GetEventID()));
+  fCvs = fPlot -> DrawSideview(fCore -> GetEventID());
+  TPad *logoPad2 = new TPad("logo2", "", 0.540232, 0.0828729, 0.616845, 0.143765);
+  logoPad2 -> SetRightMargin(0.05);
+  logoPad2 -> SetTopMargin(0.05);
+  logoPad2 -> SetLeftMargin(0.05);
+  logoPad2 -> SetBottomMargin(0.01);
+  logoPad2 -> Draw("same");
+  logoPad2 -> cd();
+  logo -> Draw();
+  /* 
+  // z axis range modification
+  hist = nullptr;
+  list = fCvs -> GetListOfPrimitives();
+  for (Int_t i = 0; i < list -> GetEntries(); i++) {
+    if (TString(list -> At(i) -> IsA() -> GetName()).EqualTo("TH2D")) {
+      hist = (TH2D *) list -> At(i);
+      break;
+    }
+  }
+  hist -> GetZaxis() -> SetRangeUser(0, 600);
+  fCvs -> Modified();
+  fCvs -> Update();
+  */
+  fCvs -> SaveAs(Form("run_%04d/r%04de%05d_side.png", fRunNo, fRunNo, fCore -> GetEventID()));
+
   if (fStart == 0 && fEnd == 0)
     while (next());
   else {
     next(fStart);
-    for (Int_t iEvent = fStart + 1; iEvent < fEnd; iEvent++)
+    for (Int_t iEvent = fStart + 1; iEvent < fEnd + 1; iEvent++)
       next();
   }
 }
