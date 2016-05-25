@@ -68,7 +68,8 @@ void STCore::Initialize()
 
   fDecoderPtr[0] = new GETDecoder();
 //  fDecoderPtr[0] -> SetDebugMode(1);
-  fPadArray = new TClonesArray("STPad", 12096);
+  for (Int_t iPad = 0; iPad < 12096; iPad++)
+    fPadArray.push_back(new STPad());
 
   fIsData = kFALSE;
   fFPNSigmaThreshold = 5;
@@ -264,7 +265,9 @@ void STCore::ProcessCobo(Int_t coboIdx)
         if (row == -2 || layer == -2)
           continue;
 
-        STPad *pad = new ((*fPadArray)[row*112 + layer]) STPad(row, layer);
+        STPad *pad = fPadArray.at(row*112 + layer);
+        pad -> SetRow(row);
+        pad -> SetLayer(layer);
         Int_t *rawadc = frame -> GetSample(iAget, iCh);
         for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
           pad -> SetRawADC(iTb, rawadc[iTb]);
@@ -322,7 +325,8 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
 
   if (fIsSeparatedData) {
     fRawEventPtr -> Clear();
-    fPadArray -> Clear("C");
+    for (Int_t iPad = 0; iPad < 12096; iPad++)
+      fPadArray.at(iPad) -> Clear();
 
     if (frameID == -1)
       fTargetFrameID++;
@@ -366,8 +370,8 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
 
     for (Int_t iRow = 0; iRow < 108; iRow++) {
       for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
-        STPad *pad = (STPad *) fPadArray -> At(iRow*112 + iLayer);
-        if (pad != NULL)
+        STPad *pad = fPadArray.at(iRow*112 + iLayer);
+        if (!(pad -> GetRow() == -1 && pad -> GetLayer() == -1))
           fRawEventPtr -> SetPad(pad);
       }
     }
@@ -378,7 +382,9 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
       return fRawEventPtr;
   } else {
     fRawEventPtr -> Clear();
-    fPadArray -> Clear("C");
+    for (Int_t iPad = 0; iPad < 12096; iPad++)
+      fPadArray.at(iPad) -> Clear();
+
 
     if (frameID == -1)
       fTargetFrameID++;
@@ -406,7 +412,9 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
           if (row == -2 || layer == -2)
             continue;
 
-          STPad *pad = new ((*fPadArray)[row*112 + layer]) STPad(row, layer);
+          STPad *pad = fPadArray.at(row*112 + layer);
+          pad -> SetRow(row);
+          pad -> SetLayer(layer);
           Int_t *rawadc = frame -> GetSample(iAget, iCh);
           for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
             pad -> SetRawADC(iTb, rawadc[iTb]);

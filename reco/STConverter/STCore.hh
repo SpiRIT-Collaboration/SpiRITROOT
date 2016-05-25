@@ -96,7 +96,7 @@ class STCore : public TObject {
     Bool_t fIsGainCalibrationData;
 
     STRawEvent *fRawEventPtr;
-    TClonesArray *fPadArray;
+    std::vector<STPad *> fPadArray;
 
     Int_t fCurrentEventID[12];
     Int_t fTargetFrameID;
