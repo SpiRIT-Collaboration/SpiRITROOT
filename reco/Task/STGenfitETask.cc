@@ -111,11 +111,6 @@ void STGenfitETask::Exec(Option_t *opt)
 
   Int_t numVertices = vertices.size();
 
-  if (numVertices == 0) {
-    fTrackArray -> Clear("C");
-    return;
-  }
-
   for (UInt_t iVert = 0; iVert < numVertices; iVert++) {
     genfit::GFRaveVertex* vertex = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
 
