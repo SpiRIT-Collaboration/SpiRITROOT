@@ -179,7 +179,7 @@ class STEveDrawTask : public STEveTask
     TGraph  *fPulseSum = NULL;
     STPulse *fPulse    = NULL;
 
-    TString fPulseData = "";
+    TString fPulseData = "pulser_default.dat";
 
     Double_t fRangeMin = 0;
     Double_t fRangeMax = 0;
