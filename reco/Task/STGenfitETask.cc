@@ -107,7 +107,10 @@ void STGenfitETask::Exec(Option_t *opt)
   fTrackArray -> Compress();
 
   vector<genfit::GFRaveVertex *> vertices;
-  fVertexFactory -> findVertices(&vertices, genfitTrackArray);
+  try {
+    fVertexFactory -> findVertices(&vertices, genfitTrackArray);
+  } catch (...) {
+  }
 
   Int_t numVertices = vertices.size();
 
