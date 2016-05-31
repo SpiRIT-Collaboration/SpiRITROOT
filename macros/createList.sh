@@ -36,7 +36,7 @@ do
   ls $DATAPATH/spdaq0?/narval/cobo$COBO/run_$RUN*s >> $OUTPUT
   for FILENUM in {1..100};
   do
-    RESULT=`ls /data/Q15264/rawdata/spdaq0?/narval/cobo$COBO/run_$RUN*s.$FILENUM 2> /dev/null`
+    RESULT=`ls $DATAPATH/spdaq0?/narval/cobo$COBO/run_$RUN*s.$FILENUM 2> /dev/null`
     if [[ -a $RESULT ]];
     then
       echo $RESULT >> $OUTPUT
