@@ -73,6 +73,16 @@ STSMTask::Init()
 
   ioMan -> Register("STEventHCM", "SPiRIT", fEventHCMArray, fIsPersistence);
 
+  if (fVertexFlag)
+  {
+    TString parName = fPar -> GetTrackingParFileName();
+    STParReader *tpar = new STParReader(parName);
+
+    fManipulator -> SetTrans(TVector3(tpar -> GetDoublePar("XVertex"),
+          tpar -> GetDoublePar("YVertex"),
+          tpar -> GetDoublePar("ZVertex")));
+  }
+
   return kSUCCESS;
 }
 
@@ -90,16 +100,6 @@ STSMTask::SetParContainers()
   fPar = (STDigiPar *) db -> getContainer("STDigiPar");
   if (!fPar)
     fLogger -> Fatal(MESSAGE_ORIGIN, "STDigiPar not found!!");
-
-  if (fVertexFlag) 
-  {
-    TString parName = fPar -> GetTrackingParFileName();
-    STParReader *fTrackingPar = new STParReader(parName);
-
-    fManipulator -> SetTrans(TVector3(fTrackingPar -> GetDoublePar("XVertex"),
-          fTrackingPar -> GetDoublePar("YVertex"),
-          fTrackingPar -> GetDoublePar("ZVertex")));
-  }
 }
 
 void

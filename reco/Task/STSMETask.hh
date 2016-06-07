@@ -11,7 +11,6 @@ class STSMETask : public STRecoTask
     STSMETask(Bool_t persistence);
     ~STSMETask();
 
-    virtual void SetParContainers();
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
 
