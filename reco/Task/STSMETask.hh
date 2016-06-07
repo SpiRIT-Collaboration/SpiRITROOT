@@ -11,14 +11,20 @@ class STSMETask : public STRecoTask
     STSMETask(Bool_t persistence);
     ~STSMETask();
 
+    virtual void SetParContainers();
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
+
+    void SetTrans(TVector3 trans);
+    void UseVertexFromParFile(Bool_t flag = kTRUE);
 
   private:
     TClonesArray *fClusterArray = nullptr;
     TClonesArray *fSMClusterArray = nullptr;
 
     STSystemManipulator *fManipulator;
+
+    Bool_t fVertexFlag = kFALSE;
 
   ClassDef(STSMETask, 1)
 };

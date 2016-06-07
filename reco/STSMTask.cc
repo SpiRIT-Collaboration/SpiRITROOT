@@ -13,6 +13,7 @@
 #include "STSMTask.hh"
 #include "STGlobal.hh"
 #include "STDebugLogger.hh"
+#include "STParReader.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -34,6 +35,8 @@ STSMTask::STSMTask()
 
   fManipulator = new STSystemManipulator();
   fSMMode = kChange;
+
+  fVertexFlag = kFALSE;
 }
 
 STSMTask::STSMTask(Bool_t persistence, ESMMode mode)
@@ -47,8 +50,10 @@ STSMTask::~STSMTask()
 {
 }
 
-void STSMTask::SetPersistence(Bool_t value)     { fIsPersistence = value; }
-void STSMTask::SetMode(ESMMode mode)            { fSMMode = mode; }
+void STSMTask::SetPersistence(Bool_t value)      { fIsPersistence = value; }
+void STSMTask::SetMode(ESMMode mode)             { fSMMode = mode; }
+void STSMTask::SetTrans(TVector3 trans)          { fManipulator -> SetTrans(trans); }
+void STSMTask::UseVertexFromParFile(Bool_t flag) { fVertexFlag = flag; } 
 
 InitStatus
 STSMTask::Init()
@@ -85,6 +90,16 @@ STSMTask::SetParContainers()
   fPar = (STDigiPar *) db -> getContainer("STDigiPar");
   if (!fPar)
     fLogger -> Fatal(MESSAGE_ORIGIN, "STDigiPar not found!!");
+
+  if (fVertexFlag) 
+  {
+    TString parName = fPar -> GetTrackingParFileName();
+    STParReader *fTrackingPar = new STParReader(parName);
+
+    fManipulator -> SetTrans(TVector3(fTrackingPar -> GetDoublePar("XVertex"),
+          fTrackingPar -> GetDoublePar("YVertex"),
+          fTrackingPar -> GetDoublePar("ZVertex")));
+  }
 }
 
 void

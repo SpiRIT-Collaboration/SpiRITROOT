@@ -31,6 +31,8 @@ STSystemManipulator::STSystemManipulator()
   fTrans = TVector3(0., 213.3, 35.2);
 }
 
+void STSystemManipulator::SetTrans(TVector3 trans) { fTrans = trans; }
+
 STSystemManipulator::~STSystemManipulator()
 {}
 

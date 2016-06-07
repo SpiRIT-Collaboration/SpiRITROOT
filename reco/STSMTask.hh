@@ -40,6 +40,9 @@ class STSMTask : public FairTask {
 
     void SetMode(STSMTask::ESMMode mode);
 
+    void SetTrans(TVector3 trans);
+    void UseVertexFromParFile(Bool_t flag = kTRUE);
+
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
 
@@ -52,6 +55,8 @@ class STSMTask : public FairTask {
     STSystemManipulator *fManipulator;
 
     ESMMode fSMMode;
+
+    Bool_t fVertexFlag;
 
   ClassDef(STSMTask, 1);
 };

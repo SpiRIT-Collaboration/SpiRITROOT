@@ -26,6 +26,8 @@ class STSystemManipulator {
     STSystemManipulator();
     ~STSystemManipulator();
 
+    void SetTrans(TVector3 trans);
+
     STEvent *Change(STEvent *event);
     STEvent *Restore(STEvent *event);
 
