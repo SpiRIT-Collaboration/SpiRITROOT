@@ -20,6 +20,8 @@ class STHitClusteringCTTask : public STRecoTask
     void SetSigmaCut(Double_t x, Double_t y, Double_t z);
     void SetEdgeCut(Double_t low, Double_t high);
 
+    void SetClusterByLength(Bool_t flag);
+
   private:
     TClonesArray *fClusterArray = nullptr;
     TClonesArray *fTrackArray = nullptr;
@@ -40,7 +42,7 @@ class STHitClusteringCTTask : public STRecoTask
     Double_t fXLowCut;
     Double_t fXHighCut;
 
-    Double_t fDriftLength; ///< Drift length [mm]
+    Bool_t fClusterByLength = kFALSE;
 
   ClassDef(STHitClusteringCTTask, 1)
 };

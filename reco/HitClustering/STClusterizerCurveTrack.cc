@@ -1,8 +1,6 @@
 #include "STClusterizerCurveTrack.hh"
 #include "STCurveTrack.hh"
 
-#define CLUSTERBYLAYER
-
 STClusterizerCurveTrack::STClusterizerCurveTrack()
 {
   fClusterArray = new TClonesArray("STHitCluster", 50);
@@ -103,83 +101,86 @@ STClusterizerCurveTrack::AnalyzeSingleTrack(STCurveTrack *track, TClonesArray *c
     return;
   }
 
-#ifdef CLUSTERBYLAYER
-  STHitSortLayer sorting;
-  std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
-
-  hit = hitArrayFromTrack -> at(0);
-  Int_t currentLayer = hit -> GetLayer();
-  cluster = NewCluster(hit, clusterArray);
-
-  for (Int_t iHit = 1; iHit < numHitsInTrack; iHit++)
+  if (fClusteringOption == 0) // Cluster by layer
   {
-    hit = hitArrayFromTrack -> at(iHit);
-    if (hit -> GetLayer() != currentLayer)
+    STHitSortLayer sorting;
+    std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
+
+    hit = hitArrayFromTrack -> at(0);
+    Int_t currentLayer = hit -> GetLayer();
+    cluster = NewCluster(hit, clusterArray);
+
+    for (Int_t iHit = 1; iHit < numHitsInTrack; iHit++)
     {
-      currentLayer = hit -> GetLayer();
-      cluster = NewCluster(hit, clusterArray);
+      hit = hitArrayFromTrack -> at(iHit);
+      if (hit -> GetLayer() != currentLayer)
+      {
+        currentLayer = hit -> GetLayer();
+        cluster = NewCluster(hit, clusterArray);
+      }
+      cluster -> AddHit(hit);
     }
-    cluster -> AddHit(hit);
   }
-#else
-  Double_t xCenter = 0, zCenter = 0, radius = 0, rms = 0, rmsP = 0;
-  Bool_t fitted = fRiemannFitter -> FitData(hitArrayFromTrack, xCenter, zCenter, radius, rms, rmsP);
-
-  if (fitted == kTRUE && rms < 12)
-  {
-    if (radius == 0) {
-      STHitSortDirection sorting(TVector3(xCenter, 0, zCenter));
-      std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
-    }
-    else {
-      STHitSortThetaFromP sorting(TVector3(xCenter, 0, zCenter));
-      std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
-    }
-  } 
   else
   {
-    fTrackFitter -> FitAndSetTrack(track);
-    STHitSortDirection sorting(track -> GetDirection());
-    std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
-  }
+    Double_t xCenter = 0, zCenter = 0, radius = 0, rms = 0, rmsP = 0;
+    Bool_t fitted = fRiemannFitter -> FitData(hitArrayFromTrack, xCenter, zCenter, radius, rms, rmsP);
 
-  STHit *preHit = track -> GetHit(0);
-  cluster = NewCluster(preHit, clusterArray);
-  STHit *curHit = nullptr;
-
-  Int_t numHitsAtHead = fNumHitsAtHead;
-  if (numHitsAtHead > numHitsInTrack)
-    numHitsAtHead = numHitsInTrack;
-
-  fTracker -> Clear();
-  for (Int_t iHit = 0; iHit < numHitsAtHead; iHit++) {
-    hit = hitArrayFromTrack -> at(iHit);
-    fTracker -> AddHit(hit);
-  }
-  fTrackFitter -> FitAndSetCurveTrack(fTracker);
-
-  for (Int_t iHit = 1; iHit < numHitsInTrack; iHit++)
-  {
-    curHit = hitArrayFromTrack -> at(iHit);
-    if (iHit >= numHitsAtHead)
+    if (fitted == kTRUE && rms < 12)
     {
-      fTracker -> AddHit(curHit);
-      fTrackFitter -> FitAndSetCurveTrack(fTracker);
+      if (radius == 0) {
+        STHitSortDirection sorting(TVector3(xCenter, 0, zCenter));
+        std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
+      }
+      else {
+        STHitSortThetaFromP sorting(TVector3(xCenter, 0, zCenter));
+        std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
+      }
     }
-    TVector3 direction = fTracker -> GetDirection();
-
-    Double_t length = std::abs(preHit -> GetPosition().Dot(direction) - curHit -> GetPosition().Dot(direction));
-
-    if (length > 12)
+    else
     {
-      cluster = NewCluster(curHit, clusterArray);
-      preHit = curHit;
+      fTrackFitter -> FitAndSetTrack(track);
+      STHitSortDirection sorting(track -> GetDirection());
+      std::sort(hitArrayFromTrack -> begin(), hitArrayFromTrack -> end(), sorting);
     }
-    else {
-      cluster -> AddHit(curHit);
+
+    STHit *preHit = track -> GetHit(0);
+    cluster = NewCluster(preHit, clusterArray);
+    STHit *curHit = nullptr;
+
+    Int_t numHitsAtHead = fNumHitsAtHead;
+    if (numHitsAtHead > numHitsInTrack)
+      numHitsAtHead = numHitsInTrack;
+
+    fTracker -> Clear();
+    for (Int_t iHit = 0; iHit < numHitsAtHead; iHit++) {
+      hit = hitArrayFromTrack -> at(iHit);
+      fTracker -> AddHit(hit);
+    }
+    fTrackFitter -> FitAndSetCurveTrack(fTracker);
+
+    for (Int_t iHit = 1; iHit < numHitsInTrack; iHit++)
+    {
+      curHit = hitArrayFromTrack -> at(iHit);
+      if (iHit >= numHitsAtHead)
+      {
+        fTracker -> AddHit(curHit);
+        fTrackFitter -> FitAndSetCurveTrack(fTracker);
+      }
+      TVector3 direction = fTracker -> GetDirection();
+
+      Double_t length = std::abs(preHit -> GetPosition().Dot(direction) - curHit -> GetPosition().Dot(direction));
+
+      if (length > 12)
+      {
+        cluster = NewCluster(curHit, clusterArray);
+        preHit = curHit;
+      }
+      else {
+        cluster -> AddHit(curHit);
+      }
     }
   }
-#endif
 }
 
 STHitCluster*

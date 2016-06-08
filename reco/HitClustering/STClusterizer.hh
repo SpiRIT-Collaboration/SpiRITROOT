@@ -42,6 +42,8 @@ class STClusterizer
 
     void SetEdgeCut(Double_t low, Double_t high);
 
+    void SetClusteringOption(Int_t opt);
+
   protected:
     TVector3 fPrimaryVertex;  //!< primary vertex position
 
@@ -68,6 +70,8 @@ class STClusterizer
     Double_t fXHighCut;
 
     Int_t fNumHitsAtHead;
+
+    Int_t fClusteringOption = 0;
 
     FairLogger *fLogger;      //!< logger
 

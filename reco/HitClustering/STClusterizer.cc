@@ -113,3 +113,5 @@ void STClusterizer::SetEdgeCut(Double_t low, Double_t high)
   fXLowCut = low;
   fXHighCut = high;
 }
+
+void STClusterizer::SetClusteringOption(Int_t opt) { fClusteringOption = opt; }

@@ -49,6 +49,8 @@ void STHitClusteringCTTask::SetEdgeCut(Double_t low, Double_t high)
   fXHighCut = high;
 }
 
+void STHitClusteringCTTask::SetClusterByLength(Bool_t flag) { fClusterByLength = flag; }
+
 InitStatus STHitClusteringCTTask::Init()
 {
   if (STRecoTask::Init() == kERROR)
@@ -67,8 +69,7 @@ InitStatus STHitClusteringCTTask::Init()
   if (fSetProxCut)  fClusterizer -> SetProximityCut(fXCut, fYCut, fZCut);
   if (fSetSigmaCut) fClusterizer -> SetSigmaCut(fSigmaXCut, fSigmaYCut, fSigmaZCut);
   if (fSetEdgeCut)  fClusterizer -> SetEdgeCut(fXLowCut, fXHighCut);
-
-  fDriftLength = fDigiPar -> GetDriftLength();
+  if (fClusterByLength) fClusterizer -> SetClusteringOption(1);
 
   return kSUCCESS;
 }

@@ -56,6 +56,7 @@ STHitClusteringTask::~STHitClusteringTask()
 
 void STHitClusteringTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
 void STHitClusteringTask::SetClusterizerMode(STClusterizerMode mode) { fClusterizerMode = mode; }
+void STHitClusteringTask::SetClusterByLength(Bool_t flag) { fClusterByLength = flag; }
 void STHitClusteringTask::SetProximityCut(Double_t x, Double_t y, Double_t z)
 {
   fSetProxCut = kTRUE;
@@ -117,6 +118,8 @@ STHitClusteringTask::Init()
   else if (fClusterizerMode == kCT) {
     fLogger -> Info(MESSAGE_ORIGIN, "Use STClusterizerCurveTrack!");
     fClusterizer = new STClusterizerCurveTrack();
+    if (fClusterByLength)
+      fClusterizer -> SetClusteringOption(1);
   }
 
   if (fClusterizer) {

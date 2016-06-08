@@ -47,6 +47,7 @@ class STHitClusteringTask : public FairTask
 
     STClusterizer* GetClusterizer();
     void SetClusterizerMode(STClusterizerMode mode);
+    void SetClusterByLength(Bool_t flag);
 
     void SetProximityCut(Double_t x, Double_t y, Double_t z);
     void SetSigmaCut(Double_t x, Double_t y, Double_t z);
@@ -79,6 +80,8 @@ class STHitClusteringTask : public FairTask
     Double_t fDriftLength; ///< Drift length [mm]
 
     FairLogger *fLogger;   //!< FairLogger singleton
+
+    Bool_t fClusterByLength = kFALSE;
 
   ClassDef(STHitClusteringTask, 2);
 };
