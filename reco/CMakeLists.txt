@@ -23,7 +23,7 @@ ${CMAKE_SOURCE_DIR}/reco/Genfit
 ${CMAKE_SOURCE_DIR}/reco/Tracking
 ${CMAKE_SOURCE_DIR}/reco/LinearTracking
 ${CMAKE_SOURCE_DIR}/reco/CurveTracking
-${CMAKE_SOURCE_DIR}/reco/HelixTracker
+${CMAKE_SOURCE_DIR}/reco/HelixTracking
 ${CMAKE_SOURCE_DIR}/reco/Task
 )
 
@@ -49,6 +49,7 @@ Task/STHitClusteringCTTask.cc
 Task/STSMETask.cc
 Task/STRiemannTrackingETask.cc
 Task/STGenfitETask.cc
+Task/STHelixTrackingTask.cc
 
 GETDecoder/GETDecoder.cc
 GETDecoder/GETFrameInfo.cc
@@ -139,6 +140,8 @@ CurveTracking/STCorrCurveTHProx.cc
 CurveTracking/STCorrCurveTHPerp.cc
 
 STCurveTrackingTask.cc
+
+HelixTracking/STHelixTrackFinder.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
