@@ -110,6 +110,17 @@ void STHit::SetTb(Double_t tb)                                  { fTb = tb; }
 void STHit::SetChi2(Double_t chi2)                              { fChi2 = chi2; }
 void STHit::SetNDF(Int_t ndf)                                   { fNDF = ndf; }
 
+void STHit::AddTrackCand(Int_t trackID)                         { fTrackCandArray.push_back(trackID); }
+void STHit::RemoveTrackCand(Int_t trackID)
+{
+  for (auto i = 0; i < fTrackCandArray.size(); i++) {
+    if (fTrackCandArray[i] == trackID) {
+      fTrackCandArray.erase(fTrackCandArray.begin()+i); 
+      return;
+    }
+  }
+}
+
    Int_t STHit::GetHitID()     const   { return fHitID; }
    Int_t STHit::GetClusterID() const   { return (fIsClustered ? fClusterID : -1); }
    Int_t STHit::GetTrackID()   const   { return fTrackID; }
@@ -130,3 +141,6 @@ Double_t STHit::GetTb()        const   { return fTb; }
 
 Double_t STHit::GetChi2()      const   { return fChi2; }
    Int_t STHit::GetNDF()       const   { return fNDF; }
+
+Int_t STHit::GetNumTrackCands()  { return fTrackCandArray.size(); }
+std::vector<Int_t> *STHit::GetTrackCandArray()  { return &fTrackCandArray; }

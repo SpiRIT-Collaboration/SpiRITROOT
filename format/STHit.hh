@@ -14,6 +14,8 @@
 #include "TVector3.h"
 #include "TMath.h"
 
+#include <vector>
+
 class STHit : public TObject 
 {
   public:
@@ -53,6 +55,9 @@ class STHit : public TObject
     void SetChi2(Double_t chi2);                             ///< Chi-square setter
     void SetNDF(Int_t ndf);                                  ///< NDF setter
 
+    void AddTrackCand(Int_t trackID);
+    void RemoveTrackCand(Int_t trackID);
+
       Bool_t IsClustered()  const; ///< Clustered flag getter
        Int_t GetHitID()     const; ///< Hit ID getter
        Int_t GetClusterID() const; ///< Cluster ID getter
@@ -74,6 +79,9 @@ class STHit : public TObject
     Double_t GetChi2()      const; ///< Chi-square getter
        Int_t GetNDF()       const; ///< NDF getter
 
+    Int_t GetNumTrackCands();
+    std::vector<Int_t> *GetTrackCandArray();
+
   protected:
       Bool_t fIsClustered; ///< Clustered flag
        Int_t fHitID;       ///< Hit ID
@@ -94,7 +102,9 @@ class STHit : public TObject
     Double_t fChi2;        ///< Chi-square of hit time fit
        Int_t fNDF;         ///< NDF of hit time fit
 
-  ClassDef(STHit, 4);
+    std::vector<Int_t> fTrackCandArray; //! <
+
+  ClassDef(STHit, 7);
 };
 
 class STHitSortDirection
