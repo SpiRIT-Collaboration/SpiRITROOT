@@ -5,6 +5,7 @@ ${GENFIT2_INCLUDE_DIR}
 ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/tool
+${CMAKE_SOURCE_DIR}/util
 ${CMAKE_SOURCE_DIR}/format
 )
 
@@ -41,6 +42,7 @@ Set(DEPENDENCIES
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
     STFormat
+    STUtil
 )
 
 GENERATE_LIBRARY()

@@ -1,11 +1,10 @@
 #include "STHelixTrackFitter.hh"
 
-ClassImp(STHelixTrackFitter)
+#include "STDebugLogger.hh"
+#include <iostream>
+using namespace std;
 
-STHelixTrackFitter::STHelixTrackFitter()
-{
-  fODRFitter = new ODRFitter();
-}
+ClassImp(STHelixTrackFitter)
 
 Bool_t 
 STHelixTrackFitter::Fit(STHelixTrack *track)
@@ -13,23 +12,23 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
   if (track -> GetNumHits() < 3)
     return kFALSE;
 
-  FitCircle(track);
-  FitLine(track);
+  Double_t scale = 1;
+  Double_t trackLength = track -> TrackLength();
+  Double_t meanCharge = track -> GetChargeSum()/track -> GetNumHits();
 
-  return kTRUE;
-}
+  if (trackLength < 500.) {
+    Double_t scaleTrackLength = 0.5*(500. - trackLength)/500.;
+    if (meanCharge < 500.)
+      scaleTrackLength *= (1 - (250000. - meanCharge*meanCharge)/250000.);
+    scale = 1 + scaleTrackLength;
+  }
 
-Bool_t
-STHelixTrackFitter::FitCircle(STHelixTrack *track)
-{
   fODRFitter -> Reset();
 
   Double_t xMean = track -> GetXMean();
   Double_t zMean = track -> GetZMean();
   Double_t xCov  = track -> GetXCov();
   Double_t zCov  = track -> GetZCov();
-  Double_t weightSum = track -> GetChargeSum();
-
   Double_t RSR = 2 * sqrt(xCov + zCov);
 
   Double_t xMapMean = 0;
@@ -38,11 +37,15 @@ STHelixTrackFitter::FitCircle(STHelixTrack *track)
 
   std::vector<STHit *> *hitArray = track -> GetHitArray();
 
+  Double_t x = 0;
+  Double_t z = 0;
+
   for (auto *hit : *hitArray)
   {
-    Double_t x = hit -> GetX() - xMean;
-    Double_t z = hit -> GetZ() - zMean;
+    x = hit -> GetX() - xMean;
+    z = hit -> GetZ() - zMean;
     Double_t w = hit -> GetCharge();
+    w = TMath::Power(w, scale);
 
     Double_t rEff = sqrt(x*x + z*z) / (2*RSR);
     Double_t denominator = 1 + rEff*rEff;
@@ -56,6 +59,7 @@ STHelixTrackFitter::FitCircle(STHelixTrack *track)
     zMapMean += w * zMap;
   }
 
+  Double_t weightSum = track -> GetChargeSum();
   xMapMean = xMapMean / weightSum;
   yMapMean = yMapMean / weightSum;
   zMapMean = zMapMean / weightSum;
@@ -65,9 +69,10 @@ STHelixTrackFitter::FitCircle(STHelixTrack *track)
 
   for (auto *hit : *hitArray)
   {
-    Double_t x = hit -> GetX() - xMean;
-    Double_t z = hit -> GetZ() - zMean;
+    x = hit -> GetX() - xMean;
+    z = hit -> GetZ() - zMean;
     Double_t w = hit -> GetCharge();
+    w = TMath::Power(w, scale);
 
     Double_t rEff = sqrt(x*x + z*z) / (2*RSR);
     Double_t denominator = 1 + rEff*rEff;
@@ -85,9 +90,8 @@ STHelixTrackFitter::FitCircle(STHelixTrack *track)
   fODRFitter -> ChooseEigenValue(2); TVector3 nToPlane = fODRFitter -> GetDirection();
 
   if (std::abs(nToPlane.Y()) < 1.e-10) {
-    track -> SetFitStatus(STHelixTrack::kLine);
-    //track -> SetLineDirection(nToPlane.Z(), 0, nToPlane.X());
-    return kTRUE;
+    track -> SetIsStraightLine();
+    return kFALSE;
   }
 
   TVector3 RSC = TVector3(0, RSR, 0);
@@ -115,48 +119,23 @@ STHelixTrackFitter::FitCircle(STHelixTrack *track)
 
   TVector3 FCC = 0.5 * (louuInvMap + highInvMap);
 
-  Double_t xCenter = FCC.X() + xMean;
-  Double_t zCenter = FCC.Z() + zMean;
+  Double_t xC = FCC.X() + xMean;
+  Double_t zC = FCC.Z() + zMean;
   Double_t radius = 0.5 * (louuInvMap - highInvMap).Mag();
 
-  track -> SetHelixCenter(xCenter, zCenter);
+  track -> SetHelixCenter(xC, zC);
   track -> SetHelixRadius(radius);
 
-  /*
-  Double_t S = 0;
-  for (auto *hit : *hitArray)
-  {
-    TVector3 position = hit -> GetPosition();
-    Double_t d = radius - sqrt((position.X() - xCenter)*(position.X() - xCenter) + 
-                               (position.Z() - zCenter)*(position.Z() - zCenter));
-    S += hit -> GetCharge() * d * d;
-  }
-  rms = sqrt(S / (weightSum * (1 - 3/hitArray -> size())));
-  */
+  track -> SetIsHelix();
 
-  track -> SetFitStatus(STHelixTrack::kHelix);
+  // TODO: Fit slope with wieight
 
-  return kTRUE;
-}
-
-Bool_t
-STHelixTrackFitter::FitLine(STHelixTrack *track)
-{
-  // TODO: Fit with wieight
-
-  std::vector<STHit *> *hitArray = track -> GetHitArray();
-
-  Double_t xC = track -> GetHelixCenterX();
-  Double_t zC = track -> GetHelixCenterZ();
-  Double_t r = track -> GetHelixRadius();
-
-  STHitSortY sorting;
-  sort(hitArray -> begin(), hitArray -> end(), sorting);
+  sort(hitArray -> begin(), hitArray -> end(), STHitSortY());
 
   TVector3 position0 = hitArray -> at(0) -> GetPosition();
-  Double_t x = position0.X();
-  Double_t y = position0.Y();
-  Double_t z = position0.Z();
+  x = position0.X() - xC;
+  z = position0.Z() - zC;
+  Double_t y = 0;
 
   Double_t alphaInit = TMath::ATan2(z, x);
   TVector2 xAxis(x,z);
@@ -165,30 +144,34 @@ STHelixTrackFitter::FitLine(STHelixTrack *track)
   xAxis = xAxis.Unit();
   zAxis = zAxis.Unit();
 
-  Double_t alphaStack = 0;
-
   Double_t expA  = 0;
   Double_t expA2 = 0;
   Double_t expY  = 0;
   Double_t expAY = 0;
 
+  Double_t alphaStack = 0;
+  Double_t alphaLast = 0;
+
+  Double_t alphaMin = alphaInit;
+  Double_t alphaMax = alphaInit;
+
   for (auto *hit : *hitArray)
   {
-    x = hit -> GetX();
+    x = hit -> GetX() - xC;
     y = hit -> GetY();
-    z = hit -> GetZ();
+    z = hit -> GetZ() - zC;;
 
     TVector2 v(x,z);
 
     Double_t xRot = v*xAxis;
     Double_t zRot = v*zAxis;
-    Double_t alpha = TMath::ATan2(zRot, xRot);
 
-    if (alpha > TMath::Pi()/2. || alpha < -TMath::Pi()/2.)
+    alphaLast = TMath::ATan2(zRot, xRot);
+    if (alphaLast > TMath::Pi()/2. || alphaLast < -TMath::Pi()/2.)
     {
-      Double_t t0 = alpha;
+      Double_t t0 = alphaLast;
 
-      alpha += alphaStack;
+      alphaLast += alphaStack;
       alphaStack += t0;
 
       xAxis = v;
@@ -197,32 +180,53 @@ STHelixTrackFitter::FitLine(STHelixTrack *track)
       zAxis = zAxis.Unit();
     }
     else
-      alpha += alphaStack;
+      alphaLast += alphaStack;
 
-    alpha = alpha + alphaInit;
+    alphaLast = alphaLast + alphaInit;
 
-    //TODO : weight
+    //TODO : give weight
 
-    expA  += alpha;
-    expA2 += alpha * alpha;
+    expA  += alphaLast;
+    expA2 += alphaLast * alphaLast;
     expY  += y;
-    expAY += alpha*y;
+    expAY += alphaLast * y;
+
+    if (alphaLast < alphaMin)
+      alphaMin = alphaLast;
+    if (alphaLast > alphaMax)
+      alphaMax = alphaLast;
   }
+
+  track -> SetAlphaHead(alphaMin);
+  track -> SetAlphaTail(alphaMax);
 
   Double_t numHits = hitArray -> size();
 
-  expA  *= expA/numHits;
-  expA2 *= expA2/numHits;
-  expY  *= expA/numHits;
-  expAY *= expAY/numHits;
+  expA  /= numHits;
+  expA2 /= numHits;
+  expY  /= numHits;
+  expAY /= numHits;
 
   Double_t slope  = (expAY - expA*expY) / (expA2 - expA*expA);
   Double_t offset = (expA2*expY - expA*expAY) / (expA2 - expA*expA);
-  Double_t dip = TMath::ATan(-slope/track -> GetHelixRadius()) + TMath::Pi()/2;
 
-  //track -> SetAlphaSlope(slope);
-  //track -> SetAlphaOffset(offset);
-  track -> SetDipAngle(dip);
+  track -> SetAlphaSlope(slope);
+  track -> SetYInitial(offset);
+
+  Double_t Sx = 0;
+  Double_t Sy = 0;
+  for (auto *hit : *hitArray)
+  {
+    TVector3 q = track -> Map(hit -> GetPosition());
+    Sx += hit -> GetCharge() * q.X() * q.X();
+    Sy += hit -> GetCharge() * q.Y() * q.Y();
+  }
+
+  Double_t rmsr = sqrt(Sx / (track -> GetChargeSum() * (1 - 3/hitArray -> size())));
+  Double_t rmsy = sqrt(Sy / (track -> GetChargeSum() * (1 - 3/hitArray -> size())));
+
+  track -> SetRMSW(rmsr);
+  track -> SetRMSH(rmsy);
 
   return kTRUE;
 }

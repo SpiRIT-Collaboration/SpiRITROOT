@@ -9,14 +9,10 @@
 class STHelixTrackFitter
 {
   public:
-    STHelixTrackFitter();
+    STHelixTrackFitter() : fODRFitter(new ODRFitter()) {}
     ~STHelixTrackFitter() {};
 
     Bool_t Fit(STHelixTrack *track);
-
-  private:
-    Bool_t FitCircle(STHelixTrack *track);
-    Bool_t FitLine(STHelixTrack *track);
 
   private:
     ODRFitter *fODRFitter;
