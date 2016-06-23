@@ -184,12 +184,12 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
 
     alphaLast = alphaLast + alphaInit;
 
-    //TODO : give weight
+    Double_t w = hit -> GetCharge();
 
-    expA  += alphaLast;
-    expA2 += alphaLast * alphaLast;
-    expY  += y;
-    expAY += alphaLast * y;
+    expA  += w * alphaLast;
+    expA2 += w * alphaLast * alphaLast;
+    expY  += w * y;
+    expAY += w * alphaLast * y;
 
     if (alphaLast < alphaMin)
       alphaMin = alphaLast;
@@ -200,12 +200,10 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
   track -> SetAlphaHead(alphaMin);
   track -> SetAlphaTail(alphaMax);
 
-  Double_t numHits = hitArray -> size();
-
-  expA  /= numHits;
-  expA2 /= numHits;
-  expY  /= numHits;
-  expAY /= numHits;
+  expA  /= weightSum;
+  expA2 /= weightSum;
+  expY  /= weightSum;
+  expAY /= weightSum;
 
   Double_t slope  = (expAY - expA*expY) / (expA2 - expA*expA);
   Double_t offset = (expA2*expY - expA*expAY) / (expA2 - expA*expA);
