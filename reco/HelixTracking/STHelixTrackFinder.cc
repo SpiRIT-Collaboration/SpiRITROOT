@@ -329,6 +329,7 @@ STHelixTrackFinder::ConfirmHits(STHelixTrack *track, bool &tailToHead)
     STHit *trackHit = trackHits -> at(numHits-iHit-1);
     auto lCur = track -> ExtrapolateByMap(trackHit->GetPosition(), q, m);
 
+    /*
     Double_t quality = Correlate(track, trackHit);
 
     if (quality <= 0) {
@@ -338,6 +339,7 @@ STHelixTrackFinder::ConfirmHits(STHelixTrack *track, bool &tailToHead)
       if (helicity != track -> Helicity())
         tailToHead = !tailToHead;
     }
+    */
 
     auto dLength = std::abs(lCur - lPre);
     extrapolationLength = 10;
@@ -369,18 +371,19 @@ Int_t STHelixTrackFinder::CheckHitOwner(STHit *hit)
 Double_t 
 STHelixTrackFinder::Correlate(STHelixTrack *track, STHit *hit)
 {
-  Double_t scale = 2;
+  Double_t scale = 2.5;
   Double_t trackLength = track -> TrackLength();
   if (trackLength < 500.)
-    scale = 2.5 + .5*(500. - trackLength)/500.;
+    scale = scale + (500. - trackLength)/500.;
 
   Double_t rmsWCut = scale * track -> GetRMSW();
   if (rmsWCut < 12) rmsWCut = 12;
   if (rmsWCut > 24) rmsWCut = 24;
 
   Double_t rmsHCut = scale * track -> GetRMSH();
-  if (rmsHCut < 3) rmsHCut = 3;
-  if (rmsHCut > 10) rmsHCut = 10;
+  //if (rmsHCut < 3) rmsHCut = 3;
+  if (rmsHCut < 3) rmsHCut = 6;
+  if (rmsHCut > 10) rmsHCut = 15;
 
   auto qHead = track -> Map(track -> PositionAtHead());
   auto qTail = track -> Map(track -> PositionAtTail());
@@ -424,7 +427,8 @@ STHelixTrackFinder::CorrelateSimple(STHelixTrack *track, STHit *hit)
     Double_t dy = std::abs(hit->GetY() - trackHit->GetY());
     Double_t dz = std::abs(hit->GetZ() - trackHit->GetZ());
 
-    Double_t r = TangentOfMaxDipAngle(trackHit);
+    Double_t r = 1;
+    //Double_t r = TangentOfMaxDipAngle(trackHit);
     Double_t highcut = 1.5 * r * sqrt(dx*dx + dz*dz);
     //Double_t lowcut  = 0.2 * r * sqrt(dx*dx + dz*dz);
     if (highcut < 5) 
