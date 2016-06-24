@@ -18,6 +18,8 @@ void eventdisplay(TString in = "~/data_cosmics/run2771.helix.reco.root")
   auto geomFile = new TFile("../../geometry/geomSpiRIT.man.root", "read"); 
   geomFile -> Get("SpiRIT");
   gEve -> AddGlobalElement(new TEveGeoTopNode(gGeoManager, gGeoManager->GetTopNode(), 1, 3, 10000));
+  gEve -> FullRedraw3D(true);
+  gEve -> GetDefaultGLViewer() -> CurrentCamera().RotateRad(-0.7, 1.1);
 
   draw(currentEvent);
 }
@@ -87,5 +89,5 @@ void draw(int eventID)
     eveArray.push_back(line);
   }
 
-  gEve -> FullRedraw3D(true);
+  gEve -> Redraw3D();
 }
