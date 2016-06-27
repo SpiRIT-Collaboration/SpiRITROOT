@@ -27,14 +27,19 @@ void STHelixTrack::Clear(Option_t *option)
   fZHelixCenter = -999;
   fHelixRadius  = -999;
   fYInitial     = -999;
+  fAlphaSlope   = -999;
 
   fChargeSum = 0;
 
-  fXMean = 0;
-  fYMean = 0;
-  fZMean = 0;
-  fXCov  = 0;
-  fZCov  = 0;
+  fExpectationX = 0;
+  fExpectationY = 0;
+  fExpectationZ = 0;
+  fExpectationXX = 0;
+  fExpectationYY = 0;
+  fExpectationZZ = 0;
+  fExpectationXY = 0;
+  fExpectationYZ = 0;
+  fExpectationZX = 0;
 
   fRMSW = -999;
   fRMSH = -999;
@@ -68,8 +73,6 @@ void STHelixTrack::Print(Option_t *option) const
   cout << " - " << setw(13) << "Fit RMS-w/h"  << " : " << fRMSW << " / " << fRMSH << " [mm]" << endl;
   cout << " - " << setw(13) << "Charge"       << " : " << fChargeSum << " [ADC]" << endl;;
   cout << " - " << setw(13) << "Track Length" << " : " << TrackLength() << " [mm]" << endl;;
-  //cout << " - " << setw(13) << "Track Length" << " : " << Continuity()*TrackLength() << " / " << TrackLength() << " [mm]" << endl;;
-  //cout << " - " << setw(13) << "Simple dE/dx" << " : " << fChargeSum/Continuity()*TrackLength() << " [mm]" << endl;;
   cout << " - " << setw(13) << "Momentum"     << " : " << Momentum() << " [MeV]" << endl;;
 }
 
@@ -82,20 +85,21 @@ void STHelixTrack::AddHit(STHit *hit)
 
   Double_t W = fChargeSum + w;
 
-  fXMean = (fChargeSum * fXMean + w * x) / W;
-  fYMean = (fChargeSum * fYMean + w * y) / W;
-  fZMean = (fChargeSum * fZMean + w * z) / W;
+  fExpectationX = (fChargeSum * fExpectationX + w * x) / W;
+  fExpectationY = (fChargeSum * fExpectationY + w * y) / W;
+  fExpectationZ = (fChargeSum * fExpectationZ + w * z) / W;
 
-  if (fChargeSum != 0) 
-  {
-    fXCov = fChargeSum / W * fXCov + w * (fXMean - x) * (fXMean - x) / fChargeSum;
-    fZCov = fChargeSum / W * fZCov + w * (fZMean - z) * (fZMean - z) / fChargeSum;
-  }
+  fExpectationXX = (fChargeSum * fExpectationXX + w * x * x) / W;
+  fExpectationYY = (fChargeSum * fExpectationYY + w * y * y) / W;
+  fExpectationZZ = (fChargeSum * fExpectationZZ + w * z * z) / W;
+
+  fExpectationXY = (fChargeSum * fExpectationXY + w * x * y) / W;
+  fExpectationYZ = (fChargeSum * fExpectationYZ + w * y * z) / W;
+  fExpectationZX = (fChargeSum * fExpectationZX + w * z * x) / W;
 
   fChargeSum = W;
 
   fMainHits.push_back(hit);
-  //fCandHits.push_back(hit);
 }
 
 void STHelixTrack::Remove(STHit *hit)
@@ -107,8 +111,6 @@ void STHelixTrack::Remove(STHit *hit)
 
   Double_t W = fChargeSum - w;
 
-  fMainHits.push_back(hit);
-
   auto numHits = fMainHits.size();
   for (auto iHit = 0; iHit < numHits; iHit++) {
     if (fMainHits[iHit] == hit) {
@@ -117,17 +119,17 @@ void STHelixTrack::Remove(STHit *hit)
     }
   }
 
-  fXMean = (fChargeSum * fXMean - w * x) / W;
-  fYMean = (fChargeSum * fYMean - w * y) / W;
-  fZMean = (fChargeSum * fZMean - w * z) / W;
+  fExpectationX = (fChargeSum * fExpectationX - w * x) / W;
+  fExpectationY = (fChargeSum * fExpectationY - w * y) / W;
+  fExpectationZ = (fChargeSum * fExpectationZ - w * z) / W;
 
-  /*
-  if (fChargeSum != 0) 
-  {
-    fXCov = fChargeSum / W * fXCov - w * (fXMean - x) * (fXMean - x) / fChargeSum;
-    fZCov = fChargeSum / W * fZCov - w * (fZMean - z) * (fZMean - z) / fChargeSum;
-  }
-  */
+  fExpectationXX = (fChargeSum * fExpectationXX - w * x * x) / W;
+  fExpectationYY = (fChargeSum * fExpectationYY - w * y * y) / W;
+  fExpectationZZ = (fChargeSum * fExpectationZZ - w * z * z) / W;
+
+  fExpectationXY = (fChargeSum * fExpectationXY - w * x * y) / W;
+  fExpectationYZ = (fChargeSum * fExpectationYZ - w * y * z) / W;
+  fExpectationZX = (fChargeSum * fExpectationZX - w * z * x) / W;
 
   fChargeSum = W;
 }
@@ -156,30 +158,76 @@ void STHelixTrack::SortHits(bool increasing)
   }
 }
 
-void STHelixTrack::SetTrackID(Int_t idx)                  { fTrackID = idx; }
-void STHelixTrack::SetParentID(Int_t idx)                 { fParentID = idx; }
-void STHelixTrack::SetFitStatus(STFitStatus value)        { fFitStatus = value; }
-void STHelixTrack::SetIsHelix()                           { fFitStatus = STHelixTrack::kHelix; }
-void STHelixTrack::SetIsStraightLine()                    { fFitStatus = STHelixTrack::kLine; }
+void STHelixTrack::SetTrackID(Int_t idx)   { fTrackID = idx; }
+void STHelixTrack::SetParentID(Int_t idx)  { fParentID = idx; }
+
+void STHelixTrack::SetFitStatus(STFitStatus value)  { fFitStatus = value; }
+void STHelixTrack::SetIsLine()   { fFitStatus = STHelixTrack::kLine; }
+void STHelixTrack::SetIsPlane()  { fFitStatus = STHelixTrack::kPlane; }
+void STHelixTrack::SetIsHelix()  { fFitStatus = STHelixTrack::kHelix; }
+
+void STHelixTrack::SetLineDirection(TVector3 dir)
+{
+  fXHelixCenter = dir.X();
+  fZHelixCenter = dir.Y();
+  fHelixRadius = dir.Z();
+}
+
+void STHelixTrack::SetPlaneNormal(TVector3 norm)
+{
+  fXHelixCenter = norm.X();
+  fZHelixCenter = norm.Y();
+  fHelixRadius = norm.Z();
+}
+
 void STHelixTrack::SetHelixCenter(Double_t x, Double_t z) { fXHelixCenter = x; fZHelixCenter = z; }
-void STHelixTrack::SetHelixRadius(Double_t r)             { fHelixRadius = r; }
-void STHelixTrack::SetYInitial(Double_t y)                { fYInitial = y; }
-void STHelixTrack::SetAlphaSlope(Double_t s)              { fAlphaSlope = s; }
-void STHelixTrack::SetRMSW(Double_t rms)                  { fRMSW = rms; }
-void STHelixTrack::SetRMSH(Double_t rms)                  { fRMSH = rms; }
-void STHelixTrack::SetAlphaHead(Double_t alpha)           { fAlphaHead = alpha; }
-void STHelixTrack::SetAlphaTail(Double_t alpha)           { fAlphaTail = alpha; }
+void STHelixTrack::SetHelixRadius(Double_t r)    { fHelixRadius = r; }
+void STHelixTrack::SetYInitial(Double_t y)       { fYInitial = y; }
+void STHelixTrack::SetAlphaSlope(Double_t s)     { fAlphaSlope = s; }
+void STHelixTrack::SetRMSW(Double_t rms)         { fRMSW = rms; }
+void STHelixTrack::SetRMSH(Double_t rms)         { fRMSH = rms; }
+void STHelixTrack::SetAlphaHead(Double_t alpha)  { fAlphaHead = alpha; }
+void STHelixTrack::SetAlphaTail(Double_t alpha)  { fAlphaTail = alpha; }
 
 Int_t STHelixTrack::GetTrackID()  const { return fTrackID; }
 Int_t STHelixTrack::GetParentID() const { return fParentID; }
 
 STHelixTrack::STFitStatus STHelixTrack::GetFitStatus() const { return fFitStatus; }
+bool STHelixTrack::IsNotFitted() const  { return fFitStatus == kNon   ? true : false; }
+bool STHelixTrack::IsLine()  const      { return fFitStatus == kLine  ? true : false; }
+bool STHelixTrack::IsPlane() const      { return fFitStatus == kPlane ? true : false; }
+bool STHelixTrack::IsHelix() const      { return fFitStatus == kHelix ? true : false; }
 
 Double_t STHelixTrack::GetHelixCenterX() const { return fXHelixCenter; }
 Double_t STHelixTrack::GetHelixCenterZ() const { return fZHelixCenter; }
 Double_t STHelixTrack::GetHelixRadius()  const { return fHelixRadius; }
 Double_t STHelixTrack::GetYInitial()     const { return fYInitial; }
 Double_t STHelixTrack::GetAlphaSlope()   const { return fAlphaSlope; }
+
+TVector3 STHelixTrack::GetLineDirection() const { return TVector3(fXHelixCenter, fZHelixCenter, fHelixRadius); }
+TVector3 STHelixTrack::GetPlaneNormal()   const { return TVector3(fXHelixCenter, fZHelixCenter, fHelixRadius); }
+
+TVector3 STHelixTrack::PerpLine(TVector3 p) const
+{
+  TVector3 mean = GetMean();
+  TVector3 dir = GetLineDirection();
+
+  TVector3 pMinusMean = p - mean;
+  TVector3 pMinusMeanUnit = pMinusMean.Unit();
+  Double_t cosine = pMinusMeanUnit.Dot(dir);
+  dir.SetMag(pMinusMean.Mag()*cosine);
+
+  return dir - pMinusMean;
+}
+
+TVector3 STHelixTrack::PerpPlane(TVector3 p) const
+{
+  TVector3 normal = GetPlaneNormal();
+  TVector3 mean = GetMean();
+
+  Double_t perp = abs(normal * p - normal * mean) / sqrt(normal * normal);
+  return perp * normal;
+}
 
 Double_t STHelixTrack::DipAngle() const
 {
@@ -218,11 +266,34 @@ void STHelixTrack::GetHelixParameters(Double_t &xCenter,
 }
 
 Double_t STHelixTrack::GetChargeSum()  const { return fChargeSum; }
-Double_t STHelixTrack::GetXMean()      const { return fXMean; }
-Double_t STHelixTrack::GetYMean()      const { return fYMean; }
-Double_t STHelixTrack::GetZMean()      const { return fZMean; }
-Double_t STHelixTrack::GetXCov()       const { return fXCov; }
-Double_t STHelixTrack::GetZCov()       const { return fZCov; }
+
+TVector3 STHelixTrack::GetMean()  const { return TVector3(fExpectationX, fExpectationY, fExpectationZ); }
+Double_t STHelixTrack::GetXMean() const { return fExpectationX; }
+Double_t STHelixTrack::GetYMean() const { return fExpectationY; }
+Double_t STHelixTrack::GetZMean() const { return fExpectationZ; }
+Double_t STHelixTrack::GetXCov()  const { return CovWXX()/fChargeSum; }
+Double_t STHelixTrack::GetZCov()  const { return CovWZZ()/fChargeSum; }
+
+Double_t STHelixTrack::CovWXX() const { return fChargeSum * (fExpectationXX - fExpectationX * fExpectationX); }
+Double_t STHelixTrack::CovWYY() const { return fChargeSum * (fExpectationYY - fExpectationY * fExpectationY); }
+Double_t STHelixTrack::CovWZZ() const { return fChargeSum * (fExpectationZZ - fExpectationZ * fExpectationZ); }
+
+Double_t STHelixTrack::CovWXY() const { return fChargeSum * (fExpectationXY - fExpectationX * fExpectationY); }
+Double_t STHelixTrack::CovWYZ() const { return fChargeSum * (fExpectationYZ - fExpectationY * fExpectationZ); }
+Double_t STHelixTrack::CovWZX() const { return fChargeSum * (fExpectationZX - fExpectationZ * fExpectationX); }
+
+Double_t STHelixTrack::GetExpectationX()  const { return fExpectationX; }
+Double_t STHelixTrack::GetExpectationY()  const { return fExpectationY; }
+Double_t STHelixTrack::GetExpectationZ()  const { return fExpectationZ; }
+
+Double_t STHelixTrack::GetExpectationXX() const { return fExpectationXX; }
+Double_t STHelixTrack::GetExpectationYY() const { return fExpectationYY; }
+Double_t STHelixTrack::GetExpectationZZ() const { return fExpectationZZ; }
+
+Double_t STHelixTrack::GetExpectationXY() const { return fExpectationXY; }
+Double_t STHelixTrack::GetExpectationYZ() const { return fExpectationYZ; }
+Double_t STHelixTrack::GetExpectationZX() const { return fExpectationZX; }
+
 Double_t STHelixTrack::GetRMSW()       const { return fRMSW; }
 Double_t STHelixTrack::GetRMSH()       const { return fRMSH; }
 Double_t STHelixTrack::GetAlphaHead()  const { return fAlphaHead; }
@@ -333,33 +404,40 @@ STHelixTrack::ExtrapolateToPointAlpha(TVector3 pointGiven, TVector3 &pointOnHeli
   Double_t alpha1 = alpha0;
   TVector3 point1 = point0;
 
-  while(1) 
+  if (std::abs(YLengthInPeriod()) > 3*fRMSH)
   {
-    alpha1 = alpha1 + 2*TMath::Pi();
-    point1.SetY(point1.Y() + 2*TMath::Pi()*fAlphaSlope);
-    y1 = std::abs(point1.Y() - pointGiven.Y());
+    while(1)
+    {
+      alpha1 = alpha1 + 2*TMath::Pi();
+      point1.SetY(point1.Y() + 2*TMath::Pi()*fAlphaSlope);
+      y1 = std::abs(point1.Y() - pointGiven.Y());
 
-    if (y0 <= y1)
-      break;
-    else {
-      alpha0 = alpha1;
-      point0 = point1;
-      y0 = y1;
+      if (y0 <= y1)
+        break;
+      else {
+        alpha0 = alpha1;
+        point0 = point1;
+        y0 = y1;
+      }
     }
-  }
 
-  while(1) 
-  {
-    alpha1 = alpha1 - 2*TMath::Pi();
-    point1.SetY(point1.Y() - 2*TMath::Pi()*fAlphaSlope);
-    y1 = std::abs(point1.Y() - pointGiven.Y());
+    y1 = y0;
+    alpha1 = alpha0;
+    point1 = point0;
 
-    if (y0 <= y1)
-      break;
-    else {
-      alpha0 = alpha1;
-      point0 = point1;
-      y0 = y1;
+    while(1)
+    {
+      alpha1 = alpha1 - 2*TMath::Pi();
+      point1.SetY(point1.Y() - 2*TMath::Pi()*fAlphaSlope);
+      y1 = std::abs(point1.Y() - pointGiven.Y());
+
+      if (y0 <= y1)
+        break;
+      else {
+        alpha0 = alpha1;
+        point0 = point1;
+        y0 = y1;
+      }
     }
   }
 

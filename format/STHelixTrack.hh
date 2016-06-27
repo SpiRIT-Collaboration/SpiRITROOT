@@ -16,7 +16,7 @@ class STHelixTrack : public TObject
     STHelixTrack();
     STHelixTrack(Int_t id);
 
-    enum STFitStatus { kNon, kHelix, kLine };
+    enum STFitStatus { kNon, kLine, kPlane, kHelix};
 
   private:
     Int_t fTrackID;
@@ -32,11 +32,15 @@ class STHelixTrack : public TObject
 
     Double_t fChargeSum;     ///< Sum of charge
 
-    Double_t fXMean;         //!
-    Double_t fYMean;         //!
-    Double_t fZMean;         //!
-    Double_t fXCov;          //!
-    Double_t fZCov;          //!
+    Double_t fExpectationX;  //! < Expectation value of x
+    Double_t fExpectationY;  //! < Expectation value of y
+    Double_t fExpectationZ;  //! < Expectation value of z
+    Double_t fExpectationXX; //! < Expectation value of x^2
+    Double_t fExpectationYY; //! < Expectation value of y^2
+    Double_t fExpectationZZ; //! < Expectation value of z^2
+    Double_t fExpectationXY; //! < Expectation value of xy
+    Double_t fExpectationYZ; //! < Expectation value of yz
+    Double_t fExpectationZX; //! < Expectation value of zx
 
     Double_t fRMSW;          ///< width RMS of the fit
     Double_t fRMSH;          ///< height RMS of the fit
@@ -60,15 +64,17 @@ class STHelixTrack : public TObject
     void SetParentID(Int_t idx);
 
     void SetFitStatus(STFitStatus value);
+    void SetIsLine();
+    void SetIsPlane();
     void SetIsHelix();
-    void SetIsStraightLine();
+
+    void SetLineDirection(TVector3 dir);  ///< ONLY USED IN TRACK FINDING
+    void SetPlaneNormal(TVector3 norm);   ///< ONLY USED IN TRACK FINDING
 
     void SetHelixCenter(Double_t x, Double_t z);
     void SetHelixRadius(Double_t r);
     void SetYInitial(Double_t y);
     void SetAlphaSlope(Double_t s);
-
-    //void SetLineVector(TVector3 dir);
 
     void SetRMSW(Double_t rms);
     void SetRMSH(Double_t rms);
@@ -79,6 +85,10 @@ class STHelixTrack : public TObject
     Int_t GetParentID() const;
 
     STFitStatus GetFitStatus() const;
+    bool IsNotFitted() const;
+    bool IsLine() const;
+    bool IsPlane() const;
+    bool IsHelix() const;
 
     Double_t GetHelixCenterX() const;
     Double_t GetHelixCenterZ() const;
@@ -94,11 +104,33 @@ class STHelixTrack : public TObject
         Double_t &alphaSlope) const;
 
     Double_t GetChargeSum() const;
+
+    TVector3 GetMean() const;
     Double_t GetXMean() const;
     Double_t GetYMean() const;
     Double_t GetZMean() const;
     Double_t GetXCov() const;
     Double_t GetZCov() const;
+
+    Double_t CovWXX() const; ///< SUM_i {(x_centroid-x_i)*(x_centroid-x_i) }
+    Double_t CovWYY() const; ///< SUM_i {(y_centroid-y_i)*(y_centroid-y_i) }
+    Double_t CovWZZ() const; ///< SUM_i {(z_centroid-z_i)*(z_centroid-z_i) }
+
+    Double_t CovWXY() const; ///< SUM_i {(x_centroid-x_i)*(y_centroid-y_i) }
+    Double_t CovWYZ() const; ///< SUM_i {(y_centroid-y_i)*(z_centroid-z_i) }
+    Double_t CovWZX() const; ///< SUM_i {(z_centroid-z_i)*(x_centroid-x_i) }
+
+    Double_t GetExpectationX()  const;
+    Double_t GetExpectationY()  const;
+    Double_t GetExpectationZ()  const;
+
+    Double_t GetExpectationXX() const;
+    Double_t GetExpectationYY() const;
+    Double_t GetExpectationZZ() const;
+
+    Double_t GetExpectationXY() const;
+    Double_t GetExpectationYZ() const;
+    Double_t GetExpectationZX() const;
 
     Double_t GetRMSW() const;
     Double_t GetRMSH() const;
@@ -111,6 +143,12 @@ class STHelixTrack : public TObject
 
     Int_t GetNumCandHits() const;
     std::vector<STHit *> *GetCandHitArray();
+
+    TVector3 GetLineDirection() const;     ///< ONLY USED IN TRACK FINDING
+    TVector3 GetPlaneNormal() const;       ///< ONLY USED IN TRACK FINDING
+
+    TVector3 PerpLine(TVector3 p) const;   ///< ONLY USED IN TRACK FINDING
+    TVector3 PerpPlane(TVector3 p) const;  ///< ONLY USED IN TRACK FINDING
 
     /**
      * Angle between p and pt. Value becomes 0 on xz plane.
@@ -279,9 +317,20 @@ class STHelixTrack : public TObject
     Double_t Continuity();
 
 
-  ClassDef(STHelixTrack, 1)
+  ClassDef(STHelixTrack, 2)
 };
 
+class STHitByDistanceTo
+{
+  private:
+    TVector3 fP;
+
+  public:
+    STHitByDistanceTo(TVector3 p):fP(p) {}
+    bool operator() (STHit* a, STHit* b) {
+      return (a->GetPosition()-fP).Mag() < (b->GetPosition()-fP).Mag();
+    }
+};
 
 class STHitSortByIncreasingLength
 {

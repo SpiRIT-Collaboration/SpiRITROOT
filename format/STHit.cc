@@ -119,6 +119,7 @@ void STHit::RemoveTrackCand(Int_t trackID)
       return;
     }
   }
+  fTrackCandArray.push_back(-1);
 }
 
    Int_t STHit::GetHitID()     const   { return fHitID; }
