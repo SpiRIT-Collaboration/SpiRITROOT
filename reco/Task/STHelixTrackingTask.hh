@@ -3,6 +3,7 @@
 
 #include "STRecoTask.hh"
 #include "STHit.hh"
+#include "STHitCluster.hh"
 #include "STHelixTrack.hh"
 #include "STHelixTrackFinder.hh"
 
@@ -20,6 +21,7 @@ class STHelixTrackingTask : public STRecoTask
 
   private:
     TClonesArray *fHitArray = nullptr;
+    TClonesArray *fHitClusterArray = nullptr;
     TClonesArray *fTrackArray = nullptr;
 
     STHelixTrackFinder* fTrackFinder;

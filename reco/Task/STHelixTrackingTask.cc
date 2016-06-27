@@ -36,6 +36,9 @@ InitStatus STHelixTrackingTask::Init()
   fTrackArray = new TClonesArray("STHelixTrack", 100);
   fRootManager -> Register("STHelixTrack", "SpiRIT", fTrackArray, fIsPersistence);
 
+  fHitClusterArray = new TClonesArray("STHitCluster", 100);
+  fRootManager -> Register("STHitCluster", "SpiRIT", fHitClusterArray, fIsPersistence);
+
   fTrackFinder = new STHelixTrackFinder();
 
   return kSUCCESS;
@@ -44,16 +47,18 @@ InitStatus STHelixTrackingTask::Init()
 void STHelixTrackingTask::Exec(Option_t *opt)
 {
   fTrackArray -> Delete();
+  fHitClusterArray -> Delete();
 
   if (fEventHeader -> IsBadEvent())
     return;
 
-  fTrackFinder -> BuildTracks(fHitArray, fTrackArray);
+  fTrackFinder -> BuildTracks(fHitArray, fTrackArray, fHitClusterArray);
 
   if (fTrackArray -> GetEntriesFast() < fNumTracksLowLimit) {
     fEventHeader -> SetIsBadEvent();
     LOG(INFO) << Space() << "Found less than " << fNumTracksLowLimit << " helix tracks. Bad event!" << FairLogger::endl;
     fTrackArray -> Delete();
+    fHitClusterArray -> Delete();
     return;
   }
 
