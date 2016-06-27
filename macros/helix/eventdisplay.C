@@ -1,7 +1,10 @@
 TTree* tree;
 TClonesArray *hits = nullptr;
 TClonesArray *tracks = nullptr;
-vector<TEveElement*> eveArray;
+vector<TEveElement*> hitArray;
+vector<TEveElement*> trackHitArray;
+vector<TEveElement*> trackLineArray;
+vector<TEveElement*> trackClusterArray;
 int currentEvent = 0;
 
 void draw(int eventID);
@@ -30,13 +33,23 @@ void draw(int eventID)
 
   if (currentEvent >= tree -> GetEntries()) { cout << "end" << endl; return; }
 
-  for (auto element : eveArray) {
-    cout << element -> GetElementName() << endl;
+  for (auto element : hitArray)
     gEve -> RemoveElement(element, gEve -> GetCurrentEvent());
-  }
-  eveArray.clear();
+  hitArray.clear();
 
-  cout << eventID << endl;
+  for (auto element : trackHitArray)
+    gEve -> RemoveElement(element, gEve -> GetCurrentEvent());
+  trackHitArray.clear();
+
+  for (auto element : trackLineArray)
+    gEve -> RemoveElement(element, gEve -> GetCurrentEvent());
+  trackLineArray.clear();
+
+  for (auto element : trackClusterArray)
+    gEve -> RemoveElement(element, gEve -> GetCurrentEvent());
+  trackClusterArray.clear();
+
+  cout << "event " << eventID << endl;
   tree -> GetEntry(eventID);
 
   if (hits != nullptr) {
@@ -48,9 +61,9 @@ void draw(int eventID)
       auto hit = (STHit *) hits -> At(i);
       TVector3 p = hit -> GetPosition();
       hitSet -> SetNextPoint(.1*p.X(), .1*p.Y(), .1*p.Z());
-    } 
-    gEve -> AddElement(hitSet);
-    eveArray.push_back(hitSet);
+    }
+    //gEve -> AddElement(hitSet);
+    //hitArray.push_back(hitSet);
   }
 
 
@@ -64,17 +77,29 @@ void draw(int eventID)
   for (auto iTrack = 0; iTrack < tracks->GetEntries(); iTrack++) {
     auto track = (STHelixTrack *) tracks -> At(iTrack);
     auto trackHits = track -> GetHitArray();
+    auto trackClusters = track -> GetClusterArray();
 
-    auto pointSet = new TEvePointSet(Form("hits%d",iTrack), track -> GetNumHits());
+    auto pointSet = new TEvePointSet(Form("hit%d",iTrack), track -> GetNumHits());
     pointSet -> SetMarkerColor(GetColor(iTrack));
     pointSet -> SetMarkerSize(1.5);
     pointSet -> SetMarkerStyle(20);
     for (auto hit : *trackHits) {
       auto p = hit -> GetPosition();
       pointSet -> SetNextPoint(.1*p.X(), .1*p.Y(), .1*p.Z());
-    } 
-    gEve -> AddElement(pointSet);
-    eveArray.push_back(pointSet);
+    }
+    //gEve -> AddElement(pointSet);
+    //trackHitArray.push_back(pointSet);
+
+    auto clusterSet = new TEvePointSet(Form("cluster%d",iTrack), track -> GetNumClusters());
+    clusterSet -> SetMarkerColor(GetColor(iTrack));
+    clusterSet -> SetMarkerSize(2);
+    clusterSet -> SetMarkerStyle(20);
+    for (auto cluster : *trackClusters) {
+      auto p = cluster -> GetPosition();
+      clusterSet -> SetNextPoint(.1*p.X(), .1*p.Y(), .1*p.Z());
+    }
+    gEve -> AddElement(clusterSet);
+    trackClusterArray.push_back(clusterSet);
 
     auto line = new TEveLine(Form("line%d",iTrack), trackHits->size()); 
     line -> SetLineColor(kRed);
@@ -82,11 +107,10 @@ void draw(int eventID)
 
     for (auto i = -0.1; i <= 1.1; i+= 0.01) {
       auto q = track -> InterpolateByRatio(i);
-      if (!(abs(q.X()) > 500 || abs(q.Z()-750) > 750 || abs(q.Y()+300) > 300))
-        line -> SetNextPoint(.1*q.X(), .1*q.Y(), .1*q.Z());
-    } 
+      line -> SetNextPoint(.1*q.X(), .1*q.Y(), .1*q.Z());
+    }
     gEve -> AddElement(line);
-    eveArray.push_back(line);
+    trackLineArray.push_back(line);
   }
 
   gEve -> Redraw3D();
