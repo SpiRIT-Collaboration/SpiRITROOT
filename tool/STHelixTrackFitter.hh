@@ -12,12 +12,13 @@ class STHelixTrackFitter
     STHelixTrackFitter() : fODRFitter(new ODRFitter()) {}
     ~STHelixTrackFitter() {};
 
-    Bool_t Fit(STHelixTrack *track);
+    bool FitPlane(STHelixTrack *track);
+    bool Fit(STHelixTrack *track);
 
   private:
     ODRFitter *fODRFitter;
 
-  ClassDef(STHelixTrackFitter, 1)
+  ClassDef(STHelixTrackFitter, 2)
 };
 
 #endif

@@ -6,11 +6,53 @@ using namespace std;
 
 ClassImp(STHelixTrackFitter)
 
-Bool_t 
+bool
+STHelixTrackFitter::FitPlane(STHelixTrack *track)
+{
+  if (track -> GetNumHits() < 4)
+    return false;
+
+  fODRFitter -> Reset();
+
+  fODRFitter -> SetCentroid(track -> GetXMean(),
+                            track -> GetYMean(),
+                            track -> GetZMean());
+
+  fODRFitter -> SetMatrixA(track -> CovWXX(),
+                           track -> CovWXY(),
+                           track -> CovWZX(),
+                           track -> CovWYY(),
+                           track -> CovWYZ(),
+                           track -> CovWZZ());
+
+  fODRFitter -> SetWeightSum(track -> GetChargeSum());
+  fODRFitter -> SetNumPoints(track -> GetNumHits());
+
+  fODRFitter -> Solve();
+  fODRFitter -> ChooseEigenValue(2);
+
+  TVector3 normal = fODRFitter -> GetDirection();
+
+  if (normal.Y() < 1.e-10) {
+    track -> SetIsLine();
+    fODRFitter -> ChooseEigenValue(0);
+    track -> SetLineDirection(fODRFitter -> GetDirection());
+    track -> SetRMSH(fODRFitter -> GetRMSLine());
+    return true;
+  }
+
+  track -> SetIsPlane();
+  track -> SetPlaneNormal(normal);
+  track -> SetRMSH(fODRFitter -> GetRMSPlane());
+
+  return true;
+}
+
+bool
 STHelixTrackFitter::Fit(STHelixTrack *track)
 {
   if (track -> GetNumHits() < 3)
-    return kFALSE;
+    return false;
 
   Double_t scale = 1;
   Double_t trackLength = track -> TrackLength();
@@ -90,8 +132,8 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
   fODRFitter -> ChooseEigenValue(2); TVector3 nToPlane = fODRFitter -> GetDirection();
 
   if (std::abs(nToPlane.Y()) < 1.e-10) {
-    track -> SetIsStraightLine();
-    return kFALSE;
+    track -> SetIsLine();
+    return true;
   }
 
   TVector3 RSC = TVector3(0, RSR, 0);
@@ -167,7 +209,7 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
     Double_t zRot = v*zAxis;
 
     alphaLast = TMath::ATan2(zRot, xRot);
-    if (alphaLast > TMath::Pi()/2. || alphaLast < -TMath::Pi()/2.)
+    if (alphaLast > .5*TMath::Pi() || alphaLast < -.5*TMath::Pi())
     {
       Double_t t0 = alphaLast;
 
@@ -226,5 +268,5 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
   track -> SetRMSW(rmsr);
   track -> SetRMSH(rmsy);
 
-  return kTRUE;
+  return true;
 }
