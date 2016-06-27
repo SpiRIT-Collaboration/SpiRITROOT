@@ -4,6 +4,8 @@
 #include "STPadPlaneMap.hh"
 #include "STHelixTrack.hh"
 #include "STHelixTrackFitter.hh"
+#include "STHit.hh"
+#include "STHitCluster.hh"
 #include "TClonesArray.h"
 #include <vector>
 
@@ -15,7 +17,7 @@ class STHelixTrackFinder
     STHelixTrackFinder();
     ~STHelixTrackFinder() {}
 
-    void BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray);
+    void BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray, TClonesArray *hitClusterArray);
 
   private:
     /** 
@@ -81,11 +83,14 @@ class STHelixTrackFinder
     bool AutoBuildByInterpolation(STHelixTrack *, bool &, Double_t &, Double_t rScale = 1);
 
     /**
-     * Sub function of TrackConfirmation(...)
-     * Build track by interpolating head to tail
-     * Check if the head is changed to tail or vice versa
+     * Clusterize Hits
      */
-    bool BuildByInterpolation(STHelixTrack *, bool &, Double_t &);
+    bool HitClustering(STHelixTrack *track);
+
+    /**
+     * Create new cluster with given hit.
+    */
+    STHitCluster *NewCluster(STHit *hit);
 
     /**
      * Check if hit is used.
@@ -114,16 +119,17 @@ class STHelixTrackFinder
 
 
   private:
-    TClonesArray *fTrackArray = nullptr;   ///< STHelixTrack array
-    STPadPlaneMap *fEventMap = nullptr;    ///< hit map to pad plane
-    STHelixTrackFitter *fFitter = nullptr; ///< Helix track fitter
+    TClonesArray *fTrackArray = nullptr;       ///< STHelixTrack array
+    TClonesArray *fHitClusterArray = nullptr;  ///< STHitCluster array
+    STPadPlaneMap *fEventMap = nullptr;        ///< hit map to pad plane
+    STHelixTrackFitter *fFitter = nullptr;     ///< Helix track fitter
 
     vhit_t fCandHits = nullptr;  ///< Candidate hits comming from fEventMap
     vhit_t fGoodHits = nullptr;  ///< Selected good hits from current fCandHits
     vhit_t fBadHits  = nullptr;  ///< Selected bad  hits from current fCandHits
 
 
-  ClassDef(STHelixTrackFinder, 1)
+  ClassDef(STHelixTrackFinder, 2)
 };
 
 #endif

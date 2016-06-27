@@ -16,9 +16,10 @@ STHelixTrackFinder::STHelixTrackFinder()
 }
 
 void 
-STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray)
+STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray, TClonesArray *hitClusterArray)
 {
   fTrackArray = trackArray;
+  fHitClusterArray = hitClusterArray;
   fEventMap -> Clear();
   fCandHits -> clear();
   fGoodHits -> clear();
@@ -81,6 +82,10 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
     }
   }
   fTrackArray -> Compress();
+
+  auto numTracks = fTrackArray -> GetEntries();
+  for (auto iTrack = 0; iTrack < numTracks; iTrack++)
+    HitClustering((STHelixTrack *) fTrackArray -> At(iTrack));
 }
 
 STHelixTrack *
@@ -96,6 +101,16 @@ STHelixTrackFinder::NewTrack()
   fGoodHits -> push_back(hit);
 
   return track;
+}
+
+STHitCluster *
+STHelixTrackFinder::NewCluster(STHit *hit)
+{
+  Int_t idx = fHitClusterArray -> GetEntries();
+  STHitCluster *cluster = new ((*fHitClusterArray)[idx]) STHitCluster();
+  cluster -> AddHit(hit);
+  cluster -> SetClusterID(idx);
+  return cluster;
 }
 
 bool
@@ -361,7 +376,90 @@ STHelixTrackFinder::ConfirmHits(STHelixTrack *track, bool &tailToHead)
   return true;
 }
 
-Int_t STHelixTrackFinder::CheckHitOwner(STHit *hit)
+bool
+STHelixTrackFinder::HitClustering(STHelixTrack *track)
+{
+  auto trackHits = track -> GetHitArray();
+  track -> SortHits();
+  auto numHits = trackHits -> size();
+
+  auto CheckMean = [](STHitCluster *cluster, STHit *hit) {
+    auto pHit = cluster -> GetPosition();
+    auto wHit = cluster -> GetCharge();
+    auto pCluster = cluster -> GetPosition();
+    auto wCluster = cluster -> GetCharge();
+    auto W = wHit + wCluster;
+
+    auto x = (wCluster * pCluster.X() + wHit * pHit.X()) / W;
+    auto y = (wCluster * pCluster.Y() + wHit * pHit.Y()) / W;
+    auto z = (wCluster * pCluster.Z() + wHit * pHit.Z()) / W;
+
+    return TVector3(x,y,z);
+  };
+
+  TVector3 q, m;
+  bool stable = false;
+  auto addedLength = 0.;
+  auto rmsW = track -> GetRMSW();
+  STHitCluster *curCluster = nullptr;
+  auto preLength = track -> ExtrapolateByMap(trackHits->at(0)->GetPosition(),q,m);
+
+  for (auto iHit = 1; iHit < numHits; iHit++)
+  {
+    auto hit = trackHits -> at(iHit);
+    auto curLength = track -> ExtrapolateByMap(hit -> GetPosition(), q, m);
+    auto dLength = curLength - preLength;
+    preLength = curLength;
+
+    if (dLength > 15.) {
+      stable = false;
+      addedLength = 0;
+      if (curCluster != nullptr)
+        fHitClusterArray -> Remove(curCluster);
+      continue;
+    }
+
+    addedLength += dLength;
+
+    if (stable == false && addedLength > rmsW)
+    {
+      curCluster = NewCluster(hit);
+      stable = true;
+      addedLength = 0;
+    }
+    else if (stable == true)
+    {
+      if (addedLength < 10) {
+        curCluster -> AddHit(hit);
+      }
+      else {
+        auto d0 = track -> DistCircle(curCluster -> GetPosition());
+        auto dc = track -> DistCircle(CheckMean(curCluster, hit));
+        if (std::abs(dc) < std::abs(d0)) {
+          curCluster -> AddHit(hit);
+        }
+        else {
+          curCluster -> SetLength(addedLength - dLength);
+          if (d0 < rmsW)
+            track -> AddHitCluster(curCluster);
+          else
+            fHitClusterArray -> Remove(curCluster);
+          curCluster = NewCluster(hit);
+          addedLength = 0;
+        }
+      }
+    }
+  }
+  fHitClusterArray -> Remove(curCluster);
+  fHitClusterArray -> Compress();
+
+  //fFitter -> FitCluster(track);
+
+  return true;
+}
+
+Int_t
+STHelixTrackFinder::CheckHitOwner(STHit *hit)
 {
   auto candTracks = hit -> GetTrackCandArray();
   if (candTracks -> size() == 0)
