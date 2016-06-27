@@ -147,3 +147,6 @@ void STHitCluster::SetClusterID(Int_t clusterID)
   for (auto hit : fHitPtrArray)
     hit -> SetClusterID(clusterID);
 }
+
+void STHitCluster::SetLength(Double_t length) { fLength = length; }
+Double_t STHitCluster::GetLength() { return fLength; }

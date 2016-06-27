@@ -36,10 +36,15 @@ class STHitCluster : public STHit
 
     virtual void SetClusterID(Int_t clusterID);
 
+    void SetLength(Double_t length);
+    Double_t GetLength();
+
   protected:
     TMatrixD fCovMatrix;                 ///< Cluster covariance matrix
     vector<Int_t>  fHitIDArray;           ///< Vector array of hit IDs
     vector<STHit*> fHitPtrArray;          //! <
+
+    Double_t fLength;
 
     /**
      * Calculate weighted mean for cluster position. (Weight = charge) <br>
