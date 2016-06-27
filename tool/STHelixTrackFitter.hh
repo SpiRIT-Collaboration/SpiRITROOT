@@ -14,6 +14,7 @@ class STHelixTrackFitter
 
     bool FitPlane(STHelixTrack *track);
     bool Fit(STHelixTrack *track);
+    bool FitCluster(STHelixTrack *track);
 
   private:
     ODRFitter *fODRFitter;
