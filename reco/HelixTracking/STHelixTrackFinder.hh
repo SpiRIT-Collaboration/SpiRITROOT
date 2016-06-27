@@ -52,7 +52,7 @@ class STHelixTrackFinder
      * Build track from given position.
      * Check if the head is changed to tail or vice versa.
      */
-    bool AutoBuildAtPosition(STHelixTrack *, TVector3, bool &, Double_t &);
+    bool AutoBuildAtPosition(STHelixTrack *, TVector3, bool &, Double_t &, Double_t rScale = 1);
 
     /** 
      * Check quality of the track
@@ -78,7 +78,7 @@ class STHelixTrackFinder
      * Build track by interpolating with length.
      * Check if the head is changed to tail or vice versa.
      */
-    bool AutoBuildByInterpolation(STHelixTrack *, bool &, Double_t &);
+    bool AutoBuildByInterpolation(STHelixTrack *, bool &, Double_t &, Double_t rScale = 1);
 
     /**
      * Sub function of TrackConfirmation(...)
@@ -99,7 +99,7 @@ class STHelixTrackFinder
     /**
      * Correlate hit-track by comparing width and height proximity
      */
-    Double_t Correlate(STHelixTrack *track, STHit *hit);
+    Double_t Correlate(STHelixTrack *track, STHit *hit, Double_t rScale = 1);
 
     /**
      * Correlate hit-track by checking hit is right next to hits from track.

@@ -25,13 +25,8 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
   fBadHits -> clear();
 
   Int_t numTotalHits = hitArray -> GetEntries();
-  for (Int_t iHit = 0; iHit < numTotalHits; iHit++) {
-    auto hit = (STHit *) hitArray -> At(iHit);
-    auto p = hit -> GetPosition() - TVector3(0, -213.3, -89);
-    if (sqrt(p.X()*p.X() + p.Z()*p.Z() + 3*p.Y()*p.Y()) < 150)
-      continue;
-    fEventMap -> AddHit(hit);
-  }
+  for (Int_t iHit = 0; iHit < numTotalHits; iHit++)
+    fEventMap -> AddHit((STHit *) hitArray -> At(iHit));
 
   while(1)
   {
@@ -44,19 +39,28 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
       break;
 
     bool survive = TrackInitialization(track);
+    survive = true;
 
-    if (survive) {
+    while (survive) {
       TrackContinuum(track);
+      survive = TrackQualityCheck(track);
+      if (!survive)
+        break;
+
       TrackExtrapolation(track);
       survive = TrackQualityCheck(track);
-      if (survive) TrackConfirmation(track);
+      if (!survive)
+        break;
+
+      TrackConfirmation(track);
+      break;
     }
 
     for (auto badHit : *fBadHits)
       fEventMap -> AddHit(badHit);
     fBadHits -> clear();
 
-    if (track -> TrackLength() < 150) 
+    if (track -> TrackLength() < 150 || track -> GetHelixRadius() < 25)
       survive = false;
 
     if (survive) {
@@ -103,7 +107,7 @@ STHelixTrackFinder::TrackInitialization(STHelixTrack *track)
   Int_t numCandHits = fCandHits -> size();;
 
   while (numCandHits != 0) {
-    sort(fCandHits -> begin(), fCandHits -> end(), STHitSortCharge());
+    sort(fCandHits->begin(), fCandHits->end(), STHitByDistanceTo(track->GetMean()));
 
     for (Int_t iHit = 0; iHit < numCandHits; iHit++) {
       STHit *candHit = fCandHits -> back();
@@ -115,17 +119,20 @@ STHelixTrackFinder::TrackInitialization(STHelixTrack *track)
         fGoodHits -> push_back(candHit);
         track -> AddHit(candHit);
 
-        if (track -> GetNumHits() > 10) {
+        if (track -> GetNumHits() > 6) {
           if (track -> GetNumHits() > 15) {
             for (auto candHit2 : *fCandHits)
               fEventMap -> AddHit(candHit2);
             fCandHits -> clear();
             break;
           }
+
           fFitter -> Fit(track);
-          if (track -> TrackLength() > 2 * track -> GetRMSW())
+
+          if (!(track -> GetNumHits() < 10 && track -> GetHelixRadius() < 30) && (track -> TrackLength() > 2.5 * track -> GetRMSW()))
             return true;
         }
+        fFitter -> FitPlane(track);
       }
       else
         fBadHits -> push_back(candHit);
@@ -216,17 +223,17 @@ STHelixTrackFinder::AutoBuildByExtrapolation(STHelixTrack *track, bool &buildHea
 }
 
 bool 
-STHelixTrackFinder::AutoBuildByInterpolation(STHelixTrack *track, bool &tailToHead, Double_t &extrapolationLength)
+STHelixTrackFinder::AutoBuildByInterpolation(STHelixTrack *track, bool &tailToHead, Double_t &extrapolationLength, Double_t rScale)
 {
   TVector3 p;
   if (tailToHead) p = track -> InterpolateByLength(extrapolationLength);
   else            p = track -> InterpolateByLength(track -> TrackLength() - extrapolationLength);
 
-  return AutoBuildAtPosition(track, p, tailToHead, extrapolationLength);
+  return AutoBuildAtPosition(track, p, tailToHead, extrapolationLength, rScale);
 }
 
 bool 
-STHelixTrackFinder::AutoBuildAtPosition(STHelixTrack *track, TVector3 p, bool &tailToHead, Double_t &extrapolationLength)
+STHelixTrackFinder::AutoBuildAtPosition(STHelixTrack *track, TVector3 p, bool &tailToHead, Double_t &extrapolationLength, Double_t rScale)
 {
   if (p.X() < -432 || p.X() < -432 || p.Z() < 0 || p.Z() > 1344 || p.Y() < -530 || p.Y() > 0)
     return false;
@@ -249,7 +256,7 @@ STHelixTrackFinder::AutoBuildAtPosition(STHelixTrack *track, TVector3 p, bool &t
 
     Double_t quality = 0; 
     if (CheckHitOwner(candHit) < 0) 
-      quality = Correlate(track, candHit);
+      quality = Correlate(track, candHit, rScale);
 
     if (quality > 0) {
       track -> AddHit(candHit);
@@ -282,6 +289,9 @@ STHelixTrackFinder::TrackQualityCheck(STHelixTrack *track)
     if (track -> TrackLength() * continuity < 500)
       return false;
   }
+
+  if (track -> GetHelixRadius() < 25)
+    return false;
 
   return true;
 }
@@ -329,21 +339,20 @@ STHelixTrackFinder::ConfirmHits(STHelixTrack *track, bool &tailToHead)
     STHit *trackHit = trackHits -> at(numHits-iHit-1);
     auto lCur = track -> ExtrapolateByMap(trackHit->GetPosition(), q, m);
 
-    /*
-    Double_t quality = Correlate(track, trackHit);
+    Double_t quality = Correlate(track, trackHit, .8);
 
     if (quality <= 0) {
       track -> Remove(trackHit);
+      trackHit -> RemoveTrackCand(trackHit -> GetTrackID());
       auto helicity = track -> Helicity();
       fFitter -> Fit(track);
       if (helicity != track -> Helicity())
         tailToHead = !tailToHead;
     }
-    */
 
     auto dLength = std::abs(lCur - lPre);
     extrapolationLength = 10;
-    while(dLength > 0 && AutoBuildByInterpolation(track, tailToHead, extrapolationLength)) { dLength -= 10; }
+    while(dLength > 0 && AutoBuildByInterpolation(track, tailToHead, extrapolationLength, .8)) { dLength -= 10; }
   }
 
   extrapolationLength = 0;
@@ -369,21 +378,22 @@ Int_t STHelixTrackFinder::CheckHitOwner(STHit *hit)
 }
 
 Double_t 
-STHelixTrackFinder::Correlate(STHelixTrack *track, STHit *hit)
+STHelixTrackFinder::Correlate(STHelixTrack *track, STHit *hit, Double_t rScale)
 {
-  Double_t scale = 2.5;
+  Double_t scale = rScale * 2.5;
   Double_t trackLength = track -> TrackLength();
   if (trackLength < 500.)
     scale = scale + (500. - trackLength)/500.;
 
-  Double_t rmsWCut = scale * track -> GetRMSW();
-  if (rmsWCut < 12) rmsWCut = 12;
-  if (rmsWCut > 24) rmsWCut = 24;
+  Double_t rmsWCut = track -> GetRMSW();
+  if (rmsWCut < 4) rmsWCut = 4;
+  if (rmsWCut > 10) rmsWCut = 10;
+  rmsWCut = scale * rmsWCut;
 
-  Double_t rmsHCut = scale * track -> GetRMSH();
-  //if (rmsHCut < 3) rmsHCut = 3;
-  if (rmsHCut < 3) rmsHCut = 6;
-  if (rmsHCut > 10) rmsHCut = 15;
+  Double_t rmsHCut = track -> GetRMSW();
+  if (rmsHCut < 1) rmsHCut = 1;
+  if (rmsHCut > 4) rmsHCut = 4;
+  rmsHCut = scale * rmsHCut;
 
   auto qHead = track -> Map(track -> PositionAtHead());
   auto qTail = track -> Map(track -> PositionAtTail());
@@ -391,8 +401,11 @@ STHelixTrackFinder::Correlate(STHelixTrack *track, STHit *hit)
 
   auto LengthAlphaCut = [track](Double_t dLength) {
     if (dLength > 0) {
-      if (dLength > .5*track -> TrackLength() || std::abs(track -> AlphaByLength(dLength)) > .3*TMath::Pi())
-        return true;
+      if (dLength > .5*track -> TrackLength()) {
+        if (std::abs(track -> AlphaByLength(dLength)) > .5*TMath::Pi()) {
+          return true;
+        }
+      }
     }
     return false;
   };
@@ -421,25 +434,49 @@ STHelixTrackFinder::CorrelateSimple(STHelixTrack *track, STHit *hit)
 
   Double_t quality = 0;
 
+  Int_t row = hit -> GetRow();
+  Int_t layer = hit -> GetLayer();
+
   auto trackHits = track -> GetHitArray();
+  bool ycut = false;
   for (auto trackHit : *trackHits) {
-    Double_t dx = std::abs(hit->GetX() - trackHit->GetX());
-    Double_t dy = std::abs(hit->GetY() - trackHit->GetY());
-    Double_t dz = std::abs(hit->GetZ() - trackHit->GetZ());
+    if (row == trackHit -> GetRow() && layer == trackHit -> GetLayer())
+      return 0;
+    if (std::abs(hit->GetY() - trackHit->GetY()) < 12)
+      ycut = true;
+  }
+  if (ycut == false)
+    return 0;
 
-    Double_t r = 1;
-    //Double_t r = TangentOfMaxDipAngle(trackHit);
-    Double_t highcut = 1.5 * r * sqrt(dx*dx + dz*dz);
-    //Double_t lowcut  = 0.2 * r * sqrt(dx*dx + dz*dz);
-    if (highcut < 5) 
-      highcut = 5;
+  if (track -> IsNotFitted()) {
+    quality = 1;
+  }
+  else if (track -> IsLine()) {
+    auto perp = track -> PerpLine(hit -> GetPosition());
 
-    if (dy > highcut)
-      continue;
+    Double_t rmsCut = track -> GetRMSH();
+    if (rmsCut < 1) rmsCut = 1;
+    if (rmsCut > 4) rmsCut = 4;
+    rmsCut = 3 * rmsCut;
+
+    if (perp.Y() > rmsCut)
+      quality = 0;
     else {
-      quality = sqrt((dy-highcut)*(dy-highcut)) / highcut;
-      break;
+      perp.SetY(0);
+      if (perp.Mag() < 15)
+        quality = 1;
     }
+  }
+  else if (track -> IsPlane()) {
+    Double_t dist = (track -> PerpPlane(hit -> GetPosition())).Mag();
+
+    Double_t rmsCut = track -> GetRMSH();
+    if (rmsCut < 1) rmsCut = 1;
+    if (rmsCut > 4) rmsCut = 4;
+    rmsCut = 3 * rmsCut;
+
+    if (dist < rmsCut)
+      quality = 1;
   }
 
   return quality;
