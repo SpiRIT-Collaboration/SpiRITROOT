@@ -52,6 +52,7 @@ void STHelixTrack::Clear(Option_t *option)
   else {
     fMainHits.clear();
     fCandHits.clear();
+    fHitClusters.clear();
   }
 }
 
@@ -145,6 +146,11 @@ void STHelixTrack::DeleteHits()
     delete hit;
 
   fCandHits.clear();
+
+  for (auto cluster : fHitClusters)
+    delete cluster;
+
+  fHitClusters.clear();
 }
 
 void STHelixTrack::SortHits(bool increasing)
@@ -156,6 +162,11 @@ void STHelixTrack::SortHits(bool increasing)
     auto sorting = STHitSortByDecreasingLength(this);
     sort(fMainHits.begin(), fMainHits.end(), sorting);
   }
+}
+
+void STHelixTrack::AddHitCluster(STHitCluster *cluster)
+{
+  fHitClusters.push_back(cluster);
 }
 
 void STHelixTrack::SetTrackID(Int_t idx)   { fTrackID = idx; }
@@ -302,6 +313,10 @@ Double_t STHelixTrack::GetAlphaTail()  const { return fAlphaTail; }
 Int_t STHelixTrack::GetNumHits() const { return fMainHits.size(); }
 STHit *STHelixTrack::GetHit(Int_t idx) const { return fMainHits.at(idx); }
 std::vector<STHit *> *STHelixTrack::GetHitArray() { return &fMainHits; }
+
+Int_t STHelixTrack::GetNumClusters() const { return fHitClusters.size(); }
+STHitCluster *STHelixTrack::GetCluster(Int_t idx) const { return fHitClusters.at(idx); }
+std::vector<STHitCluster *> *STHelixTrack::GetClusterArray() { return &fHitClusters; }
 
 Int_t STHelixTrack::GetNumCandHits() const { return fCandHits.size(); }
 std::vector<STHit *> *STHelixTrack::GetCandHitArray() { return &fCandHits; }

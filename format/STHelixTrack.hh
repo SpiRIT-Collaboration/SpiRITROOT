@@ -2,6 +2,7 @@
 #define STHELIXTRACK
 
 #include "STHit.hh"
+#include "STHitCluster.hh"
 #include <vector>
 
 /**
@@ -49,7 +50,9 @@ class STHelixTrack : public TObject
     Double_t fAlphaTail;     ///< Last position alpha
 
     std::vector<STHit *> fMainHits;
-    std::vector<STHit *> fCandHits;
+    std::vector<STHit *> fCandHits; //!
+
+    std::vector<STHitCluster *> fHitClusters;
 
   public:
     void Clear(Option_t *option = "");
@@ -59,6 +62,8 @@ class STHelixTrack : public TObject
     void Remove(STHit *hit);
     void DeleteHits();
     void SortHits(bool increasing = true);
+
+    void AddHitCluster(STHitCluster *cluster);
 
     void SetTrackID(Int_t idx);
     void SetParentID(Int_t idx);
@@ -143,6 +148,10 @@ class STHelixTrack : public TObject
 
     Int_t GetNumCandHits() const;
     std::vector<STHit *> *GetCandHitArray();
+
+    Int_t GetNumClusters() const;
+    STHitCluster *GetCluster(Int_t idx) const;
+    std::vector<STHitCluster *> *GetClusterArray();
 
     TVector3 GetLineDirection() const;     ///< ONLY USED IN TRACK FINDING
     TVector3 GetPlaneNormal() const;       ///< ONLY USED IN TRACK FINDING
@@ -317,7 +326,7 @@ class STHelixTrack : public TObject
     Double_t Continuity();
 
 
-  ClassDef(STHelixTrack, 2)
+  ClassDef(STHelixTrack, 3)
 };
 
 class STHitByDistanceTo
