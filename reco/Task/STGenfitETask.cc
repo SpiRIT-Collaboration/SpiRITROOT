@@ -83,11 +83,13 @@ void STGenfitETask::Exec(Option_t *opt)
   for (Int_t iHelixTrack = 0; iHelixTrack < numTrackCand; iHelixTrack++)
   {
     STHelixTrack *helixTrack = (STHelixTrack *) fHelixTrackArray -> At(iHelixTrack);
+    if (helixTrack -> IsHelix() == false)
+      continue;
 
     Int_t trackID = fTrackArray -> GetEntriesFast();
     STTrack *recoTrack = (STTrack *) fTrackArray -> ConstructedAt(trackID);
     recoTrack -> SetTrackID(trackID);
-    recoTrack -> SetRiemannID(iHelixTrack);
+    recoTrack -> SetHelixID(helixTrack -> GetTrackID());
 
     genfit::Track *track = fGenfitTest -> FitTrack(recoTrack, fHitClusterArray, helixTrack);
     if (track != nullptr)
@@ -95,6 +97,7 @@ void STGenfitETask::Exec(Option_t *opt)
       fGenfitTest -> SetTrack(recoTrack, track);
       if (recoTrack -> IsFitted()) {
         helixTrack -> SetIsGenfitTrack();
+        helixTrack -> SetGenfitID(recoTrack -> GetTrackID());
         helixTrack -> SetGenfitMomentum(recoTrack -> GetP());
       }
       else {
