@@ -2,7 +2,6 @@
 
 // SPiRITROOT classes
 #include "STGenfitTask.hh"
-#include "STRiemannHit.hh"
 #include "STTrackCandidate.hh"
 #include "STGlobal.hh"
 #include "STDebugLogger.hh"
@@ -83,18 +82,18 @@ void STGenfitTestE::Init()
   fGenfitTrackArray -> Delete();
 }
 
-genfit::Track* STGenfitTestE::FitTrack(STTrack *recoTrack, TClonesArray *hitArray, STRiemannTrack *riemannTrack)
+genfit::Track* STGenfitTestE::FitTrack(STTrack *recoTrack, TClonesArray *hitArray, STHelixTrack *helixTrack)
 {
   fHitClusterArray -> Delete();
   genfit::TrackCand trackCand;
 
-  UInt_t numHits = riemannTrack -> GetNumHits();
+  UInt_t numHits = helixTrack -> GetNumClusters();
   if (numHits < 3) 
     return nullptr;
 
   for (UInt_t iHit = 0; iHit < numHits; iHit++) 
   {
-    Int_t id = riemannTrack -> GetHit(iHit) -> GetHit() -> GetClusterID();
+    Int_t id = helixTrack -> GetClusterID(iHit);
     STHitCluster *hit = (STHitCluster *) hitArray -> At(id);
 
     new ((*fHitClusterArray)[iHit]) STHitCluster(*hit);
@@ -106,8 +105,7 @@ genfit::Track* STGenfitTestE::FitTrack(STTrack *recoTrack, TClonesArray *hitArra
   // Initial parameter setting
   // TODO : improve initial parameter
   {
-    STRiemannHit *hit = riemannTrack -> GetFirstHit();
-    STHitCluster *firstCluster = (STHitCluster *) hitArray -> At(hit -> GetHit() -> GetClusterID());
+    STHitCluster *firstCluster = helixTrack -> GetCluster(0);
     TVector3 posSeed = firstCluster -> GetPosition();
     posSeed.SetMag(posSeed.Mag()/10.);
 
@@ -118,8 +116,8 @@ genfit::Track* STGenfitTestE::FitTrack(STTrack *recoTrack, TClonesArray *hitArra
     for (Int_t iComp = 3; iComp < 6; iComp++) 
       covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
 
-    Double_t dip = riemannTrack -> GetDip();
-    Double_t momSeedMag = riemannTrack -> GetMom(5.);
+    Double_t dip = helixTrack -> DipAngle();
+    Double_t momSeedMag = helixTrack -> Momentum();
     TVector3 momSeed(0., 0., momSeedMag);
     momSeed.SetTheta(TMath::Pi()/2. - dip);
 

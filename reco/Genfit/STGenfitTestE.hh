@@ -5,8 +5,7 @@
 #include "STHitCluster.hh"
 #include "STSpacepointMeasurement.hh"
 #include "STEvent.hh"
-#include "STRiemannTrack.hh"
-#include "STRiemannHit.hh"
+#include "STHelixTrack.hh"
 #include "STTrack.hh"
 
 // GENFIT2 classes
@@ -35,7 +34,7 @@ class STGenfitTestE
     void SetMaxIterations(Int_t value);
 
     void Init();
-    genfit::Track* FitTrack(STTrack *recoTrack, TClonesArray *hitArray, STRiemannTrack *riemannTrack);
+    genfit::Track* FitTrack(STTrack *recoTrack, TClonesArray *hitArray, STHelixTrack *helixTrack);
     void SetTrack(STTrack *recotrack, genfit::Track *gfTrack);
 
   private:
