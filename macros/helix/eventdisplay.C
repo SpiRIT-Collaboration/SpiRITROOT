@@ -1,6 +1,7 @@
 TTree* tree;
 TClonesArray *hits = nullptr;
 TClonesArray *tracks = nullptr;
+TClonesArray *clusters = nullptr;
 vector<TEveElement*> hitArray;
 vector<TEveElement*> trackHitArray;
 vector<TEveElement*> trackLineArray;
@@ -15,6 +16,7 @@ void eventdisplay(TString in = "~/data_cosmics/run2771.helix.reco.root")
   auto file = new TFile(in);
   tree = (TTree *) file -> Get("cbmsim");
   tree -> SetBranchAddress("STHit", &hits);
+  tree -> SetBranchAddress("STHitCluster", &clusters);
   tree -> SetBranchAddress("STHelixTrack", &tracks);
 
   TEveManager::Create();
@@ -62,8 +64,8 @@ void draw(int eventID)
       TVector3 p = hit -> GetPosition();
       hitSet -> SetNextPoint(.1*p.X(), .1*p.Y(), .1*p.Z());
     }
-    //gEve -> AddElement(hitSet);
-    //hitArray.push_back(hitSet);
+    gEve -> AddElement(hitSet);
+    hitArray.push_back(hitSet);
   }
 
 
@@ -75,16 +77,17 @@ void draw(int eventID)
 
 
   for (auto iTrack = 0; iTrack < tracks->GetEntries(); iTrack++) {
+    //if (iTrack != 6) continue;
     auto track = (STHelixTrack *) tracks -> At(iTrack);
-    auto trackHits = track -> GetHitArray();
-    auto trackClusters = track -> GetClusterArray();
+    auto trackHitIDs = track -> GetHitIDArray();
+    auto trackClusterIDs = track -> GetClusterIDArray();
 
     auto pointSet = new TEvePointSet(Form("hit%d",iTrack), track -> GetNumHits());
     pointSet -> SetMarkerColor(GetColor(iTrack));
     pointSet -> SetMarkerSize(1.5);
     pointSet -> SetMarkerStyle(20);
-    for (auto hit : *trackHits) {
-      auto p = hit -> GetPosition();
+    for (auto hitID : *trackHitIDs) {
+      auto p = ((STHit *) hits -> At(hitID)) -> GetPosition();
       pointSet -> SetNextPoint(.1*p.X(), .1*p.Y(), .1*p.Z());
     }
     //gEve -> AddElement(pointSet);
@@ -94,14 +97,14 @@ void draw(int eventID)
     clusterSet -> SetMarkerColor(GetColor(iTrack));
     clusterSet -> SetMarkerSize(2);
     clusterSet -> SetMarkerStyle(20);
-    for (auto cluster : *trackClusters) {
-      auto p = cluster -> GetPosition();
+    for (auto clusterID : *trackClusterIDs) {
+      auto p = ((STHitCluster *) clusters -> At(clusterID)) -> GetPosition();
       clusterSet -> SetNextPoint(.1*p.X(), .1*p.Y(), .1*p.Z());
     }
     gEve -> AddElement(clusterSet);
     trackClusterArray.push_back(clusterSet);
 
-    auto line = new TEveLine(Form("line%d",iTrack), trackHits->size()); 
+    auto line = new TEveLine(Form("line%d",iTrack), trackHitIDs->size());
     line -> SetLineColor(kRed);
     line -> SetLineWidth(2);
 
