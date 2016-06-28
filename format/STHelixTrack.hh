@@ -17,13 +17,13 @@ class STHelixTrack : public TObject
     STHelixTrack();
     STHelixTrack(Int_t id);
 
-    enum STFitStatus { kNon, kLine, kPlane, kHelix, kGenfitTrack };
+    enum STFitStatus { kBad, kLine, kPlane, kHelix, kGenfitTrack };
 
   private:
     Int_t fTrackID;
     Int_t fParentID;
 
-    STFitStatus fFitStatus;  ///< One of kNon, kHelix and kLine.
+    STFitStatus fFitStatus;  ///< One of kBad, kHelix and kLine.
 
     Double_t fXHelixCenter;  ///< x-component of the helix center
     Double_t fZHelixCenter;  ///< z-component of the helix center
@@ -53,8 +53,9 @@ class STHelixTrack : public TObject
     std::vector<STHit *> fCandHits; //!
     std::vector<STHitCluster *> fHitClusters; //!
 
-    std::vector<Int_t> fMainHitIDs;  ///<
-    std::vector<Int_t> fClusterIDs;  ///<
+    std::vector<Int_t> fMainHitIDs;    ///<
+    std::vector<Int_t> fClusterIDs;    ///<
+    std::vector<Double_t> fdEdxArray;  ///< dE/dx array;
 
     Int_t    fGenfitID;        ///< GENFIT Track ID
     Double_t fGenfitMomentum;  ///< Momentum reconstructed by GENFIT
@@ -78,6 +79,7 @@ class STHelixTrack : public TObject
     void SetParentID(Int_t idx);
 
     void SetFitStatus(STFitStatus value);
+    void SetIsBad();
     void SetIsLine();
     void SetIsPlane();
     void SetIsHelix();
@@ -104,7 +106,7 @@ class STHelixTrack : public TObject
 
     STFitStatus GetFitStatus() const;
     TString GetFitStatusString() const;
-    bool IsNotFitted() const;
+    bool IsBad() const;
     bool IsLine() const;
     bool IsPlane() const;
     bool IsHelix() const;
@@ -179,6 +181,9 @@ class STHelixTrack : public TObject
     Int_t GetNumClusterIDs() const;
     Int_t GetClusterID(Int_t idx) const;
     std::vector<Int_t> *GetClusterIDArray();
+
+    std::vector<Double_t> *GetdEdxArray();
+    Double_t GetdEdxWithCut(Double_t lowR, Double_t highR);
 
 
 

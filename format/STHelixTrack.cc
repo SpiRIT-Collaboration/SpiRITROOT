@@ -21,7 +21,7 @@ void STHelixTrack::Clear(Option_t *option)
   fTrackID  = -999;
   fParentID = -999;
 
-  fFitStatus = kNon;
+  fFitStatus = kBad;
 
   fXHelixCenter = -999;
   fZHelixCenter = -999;
@@ -179,8 +179,10 @@ void STHelixTrack::FinalizeHits()
 
 void STHelixTrack::FinalizeClusters()
 {
-  for (auto cluster : fHitClusters)
+  for (auto cluster : fHitClusters) {
     fClusterIDs.push_back(cluster->GetClusterID());
+    fdEdxArray.push_back(cluster->GetCharge()/cluster->GetLength());
+  }
 }
 
 void STHelixTrack::SetTrackID(Int_t idx)    { fTrackID = idx; }
@@ -188,6 +190,7 @@ void STHelixTrack::SetGenfitID(Int_t idx)   { fGenfitID = idx; }
 void STHelixTrack::SetParentID(Int_t idx)   { fParentID = idx; }
 
 void STHelixTrack::SetFitStatus(STFitStatus value)  { fFitStatus = value; }
+void STHelixTrack::SetIsBad()          { fFitStatus = STHelixTrack::kBad; }
 void STHelixTrack::SetIsLine()         { fFitStatus = STHelixTrack::kLine; }
 void STHelixTrack::SetIsPlane()        { fFitStatus = STHelixTrack::kPlane; }
 void STHelixTrack::SetIsHelix()        { fFitStatus = STHelixTrack::kHelix; }
@@ -228,7 +231,7 @@ TString STHelixTrack::GetFitStatusString() const
 {
   TString fitStat;
 
-  if      (fFitStatus == STHelixTrack::kNon) fitStat = "Non";
+  if      (fFitStatus == STHelixTrack::kBad) fitStat = "Bad";
   else if (fFitStatus == STHelixTrack::kLine) fitStat = "Line";
   else if (fFitStatus == STHelixTrack::kPlane) fitStat = "Plane";
   else if (fFitStatus == STHelixTrack::kHelix) fitStat = "Helix";
@@ -237,7 +240,7 @@ TString STHelixTrack::GetFitStatusString() const
   return fitStat;
 }
 
-bool STHelixTrack::IsNotFitted() const    { return fFitStatus == kNon   ? true : false; }
+bool STHelixTrack::IsBad() const          { return fFitStatus == kBad   ? true : false; }
 bool STHelixTrack::IsLine()  const        { return fFitStatus == kLine  ? true : false; }
 bool STHelixTrack::IsPlane() const        { return fFitStatus == kPlane ? true : false; }
 bool STHelixTrack::IsHelix() const        { return fFitStatus == kHelix ? true : false; }
@@ -371,6 +374,8 @@ std::vector<Int_t> *STHelixTrack::GetHitIDArray() { return &fMainHitIDs; }
 Int_t STHelixTrack::GetNumClusterIDs() const { return fClusterIDs.size(); }
 Int_t STHelixTrack::GetClusterID(Int_t idx) const { return fClusterIDs.at(idx); }
 std::vector<Int_t> *STHelixTrack::GetClusterIDArray() { return &fClusterIDs; }
+
+std::vector<Double_t> *STHelixTrack::GetdEdxArray() { return &fdEdxArray; }
 
 
 
@@ -830,4 +835,24 @@ STHelixTrack::Continuity()
   }
 
   return continuous/total;
+}
+
+Double_t 
+STHelixTrack::GetdEdxWithCut(Double_t lowR, Double_t highR)
+{
+  auto numPoints = fdEdxArray.size();
+
+  Int_t idxLow = Int_t(numPoints * lowR);
+  Int_t idxHigh = Int_t(numPoints * highR);
+
+  numPoints = idxHigh - idxLow;
+  if (numPoints < 3)
+    return -1;
+
+  Double_t dEdx = 0.;
+  for (Int_t idEdx = idxLow; idEdx < idxHigh; idEdx++)
+    dEdx += fdEdxArray[idEdx];
+  dEdx = dEdx/numPoints;
+
+  return dEdx;
 }
