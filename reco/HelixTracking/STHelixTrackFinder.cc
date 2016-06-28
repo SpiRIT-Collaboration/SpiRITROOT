@@ -407,6 +407,7 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
   bool stable = false;
   auto addedLength = 0.;
   auto rmsW = track -> GetRMSW();
+  auto rmsH = track -> GetRMSW();
   STHitCluster *curCluster = nullptr;
   auto preLength = track -> ExtrapolateByMap(trackHits->at(0)->GetPosition(),q,m);
 
@@ -439,13 +440,17 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
         curCluster -> AddHit(curHit);
       }
       else {
-        auto d0 = track -> DistCircle(curCluster -> GetPosition());
-        auto dc = track -> DistCircle(CheckMean(curCluster, curHit));
-        if (std::abs(dc) < std::abs(d0)) {
+        auto p0 = track -> Map(curCluster -> GetPosition());
+        auto pc = track -> Map(CheckMean(curCluster, curHit));
+        auto w0 = p0.X();
+        auto wc = pc.X();
+        auto h0 = p0.Y();
+
+        if (std::abs(wc) < std::abs(w0)) {
           curCluster -> AddHit(curHit);
         }
         else {
-          if (std::abs(d0) < rmsW) {
+          if (std::abs(w0) < rmsW && std::abs(h0) < rmsH) {
             curCluster -> SetLength(addedLength - 0.5*dLength);
             track -> AddHitCluster(curCluster);
           }
@@ -459,6 +464,9 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
   }
   fHitClusterArray -> Remove(curCluster);
   fHitClusterArray -> Compress();
+
+  if (track -> GetNumClusters() < 5)
+    track -> SetIsBad();
 
   //fFitter -> FitCluster(track);
 
@@ -553,7 +561,7 @@ STHelixTrackFinder::CorrelateSimple(STHelixTrack *track, STHit *hit)
   if (ycut == false)
     return 0;
 
-  if (track -> IsNotFitted()) {
+  if (track -> IsBad()) {
     quality = 1;
   }
   else if (track -> IsLine()) {
