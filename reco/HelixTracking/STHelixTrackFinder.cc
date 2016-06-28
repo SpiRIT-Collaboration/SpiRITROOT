@@ -84,8 +84,12 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
   fTrackArray -> Compress();
 
   auto numTracks = fTrackArray -> GetEntries();
-  for (auto iTrack = 0; iTrack < numTracks; iTrack++)
-    HitClustering((STHelixTrack *) fTrackArray -> At(iTrack));
+  for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
+    auto track = (STHelixTrack *) fTrackArray -> At(iTrack);
+    HitClustering(track);
+    track -> FinalizeHits();
+    track -> FinalizeClusters();
+  }
 }
 
 STHelixTrack *
@@ -314,9 +318,9 @@ STHelixTrackFinder::TrackQualityCheck(STHelixTrack *track)
 bool
 STHelixTrackFinder::TrackConfirmation(STHelixTrack *track)
 {
-  auto tailToHead = true;
+  auto tailToHead = false;
   if (track -> PositionAtTail().Z() > track -> PositionAtHead().Z())
-    tailToHead = false;
+    tailToHead = true;
 
   for (auto badHit : *fBadHits)
     fEventMap -> AddHit(badHit);
@@ -367,7 +371,7 @@ STHelixTrackFinder::ConfirmHits(STHelixTrack *track, bool &tailToHead)
 
     auto dLength = std::abs(lCur - lPre);
     extrapolationLength = 10;
-    while(dLength > 0 && AutoBuildByInterpolation(track, tailToHead, extrapolationLength, .8)) { dLength -= 10; }
+    while(dLength > 0 && AutoBuildByInterpolation(track, tailToHead, extrapolationLength, 1)) { dLength -= 10; }
   }
 
   extrapolationLength = 0;
@@ -397,6 +401,8 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
     return TVector3(x,y,z);
   };
 
+  auto lengthCut = 10. / TMath::Cos(track -> DipAngle());
+
   TVector3 q, m;
   bool stable = false;
   auto addedLength = 0.;
@@ -406,8 +412,8 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
 
   for (auto iHit = 1; iHit < numHits; iHit++)
   {
-    auto hit = trackHits -> at(iHit);
-    auto curLength = track -> ExtrapolateByMap(hit -> GetPosition(), q, m);
+    auto curHit = trackHits -> at(iHit);
+    auto curLength = track -> ExtrapolateByMap(curHit -> GetPosition(), q, m);
     auto dLength = curLength - preLength;
     preLength = curLength;
 
@@ -423,29 +429,30 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
 
     if (stable == false && addedLength > rmsW)
     {
-      curCluster = NewCluster(hit);
+      curCluster = NewCluster(curHit);
       stable = true;
-      addedLength = 0;
+      addedLength = 0.5*dLength;
     }
     else if (stable == true)
     {
-      if (addedLength < 10) {
-        curCluster -> AddHit(hit);
+      if (addedLength < lengthCut) {
+        curCluster -> AddHit(curHit);
       }
       else {
         auto d0 = track -> DistCircle(curCluster -> GetPosition());
-        auto dc = track -> DistCircle(CheckMean(curCluster, hit));
+        auto dc = track -> DistCircle(CheckMean(curCluster, curHit));
         if (std::abs(dc) < std::abs(d0)) {
-          curCluster -> AddHit(hit);
+          curCluster -> AddHit(curHit);
         }
         else {
-          curCluster -> SetLength(addedLength - dLength);
-          if (d0 < rmsW)
+          if (std::abs(d0) < rmsW) {
+            curCluster -> SetLength(addedLength - 0.5*dLength);
             track -> AddHitCluster(curCluster);
+          }
           else
             fHitClusterArray -> Remove(curCluster);
-          curCluster = NewCluster(hit);
-          addedLength = 0;
+          curCluster = NewCluster(curHit);
+          addedLength = 0.5*dLength;
         }
       }
     }
