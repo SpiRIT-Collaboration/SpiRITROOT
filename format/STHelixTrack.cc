@@ -54,20 +54,22 @@ void STHelixTrack::Clear(Option_t *option)
     fCandHits.clear();
     fHitClusters.clear();
   }
+
+  fMainHitIDs.clear();
+  fClusterIDs.clear();
+
+  fGenfitID  = -999;
+  fGenfitMomentum = -999;
 }
 
 void STHelixTrack::Print(Option_t *option) const
 {
-  TString fitStat;
-  if      (fFitStatus == STHelixTrack::kNon)   fitStat = "Not Set";
-  else if (fFitStatus == STHelixTrack::kHelix) fitStat = "Helix";
-  else if (fFitStatus == STHelixTrack::kLine)  fitStat = "Straight Line";
   TString center = "("+TString::Itoa(fXHelixCenter,10)+", x, "+TString::Itoa(fZHelixCenter,10)+")";
 
   cout << left << " STHelixTrack, units in [mm] [radian] [ADC]" << endl;
   cout << " - " << setw(13) << "Track ID"     << " : " << fTrackID << endl;
   cout << " - " << setw(13) << "Parent ID"    << " : " << fParentID << endl;
-  cout << " - " << setw(13) << "Fit Status"   << " : " << fitStat << endl;
+  cout << " - " << setw(13) << "Fit Status"   << " : " << GetFitStatusString() << endl;
   cout << " - " << setw(13) << "Helix Center" << " : " << center << " [mm]" << endl;
   cout << " - " << setw(13) << "Helix Radius" << " : " << fHelixRadius << " [mm]" << endl;
   cout << " - " << setw(13) << "Dip Angle"    << " : " << DipAngle() << endl;
@@ -169,13 +171,27 @@ void STHelixTrack::AddHitCluster(STHitCluster *cluster)
   fHitClusters.push_back(cluster);
 }
 
-void STHelixTrack::SetTrackID(Int_t idx)   { fTrackID = idx; }
-void STHelixTrack::SetParentID(Int_t idx)  { fParentID = idx; }
+void STHelixTrack::FinalizeHits()
+{
+  for (auto hit : fMainHits)
+    fMainHitIDs.push_back(hit->GetHitID());
+}
+
+void STHelixTrack::FinalizeClusters()
+{
+  for (auto cluster : fHitClusters)
+    fClusterIDs.push_back(cluster->GetClusterID());
+}
+
+void STHelixTrack::SetTrackID(Int_t idx)    { fTrackID = idx; }
+void STHelixTrack::SetGenfitID(Int_t idx)   { fGenfitID = idx; }
+void STHelixTrack::SetParentID(Int_t idx)   { fParentID = idx; }
 
 void STHelixTrack::SetFitStatus(STFitStatus value)  { fFitStatus = value; }
-void STHelixTrack::SetIsLine()   { fFitStatus = STHelixTrack::kLine; }
-void STHelixTrack::SetIsPlane()  { fFitStatus = STHelixTrack::kPlane; }
-void STHelixTrack::SetIsHelix()  { fFitStatus = STHelixTrack::kHelix; }
+void STHelixTrack::SetIsLine()         { fFitStatus = STHelixTrack::kLine; }
+void STHelixTrack::SetIsPlane()        { fFitStatus = STHelixTrack::kPlane; }
+void STHelixTrack::SetIsHelix()        { fFitStatus = STHelixTrack::kHelix; }
+void STHelixTrack::SetIsGenfitTrack()  { fFitStatus = STHelixTrack::kGenfitTrack; }
 
 void STHelixTrack::SetLineDirection(TVector3 dir)
 {
@@ -200,14 +216,32 @@ void STHelixTrack::SetRMSH(Double_t rms)         { fRMSH = rms; }
 void STHelixTrack::SetAlphaHead(Double_t alpha)  { fAlphaHead = alpha; }
 void STHelixTrack::SetAlphaTail(Double_t alpha)  { fAlphaTail = alpha; }
 
-Int_t STHelixTrack::GetTrackID()  const { return fTrackID; }
-Int_t STHelixTrack::GetParentID() const { return fParentID; }
+void STHelixTrack::SetGenfitMomentum(Double_t p) { fGenfitMomentum = p; }
+
+Int_t STHelixTrack::GetTrackID()  const  { return fTrackID; }
+Int_t STHelixTrack::GetGenfitID() const  { return fGenfitID; }
+Int_t STHelixTrack::GetParentID() const  { return fParentID; }
 
 STHelixTrack::STFitStatus STHelixTrack::GetFitStatus() const { return fFitStatus; }
-bool STHelixTrack::IsNotFitted() const  { return fFitStatus == kNon   ? true : false; }
-bool STHelixTrack::IsLine()  const      { return fFitStatus == kLine  ? true : false; }
-bool STHelixTrack::IsPlane() const      { return fFitStatus == kPlane ? true : false; }
-bool STHelixTrack::IsHelix() const      { return fFitStatus == kHelix ? true : false; }
+
+TString STHelixTrack::GetFitStatusString() const
+{
+  TString fitStat;
+
+  if      (fFitStatus == STHelixTrack::kNon) fitStat = "Non";
+  else if (fFitStatus == STHelixTrack::kLine) fitStat = "Line";
+  else if (fFitStatus == STHelixTrack::kPlane) fitStat = "Plane";
+  else if (fFitStatus == STHelixTrack::kHelix) fitStat = "Helix";
+  else if (fFitStatus == STHelixTrack::kGenfitTrack) fitStat = "Genfit";
+
+  return fitStat;
+}
+
+bool STHelixTrack::IsNotFitted() const    { return fFitStatus == kNon   ? true : false; }
+bool STHelixTrack::IsLine()  const        { return fFitStatus == kLine  ? true : false; }
+bool STHelixTrack::IsPlane() const        { return fFitStatus == kPlane ? true : false; }
+bool STHelixTrack::IsHelix() const        { return fFitStatus == kHelix ? true : false; }
+bool STHelixTrack::IsGenfitTrack() const  { return fFitStatus == kGenfitTrack ? true : false; }
 
 Double_t STHelixTrack::GetHelixCenterX() const { return fXHelixCenter; }
 Double_t STHelixTrack::GetHelixCenterZ() const { return fZHelixCenter; }
@@ -240,6 +274,11 @@ TVector3 STHelixTrack::PerpPlane(TVector3 p) const
   return perp * normal;
 }
 
+Double_t STHelixTrack::GetGenfitMomentum() const
+{
+  return fGenfitMomentum;
+}
+
 Double_t STHelixTrack::DipAngle() const
 {
   if (fHelixRadius <= 0)
@@ -256,7 +295,7 @@ void STHelixTrack::GetHelixParameters(Double_t &xCenter,
     Double_t &yInitial,
     Double_t &alphaSlope) const
 {
-  if (fFitStatus == STHelixTrack::kHelix)
+  if (fFitStatus == STHelixTrack::kHelix || fFitStatus == STHelixTrack::kGenfitTrack)
   {
     xCenter    = fXHelixCenter;
     zCenter    = fZHelixCenter;
@@ -310,16 +349,30 @@ Double_t STHelixTrack::GetRMSH()       const { return fRMSH; }
 Double_t STHelixTrack::GetAlphaHead()  const { return fAlphaHead; }
 Double_t STHelixTrack::GetAlphaTail()  const { return fAlphaTail; }
 
+
+
 Int_t STHelixTrack::GetNumHits() const { return fMainHits.size(); }
 STHit *STHelixTrack::GetHit(Int_t idx) const { return fMainHits.at(idx); }
 std::vector<STHit *> *STHelixTrack::GetHitArray() { return &fMainHits; }
+
+Int_t STHelixTrack::GetNumCandHits() const { return fCandHits.size(); }
+std::vector<STHit *> *STHelixTrack::GetCandHitArray() { return &fCandHits; }
 
 Int_t STHelixTrack::GetNumClusters() const { return fHitClusters.size(); }
 STHitCluster *STHelixTrack::GetCluster(Int_t idx) const { return fHitClusters.at(idx); }
 std::vector<STHitCluster *> *STHelixTrack::GetClusterArray() { return &fHitClusters; }
 
-Int_t STHelixTrack::GetNumCandHits() const { return fCandHits.size(); }
-std::vector<STHit *> *STHelixTrack::GetCandHitArray() { return &fCandHits; }
+
+
+Int_t STHelixTrack::GetNumHitIDs() const { return fMainHitIDs.size(); }
+Int_t STHelixTrack::GetHitID(Int_t idx) const { return fMainHitIDs.at(idx); }
+std::vector<Int_t> *STHelixTrack::GetHitIDArray() { return &fMainHitIDs; }
+
+Int_t STHelixTrack::GetNumClusterIDs() const { return fClusterIDs.size(); }
+Int_t STHelixTrack::GetClusterID(Int_t idx) const { return fClusterIDs.at(idx); }
+std::vector<Int_t> *STHelixTrack::GetClusterIDArray() { return &fClusterIDs; }
+
+
 
 Double_t 
 STHelixTrack::DistCircle(TVector3 pointGiven) const
@@ -337,7 +390,7 @@ TVector3 STHelixTrack::PositionAtTail() const { return PositionByAlpha(fAlphaTai
 
 Double_t STHelixTrack::Momentum(Double_t B) const
 {
-  if (fFitStatus != STHelixTrack::kHelix)
+  if (fFitStatus != STHelixTrack::kHelix && fFitStatus != STHelixTrack::kGenfitTrack)
     return -1;
 
   Double_t cosDip = TMath::Cos(DipAngle());

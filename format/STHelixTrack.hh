@@ -17,7 +17,7 @@ class STHelixTrack : public TObject
     STHelixTrack();
     STHelixTrack(Int_t id);
 
-    enum STFitStatus { kNon, kLine, kPlane, kHelix};
+    enum STFitStatus { kNon, kLine, kPlane, kHelix, kGenfitTrack };
 
   private:
     Int_t fTrackID;
@@ -49,10 +49,15 @@ class STHelixTrack : public TObject
     Double_t fAlphaHead;     ///< Head position alpha
     Double_t fAlphaTail;     ///< Last position alpha
 
-    std::vector<STHit *> fMainHits;
+    std::vector<STHit *> fMainHits; //!
     std::vector<STHit *> fCandHits; //!
+    std::vector<STHitCluster *> fHitClusters; //!
 
-    std::vector<STHitCluster *> fHitClusters;
+    std::vector<Int_t> fMainHitIDs;  ///<
+    std::vector<Int_t> fClusterIDs;  ///<
+
+    Int_t    fGenfitID;        ///< GENFIT Track ID
+    Double_t fGenfitMomentum;  ///< Momentum reconstructed by GENFIT
 
   public:
     void Clear(Option_t *option = "");
@@ -65,13 +70,18 @@ class STHelixTrack : public TObject
 
     void AddHitCluster(STHitCluster *cluster);
 
+    void FinalizeHits();
+    void FinalizeClusters();
+
     void SetTrackID(Int_t idx);
+    void SetGenfitID(Int_t idx);
     void SetParentID(Int_t idx);
 
     void SetFitStatus(STFitStatus value);
     void SetIsLine();
     void SetIsPlane();
     void SetIsHelix();
+    void SetIsGenfitTrack();
 
     void SetLineDirection(TVector3 dir);  ///< ONLY USED IN TRACK FINDING
     void SetPlaneNormal(TVector3 norm);   ///< ONLY USED IN TRACK FINDING
@@ -86,14 +96,19 @@ class STHelixTrack : public TObject
     void SetAlphaHead(Double_t alpha);
     void SetAlphaTail(Double_t alpha);
 
+    void SetGenfitMomentum(Double_t p);
+
     Int_t GetTrackID() const;
+    Int_t GetGenfitID() const;
     Int_t GetParentID() const;
 
     STFitStatus GetFitStatus() const;
+    TString GetFitStatusString() const;
     bool IsNotFitted() const;
     bool IsLine() const;
     bool IsPlane() const;
     bool IsHelix() const;
+    bool IsGenfitTrack() const;
 
     Double_t GetHelixCenterX() const;
     Double_t GetHelixCenterZ() const;
@@ -142,6 +157,8 @@ class STHelixTrack : public TObject
     Double_t GetAlphaHead() const;
     Double_t GetAlphaTail() const;
 
+
+
     Int_t GetNumHits() const;
     STHit *GetHit(Int_t idx) const;
     std::vector<STHit *> *GetHitArray();
@@ -153,12 +170,25 @@ class STHelixTrack : public TObject
     STHitCluster *GetCluster(Int_t idx) const;
     std::vector<STHitCluster *> *GetClusterArray();
 
+
+
+    Int_t GetNumHitIDs() const;
+    Int_t GetHitID(Int_t idx) const;
+    std::vector<Int_t> *GetHitIDArray();
+
+    Int_t GetNumClusterIDs() const;
+    Int_t GetClusterID(Int_t idx) const;
+    std::vector<Int_t> *GetClusterIDArray();
+
+
+
     TVector3 GetLineDirection() const;     ///< ONLY USED IN TRACK FINDING
     TVector3 GetPlaneNormal() const;       ///< ONLY USED IN TRACK FINDING
 
     TVector3 PerpLine(TVector3 p) const;   ///< ONLY USED IN TRACK FINDING
     TVector3 PerpPlane(TVector3 p) const;  ///< ONLY USED IN TRACK FINDING
 
+    Double_t GetGenfitMomentum() const;    /// Momentum reconstructed by genfit (if is set)
     /**
      * Angle between p and pt. Value becomes 0 on xz plane.
      * = tan(-fAlphaSlope/fHelixRadius) + pi/2
@@ -326,7 +356,7 @@ class STHelixTrack : public TObject
     Double_t Continuity();
 
 
-  ClassDef(STHelixTrack, 3)
+  ClassDef(STHelixTrack, 4)
 };
 
 class STHitByDistanceTo
