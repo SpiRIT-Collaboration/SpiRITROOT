@@ -24,6 +24,7 @@ class STTrack : public STTrackCandidate {
     void SetParentID(Int_t value);
     void SetTrackID(Int_t value);
     void SetRiemannID(Int_t value);
+    void SetHelixID(Int_t value);
 
     void SetIsFitted(Bool_t value = kTRUE);
 
@@ -34,6 +35,7 @@ class STTrack : public STTrackCandidate {
     Int_t GetParentID();
     Int_t GetTrackID();
     Int_t GetRiemannID();
+    Int_t GetHelixID();
 
     Bool_t IsFitted();
 
@@ -49,7 +51,7 @@ class STTrack : public STTrackCandidate {
   private:
     Int_t fParentID;
     Int_t fTrackID;
-    Int_t fRiemannID;
+    Int_t fSubTrackID;
 
     Bool_t fIsFitted;
 

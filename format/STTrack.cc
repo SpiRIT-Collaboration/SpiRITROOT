@@ -15,7 +15,8 @@ STTrack::STTrack()
 
 void STTrack::SetParentID(Int_t value)                   { fParentID = value; }
 void STTrack::SetTrackID(Int_t value)                    { fTrackID = value; }
-void STTrack::SetRiemannID(Int_t value)                  { fRiemannID = value; }
+void STTrack::SetRiemannID(Int_t value)                  { fSubTrackID = value; }
+void STTrack::SetHelixID(Int_t value)                    { fSubTrackID = value; }
 
 void STTrack::SetIsFitted(Bool_t value)                  { fIsFitted = value; }
 
@@ -42,7 +43,7 @@ void STTrack::Clear(Option_t *option)
 
   fParentID = -99999;
   fTrackID = -99999;
-  fRiemannID = -99999;
+  fSubTrackID = -99999;
 
   fIsFitted = kFALSE;
 
@@ -64,7 +65,8 @@ void STTrack::DeleteCandidates()
 
 Int_t STTrack::GetParentID()                    { return fParentID; }
 Int_t STTrack::GetTrackID()                     { return fTrackID; }
-Int_t STTrack::GetRiemannID()                   { return fRiemannID; }
+Int_t STTrack::GetRiemannID()                   { return fSubTrackID; }
+Int_t STTrack::GetHelixID()                     { return fSubTrackID; }
 
 Bool_t STTrack::IsFitted()                      { return fIsFitted; }
 
