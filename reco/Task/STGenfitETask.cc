@@ -40,9 +40,9 @@ STGenfitETask::Init()
   if (STRecoTask::Init() == kERROR)
     return kERROR;
 
-  fRiemannTrackArray = (TClonesArray *) fRootManager -> GetObject("STRiemannTrack");
-  if (fRiemannTrackArray == nullptr) {
-    LOG(ERROR) << "Cannot find STRiemannTrack array!" << FairLogger::endl;
+  fHelixTrackArray = (TClonesArray *) fRootManager -> GetObject("STHelixTrack");
+  if (fHelixTrackArray == nullptr) {
+    LOG(ERROR) << "Cannot find STHelixTrack array!" << FairLogger::endl;
     return kERROR;
   }
 
@@ -79,23 +79,25 @@ void STGenfitETask::Exec(Option_t *opt)
 
   fGenfitTest -> Init();
 
-  Int_t numTrackCand = fRiemannTrackArray -> GetEntriesFast();
-  for (Int_t iRiemann = 0; iRiemann < numTrackCand; iRiemann++) 
+  Int_t numTrackCand = fHelixTrackArray -> GetEntriesFast();
+  for (Int_t iHelixTrack = 0; iHelixTrack < numTrackCand; iHelixTrack++)
   {
-    STRiemannTrack *riemannTrack = (STRiemannTrack *) fRiemannTrackArray -> At(iRiemann);
-    if (!(riemannTrack -> IsFitted())) 
-      continue;
+    STHelixTrack *helixTrack = (STHelixTrack *) fHelixTrackArray -> At(iHelixTrack);
 
     Int_t trackID = fTrackArray -> GetEntriesFast();
     STTrack *recoTrack = (STTrack *) fTrackArray -> ConstructedAt(trackID);
     recoTrack -> SetTrackID(trackID);
-    recoTrack -> SetRiemannID(iRiemann);
+    recoTrack -> SetRiemannID(iHelixTrack);
 
-    genfit::Track *track = fGenfitTest -> FitTrack(recoTrack, fHitClusterArray, riemannTrack);
+    genfit::Track *track = fGenfitTest -> FitTrack(recoTrack, fHitClusterArray, helixTrack);
     if (track != nullptr)
     {
       fGenfitTest -> SetTrack(recoTrack, track);
-      if (recoTrack -> IsFitted() == kFALSE) {
+      if (recoTrack -> IsFitted()) {
+        helixTrack -> SetIsGenfitTrack();
+        helixTrack -> SetGenfitMomentum(recoTrack -> GetP());
+      }
+      else {
         fTrackArray -> Remove(recoTrack);
         continue;
       }

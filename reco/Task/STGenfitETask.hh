@@ -2,7 +2,7 @@
 #define STGENFITETASK
 
 #include "STRecoTask.hh"
-#include "STRiemannTrack.hh"
+#include "STHelixTrack.hh"
 #include "STGenfitTestE.hh"
 
 class STGenfitETask : public STRecoTask
@@ -22,7 +22,7 @@ class STGenfitETask : public STRecoTask
   private:
     TClonesArray *fTrackArray = nullptr;
     TClonesArray *fVertexArray = nullptr;
-    TClonesArray *fRiemannTrackArray = nullptr;
+    TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fHitClusterArray = nullptr;
 
     Bool_t fRemoveNoVertexEvent = false;
