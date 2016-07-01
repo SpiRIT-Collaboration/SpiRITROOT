@@ -401,13 +401,13 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
     return TVector3(x,y,z);
   };
 
-  auto lengthCut = 10. / TMath::Cos(track -> DipAngle());
+  auto lengthCut = 12. / TMath::Cos(track -> DipAngle());
 
   TVector3 q, m;
   bool stable = false;
   auto addedLength = 0.;
   auto rmsW = track -> GetRMSW();
-  auto rmsH = track -> GetRMSW();
+  auto rmsH = track -> GetRMSH();
   STHitCluster *curCluster = nullptr;
   auto preLength = track -> ExtrapolateByMap(trackHits->at(0)->GetPosition(),q,m);
 
@@ -468,7 +468,7 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
   if (track -> GetNumClusters() < 5)
     track -> SetIsBad();
 
-  //fFitter -> FitCluster(track);
+  fFitter -> FitCluster(track);
 
   return true;
 }
@@ -503,7 +503,7 @@ STHelixTrackFinder::Correlate(STHelixTrack *track, STHit *hit, Double_t rScale)
   if (rmsWCut > 10) rmsWCut = 10;
   rmsWCut = scale * rmsWCut;
 
-  Double_t rmsHCut = track -> GetRMSW();
+  Double_t rmsHCut = track -> GetRMSH();
   if (rmsHCut < 1) rmsHCut = 1;
   if (rmsHCut > 4) rmsHCut = 4;
   rmsHCut = scale * rmsHCut;
