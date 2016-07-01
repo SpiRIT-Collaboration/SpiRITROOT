@@ -11,14 +11,17 @@ STHelixTrackingTask::STHelixTrackingTask()
 {
 }
 
-STHelixTrackingTask::STHelixTrackingTask(Bool_t persistence)
+STHelixTrackingTask::STHelixTrackingTask(Bool_t persistence, Bool_t clusterPersistence)
 : STRecoTask("Helix Tracking Task", 1, persistence)
 {
+  fIsClusterPersistence = clusterPersistence;
 }
 
 STHelixTrackingTask::~STHelixTrackingTask()
 {
 }
+
+void STHelixTrackingTask::SetClusterPersistence(Bool_t value) { fIsClusterPersistence = value; }
 
 void STHelixTrackingTask::SetNumTracksLowLimit(Int_t limit) { fNumTracksLowLimit = limit; }
 
@@ -37,7 +40,7 @@ InitStatus STHelixTrackingTask::Init()
   fRootManager -> Register("STHelixTrack", "SpiRIT", fTrackArray, fIsPersistence);
 
   fHitClusterArray = new TClonesArray("STHitCluster", 100);
-  fRootManager -> Register("STHitCluster", "SpiRIT", fHitClusterArray, fIsPersistence);
+  fRootManager -> Register("STHitCluster", "SpiRIT", fHitClusterArray, fIsClusterPersistence);
 
   fTrackFinder = new STHelixTrackFinder();
 
