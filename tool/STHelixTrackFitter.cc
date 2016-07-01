@@ -295,11 +295,13 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
   Double_t x = 0;
   Double_t z = 0;
 
+  Double_t weightSum = 0;
   for (auto hit : *hitArray)
   {
     x = hit -> GetX() - xMean;
     z = hit -> GetZ() - zMean;
     Double_t w = hit -> GetCharge();
+    weightSum += w;
 
     Double_t rEff = sqrt(x*x + z*z) / (2*RSR);
     Double_t denominator = 1 + rEff*rEff;
@@ -313,7 +315,6 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
     zMapMean += w * zMap;
   }
 
-  Double_t weightSum = track -> GetChargeSum();
   xMapMean = xMapMean / weightSum;
   yMapMean = yMapMean / weightSum;
   zMapMean = zMapMean / weightSum;
@@ -380,8 +381,6 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
   track -> SetHelixRadius(radius);
 
   track -> SetIsHelix();
-
-  sort(hitArray -> begin(), hitArray -> end(), STHitSortY());
 
   TVector3 position0 = hitArray -> at(0) -> GetPosition();
   x = position0.X() - xC;
