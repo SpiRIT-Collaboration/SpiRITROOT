@@ -11,8 +11,10 @@ class STHelixTrackingTask : public STRecoTask
 {
   public:
     STHelixTrackingTask();
-    STHelixTrackingTask(Bool_t persistence);
+    STHelixTrackingTask(Bool_t persistence, Bool_t clusterPersistence);
     ~STHelixTrackingTask();
+
+    virtual void SetClusterPersistence(Bool_t value = kTRUE);
 
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
@@ -27,6 +29,9 @@ class STHelixTrackingTask : public STRecoTask
     STHelixTrackFinder* fTrackFinder;
 
     Int_t fNumTracksLowLimit = 1;
+
+    Bool_t fIsClusterPersistence = kFALSE;
+
 
   ClassDef(STHelixTrackingTask, 1)
 };
