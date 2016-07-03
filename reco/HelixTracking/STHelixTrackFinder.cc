@@ -407,7 +407,7 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
   bool stable = false;
   auto addedLength = 0.;
   auto rmsW = track -> GetRMSW();
-  auto rmsH = track -> GetRMSH();
+  auto rmsH = 2 * track -> GetRMSH();
   STHitCluster *curCluster = nullptr;
   auto preLength = track -> ExtrapolateByMap(trackHits->at(0)->GetPosition(),q,m);
 
@@ -468,7 +468,10 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
   if (track -> GetNumClusters() < 5)
     track -> SetIsBad();
 
-  fFitter -> FitCluster(track);
+  if (fFitter -> FitCluster(track) == false) {
+    fFitter -> Fit(track);
+    track -> SetIsLine();
+  }
 
   return true;
 }
