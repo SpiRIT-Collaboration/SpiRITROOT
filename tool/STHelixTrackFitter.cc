@@ -133,7 +133,7 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
 
   if (std::abs(nToPlane.Y()) < 1.e-10) {
     track -> SetIsLine();
-    return true;
+    return false;
   }
 
   TVector3 RSC = TVector3(0, RSR, 0);
@@ -280,8 +280,20 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
 
   fODRFitter -> Reset();
 
-  Double_t xMean = track -> GetXMean();
-  Double_t zMean = track -> GetZMean();
+  auto clusterArray = track -> GetClusterArray();
+
+  Double_t xMean = 0;
+  Double_t zMean = 0;
+  Double_t weightSum = 0;
+  for (auto cluster : *clusterArray) {
+    Double_t w = cluster -> GetCharge();
+    xMean += w * cluster -> GetX();
+    zMean += w * cluster -> GetZ();
+    weightSum += w;
+  }
+  xMean = xMean / weightSum;
+  zMean = zMean / weightSum;
+
   Double_t xCov  = track -> GetXCov();
   Double_t zCov  = track -> GetZCov();
   Double_t RSR = 2 * sqrt(xCov + zCov);
@@ -290,18 +302,14 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
   Double_t yMapMean = 0;
   Double_t zMapMean = 0;
 
-  auto hitArray = track -> GetClusterArray();
-
   Double_t x = 0;
   Double_t z = 0;
 
-  Double_t weightSum = 0;
-  for (auto hit : *hitArray)
+  for (auto cluster : *clusterArray)
   {
-    x = hit -> GetX() - xMean;
-    z = hit -> GetZ() - zMean;
-    Double_t w = hit -> GetCharge();
-    weightSum += w;
+    x = cluster -> GetX() - xMean;
+    z = cluster -> GetZ() - zMean;
+    Double_t w = cluster -> GetCharge();
 
     Double_t rEff = sqrt(x*x + z*z) / (2*RSR);
     Double_t denominator = 1 + rEff*rEff;
@@ -322,11 +330,11 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
   fODRFitter -> SetCentroid(xMapMean, yMapMean, zMapMean);
   TVector3 mapMean(xMapMean, yMapMean, zMapMean);
 
-  for (auto hit : *hitArray)
+  for (auto cluster : *clusterArray)
   {
-    x = hit -> GetX() - xMean;
-    z = hit -> GetZ() - zMean;
-    Double_t w = hit -> GetCharge();
+    x = cluster -> GetX() - xMean;
+    z = cluster -> GetZ() - zMean;
+    Double_t w = cluster -> GetCharge();
 
     Double_t rEff = sqrt(x*x + z*z) / (2*RSR);
     Double_t denominator = 1 + rEff*rEff;
@@ -345,7 +353,7 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
 
   if (std::abs(nToPlane.Y()) < 1.e-10) {
     track -> SetIsLine();
-    return true;
+    return false;
   }
 
   TVector3 RSC = TVector3(0, RSR, 0);
@@ -382,7 +390,7 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
 
   track -> SetIsHelix();
 
-  TVector3 position0 = hitArray -> at(0) -> GetPosition();
+  TVector3 position0 = clusterArray -> at(0) -> GetPosition();
   x = position0.X() - xC;
   z = position0.Z() - zC;
   Double_t y = 0;
@@ -405,11 +413,11 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
   Double_t alphaMin = alphaInit;
   Double_t alphaMax = alphaInit;
 
-  for (auto hit : *hitArray)
+  for (auto cluster : *clusterArray)
   {
-    x = hit -> GetX() - xC;
-    y = hit -> GetY();
-    z = hit -> GetZ() - zC;;
+    x = cluster -> GetX() - xC;
+    y = cluster -> GetY();
+    z = cluster -> GetZ() - zC;;
 
     TVector2 v(x,z);
 
@@ -434,7 +442,7 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
 
     alphaLast = alphaLast + alphaInit;
 
-    Double_t w = hit -> GetCharge();
+    Double_t w = cluster -> GetCharge();
 
     expA  += w * alphaLast;
     expA2 += w * alphaLast * alphaLast;
@@ -463,15 +471,15 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
 
   Double_t Sx = 0;
   Double_t Sy = 0;
-  for (auto hit : *hitArray)
+  for (auto cluster : *clusterArray)
   {
-    TVector3 q = track -> Map(hit -> GetPosition());
-    Sx += hit -> GetCharge() * q.X() * q.X();
-    Sy += hit -> GetCharge() * q.Y() * q.Y();
+    TVector3 q = track -> Map(cluster -> GetPosition());
+    Sx += cluster -> GetCharge() * q.X() * q.X();
+    Sy += cluster -> GetCharge() * q.Y() * q.Y();
   }
 
-  Double_t rmsr = sqrt(Sx / (track -> GetChargeSum() * (1 - 3/hitArray -> size())));
-  Double_t rmsy = sqrt(Sy / (track -> GetChargeSum() * (1 - 3/hitArray -> size())));
+  Double_t rmsr = sqrt(Sx / (track -> GetChargeSum() * (1 - 3/clusterArray -> size())));
+  Double_t rmsy = sqrt(Sy / (track -> GetChargeSum() * (1 - 3/clusterArray -> size())));
 
   track -> SetRMSW(rmsr);
   track -> SetRMSH(rmsy);
