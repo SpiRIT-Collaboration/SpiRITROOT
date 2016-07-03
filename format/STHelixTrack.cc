@@ -70,6 +70,10 @@ void STHelixTrack::Print(Option_t *option) const
   cout << " - " << setw(13) << "Track ID"     << " : " << fTrackID << endl;
   cout << " - " << setw(13) << "Parent ID"    << " : " << fParentID << endl;
   cout << " - " << setw(13) << "Fit Status"   << " : " << GetFitStatusString() << endl;
+
+  if (fFitStatus != STHelixTrack::kHelix && fFitStatus != STHelixTrack::kGenfitTrack)
+    return;
+
   cout << " - " << setw(13) << "Helix Center" << " : " << center << " [mm]" << endl;
   cout << " - " << setw(13) << "Helix Radius" << " : " << fHelixRadius << " [mm]" << endl;
   cout << " - " << setw(13) << "Dip Angle"    << " : " << DipAngle() << endl;
@@ -77,6 +81,11 @@ void STHelixTrack::Print(Option_t *option) const
   cout << " - " << setw(13) << "Charge"       << " : " << fChargeSum << " [ADC]" << endl;;
   cout << " - " << setw(13) << "Track Length" << " : " << TrackLength() << " [mm]" << endl;;
   cout << " - " << setw(13) << "Momentum"     << " : " << Momentum() << " [MeV]" << endl;;
+
+  if (fFitStatus == STHelixTrack::kGenfitTrack) {
+    cout << " - " << setw(13) << "GF-Momentum"  << " : " << fGenfitMomentum << " [MeV]" << endl;;
+    cout << " - " << setw(13) << "dEdx (70 %)"  << " : " << GetdEdxWithCut(0, 0.7) << " [ADC/mm]" << endl;;
+  }
 }
 
 void STHelixTrack::AddHit(STHit *hit)
@@ -838,7 +847,7 @@ STHelixTrack::Continuity()
 }
 
 Double_t 
-STHelixTrack::GetdEdxWithCut(Double_t lowR, Double_t highR)
+STHelixTrack::GetdEdxWithCut(Double_t lowR, Double_t highR) const
 {
   auto numPoints = fdEdxArray.size();
 

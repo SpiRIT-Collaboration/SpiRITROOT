@@ -183,7 +183,7 @@ class STHelixTrack : public TObject
     std::vector<Int_t> *GetClusterIDArray();
 
     std::vector<Double_t> *GetdEdxArray();
-    Double_t GetdEdxWithCut(Double_t lowR, Double_t highR);
+    Double_t GetdEdxWithCut(Double_t lowR, Double_t highR) const;
 
 
 
