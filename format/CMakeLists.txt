@@ -38,6 +38,7 @@ STTrack.cc
 STTrackCandidate.cc
 STEventHeader.cc
 STHelixTrack.cc
+STVertex.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
