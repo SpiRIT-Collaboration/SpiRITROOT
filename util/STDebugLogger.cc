@@ -103,13 +103,22 @@ STDebugLogger::Write()
     itHist1D++;
   }
 
-  std::map<TString, TH2D*>::iterator tiHist2D = fMapHist2.begin();
-  while (tiHist2D != fMapHist2.end()) 
+  std::map<TString, TH2D*>::iterator itHist2D = fMapHist2.begin();
+  while (itHist2D != fMapHist2.end()) 
   {
-    cout << "STDebugLogger::Writing 2D Histogram " << tiHist2D -> first << endl;
-    tiHist2D -> second -> Write();
-    delete tiHist2D -> second;
-    tiHist2D++;
+    cout << "STDebugLogger::Writing 2D Histogram " << itHist2D -> first << endl;
+    itHist2D -> second -> Write();
+    delete itHist2D -> second;
+    itHist2D++;
+  }
+
+  std::map<TString, TTree*>::iterator itTree = fMapTree.begin();
+  while (itTree != fMapTree.end()) 
+  {
+    cout << "STDebugLogger::Writing Tree " << itTree -> first << endl;
+    itTree -> second -> Write();
+    delete itTree -> second;
+    itTree++;
   }
 
   if (fOutFile != NULL) {
@@ -177,7 +186,7 @@ STDebugLogger::FillTree(TString name, Int_t nVal, Double_t *val, TString *bname)
       for (Int_t i=0; i<nVal; i++)
       {
         Double_t* branchVal = new Double_t;
-        tree -> Branch(Form("v%d",i), &branchVal);
+        tree -> Branch(Form("v%d",i), branchVal);
         fMapBranchVal.push_back(branchVal);
 
         fMaxBranchIdx++;
@@ -188,7 +197,7 @@ STDebugLogger::FillTree(TString name, Int_t nVal, Double_t *val, TString *bname)
       for (Int_t i=0; i<nVal; i++)
       {
         Double_t* branchVal = new Double_t;
-        tree -> Branch(bname[i], &branchVal);
+        tree -> Branch(bname[i], branchVal);
         fMapBranchVal.push_back(branchVal);
 
         fMaxBranchIdx++;
@@ -203,6 +212,12 @@ STDebugLogger::FillTree(TString name, Int_t nVal, Double_t *val, TString *bname)
     *valP = val[i];
   }
   fMapTree[name] -> Fill();
+}
+
+TTree*
+STDebugLogger::GetTree(TString name)
+{
+  return fMapTree[name];
 }
 
 void 
