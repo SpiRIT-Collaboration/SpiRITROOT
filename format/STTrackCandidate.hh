@@ -46,6 +46,8 @@ class STTrackCandidate : public TObject {
     void SetChi2(Double_t value);
     void SetNDF(Int_t value);
 
+    void SetPVal(Double_t value);
+
     Int_t GetPID();
     Double_t GetMass();
     Int_t GetCharge();
@@ -90,6 +92,8 @@ class STTrackCandidate : public TObject {
     Double_t GetRiemanndEdx();
     Double_t GetChi2();
     Int_t GetNDF();
+
+    Double_t GetPVal();
 
     /**
      * Calculate dEdx with applied cuts from fdEdxArray.
@@ -150,7 +154,9 @@ class STTrackCandidate : public TObject {
     Double_t fChi2;
     Int_t fNDF;
 
-  ClassDef(STTrackCandidate, 2)
+    Double_t fPVal;
+
+  ClassDef(STTrackCandidate, 3)
 };
 
 #endif

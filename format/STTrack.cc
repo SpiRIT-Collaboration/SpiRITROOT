@@ -25,11 +25,11 @@ void STTrack::AddTrackCandidate(STTrackCandidate *track) { fTrackCandidateArray.
 
 void STTrack::DetermineBestCandidate()
 {
-  Double_t bestChi2 = 1.e10;
+  Double_t bestPVal = 0;
   STTrackCandidate *bestCandidate = nullptr;
   for (auto cand : fTrackCandidateArray) {
-    if (cand -> GetChi2() < bestChi2) {
-      bestChi2 = cand -> GetChi2();
+    if (cand -> GetPVal() > bestPVal) {
+      bestPVal = cand -> GetPVal();
       bestCandidate = cand;
     }
   }

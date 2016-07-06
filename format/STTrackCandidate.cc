@@ -48,6 +48,8 @@ void STTrackCandidate::Clear(Option_t *option)
   fChi2 = -99999;
   fNDF = -99999;
 
+  fPVal = -99999;
+
   fdEdxArray.clear();
 }
 
@@ -77,6 +79,8 @@ void STTrackCandidate::SetTotaldEdx(Double_t value)                       { fdEd
 void STTrackCandidate::SetRiemanndEdx(Double_t value)                     { fRiemanndEdx = value; }
 void STTrackCandidate::SetChi2(Double_t value)                            { fChi2 = value; }
 void STTrackCandidate::SetNDF(Int_t value)                                { fNDF = value; }
+
+void STTrackCandidate::SetPVal(Double_t value)                            { fPVal = value; }
 
 
 Int_t STTrackCandidate::GetPID()                         { return fPID; }
@@ -127,6 +131,8 @@ Double_t STTrackCandidate::GetTotaldEdx()                { return fdEdxTotal; }
 Double_t STTrackCandidate::GetRiemanndEdx()              { return fRiemanndEdx; }
 Double_t STTrackCandidate::GetChi2()                     { return fChi2; }
 Int_t STTrackCandidate::GetNDF()                         { return fNDF; }
+
+Double_t STTrackCandidate::GetPVal()                     { return fPVal; }
 
 Int_t STTrackCandidate::GetdEdxWithCut(Double_t &dEdx, Int_t &numUsedPoints, Double_t lowCut, Double_t highCut, Int_t numCut)
 {
@@ -179,6 +185,7 @@ void STTrackCandidate::SetTrackCandidate(STTrackCandidate *track)
   fRiemanndEdx = track -> GetRiemanndEdx();
   fChi2 = track -> GetChi2();
   fNDF = track -> GetNDF();
+  fPVal = track -> GetPVal();
 
   fdEdxArray.clear();
   std::vector<Double_t> *tempArray = track -> GetdEdxArray();
