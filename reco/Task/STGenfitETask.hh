@@ -4,6 +4,7 @@
 #include "STRecoTask.hh"
 #include "STHelixTrack.hh"
 #include "STGenfitTestE.hh"
+#include "STDatabasePDG.hh"
 
 class STGenfitETask : public STRecoTask
 {
@@ -19,6 +20,7 @@ class STGenfitETask : public STRecoTask
 
   private:
     TClonesArray *fTrackArray = nullptr;
+    TClonesArray *fTrackCandArray = nullptr;
     TClonesArray *fVertexArray = nullptr;
     TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fHitClusterArray = nullptr;
@@ -30,6 +32,8 @@ class STGenfitETask : public STRecoTask
 
     TString fGFRaveVertexMethod;
     genfit::GFRaveVertexFactory *fVertexFactory;
+
+    STDatabasePDG* fPDGDB;
 
   ClassDef(STGenfitETask, 1)
 };

@@ -17,11 +17,13 @@ ClassImp(STGenfitETask)
 STGenfitETask::STGenfitETask()
 : STRecoTask("GENFIT Task", 1, false)
 {
+  fPDGDB = STDatabasePDG::Instance();
 }
 
 STGenfitETask::STGenfitETask(Bool_t persistence)
 : STRecoTask("GENFIT Task", 1, persistence)
 {
+  fPDGDB = STDatabasePDG::Instance();
 }
 
 STGenfitETask::~STGenfitETask()
@@ -57,6 +59,8 @@ STGenfitETask::Init()
   fTrackArray = new TClonesArray("STTrack");
   fRootManager -> Register("STTrack", "SpiRIT", fTrackArray, fIsPersistence);
 
+  fTrackCandArray = new TClonesArray("STTrackCandidate");
+
   fGenfitTest = new STGenfitTestE();
 
 //  fVertexArray = new TClonesArray("genfit::GFRaveVertex");
@@ -81,6 +85,7 @@ STGenfitETask::Init()
 void STGenfitETask::Exec(Option_t *opt)
 {
   fTrackArray -> Clear("C");
+  fTrackCandArray -> Clear("C");
   fVertexArray -> Delete();
 
   if (fEventHeader -> IsBadEvent())
@@ -102,23 +107,58 @@ void STGenfitETask::Exec(Option_t *opt)
     recoTrack -> SetTrackID(trackID);
     recoTrack -> SetHelixID(helixTrack -> GetTrackID());
 
-    genfit::Track *track = fGenfitTest -> FitTrack(recoTrack, fHitClusterArray, helixTrack);
-    if (track != nullptr)
+    Int_t numHits = helixTrack -> GetNumClusters();
+    for (Int_t iHit = 0; iHit < numHits; iHit++)
+      recoTrack -> AddHitID(helixTrack -> GetClusterID(iHit));
+
+    vector<genfit::Track *> gfCandTrackArray;
+    vector<STTrackCandidate*> recoCandTrackArray;
+
+    auto pdgList = fPDGDB -> GetPDGCandidateArray();
+    for (auto pdg : *pdgList)
     {
-      fGenfitTest -> SetTrack(recoTrack, track);
-      if (recoTrack -> IsFitted()) {
-        helixTrack -> SetIsGenfitTrack();
-        helixTrack -> SetGenfitID(recoTrack -> GetTrackID());
-        helixTrack -> SetGenfitMomentum(recoTrack -> GetP());
+      Int_t trackCandID = fTrackCandArray -> GetEntriesFast();
+      STTrackCandidate *candTrack = (STTrackCandidate *) fTrackCandArray -> ConstructedAt(trackCandID);
+
+      genfit::Track *track = fGenfitTest -> FitTrack(candTrack, fHitClusterArray, helixTrack, pdg);
+      if (track != nullptr)
+      {
+        fGenfitTest -> SetTrack(candTrack, track);
+        if (candTrack -> GetPVal() <= 0) {
+          continue;
+        }
+        gfCandTrackArray.push_back(track);
+        recoCandTrackArray.push_back(candTrack);
       }
-      else {
-        fTrackArray -> Remove(recoTrack);
-        continue;
-      }
-      genfitTrackArray.push_back(track);
     }
-    else
-      fTrackArray -> Remove(recoTrack);
+
+    Double_t bestPVal = 0;
+    STTrackCandidate *bestCandTrack = nullptr;
+    genfit::Track *bestGFTrack = nullptr;
+
+    for (auto i=0; i<recoCandTrackArray.size(); i++)
+    {
+      auto candTrack = recoCandTrackArray[i];
+      auto gfTrack = gfCandTrackArray[i];
+
+      if (candTrack -> GetPVal() > bestPVal) {
+        bestPVal = candTrack -> GetPVal();
+        bestCandTrack = candTrack;
+        bestGFTrack = gfTrack;
+      }
+      recoTrack -> AddTrackCandidate(candTrack);
+    }
+
+    if (bestCandTrack == nullptr)
+      continue;
+
+    recoTrack -> SetIsFitted();
+    recoTrack -> SetTrackCandidate(bestCandTrack);
+    genfitTrackArray.push_back(bestGFTrack);
+
+    helixTrack -> SetGenfitID(recoTrack -> GetTrackID());
+    helixTrack -> SetIsGenfitTrack();
+    helixTrack -> SetGenfitMomentum(bestCandTrack -> GetP());
   }
   fTrackArray -> Compress();
 
