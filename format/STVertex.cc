@@ -32,7 +32,7 @@
 #include <iostream>
 
 STVertex::STVertex()
-:fCov(3), fNDF(0), fChi2(0), fID(-1)
+:fCov(3, 3), fNDF(0), fChi2(0), fID(-1)
 {
 }
 
@@ -42,7 +42,8 @@ STVertex::STVertex(const genfit::GFRaveVertex &vertex):
   fID(vertex.getId())
 {
   fPos = vertex.getPos()*10.;
-  fCov = vertex.getCov()*10.;
+  fCov.ResizeTo(vertex.getCov());
+  fCov = vertex.getCov()*100.;
 
   UInt_t nPar = vertex.getNTracks();
   fSmoothedTracks.reserve(nPar);
