@@ -1,7 +1,7 @@
 void run_reco_experiment
 (
   Int_t fRunNo = 3000,
-  Int_t fNumEventsInRun = 2,
+  Int_t fNumEventsInRun = 20,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 100,
   Bool_t fUseMeta = kFALSE,
