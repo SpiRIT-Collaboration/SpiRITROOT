@@ -369,7 +369,7 @@ STHelixTrackFinder::ConfirmHits(STHelixTrack *track, bool &tailToHead)
         tailToHead = !tailToHead;
     }
 
-    auto dLength = std::abs(lCur - lPre);
+    auto dLength = abs(lCur - lPre);
     extrapolationLength = 10;
     while(dLength > 0 && AutoBuildByInterpolation(track, tailToHead, extrapolationLength, 1)) { dLength -= 10; }
   }
@@ -401,12 +401,27 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
     return TVector3(x,y,z);
   };
 
+  auto CheckRange = [](STHitCluster *cluster) {
+    auto x = cluster -> GetX();
+    auto y = cluster -> GetY();
+    auto z = cluster -> GetZ();
+
+    if (x > 412 || x < -412 || y < -520 || y > 20 || z < 20 || z > 1324)
+      return false;
+
+    Int_t layer = z / 12;
+    if (layer > 89 && layer < 100)
+      return false;
+
+    return true;
+  };
+
   auto lengthCut = 12. / TMath::Cos(track -> DipAngle());
 
   TVector3 q, m;
   bool stable = false;
   auto addedLength = 0.;
-  auto rmsW = track -> GetRMSW();
+  auto rmsW = 2 * track -> GetRMSW();
   auto rmsH = 2 * track -> GetRMSH();
   STHitCluster *curCluster = nullptr;
   auto preLength = track -> ExtrapolateByMap(trackHits->at(0)->GetPosition(),q,m);
@@ -446,11 +461,11 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
         auto wc = pc.X();
         auto h0 = p0.Y();
 
-        if (std::abs(wc) < std::abs(w0)) {
+        if (abs(wc) < abs(w0)) {
           curCluster -> AddHit(curHit);
         }
         else {
-          if (std::abs(w0) < rmsW && std::abs(h0) < rmsH) {
+          if (abs(w0) < rmsW && abs(h0) < rmsH && CheckRange(curCluster)) {
             curCluster -> SetLength(addedLength - 0.5*dLength);
             track -> AddHitCluster(curCluster);
           }
@@ -518,7 +533,7 @@ STHelixTrackFinder::Correlate(STHelixTrack *track, STHit *hit, Double_t rScale)
   auto LengthAlphaCut = [track](Double_t dLength) {
     if (dLength > 0) {
       if (dLength > .5*track -> TrackLength()) {
-        if (std::abs(track -> AlphaByLength(dLength)) > .5*TMath::Pi()) {
+        if (abs(track -> AlphaByLength(dLength)) > .5*TMath::Pi()) {
           return true;
         }
       }
@@ -534,9 +549,9 @@ STHelixTrackFinder::Correlate(STHelixTrack *track, STHit *hit, Double_t rScale)
     if (LengthAlphaCut(qHead.Z() - q.Z())) return 0;
   }
 
-  Double_t dr = std::abs(q.X());
+  Double_t dr = abs(q.X());
   Double_t quality = 0;
-  if (dr < rmsWCut && std::abs(q.Y()) < rmsHCut)
+  if (dr < rmsWCut && abs(q.Y()) < rmsHCut)
     quality = sqrt((dr-rmsWCut)*(dr-rmsWCut)) / rmsWCut;
 
   return quality;
@@ -558,7 +573,7 @@ STHelixTrackFinder::CorrelateSimple(STHelixTrack *track, STHit *hit)
   for (auto trackHit : *trackHits) {
     if (row == trackHit -> GetRow() && layer == trackHit -> GetLayer())
       return 0;
-    if (std::abs(hit->GetY() - trackHit->GetY()) < 12)
+    if (abs(hit->GetY() - trackHit->GetY()) < 12)
       ycut = true;
   }
   if (ycut == false)
@@ -608,7 +623,7 @@ STHelixTrackFinder::TangentOfMaxDipAngle(STHit *hit)
   Double_t dy = p.Y()-v.Y();
   Double_t dz = p.Z()-v.Z();
 
-  Double_t r = std::abs(dy / sqrt(dx*dx + dz*dz));
+  Double_t r = abs(dy / sqrt(dx*dx + dz*dz));
 
   return r;
 }
