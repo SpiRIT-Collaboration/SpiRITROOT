@@ -150,6 +150,7 @@ STPulse::GetPulseFunction(STHit* hit, TString name)
   return f1;
 }
 
+   Int_t  STPulse::GetShapingTime()     { return fShapingTime;     }
 Double_t  STPulse::GetTbAtThreshold()   { return fTbAtThreshold;   }
 Double_t  STPulse::GetTbAtTail()        { return fTbAtTail;        }
 Double_t  STPulse::GetTbAtMax()         { return fTbAtMax;         }

@@ -33,6 +33,7 @@ class STPulse
     /** Get Pulse with STHit information */
     TF1* GetPulseFunction(STHit* hit, TString name = "");
 
+       Int_t  GetShapingTime();
     Double_t  GetTbAtThreshold();
     Double_t  GetTbAtTail();
     Double_t  GetTbAtMax();
