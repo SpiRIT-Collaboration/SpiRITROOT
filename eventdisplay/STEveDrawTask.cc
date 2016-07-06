@@ -192,7 +192,7 @@ STEveDrawTask::Exec(Option_t* option)
   if (fDriftedElectronArray != NULL && fSetObject[kDigi]) 
     DrawDriftedElectrons();
 
-  if (fSetObject[kHit] || fSetObject[kHitBox])
+  //if (fSetObject[kHit] || fSetObject[kHitBox])
     DrawHitPoints();
 
   if (fSetObject[kCluster] || fSetObject[kClusterBox])
@@ -1331,9 +1331,6 @@ STEveDrawTask::UpdateCvsPadPlane()
 
   fLogger -> Debug(MESSAGE_ORIGIN,"Updating pad plane.");
 
-  fCvsPadPlane -> Modified();
-  fCvsPadPlane -> Update();
-
   TPaletteAxis *paxis 
     = (TPaletteAxis *) fPadPlane -> GetListOfFunctions() -> FindObject("palette");
 
@@ -1347,10 +1344,11 @@ STEveDrawTask::UpdateCvsPadPlane()
       paxis -> SetX1NDC(0.905);
       paxis -> SetX2NDC(0.94);
     }
-
-    fCvsPadPlane -> Modified();
-    fCvsPadPlane -> Update();
   }
+
+  fCvsPadPlane -> Modified();
+  fCvsPadPlane -> Update();
+  gSystem -> ProcessEvents();
 }
 
 Color_t 
@@ -1469,6 +1467,7 @@ STEveDrawTask::UpdatePadRange()
   fHistPad -> GetXaxis() -> SetRangeUser(fWindowTbStart, fWindowTbEnd);
   fCvsPad -> Modified();
   fCvsPad -> Update();
+  gSystem -> ProcessEvents();
 }
 
 void
