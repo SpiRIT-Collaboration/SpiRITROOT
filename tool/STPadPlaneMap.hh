@@ -64,10 +64,10 @@ class STPadPlaneMap
     STPadHitContainer *fPadMap[108][112];
 
     Int_t fNextRow = 107;
-    Int_t fNextLayer = 111;
+    Int_t fNextLayer = 90;
 
     Int_t fNextFreeRow = 107;
-    Int_t fNextFreeLayer = 111;
+    Int_t fNextFreeLayer = 90;
 
   ClassDef(STPadPlaneMap, 1)
 };

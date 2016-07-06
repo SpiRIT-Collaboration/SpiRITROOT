@@ -100,9 +100,9 @@ void STPadPlaneMap::Clear()
       fPadMap[row][layer] -> Clear();
 
   fNextRow = 107;
-  fNextLayer = 111;
+  fNextLayer = 90;
   fNextFreeRow = 107;
-  fNextFreeLayer = 111;
+  fNextFreeLayer = 90;
 }
 
 void STPadPlaneMap::AddHit(STHit *hit)
