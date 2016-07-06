@@ -1,4 +1,6 @@
 #include "STRecoHeader.hh"
+#include <iostream>
+using namespace std;
 
 ClassImp(STRecoHeader)
 
@@ -16,7 +18,35 @@ STRecoHeader::STRecoHeader(const char *name, const char *title)
 
 void STRecoHeader::Print(Option_t *option) const
 {
-  fParList -> Print();
+  cout << "    [Name]                    [Value]" << endl;
+  for (auto i=0; i<fParList->GetEntries(); i++) {
+    TString className = fParList -> At(i) -> ClassName();
+
+    if (className == "TNamed") {
+      auto par = (TNamed *) fParList -> At(i);
+      auto key = par -> GetName();
+      auto value = par -> GetTitle();
+      cout << right << setw(2) << i << "  " << left << setw(25) << key << " " << value << endl;
+    }
+    else if (className == "TParameter<int>") {
+      auto par = (TParameter<int> *) fParList -> At(i);
+      auto key = par -> GetName();
+      int value = par -> GetVal();
+      cout << right << setw(2) << i << "  " << left << setw(25) << key << " " << value << endl;
+    }
+    else if (className == "TParameter<double>") {
+      auto par = (TParameter<double> *) fParList -> At(i);
+      auto key = par -> GetName();
+      double value = par -> GetVal();
+      cout << right << setw(2) << i << "  " << left << setw(25) << key << " " << value << endl;
+    }
+    else if (className == "TParameter<bool>") {
+      auto par = (TParameter<bool> *) fParList -> At(i);
+      auto key = par -> GetName();
+      TString value = par -> GetVal() == true ? "true" : "false";
+      cout << right << setw(2) << i << "  " << left << setw(25) << key << " " << value << endl;
+    }
+  }
 }
 
 void STRecoHeader::SetPar(TString name, Bool_t val)   { fParList -> Add(new TParameter<Bool_t>(name, val)); }
