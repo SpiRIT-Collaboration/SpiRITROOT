@@ -1,6 +1,7 @@
 #include "STGenfitETask.hh"
 #include "STDatabasePDG.hh"
 #include "STTrack.hh"
+#include "STVertex.hh"
 
 #include "FairRun.h"
 #include "FairRuntimeDb.h"
@@ -57,7 +58,8 @@ STGenfitETask::Init()
 
   fGenfitTest = new STGenfitTestE();
 
-  fVertexArray = new TClonesArray("genfit::GFRaveVertex");
+//  fVertexArray = new TClonesArray("genfit::GFRaveVertex");
+  fVertexArray = new TClonesArray("STVertex");
   fRootManager -> Register("STVertex", "SpiRIT", fVertexArray, fIsPersistence);
 
   fVertexFactory = new genfit::GFRaveVertexFactory(/* verbosity */ 2, /* useVacuumPropagator */ kFALSE);
@@ -139,7 +141,8 @@ void STGenfitETask::Exec(Option_t *opt)
         }
       }
     }
-    new ((*fVertexArray)[iVert]) genfit::GFRaveVertex(*vertex);
+//    new ((*fVertexArray)[iVert]) genfit::GFRaveVertex(*vertex);
+    new ((*fVertexArray)[iVert]) STVertex(*vertex);
     delete vertex;
   }
 
