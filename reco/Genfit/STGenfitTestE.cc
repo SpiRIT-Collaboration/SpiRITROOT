@@ -32,8 +32,8 @@ STGenfitTestE::STGenfitTestE()
 {
   fTPCDetID = 0;
 
-  fKalmanFitter = new genfit::DAF();
-  //fKalmanFitter = new genfit::KalmanFitterRefTrack();
+  //fKalmanFitter = new genfit::DAF();
+  fKalmanFitter = new genfit::KalmanFitterRefTrack();
   fKalmanFitter -> setMinIterations(5);
   fKalmanFitter -> setMaxIterations(20);
 
@@ -82,7 +82,7 @@ void STGenfitTestE::Init()
   fGenfitTrackArray -> Delete();
 }
 
-genfit::Track* STGenfitTestE::FitTrack(STTrack *recoTrack, TClonesArray *hitArray, STHelixTrack *helixTrack)
+genfit::Track* STGenfitTestE::FitTrack(STTrackCandidate *recoTrack, TClonesArray *hitArray, STHelixTrack *helixTrack, Int_t pdg)
 {
   fHitClusterArray -> Delete();
   genfit::TrackCand trackCand;
@@ -99,7 +99,7 @@ genfit::Track* STGenfitTestE::FitTrack(STTrack *recoTrack, TClonesArray *hitArra
     new ((*fHitClusterArray)[iHit]) STHitCluster(*hit);
     trackCand.addHit(fTPCDetID, iHit);
 
-    recoTrack -> AddHitID(id);
+    //recoTrack -> AddHitID(id);
   }
 
   // Initial parameter setting
@@ -122,12 +122,15 @@ genfit::Track* STGenfitTestE::FitTrack(STTrack *recoTrack, TClonesArray *hitArra
     momSeed.SetTheta(TMath::Pi()/2. - dip);
 
     trackCand.setCovSeed(covSeed);
-    trackCand.setPosMomSeed(posSeed, momSeed, -1);
+    if (pdg == 11 || pdg == -211)
+      trackCand.setPosMomSeed(posSeed, momSeed, -1);
+    else
+      trackCand.setPosMomSeed(posSeed, momSeed, 1);
   }
 
   genfit::Track *gfTrack = new ((*fGenfitTrackArray)[fGenfitTrackArray -> GetEntriesFast()]) genfit::Track(trackCand, *fMeasurementFactory);
 
-  gfTrack -> addTrackRep(new genfit::RKTrackRep(2212));
+  gfTrack -> addTrackRep(new genfit::RKTrackRep(pdg));
 
   Bool_t isFitted = ProcessTrack(gfTrack);
 
@@ -154,7 +157,7 @@ STGenfitTestE::ProcessTrack(genfit::Track *gfTrack)
 }
 
 void 
-STGenfitTestE::SetTrack(STTrack *recoTrack, genfit::Track *gfTrack)
+STGenfitTestE::SetTrack(STTrackCandidate *recoTrack, genfit::Track *gfTrack)
 {
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
@@ -177,9 +180,11 @@ STGenfitTestE::SetTrack(STTrack *recoTrack, genfit::Track *gfTrack)
   TMatrixDSym covMat(6,6);
   Double_t bChi2 = 0, fChi2 = 0, bNdf = 0, fNdf = 0;
 
+  Double_t pVal = 0;
 
   try {
     fitState.getPosMomCov(posReco, momReco, covMat);
+    pVal = fitStatus -> getPVal();
     fKalmanFitter -> getChiSquNdf(gfTrack, trackRep, bChi2, fChi2, bNdf, fNdf);
   } catch (genfit::Exception &e) {
     return;
@@ -195,16 +200,17 @@ STGenfitTestE::SetTrack(STTrack *recoTrack, genfit::Track *gfTrack)
   recoTrack -> SetCharge(fitState.getCharge());
   recoTrack -> SetChi2(fChi2);
   recoTrack -> SetNDF(fNdf);
+  recoTrack -> SetPVal(pVal);
 
   ProcessExtrapolation(recoTrack, gfTrack);
-  if (CalculatedEdx(recoTrack, gfTrack) == kFALSE)
-    return;
+  //if (CalculatedEdx(recoTrack, gfTrack) == kFALSE)
+    //return;
 
-  recoTrack -> SetIsFitted();
+  //recoTrack -> SetIsFitted();
 }
 
 void 
-STGenfitTestE::ProcessExtrapolation(STTrack *recoTrack, genfit::Track *gfTrack)
+STGenfitTestE::ProcessExtrapolation(STTrackCandidate *recoTrack, genfit::Track *gfTrack)
 {
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
@@ -253,7 +259,7 @@ STGenfitTestE::ProcessExtrapolation(STTrack *recoTrack, genfit::Track *gfTrack)
 }
 
 Bool_t 
-STGenfitTestE::CalculatedEdx(STTrack *recoTrack, genfit::Track *gfTrack)
+STGenfitTestE::CalculatedEdx(STTrackCandidate *recoTrack, genfit::Track *gfTrack)
 {
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;

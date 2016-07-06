@@ -34,13 +34,13 @@ class STGenfitTestE
     void SetMaxIterations(Int_t value);
 
     void Init();
-    genfit::Track* FitTrack(STTrack *recoTrack, TClonesArray *hitArray, STHelixTrack *helixTrack);
-    void SetTrack(STTrack *recotrack, genfit::Track *gfTrack);
+    genfit::Track* FitTrack(STTrackCandidate *recoTrack, TClonesArray *hitArray, STHelixTrack *helixTrack, Int_t pdg = 2212);
+    void SetTrack(STTrackCandidate *recotrack, genfit::Track *gfTrack);
 
   private:
     Bool_t ProcessTrack(genfit::Track *gfTrack);
-    void ProcessExtrapolation(STTrack *recoTrack, genfit::Track *gfTrack);
-    Bool_t CalculatedEdx(STTrack *recoTrack, genfit::Track *gfTrack);
+    void ProcessExtrapolation(STTrackCandidate *recoTrack, genfit::Track *gfTrack);
+    Bool_t CalculatedEdx(STTrackCandidate *recoTrack, genfit::Track *gfTrack);
 
   private:
     Int_t fTPCDetID;
