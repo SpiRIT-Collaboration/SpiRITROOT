@@ -1,9 +1,9 @@
 void run_reco_experiment
 (
-  Int_t fRunNo = 2621,
-  Int_t fNumEventsInRun = 5000,
+  Int_t fRunNo = 3000,
+  Int_t fNumEventsInRun = 2,
   Int_t fSplitNo = 0,
-  Int_t fNumEventsInSplit = 1000,
+  Int_t fNumEventsInSplit = 100,
   Bool_t fUseMeta = kFALSE,
   TString fSupplePath = "/data/Q16264/rawdataSupplement",
   TString fParameterFile = "ST.parameters.Commissioning_201604.par"
@@ -14,8 +14,8 @@ void run_reco_experiment
   if (start + fNumEventsInSplit > fNumEventsInRun)
     fNumEventsInSplit = fNumEventsInRun - start;
 
-  TString sRunNo     = TString::Itoa(fRunNo, 10);
-  TString sSplitNo   = TString::Itoa(fSplitNo, 10);
+  TString sRunNo   = TString::Itoa(fRunNo, 10);
+  TString sSplitNo = TString::Itoa(fSplitNo, 10);
 
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
   TString pathToData = spiritroot+"macros/data/";
@@ -63,39 +63,34 @@ void run_reco_experiment
     }
   }
 
-  STEventPreviewTask *preview = new STEventPreviewTask();
-  preview -> SetPersistence(false);
+  auto preview = new STEventPreviewTask();
+  preview -> SetPersistence(true);
 
-  STPSAETask *psa = new STPSAETask();
-  psa -> SetPersistence(false);
+  auto psa = new STPSAETask();
+  psa -> SetPersistence(true);
   psa -> SetThreshold(30);
-  psa -> SetLayerCut(-1, 90);
+  psa -> SetLayerCut(-1, 112);
   psa -> SetPulserData("pulser_117ns.dat");
 
-  STCurveTrackingETask *curve = new STCurveTrackingETask();
-  curve -> SetPersistence(false);
+  auto helix = new STHelixTrackingTask();
+  helix -> SetPersistence(true);
+  helix -> SetClusterPersistence(true);
 
-  STHitClusteringCTTask *clustering = new STHitClusteringCTTask();
-  clustering -> SetPersistence(false);
-
-  STSMETask *sm = new STSMETask();
-  sm -> SetPersistence(false);
-
-  STRiemannTrackingETask *riemann = new STRiemannTrackingETask();
-  riemann -> SetPersistence(false);
-
-  STGenfitETask *genfit = new STGenfitETask();
-  genfit -> SetPersistence(true);
-  genfit -> SetRemoveNoVertexEvent(false);
+  auto st_genfit = new STGenfitETask();
+  st_genfit -> SetPersistence(true);
 
   run -> AddTask(decoder);
   run -> AddTask(preview);
   run -> AddTask(psa);
-  run -> AddTask(curve);
-  run -> AddTask(clustering);
-  run -> AddTask(sm);
-  run -> AddTask(riemann);
-  run -> AddTask(genfit);
+  run -> AddTask(helix);
+  run -> AddTask(st_genfit);
+
+  auto outFile = FairRootManager::Instance() -> GetOutFile();
+  auto recoHeader = new STRecoHeader("RecoHeader","");
+  recoHeader -> SetPar("eventStart", start);
+  recoHeader -> SetPar("numEvents", fNumEventsInSplit);
+  recoHeader -> SetPar("parameter", fParameterFile);
+  recoHeader -> Write("RecoHeader");
 
   run -> Init();
   run -> Run(0, fNumEventsInSplit);

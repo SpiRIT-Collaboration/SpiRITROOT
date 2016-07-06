@@ -22,7 +22,7 @@ void run_digi(TString name = "urqmd_short")
   // -----------------------------------------------------------------
   // Set digitization tasks
   STDriftTask* fDriftTask = new STDriftTask(); 
-  fDriftTask -> SetPersistence(kFALSE);
+  fDriftTask -> SetPersistence(true);
   fRun -> AddTask(fDriftTask);
 
   STPadResponseTask* fPadResponseTask = new STPadResponseTask(); 
@@ -32,6 +32,7 @@ void run_digi(TString name = "urqmd_short")
 
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
   fElectronicsTask -> SetPersistence(kTRUE);
+  fElectronicsTask -> SetADCConstant(1);
   fRun -> AddTask(fElectronicsTask);
 
 
