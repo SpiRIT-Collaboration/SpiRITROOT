@@ -15,8 +15,8 @@ STEveTask::GetEveObject(TString name)
   else if (name == "clusterbox")   return kClusterBox;
   else if (name == "riemanntrack") return kRiemannTrack;
   else if (name == "riemannhit")   return kRiemannHit;
-  else if (name == "linear")       return kLinear;
-  else if (name == "linearhit")    return kLinearHit;
+  else if (name == "helix")        return kHelix;
+  else if (name == "helixhit")     return kHelixHit;
   else if (name == "curve")        return kCurve;
   else if (name == "curvehit")     return kCurveHit;
   else if (name == "recotrack")    return kRecoTrack;

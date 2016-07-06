@@ -102,7 +102,7 @@ void STEveManager::SetViewerPoint(Double_t hRotate, Double_t vRotate)
   fVRotate = vRotate;
 }
 void STEveManager::SetNumRiemannSet(Int_t num)   { fNumRiemannSet = num; }
-void STEveManager::SetNumLinearSet(Int_t num)    { fNumLinearSet  = num; }
+void STEveManager::SetNumHelixSet(Int_t num)     { fNumHelixSet  = num; }
 void STEveManager::SetNumCurveSet(Int_t num)     { fNumCurveSet   = num; }
 void STEveManager::SetRowLayer(Int_t row, Int_t layer)
 {
@@ -427,25 +427,25 @@ STEveManager::BuildMenu()
   }
   frameEventControl -> AddFrame(frameRiemannButtons, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY | kLHintsExpandX, 1,1,1,1));
 
-  TGHorizontalFrame* frameLinearButtons = new TGHorizontalFrame(frameEventControl);
+  TGHorizontalFrame* frameHelixButtons = new TGHorizontalFrame(frameEventControl);
   {
-    fButtonOnOffLinear = new TGCheckButton(frameLinearButtons, "Linear-Track");
-    fButtonOnOffLinear -> Connect("Clicked()", "STEveManager", this, "ClickOnOffLinear()");
-    frameLinearButtons -> AddFrame(fButtonOnOffLinear, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 3,3,2,2));
-    if (fEveTask -> IsSetTask("linear") != 1)     
-      fButtonOnOffLinear -> SetState(kButtonDisabled);
-    else if (fEveTask -> RnrEveObjectTask("Linear", 0) == 1)
-      fButtonOnOffLinear -> SetState(kButtonDown);
+    fButtonOnOffHelix = new TGCheckButton(frameHelixButtons, "Helix-Track");
+    fButtonOnOffHelix -> Connect("Clicked()", "STEveManager", this, "ClickOnOffHelix()");
+    frameHelixButtons -> AddFrame(fButtonOnOffHelix, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 3,3,2,2));
+    if (fEveTask -> IsSetTask("helix") != 1)
+      fButtonOnOffHelix -> SetState(kButtonDisabled);
+    else if (fEveTask -> RnrEveObjectTask("Helix", 0) == 1)
+      fButtonOnOffHelix -> SetState(kButtonDown);
 
-    fButtonOnOffLinearHit = new TGCheckButton(frameLinearButtons, "Linear-Hit");
-    fButtonOnOffLinearHit -> Connect("Clicked()", "STEveManager", this, "ClickOnOffLinearHit()");
-    frameLinearButtons -> AddFrame(fButtonOnOffLinearHit, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 3,3,2,2));
-    if (fEveTask -> IsSetTask("linearhit") != 1)  
-      fButtonOnOffLinearHit  -> SetState(kButtonDisabled);
-    else if (fEveTask -> RnrEveObjectTask("LinearHit", 0) == 1)
-      fButtonOnOffLinearHit -> SetState(kButtonDown);
+    fButtonOnOffHelixHit = new TGCheckButton(frameHelixButtons, "Helix-Hit");
+    fButtonOnOffHelixHit -> Connect("Clicked()", "STEveManager", this, "ClickOnOffHelixHit()");
+    frameHelixButtons -> AddFrame(fButtonOnOffHelixHit, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 3,3,2,2));
+    if (fEveTask -> IsSetTask("helixhit") != 1)
+      fButtonOnOffHelixHit  -> SetState(kButtonDisabled);
+    else if (fEveTask -> RnrEveObjectTask("HelixHit", 0) == 1)
+      fButtonOnOffHelixHit -> SetState(kButtonDown);
   }
-  frameEventControl -> AddFrame(frameLinearButtons, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY | kLHintsExpandX, 1,1,1,1));
+  frameEventControl -> AddFrame(frameHelixButtons, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY | kLHintsExpandX, 1,1,1,1));
 
   TGHorizontalFrame* frameCurveButtons = new TGHorizontalFrame(frameEventControl);
   {
@@ -659,11 +659,11 @@ void STEveManager::SelectEventButton()
   fEveTask -> PushParametersTask();
 
   if (fNumRiemannSet <= 0) fNumRiemannSet = 1;
-  if (fNumLinearSet <= 0)  fNumLinearSet = 1;
+  if (fNumHelixSet <= 0)   fNumHelixSet = 1;
   if (fNumCurveSet <= 0)   fNumCurveSet = 1;
 
   if (fCurrentRiemannSet) fCurrentRiemannSet -> SetLimitValues(0, fNumRiemannSet);
-  if (fCurrentLinearSet)  fCurrentLinearSet  -> SetLimitValues(0, fNumLinearSet);
+  if (fCurrentHelixSet)   fCurrentHelixSet  -> SetLimitValues(0, fNumHelixSet);
   if (fCurrentCurveSet)   fCurrentCurveSet   -> SetLimitValues(0, fNumCurveSet);
 }
 
@@ -674,11 +674,11 @@ void STEveManager::RunEveSubTask()
   fEveTask -> PushParametersTask();
 
   if (fNumRiemannSet <= 0) fNumRiemannSet = 1;
-  if (fNumLinearSet <= 0)  fNumLinearSet = 1;
-  if (fNumCurveSet <= 0)  fNumCurveSet = 1;
+  if (fNumHelixSet <= 0)   fNumHelixSet = 1;
+  if (fNumCurveSet <= 0)   fNumCurveSet = 1;
 
   if (fCurrentRiemannSet) fCurrentRiemannSet -> SetLimitValues(0, fNumRiemannSet);
-  if (fCurrentLinearSet)  fCurrentLinearSet  -> SetLimitValues(0, fNumLinearSet);
+  if (fCurrentHelixSet)   fCurrentHelixSet   -> SetLimitValues(0, fNumHelixSet);
   if (fCurrentCurveSet)   fCurrentCurveSet   -> SetLimitValues(0, fNumCurveSet);
 }
 
@@ -730,8 +730,8 @@ void STEveManager::ClickOnOffCluster()      { fEveTask -> RnrEveObjectTask("clus
 void STEveManager::ClickOnOffClusterBox()   { fEveTask -> RnrEveObjectTask("clusterbox");   gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffRiemannTrack() { fEveTask -> RnrEveObjectTask("riemanntrack"); gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffRiemannHit()   { fEveTask -> RnrEveObjectTask("riemannhit");   gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffLinear()       { fEveTask -> RnrEveObjectTask("linear");       gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffLinearHit()    { fEveTask -> RnrEveObjectTask("linearhit");    gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffHelix()        { fEveTask -> RnrEveObjectTask("helix");       gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffHelixHit()     { fEveTask -> RnrEveObjectTask("helixhit");    gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffCurve()        { fEveTask -> RnrEveObjectTask("curve");        gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffCurveHit()     { fEveTask -> RnrEveObjectTask("curvehit");     gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffRecoTrack()    { fEveTask -> RnrEveObjectTask("recoTrack");    gEve -> Redraw3D(); }

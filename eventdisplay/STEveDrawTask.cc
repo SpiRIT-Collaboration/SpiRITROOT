@@ -65,15 +65,15 @@ STEveDrawTask::STEveDrawTask()
   fEveColor[kRiemannHit] = -1;
   fRnrSelf [kRiemannHit] = kFALSE;
 
-  fEveStyle[kLinear] = 1;
-  fEveSize [kLinear] = 5;
-  fEveColor[kLinear] = -1;
-  fRnrSelf [kLinear] = kFALSE;
+  fEveStyle[kHelix] = 1;
+  fEveSize [kHelix] = 5;
+  fEveColor[kHelix] = -1;
+  fRnrSelf [kHelix] = kFALSE;
 
-  fEveStyle[kLinearHit] = kFullCircle;
-  fEveSize [kLinearHit] = 0.5;
-  fEveColor[kLinearHit] = -1;
-  fRnrSelf [kLinearHit] = kFALSE;
+  fEveStyle[kHelixHit] = kFullCircle;
+  fEveSize [kHelixHit] = 0.5;
+  fEveColor[kHelixHit] = -1;
+  fRnrSelf [kHelixHit] = kFALSE;
 
   fEveStyle[kCurve] = 1;
   fEveSize [kCurve] = 5;
@@ -90,7 +90,6 @@ STEveDrawTask::STEveDrawTask()
   fEveColor[kRecoTrack] = kRed;
   fRnrSelf [kRecoTrack] = kFALSE;
 
-  fLTFitter = new STLinearTrackFitter();
   fCTFitter = new STCurveTrackFitter();
   fGenfitTest = new STGenfitTest();
 
@@ -109,7 +108,7 @@ void STEveDrawTask::DrawADC(Int_t row, Int_t layer)
 void STEveDrawTask::PushParameters()
 {
   fEveManager -> SetNumRiemannSet(fRiemannSetArray.size());
-  fEveManager -> SetNumLinearSet(fLinearTrackSetArray.size());
+  fEveManager -> SetNumHelixSet(fHelixTrackSetArray.size());
   fEveManager -> SetNumCurveSet(fCurveTrackSetArray.size());
 }
 
@@ -135,13 +134,15 @@ STEveDrawTask::Init()
   fDriftedElectronArray = (TClonesArray*) ioMan -> GetObject("STDriftedElectron");
   fEventArray           = (TClonesArray*) ioMan -> GetObject("STEvent");
   fRiemannTrackArray    = (TClonesArray*) ioMan -> GetObject("STRiemannTrack");
-  fLinearTrackArray     = (TClonesArray*) ioMan -> GetObject("STLinearTrack");
+  fHelixTrackArray      = (TClonesArray*) ioMan -> GetObject("STHelixTrack");
   fCurveTrackArray      = (TClonesArray*) ioMan -> GetObject("STCurveTrack");
   fRawEventArray        = (TClonesArray*) ioMan -> GetObject("STRawEvent");
   fRecoTrackArray       = (TClonesArray*) ioMan -> GetObject("STTrack");
 
   fHitArray             = (TClonesArray*) ioMan -> GetObject("STHit");
   fHitClusterArray      = (TClonesArray*) ioMan -> GetObject("STHitCluster");
+
+  fHelixTrackArray      = (TClonesArray*) ioMan -> GetObject("STHelixTrack");
 
   //gStyle -> SetPalette(0);
   //gStyle -> SetPalette(kInvertedDarkBodyRadiator);
@@ -200,8 +201,8 @@ STEveDrawTask::Exec(Option_t* option)
   if (fRiemannTrackArray != NULL && (fSetObject[kRiemannHit] || fSetObject[kRiemannTrack]))
     DrawRiemannHits();
 
-  if (fLinearTrackArray != NULL && (fSetObject[kLinear] || fSetObject[kLinearHit]))
-    DrawLinearTracks();
+  if (fHelixTrackArray != NULL && (fSetObject[kHelix] || fSetObject[kHelixHit]))
+    DrawHelixTracks();
 
   if (fCurveTrackArray != NULL && (fSetObject[kCurve] || fSetObject[kCurveHit]))
     DrawCurveTracks();
@@ -271,7 +272,7 @@ STEveDrawTask::DrawDriftedElectrons()
     STDriftedElectron *electron = (STDriftedElectron*) fDriftedElectronArray -> At(iPoint);
 
     Double_t x = electron -> GetX() + electron -> GetDiffusedX();
-    Double_t y = electron -> GetHitY() + fDriftVelocity*(electron -> GetDiffusedTime() + electron -> GetDriftTime());
+    Double_t y = electron -> GetHitY();// + fDriftVelocity*(electron -> GetDiffusedTime() + electron -> GetDriftTime());
     Double_t z = electron -> GetZ() + electron -> GetDiffusedZ();
 
     fPointSet[kDigi] -> SetNextPoint(x/10., y/10., z/10.);
@@ -616,110 +617,73 @@ STEveDrawTask::DrawRiemannHits()
 }
 
 void
-STEveDrawTask::DrawLinearTracks()
+STEveDrawTask::DrawHelixTracks()
 {
-  fLogger -> Debug(MESSAGE_ORIGIN,"Draw Linear Tracks");
+  fLogger -> Debug(MESSAGE_ORIGIN,"Draw Helix Tracks");
 
-  Int_t nTracks = fLinearTrackArray -> GetEntries();
-  if (nTracks == 0)
+  Int_t numTracks = fHelixTrackArray -> GetEntries();
+  if (numTracks == 0)
     return;
 
-  STLinearTrack *track = (STLinearTrack*) fLinearTrackArray -> At(0);
-  std::vector<STHit*> *hitPointerArray = track -> GetHitPointerArray();
+  TEveLine* helixTrackLine = NULL;
+  TEvePointSet* helixPointSet = NULL;
 
-  if ((fEvent == NULL) && (hitPointerArray -> size() == 0))
-    return;
+  Int_t numTracksInBuffer = fHelixTrackSetArray.size();
 
-  STHit* hit = NULL;
-
-  TEveLine* linearTrackLine = NULL;
-  TEvePointSet* linearPointSet = NULL;
-
-  Int_t nTracksInBuffer = fLinearTrackSetArray.size();
-
-  if (nTracksInBuffer < nTracks)
+  if (numTracksInBuffer < numTracks)
   {
-    Int_t diffNumTracks = nTracks - nTracksInBuffer;
+    Int_t diffNumTracks = numTracks - numTracksInBuffer;
     for (Int_t iTrack = 0; iTrack < diffNumTracks; iTrack++)
     {
-      Int_t idxTrack = iTrack + nTracksInBuffer;
-      linearTrackLine = new TEveLine(Form("LinearLine_%d", idxTrack), 2, TEvePointSelectorConsumer::kTVT_XYZ);
-      if (fEveColor[kLinear] == -1) linearTrackLine -> SetLineColor(GetColor(idxTrack));
-      else linearTrackLine -> SetLineColor(fEveColor[kLinear]);
-      linearTrackLine -> SetLineStyle(fEveStyle[kLinear]);
-      linearTrackLine -> SetLineWidth(fEveSize[kLinear]);
-      fLinearTrackSetArray.push_back(linearTrackLine);
-      gEve -> AddElement(linearTrackLine);
+      Int_t idxTrack = iTrack + numTracksInBuffer;
+      helixTrackLine = new TEveLine(Form("HelixLine_%d", idxTrack), 2, TEvePointSelectorConsumer::kTVT_XYZ);
+      if (fEveColor[kHelix] == -1) helixTrackLine -> SetLineColor(GetColor(idxTrack));
+      else helixTrackLine -> SetLineColor(fEveColor[kHelix]);
+      helixTrackLine -> SetLineStyle(fEveStyle[kHelix]);
+      helixTrackLine -> SetLineWidth(fEveSize[kHelix]);
+      fHelixTrackSetArray.push_back(helixTrackLine);
+      gEve -> AddElement(helixTrackLine);
 
-      if (fSetObject[kLinearHit] == kTRUE)
+      if (fSetObject[kHelixHit] == true)
       {
-        linearPointSet = new TEvePointSet(Form("LinearHit_%d", idxTrack), 1, TEvePointSelectorConsumer::kTVT_XYZ);
-        if (fEveColor[kLinearHit] == -1) linearPointSet -> SetMarkerColor(GetColor(idxTrack));
-        else linearPointSet -> SetMarkerColor(fEveColor[kLinearHit]);
-        linearPointSet -> SetMarkerSize(fEveSize[kLinearHit]);
-        linearPointSet -> SetMarkerStyle(fEveStyle[kLinearHit]);
-        fLinearHitSetArray.push_back(linearPointSet);
-        gEve -> AddElement(linearPointSet);
+        helixPointSet = new TEvePointSet(Form("HelixHit_%d", idxTrack), 1, TEvePointSelectorConsumer::kTVT_XYZ);
+        if (fEveColor[kHelixHit] == -1) helixPointSet -> SetMarkerColor(GetColor(idxTrack));
+        else helixPointSet -> SetMarkerColor(fEveColor[kHelixHit]);
+        helixPointSet -> SetMarkerSize(fEveSize[kHelixHit]);
+        helixPointSet -> SetMarkerStyle(fEveStyle[kHelixHit]);
+        fHelixHitSetArray.push_back(helixPointSet);
+        gEve -> AddElement(helixPointSet);
       }
     }
   }
 
-  for (Int_t iTrack = 0; iTrack < nTracks; iTrack++)
+  for (Int_t iTrack = 0; iTrack < numTracks; iTrack++)
   {
-    track = (STLinearTrack*) fLinearTrackArray -> At(iTrack);
-    Int_t nHits = track -> GetNumHits();
+    auto track = (STHelixTrack*) fHelixTrackArray -> At(iTrack);
+    if (track -> IsHelix() == false && track -> IsGenfitTrack() == false)
+      continue;
 
-    Int_t hitIDFirst = track -> GetHitID(0);
-    Int_t hitIDLast  = track -> GetHitID(track -> GetNumHits()-1);
+    helixTrackLine = fHelixTrackSetArray.at(iTrack);
 
-    STHit *hitFirst;
-    STHit *hitLast;
-
-    if (fEvent != NULL)
-    {
-      hitFirst = fEvent -> GetHit(hitIDFirst);
-      hitLast  = fEvent -> GetHit(hitIDLast);
-    }
-    else
-    {
-      hitFirst = track -> GetHit(hitIDFirst);
-      hitLast  = track -> GetHit(hitIDLast);
+    for (auto i = -0.1; i <= 1.1; i+= 0.01) {
+      auto q = track -> InterpolateByRatio(i);
+      helixTrackLine -> SetNextPoint(.1*q.X(), .1*q.Y() + fWindowYStart, .1*q.Z());
     }
 
-    TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
-    TVector3 posLast  = fLTFitter -> GetClosestPointOnTrack(track, hitLast);
+    helixTrackLine -> SetRnrSelf(fRnrSelf[kHelix]);
 
-    Double_t yFirst = posFirst.Y()/10.;
-    yFirst += fWindowYStart;
-    Double_t yLast = posLast.Y()/10.;
-    yLast += fWindowYStart;
-
-    linearTrackLine = fLinearTrackSetArray.at(iTrack);
-
-    linearTrackLine -> SetNextPoint(posFirst.X()/10., yFirst, posFirst.Z()/10.);
-    linearTrackLine -> SetNextPoint(posLast.X()/10., yLast, posLast.Z()/10.);
-
-    linearTrackLine -> SetRnrSelf(fRnrSelf[kLinear]);
-
-    if (fSetObject[kLinearHit] == kTRUE)
+    if (fSetObject[kHelixHit] == true && fHitArray != nullptr)
     {
-      linearPointSet = fLinearHitSetArray.at(iTrack);
+      auto trackHitIDs = track -> GetHitIDArray();
+      Int_t numHits = trackHitIDs -> size();
 
-      for (Int_t iHit = 0; iHit < nHits; iHit++)
-      {
-        if (fEvent != NULL)
-          hit = fEvent -> GetHit(track -> GetHitID(iHit));
-        else
-          hit = track -> GetHit(iHit);
+      helixPointSet = fHelixHitSetArray.at(iTrack);
 
-        TVector3 position = hit -> GetPosition();
-
-        linearPointSet -> SetNextPoint(position.X()/10.,
-                                       position.Y()/10. + fWindowYStart,
-                                       position.Z()/10.);
+      for (auto hitID : *trackHitIDs) {
+        auto p = ((STHit *) fHitArray -> At(hitID)) -> GetPosition();
+        helixPointSet -> SetNextPoint(.1*p.X(), .1*p.Y() + fWindowYStart, .1*p.Z());
       }
-
-      linearPointSet -> SetRnrSelf(fRnrSelf[kLinearHit]);
+      helixPointSet -> SetRnrSelf(fRnrSelf[kHelixHit]);
     }
   }
 }
@@ -817,8 +781,8 @@ STEveDrawTask::DrawCurveTracks()
         hitLast  = (STHit *) fHitArray -> At(hitIDLast);
       }
 
-      TVector3 posFirst = fLTFitter -> GetClosestPointOnTrack(track, hitFirst);
-      TVector3 posLast  = fLTFitter -> GetClosestPointOnTrack(track, hitLast);
+      TVector3 posFirst = fCTFitter -> GetClosestPointOnTrack(track, hitFirst);
+      TVector3 posLast  = fCTFitter -> GetClosestPointOnTrack(track, hitLast);
 
       Double_t yFirst = posFirst.Y()/10.;
       yFirst += fWindowYStart;
@@ -985,61 +949,61 @@ STEveDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
 }
 
 void 
-STEveDrawTask::SetSelfLinearSet(Int_t iLinearSet, Bool_t offElse)
+STEveDrawTask::SetSelfHelixSet(Int_t iHelixSet, Bool_t offElse)
 {
-  Int_t nLinearTrackSets = fLinearTrackSetArray.size();
-  Int_t nLinearHitSets = fLinearHitSetArray.size();
+  Int_t nHelixTrackSets = fHelixTrackSetArray.size();
+  Int_t nHelixHitSets = fHelixHitSetArray.size();
 
-  if (iLinearSet == -1) 
+  if (iHelixSet == -1) 
   {
     if (!offElse)
     {
-      for (Int_t i=0; i<nLinearHitSets; i++)
+      for (Int_t i=0; i<nHelixHitSets; i++)
       {
-        TEvePointSet* pointSet = fLinearHitSetArray.at(i);
-        pointSet -> SetRnrSelf(fRnrSelf[kLinearHit]);
+        TEvePointSet* pointSet = fHelixHitSetArray.at(i);
+        pointSet -> SetRnrSelf(fRnrSelf[kHelixHit]);
       }
-      for (Int_t i=0; i<nLinearTrackSets; i++)
+      for (Int_t i=0; i<nHelixTrackSets; i++)
       {
-        TEveLine* linearTrackLine = fLinearTrackSetArray.at(i);
-        linearTrackLine -> SetRnrSelf(kTRUE);
+        TEveLine* helixTrackLine = fHelixTrackSetArray.at(i);
+        helixTrackLine -> SetRnrSelf(kTRUE);
       }
     }
     else
     {
-      for (Int_t i=0; i<nLinearHitSets; i++)
+      for (Int_t i=0; i<nHelixHitSets; i++)
       {
-        TEvePointSet* pointSet = fLinearHitSetArray.at(i);
+        TEvePointSet* pointSet = fHelixHitSetArray.at(i);
         pointSet -> SetRnrSelf(kFALSE);
       }
-      for (Int_t i=0; i<nLinearTrackSets; i++)
+      for (Int_t i=0; i<nHelixTrackSets; i++)
       {
-        TEveLine* linearTrackLine = fLinearTrackSetArray.at(i);
-        linearTrackLine -> SetRnrSelf(kFALSE);
+        TEveLine* helixTrackLine = fHelixTrackSetArray.at(i);
+        helixTrackLine -> SetRnrSelf(kFALSE);
       }
     }
   }
 
   else 
   {
-    for (Int_t i=0; i<nLinearHitSets; i++)
+    for (Int_t i=0; i<nHelixHitSets; i++)
     {
-      TEvePointSet* pointSet = fLinearHitSetArray.at(i);
+      TEvePointSet* pointSet = fHelixHitSetArray.at(i);
 
-      if (i==iLinearSet) 
-        pointSet -> SetRnrSelf(fRnrSelf[kLinearHit]);
+      if (i==iHelixSet) 
+        pointSet -> SetRnrSelf(fRnrSelf[kHelixHit]);
       else if (offElse) 
         pointSet -> SetRnrSelf(kFALSE);
     }
 
-    for (Int_t i=0; i<nLinearTrackSets; i++)
+    for (Int_t i=0; i<nHelixTrackSets; i++)
     {
-      TEveLine* linearTrackLine = fLinearTrackSetArray.at(i);
+      TEveLine* helixTrackLine = fHelixTrackSetArray.at(i);
 
-      if (i==iLinearSet) 
-        linearTrackLine -> SetRnrSelf(kTRUE);
+      if (i==iHelixSet) 
+        helixTrackLine -> SetRnrSelf(kTRUE);
       else if (offElse) 
-        linearTrackLine -> SetRnrSelf(kFALSE);
+        helixTrackLine -> SetRnrSelf(kFALSE);
     }
   }
 }
@@ -1224,22 +1188,22 @@ STEveDrawTask::Reset()
     riemannTrackLine -> Reset();
   }
 
-  fLogger -> Debug(MESSAGE_ORIGIN,"Reset linear line set");
+  fLogger -> Debug(MESSAGE_ORIGIN,"Reset helix line set");
 
-  Int_t nLinearTracks = fLinearTrackSetArray.size();
-  for (Int_t i=0; i<nLinearTracks; i++) 
+  Int_t nHelixTracks = fHelixTrackSetArray.size();
+  for (Int_t i=0; i<nHelixTracks; i++) 
   {
-    TEveLine* linearTrackLine = fLinearTrackSetArray.at(i);
-    linearTrackLine -> SetRnrSelf(kFALSE);
-    linearTrackLine -> Reset();
+    TEveLine* helixTrackLine = fHelixTrackSetArray.at(i);
+    helixTrackLine -> SetRnrSelf(kFALSE);
+    helixTrackLine -> Reset();
   }
 
-  fLogger -> Debug(MESSAGE_ORIGIN,"Reset linear point set");
+  fLogger -> Debug(MESSAGE_ORIGIN,"Reset helix point set");
 
-  Int_t nLinearPoints = fLinearHitSetArray.size();
-  for (Int_t i=0; i<nLinearPoints; i++) 
+  Int_t nHelixPoints = fHelixHitSetArray.size();
+  for (Int_t i=0; i<nHelixPoints; i++) 
   {
-    TEvePointSet* pointSet = fLinearHitSetArray.at(i);
+    TEvePointSet* pointSet = fHelixHitSetArray.at(i);
     pointSet -> SetRnrSelf(kFALSE);
     pointSet -> Reset();
   }
@@ -1392,23 +1356,8 @@ STEveDrawTask::UpdateCvsPadPlane()
 Color_t 
 STEveDrawTask::GetColor(Int_t index)
 {
-  Color_t color;
-
   Color_t colors[] = {kOrange, kTeal, kViolet, kSpring, kPink, kAzure};
-
-  Int_t remainder = index%6;
-  color = colors[remainder];
-
-  Int_t quotient  = index/6;
-  Int_t offColor  = (quotient%20);
-
-  if (offColor%2 == 0)
-    offColor = offColor/2 + 1;
-  else 
-    offColor = -(offColor+1)/2;
-
-  color += offColor;
-
+  Color_t color = colors[index%6] + ((index/6)%20);
   return color;
 }
 
@@ -1585,8 +1534,8 @@ STEveDrawTask::RnrEveObject(TString name, Int_t option)
   else if (name == "clusterbox")   return RenderClusterBox(option);
   else if (name == "riemanntrack") return RenderRiemannTrack(option);
   else if (name == "riemannhit")   return RenderRiemannHit(option);
-  else if (name == "linear")       return RenderLinear(option);
-  else if (name == "linearhit")    return RenderLinearHit(option);
+  else if (name == "helix")        return RenderHelix(option);
+  else if (name == "helixhit")     return RenderHelixHit(option);
   else if (name == "curve")        return RenderCurve(option);
   else if (name == "curvehit")     return RenderCurveHit(option);
   else if (name == "recotrack")    return RenderRecoTrack(option);
@@ -1607,8 +1556,8 @@ STEveDrawTask::IsSet(TString name, Int_t option)
   else if (name == "clusterbox")   return BoolToInt(fSetObject[kClusterBox]);
   else if (name == "riemanntrack") return BoolToInt(fSetObject[kRiemannTrack]);
   else if (name == "riemannhit")   return BoolToInt(fSetObject[kRiemannHit]);
-  else if (name == "linear")       return BoolToInt(fSetObject[kLinear]);
-  else if (name == "linearhit")    return BoolToInt(fSetObject[kLinearHit]);
+  else if (name == "helix")        return BoolToInt(fSetObject[kHelix]);
+  else if (name == "helixhit")     return BoolToInt(fSetObject[kHelixHit]);
   else if (name == "curve")        return BoolToInt(fSetObject[kCurve]);
   else if (name == "curvehit")     return BoolToInt(fSetObject[kCurveHit]);
   else if (name == "recotrack")    return BoolToInt(fSetObject[kRecoTrack]);
@@ -1753,49 +1702,49 @@ STEveDrawTask::RenderRiemannHit(Int_t option)
 }
 
 Int_t 
-STEveDrawTask::RenderLinear(Int_t option)
+STEveDrawTask::RenderHelix(Int_t option)
 {
   if (option == 0)
-    return BoolToInt(fRnrSelf[kLinear]);
+    return BoolToInt(fRnrSelf[kHelix]);
 
-  Int_t nLinearTrackSets = fLinearTrackSetArray.size();
-  if (nLinearTrackSets == 0)
+  Int_t nHelixTrackSets = fHelixTrackSetArray.size();
+  if (nHelixTrackSets == 0)
     return -1;
 
-  fRnrSelf[kLinear] = !fRnrSelf[kLinear];
-  for (Int_t i=0; i<nLinearTrackSets; i++)
+  fRnrSelf[kHelix] = !fRnrSelf[kHelix];
+  for (Int_t i=0; i<nHelixTrackSets; i++)
   {
-    TEveLine* linearTrackLine = fLinearTrackSetArray.at(i);
-    if (linearTrackLine -> Size() == 0)
-      linearTrackLine -> SetRnrSelf(kFALSE);
+    TEveLine* helixTrackLine = fHelixTrackSetArray.at(i);
+    if (helixTrackLine -> Size() == 0)
+      helixTrackLine -> SetRnrSelf(kFALSE);
     else
-      linearTrackLine -> SetRnrSelf(fRnrSelf[kLinear]);
+      helixTrackLine -> SetRnrSelf(fRnrSelf[kHelix]);
   }
 
-  return BoolToInt(fRnrSelf[kLinear]);
+  return BoolToInt(fRnrSelf[kHelix]);
 }
 
 Int_t 
-STEveDrawTask::RenderLinearHit(Int_t option)
+STEveDrawTask::RenderHelixHit(Int_t option)
 {
   if (option == 0)
-    return BoolToInt(fRnrSelf[kLinearHit]);
+    return BoolToInt(fRnrSelf[kHelixHit]);
 
-  Int_t nLinearHitSets = fLinearHitSetArray.size();
-  if (nLinearHitSets == 0)
+  Int_t nHelixHitSets = fHelixHitSetArray.size();
+  if (nHelixHitSets == 0)
     return -1;
 
-  fRnrSelf[kLinearHit] = !fRnrSelf[kLinearHit];
-  for (Int_t i=0; i<nLinearHitSets; i++)
+  fRnrSelf[kHelixHit] = !fRnrSelf[kHelixHit];
+  for (Int_t i=0; i<nHelixHitSets; i++)
   {
-    TEvePointSet* pointSet = fLinearHitSetArray.at(i);
+    TEvePointSet* pointSet = fHelixHitSetArray.at(i);
     if (pointSet -> Size() == 0)
       pointSet -> SetRnrSelf(kFALSE);
     else
-      pointSet -> SetRnrSelf(fRnrSelf[kLinearHit]);
+      pointSet -> SetRnrSelf(fRnrSelf[kHelixHit]);
   }
 
-  return BoolToInt(fRnrSelf[kLinearHit]);
+  return BoolToInt(fRnrSelf[kHelixHit]);
 }
 
 Int_t 

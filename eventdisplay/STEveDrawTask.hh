@@ -30,8 +30,7 @@
 #include "STEveManager.hh"
 #include "STTrack.hh"
 #include "STRiemannTrack.hh"
-#include "STLinearTrackFitter.hh"
-#include "STLinearTrack.hh"
+#include "STHelixTrack.hh"
 #include "STCurveTrackFitter.hh"
 #include "STCurveTrack.hh"
 #include "STRiemannHit.hh"
@@ -73,7 +72,7 @@ class STEveDrawTask : public STEveTask
     void Set2DPlotRange(Int_t uaIdx);
 
     void SetSelfRiemannSet(Int_t iRiemannSet = -1, Bool_t offElse = kTRUE);
-    void SetSelfLinearSet(Int_t iLinearSet = -1, Bool_t offElse = kTRUE);
+    void SetSelfHelixSet(Int_t iHelixSet = -1, Bool_t offElse = kTRUE);
     void SetSelfCurveSet(Int_t iCurveSet = -1, Bool_t offElse = kTRUE);
     void SetSelfRecoTrackSet(Int_t iCurveSet = -1, Bool_t offElse = kTRUE);
     void SetObject(TString name, Bool_t set);
@@ -104,8 +103,8 @@ class STEveDrawTask : public STEveTask
     Int_t RenderClusterBox(Int_t option);
     Int_t RenderRiemannTrack(Int_t option);
     Int_t RenderRiemannHit(Int_t option);
-    Int_t RenderLinear(Int_t option);
-    Int_t RenderLinearHit(Int_t option);
+    Int_t RenderHelix(Int_t option);
+    Int_t RenderHelixHit(Int_t option);
     Int_t RenderCurve(Int_t option);
     Int_t RenderCurveHit(Int_t option);
     Int_t RenderRecoTrack(Int_t option);
@@ -120,7 +119,7 @@ class STEveDrawTask : public STEveTask
     void DrawHitPoints();
     void DrawHitClusterPoints();
     void DrawRiemannHits();
-    void DrawLinearTracks();
+    void DrawHelixTracks();
     void DrawCurveTracks();
     void DrawRecoTracks();
 
@@ -163,7 +162,7 @@ class STEveDrawTask : public STEveTask
     TClonesArray* fDriftedElectronArray = NULL;
     TClonesArray* fEventArray           = NULL;
     TClonesArray* fRiemannTrackArray    = NULL;
-    TClonesArray* fLinearTrackArray     = NULL;
+    TClonesArray* fHelixTrackArray      = NULL;
     TClonesArray* fCurveTrackArray      = NULL;
     TClonesArray* fRecoTrackArray       = NULL;
     TClonesArray* fRawEventArray        = NULL;
@@ -210,13 +209,12 @@ class STEveDrawTask : public STEveTask
 
     vector<TEvePointSet*> fRiemannSetArray;
     vector<TEveLine*>     fRiemannTrackSetArray;
-    vector<TEvePointSet*> fLinearHitSetArray;
-    vector<TEveLine*>     fLinearTrackSetArray;
+    vector<TEvePointSet*> fHelixHitSetArray;
+    vector<TEveLine*>     fHelixTrackSetArray;
     vector<TEvePointSet*> fCurveHitSetArray;
     vector<TEveLine*>     fCurveTrackSetArray;
     vector<TEveLine*>     fRecoTrackSetArray;
 
-    STLinearTrackFitter* fLTFitter = NULL;
     STCurveTrackFitter* fCTFitter = NULL;
 
     STGenfitTest *fGenfitTest = NULL;

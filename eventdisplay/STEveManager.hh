@@ -83,7 +83,7 @@ class STEveManager : public TEveEventManager
     void SetBackgroundColor(Color_t color);   //!< Set back ground color 
     void SetViewerPoint(Double_t hRotate, Double_t vRotate);    //!< Set viewer point
     void SetNumRiemannSet(Int_t num);         //!< Set number of riemann set
-    void SetNumLinearSet(Int_t num);          //!< Set number of linear set
+    void SetNumHelixSet(Int_t num);           //!< Set number of helix set
     void SetNumCurveSet(Int_t num);           //!< Set number of curve set
     void SetRowLayer(Int_t row, Int_t layer); //!< Set row & layer
 
@@ -116,8 +116,8 @@ class STEveManager : public TEveEventManager
     void ClickOnOffClusterBox();
     void ClickOnOffRiemannTrack();
     void ClickOnOffRiemannHit();
-    void ClickOnOffLinear();
-    void ClickOnOffLinearHit();
+    void ClickOnOffHelix();
+    void ClickOnOffHelixHit();
     void ClickOnOffCurve();
     void ClickOnOffCurveHit();
     void ClickOnOffRecoTrack();
@@ -133,7 +133,7 @@ class STEveManager : public TEveEventManager
     TGNumberEntry *fCurrentWindowTbStart    = NULL;
     TGNumberEntry *fCurrentWindowTbEnd      = NULL;
     TGNumberEntry *fCurrentRiemannSet       = NULL;
-    TGNumberEntry *fCurrentLinearSet        = NULL;
+    TGNumberEntry *fCurrentHelixSet         = NULL;
     TGNumberEntry *fCurrentCurveSet         = NULL;
     TGNumberEntry *fCurrentRow              = NULL;
     TGNumberEntry *fCurrentLayer            = NULL;
@@ -148,8 +148,8 @@ class STEveManager : public TEveEventManager
     TGCheckButton *fButtonOnOffClusterBox;
     TGCheckButton *fButtonOnOffRiemannTrack;
     TGCheckButton *fButtonOnOffRiemannHit;
-    TGCheckButton *fButtonOnOffLinear;
-    TGCheckButton *fButtonOnOffLinearHit;
+    TGCheckButton *fButtonOnOffHelix;
+    TGCheckButton *fButtonOnOffHelixHit;
     TGCheckButton *fButtonOnOffCurve;
     TGCheckButton *fButtonOnOffCurveHit;
     TGCheckButton *fButtonOnOffRecoTrack;
@@ -172,7 +172,7 @@ class STEveManager : public TEveEventManager
     Long64_t fTotalNumEntries;   //!< Total number of entries
 
     Int_t fNumRiemannSet;
-    Int_t fNumLinearSet;
+    Int_t fNumHelixSet;
     Int_t fNumCurveSet;
 
     Int_t fWindowTbStart;
