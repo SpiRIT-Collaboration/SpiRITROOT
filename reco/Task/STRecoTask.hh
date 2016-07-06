@@ -8,6 +8,7 @@
 #include "STDebugLogger.hh"
 #include "STGlobal.hh"
 #include "STDigiPar.hh"
+#include "STRecoHeader.hh"
 #include "STEventHeader.hh"
 
 #include "TClonesArray.h" 
@@ -27,6 +28,7 @@ class STRecoTask : public FairTask
   protected:
     Bool_t fIsPersistence;  ///< Persistence check variable
 
+    STRecoHeader *fRecoHeader = nullptr;
     STEventHeader *fEventHeader = nullptr;
 
     FairRootManager *fRootManager;

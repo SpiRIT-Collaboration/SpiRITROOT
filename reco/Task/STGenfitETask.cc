@@ -19,10 +19,9 @@ STGenfitETask::STGenfitETask()
 {
 }
 
-STGenfitETask::STGenfitETask(Bool_t persistence, Bool_t removeNoVertexEvent)
+STGenfitETask::STGenfitETask(Bool_t persistence)
 : STRecoTask("GENFIT Task", 1, persistence)
 {
-  fRemoveNoVertexEvent = removeNoVertexEvent;
 }
 
 STGenfitETask::~STGenfitETask()
@@ -33,6 +32,8 @@ void STGenfitETask::SetIterationCut(Int_t min, Int_t max)
 {
   fGenfitTest -> SetMinIterations(min);
   fGenfitTest -> SetMaxIterations(max);
+  fMinIterations = min;
+  fMaxIterations = max;
 }
 
 InitStatus
@@ -64,7 +65,15 @@ STGenfitETask::Init()
 
   fVertexFactory = new genfit::GFRaveVertexFactory(/* verbosity */ 2, /* useVacuumPropagator */ kFALSE);
   //fVertexFactory -> setMethod("kalman-smoothing:1");
-  fVertexFactory -> setMethod("avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5");
+  fGFRaveVertexMethod = "avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5";
+  fVertexFactory -> setMethod(fGFRaveVertexMethod.Data());
+
+  if (fRecoHeader != nullptr) {
+    fRecoHeader -> SetPar("genfit_minimumIteration", fMinIterations);
+    fRecoHeader -> SetPar("genfit_maximumIteration", fMaxIterations);
+    fRecoHeader -> SetPar("vertex_method", fGFRaveVertexMethod);
+    fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
+  }
 
   return kSUCCESS;
 }
@@ -145,17 +154,4 @@ void STGenfitETask::Exec(Option_t *opt)
     new ((*fVertexArray)[iVert]) STVertex(*vertex);
     delete vertex;
   }
-
-  if (fRemoveNoVertexEvent)
-  {
-    Int_t numRecoTracks = fTrackArray -> GetEntriesFast();
-    for (Int_t iReco = 0; iReco < numRecoTracks; iReco++) {
-      STTrack *recoTrack = (STTrack *) fTrackArray -> At(iReco);
-      if (recoTrack -> GetParentID() < 0)
-        fTrackArray -> Remove(recoTrack);
-    }
-    fTrackArray -> Compress();
-  }
 }
-
-void STGenfitETask::SetRemoveNoVertexEvent(Bool_t val) { fRemoveNoVertexEvent = val; }

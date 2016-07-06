@@ -1,5 +1,6 @@
 #include "STEventPreviewTask.hh"
 #include "STPad.hh"
+#include <fstream>
 
 ClassImp(STEventPreviewTask)
 
@@ -31,6 +32,18 @@ InitStatus STEventPreviewTask::Init()
 
   fEventHeader = new STEventHeader();
   fRootManager -> Register("STEventHeader", "SpiRIT", fEventHeader, fIsPersistence);
+
+  if (fRecoHeader != nullptr) {
+    TString version; {
+      TString name = TString(gSystem -> Getenv("VMCWORKDIR")) + "/VERSION";
+      std::ifstream vfile(name);
+      vfile >> version;
+      vfile.close();
+    }
+    fRecoHeader -> SetPar("spiritroot_version", version);
+    fRecoHeader -> SetPar("pre_identifyEvent", fIdentifyEvent);
+    fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
+  }
 
   return kSUCCESS;
 }

@@ -42,6 +42,7 @@ InitStatus STRecoTask::Init()
     return kERROR;
   }
 
+  fRecoHeader = (STRecoHeader *) fRootManager -> GetOutFile() -> Get("RecoHeader");
   fEventHeader = (STEventHeader *) fRootManager -> GetObject("STEventHeader");
 
   return kSUCCESS;

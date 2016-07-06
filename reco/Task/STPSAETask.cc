@@ -69,6 +69,18 @@ InitStatus STPSAETask::Init()
   fPSA -> SetThreshold(fThreshold);
   fPSA -> SetLayerCut(fLayerLowCut, fLayerHighCut);
 
+  fShapingTime = fPSA -> GetShapingTime();
+
+  if (fRecoHeader != nullptr) {
+    fRecoHeader -> SetPar("psa_threshold",       fThreshold);
+    fRecoHeader -> SetPar("psa_layerLowCut",     fLayerLowCut);
+    fRecoHeader -> SetPar("psa_layerHgihCut",    fLayerHighCut);
+    fRecoHeader -> SetPar("psa_pulserData",      fPulserDataName);
+    fRecoHeader -> SetPar("psa_shapingTime",     fShapingTime);
+    fRecoHeader -> SetPar("psa_numHitsLowLimit", fNumHitsLowLimit);
+    fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
+  }
+
   return kSUCCESS;
 }
 

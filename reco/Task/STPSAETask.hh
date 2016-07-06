@@ -3,7 +3,7 @@
 
 #include "STRecoTask.hh"
 #include "STRawEvent.hh"
-#include "STPSA.hh"
+#include "STPSAFastFit.hh"
 
 class STPSAETask : public STRecoTask 
 {
@@ -39,7 +39,7 @@ class STPSAETask : public STRecoTask
     TClonesArray *fRawEventArray = nullptr;
     TClonesArray *fHitArray = nullptr;
 
-    STPSA *fPSA;
+    STPSAFastFit *fPSA;
     
     Double_t fThreshold = 20;
     Int_t fLayerLowCut  = -1;

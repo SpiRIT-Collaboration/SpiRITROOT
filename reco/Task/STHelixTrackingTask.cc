@@ -44,6 +44,11 @@ InitStatus STHelixTrackingTask::Init()
 
   fTrackFinder = new STHelixTrackFinder();
 
+  if (fRecoHeader != nullptr) {
+    fRecoHeader -> SetPar("helix_numTracksLowLimit", fNumTracksLowLimit);
+    fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
+  }
+
   return kSUCCESS;
 }
 
