@@ -36,8 +36,8 @@ STGenfitTest::STGenfitTest()
   fTPCDetID = 0;
   fCurrentDirection = 1;
 
-  fKalmanFitter = new genfit::DAF();
-  //fKalmanFitter = new genfit::KalmanFitterRefTrack();
+  //fKalmanFitter = new genfit::DAF();
+  fKalmanFitter = new genfit::KalmanFitterRefTrack();
   fKalmanFitter -> setMinIterations(5);
   fKalmanFitter -> setMaxIterations(20);
 
@@ -121,32 +121,34 @@ STGenfitTest::FitTrack(STTrack *recoTrack,
 
   // Initial parameter setting
   // TODO : improve initial parameter
-  {
-    STRiemannHit *hit = riemannTrack -> GetFirstHit();
-    STHitCluster *firstCluster = event -> GetCluster(hit -> GetHit() -> GetClusterID());
-    TVector3 posSeed = firstCluster -> GetPosition();
-    posSeed.SetMag(posSeed.Mag()/10.);
+  STRiemannHit *hit = riemannTrack -> GetFirstHit();
+  STHitCluster *firstCluster = event -> GetCluster(hit -> GetHit() -> GetClusterID());
+  TVector3 posSeed = firstCluster -> GetPosition();
+  posSeed.SetMag(posSeed.Mag()/10.);
 
-    TMatrixDSym covSeed(6);
-    TMatrixD covMatrix = firstCluster -> GetCovMatrix();
-    for (Int_t iComp = 0; iComp < 3; iComp++) 
-      covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
-    for (Int_t iComp = 3; iComp < 6; iComp++) 
-      covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
+  TMatrixDSym covSeed(6);
+  TMatrixD covMatrix = firstCluster -> GetCovMatrix();
+  for (Int_t iComp = 0; iComp < 3; iComp++)
+    covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
+  for (Int_t iComp = 3; iComp < 6; iComp++)
+    covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
 
-    Double_t dip = riemannTrack -> GetDip();
-    Double_t momSeedMag = riemannTrack -> GetMom(5.);
-    TVector3 momSeed(0., 0., momSeedMag);
-    momSeed.SetTheta(TMath::Pi()/2. - dip);
+  Double_t dip = riemannTrack -> GetDip();
+  Double_t momSeedMag = riemannTrack -> GetMom(5.);
+  TVector3 momSeed(0., 0., momSeedMag);
+  momSeed.SetTheta(TMath::Pi()/2. - dip);
 
-    trackCand.setCovSeed(covSeed);
-    trackCand.setPosMomSeed(posSeed, momSeed, -1);
-  }
+  trackCand.setCovSeed(covSeed);
 
   genfit::Track *genfitTrack = new ((*fGenfitTrackArray)[fGenfitTrackArray -> GetEntriesFast()]) genfit::Track(trackCand, *fMeasurementFactory);
 
-  for (Int_t pdg : *fPDGCandidateArray) 
+  for (Int_t pdg : *fPDGCandidateArray)  {
+    if (pdg == 11 || pdg == -211)
+      trackCand.setPosMomSeed(posSeed, momSeed, -1);
+    else
+      trackCand.setPosMomSeed(posSeed, momSeed, 1);
     genfitTrack -> addTrackRep(new genfit::RKTrackRep(pdg));
+  }
 
   Bool_t isFitted = ProcessTrack(genfitTrack);
 
@@ -350,7 +352,7 @@ STGenfitTest::SetTrack(STEvent *event, STTrack *recoTrack)
   momSeed.SetTheta(TMath::Pi()/2. - TMath::ACos(pZ/pTot));
 
   trackCand.setCovSeed(covSeed);
-  trackCand.setPosMomSeed(posSeed, momSeed, 1);
+  trackCand.setPosMomSeed(posSeed, momSeed, recoTrack -> GetCharge());
 
   Bool_t fitted = kFALSE;
 
@@ -368,9 +370,13 @@ STGenfitTest::SetTrack(STEvent *event, STTrack *recoTrack)
 
   try {
     fCurrentFitState = genfitTrack -> getFittedState();
-    fCurrentTrackRep -> extrapolateToPlane(fCurrentFitState, fTargetPlane); 
   } catch (genfit::Exception &e) {
     return kFALSE;
+  }
+
+  try {
+    fCurrentTrackRep -> extrapolateToPlane(fCurrentFitState, fTargetPlane);
+  } catch (genfit::Exception &e) {
   }
 
   fitted = kTRUE;
@@ -404,9 +410,9 @@ STGenfitTest::SetTrack(TClonesArray *array, STTrack *recoTrack)
 
   TMatrixDSym covSeed(6);
   TMatrixD covMatrix = firstCluster -> GetCovMatrix();
-  for (Int_t iComp = 0; iComp < 3; iComp++) 
+  for (Int_t iComp = 0; iComp < 3; iComp++)
     covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
-  for (Int_t iComp = 3; iComp < 6; iComp++) 
+  for (Int_t iComp = 3; iComp < 6; iComp++)
     covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
 
   Double_t pTot = recoTrack -> GetP();
@@ -418,7 +424,7 @@ STGenfitTest::SetTrack(TClonesArray *array, STTrack *recoTrack)
   momSeed.SetTheta(TMath::Pi()/2. - TMath::ACos(pZ/pTot));
 
   trackCand.setCovSeed(covSeed);
-  trackCand.setPosMomSeed(posSeed, momSeed, 1);
+  trackCand.setPosMomSeed(posSeed, momSeed, recoTrack -> GetCharge());
 
   Bool_t fitted = kFALSE;
 
@@ -429,16 +435,20 @@ STGenfitTest::SetTrack(TClonesArray *array, STTrack *recoTrack)
   genfit::Track *genfitTrack = new ((*fGenfitTrackArray)[0]) genfit::Track(trackCand, *fMeasurementFactory, fCurrentTrackRep);
 
   try {
-    fKalmanFitter -> processTrack(genfitTrack);
+    fKalmanFitter -> processTrackWithRep(genfitTrack, fCurrentTrackRep, false);
   } catch (genfit::Exception &e) {
     return kFALSE;
   }
 
   try {
     fCurrentFitState = genfitTrack -> getFittedState();
-    fCurrentTrackRep -> extrapolateToPlane(fCurrentFitState, fTargetPlane); 
   } catch (genfit::Exception &e) {
     return kFALSE;
+  }
+
+  try {
+    fCurrentTrackRep -> extrapolateToPlane(fCurrentFitState, fTargetPlane);
+  } catch (genfit::Exception &e) {
   }
 
   fitted = kTRUE;
