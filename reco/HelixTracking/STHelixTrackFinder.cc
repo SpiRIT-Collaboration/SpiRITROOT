@@ -421,7 +421,7 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
   TVector3 q, m;
   bool stable = false;
   auto addedLength = 0.;
-  auto rmsW = track -> GetRMSW();
+  auto rmsW = 2 * track -> GetRMSW();
   auto rmsH = 2 * track -> GetRMSH();
   STHitCluster *curCluster = nullptr;
   auto preLength = track -> ExtrapolateByMap(trackHits->at(0)->GetPosition(),q,m);

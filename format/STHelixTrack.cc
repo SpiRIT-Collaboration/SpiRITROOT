@@ -182,8 +182,10 @@ void STHelixTrack::AddHitCluster(STHitCluster *cluster)
 
 void STHelixTrack::FinalizeHits()
 {
-  for (auto hit : fMainHits)
+  for (auto hit : fMainHits) {
     fMainHitIDs.push_back(hit->GetHitID());
+    hit -> SetTrackID(fTrackID);
+  }
 }
 
 void STHelixTrack::FinalizeClusters()
@@ -191,6 +193,7 @@ void STHelixTrack::FinalizeClusters()
   for (auto cluster : fHitClusters) {
     fClusterIDs.push_back(cluster->GetClusterID());
     fdEdxArray.push_back(cluster->GetCharge()/cluster->GetLength());
+    cluster -> SetTrackID(fTrackID);
   }
 }
 
@@ -486,7 +489,8 @@ STHelixTrack::ExtrapolateToPointAlpha(TVector3 pointGiven, TVector3 &pointOnHeli
   Double_t alpha1 = alpha0;
   TVector3 point1 = point0;
 
-  if (std::abs(YLengthInPeriod()) > 3*fRMSH)
+  Double_t yLengthInPeriod = std::abs(YLengthInPeriod());
+  if (yLengthInPeriod > 3*fRMSH && yLengthInPeriod > 5)
   {
     while(1)
     {
@@ -494,7 +498,7 @@ STHelixTrack::ExtrapolateToPointAlpha(TVector3 pointGiven, TVector3 &pointOnHeli
       point1.SetY(point1.Y() + 2*TMath::Pi()*fAlphaSlope);
       y1 = std::abs(point1.Y() - pointGiven.Y());
 
-      if (y0 <= y1)
+      if (y0 - y1 < 1.e10)
         break;
       else {
         alpha0 = alpha1;
@@ -513,7 +517,7 @@ STHelixTrack::ExtrapolateToPointAlpha(TVector3 pointGiven, TVector3 &pointOnHeli
       point1.SetY(point1.Y() - 2*TMath::Pi()*fAlphaSlope);
       y1 = std::abs(point1.Y() - pointGiven.Y());
 
-      if (y0 <= y1)
+      if (y0 - y1 < 1.e10)
         break;
       else {
         alpha0 = alpha1;
