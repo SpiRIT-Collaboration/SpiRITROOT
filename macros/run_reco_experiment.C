@@ -67,14 +67,14 @@ void run_reco_experiment
   preview -> SetPersistence(true);
 
   auto psa = new STPSAETask();
-  psa -> SetPersistence(true);
+  psa -> SetPersistence(false);
   psa -> SetThreshold(30);
   psa -> SetLayerCut(-1, 112);
   psa -> SetPulserData("pulser_117ns.dat");
 
   auto helix = new STHelixTrackingTask();
   helix -> SetPersistence(true);
-  helix -> SetClusterPersistence(true);
+  helix -> SetClusterPersistence(false);
 
   auto st_genfit = new STGenfitETask();
   st_genfit -> SetPersistence(true);
@@ -98,4 +98,6 @@ void run_reco_experiment
   cout << "Log    : " << log << endl;
   cout << "Input  : " << raw << endl;
   cout << "Output : " << out << endl;
+
+  gApplication -> Terminate();
 }
