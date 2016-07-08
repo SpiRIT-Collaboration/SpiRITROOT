@@ -187,7 +187,7 @@ STHelixTrackFinder::TrackContinuum(STHelixTrack *track)
       fCandHits -> pop_back();
 
       Double_t quality = 0; 
-      if (CheckHitOwner(candHit) == -2) 
+      if (CheckHitOwner(candHit) == -2)
         quality = Correlate(track, candHit);
 
       if (quality > 0) {
@@ -358,7 +358,7 @@ STHelixTrackFinder::ConfirmHits(STHelixTrack *track, bool &tailToHead)
     STHit *trackHit = trackHits -> at(numHits-iHit-1);
     auto lCur = track -> ExtrapolateByMap(trackHit->GetPosition(), q, m);
 
-    Double_t quality = Correlate(track, trackHit, .8);
+    Double_t quality = Correlate(track, trackHit);
 
     if (quality <= 0) {
       track -> Remove(trackHit);
@@ -421,7 +421,7 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
   TVector3 q, m;
   bool stable = false;
   auto addedLength = 0.;
-  auto rmsW = 2 * track -> GetRMSW();
+  auto rmsW = track -> GetRMSW();
   auto rmsH = 2 * track -> GetRMSH();
   STHitCluster *curCluster = nullptr;
   auto preLength = track -> ExtrapolateByMap(trackHits->at(0)->GetPosition(),q,m);
