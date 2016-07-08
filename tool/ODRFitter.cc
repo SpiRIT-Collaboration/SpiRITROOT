@@ -93,13 +93,17 @@ void ODRFitter::SetMatrixA(
 void ODRFitter::SetWeightSum(Double_t weightSum) { fWeightSum = weightSum; }
 void ODRFitter::SetNumPoints(Double_t numPoints) { fNumPoints = numPoints; }
 
-void ODRFitter::Solve()
+bool ODRFitter::Solve()
 {
   (*fMatrixA)[1][0] = (*fMatrixA)[0][1];
   (*fMatrixA)[2][0] = (*fMatrixA)[0][2];
   (*fMatrixA)[2][1] = (*fMatrixA)[1][2];
 
+  if ((*fMatrixA)[0][0] == 0 && (*fMatrixA)[1][1] == 0 && (*fMatrixA)[2][2] == 0)
+    return false;
+
   (*fEigenVectors) = fMatrixA -> EigenVectors(*fEigenValues);
+  return true;
 }
 
 void ODRFitter::ChooseEigenValue(Int_t iEV)
@@ -114,16 +118,22 @@ void ODRFitter::ChooseEigenValue(Int_t iEV)
   fRMSPlane = TMath::Sqrt(fRMSPlane);
 }
 
-void ODRFitter::FitLine()
+bool ODRFitter::FitLine()
 {
-  Solve();
+  if (Solve() == false)
+    return false;
+
   ChooseEigenValue(0);
+  return true;
 }
 
-void ODRFitter::FitPlane()
+bool ODRFitter::FitPlane()
 {
-  Solve();
+  if (Solve() == false)
+    return false;
+
   ChooseEigenValue(2);
+  return true;
 }
 
 TVector3 ODRFitter::GetCentroid()  { return TVector3(fXCentroid, fYCentroid, fZCentroid); }

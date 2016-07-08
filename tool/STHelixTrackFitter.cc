@@ -28,7 +28,9 @@ STHelixTrackFitter::FitPlane(STHelixTrack *track)
   fODRFitter -> SetWeightSum(track -> GetChargeSum());
   fODRFitter -> SetNumPoints(track -> GetNumHits());
 
-  fODRFitter -> Solve();
+  if (fODRFitter -> Solve() == false)
+    return false;
+
   fODRFitter -> ChooseEigenValue(2);
 
   TVector3 normal = fODRFitter -> GetDirection();
@@ -126,7 +128,9 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
     fODRFitter -> AddPoint(xMap, yMap, zMap, w);
   }
 
-  fODRFitter -> Solve();
+  if (fODRFitter -> Solve() == false)
+    return false;
+
   fODRFitter -> ChooseEigenValue(0); TVector3 uOnPlane = fODRFitter -> GetDirection();
   fODRFitter -> ChooseEigenValue(1); TVector3 vOnPlane = fODRFitter -> GetDirection();
   fODRFitter -> ChooseEigenValue(2); TVector3 nToPlane = fODRFitter -> GetDirection();
@@ -346,7 +350,9 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
     fODRFitter -> AddPoint(xMap, yMap, zMap, w);
   }
 
-  fODRFitter -> Solve();
+  if (fODRFitter -> Solve() == false)
+    return false;
+
   fODRFitter -> ChooseEigenValue(0); TVector3 uOnPlane = fODRFitter -> GetDirection();
   fODRFitter -> ChooseEigenValue(1); TVector3 vOnPlane = fODRFitter -> GetDirection();
   fODRFitter -> ChooseEigenValue(2); TVector3 nToPlane = fODRFitter -> GetDirection();

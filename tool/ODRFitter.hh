@@ -61,11 +61,11 @@ class ODRFitter
     void SetWeightSum(Double_t weightSum);
     void SetNumPoints(Double_t numPoints);
 
-    void FitPlane(); ///< Fit plane
-    void FitLine();  ///< Fit line
+    bool FitPlane(); ///< Fit plane
+    bool FitLine();  ///< Fit line
 
     /// Solve eigen value equation
-    void Solve();
+    bool Solve();
     /// Choose which eigen value to use.
     void ChooseEigenValue(Int_t iEV);
 
