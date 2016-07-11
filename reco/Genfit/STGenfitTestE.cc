@@ -87,51 +87,49 @@ genfit::Track* STGenfitTestE::FitTrack(STTrackCandidate *recoTrack, TClonesArray
   fHitClusterArray -> Delete();
   genfit::TrackCand trackCand;
 
-  UInt_t numHits = helixTrack -> GetNumClusters();
+  UInt_t numHits = helixTrack -> GetNumStableClusters();
   if (numHits < 3) 
     return nullptr;
 
-  for (UInt_t iHit = 0; iHit < numHits; iHit++) 
-  {
-    Int_t id = helixTrack -> GetClusterID(iHit);
-    STHitCluster *hit = (STHitCluster *) hitArray -> At(id);
-
-    new ((*fHitClusterArray)[iHit]) STHitCluster(*hit);
-    trackCand.addHit(fTPCDetID, iHit);
-
-    //recoTrack -> AddHitID(id);
+  auto clusterArray = helixTrack -> GetClusterArray();
+  for (auto cluster : *clusterArray) {
+    if (cluster -> IsStable() == false)
+      continue;
+    Int_t idx = fHitClusterArray->GetEntriesFast();
+    new ((*fHitClusterArray)[idx]) STHitCluster(cluster);
+    trackCand.addHit(fTPCDetID, idx);
   }
 
-  // Initial parameter setting
-  // TODO : improve initial parameter
-  {
-    STHitCluster *firstCluster = helixTrack -> GetCluster(0);
-    TVector3 posSeed = firstCluster -> GetPosition();
-    posSeed.SetMag(posSeed.Mag()/10.);
-
-    TMatrixDSym covSeed(6);
-    TMatrixD covMatrix = firstCluster -> GetCovMatrix();
-    for (Int_t iComp = 0; iComp < 3; iComp++) 
-      covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
-    for (Int_t iComp = 3; iComp < 6; iComp++) 
-      covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
-
-    Double_t dip = helixTrack -> DipAngle();
-    Double_t momSeedMag = helixTrack -> Momentum();
-    TVector3 momSeed(0., 0., momSeedMag);
-    momSeed.SetTheta(TMath::Pi()/2. - dip);
-
-    trackCand.setCovSeed(covSeed);
-    if (pdg == 11 || pdg == -211)
-      trackCand.setPosMomSeed(posSeed, momSeed, -1);
-    else
-      trackCand.setPosMomSeed(posSeed, momSeed, 1);
+  STHitCluster *firstCluster;
+  for (auto cluster : *clusterArray) {
+    if (cluster -> IsStable()) {
+      firstCluster = cluster;
+      break;
+    }
   }
+  TVector3 posSeed = firstCluster -> GetPosition();
+  posSeed.SetMag(posSeed.Mag()/10.);
+
+  TMatrixDSym covSeed(6);
+  TMatrixD covMatrix = firstCluster -> GetCovMatrix();
+  for (Int_t iComp = 0; iComp < 3; iComp++)
+    covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
+  for (Int_t iComp = 3; iComp < 6; iComp++)
+    covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
+
+  Double_t dip = helixTrack -> DipAngle();
+  Double_t momSeedMag = helixTrack -> Momentum();
+  TVector3 momSeed(0., 0., momSeedMag);
+  momSeed.SetTheta(TMath::Pi()/2. - dip);
+
+  trackCand.setCovSeed(covSeed);
+  if (pdg == 11 || pdg == -211)
+    trackCand.setPosMomSeed(posSeed, momSeed, -1);
+  else
+    trackCand.setPosMomSeed(posSeed, momSeed, 1);
 
   genfit::Track *gfTrack = new ((*fGenfitTrackArray)[fGenfitTrackArray -> GetEntriesFast()]) genfit::Track(trackCand, *fMeasurementFactory);
-
   gfTrack -> addTrackRep(new genfit::RKTrackRep(pdg));
-
   Bool_t isFitted = ProcessTrack(gfTrack);
 
   if (!isFitted)
@@ -203,10 +201,6 @@ STGenfitTestE::SetTrack(STTrackCandidate *recoTrack, genfit::Track *gfTrack)
   recoTrack -> SetPVal(pVal);
 
   ProcessExtrapolation(recoTrack, gfTrack);
-  //if (CalculatedEdx(recoTrack, gfTrack) == kFALSE)
-    //return;
-
-  //recoTrack -> SetIsFitted();
 }
 
 void 
@@ -259,11 +253,14 @@ STGenfitTestE::ProcessExtrapolation(STTrackCandidate *recoTrack, genfit::Track *
 }
 
 Bool_t 
-STGenfitTestE::CalculatedEdx(STTrackCandidate *recoTrack, genfit::Track *gfTrack)
+STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrack *recoTrack, STHelixTrack *helixTrack)
 {
+  Int_t numPoints = helixTrack -> GetNumStableClusters();
+  if (numPoints < 3)
+    return kFALSE;
+
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
-
   try {
     trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
     fitState = gfTrack -> getFittedState();
@@ -271,64 +268,57 @@ STGenfitTestE::CalculatedEdx(STTrackCandidate *recoTrack, genfit::Track *gfTrack
     return kFALSE;
   }
 
-  std::vector<genfit::TrackPoint *> hitArray = gfTrack -> getPointsWithMeasurement();
+  auto clusterArray = helixTrack -> GetClusterArray();
+  auto numClusters = clusterArray -> size();
 
-  Int_t numPoints = hitArray.size();
-  if (numPoints < 3)
-    return kFALSE;
+  STHitCluster *preCluster = clusterArray -> at(0);
+  TVector3 position = preCluster -> GetPosition();
 
-  genfit::STSpacepointMeasurement *point;
-
-  Double_t dEdx = 0;
-  Double_t dEdxTotal = 0;
-
-  Double_t charge = 0;
-  Double_t lengthTotal = 0;
-  Double_t lengthNextHalf = 0;
-
-  Int_t idx = 0;
-  point = (genfit::STSpacepointMeasurement *) hitArray.at(idx) -> getRawMeasurement(0);
-  idx++;
-
+  Double_t dLength;
   try {
-    trackRep -> extrapolateToMeasurement(fitState, point);
+    dLength = trackRep -> extrapolateToPoint(fitState, .1*position);
   } catch (genfit::Exception &e) {
     recoTrack -> SetTotaldEdx(-1);
     return kFALSE;
   }
+  dLength = 0;
 
-  charge = point -> GetCharge();
-  charge = charge/2.;
+  Double_t totaldE = 0;
+  Double_t totaldx = 0;
 
-  while (idx < numPoints)
+  for (auto iCluster = 1; iCluster < numClusters; iCluster++)
   {
-    point = (genfit::STSpacepointMeasurement *) hitArray.at(idx) -> getRawMeasurement(0);
-    idx++;
+    auto curCluster = clusterArray -> at(iCluster);
 
+    Double_t length = .5*std::abs(dLength);
+
+    position = curCluster -> GetPosition();
     try {
-      lengthNextHalf = (trackRep -> extrapolateToMeasurement(fitState, point))/2.;
+      dLength = trackRep -> extrapolateToPoint(fitState, .1*position);
     } catch (genfit::Exception &e) {
       recoTrack -> SetTotaldEdx(-1);
       return kFALSE;
     }
 
-    lengthTotal += lengthNextHalf;
+    length += .5*std::abs(dLength);
+    preCluster -> SetLength(10*length);
 
-    dEdx = charge/lengthTotal/10.;
-    dEdxTotal += dEdx;
-    recoTrack -> AdddEdx(dEdx);
+    if (preCluster -> IsStable())
+    {
+      Double_t dE = preCluster -> GetCharge();
+      Double_t dx = preCluster -> GetLength();
 
-    lengthTotal = lengthNextHalf;
-    charge = point -> GetCharge();
+      Double_t dEdx = dE/dx;
+      recoTrack -> AdddEdx(dEdx);
+
+      totaldE += dE;
+      totaldx += dx;
+    }
+
+    preCluster = curCluster;
   }
 
-  charge = charge/2.;
-  dEdx = charge/lengthTotal/10.;
-  dEdxTotal += dEdx;
-  recoTrack -> AdddEdx(dEdx);
-
-  dEdxTotal = dEdxTotal/numPoints;
-  recoTrack -> SetTotaldEdx(dEdxTotal);
+  recoTrack -> SetTotaldEdx(totaldE/totaldx);
 
   return kTRUE;
 }
