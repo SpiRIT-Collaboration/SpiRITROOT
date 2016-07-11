@@ -27,20 +27,26 @@ class STHitCluster : public STHit
 
     void SetCovMatrix(TMatrixD matrix);  ///< Set covariance matrix
 
+    Bool_t IsClustered() const;
+     Int_t GetHitID() const;
+
          TMatrixD   GetCovMatrix() const; ///< Get covariance matrix
             Int_t   GetNumHits();         ///< Get number of hits
     vector<Int_t>  *GetHitIDs();          ///< Get vector array hit IDs
     vector<STHit*> *GetHitPtrs();
 
-    virtual void AddHit(STHit *hit);             ///< Add hit to cluster
+    virtual void AddHit(STHit *hit);      ///< Add hit to cluster
 
     virtual void SetClusterID(Int_t clusterID);
 
     void SetLength(Double_t length);
     Double_t GetLength();
 
+    void SetIsStable(Bool_t isStable = true);
+    Bool_t IsStable();
+
   protected:
-    TMatrixD fCovMatrix;                 ///< Cluster covariance matrix
+    TMatrixD fCovMatrix;                  ///< Cluster covariance matrix
     vector<Int_t>  fHitIDArray;           ///< Vector array of hit IDs
     vector<STHit*> fHitPtrArray;          //! <
 
@@ -59,7 +65,7 @@ class STHitCluster : public STHit
      */
     void CalculateCovMatrix(TVector3 hitPos, Double_t charge); 
 
-  ClassDef(STHitCluster, 6);
+  ClassDef(STHitCluster, 7);
 };
 
 #endif

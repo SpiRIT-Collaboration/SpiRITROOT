@@ -29,6 +29,8 @@ STHitCluster::STHitCluster()
     fCovMatrix(iElem/3, iElem%3) = 0;
 
   fCharge = 0.;
+
+  fIsClustered = kFALSE;
 }
 
 STHitCluster::STHitCluster(STHitCluster *cluster)
@@ -54,6 +56,9 @@ STHitCluster::STHitCluster(STHitCluster *cluster)
 }
 
 void STHitCluster::SetCovMatrix(TMatrixD matrix) { fCovMatrix = matrix; } 
+
+Bool_t STHitCluster::IsClustered() const { return kTRUE; }
+Int_t  STHitCluster::GetHitID()    const { return fClusterID; }
 
      TMatrixD   STHitCluster::GetCovMatrix() const  { return fCovMatrix; }
         Int_t   STHitCluster::GetNumHits()          { return fHitIDArray.size(); }
@@ -116,31 +121,6 @@ STHitCluster::CalculateCovMatrix(TVector3 hitPos, Double_t charge)
   fDz = fCovMatrix(2, 2);
 }
 
-/*
- *
-/// Without using charge information, e.g. normal mean, rms, and covariance
-void STHitCluster::CalculatePosition(TVector3 hitPos)
-{
-  for (Int_t iPos = 0; iPos < 3; iPos++)
-    fPosition[iPos] += (hitPos[iPos] - fPosition[iPos])/(Double_t)(GetNumHits() + 1);
-}
-
-void STHitCluster::CalculateCovMatrix(TVector3 hitPos)
-{
-  for (Int_t iFirst = 0; iFirst < 3; iFirst++) {
-    for (Int_t iSecond = 0; iSecond < iFirst + 1; iSecond++) {
-      fCovMatrix(iFirst, iSecond) = GetNumHits()*fCovMatrix(iFirst, iSecond)/(Double_t)(GetNumHits() + 1);
-      fCovMatrix(iFirst, iSecond) += (hitPos[iFirst] - fPosition[iFirst])
-                                     * (hitPos[iSecond] - fPosition[iSecond])
-                                     / (Double_t)(GetNumHits());
-      fCovMatrix(iSecond, iFirst) = fCovMatrix(iFirst, iSecond);
-    }
-
-    fPosSigma[iFirst] = TMath::Sqrt(fCovMatrix(iFirst, iFirst));
-  }
-}
-*/
-
 void STHitCluster::SetClusterID(Int_t clusterID)
 {
   STHit::SetClusterID(clusterID);
@@ -150,3 +130,6 @@ void STHitCluster::SetClusterID(Int_t clusterID)
 
 void STHitCluster::SetLength(Double_t length) { fLength = length; }
 Double_t STHitCluster::GetLength() { return fLength; }
+
+void STHitCluster::SetIsStable(Bool_t isStable) { fIsClustered = isStable; }
+Bool_t STHitCluster::IsStable() { return fIsClustered; }

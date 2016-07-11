@@ -58,8 +58,9 @@ class STHit : public TObject
     void AddTrackCand(Int_t trackID);
     void RemoveTrackCand(Int_t trackID);
 
-      Bool_t IsClustered()  const; ///< Clustered flag getter
-       Int_t GetHitID()     const; ///< Hit ID getter
+    virtual Bool_t IsClustered() const; ///< Clustered flag getter
+    virtual  Int_t GetHitID()    const; ///< Hit ID getter
+
        Int_t GetClusterID() const; ///< Cluster ID getter
        Int_t GetTrackID()   const; ///< Track ID getter
     Double_t GetX()         const; ///< x position getter
