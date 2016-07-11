@@ -276,11 +276,8 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
 bool
 STHelixTrackFitter::FitCluster(STHelixTrack *track)
 {
-  if (track -> GetNumHits() < 3)
+  if (track -> GetNumStableClusters() < 3)
     return false;
-
-  Double_t trackLength = track -> TrackLength();
-  Double_t meanCharge = track -> GetChargeSum()/track -> GetNumHits();
 
   fODRFitter -> Reset();
 
@@ -289,7 +286,11 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
   Double_t xMean = 0;
   Double_t zMean = 0;
   Double_t weightSum = 0;
-  for (auto cluster : *clusterArray) {
+  for (auto cluster : *clusterArray) 
+  {
+    if (cluster -> IsStable() == false)
+      continue;
+
     Double_t w = cluster -> GetCharge();
     xMean += w * cluster -> GetX();
     zMean += w * cluster -> GetZ();
@@ -311,6 +312,9 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
 
   for (auto cluster : *clusterArray)
   {
+    if (cluster -> IsStable() == false)
+      continue;
+
     x = cluster -> GetX() - xMean;
     z = cluster -> GetZ() - zMean;
     Double_t w = cluster -> GetCharge();
@@ -336,6 +340,9 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
 
   for (auto cluster : *clusterArray)
   {
+    if (cluster -> IsStable() == false)
+      continue;
+
     x = cluster -> GetX() - xMean;
     z = cluster -> GetZ() - zMean;
     Double_t w = cluster -> GetCharge();
@@ -396,7 +403,16 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
 
   track -> SetIsHelix();
 
-  TVector3 position0 = clusterArray -> at(0) -> GetPosition();
+  TVector3 position0;
+  Int_t firstIndex = 0;
+  for (auto cluster : *clusterArray) {
+    if (cluster -> IsStable()) {
+      position0 = cluster -> GetPosition();
+      break;
+    }
+    firstIndex++;
+  }
+
   x = position0.X() - xC;
   z = position0.Z() - zC;
   Double_t y = 0;
@@ -419,8 +435,13 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
   Double_t alphaMin = alphaInit;
   Double_t alphaMax = alphaInit;
 
-  for (auto cluster : *clusterArray)
+  auto numClusters = clusterArray -> size();
+  for (auto iCluster = firstIndex; iCluster < numClusters; iCluster++)
   {
+    auto cluster = clusterArray -> at(iCluster);
+    if (cluster -> IsStable() == false)
+      continue;
+
     x = cluster -> GetX() - xC;
     y = cluster -> GetY();
     z = cluster -> GetZ() - zC;;
@@ -479,6 +500,9 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
   Double_t Sy = 0;
   for (auto cluster : *clusterArray)
   {
+    if (cluster -> IsStable() == false)
+      continue;
+
     TVector3 q = track -> Map(cluster -> GetPosition());
     Sx += cluster -> GetCharge() * q.X() * q.X();
     Sy += cluster -> GetCharge() * q.Y() * q.Y();
