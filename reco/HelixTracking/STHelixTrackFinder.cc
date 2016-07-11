@@ -419,40 +419,50 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
   auto lengthCut = 12. / TMath::Cos(track -> DipAngle());
 
   TVector3 q, m;
-  bool stable = false;
+  bool isStableCluster = false;
+  bool isStableState = false;
   auto addedLength = 0.;
+
   auto rmsW = 2 * track -> GetRMSW();
   auto rmsH = 2 * track -> GetRMSH();
-  STHitCluster *curCluster = nullptr;
-  auto preLength = track -> ExtrapolateByMap(trackHits->at(0)->GetPosition(),q,m);
+
+  auto curHit = trackHits -> at(0);
+  auto curCluster = NewCluster(curHit);
+
+  auto curLength = 0;
+  auto preLength = track -> ExtrapolateByMap(curHit->GetPosition(),q,m);
 
   for (auto iHit = 1; iHit < numHits; iHit++)
   {
-    auto curHit = trackHits -> at(iHit);
-    auto curLength = track -> ExtrapolateByMap(curHit -> GetPosition(), q, m);
+    curHit = trackHits -> at(iHit);
+    curLength = track -> ExtrapolateByMap(curHit -> GetPosition(), q, m);
     auto dLength = curLength - preLength;
     preLength = curLength;
 
+    addedLength += .5*dLength;
+
+    bool endCluster = false; // add hit if false, end cluster if true.
+
     if (dLength > 15.) {
-      stable = false;
-      addedLength = 0;
-      if (curCluster != nullptr)
-        fHitClusterArray -> Remove(curCluster);
-      continue;
+      isStableState = false;
+      isStableCluster = false;
+      endCluster = true;
     }
-
-    addedLength += dLength;
-
-    if (stable == false && addedLength > rmsW)
+    else if (isStableState == false)
     {
-      curCluster = NewCluster(curHit);
-      stable = true;
-      addedLength = 0.5*dLength;
+      if (addedLength > rmsW) {
+        isStableState = true;
+        isStableCluster = false;
+        endCluster = true;
+      }
+      else {
+        isStableState = false;
+        endCluster = false;
+      }
     }
-    else if (stable == true)
-    {
+    else if (isStableState == true) {
       if (addedLength < lengthCut) {
-        curCluster -> AddHit(curHit);
+        endCluster = false;
       }
       else {
         auto p0 = track -> Map(curCluster -> GetPosition());
@@ -462,26 +472,37 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
         auto h0 = p0.Y();
 
         if (abs(wc) < abs(w0)) {
-          curCluster -> AddHit(curHit);
+          endCluster = false;
         }
         else {
-          if (abs(w0) < rmsW && abs(h0) < rmsH && CheckRange(curCluster)) {
-            curCluster -> SetLength(addedLength - 0.5*dLength);
-            track -> AddHitCluster(curCluster);
-          }
+          if (abs(w0) < rmsW && abs(h0) < rmsH && CheckRange(curCluster))
+            isStableCluster = true;
           else
-            fHitClusterArray -> Remove(curCluster);
-          curCluster = NewCluster(curHit);
-          addedLength = 0.5*dLength;
+            isStableCluster = false;
+          endCluster = true;
         }
       }
     }
-  }
-  fHitClusterArray -> Remove(curCluster);
-  fHitClusterArray -> Compress();
 
-  if (track -> GetNumClusters() < 5)
+    if (endCluster) {
+      curCluster -> SetIsStable(isStableCluster);
+      curCluster -> SetLength(addedLength);
+      track -> AddHitCluster(curCluster);
+      curCluster = NewCluster(curHit);
+      addedLength = .5*dLength;
+    }
+    else
+      curCluster -> AddHit(curHit);
+  }
+
+  curCluster -> SetIsStable(false);
+  curCluster -> SetLength(addedLength);
+  track -> AddHitCluster(curCluster);
+
+  if (track -> GetNumClusters() < 5) {
     track -> SetIsBad();
+    return false;
+  }
 
   if (fFitter -> FitCluster(track) == false) {
     fFitter -> Fit(track);
