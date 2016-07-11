@@ -191,9 +191,11 @@ void STHelixTrack::FinalizeHits()
 void STHelixTrack::FinalizeClusters()
 {
   for (auto cluster : fHitClusters) {
-    fClusterIDs.push_back(cluster->GetClusterID());
-    fdEdxArray.push_back(cluster->GetCharge()/cluster->GetLength());
     cluster -> SetTrackID(fTrackID);
+    if (cluster -> IsStable()) {
+      fClusterIDs.push_back(cluster->GetClusterID());
+      fdEdxArray.push_back(cluster->GetCharge()/cluster->GetLength());
+    }
   }
 }
 
@@ -374,6 +376,15 @@ Int_t STHelixTrack::GetNumCandHits() const { return fCandHits.size(); }
 std::vector<STHit *> *STHelixTrack::GetCandHitArray() { return &fCandHits; }
 
 Int_t STHelixTrack::GetNumClusters() const { return fHitClusters.size(); }
+Int_t STHelixTrack::GetNumStableClusters() const
+{
+  auto count = 0;
+  for (auto cluster : fHitClusters) {
+    if (cluster -> IsStable())
+      count++;
+  }
+  return count;
+}
 STHitCluster *STHelixTrack::GetCluster(Int_t idx) const { return fHitClusters.at(idx); }
 std::vector<STHitCluster *> *STHelixTrack::GetClusterArray() { return &fHitClusters; }
 
