@@ -88,6 +88,7 @@ Double_t STTrackCandidate::GetMass()                     { return fMass; }
 Int_t STTrackCandidate::GetCharge()                      { return fCharge; }
 
 TVector3 STTrackCandidate::GetVertex()                   { return TVector3(fVx, fVy, fVz); }
+TVector3 STTrackCandidate::GetTargetPlaneVertex()        { return TVector3(fBeamVx, fBeamVy, fBeamVz); }
 TVector3 STTrackCandidate::GetBeamVertex()               { return TVector3(fBeamVx, fBeamVy, fBeamVz); }
 Double_t STTrackCandidate::GetVx()                       { return fVx; }
 Double_t STTrackCandidate::GetVy()                       { return fVy; }
@@ -96,10 +97,11 @@ Double_t STTrackCandidate::GetBeamVx()                   { return fBeamVx; }
 Double_t STTrackCandidate::GetBeamVy()                   { return fBeamVy; }
 Double_t STTrackCandidate::GetBeamVz()                   { return fBeamVz; }
 
+TVector3 STTrackCandidate::GetTargetPlaneMomentum()      { return TVector3(fBeamMomx, fBeamMomy, fBeamMomz); }
 TVector3 STTrackCandidate::GetBeamMomentum()             { return TVector3(fBeamMomx, fBeamMomy, fBeamMomz); }
-Double_t STTrackCandidate::GetBeamMomx()                   { return fBeamMomx; }
-Double_t STTrackCandidate::GetBeamMomy()                   { return fBeamMomy; }
-Double_t STTrackCandidate::GetBeamMomz()                   { return fBeamMomz; }
+Double_t STTrackCandidate::GetBeamMomx()                 { return fBeamMomx; }
+Double_t STTrackCandidate::GetBeamMomy()                 { return fBeamMomy; }
+Double_t STTrackCandidate::GetBeamMomz()                 { return fBeamMomz; }
 
 TVector3 STTrackCandidate::GetKyotoLHit()                { return TVector3(fKyotoLx, fKyotoLy, fKyotoLz); }
 Double_t STTrackCandidate::GetKyotoLHitX()               { return fKyotoLx; }

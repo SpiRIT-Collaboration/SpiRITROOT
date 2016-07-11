@@ -48,48 +48,50 @@ class STTrackCandidate : public TObject {
 
     void SetPVal(Double_t value);
 
-    Int_t GetPID();
-    Double_t GetMass();
-    Int_t GetCharge();
+    Int_t GetPID();      ///< NOT SET IN v1
+    Double_t GetMass();  ///< NOT SET IN v1
+    Int_t GetCharge();   ///< NOT SET IN v1
 
-    TVector3 GetVertex();
+    TVector3 GetVertex();  ///< Vertex in GENFIT status
     Double_t GetVx();
     Double_t GetVy();
     Double_t GetVz();
-    TVector3 GetBeamVertex();
+    TVector3 GetTargetPlaneVertex();  ///< Vertex on target plane
+    TVector3 GetBeamVertex();  ///< Same as GetVertexOnTargetPlane();
     Double_t GetBeamVx();
     Double_t GetBeamVy();
     Double_t GetBeamVz();
-    TVector3 GetBeamMomentum();
+    TVector3 GetTargetPlaneMomentum();  ///< Vertex on target plane
+    TVector3 GetBeamMomentum();  ///< Same as GetTargetPlaneMomentum()
     Double_t GetBeamMomx();
     Double_t GetBeamMomy();
     Double_t GetBeamMomz();
 
-    TVector3 GetKyotoLHit();
+    TVector3 GetKyotoLHit();   ///< Hit position in left KYOTO plane
     Double_t GetKyotoLHitX();
     Double_t GetKyotoLHitY();
     Double_t GetKyotoLHitZ();
-    TVector3 GetKyotoRHit();
+    TVector3 GetKyotoRHit();   ///< Hit position in right KYOTO plane
     Double_t GetKyotoRHitX();
     Double_t GetKyotoRHitY();
     Double_t GetKyotoRHitZ();
-    TVector3 GetKatanaHit();
+    TVector3 GetKatanaHit();   ///< Hit position in KATANA plane
     Double_t GetKatanaHitX();
     Double_t GetKatanaHitY();
     Double_t GetKatanaHitZ();
 
-    TVector3 GetMomentum() const;
-    Double_t GetP() const;
-    Double_t GetPt();
+    TVector3 GetMomentum() const; ///< Momentum vector
+    Double_t GetP() const;        ///< Magnitude of momentum
+    Double_t GetPt();             ///< Transversal momentum
     Double_t GetPx();
     Double_t GetPy();
     Double_t GetPz();
 
     Double_t GetTrackLength();
-    std::vector<Double_t> *GetdEdxArray();
-    Double_t GetTotaldEdx();
+    std::vector<Double_t> *GetdEdxArray();  ///< Array of dE/dx of cluster
+    Double_t GetTotaldEdx();                ///< [total charge] / [total length]
 
-    Double_t GetRiemanndEdx();
+    Double_t GetRiemanndEdx();  ///< Do not use in v1.
     Double_t GetChi2();
     Int_t GetNDF();
 
@@ -113,6 +115,9 @@ class STTrackCandidate : public TObject {
      */
     Int_t GetdEdxWithCut(Double_t &dEdx, Int_t &numUsedPoints, Double_t lowCut, Double_t highCut, Int_t numCut);
 
+    /**
+     * dE/dx with all cut, return -1 if number of (dE/dx point) is not enough.
+     */
     Double_t GetdEdxWithCut(Double_t lowCut, Double_t highCut);
 
 
