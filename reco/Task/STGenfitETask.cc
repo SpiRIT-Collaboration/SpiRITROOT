@@ -107,9 +107,12 @@ void STGenfitETask::Exec(Option_t *opt)
     recoTrack -> SetTrackID(trackID);
     recoTrack -> SetHelixID(helixTrack -> GetTrackID());
 
-    Int_t numHits = helixTrack -> GetNumClusters();
-    for (Int_t iHit = 0; iHit < numHits; iHit++)
-      recoTrack -> AddHitID(helixTrack -> GetClusterID(iHit));
+    auto clusterArray = helixTrack -> GetClusterArray();
+    for (auto cluster : *clusterArray) {
+      if (cluster -> IsStable()) {
+        recoTrack -> AddHitID(cluster -> GetClusterID());
+      }
+    }
 
     vector<genfit::Track *> gfCandTrackArray;
     vector<STTrackCandidate*> recoCandTrackArray;
@@ -149,18 +152,24 @@ void STGenfitETask::Exec(Option_t *opt)
       recoTrack -> AddTrackCandidate(candTrack);
     }
 
-    if (bestCandTrack == nullptr)
+    if (bestCandTrack == nullptr) {
+      fTrackArray -> Remove(recoTrack);
       continue;
+    }
 
     recoTrack -> SetIsFitted();
     recoTrack -> SetTrackCandidate(bestCandTrack);
     genfitTrackArray.push_back(bestGFTrack);
+
+    fGenfitTest -> CalculatedEdx(bestGFTrack, recoTrack, helixTrack);
 
     helixTrack -> SetGenfitID(recoTrack -> GetTrackID());
     helixTrack -> SetIsGenfitTrack();
     helixTrack -> SetGenfitMomentum(bestCandTrack -> GetP());
   }
   fTrackArray -> Compress();
+
+  LOG(INFO) << Space() << "STTrack " << fTrackArray -> GetEntriesFast() << FairLogger::endl;
 
   vector<genfit::GFRaveVertex *> vertices;
   try {
@@ -190,7 +199,6 @@ void STGenfitETask::Exec(Option_t *opt)
         }
       }
     }
-//    new ((*fVertexArray)[iVert]) genfit::GFRaveVertex(*vertex);
     new ((*fVertexArray)[iVert]) STVertex(*vertex);
     delete vertex;
   }
