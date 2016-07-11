@@ -4,9 +4,11 @@ void run_reco_experiment
   Int_t fNumEventsInRun = 20,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 100,
+  Double_t fPSAThreshold = 30,
+  TString fParameterFile = "ST.parameters.Commissioning_201604.par",
+  TString fPathToData = "/Users/ejungwoo/spiritroot/macros/data2",
   Bool_t fUseMeta = kFALSE,
-  TString fSupplePath = "/data/Q16264/rawdataSupplement",
-  TString fParameterFile = "ST.parameters.Commissioning_201604.par"
+  TString fSupplePath = "/data/Q16264/rawdataSupplement"
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -18,12 +20,13 @@ void run_reco_experiment
   TString sSplitNo = TString::Itoa(fSplitNo, 10);
 
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
-  TString pathToData = spiritroot+"macros/data/";
+  if (fPathToData.IsNull())
+    fPathToData = spiritroot+"macros/data/";
   TString par = spiritroot+"parameters/"+fParameterFile;
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root";
   TString raw = TString(gSystem -> Getenv("PWD"))+"/list_run"+sRunNo+".txt";
-  TString out = pathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.root"; 
-  TString log = pathToData+"run"+sRunNo+"_s"+sSplitNo+".log"; 
+  TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.root";
+  TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".log";
 
   if (TString(gSystem -> Which(".", raw)).IsNull() && !fUseMeta)
     gSystem -> Exec("./createList.sh "+sRunNo);
@@ -68,12 +71,12 @@ void run_reco_experiment
 
   auto psa = new STPSAETask();
   psa -> SetPersistence(false);
-  psa -> SetThreshold(30);
+  psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
   psa -> SetPulserData("pulser_117ns.dat");
 
   auto helix = new STHelixTrackingTask();
-  helix -> SetPersistence(true);
+  helix -> SetPersistence(false);
   helix -> SetClusterPersistence(false);
 
   auto st_genfit = new STGenfitETask();
