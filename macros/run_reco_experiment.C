@@ -6,7 +6,7 @@ void run_reco_experiment
   Int_t fNumEventsInSplit = 100,
   Double_t fPSAThreshold = 30,
   TString fParameterFile = "ST.parameters.Commissioning_201604.par",
-  TString fPathToData = "/Users/ejungwoo/spiritroot/macros/data2",
+  TString fPathToData = "",
   Bool_t fUseMeta = kFALSE,
   TString fSupplePath = "/data/Q16264/rawdataSupplement"
 )
