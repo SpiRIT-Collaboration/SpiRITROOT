@@ -1,6 +1,7 @@
 void run_eve
 (
   TString name = "run3000_s0", 
+  TString pathToData = "/Users/ejungwoo/spiritroot/macros/data/",
   TString parname = "ST.parameters.Commissioning_201604.par",
   /*
    * - If dataList is "", deactivate single pad data,
@@ -15,11 +16,17 @@ void run_eve
   TString supplePath = "/data/Q16264/rawdataSupplement"
 )
 {
-  TString directory = gSystem -> Getenv("VMCWORKDIR");
-  TString input     = directory + "/macros/data/" + name + ".reco.root";
-  TString output    = directory + "/macros/data/" + name + ".eve.root";
-  TString parameter = directory + "/parameters/"  + parname;
-  TString geomety   = directory + "/geometry/geomSpiRIT.man.root";
+  TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
+  if (pathToData.IsNull())
+    pathToData = spiritroot+"macros/data/";
+
+  TString input     = pathToData + name + ".reco.root";
+  TString output    = pathToData + name + ".eve.root";
+  TString parameter = spiritroot + "parameters/"  + parname;
+  TString geomety   = spiritroot + "geometry/geomSpiRIT.man.root";
+
+  FairLogger *logger = FairLogger::GetLogger();
+  logger -> SetLogToScreen(true);
 
   STEveManager *eve = new STEveManager();
   eve -> SetInputFile(input);         // Set input file (string)
@@ -33,9 +40,9 @@ void run_eve
   STEveDrawTask *draw = new STEveDrawTask();
   draw -> SetRendering("mc",         false);
   draw -> SetRendering("digi",       false);
-  draw -> SetRendering("hit",        false);
+  draw -> SetRendering("hit",        true);
   draw -> SetRendering("hitbox",     false);
-  draw -> SetRendering("helixhit",   false);
+  draw -> SetRendering("helixhit",   true);
   draw -> SetRendering("helix",      true);
   draw -> SetRendering("cluster",    true);
   draw -> SetRendering("recotrack",  true);
