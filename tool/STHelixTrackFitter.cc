@@ -135,7 +135,7 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
   fODRFitter -> ChooseEigenValue(1); TVector3 vOnPlane = fODRFitter -> GetDirection();
   fODRFitter -> ChooseEigenValue(2); TVector3 nToPlane = fODRFitter -> GetDirection();
 
-  if (std::abs(nToPlane.Y()) < 1.e-10) {
+  if (std::abs(nToPlane.Y()) < 1.e-8) {
     track -> SetIsLine();
     return false;
   }
@@ -168,6 +168,11 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
   Double_t xC = FCC.X() + xMean;
   Double_t zC = FCC.Z() + zMean;
   Double_t radius = 0.5 * (louuInvMap - highInvMap).Mag();
+
+  if (radius > 1.e+8) {
+    track -> SetIsLine();
+    return false;
+  }
 
   track -> SetHelixCenter(xC, zC);
   track -> SetHelixRadius(radius);
@@ -251,6 +256,11 @@ STHelixTrackFitter::Fit(STHelixTrack *track)
 
   Double_t slope  = (expAY - expA*expY) / (expA2 - expA*expA);
   Double_t offset = (expA2*expY - expA*expAY) / (expA2 - expA*expA);
+
+  if (std::isinf(slope)) {
+    track -> SetIsLine();
+    return false;
+  }
 
   track -> SetAlphaSlope(slope);
   track -> SetYInitial(offset);
@@ -398,6 +408,11 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
   Double_t zC = FCC.Z() + zMean;
   Double_t radius = 0.5 * (louuInvMap - highInvMap).Mag();
 
+  if (radius > 1.e+8) {
+    track -> SetIsLine();
+    return false;
+  }
+
   track -> SetHelixCenter(xC, zC);
   track -> SetHelixRadius(radius);
 
@@ -492,6 +507,11 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
 
   Double_t slope  = (expAY - expA*expY) / (expA2 - expA*expA);
   Double_t offset = (expA2*expY - expA*expAY) / (expA2 - expA*expA);
+
+  if (std::isinf(slope)) {
+    track -> SetIsLine();
+    return false;
+  }
 
   track -> SetAlphaSlope(slope);
   track -> SetYInitial(offset);
