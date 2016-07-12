@@ -226,8 +226,11 @@ class STHitSortYInv {
 
 class STHitSortCharge {
   public:
-    Bool_t operator() (STHit* hit1, STHit* hit2)
-    { return hit1 -> GetCharge() > hit2 -> GetCharge(); }
+    Bool_t operator() (STHit* hit1, STHit* hit2) {
+      if (hit1 -> GetCharge() == hit2 -> GetCharge())
+        return hit1 -> GetY() > hit2 -> GetY();
+      return hit1 -> GetCharge() > hit2 -> GetCharge();
+    }
 };
 
 class STHitSortChargeInv {
