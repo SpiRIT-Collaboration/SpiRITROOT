@@ -214,13 +214,21 @@ STHelixTrackFinder::TrackExtrapolation(STHelixTrack *track)
     fEventMap -> AddHit(badHit);
   fBadHits -> clear();
 
+  Int_t count = 0;
   bool buildHead = true;
   Double_t extrapolationLength = 0;
-  while (AutoBuildByExtrapolation(track, buildHead, extrapolationLength)) {}
+  while (AutoBuildByExtrapolation(track, buildHead, extrapolationLength)) {
+    if (count++ > 100)
+      break;
+  }
 
+  count = 0;
   buildHead = !buildHead;
   extrapolationLength = 0;
-  while (AutoBuildByExtrapolation(track, buildHead, extrapolationLength)) {}
+  while (AutoBuildByExtrapolation(track, buildHead, extrapolationLength)) {
+    if (count++ > 100)
+      break;
+  }
 
   for (auto badHit : *fBadHits)
     fEventMap -> AddHit(badHit);
