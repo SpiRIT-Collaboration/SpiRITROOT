@@ -501,8 +501,9 @@ STHelixTrack::ExtrapolateToPointAlpha(TVector3 pointGiven, TVector3 &pointOnHeli
   TVector3 point1 = point0;
 
   Double_t yLengthInPeriod = std::abs(YLengthInPeriod());
-  if (yLengthInPeriod > 3*fRMSH && yLengthInPeriod > 5)
+  if (yLengthInPeriod > 3*fRMSH && yLengthInPeriod > 5 && std::abs(DipAngle()) < 1.5)
   {
+    Int_t count = 0;
     while(1)
     {
       alpha1 = alpha1 + 2*TMath::Pi();
@@ -516,12 +517,15 @@ STHelixTrack::ExtrapolateToPointAlpha(TVector3 pointGiven, TVector3 &pointOnHeli
         point0 = point1;
         y0 = y1;
       }
+      if (count++ > 20)
+        break;
     }
 
     y1 = y0;
     alpha1 = alpha0;
     point1 = point0;
 
+    count = 0;
     while(1)
     {
       alpha1 = alpha1 - 2*TMath::Pi();
@@ -535,6 +539,8 @@ STHelixTrack::ExtrapolateToPointAlpha(TVector3 pointGiven, TVector3 &pointOnHeli
         point0 = point1;
         y0 = y1;
       }
+      if (count++ > 20)
+        break;
     }
   }
 
