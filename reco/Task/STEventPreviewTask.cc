@@ -42,6 +42,7 @@ InitStatus STEventPreviewTask::Init()
     }
     fRecoHeader -> SetPar("spiritroot_version", version);
     fRecoHeader -> SetPar("pre_identifyEvent", fIdentifyEvent);
+    fRootManager -> GetOutFile() -> cd();
     fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
   }
 
