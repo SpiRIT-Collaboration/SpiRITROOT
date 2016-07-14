@@ -55,7 +55,7 @@ class STMap : public TObject {
 
     Int_t fUAMap[12][4];
 
-    std::fstream fStream;
+    std::ifstream fStream;
 
   ClassDef(STMap, 1);
 };
