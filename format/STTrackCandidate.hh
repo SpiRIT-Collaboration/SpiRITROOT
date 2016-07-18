@@ -52,7 +52,7 @@ class STTrackCandidate : public TObject {
     Double_t GetMass();  ///< NOT SET IN v1
     Int_t GetCharge();   ///< NOT SET IN v1
 
-    TVector3 GetVertex();  ///< Vertex in GENFIT status
+    TVector3 GetVertex();  ///< Closest point to the vertex (if found).
     Double_t GetVx();
     Double_t GetVy();
     Double_t GetVz();

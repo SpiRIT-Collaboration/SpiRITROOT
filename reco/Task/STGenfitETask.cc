@@ -50,12 +50,6 @@ STGenfitETask::Init()
     return kERROR;
   }
 
-  fHitClusterArray = (TClonesArray *) fRootManager -> GetObject("STHitCluster");
-  if (fHitClusterArray == nullptr) {
-    LOG(ERROR) << "Cannot find STHitCluster array!" << FairLogger::endl;
-    return kERROR;
-  }
-
   fTrackArray = new TClonesArray("STTrack");
   fRootManager -> Register("STTrack", "SpiRIT", fTrackArray, fIsPersistence);
 
@@ -79,6 +73,8 @@ STGenfitETask::Init()
     fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
   }
 
+  fHitClusterVertex = new TClonesArray("STHitCluster");
+
   return kSUCCESS;
 }
 
@@ -87,6 +83,7 @@ void STGenfitETask::Exec(Option_t *opt)
   fTrackArray -> Clear("C");
   fTrackCandArray -> Clear("C");
   fVertexArray -> Delete();
+  fHitClusterVertex -> Delete();
 
   if (fEventHeader -> IsBadEvent())
     return;
@@ -106,6 +103,7 @@ void STGenfitETask::Exec(Option_t *opt)
     STTrack *recoTrack = (STTrack *) fTrackArray -> ConstructedAt(trackID);
     recoTrack -> SetTrackID(trackID);
     recoTrack -> SetHelixID(helixTrack -> GetTrackID());
+    recoTrack -> SetCharge(helixTrack -> Charge());
 
     auto clusterArray = helixTrack -> GetClusterArray();
     for (auto cluster : *clusterArray) {
@@ -123,10 +121,10 @@ void STGenfitETask::Exec(Option_t *opt)
       Int_t trackCandID = fTrackCandArray -> GetEntriesFast();
       STTrackCandidate *candTrack = (STTrackCandidate *) fTrackCandArray -> ConstructedAt(trackCandID);
 
-      genfit::Track *track = fGenfitTest -> FitTrack(candTrack, fHitClusterArray, helixTrack, pdg);
+      genfit::Track *track = fGenfitTest -> FitTrack(candTrack, helixTrack, pdg);
       if (track != nullptr)
       {
-        fGenfitTest -> SetTrack(candTrack, track);
+        fGenfitTest -> SetTrackParameters(candTrack, track);
         if (candTrack -> GetPVal() <= 0) {
           continue;
         }
@@ -182,6 +180,10 @@ void STGenfitETask::Exec(Option_t *opt)
   for (UInt_t iVert = 0; iVert < numVertices; iVert++) {
     genfit::GFRaveVertex* vertex = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
 
+    STHitCluster *vertexCluster = (STHitCluster *) fHitClusterVertex -> ConstructedAt(fHitClusterVertex -> GetEntries());
+    vertexCluster -> SetPosition(vertex -> getPos()*10.);
+    vertexCluster -> SetIsStable(true);
+
     Int_t numTracks = vertex -> getNTracks();
     for (Int_t iTrack = 0; iTrack < numTracks; iTrack++) {
       genfit::GFRaveTrackParameters *par = vertex -> getParameters(iTrack);
@@ -191,12 +193,17 @@ void STGenfitETask::Exec(Option_t *opt)
       if (iter != genfitTrackArray.end())
       {
         Int_t index = std::distance(genfitTrackArray.begin(), iter);
-        genfit::Track *gfTrack = genfitTrackArray.at(iTrack);
         STTrack *recoTrack = (STTrack *) fTrackArray -> At(index);
-        if (recoTrack -> GetParentID() < 0)
-        {
+        if (recoTrack -> GetParentID() < 0) {
           recoTrack -> SetParentID(iVert);
         }
+
+        STHelixTrack *helixTrack = (STHelixTrack *) fHelixTrackArray -> At(recoTrack -> GetHelixID());
+        helixTrack -> AddHitClusterAtFront(vertexCluster);
+
+        genfit::Track *refitTrack = fGenfitTest -> FitTrack(recoTrack, helixTrack, recoTrack -> GetPID());
+        if (refitTrack != nullptr)
+          fGenfitTest -> SetTrackParameters(recoTrack, refitTrack);
       }
     }
     new ((*fVertexArray)[iVert]) STVertex(*vertex);

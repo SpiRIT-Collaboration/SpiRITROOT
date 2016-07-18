@@ -175,6 +175,14 @@ void STHelixTrack::SortHits(bool increasing)
   }
 }
 
+void STHelixTrack::SortHitsByPropagation(TVector3 vertex)
+{
+  if (std::abs((vertex-PositionAtHead()).Mag()) < std::abs((vertex-PositionAtTail()).Mag()))
+    SortHits(false);
+  else
+    SortHits(true);
+}
+
 void STHelixTrack::AddHitCluster(STHitCluster *cluster)
 {
   fHitClusters.push_back(cluster);
@@ -885,4 +893,9 @@ STHelixTrack::GetdEdxWithCut(Double_t lowR, Double_t highR) const
   dEdx = dEdx/numPoints;
 
   return dEdx;
+}
+
+void STHelixTrack::AddHitClusterAtFront(STHitCluster *cluster)
+{
+  fHitClusters.insert(fHitClusters.begin(), cluster);
 }
