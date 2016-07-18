@@ -68,8 +68,10 @@ class STHelixTrack : public TObject
     void Remove(STHit *hit);
     void DeleteHits();
     void SortHits(bool increasing = true);
+    void SortHitsByPropagation(TVector3 vertex = TVector3(0, -213.3, -89));
 
     void AddHitCluster(STHitCluster *cluster);
+    void AddHitClusterAtFront(STHitCluster *cluster);
 
     void FinalizeHits();
     void FinalizeClusters();
@@ -397,7 +399,7 @@ class STHitSortByDecreasingLength
   public:
     STHitSortByDecreasingLength(STHelixTrack *track):fTrk(track) {}
     bool operator() (STHit* a, STHit* b) {
-      return fTrk->Map(a->GetPosition()).Z() < fTrk->Map(b->GetPosition()).Z();
+      return fTrk->Map(a->GetPosition()).Z() > fTrk->Map(b->GetPosition()).Z();
     }
 };
 

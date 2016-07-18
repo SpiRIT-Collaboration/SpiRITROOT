@@ -23,7 +23,7 @@ class STGenfitETask : public STRecoTask
     TClonesArray *fTrackCandArray = nullptr;
     TClonesArray *fVertexArray = nullptr;
     TClonesArray *fHelixTrackArray = nullptr;
-    TClonesArray *fHitClusterArray = nullptr;
+    TClonesArray *fHitClusterVertex = nullptr;
 
     STGenfitTestE *fGenfitTest;
 

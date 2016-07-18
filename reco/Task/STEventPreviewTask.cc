@@ -34,13 +34,6 @@ InitStatus STEventPreviewTask::Init()
   fRootManager -> Register("STEventHeader", "SpiRIT", fEventHeader, fIsPersistence);
 
   if (fRecoHeader != nullptr) {
-    TString version; {
-      TString name = TString(gSystem -> Getenv("VMCWORKDIR")) + "/VERSION";
-      std::ifstream vfile(name);
-      vfile >> version;
-      vfile.close();
-    }
-    fRecoHeader -> SetPar("spiritroot_version", version);
     fRecoHeader -> SetPar("pre_identifyEvent", fIdentifyEvent);
     fRootManager -> GetOutFile() -> cd();
     fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);

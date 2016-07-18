@@ -4,6 +4,8 @@ void run_reco_experiment
   Int_t fNumEventsInRun = 20,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 100,
+  TString fGCData = "",
+  TString fGGData = "",
   Double_t fPSAThreshold = 30,
   TString fParameterFile = "ST.parameters.Commissioning_201604.par",
   TString fPathToData = "",
@@ -22,11 +24,17 @@ void run_reco_experiment
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
   if (fPathToData.IsNull())
     fPathToData = spiritroot+"macros/data/";
+  TString version; {
+    TString name = spiritroot + "VERSION";
+    std::ifstream vfile(name);
+    vfile >> version;
+    vfile.close();
+  }
   TString par = spiritroot+"parameters/"+fParameterFile;
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root";
   TString raw = TString(gSystem -> Getenv("PWD"))+"/list_run"+sRunNo+".txt";
-  TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.root";
-  TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".log";
+  TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".root";
+  TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+"."+version+".log";
 
   if (TString(gSystem -> Which(".", raw)).IsNull() && !fUseMeta)
     gSystem -> Exec("./createList.sh "+sRunNo);
@@ -51,8 +59,13 @@ void run_reco_experiment
   STDecoderTask *decoder = new STDecoderTask();
   decoder -> SetUseSeparatedData(true);
   decoder -> SetPersistence(false);
-  decoder -> SetUseGainCalibration(false);
-  decoder -> SetGGNoiseData("");
+  if (fGCData.IsNull())
+    decoder -> SetUseGainCalibration(false);
+  else {
+    decoder -> SetUseGainCalibration(true);
+    decoder -> SetGainCalibrationData(fGCData);
+  }
+  decoder -> SetGGNoiseData(fGGData);
   decoder -> SetDataList(raw);
   decoder -> SetEventID(start);
 
@@ -90,9 +103,12 @@ void run_reco_experiment
 
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
+  recoHeader -> SetPar("version", version);
   recoHeader -> SetPar("eventStart", start);
   recoHeader -> SetPar("numEvents", fNumEventsInSplit);
   recoHeader -> SetPar("parameter", fParameterFile);
+  recoHeader -> SetPar("GCData", fGCData);
+  recoHeader -> SetPar("GGData", fGGData);
   recoHeader -> Write("RecoHeader");
 
   run -> Init();

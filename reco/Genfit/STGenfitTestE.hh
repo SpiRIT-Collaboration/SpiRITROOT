@@ -34,8 +34,8 @@ class STGenfitTestE
     void SetMaxIterations(Int_t value);
 
     void Init();
-    genfit::Track* FitTrack(STTrackCandidate *recoTrack, TClonesArray *hitArray, STHelixTrack *helixTrack, Int_t pdg = 2212);
-    void SetTrack(STTrackCandidate *recotrack, genfit::Track *gfTrack);
+    genfit::Track* FitTrack(STTrackCandidate *recoTrack, STHelixTrack *helixTrack, Int_t pdg = 2212);
+    void SetTrackParameters(STTrackCandidate *recotrack, genfit::Track *gfTrack);
     Bool_t CalculatedEdx(genfit::Track *, STTrack *, STHelixTrack *);
 
   private:

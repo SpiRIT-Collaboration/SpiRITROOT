@@ -391,8 +391,8 @@ STHelixTrackFinder::ConfirmHits(STHelixTrack *track, bool &tailToHead)
 bool
 STHelixTrackFinder::HitClustering(STHelixTrack *track)
 {
+  track -> SortHitsByPropagation();
   auto trackHits = track -> GetHitArray();
-  track -> SortHits();
   auto numHits = trackHits -> size();
 
   auto CheckMean = [](STHitCluster *cluster, STHit *hit) {
@@ -444,7 +444,7 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
   {
     curHit = trackHits -> at(iHit);
     curLength = track -> ExtrapolateByMap(curHit -> GetPosition(), q, m);
-    auto dLength = curLength - preLength;
+    auto dLength = std::abs(curLength - preLength);
     preLength = curLength;
 
     addedLength += .5*dLength;
