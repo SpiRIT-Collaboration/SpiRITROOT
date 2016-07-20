@@ -53,6 +53,8 @@ class STCore : public TObject {
     void SetGainReference(Int_t row, Int_t layer);
     void SetGainReference(Double_t constant, Double_t linear, Double_t quadratic = 0.);
 
+    void SetDiscardTbsBelow(Int_t tb);
+
     Bool_t SetUAMap(TString filename);
     Bool_t SetAGETMap(TString filename);
 
@@ -94,6 +96,8 @@ class STCore : public TObject {
 
     STGainCalibration *fGainCalibrationPtr[12];
     Bool_t fIsGainCalibrationData;
+
+    Int_t fDiscardTbsBelow;
 
     STRawEvent *fRawEventPtr;
     std::vector<STPad *> fPadArray;
