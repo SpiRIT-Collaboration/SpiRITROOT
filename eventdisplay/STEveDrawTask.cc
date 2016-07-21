@@ -852,7 +852,6 @@ STEveDrawTask::DrawRecoTracks()
   }
 
   for (Int_t iTrack = 0; iTrack < nTracks; iTrack++) 
-  //for (Int_t iTrack = 0; iTrack < 1; iTrack++) 
   {
     track = (STTrack*) fRecoTrackArray -> At(iTrack);
 
@@ -891,6 +890,14 @@ STEveDrawTask::DrawRecoTracks()
       recoTrackLine -> SetNextPoint(position.X(), y, position.Z());
     }
 
+    if (track -> GetCharge() == 0 || track -> GetParentID() != 0)
+      recoTrackLine -> SetLineColor(kGray+1);
+    else if (track -> GetCharge() > 0)
+      recoTrackLine -> SetLineColor(kRed);
+    else {
+      recoTrackLine -> SetLineColor(kBlue);
+      recoTrackLine -> SetLineWidth(3);
+    }
     recoTrackLine -> SetRnrSelf(fRnrSelf[kRecoTrack]);
   }
 }

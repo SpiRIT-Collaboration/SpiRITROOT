@@ -6,6 +6,9 @@
 
 #include "STTrack.hh"
 
+#include <iostream>
+using namespace std;
+
 ClassImp(STTrack)
 
 STTrack::STTrack() 
@@ -53,6 +56,21 @@ void STTrack::Clear(Option_t *option)
     DeleteCandidates();
   else
     fTrackCandidateArray.clear();
+}
+
+void STTrack::Print(Option_t *option) const
+{
+  cout << left << " STTrack" << endl;
+  cout << " - " << setw(13) << "Track ID"     << " : " << fTrackID << endl;
+  cout << " - " << setw(13) << "Vertex ID"    << " : " << fParentID << endl;
+  cout << " - " << setw(13) << "Helix ID"     << " : " << fSubTrackID << endl;
+
+  cout << " - " << setw(13) << "PID"          << " : " << fPID << endl;
+  cout << " - " << setw(13) << "Charge Sign"  << " : " << fCharge << endl;
+  cout << " - " << setw(13) << "Momentum"     << " : " << GetP() << " [MeV/c]" << endl;
+
+  TString vertex = "("+TString::Itoa(fVx,10)+", "+TString::Itoa(fVy,10)+", "+TString::Itoa(fVz,10)+")";
+  cout << " - " << setw(13) << "Vertex POCA " << " : " << vertex << " [mm]" << endl;
 }
 
 void STTrack::DeleteCandidates()

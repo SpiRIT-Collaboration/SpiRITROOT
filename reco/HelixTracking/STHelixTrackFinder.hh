@@ -19,6 +19,8 @@ class STHelixTrackFinder
 
     void BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray, TClonesArray *hitClusterArray);
 
+    TVector3 FindVertex(TClonesArray *tracks, Int_t nIterations = 1);
+
   private:
     /** 
      * Create new track with free hit from event map

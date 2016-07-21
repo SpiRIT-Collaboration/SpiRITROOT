@@ -19,6 +19,7 @@ class STTrack : public STTrackCandidate {
     virtual ~STTrack() {};
 
     virtual void Clear(Option_t *option = "");
+    virtual void Print(Option_t *option="") const;
     void DeleteCandidates();
 
     void SetParentID(Int_t value);

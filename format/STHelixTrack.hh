@@ -49,6 +49,8 @@ class STHelixTrack : public TObject
     Double_t fAlphaHead;     ///< Head position alpha
     Double_t fAlphaTail;     ///< Last position alpha
 
+    Bool_t fIsPositiveChargeParticle;
+
     std::vector<STHit *> fMainHits; //!
     std::vector<STHit *> fCandHits; //!
     std::vector<STHitCluster *> fHitClusters; //!
@@ -68,7 +70,9 @@ class STHelixTrack : public TObject
     void Remove(STHit *hit);
     void DeleteHits();
     void SortHits(bool increasing = true);
-    void SortHitsByPropagation(TVector3 vertex = TVector3(0, -213.3, -89));
+    void SortClusters(bool increasing = true);
+    void SortHitsByTimeOrder();
+    void SortClustersByTimeOrder();
 
     void AddHitCluster(STHitCluster *cluster);
     void AddHitClusterAtFront(STHitCluster *cluster);
@@ -99,6 +103,9 @@ class STHelixTrack : public TObject
     void SetRMSH(Double_t rms);
     void SetAlphaHead(Double_t alpha);
     void SetAlphaTail(Double_t alpha);
+
+    void DetermineParticleCharge(TVector3 vertex);
+    void SetIsPositiveChargeParticle(Bool_t val);
 
     void SetGenfitMomentum(Double_t p);
 
@@ -160,6 +167,8 @@ class STHelixTrack : public TObject
     Double_t GetRMSH() const;
     Double_t GetAlphaHead() const;
     Double_t GetAlphaTail() const;
+
+    Bool_t IsPositiveChargeParticle() const;
 
 
 

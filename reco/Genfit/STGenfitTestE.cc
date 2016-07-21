@@ -111,18 +111,6 @@ genfit::Track* STGenfitTestE::FitTrack(STTrackCandidate *recoTrack, STHelixTrack
   TVector3 posSeed = refCluster -> GetPosition();
   posSeed.SetMag(posSeed.Mag()/10.);
 
-  Bool_t isSecond = false;
-  for (auto cluster : *clusterArray) {
-    if (cluster -> IsStable()) {
-      if (!isSecond) {
-        isSecond = true;
-        continue;
-      }
-      refCluster = cluster;
-      break;
-    }
-  }
-
   TMatrixDSym covSeed(6);
   TMatrixD covMatrix = refCluster -> GetCovMatrix();
   for (Int_t iComp = 0; iComp < 3; iComp++)
@@ -136,10 +124,7 @@ genfit::Track* STGenfitTestE::FitTrack(STTrackCandidate *recoTrack, STHelixTrack
   momSeed.SetTheta(TMath::Pi()/2. - dip);
 
   trackCand.setCovSeed(covSeed);
-  if (pdg == 11 || pdg == -211)
-    trackCand.setPosMomSeed(posSeed, momSeed, -1);
-  else
-    trackCand.setPosMomSeed(posSeed, momSeed, 1);
+  trackCand.setPosMomSeed(posSeed, momSeed, recoTrack -> GetCharge());
 
   genfit::Track *gfTrack = new ((*fGenfitTrackArray)[fGenfitTrackArray -> GetEntriesFast()]) genfit::Track(trackCand, *fMeasurementFactory);
   gfTrack -> addTrackRep(new genfit::RKTrackRep(pdg));
@@ -168,7 +153,7 @@ STGenfitTestE::ProcessTrack(genfit::Track *gfTrack)
 }
 
 void 
-STGenfitTestE::SetTrackParameters(STTrackCandidate *recoTrack, genfit::Track *gfTrack)
+STGenfitTestE::SetTrackParameters(STTrackCandidate *recoTrack, genfit::Track *gfTrack, TVector3 vertex)
 {
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
@@ -185,17 +170,15 @@ STGenfitTestE::SetTrackParameters(STTrackCandidate *recoTrack, genfit::Track *gf
   if (fitStatus -> isFitted() == kFALSE || fitStatus -> isFitConverged() == kFALSE)
     return;
 
-  std::vector<genfit::TrackPoint *> pointArray = gfTrack -> getPointsWithMeasurement();
-  genfit::STSpacepointMeasurement *point = (genfit::STSpacepointMeasurement *) pointArray.at(0) -> getRawMeasurement(0);
-
-  try {
-    trackRep -> extrapolateToMeasurement(fitState, point);
-  } catch (genfit::Exception &e) {
-    return;
+  if (vertex.Z() > -900) {
+    try {
+      trackRep -> extrapolateToPoint(fitState, .1*vertex);
+    } catch (genfit::Exception &e) {
+    }
   }
 
-  TVector3 posReco(-99999,-99999,-99999);
-  TVector3 momReco(-99999,-99999,-99999);
+  TVector3 posReco(-999,-999,-999);
+  TVector3 momReco(-999,-999,-999);
 
   TMatrixDSym covMat(6,6);
   Double_t bChi2 = 0, fChi2 = 0, bNdf = 0, fNdf = 0;
@@ -213,6 +196,9 @@ STGenfitTestE::SetTrackParameters(STTrackCandidate *recoTrack, genfit::Track *gf
   if (fNdf < 3)
     return;
 
+  if (momReco.Z() < 0)
+    momReco = -momReco;
+
   recoTrack -> SetVertex(posReco*10.);
   recoTrack -> SetMomentum(momReco*1000.);
   recoTrack -> SetPID(trackRep -> getPDG());
@@ -221,7 +207,62 @@ STGenfitTestE::SetTrackParameters(STTrackCandidate *recoTrack, genfit::Track *gf
   recoTrack -> SetNDF(fNdf);
   recoTrack -> SetPVal(pVal);
 
+  Double_t charge = DetermineCharge(recoTrack, gfTrack);
+  recoTrack -> SetCharge(charge);
   ProcessExtrapolation(recoTrack, gfTrack);
+}
+
+Int_t
+STGenfitTestE::DetermineCharge(STTrackCandidate *recoTrack, genfit::Track *gfTrack)
+{
+  genfit::RKTrackRep *trackRep;
+  genfit::MeasuredStateOnPlane fitState;
+
+  try {
+    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+    fitState = gfTrack -> getFittedState();
+  } catch (genfit::Exception &e) {
+    return 0;
+  }
+
+  std::vector<genfit::TrackPoint *> pointArray = gfTrack -> getPointsWithMeasurement();
+  Int_t numPoints = pointArray.size();
+
+  genfit::STSpacepointMeasurement *point = (genfit::STSpacepointMeasurement *) pointArray.at(0) -> getRawMeasurement(0);
+  try {
+    trackRep -> extrapolateToMeasurement(fitState, point);
+  } catch (genfit::Exception &e) {
+    return 0;
+  }
+  TVector3 ref = fitState.getPos();
+  ref.SetY(0);
+
+  Double_t sum = 0;
+
+  for (Int_t iPoint = 1; iPoint < numPoints-1; iPoint++)
+  {
+    genfit::STSpacepointMeasurement *point1 = (genfit::STSpacepointMeasurement *) pointArray.at(iPoint) -> getRawMeasurement(0);
+    try {
+      trackRep -> extrapolateToMeasurement(fitState, point1);
+    } catch (genfit::Exception &e) {
+      return 0;
+    }
+    TVector3 pos1 = fitState.getPos();
+
+    genfit::STSpacepointMeasurement *point2 = (genfit::STSpacepointMeasurement *) pointArray.at(iPoint+1) -> getRawMeasurement(0);
+    try {
+      trackRep -> extrapolateToMeasurement(fitState, point2);
+    } catch (genfit::Exception &e) {
+      return 0;
+    }
+    TVector3 pos2 = fitState.getPos();
+
+    pos1.SetY(0);
+    pos2.SetY(0);
+    sum += ((pos1-ref).Cross(pos2-ref)).Y();
+  }
+
+  return sum > 0 ? -1 : 1;
 }
 
 void 
@@ -297,7 +338,7 @@ STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrack *recoTrack, STHelix
 
   Double_t dLength;
   try {
-    dLength = 10*trackRep -> extrapolateToPoint(fitState, .1*position);
+    dLength = trackRep -> extrapolateToPoint(fitState, .1*position);
   } catch (genfit::Exception &e) {
     recoTrack -> SetTotaldEdx(-1);
     return kFALSE;
@@ -315,7 +356,7 @@ STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrack *recoTrack, STHelix
 
     position = curCluster -> GetPosition();
     try {
-      dLength = 10*trackRep -> extrapolateToPoint(fitState, .1*position);
+      dLength = trackRep -> extrapolateToPoint(fitState, .1*position);
     } catch (genfit::Exception &e) {
       recoTrack -> SetTotaldEdx(-1);
       return kFALSE;

@@ -83,9 +83,12 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
   }
   fTrackArray -> Compress();
 
+  TVector3 vertex = FindVertex(fTrackArray);
+
   auto numTracks = fTrackArray -> GetEntries();
   for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
     auto track = (STHelixTrack *) fTrackArray -> At(iTrack);
+    track -> DetermineParticleCharge(vertex);
     HitClustering(track);
     track -> FinalizeHits();
     track -> FinalizeClusters();
@@ -391,7 +394,8 @@ STHelixTrackFinder::ConfirmHits(STHelixTrack *track, bool &tailToHead)
 bool
 STHelixTrackFinder::HitClustering(STHelixTrack *track)
 {
-  track -> SortHitsByPropagation();
+  track -> SortHitsByTimeOrder();
+
   auto trackHits = track -> GetHitArray();
   auto numHits = trackHits -> size();
 
@@ -655,4 +659,81 @@ STHelixTrackFinder::TangentOfMaxDipAngle(STHit *hit)
   Double_t r = abs(dy / sqrt(dx*dx + dz*dz));
 
   return r;
+}
+
+TVector3
+STHelixTrackFinder::FindVertex(TClonesArray *tracks, Int_t nIterations)
+{
+  auto TestZ = [tracks](TVector3 &v)
+  {
+    Double_t s = 0;
+    Int_t numUsedTracks = 0;
+
+    v.SetX(0);
+    v.SetY(0);
+
+    auto numTracks = tracks -> GetEntries();
+    for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
+      STHelixTrack *track = (STHelixTrack *) tracks -> At(iTrack);
+
+      TVector3 p;
+      bool extrapolated = track -> ExtrapolateToZ(v.Z(), p);
+      if (extrapolated == false)
+        continue;
+
+      v.SetX((numUsedTracks*v.X() + p.X())/(numUsedTracks+1));
+      v.SetY((numUsedTracks*v.Y() + p.Y())/(numUsedTracks+1));
+
+      if (numUsedTracks != 0)
+        s = (double)numUsedTracks/(numUsedTracks+1)*s + (v-p).Mag()/numUsedTracks;
+
+      numUsedTracks++;
+    }
+
+    return s;
+  };
+
+  Double_t z0 = 500;
+  Double_t dz = 200;
+  Double_t s0 = 1.e8;
+
+  const Int_t numSamples = 9;
+  Int_t halfOfSamples = (numSamples)/2;
+
+  Double_t zArray[numSamples] = {0};
+  for (Int_t iSample = 0; iSample <= numSamples; iSample++)
+    zArray[iSample] = (iSample - halfOfSamples) * dz + z0;
+
+  for (auto z : zArray) {
+    TVector3 v(0, 0, z);
+    Double_t s = TestZ(v);
+
+    if (s < s0) {
+      s0 = s;
+      z0 = z;
+    }
+  }
+
+  while (nIterations > 0) {
+    dz = dz/halfOfSamples;
+    for (Int_t iSample = 0; iSample <= numSamples; iSample++)
+      zArray[iSample] = (iSample - halfOfSamples) * dz + z0;
+
+    for (auto z : zArray) {
+      TVector3 v(0, 0, z);
+      Double_t s = TestZ(v);
+
+      if (s < s0) {
+        s0 = s;
+        z0 = z;
+      }
+    }
+
+    nIterations--;
+  }
+
+  TVector3 v(0, 0, z0);
+  TestZ(v);
+
+  return v;
 }
