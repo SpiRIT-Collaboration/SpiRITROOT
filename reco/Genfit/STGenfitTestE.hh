@@ -35,11 +35,12 @@ class STGenfitTestE
 
     void Init();
     genfit::Track* FitTrack(STTrackCandidate *recoTrack, STHelixTrack *helixTrack, Int_t pdg = 2212);
-    void SetTrackParameters(STTrackCandidate *recotrack, genfit::Track *gfTrack);
+    void SetTrackParameters(STTrackCandidate *recoTrack, genfit::Track *gfTrack, TVector3 vertex = TVector3(-999,-999,-999));
     Bool_t CalculatedEdx(genfit::Track *, STTrack *, STHelixTrack *);
 
   private:
     Bool_t ProcessTrack(genfit::Track *gfTrack);
+    Int_t DetermineCharge(STTrackCandidate *recoTrack, genfit::Track *gfTrack);
     void ProcessExtrapolation(STTrackCandidate *recoTrack, genfit::Track *gfTrack);
 
   private:

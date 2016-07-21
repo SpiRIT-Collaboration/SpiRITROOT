@@ -47,6 +47,8 @@ void STHelixTrack::Clear(Option_t *option)
   fAlphaHead = -999;
   fAlphaTail = -999;
 
+  fIsPositiveChargeParticle = true;
+
   if (TString(option) == "C")
     DeleteHits();
   else {
@@ -175,13 +177,20 @@ void STHelixTrack::SortHits(bool increasing)
   }
 }
 
-void STHelixTrack::SortHitsByPropagation(TVector3 vertex)
+void STHelixTrack::SortClusters(bool increasing)
 {
-  if (std::abs((vertex-PositionAtHead()).Mag()) < std::abs((vertex-PositionAtTail()).Mag()))
-    SortHits(false);
-  else
-    SortHits(true);
+  if (increasing) {
+    auto sorting = STHitSortByIncreasingLength(this);
+    sort(fHitClusters.begin(), fHitClusters.end(), sorting);
+  } else {
+    auto sorting = STHitSortByDecreasingLength(this);
+    sort(fHitClusters.begin(), fHitClusters.end(), sorting);
+  }
 }
+
+void STHelixTrack::SortHitsByTimeOrder() { SortHits(fIsPositiveChargeParticle); }
+
+void STHelixTrack::SortClustersByTimeOrder() { SortHits(fIsPositiveChargeParticle); }
 
 void STHelixTrack::AddHitCluster(STHitCluster *cluster)
 {
@@ -240,6 +249,23 @@ void STHelixTrack::SetRMSW(Double_t rms)         { fRMSW = rms; }
 void STHelixTrack::SetRMSH(Double_t rms)         { fRMSH = rms; }
 void STHelixTrack::SetAlphaHead(Double_t alpha)  { fAlphaHead = alpha; }
 void STHelixTrack::SetAlphaTail(Double_t alpha)  { fAlphaTail = alpha; }
+
+void STHelixTrack::DetermineParticleCharge(TVector3 vertex)
+{
+  Double_t lHead = ExtrapolateToAlpha(fAlphaHead);
+  Double_t lTail = ExtrapolateToAlpha(fAlphaTail);
+
+  TVector3 q;
+  Double_t alpha;
+  Double_t lVertex = ExtrapolateToPointAlpha(vertex, q, alpha);
+
+  if (std::abs(lVertex-lTail) > std::abs(lVertex - lHead))
+    fIsPositiveChargeParticle = true;
+  else
+    fIsPositiveChargeParticle = false;
+}
+
+void STHelixTrack::SetIsPositiveChargeParticle(Bool_t val)  { fIsPositiveChargeParticle = val; }
 
 void STHelixTrack::SetGenfitMomentum(Double_t p) { fGenfitMomentum = p; }
 
@@ -374,6 +400,8 @@ Double_t STHelixTrack::GetRMSH()       const { return fRMSH; }
 Double_t STHelixTrack::GetAlphaHead()  const { return fAlphaHead; }
 Double_t STHelixTrack::GetAlphaTail()  const { return fAlphaTail; }
 
+Bool_t STHelixTrack::IsPositiveChargeParticle()  const { return fIsPositiveChargeParticle; }
+
 
 
 Int_t STHelixTrack::GetNumHits() const { return fMainHits.size(); }
@@ -418,7 +446,7 @@ STHelixTrack::DistCircle(TVector3 pointGiven) const
   return sqrt(dx*dx + dz*dz) - fHelixRadius;
 }
 
-Int_t STHelixTrack::Charge()   const { return DipAngle()*fAlphaSlope > 0 ? 1 : -1; }
+Int_t STHelixTrack::Charge()   const { return fIsPositiveChargeParticle ? 1 : -1; }
 Int_t STHelixTrack::Helicity() const { return fAlphaSlope > 0 ? 1 : -1; }
 
 TVector3 STHelixTrack::PositionAtHead() const { return PositionByAlpha(fAlphaHead); }

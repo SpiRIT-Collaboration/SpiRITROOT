@@ -87,6 +87,7 @@ Int_t STTrackCandidate::GetPID()                         { return fPID; }
 Double_t STTrackCandidate::GetMass()                     { return fMass; }
 Int_t STTrackCandidate::GetCharge()                      { return fCharge; }
 
+Double_t STTrackCandidate::DistanceToPrimaryVertex(TVector3 vertex) { return (GetVertex() - vertex).Mag(); }
 TVector3 STTrackCandidate::GetVertex()                   { return TVector3(fVx, fVy, fVz); }
 TVector3 STTrackCandidate::GetTargetPlaneVertex()        { return TVector3(fBeamVx, fBeamVy, fBeamVz); }
 TVector3 STTrackCandidate::GetBeamVertex()               { return TVector3(fBeamVx, fBeamVy, fBeamVz); }
