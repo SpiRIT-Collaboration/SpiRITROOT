@@ -99,8 +99,10 @@ void STPadPlaneMap::Clear()
     for (Int_t layer = 0; layer < 112; layer++) 
       fPadMap[row][layer] -> Clear();
 
+  fEndOfMap = false;
   fNextRow = 107;
   fNextLayer = 90;
+  fEndOfFreeMap = false;
   fNextFreeRow = 107;
   fNextFreeLayer = 90;
 }
@@ -118,7 +120,7 @@ void STPadPlaneMap::AddHits(hits_t *hits)
 
 STHit *STPadPlaneMap::PullOutNextHit()
 {
-  if (fNextRow == 0 && fNextLayer == 0)
+  if (fEndOfMap)
     return nullptr;
 
   STHit *hit = fPadMap[fNextRow][fNextLayer] -> PullOutNextHit();
@@ -126,6 +128,12 @@ STHit *STPadPlaneMap::PullOutNextHit()
   if (hit == nullptr) {
     if (fNextRow == 0) {
       fNextLayer--;
+
+      if (fNextLayer == -1)
+        fNextLayer = 111;
+      else if (fNextLayer == 90)
+        fEndOfMap = true;
+
       fNextRow = 107;
     } else
       fNextRow--;
@@ -138,7 +146,7 @@ STHit *STPadPlaneMap::PullOutNextHit()
 
 STHit *STPadPlaneMap::PullOutNextFreeHit()
 {
-  if (fNextFreeRow == 0 && fNextFreeLayer == 0)
+  if (fEndOfFreeMap)
     return nullptr;
 
   STHit *hit = fPadMap[fNextFreeRow][fNextFreeLayer] -> PullOutNextFreeHit();
@@ -146,6 +154,12 @@ STHit *STPadPlaneMap::PullOutNextFreeHit()
   if (hit == nullptr) {
     if (fNextFreeRow == 0) {
       fNextFreeLayer--;
+
+      if (fNextFreeLayer == -1)
+        fNextFreeLayer = 111;
+      else if (fNextFreeLayer == 90)
+        fEndOfFreeMap = true;
+
       fNextFreeRow = 107;
     } else
       fNextFreeRow--;

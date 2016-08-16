@@ -50,6 +50,7 @@ Task/STSMETask.cc
 Task/STRiemannTrackingETask.cc
 Task/STGenfitETask.cc
 Task/STHelixTrackingTask.cc
+Task/STMCTruthTask.cc
 
 GETDecoder/GETDecoder.cc
 GETDecoder/GETFrameInfo.cc

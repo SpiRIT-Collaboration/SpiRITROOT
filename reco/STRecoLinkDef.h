@@ -13,6 +13,7 @@
 #pragma link C++ class STRiemannTrackingETask+;
 #pragma link C++ class STGenfitETask+;
 #pragma link C++ class STHelixTrackingTask+;
+#pragma link C++ class STMCTruthTask+;
 
 #pragma link C++ class GETDecoder+;
 #pragma link C++ class GETFrameInfo+;
