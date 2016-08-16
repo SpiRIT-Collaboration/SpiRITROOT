@@ -63,9 +63,11 @@ class STPadPlaneMap
   private:
     STPadHitContainer *fPadMap[108][112];
 
+    bool fEndOfMap = false;
     Int_t fNextRow = 107;
     Int_t fNextLayer = 90;
 
+    bool fEndOfFreeMap = false;
     Int_t fNextFreeRow = 107;
     Int_t fNextFreeLayer = 90;
 
