@@ -41,6 +41,7 @@
 #pragma link C++ class STGGNoiseSubtractor+;
 
 #pragma link C++ class STDecoderTask+;
+#pragma link C++ class STSlimPadReaderTask+;
 
 #pragma link C++ class STPSATask+;
 #pragma link C++ class STPSA+;

@@ -125,6 +125,7 @@ LinearTracking/STLinearTrackFinder2.cc
 LinearTracking/STLinearTrackFitter.cc
 
 STDecoderTask.cc
+STSlimPadReaderTask.cc
 
 STPSATask.cc
 STHitClusteringTask.cc
