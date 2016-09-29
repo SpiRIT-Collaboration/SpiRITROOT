@@ -38,6 +38,8 @@ class STTrackCandidate : public TObject {
     void SetMomentum(Double_t px, Double_t py, Double_t pz);
 
     void AdddEdx(Double_t value);
+    void AdddE(Double_t value);
+    void Adddx(Double_t value);
 
     void SetTrackLength(Double_t value);
     void SetTotaldEdx(Double_t value);
@@ -91,6 +93,8 @@ class STTrackCandidate : public TObject {
 
     Double_t GetTrackLength();
     std::vector<Double_t> *GetdEdxArray();  ///< Array of dE/dx of cluster
+    std::vector<Double_t> *GetdEArray();    ///< Array of dE of cluster
+    std::vector<Double_t> *GetdxArray();    ///< Array of dx of cluster
     Double_t GetTotaldEdx();                ///< [total charge] / [total length]
 
     Double_t GetRiemanndEdx();  ///< Do not use in v1.
@@ -155,6 +159,8 @@ class STTrackCandidate : public TObject {
 
     Double_t fTrackLength;
     std::vector<Double_t> fdEdxArray;
+    std::vector<Double_t> fdEArray;
+    std::vector<Double_t> fdxArray;
     Double_t fdEdxTotal;
 
     Double_t fRiemanndEdx;

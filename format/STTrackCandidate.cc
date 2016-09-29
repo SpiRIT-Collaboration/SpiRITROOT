@@ -73,6 +73,8 @@ void STTrackCandidate::SetMomentum(TVector3 vector)                       { fPx 
 void STTrackCandidate::SetMomentum(Double_t px, Double_t py, Double_t pz) { fPx = px; fPy = py; fPz = pz; }
 
 void STTrackCandidate::AdddEdx(Double_t value)                            { fdEdxArray.push_back(value); }
+void STTrackCandidate::AdddE(Double_t value)                              { fdEArray.push_back(value); }
+void STTrackCandidate::Adddx(Double_t value)                              { fdxArray.push_back(value); }
 void STTrackCandidate::SetTrackLength(Double_t value)                     { fTrackLength = value; }
 void STTrackCandidate::SetTotaldEdx(Double_t value)                       { fdEdxTotal = value; }
 
@@ -128,6 +130,8 @@ Double_t STTrackCandidate::GetPz()                       { return fPz; }
 
 Double_t STTrackCandidate::GetTrackLength()              { return fTrackLength; }
 std::vector<Double_t> *STTrackCandidate::GetdEdxArray()  { return &fdEdxArray; }
+std::vector<Double_t> *STTrackCandidate::GetdEArray()    { return &fdEArray; }
+std::vector<Double_t> *STTrackCandidate::GetdxArray()    { return &fdxArray; }
 
 Double_t STTrackCandidate::GetTotaldEdx()                { return fdEdxTotal; }
 
@@ -192,7 +196,12 @@ void STTrackCandidate::SetTrackCandidate(STTrackCandidate *track)
 
   fdEdxArray.clear();
   std::vector<Double_t> *tempArray = track -> GetdEdxArray();
+  std::vector<Double_t> *tempdEArray = track -> GetdEArray();
+  std::vector<Double_t> *tempdxArray = track -> GetdxArray();
   Int_t n = tempArray -> size();
-  for (Int_t i = 0; i < n; i++)
+  for (Int_t i = 0; i < n; i++) {
     fdEdxArray.push_back(tempArray -> at(i));
+    fdEArray.push_back(tempdEArray -> at(i));
+    fdxArray.push_back(tempdxArray -> at(i));
+  }
 }
