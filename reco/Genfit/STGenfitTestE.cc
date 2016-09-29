@@ -372,6 +372,8 @@ STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrack *recoTrack, STHelix
 
       Double_t dEdx = dE/dx;
       recoTrack -> AdddEdx(dEdx);
+      recoTrack -> AdddE(dE);
+      recoTrack -> Adddx(dx);
 
       totaldE += dE;
       totaldx += dx;
