@@ -73,13 +73,31 @@ STHitCluster::AddHit(STHit *hit)
 
   CalculatePosition(hitPos, charge);
 
-  if (GetNumHits() > 0)
-    CalculateCovMatrix(hitPos, charge);
-  else {
-    fCovMatrix(0, 0) = hit -> GetDx();
-    fCovMatrix(1, 1) = hit -> GetDy();
-    fCovMatrix(2, 2) = hit -> GetDz();
+  Int_t numHits = GetNumHits();
+  if (numHits == 0) {
+    fCovMatrix(0, 0) = hit -> GetDx()*hit -> GetDx();
+    fCovMatrix(1, 1) = hit -> GetDy()*hit -> GetDy();
+    fCovMatrix(2, 2) = hit -> GetDz()*hit -> GetDz();
   }
+  else  {
+    if (numHits == 1) {
+      fCovMatrix(0, 0) = 0;
+      fCovMatrix(1, 1) = 0;
+      fCovMatrix(2, 2) = 0;
+      CalculateCovMatrix(hitPos, charge);
+    }
+    else
+      CalculateCovMatrix(hitPos, charge);
+
+    if (fCovMatrix(0, 0) < .64)
+      fCovMatrix(0, 0) = .64;
+    if (fCovMatrix(2, 2) < 1.44)
+      fCovMatrix(2, 2) = 1.44;
+  }
+
+  fDx = sqrt(fCovMatrix(0, 0));
+  fDy = sqrt(fCovMatrix(1, 1));
+  fDz = sqrt(fCovMatrix(2, 2));
 
   fCharge += charge;
 
@@ -108,17 +126,11 @@ STHitCluster::CalculateCovMatrix(TVector3 hitPos, Double_t charge)
 
   for (Int_t iFirst = 0; iFirst < 3; iFirst++) {
     for (Int_t iSecond = 0; iSecond < iFirst + 1; iSecond++) {
-      fCovMatrix(iFirst, iSecond) = fCharge*fCovMatrix(iFirst, iSecond)/(fCharge + charge);
-      fCovMatrix(iFirst, iSecond) += charge*(hitPos[iFirst] 
-                                     - position[iFirst])*(hitPos[iSecond] 
-                                     - position[iSecond])/fCharge;
+      fCovMatrix(iFirst, iSecond) = fCharge * fCovMatrix(iFirst, iSecond) / (fCharge + charge);
+      fCovMatrix(iFirst, iSecond) += charge * (hitPos[iFirst] - position[iFirst]) * (hitPos[iSecond] - position[iSecond])/fCharge;
       fCovMatrix(iSecond, iFirst) = fCovMatrix(iFirst, iSecond);
     }
   }
-
-  fDx = fCovMatrix(0, 0);
-  fDy = fCovMatrix(1, 1);
-  fDz = fCovMatrix(2, 2);
 }
 
 void STHitCluster::SetClusterID(Int_t clusterID)
@@ -133,3 +145,11 @@ Double_t STHitCluster::GetLength() { return fLength; }
 
 void STHitCluster::SetIsStable(Bool_t isStable) { fIsClustered = isStable; }
 Bool_t STHitCluster::IsStable() { return fIsClustered; }
+
+void STHitCluster::SetPOCA(TVector3 p)
+{
+  fPOCAX = p.X();
+  fPOCAY = p.Y();
+  fPOCAZ = p.Z();
+}
+TVector3 STHitCluster::GetPOCA() { return TVector3(fPOCAX, fPOCAY, fPOCAZ); }

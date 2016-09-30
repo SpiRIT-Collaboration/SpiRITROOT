@@ -45,12 +45,19 @@ class STHitCluster : public STHit
     void SetIsStable(Bool_t isStable = true);
     Bool_t IsStable();
 
+    void SetPOCA(TVector3 p);
+    TVector3 GetPOCA();
+
   protected:
     TMatrixD fCovMatrix;                  ///< Cluster covariance matrix
     vector<Int_t>  fHitIDArray;           ///< Vector array of hit IDs
     vector<STHit*> fHitPtrArray;          //! <
 
     Double_t fLength;
+
+    Double_t fPOCAX;
+    Double_t fPOCAY;
+    Double_t fPOCAZ;
 
     /**
      * Calculate weighted mean for cluster position. (Weight = charge) <br>
