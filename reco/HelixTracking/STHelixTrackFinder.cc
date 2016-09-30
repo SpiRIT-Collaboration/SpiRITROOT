@@ -3,6 +3,8 @@
 #include <iostream>
 using namespace std;
 
+#include "STGlobal.hh"
+
 ClassImp(STHelixTrackFinder)
 
 STHelixTrackFinder::STHelixTrackFinder()
@@ -89,7 +91,12 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
   for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
     auto track = (STHelixTrack *) fTrackArray -> At(iTrack);
     track -> DetermineParticleCharge(vertex);
-    HitClustering(track);
+    if (fClusteringOption == 0)
+      HitClustering(track, 24);
+    else if (fClusteringOption == 1)
+      HitClustering(track, 12);
+    else if (fClusteringOption == 2)
+      HitClustering2(track);
     track -> FinalizeHits();
     track -> FinalizeClusters();
   }
@@ -392,7 +399,221 @@ STHelixTrackFinder::ConfirmHits(STHelixTrack *track, bool &tailToHead)
 }
 
 bool
-STHelixTrackFinder::HitClustering(STHelixTrack *track)
+STHelixTrackFinder::HitClustering2(STHelixTrack *track)
+{
+  track -> SortHitsByTimeOrder();
+
+  auto trackHits = track -> GetHitArray();
+  auto numHits = trackHits -> size();
+
+  auto CheckRange = [](STHitCluster *cluster) {
+    auto x = cluster -> GetX();
+    auto y = cluster -> GetY();
+    auto z = cluster -> GetZ();
+
+    if (x > 412 || x < -412 || y < -520 || y > 20 || z < 20 || z > 1324)
+      return false;
+
+    Int_t layer = z / 12;
+    if (layer > 89 && layer < 100)
+      return false;
+
+    return true;
+  };
+
+  auto CheckBuildByLayer = [track](STHit *hit) {
+    TVector3 q;
+    Double_t alpha;
+    track -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
+
+    auto direction = track -> Direction(alpha);
+    Double_t angle = TMath::ATan2(TMath::Abs(direction.Z()), direction.X());
+    //if (angle > TMath::ATan2(12,8) && angle < TMath::ATan2(12,-8))
+    if (angle > TMath::ATan2(1,1) && angle < TMath::ATan2(1,-1))
+      return true;
+    else
+      return false;
+  };
+
+  auto SetClusterLength = [track](STHitCluster *cluster) {
+    auto row = cluster -> GetRow();
+    auto layer = cluster -> GetLayer();
+    auto alpha = track -> AlphaAtPosition(cluster -> GetPosition());
+    Double_t length;
+    TVector3 q;
+    if (layer == -1) {
+      Double_t x0 = (row)*8.-432.;
+      Double_t x1 = (row+1)*8.-432.;
+      length = TMath::Abs(track -> ExtrapolateToX(x0, alpha, q) - track -> ExtrapolateToX(x1, alpha, q));
+    } else {
+      Double_t z0 = (layer)*12.;
+      Double_t z1 = (layer+1)*12.;
+      length = TMath::Abs(track -> ExtrapolateToZ(z0, alpha, q) - track -> ExtrapolateToZ(z1, alpha, q));
+    }
+    cluster -> SetLength(length);
+  };
+
+  bool buildNewCluster = true;
+  auto curHit = trackHits -> at(0);
+  bool buildByLayer = CheckBuildByLayer(curHit);
+
+  STHitCluster *lastCluster = nullptr;
+  lastCluster = NewCluster(curHit);
+
+  Int_t rowMin = curHit -> GetRow();
+  Int_t rowMax = curHit -> GetRow();
+  Int_t layerMin = curHit -> GetLayer();
+  Int_t layerMax = curHit -> GetLayer();
+
+  if (buildByLayer) {
+    layerMin = layerMin = 0;
+    layerMin = layerMax = -1;
+    lastCluster -> SetRow(-1);
+    lastCluster -> SetLayer(curHit -> GetLayer());
+  } else {
+    rowMin = rowMin = 0;
+    rowMin = rowMax = -1;
+    lastCluster -> SetRow(curHit -> GetRow());
+    lastCluster -> SetLayer(-1);
+  }
+  SetClusterLength(lastCluster);
+
+  std::vector<STHitCluster *> buildingClusters;
+  buildingClusters.push_back(lastCluster);
+
+  for (auto iHit = 1; iHit < numHits; iHit++)
+  {
+    curHit = trackHits -> at(iHit);
+
+    auto row = curHit -> GetRow();
+    auto layer = curHit -> GetLayer();
+
+    if (!buildNewCluster)
+    {
+      if (buildByLayer) {
+        if (row < rowMin || row > rowMax) {
+          buildNewCluster = true;
+          layerMin = layer;
+          layerMax = layer;
+        }
+      } else {
+        if (layer < layerMin || layer > layerMax) {
+          buildNewCluster = true;
+          rowMin = row;
+          rowMax = row;
+        }
+      }
+
+      if (buildNewCluster) {
+        buildingClusters.clear();
+        buildByLayer = !buildByLayer;
+      }
+    }
+
+    if (buildByLayer)
+    {
+      bool createNewCluster = true;
+      if (layer < layerMin || layer > layerMax) {
+        for (auto cluster : buildingClusters) {
+          if (layer == cluster -> GetLayer()) {
+            createNewCluster = false;
+            cluster -> AddHit(curHit);
+          }
+        }
+      } else
+        createNewCluster = false;
+
+      if (buildNewCluster) {
+        if (row < rowMin) rowMin = row;
+        if (row > rowMax) rowMax = row;
+      } else
+        createNewCluster = false;
+
+      if (createNewCluster) {
+        if (buildByLayer !=  CheckBuildByLayer(curHit)) {
+          buildNewCluster = false;
+          lastCluster = nullptr;
+        }
+        else {
+          if (lastCluster != nullptr) {
+            track -> AddHitCluster(lastCluster);
+            lastCluster -> SetIsStable(true);
+          }
+          lastCluster = NewCluster(curHit);
+          lastCluster -> SetRow(-1);
+          lastCluster -> SetLayer(layer);
+          SetClusterLength(lastCluster);
+          buildingClusters.push_back(lastCluster);
+        }
+      }
+    }
+    else
+    {
+      bool createNewCluster = true;
+      if (row < rowMin || row > rowMax) {
+        for (auto cluster : buildingClusters) {
+          if (row == cluster -> GetRow()) {
+            createNewCluster = false;
+            cluster -> AddHit(curHit);
+          }
+        }
+      } else
+        createNewCluster = false;
+
+      if (buildNewCluster) {
+        if (layer < layerMin) layerMin = layer;
+        if (layer > layerMax) layerMax = layer;
+      } else
+        createNewCluster = false;
+
+      if (createNewCluster) {
+        if (buildByLayer !=  CheckBuildByLayer(curHit)) {
+          buildNewCluster = false;
+          lastCluster = nullptr;
+        }
+        else {
+          if (lastCluster != nullptr) {
+            track -> AddHitCluster(lastCluster);
+            lastCluster -> SetIsStable(true);
+          }
+          lastCluster = NewCluster(curHit);
+          lastCluster -> SetRow(row);
+          lastCluster -> SetLayer(-1);
+          SetClusterLength(lastCluster);
+          buildingClusters.push_back(lastCluster);
+        }
+      }
+    }
+  }
+
+  Int_t numCluster = fHitClusterArray -> GetEntries();
+  for (auto iCluster = 0; iCluster < numCluster; iCluster++)
+  {
+    auto cluster = (STHitCluster *) fHitClusterArray -> At(iCluster);
+
+    if (cluster -> IsStable()) {
+      if (CheckRange(cluster))
+        cluster -> SetIsStable(true);
+      else
+        cluster -> SetIsStable(false);
+    }
+  }
+
+  if (track -> GetNumClusters() < 5) {
+    track -> SetIsBad();
+    return false;
+  }
+
+  if (fFitter -> FitCluster(track) == false) {
+    fFitter -> Fit(track);
+    track -> SetIsLine();
+  }
+
+  return true;
+}
+
+bool
+STHelixTrackFinder::HitClustering(STHelixTrack *track, Double_t cut)
 {
   track -> SortHitsByTimeOrder();
 
@@ -428,7 +649,7 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
     return true;
   };
 
-  auto lengthCut = 12. / TMath::Cos(track -> DipAngle());
+  auto lengthCut = cut / TMath::Cos(track -> DipAngle());
 
   TVector3 q, m;
   bool isStableCluster = false;
@@ -498,13 +719,16 @@ STHelixTrackFinder::HitClustering(STHelixTrack *track)
 
     if (endCluster) {
       curCluster -> SetIsStable(isStableCluster);
+      addedLength += .5*dLength;
       curCluster -> SetLength(addedLength);
       track -> AddHitCluster(curCluster);
       curCluster = NewCluster(curHit);
       addedLength = .5*dLength;
     }
-    else
+    else {
       curCluster -> AddHit(curHit);
+      addedLength += .5*dLength;
+    }
   }
 
   curCluster -> SetIsStable(false);
@@ -737,3 +961,5 @@ STHelixTrackFinder::FindVertex(TClonesArray *tracks, Int_t nIterations)
 
   return v;
 }
+
+void STHelixTrackFinder::SetClusteringOption(Int_t opt) { fClusteringOption = opt; }

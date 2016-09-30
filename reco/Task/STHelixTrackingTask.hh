@@ -20,17 +20,19 @@ class STHelixTrackingTask : public STRecoTask
     virtual void Exec(Option_t *opt);
 
     void SetNumTracksLowLimit(Int_t limit);
+    void SetClusteringOption(Int_t opt);
 
   private:
     TClonesArray *fHitArray = nullptr;
     TClonesArray *fHitClusterArray = nullptr;
     TClonesArray *fTrackArray = nullptr;
 
+    Bool_t fIsClusterPersistence = kFALSE;
+
     STHelixTrackFinder* fTrackFinder;
 
     Int_t fNumTracksLowLimit = 1;
-
-    Bool_t fIsClusterPersistence = kFALSE;
+    Int_t fClusteringOption = 0;
 
 
   ClassDef(STHelixTrackingTask, 1)
