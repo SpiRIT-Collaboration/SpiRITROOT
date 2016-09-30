@@ -756,6 +756,86 @@ STHelixTrack::ExtrapolateToZ(Double_t z,
 }
 
 bool
+STHelixTrack::ExtrapolateToX(Double_t x, Double_t alphaRef, TVector3 &pointOnHelix) const
+{
+  if (CheckExtrapolateToX(x) == false)
+    return false;
+
+  Double_t zOff = sqrt(fHelixRadius * fHelixRadius - (x - fXHelixCenter) * (x - fXHelixCenter));
+  Double_t z1 = fZHelixCenter + zOff;
+  Double_t z2 = fZHelixCenter - zOff;
+
+  Double_t alpha = TMath::ATan2(z1-fZHelixCenter, x-fXHelixCenter);
+  Double_t alphaTemp = alpha;
+  Double_t d1Cand = std::abs(alphaTemp-alphaRef);
+  Double_t d1Temp = d1Cand;
+
+  while (1) {
+    alphaTemp = alpha + 2*TMath::Pi();
+    d1Temp = std::abs(alphaTemp-alphaRef);
+    if (d1Temp >= d1Cand)
+      break;
+    else {
+      alpha = alphaTemp;
+      d1Cand = d1Temp;
+    }
+  }
+  while (1) {
+    alphaTemp = alpha - 2*TMath::Pi();
+    d1Temp = std::abs(alphaTemp-alphaRef);
+    if (d1Temp >= d1Cand)
+      break;
+    else {
+      alpha = alphaTemp;
+      d1Cand = d1Temp;
+    }
+  }
+  pointOnHelix = PositionByAlpha(alpha);
+
+  return true;
+}
+
+bool
+STHelixTrack::ExtrapolateToZ(Double_t z, Double_t alphaRef, TVector3 &pointOnHelix) const
+{
+  if (CheckExtrapolateToZ(z) == false)
+    return false;
+
+  Double_t xOff = sqrt(fHelixRadius * fHelixRadius - (z - fZHelixCenter) * (z - fZHelixCenter));
+  Double_t x1 = fXHelixCenter + xOff;
+  Double_t x2 = fXHelixCenter - xOff;
+
+  Double_t alpha = TMath::ATan2(z-fZHelixCenter, x1-fXHelixCenter);
+  Double_t alphaTemp = alpha;
+  Double_t d1Cand = std::abs(alphaTemp-alphaRef);
+  Double_t d1Temp = d1Cand;
+
+  while (1) {
+    alphaTemp = alpha + 2*TMath::Pi();
+    d1Temp = std::abs(alphaTemp-alphaRef);
+    if (d1Temp >= d1Cand)
+      break;
+    else {
+      alpha = alphaTemp;
+      d1Cand = d1Temp;
+    }
+  }
+  while (1) {
+    alphaTemp = alpha - 2*TMath::Pi();
+    d1Temp = std::abs(alphaTemp-alphaRef);
+    if (d1Temp >= d1Cand)
+      break;
+    else {
+      alpha = alphaTemp;
+      d1Cand = d1Temp;
+    }
+  }
+  pointOnHelix = PositionByAlpha(alpha);
+
+  return true;
+}
+
+bool
 STHelixTrack::ExtrapolateToZ(Double_t z, TVector3 &pointOnHelix) const
 {
   TVector3 position1, position2;
@@ -823,6 +903,15 @@ STHelixTrack::Map(TVector3 p) const
   ExtrapolateByMap(p, q, m);
 
   return m;
+}
+
+Double_t
+STHelixTrack::AlphaAtPosition(TVector3 p)
+{
+  Double_t alpha;
+  TVector3 q(0,0,0);
+  ExtrapolateToPointAlpha(p, q, alpha);
+  return alpha;
 }
 
 Double_t 
