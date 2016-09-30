@@ -58,6 +58,8 @@ STPadResponseTask::Init()
   fRawEventArray = new TClonesArray("STRawEvent"); 
   ioman->Register("PPEvent", "ST", fRawEventArray, fIsPersistence);
 
+  fRawEvent = new ((*fRawEventArray)[0]) STRawEvent();
+
   fTBTime    = fPar -> GetTBTime();
   fNTbs      = fPar -> GetNumTbs();
   fXPadPlane = fPar -> GetPadPlaneX();
@@ -80,10 +82,11 @@ STPadResponseTask::Exec(Option_t* option)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Exec of STPadResponseTask");
 
+  fRawEvent -> Clear();
+
   if(!fRawEventArray) 
     fLogger->Fatal(MESSAGE_ORIGIN,"No RawEventArray!");
 
-  fRawEvent = new ((*fRawEventArray)[0]) STRawEvent();
   fRawEvent->SetEventID(fEventID);
 
   ReInitDummy();
