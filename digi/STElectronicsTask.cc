@@ -82,6 +82,8 @@ STElectronicsTask::Init()
   for(Int_t i=0; i<100; i++) 
     fPulser[fNBinPulser++] = pulserConstant * stpulse -> Pulse(i, 1, 0);
 
+  fRawEvent = new ((*fRawEventArray)[0]) STRawEvent();
+
   return kSUCCESS;
 }
 
@@ -97,7 +99,7 @@ STElectronicsTask::Exec(Option_t* option)
 
   Int_t nPads = fPPEvent -> GetNumPads();
 
-  fRawEvent = new STRawEvent();
+  fRawEvent -> Clear();
   fRawEvent -> SetEventID(fPPEvent->GetEventID());
 
   STPad* padI;
@@ -144,9 +146,6 @@ STElectronicsTask::Exec(Option_t* option)
     fRawEvent -> SetPad(padO);
     delete padO;
   }
-
-  new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
-  delete fRawEvent;
 
   fLogger->Info(MESSAGE_ORIGIN, 
                 Form("Event #%d : Raw Event created.",
