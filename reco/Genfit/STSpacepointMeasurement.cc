@@ -40,14 +40,10 @@ STSpacepointMeasurement::STSpacepointMeasurement(const STHitCluster *detHit, con
   rawHitCoords_(1) = pos.Y()/10.;
   rawHitCoords_(2) = pos.Z()/10.;
 
-  TVector3 posSigma = detHit -> GetPosSigma();
   TMatrixDSym cov(3);
-  for (Int_t iComp = 0; iComp < 3; iComp++)
-    cov(iComp, iComp) = 0.05*0.05;
-//    cov(iComp, iComp) = posSigma(iComp)*posSigma(iComp);
-//    cov(0, 0) = 0.08*0.08;
-//    cov(1, 1) = 0.02*0.02;
-//    cov(2, 2) = 0.12*0.12;
+  cov(0,0) = 0.2*0.2;
+  cov(1,1) = 0.1*0.1;
+  cov(2,2) = 0.2*0.2;
 
   rawHitCov_ = cov;
   detId_ = hit -> getDetId();
