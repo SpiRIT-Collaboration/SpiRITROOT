@@ -21,6 +21,8 @@ class STHelixTrackFinder
 
     TVector3 FindVertex(TClonesArray *tracks, Int_t nIterations = 1);
 
+    void SetClusteringOption(Int_t opt);
+
   private:
     /** 
      * Create new track with free hit from event map
@@ -87,7 +89,8 @@ class STHelixTrackFinder
     /**
      * Clusterize Hits
      */
-    bool HitClustering(STHelixTrack *track);
+    bool HitClustering(STHelixTrack *track, Double_t cut);
+    bool HitClustering2(STHelixTrack *track);
 
     /**
      * Create new cluster with given hit.
@@ -129,6 +132,8 @@ class STHelixTrackFinder
     vhit_t fCandHits = nullptr;  ///< Candidate hits comming from fEventMap
     vhit_t fGoodHits = nullptr;  ///< Selected good hits from current fCandHits
     vhit_t fBadHits  = nullptr;  ///< Selected bad  hits from current fCandHits
+
+    Int_t fClusteringOption = 0;
 
 
   ClassDef(STHelixTrackFinder, 2)
