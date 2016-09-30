@@ -189,6 +189,7 @@ STGenfitTestE::SetTrackParameters(STTrackCandidate *recoTrack, genfit::Track *gf
     fitState.getPosMomCov(posReco, momReco, covMat);
     pVal = fitStatus -> getPVal();
     fKalmanFitter -> getChiSquNdf(gfTrack, trackRep, bChi2, fChi2, bNdf, fNdf);
+
   } catch (genfit::Exception &e) {
     return;
   }
@@ -206,6 +207,7 @@ STGenfitTestE::SetTrackParameters(STTrackCandidate *recoTrack, genfit::Track *gf
   recoTrack -> SetChi2(fChi2);
   recoTrack -> SetNDF(fNdf);
   recoTrack -> SetPVal(pVal);
+  recoTrack -> SetCovSeed(covMat);
 
   Double_t charge = DetermineCharge(recoTrack, gfTrack);
   recoTrack -> SetCharge(charge);
@@ -357,6 +359,7 @@ STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrack *recoTrack, STHelix
     position = curCluster -> GetPosition();
     try {
       dLength = trackRep -> extrapolateToPoint(fitState, .1*position);
+      curCluster -> SetPOCA(fitState.getPos());
     } catch (genfit::Exception &e) {
       recoTrack -> SetTotaldEdx(-1);
       return kFALSE;
