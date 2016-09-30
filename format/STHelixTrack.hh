@@ -229,6 +229,12 @@ class STHelixTrack : public TObject
     TVector3 Direction(Double_t alpha) const;       ///< Direction at angle alpha
 
     /**
+     * Extrapolate track due to alpha angle of the given point.
+     * Returns alpha;
+     */
+    Double_t AlphaAtPosition(TVector3 p);
+
+    /**
      * Extrapolate track due to given alpha.
      * Returns extrapolation length from the initial track reference position.
     */
@@ -296,6 +302,26 @@ class STHelixTrack : public TObject
     bool ExtrapolateToZ(Double_t z,
         TVector3 &pointOnHelix1, Double_t &alpha1,
         TVector3 &pointOnHelix2, Double_t &alpha2) const;
+
+    /**
+     * Extrapolate track to zy-plane at x-position.
+     * Returns true if extrapolation is possible, false if not.
+     *
+     * @param x              x-position of zy-plane.
+     * @param alphaRef       reference position for extapolation
+     * @param pointOnHelix   extrapolated position on the helix close to alphaRef
+    */
+    bool ExtrapolateToX(Double_t x, Double_t alphaRef, TVector3 &pointOnHelix) const;
+
+    /**
+     * Extrapolate track to xy-plane at z-position.
+     * Returns true if extrapolation is possible, false if not.
+     *
+     * @param z              z-position of xy-plane
+     * @param alphaRef       reference position for extapolation
+     * @param pointOnHelix   extrapolated position on the helix close to alphaRef
+    */
+    bool ExtrapolateToZ(Double_t z, Double_t alphaRef, TVector3 &pointOnHelix) const;
 
     /**
      * Extrapolate track to xy-plane at z-position.
