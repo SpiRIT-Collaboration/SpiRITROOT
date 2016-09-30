@@ -3,6 +3,7 @@
 
 #include "TObject.h"
 #include "TVector3.h"
+#include "TMatrixDSym.h"
 
 #include <vector>
 
@@ -47,6 +48,8 @@ class STTrackCandidate : public TObject {
     void SetNDF(Int_t value);
 
     void SetPVal(Double_t value);
+
+    void SetCovSeed(TMatrixDSym covSeed);
 
     Int_t GetPID();      ///< NOT SET IN v1
     Double_t GetMass();  ///< NOT SET IN v1
@@ -122,6 +125,7 @@ class STTrackCandidate : public TObject {
      */
     Double_t GetdEdxWithCut(Double_t lowCut, Double_t highCut);
 
+    const TMatrixDSym &GetCovSeed() const;
 
   protected:
     Int_t fPID;
@@ -162,6 +166,8 @@ class STTrackCandidate : public TObject {
     Int_t fNDF;
 
     Double_t fPVal;
+
+    TMatrixDSym fCovSeed;
 
   ClassDef(STTrackCandidate, 3)
 };

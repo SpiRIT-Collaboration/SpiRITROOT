@@ -82,6 +82,8 @@ void STTrackCandidate::SetNDF(Int_t value)                                { fNDF
 
 void STTrackCandidate::SetPVal(Double_t value)                            { fPVal = value; }
 
+void STTrackCandidate::SetCovSeed(TMatrixDSym covSeed)                    { fCovSeed.ResizeTo(covSeed); fCovSeed = covSeed; }
+
 
 Int_t STTrackCandidate::GetPID()                         { return fPID; }
 Double_t STTrackCandidate::GetMass()                     { return fMass; }
@@ -195,4 +197,8 @@ void STTrackCandidate::SetTrackCandidate(STTrackCandidate *track)
   Int_t n = tempArray -> size();
   for (Int_t i = 0; i < n; i++)
     fdEdxArray.push_back(tempArray -> at(i));
+
+  SetCovSeed(track -> GetCovSeed());
 }
+
+const TMatrixDSym& STTrackCandidate::GetCovSeed() const { return fCovSeed; }
