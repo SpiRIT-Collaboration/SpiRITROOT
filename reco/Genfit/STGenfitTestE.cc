@@ -136,7 +136,7 @@ genfit::Track* STGenfitTestE::FitTrack(STTrackCandidate *recoTrack, STHelixTrack
   return gfTrack;
 }
 
-Bool_t 
+Bool_t
 STGenfitTestE::ProcessTrack(genfit::Track *gfTrack)
 {
   Bool_t isFitted = kFALSE;
@@ -316,6 +316,36 @@ STGenfitTestE::ProcessExtrapolation(STTrackCandidate *recoTrack, genfit::Track *
   }
 }
 
+void
+STGenfitTestE::VarifyClusters(genfit::Track *gfTrack, STHelixTrack *helixTrack)
+{
+  genfit::MeasuredStateOnPlane fitState;
+  genfit::RKTrackRep *trackRep;
+  try {
+    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+    fitState = gfTrack -> getFittedState();
+  } catch (genfit::Exception &e) {}
+
+  auto clusterArray = helixTrack -> GetClusterArray();
+  auto numClusters = clusterArray -> size();
+
+  for (auto iCluster = 0; iCluster < numClusters; iCluster++)
+  {
+    auto cluster = clusterArray -> at(iCluster);
+    if (cluster -> IsStable() == false)
+      continue;
+    auto position = cluster -> GetPosition();
+    try {
+      trackRep -> extrapolateToPoint(fitState, .1*position);
+      auto poca = 10*fitState.getPos();
+      auto d = position - poca;
+      d.SetY(0);
+      if (d.Mag() > 5)
+        cluster -> SetIsStable(false);
+    } catch (genfit::Exception &e) {}
+  }
+}
+
 Bool_t 
 STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrack *recoTrack, STHelixTrack *helixTrack)
 {
@@ -354,12 +384,13 @@ STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrack *recoTrack, STHelix
   {
     auto curCluster = clusterArray -> at(iCluster);
 
+
     Double_t length = .5*std::abs(dLength);
 
     position = curCluster -> GetPosition();
     try {
       dLength = trackRep -> extrapolateToPoint(fitState, .1*position);
-      curCluster -> SetPOCA(fitState.getPos());
+      curCluster -> SetPOCA(10*fitState.getPos());
     } catch (genfit::Exception &e) {
       recoTrack -> SetTotaldEdx(-1);
       return kFALSE;
@@ -381,6 +412,89 @@ STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrack *recoTrack, STHelix
     }
 
     preCluster = curCluster;
+  }
+
+  recoTrack -> SetTrackLength(totaldx);
+  recoTrack -> SetTotaldEdx(totaldE/totaldx);
+
+  return kTRUE;
+}
+
+Bool_t 
+STGenfitTestE::CalculatedEdx2(genfit::Track *gfTrack, STTrack *recoTrack, STHelixTrack *helixTrack)
+{
+  Int_t numPoints = helixTrack -> GetNumStableClusters();
+  if (numPoints < 3)
+    return kFALSE;
+
+  genfit::RKTrackRep *trackRep;
+  genfit::MeasuredStateOnPlane fitState;
+  try {
+    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+    fitState = gfTrack -> getFittedState();
+  } catch (genfit::Exception &e) {
+    return kFALSE;
+  }
+
+  auto clusterArray = helixTrack -> GetClusterArray();
+  auto numClusters = clusterArray -> size();
+
+  Double_t totaldE = 0;
+  Double_t totaldx = 0;
+
+  for (auto iCluster = 0; iCluster < numClusters; iCluster++)
+  {
+    auto cluster = clusterArray -> at(iCluster);
+    if (!cluster -> IsStable())
+      continue;
+
+    auto row = cluster -> GetRow();
+    auto layer = cluster -> GetLayer();
+    auto position = cluster -> GetPosition();
+
+    Bool_t buildByLayer = true;
+    if (layer == -1)
+      buildByLayer = false;
+
+    TVector3 pointRef1 = .1*position;
+    TVector3 pointRef2 = .1*position;
+    TVector3 normalRef(0,0,0);
+    if (buildByLayer) {
+      normalRef = TVector3(0,0,1);
+      pointRef1.SetZ(.1*(layer*12.));
+      pointRef2.SetZ(.1*((layer+1)*12.));
+    } else {
+      normalRef = TVector3(1,0,0);
+      pointRef1.SetX(.1*(row*8.-432.));
+      pointRef2.SetX(.1*((row+1)*8.-432.));
+    }
+
+    genfit::SharedPlanePtr referencePlane1 = genfit::SharedPlanePtr(new genfit::DetPlane(pointRef1, normalRef));
+    genfit::SharedPlanePtr referencePlane2 = genfit::SharedPlanePtr(new genfit::DetPlane(pointRef2, normalRef));
+
+    try {
+      trackRep -> extrapolateToPlane(fitState, referencePlane1);
+      Double_t l2 = 10 * trackRep -> extrapolateToPlane(fitState, referencePlane2);
+      cluster -> SetLength(std::abs(l2));
+      cluster -> SetPOCA(10*fitState.getPos());
+    } catch (genfit::Exception &e) {
+      cluster -> SetIsStable(false);
+      continue;
+    }
+
+    Double_t dE = cluster -> GetCharge();
+    Double_t dx = cluster -> GetLength();
+
+    if (dx > 20) {
+      cluster -> SetIsStable(false);
+      continue;
+    }
+
+    Double_t dEdx = dE/dx;
+    recoTrack -> AdddEdx(dEdx);
+
+    totaldE += dE;
+    totaldx += dx;
   }
 
   recoTrack -> SetTrackLength(totaldx);
