@@ -169,7 +169,7 @@ class STTrackCandidate : public TObject {
 
     TMatrixDSym fCovSeed;
 
-  ClassDef(STTrackCandidate, 3)
+  ClassDef(STTrackCandidate, 4)
 };
 
 #endif
