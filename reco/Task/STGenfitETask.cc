@@ -32,11 +32,11 @@ STGenfitETask::~STGenfitETask()
 
 void STGenfitETask::SetIterationCut(Int_t min, Int_t max) 
 {
-  fGenfitTest -> SetMinIterations(min);
-  fGenfitTest -> SetMaxIterations(max);
   fMinIterations = min;
   fMaxIterations = max;
 }
+
+void STGenfitETask::SetClusteringType(Int_t type) { fClusteringType = type; }
 
 InitStatus
 STGenfitETask::Init()
@@ -56,6 +56,8 @@ STGenfitETask::Init()
   fTrackCandArray = new TClonesArray("STTrackCandidate");
 
   fGenfitTest = new STGenfitTestE();
+  fGenfitTest -> SetMinIterations(fMinIterations);
+  fGenfitTest -> SetMaxIterations(fMaxIterations);
 
   fVertexArray = new TClonesArray("STVertex");
   fRootManager -> Register("STVertex", "SpiRIT", fVertexArray, fIsPersistence);
@@ -117,16 +119,23 @@ void STGenfitETask::Exec(Option_t *opt)
       STTrackCandidate *candTrack = (STTrackCandidate *) fTrackCandArray -> ConstructedAt(trackCandID);
       candTrack -> SetCharge(helixTrack -> Charge());
 
+      /*
+      genfit::Track *track0 = fGenfitTest -> FitTrack(candTrack, helixTrack, pdg);
+      if (track0 == nullptr)
+        continue;
+
+      fGenfitTest -> VarifyClusters(track0, helixTrack);
+      */
       genfit::Track *track = fGenfitTest -> FitTrack(candTrack, helixTrack, pdg);
-      if (track != nullptr)
-      {
-        fGenfitTest -> SetTrackParameters(candTrack, track);
-        if (candTrack -> GetPVal() <= 0) {
-          continue;
-        }
-        gfCandTrackArray.push_back(track);
-        recoCandTrackArray.push_back(candTrack);
-      }
+      if (track == nullptr)
+        continue;
+
+      fGenfitTest -> SetTrackParameters(candTrack, track);
+      if (candTrack -> GetPVal() <= 0)
+        continue;
+
+      gfCandTrackArray.push_back(track);
+      recoCandTrackArray.push_back(candTrack);
     }
 
     Double_t bestPVal = 0;
@@ -155,7 +164,10 @@ void STGenfitETask::Exec(Option_t *opt)
     recoTrack -> SetTrackCandidate(bestCandTrack);
     genfitTrackArray.push_back(bestGFTrack);
 
-    fGenfitTest -> CalculatedEdx(bestGFTrack, recoTrack, helixTrack);
+    if (fClusteringType == 2)
+      fGenfitTest -> CalculatedEdx2(bestGFTrack, recoTrack, helixTrack);
+    else
+      fGenfitTest -> CalculatedEdx(bestGFTrack, recoTrack, helixTrack);
 
     helixTrack -> SetGenfitID(recoTrack -> GetTrackID());
     helixTrack -> SetIsGenfitTrack();

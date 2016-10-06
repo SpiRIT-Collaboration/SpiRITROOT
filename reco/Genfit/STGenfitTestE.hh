@@ -36,7 +36,9 @@ class STGenfitTestE
     void Init();
     genfit::Track* FitTrack(STTrackCandidate *recoTrack, STHelixTrack *helixTrack, Int_t pdg = 2212);
     void SetTrackParameters(STTrackCandidate *recoTrack, genfit::Track *gfTrack, TVector3 vertex = TVector3(-999,-999,-999));
+    void VarifyClusters(genfit::Track *, STHelixTrack *);
     Bool_t CalculatedEdx(genfit::Track *, STTrack *, STHelixTrack *);
+    Bool_t CalculatedEdx2(genfit::Track *, STTrack *, STHelixTrack *);
 
   private:
     Bool_t ProcessTrack(genfit::Track *gfTrack);

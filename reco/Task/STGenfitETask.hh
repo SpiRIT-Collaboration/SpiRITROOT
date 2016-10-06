@@ -14,6 +14,7 @@ class STGenfitETask : public STRecoTask
     ~STGenfitETask();
 
     void SetIterationCut(Int_t min, Int_t max);
+    void SetClusteringType(Int_t type);
 
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
@@ -33,6 +34,8 @@ class STGenfitETask : public STRecoTask
     genfit::GFRaveVertexFactory *fVertexFactory;
 
     STDatabasePDG* fPDGDB;
+
+    Int_t fClusteringType = 0;
 
   ClassDef(STGenfitETask, 1)
 };
