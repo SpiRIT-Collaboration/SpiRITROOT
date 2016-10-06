@@ -86,7 +86,7 @@ STEveDrawTask::STEveDrawTask()
   fRnrSelf [kCurveHit] = kFALSE;
 
   fEveStyle[kRecoTrack] = 1;
-  fEveSize [kRecoTrack] = 5;
+  fEveSize [kRecoTrack] = 1;
   fEveColor[kRecoTrack] = kRed;
   fRnrSelf [kRecoTrack] = kFALSE;
 
@@ -441,6 +441,9 @@ STEveDrawTask::DrawHitClusterPoints()
       cluster = fEvent -> GetCluster(iCluster);
     else
       cluster = (STHitCluster *) fHitClusterArray -> At(iCluster);
+
+    if (!cluster -> IsStable())
+      continue;
 
     if (cluster -> GetCharge() < fThresholdMin[kCluster] || 
         cluster -> GetCharge() > fThresholdMax[kCluster])
@@ -843,7 +846,7 @@ STEveDrawTask::DrawRecoTracks()
       recoTrackLine = new TEveLine(Form("RecoTrack_%d", idxTrack));
       if (fEveColor[kRecoTrack] == -1) recoTrackLine -> SetLineColor(GetColor(idxTrack));
       else recoTrackLine -> SetLineColor(fEveColor[kRecoTrack]);
-      recoTrackLine -> SetMarkerSize(fEveSize[kRecoTrack]);
+      recoTrackLine -> SetLineWidth(fEveSize[kRecoTrack]);
       recoTrackLine -> SetMarkerStyle(fEveStyle[kRecoTrack]);
       recoTrackLine -> SetRnrSelf(fRnrSelf[kRecoTrack]);
       fRecoTrackSetArray.push_back(recoTrackLine);
@@ -890,13 +893,15 @@ STEveDrawTask::DrawRecoTracks()
       recoTrackLine -> SetNextPoint(position.X(), y, position.Z());
     }
 
-    if (track -> GetCharge() == 0 || track -> GetParentID() != 0)
+    if (track -> GetCharge() == 0)// || track -> GetParentID() != 0)
       recoTrackLine -> SetLineColor(kGray+1);
-    else if (track -> GetCharge() > 0)
+    else if (track -> GetCharge() > 0) {
       recoTrackLine -> SetLineColor(kRed);
+      recoTrackLine -> SetLineWidth(1);
+    }
     else {
       recoTrackLine -> SetLineColor(kBlue);
-      recoTrackLine -> SetLineWidth(3);
+      recoTrackLine -> SetLineWidth(2);
     }
     recoTrackLine -> SetRnrSelf(fRnrSelf[kRecoTrack]);
   }
