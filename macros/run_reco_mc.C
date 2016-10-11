@@ -1,15 +1,17 @@
 void run_reco_mc
 (
-  TString fName = "urqmd_short",
+  TString fName = "proton1000",
   Int_t fRunNo = 0,
-  Int_t fNumEventsInRun = 10,
+  Int_t fNumEventsInRun = 2500,
   Int_t fSplitNo = 0,
-  Int_t fNumEventsInSplit = 500,
+  Int_t fNumEventsInSplit = 2500,
   Double_t fPSAThreshold = 30,
   TString fParameterFile = "ST.parameters.Commissioning_201604.par",
   TString fPathToData = ""
 )
 {
+  Int_t clusteringOption = 2,
+
   Int_t start = fSplitNo * fNumEventsInSplit;
   if (start >= fNumEventsInRun) return;
   if (start + fNumEventsInSplit > fNumEventsInRun)
@@ -29,10 +31,9 @@ void run_reco_mc
   }
   TString par = spiritroot+"parameters/"+fParameterFile;
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root";
-  TString in1 = fPathToData+fName+".digi.root"; 
-  TString in2 = fPathToData+fName+".mc.root"; 
-  TString out = fPathToData+"mc"+sRunNo+"_s"+sSplitNo+".reco."+version+".root";
-  TString log = fPathToData+"mc"+sRunNo+"_s"+sSplitNo+"."+version+".log";
+  TString mc  = fPathToData+fName+".mc.root";
+  TString out = fPathToData+fName+".reco."+version+".root";
+  TString log = fPathToData+fName+"."+version+".log";
 
   FairLogger *logger = FairLogger::GetLogger();
   logger -> SetLogToScreen(true);
@@ -41,8 +42,7 @@ void run_reco_mc
   parReader -> open(par);
 
   FairRunAna* run = new FairRunAna();
-  run -> SetInputFile(in1);
-  run -> AddFriend(in2);
+  run -> AddFriend(mc);
   run -> SetGeomFile(geo);
   run -> SetOutputFile(out);
   run -> GetRuntimeDb() -> setSecondInput(parReader);
@@ -51,7 +51,7 @@ void run_reco_mc
   preview -> SetPersistence(true);
 
   auto psa = new STPSAETask();
-  psa -> SetPersistence(true);
+  psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
   psa -> SetPulserData("pulser_117ns.dat");
@@ -59,9 +59,11 @@ void run_reco_mc
   auto helix = new STHelixTrackingTask();
   helix -> SetPersistence(true);
   helix -> SetClusterPersistence(true);
+  helix -> SetClusteringOption(clusteringOption);
 
   auto st_genfit = new STGenfitETask();
   st_genfit -> SetPersistence(true);
+  st_genfit -> SetClusteringType(clusteringOption);
 
   auto mctruth = new STMCTruthTask(true);
 
@@ -81,11 +83,11 @@ void run_reco_mc
 
   run -> Init();
   run -> Run(0, fNumEventsInSplit);
-  //run -> Run(0, 2);
+
+  //st_genfit -> OpenDisplay();
 
   cout << "Log    : " << log << endl;
-  cout << "Input1 : " << in1 << endl;
-  cout << "Input2 : " << in2 << endl;
+  cout << "MC     : " << mc  << endl;
   cout << "Output : " << out << endl;
 
   gApplication -> Terminate();
