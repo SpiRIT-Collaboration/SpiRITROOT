@@ -117,7 +117,7 @@ STPadResponseTask::Exec(Option_t* option)
     Int_t layer = iWire/3;
     Int_t type  = iWire%3; //< %3 : same reason as above
     Int_t iTb   = tEl/fTBTime;
-    if(iTb>fNTbs) continue;
+    if(iTb>=fNTbs) continue;
 
     // Covering 5x5(25 in total) pads cover 99.97 % of all the charges.
     for(Int_t iLayer=0; iLayer<5; iLayer++){ 
