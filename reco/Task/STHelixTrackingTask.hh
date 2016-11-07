@@ -32,7 +32,7 @@ class STHelixTrackingTask : public STRecoTask
     STHelixTrackFinder* fTrackFinder;
 
     Int_t fNumTracksLowLimit = 1;
-    Int_t fClusteringOption = 0;
+    Int_t fClusteringOption = 2;
 
 
   ClassDef(STHelixTrackingTask, 1)

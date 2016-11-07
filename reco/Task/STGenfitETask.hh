@@ -35,7 +35,7 @@ class STGenfitETask : public STRecoTask
 
     STDatabasePDG* fPDGDB;
 
-    Int_t fClusteringType = 0;
+    Int_t fClusteringType = 2;
 
   ClassDef(STGenfitETask, 1)
 };
