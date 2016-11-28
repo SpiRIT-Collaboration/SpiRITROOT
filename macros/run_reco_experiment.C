@@ -95,11 +95,14 @@ void run_reco_experiment
   auto st_genfit = new STGenfitETask();
   st_genfit -> SetPersistence(true);
 
+  auto pidmatching = new STPIDCorrelatorTask(false);
+
   run -> AddTask(decoder);
   run -> AddTask(preview);
   run -> AddTask(psa);
   run -> AddTask(helix);
   run -> AddTask(st_genfit);
+  run -> AddTask(pidmatching);
 
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
