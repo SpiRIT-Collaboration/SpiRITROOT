@@ -153,6 +153,11 @@ void STGenfitETask::Exec(Option_t *opt)
         bestGFTrack = gfTrack;
       }
       recoTrack -> AddTrackCandidate(candTrack);
+
+      if (fClusteringType == 2)
+        fGenfitTest -> CalculatedEdx2(gfTrack, candTrack, helixTrack);
+      else
+        fGenfitTest -> CalculatedEdx(gfTrack, candTrack, helixTrack);
     }
 
     if (bestCandTrack == nullptr) {

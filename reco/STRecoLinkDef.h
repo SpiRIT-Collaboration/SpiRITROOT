@@ -14,6 +14,7 @@
 #pragma link C++ class STGenfitETask+;
 #pragma link C++ class STHelixTrackingTask+;
 #pragma link C++ class STMCTruthTask+;
+#pragma link C++ class STPIDCorrelatorTask+;
 
 #pragma link C++ class GETDecoder+;
 #pragma link C++ class GETFrameInfo+;

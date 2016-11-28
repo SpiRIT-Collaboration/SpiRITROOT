@@ -347,7 +347,7 @@ STGenfitTestE::VarifyClusters(genfit::Track *gfTrack, STHelixTrack *helixTrack)
 }
 
 Bool_t 
-STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrack *recoTrack, STHelixTrack *helixTrack)
+STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrackCandidate *recoTrack, STHelixTrack *helixTrack)
 {
   Int_t numPoints = helixTrack -> GetNumStableClusters();
   if (numPoints < 3)
@@ -421,7 +421,7 @@ STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrack *recoTrack, STHelix
 }
 
 Bool_t 
-STGenfitTestE::CalculatedEdx2(genfit::Track *gfTrack, STTrack *recoTrack, STHelixTrack *helixTrack)
+STGenfitTestE::CalculatedEdx2(genfit::Track *gfTrack, STTrackCandidate *recoTrack, STHelixTrack *helixTrack)
 {
   Int_t numPoints = helixTrack -> GetNumStableClusters();
   if (numPoints < 3)
