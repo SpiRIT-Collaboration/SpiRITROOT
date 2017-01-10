@@ -440,15 +440,21 @@ STHelixTrackFinder::HitClustering2(STHelixTrack *track)
     auto layer = cluster -> GetLayer();
     auto alpha = track -> AlphaAtPosition(cluster -> GetPosition());
     Double_t length;
-    TVector3 q;
+    TVector3 q0;
+    TVector3 q1;
     if (layer == -1) {
       Double_t x0 = (row)*8.-432.;
       Double_t x1 = (row+1)*8.-432.;
-      length = TMath::Abs(track -> ExtrapolateToX(x0, alpha, q) - track -> ExtrapolateToX(x1, alpha, q));
+      length = 1;
+      track -> ExtrapolateToX(x0, alpha, q0);
+      track -> ExtrapolateToX(x1, alpha, q1);
+      length = TMath::Abs(track -> Map(q0).Z() - track -> Map(q1).Z());
     } else {
       Double_t z0 = (layer)*12.;
       Double_t z1 = (layer+1)*12.;
-      length = TMath::Abs(track -> ExtrapolateToZ(z0, alpha, q) - track -> ExtrapolateToZ(z1, alpha, q));
+      track -> ExtrapolateToZ(z0, alpha, q0);
+      track -> ExtrapolateToZ(z1, alpha, q1);
+      length = TMath::Abs(track -> Map(q0).Z() - track -> Map(q1).Z());
     }
     cluster -> SetLength(length);
   };
