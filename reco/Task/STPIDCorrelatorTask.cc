@@ -78,7 +78,7 @@ void STPIDCorrelatorTask::Exec(Option_t *opt)
       //cout << "size of dedx array " << candTrack -> GetdEdxArray() -> size() << endl;
       auto dedxReco = candTrack -> GetdEdxWithCut(0,0.7);
       // conversion ADC -> MeV/mm
-      //dedxReco = dedxReco*5.353e-06;
+      dedxReco = dedxReco*5.353e-06;
 
       auto pid = candTrack -> GetPID();
 
@@ -172,7 +172,7 @@ Double_t STPIDCorrelatorTask::GetMu(TString particle, Double_t p)
 
   Double_t val = f->Eval(p);
   delete f;
-  return 185000*val;
+  return val;
 }
 
 Double_t STPIDCorrelatorTask::GetSigma(TString particle, Double_t p)
@@ -208,7 +208,7 @@ Double_t STPIDCorrelatorTask::GetSigma(TString particle, Double_t p)
   
   Double_t val = f->Eval(p);
   delete f;
-  return 185000*val*coeff;
+  return val*coeff;
 }
 
 Double_t STPIDCorrelatorTask::GetPdf(Double_t dedx, Double_t mu, Double_t sigma){
