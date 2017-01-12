@@ -15,15 +15,13 @@ using namespace std;
 ClassImp(STGenfitSinglePIDTask)
 
 STGenfitSinglePIDTask::STGenfitSinglePIDTask()
-: STRecoTask("GENFIT Task", 1, false)
+: STRecoTask("GENFIT Single PID Task", 1, false)
 {
-  fPDGDB = STDatabasePDG::Instance();
 }
 
 STGenfitSinglePIDTask::STGenfitSinglePIDTask(Bool_t persistence)
-: STRecoTask("GENFIT Task", 1, persistence)
+: STRecoTask("GENFIT Single PID Task", 1, persistence)
 {
-  fPDGDB = STDatabasePDG::Instance();
 }
 
 STGenfitSinglePIDTask::~STGenfitSinglePIDTask()

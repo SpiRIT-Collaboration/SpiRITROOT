@@ -35,8 +35,6 @@ class STGenfitSinglePIDTask : public STRecoTask
     TString fGFRaveVertexMethod;
     genfit::GFRaveVertexFactory *fVertexFactory;
 
-    STDatabasePDG* fPDGDB;
-
     Int_t fClusteringType = 2;
 
   ClassDef(STGenfitSinglePIDTask, 1)
