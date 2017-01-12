@@ -30,7 +30,7 @@ InitStatus STPIDCorrelatorTask::Init()
   if (STRecoTask::Init() == kERROR)
     return kERROR;
 
-  fRecoTrackArray = (TClonesArray*) fRootManager -> GetObject("STTrack");
+  fRecoTrackArray = (TClonesArray*) fRootManager -> GetObject("STTrackPre");
   if (fRecoTrackArray == nullptr) {
     LOG(ERROR) << "Cannot find RecoTrack array!" << FairLogger::endl;
     return kERROR;
@@ -68,7 +68,7 @@ void STPIDCorrelatorTask::Exec(Option_t *opt)
     Double_t tot_prob = 0;
 
     Int_t bestIndex = 0;
-    Int_t bestProb = 0;
+    Double_t bestProb = 0;
 
     //cout << "SIZE OF DEDX ARRAY " << recoTrack -> GetdEdxArray() -> size() << endl;
     for (auto iCand = 0; iCand < nCands; iCand++) {
@@ -76,19 +76,24 @@ void STPIDCorrelatorTask::Exec(Option_t *opt)
 
       auto momReco = candTrack -> GetP();
       //cout << "size of dedx array " << candTrack -> GetdEdxArray() -> size() << endl;
-      auto dedxReco = candTrack -> GetdEdxWithCut(0,1);
+      auto dedxReco = candTrack -> GetdEdxWithCut(0,0.7);
       // conversion ADC -> MeV/mm
-      dedxReco = dedxReco*5.353e-06;
+      //dedxReco = dedxReco*5.353e-06;
 
       auto pid = candTrack -> GetPID();
 
       Double_t prob = -1;
-      if (pid == 211 || pid == -211) prob = GetPdf(dedxReco,GetMu("pion",momReco),GetSigma("pion",momReco));
-      else if (pid == 2212)          prob = GetPdf(dedxReco,GetMu("proton",momReco),GetSigma("proton",momReco));
-      else if (pid == 1000010020)    prob = GetPdf(dedxReco,GetMu("deuterium",momReco),GetSigma("deuterium",momReco));
-      else if (pid == 1000010030)    prob = GetPdf(dedxReco,GetMu("triton",momReco),GetSigma("triton",momReco));
-      else if (pid == 1000020040)    prob = GetPdf(dedxReco,GetMu("3He",momReco),GetSigma("3He",momReco));
-      else if (pid == 1000020030)    prob = GetPdf(dedxReco,GetMu("4He",momReco),GetSigma("4He",momReco));
+      TString name = "";
+      if (pid == 211 || pid == -211) name = "pion";
+      else if (pid == 2212)          name = "proton";
+      else if (pid == 1000010020)    name = "deuterium";
+      else if (pid == 1000010030)    name = "triton";
+      else if (pid == 1000020030)    name = "3He";
+      else if (pid == 1000020040)    name = "4He";
+
+      auto mu = GetMu(name,momReco);
+      auto sigma = GetSigma(name,momReco);
+      prob = GetPdf(dedxReco,mu,sigma);
 
       if (bestProb < prob) {
         bestProb = prob;

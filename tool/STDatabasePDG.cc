@@ -22,13 +22,13 @@ STDatabasePDG::STDatabasePDG()
   db -> AddParticle("HE3","HE3",3*kAu2Gev+14.931e-3,kFALSE, 0,6,"Ion",1000020030);
 
   fPDGCandidateArray.push_back(2212);
-  fPDGCandidateArray.push_back(11);
+  //fPDGCandidateArray.push_back(11);
   fPDGCandidateArray.push_back(211);
-  fPDGCandidateArray.push_back(-211);
+  //fPDGCandidateArray.push_back(-211);
   fPDGCandidateArray.push_back(1000010020);
   fPDGCandidateArray.push_back(1000010030);
-  fPDGCandidateArray.push_back(1000020040);
   fPDGCandidateArray.push_back(1000020030);
+  fPDGCandidateArray.push_back(1000020040);
 }
 
 void STDatabasePDG::AddPDGCandidate(Int_t pdg) { fPDGCandidateArray.push_back(pdg); }
