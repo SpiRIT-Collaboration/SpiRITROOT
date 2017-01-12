@@ -167,7 +167,7 @@ Double_t STPIDCorrelatorTask::GetMu(TString particle, Double_t p)
 
   Double_t val = f->Eval(p);
   delete f;
-  return val;
+  return 185000*val;
 }
 
 Double_t STPIDCorrelatorTask::GetSigma(TString particle, Double_t p)
@@ -203,7 +203,7 @@ Double_t STPIDCorrelatorTask::GetSigma(TString particle, Double_t p)
   
   Double_t val = f->Eval(p);
   delete f;
-  return val*coeff;
+  return 185000*val*coeff;
 }
 
 Double_t STPIDCorrelatorTask::GetPdf(Double_t dedx, Double_t mu, Double_t sigma){

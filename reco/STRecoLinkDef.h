@@ -20,8 +20,7 @@
 #pragma link C++ class GETDecoder+;
 #pragma link C++ class GETFrameInfo+;
 #pragma link C++ class GETHeaderBase+;
-#pragma link C++ class GETBasicFrameHeader+;
-#pragma link C++ class GETLayerHeader+;
+#pragma link C++ class GETBasicFrameHeader+; #pragma link C++ class GETLayerHeader+;
 #pragma link C++ class GETTopologyFrame+;
 #pragma link C++ class GETBasicFrame+;
 #pragma link C++ class GETCoboFrame+;
@@ -88,6 +87,7 @@
 #pragma link C++ class STGenfitTest+;
 #pragma link C++ class STGenfitTestE+;
 #pragma link C++ class STGenfitTask+;
+#pragma link C++ class STGenfitSinglePIDTask+;
 
 #pragma link C++ class STSource+;
 
