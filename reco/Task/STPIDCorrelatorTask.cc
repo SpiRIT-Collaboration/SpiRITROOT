@@ -95,6 +95,9 @@ void STPIDCorrelatorTask::Exec(Option_t *opt)
       auto sigma = GetSigma(name,momReco);
       prob = GetPdf(dedxReco,mu,sigma);
 
+      if (pid == 211 && momReco > 500)
+        prob = 0;
+
       if (bestProb < prob) {
         bestProb = prob;
         bestIndex = iCand;
