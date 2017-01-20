@@ -42,6 +42,7 @@ STDecoderTask::STDecoderTask()
   fGainConstant = -9999;
   fGainLinear = -9999;
   fGainQuadratic = 0;
+  fGainMatchingData = "";
 
   fIsPersistence = kFALSE;
 
@@ -68,6 +69,7 @@ void STDecoderTask::SetGGNoiseData(TString filename)                            
 void STDecoderTask::SetUseGainCalibration(Bool_t value)                                       { fUseGainCalibration = value; }
 void STDecoderTask::SetGainCalibrationData(TString filename)                                  { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)  { fGainConstant = constant; fGainLinear = linear; fGainQuadratic = quadratic; }
+void STDecoderTask::SetGainMatchingData(TString filename)                                     { fGainMatchingData = filename; };
 void STDecoderTask::SetUseSeparatedData(Bool_t value)                                         { fIsSeparatedData = value; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
 
@@ -169,6 +171,11 @@ STDecoderTask::Init()
     fDecoder -> SetGainReference(fGainConstant, fGainLinear, fGainQuadratic);
     fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set!");
   }
+
+  if (fGainMatchingData.EqualTo(""))
+    fLogger -> Info(MESSAGE_ORIGIN, "Relative gain maching is not done!");
+  else
+    fDecoder -> SetGainMatchingData(fGainMatchingData);
 
   return kSUCCESS;
 }

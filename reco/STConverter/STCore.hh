@@ -19,6 +19,7 @@
 #include "STMap.hh"
 #include "STPedestal.hh"
 #include "STGainCalibration.hh"
+#include "STGainMatching.hh"
 #include "STGGNoiseSubtractor.hh"
 #include "STPlot.hh"
 
@@ -52,6 +53,8 @@ class STCore : public TObject {
     Bool_t SetGainCalibrationData(TString filename, TString dataType = "f");
     void SetGainReference(Int_t row, Int_t layer);
     void SetGainReference(Double_t constant, Double_t linear, Double_t quadratic = 0.);
+
+    Bool_t SetGainMatchingData(TString filename);
 
     Bool_t SetUAMap(TString filename);
     Bool_t SetAGETMap(TString filename);
@@ -94,6 +97,9 @@ class STCore : public TObject {
 
     STGainCalibration *fGainCalibrationPtr[12];
     Bool_t fIsGainCalibrationData;
+
+    STGainMatching *fGainMatchingPtr[12];
+    Bool_t fIsGainMatchingData;
 
     STRawEvent *fRawEventPtr;
     std::vector<STPad *> fPadArray;
