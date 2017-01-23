@@ -19,7 +19,7 @@ STHitCluster::STHitCluster()
 
   fX = 0;
   fY = 0;
-  fZ = -1000;
+  fZ = 0;
   fDx = 0;
   fDy = 0;
   fDz = 0;
@@ -65,21 +65,23 @@ Int_t  STHitCluster::GetHitID()    const { return fClusterID; }
 vector<Int_t>  *STHitCluster::GetHitIDs()           { return &fHitIDArray; }
 vector<STHit*> *STHitCluster::GetHitPtrs()          { return &fHitPtrArray; }
 
-void 
+void
 STHitCluster::AddHit(STHit *hit)
 {
   TVector3 hitPos = hit -> GetPosition();
   Double_t charge = hit -> GetCharge();
 
-  CalculatePosition(hitPos, charge);
-
   Int_t numHits = GetNumHits();
   if (numHits == 0) {
+    fX = hitPos.X();
+    fY = hitPos.Y();
+    fZ = hitPos.Z();
     fCovMatrix(0, 0) = hit -> GetDx()*hit -> GetDx();
     fCovMatrix(1, 1) = hit -> GetDy()*hit -> GetDy();
     fCovMatrix(2, 2) = hit -> GetDz()*hit -> GetDz();
   }
-  else  {
+  else {
+    CalculatePosition(hitPos, charge);
     if (numHits == 1) {
       fCovMatrix(0, 0) = 0;
       fCovMatrix(1, 1) = 0;
@@ -106,7 +108,7 @@ STHitCluster::AddHit(STHit *hit)
   hit -> SetClusterID(fClusterID);
 }
 
-void 
+void
 STHitCluster::CalculatePosition(TVector3 hitPos, Double_t charge)
 {
   TVector3 position(fX, fY, fZ);
@@ -119,7 +121,7 @@ STHitCluster::CalculatePosition(TVector3 hitPos, Double_t charge)
   fZ = position.Z();
 }
 
-void 
+void
 STHitCluster::CalculateCovMatrix(TVector3 hitPos, Double_t charge)
 {
   TVector3 position(fX, fY, fZ);
