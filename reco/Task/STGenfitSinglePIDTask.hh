@@ -20,11 +20,7 @@ class STGenfitSinglePIDTask : public STRecoTask
     virtual void Exec(Option_t *opt);
 
   private:
-    TClonesArray *fHelixTrackArray = nullptr;
-    TClonesArray *fTrackPreArray = nullptr;
     TClonesArray *fTrackArray = nullptr;
-    TClonesArray *fTrackCandArray = nullptr;
-
     TClonesArray *fVertexArray = nullptr;
 
     STGenfitTestE *fGenfitTest;

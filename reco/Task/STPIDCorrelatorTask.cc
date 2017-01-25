@@ -67,7 +67,7 @@ void STPIDCorrelatorTask::Exec(Option_t *opt)
     Double_t he4_prob = 0;
     Double_t tot_prob = 0;
 
-    Int_t bestIndex = 0;
+    Int_t bestIndex = -1;
     Double_t bestProb = 0;
 
     //cout << "SIZE OF DEDX ARRAY " << recoTrack -> GetdEdxArray() -> size() << endl;
@@ -103,7 +103,10 @@ void STPIDCorrelatorTask::Exec(Option_t *opt)
         bestIndex = iCand;
       }
     }
-    recoTrack -> SelectTrackCandidate(bestIndex);
+    if (bestIndex == -1)
+      recoTrack -> SetIsFitted(kFALSE);
+    else
+      recoTrack -> SelectTrackCandidate(bestIndex);
   }
   
   LOG(INFO) << Space() << "STPIDCorrelatorTask done." << FairLogger::endl;

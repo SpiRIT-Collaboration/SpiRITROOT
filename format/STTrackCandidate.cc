@@ -50,6 +50,8 @@ void STTrackCandidate::Clear(Option_t *option)
 
   fPVal = -99999;
 
+  fGenfitTrack = nullptr;
+
   fdEdxArray.clear();
 }
 
@@ -199,6 +201,11 @@ void STTrackCandidate::SetTrackCandidate(STTrackCandidate *track)
     fdEdxArray.push_back(tempArray -> at(i));
 
   SetCovSeed(track -> GetCovSeed());
+
+  fGenfitTrack = track -> GetGenfitTrack();
 }
 
 const TMatrixDSym& STTrackCandidate::GetCovSeed() const { return fCovSeed; }
+
+void STTrackCandidate::SetGenfitTrack(genfit::Track *track) { fGenfitTrack = track; }
+genfit::Track *STTrackCandidate::GetGenfitTrack() { return fGenfitTrack; }

@@ -30,7 +30,7 @@ STGenfitETask::~STGenfitETask()
 {
 }
 
-void STGenfitETask::SetIterationCut(Int_t min, Int_t max) 
+void STGenfitETask::SetIterationCut(Int_t min, Int_t max)
 {
   fMinIterations = min;
   fMaxIterations = max;
@@ -51,7 +51,7 @@ STGenfitETask::Init()
   }
 
   fTrackArray = new TClonesArray("STTrack");
-  fRootManager -> Register("STTrackPre", "SpiRIT", fTrackArray, fIsPersistence);
+  fRootManager -> Register("STTrack", "SpiRIT", fTrackArray, fIsPersistence);
 
   fTrackCandArray = new TClonesArray("STTrackCandidate");
 
@@ -86,8 +86,6 @@ void STGenfitETask::Exec(Option_t *opt)
   if (fEventHeader -> IsBadEvent())
     return;
 
-  vector<genfit::Track *> genfitTrackArray;
-
   fGenfitTest -> Init();
 
   Int_t numTrackCand = fHelixTrackArray -> GetEntriesFast();
@@ -109,9 +107,6 @@ void STGenfitETask::Exec(Option_t *opt)
       }
     }
 
-    vector<genfit::Track *> gfCandTrackArray;
-    vector<STTrackCandidate*> recoCandTrackArray;
-
     auto pdgList = fPDGDB -> GetPDGCandidateArray();
     for (auto pdg : *pdgList)
     {
@@ -119,13 +114,6 @@ void STGenfitETask::Exec(Option_t *opt)
       STTrackCandidate *candTrack = (STTrackCandidate *) fTrackCandArray -> ConstructedAt(trackCandID);
       candTrack -> SetCharge(helixTrack -> Charge());
 
-      /*
-      genfit::Track *track0 = fGenfitTest -> FitTrack(candTrack, helixTrack, pdg);
-      if (track0 == nullptr)
-        continue;
-
-      fGenfitTest -> VarifyClusters(track0, helixTrack);
-      */
       genfit::Track *track = fGenfitTest -> FitTrack(candTrack, helixTrack, pdg);
       if (track == nullptr)
         continue;
@@ -134,30 +122,25 @@ void STGenfitETask::Exec(Option_t *opt)
       if (candTrack -> GetPVal() <= 0)
         continue;
 
-      gfCandTrackArray.push_back(track);
-      recoCandTrackArray.push_back(candTrack);
+      candTrack -> SetGenfitTrack(track);
+      recoTrack -> AddTrackCandidate(candTrack);
     }
 
     Double_t bestPVal = 0;
     STTrackCandidate *bestCandTrack = nullptr;
-    genfit::Track *bestGFTrack = nullptr;
 
-    for (auto i=0; i<recoCandTrackArray.size(); i++)
+    auto candArray = recoTrack -> GetTrackCandidateArray();
+    for (auto candTrack : *candArray)
     {
-      auto candTrack = recoCandTrackArray[i];
-      auto gfTrack = gfCandTrackArray[i];
-
       if (candTrack -> GetPVal() > bestPVal) {
         bestPVal = candTrack -> GetPVal();
         bestCandTrack = candTrack;
-        bestGFTrack = gfTrack;
       }
-      recoTrack -> AddTrackCandidate(candTrack);
 
       if (fClusteringType == 2)
-        fGenfitTest -> CalculatedEdx2(gfTrack, candTrack, helixTrack);
+        fGenfitTest -> CalculatedEdx2(candTrack -> GetGenfitTrack(), candTrack, helixTrack);
       else
-        fGenfitTest -> CalculatedEdx(gfTrack, candTrack, helixTrack);
+        fGenfitTest -> CalculatedEdx(candTrack -> GetGenfitTrack(), candTrack, helixTrack);
     }
 
     if (bestCandTrack == nullptr) {
@@ -167,12 +150,11 @@ void STGenfitETask::Exec(Option_t *opt)
 
     recoTrack -> SetIsFitted();
     recoTrack -> SetTrackCandidate(bestCandTrack);
-    genfitTrackArray.push_back(bestGFTrack);
 
     if (fClusteringType == 2)
-      fGenfitTest -> CalculatedEdx2(bestGFTrack, recoTrack, helixTrack);
+      fGenfitTest -> CalculatedEdx2(recoTrack -> GetGenfitTrack(), recoTrack, helixTrack);
     else
-      fGenfitTest -> CalculatedEdx(bestGFTrack, recoTrack, helixTrack);
+      fGenfitTest -> CalculatedEdx(recoTrack -> GetGenfitTrack(), recoTrack, helixTrack);
 
     helixTrack -> SetGenfitID(recoTrack -> GetTrackID());
     helixTrack -> SetIsGenfitTrack();
@@ -180,7 +162,15 @@ void STGenfitETask::Exec(Option_t *opt)
   }
   fTrackArray -> Compress();
 
-  LOG(INFO) << Space() << "STTrack " << fTrackArray -> GetEntriesFast() << FairLogger::endl;
+  Int_t numRecoTracks = fTrackArray -> GetEntriesFast();
+
+  LOG(INFO) << Space() << "STTrack " << numRecoTracks << FairLogger::endl;
+
+  vector<genfit::Track *> genfitTrackArray;
+  for (auto iTrack = 0; iTrack < numRecoTracks; ++iTrack) {
+    auto recoTrack = (STTrack *) fTrackArray -> At(iTrack);
+    genfitTrackArray.push_back(recoTrack -> GetGenfitTrack());
+  }
 
   vector<genfit::GFRaveVertex *> vertices;
   try {

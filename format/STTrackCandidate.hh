@@ -5,6 +5,8 @@
 #include "TVector3.h"
 #include "TMatrixDSym.h"
 
+#include "Track.h"
+
 #include <vector>
 
 class STTrackCandidate : public TObject {
@@ -127,6 +129,9 @@ class STTrackCandidate : public TObject {
 
     const TMatrixDSym &GetCovSeed() const;
 
+    void SetGenfitTrack(genfit::Track *track);
+    genfit::Track *GetGenfitTrack();
+
   protected:
     Int_t fPID;
     Double_t fMass;
@@ -168,6 +173,8 @@ class STTrackCandidate : public TObject {
     Double_t fPVal;
 
     TMatrixDSym fCovSeed;
+
+    genfit::Track *fGenfitTrack; //!
 
   ClassDef(STTrackCandidate, 4)
 };

@@ -42,18 +42,7 @@ STGenfitSinglePIDTask::Init()
   if (STRecoTask::Init() == kERROR)
     return kERROR;
 
-  fHelixTrackArray = (TClonesArray *) fRootManager -> GetObject("STHelixTrack");
-  if (fHelixTrackArray == nullptr) {
-    LOG(ERROR) << "Cannot find STHelixTrack array!" << FairLogger::endl;
-    return kERROR;
-  }
-
-  fTrackPreArray = (TClonesArray *) fRootManager -> GetObject("STTrackPre");
-
-  fTrackArray = new TClonesArray("STTrack");
-  fRootManager -> Register("STTrack", "SpiRIT", fTrackArray, fIsPersistence);
-
-  fTrackCandArray = new TClonesArray("STTrackCandidate");
+  fTrackArray = (TClonesArray *) fRootManager -> GetObject("STTrack");
 
   fGenfitTest = new STGenfitTestE();
   fGenfitTest -> SetMinIterations(fMinIterations);
@@ -79,62 +68,20 @@ STGenfitSinglePIDTask::Init()
 
 void STGenfitSinglePIDTask::Exec(Option_t *opt)
 {
-  fTrackArray -> Clear("C");
-  fTrackCandArray -> Clear("C");
   fVertexArray -> Delete();
 
   if (fEventHeader -> IsBadEvent())
     return;
 
+  Int_t numRecoTracks = fTrackArray -> GetEntriesFast();
+
   vector<genfit::Track *> genfitTrackArray;
-
-  fGenfitTest -> Init();
-
-  Int_t numTrackCand = fHelixTrackArray -> GetEntriesFast();
-  for (Int_t iHelixTrack = 0; iHelixTrack < numTrackCand; iHelixTrack++)
-  {
-    STHelixTrack *helixTrack = (STHelixTrack *) fHelixTrackArray -> At(iHelixTrack);
-    auto genfitID = helixTrack -> GetGenfitID();
-    if (genfitID < 0)
+  for (auto iTrack = 0; iTrack < numRecoTracks; ++iTrack) {
+    auto recoTrack = (STTrack *) fTrackArray -> At(iTrack);
+    if (!recoTrack -> IsFitted())
       continue;
-
-    auto preTrack = (STTrack *) fTrackPreArray -> At(genfitID);
-    auto pdg = preTrack -> GetPID();
-
-    Int_t trackID = fTrackArray -> GetEntriesFast();
-    STTrack *recoTrack = (STTrack *) fTrackArray -> ConstructedAt(trackID);
-    recoTrack -> SetTrackID(trackID);
-    recoTrack -> SetHelixID(helixTrack -> GetTrackID());
-
-    auto clusterArray = helixTrack -> GetClusterArray();
-    for (auto cluster : *clusterArray) {
-      if (cluster -> IsStable()) {
-        recoTrack -> AddHitID(cluster -> GetClusterID());
-      }
-    }
-
-    Int_t trackCandID = fTrackCandArray -> GetEntriesFast();
-    STTrackCandidate *candTrack = (STTrackCandidate *) fTrackCandArray -> ConstructedAt(trackCandID);
-    candTrack -> SetCharge(helixTrack -> Charge());
-
-    genfit::Track *track = fGenfitTest -> FitTrack(candTrack, helixTrack, pdg);
-    if (track == nullptr)
-      continue;
-
-    fGenfitTest -> SetTrackParameters(candTrack, track);
-    fGenfitTest -> CalculatedEdx2(track, candTrack, helixTrack);
-
-    recoTrack -> SetIsFitted();
-    recoTrack -> SetTrackCandidate(candTrack);
-    genfitTrackArray.push_back(track);
-
-    fGenfitTest -> CalculatedEdx2(track, recoTrack, helixTrack);
-
-    helixTrack -> SetGenfitID(recoTrack -> GetTrackID());
-    helixTrack -> SetGenfitMomentum(candTrack -> GetP());
+    genfitTrackArray.push_back(recoTrack -> GetGenfitTrack());
   }
-
-  LOG(INFO) << Space() << "STTrack " << fTrackArray -> GetEntriesFast() << FairLogger::endl;
 
   vector<genfit::GFRaveVertex *> vertices;
   try {
@@ -163,6 +110,7 @@ void STGenfitSinglePIDTask::Exec(Option_t *opt)
         }
       }
     }
+
     new ((*fVertexArray)[iVert]) STVertex(*vertex);
     delete vertex;
   }
