@@ -21,6 +21,7 @@
 #include "STGainCalibration.hh"
 #include "STGGNoiseSubtractor.hh"
 #include "STPlot.hh"
+#include "STPadRemover.hh"
 
 #include "GETDecoder.hh"
 
@@ -48,6 +49,8 @@ class STCore : public TObject {
     void SetGGNoiseGenerationMode(Bool_t value = kTRUE);
     void SetGGNoiseData(TString ggNoiseData);
     Bool_t InitGGNoiseSubtractor();
+
+    Bool_t SetPadRemoverData(TString filename);
 
     Bool_t SetGainCalibrationData(TString filename, TString dataType = "f");
     void SetGainReference(Int_t row, Int_t layer);
@@ -94,6 +97,9 @@ class STCore : public TObject {
 
     STGainCalibration *fGainCalibrationPtr[12];
     Bool_t fIsGainCalibrationData;
+
+    STPadRemover *fPadRemoverPtr[12];
+    Bool_t fIsPadRemoverData;
 
     STRawEvent *fRawEventPtr;
     std::vector<STPad *> fPadArray;

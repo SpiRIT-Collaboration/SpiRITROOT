@@ -80,6 +80,12 @@ void STCore::Initialize()
 
   fIsGainCalibrationData = kFALSE;
 
+  fPadRemoverPtr[0] = new STPadRemover();
+  for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+    fPadRemoverPtr[iCobo] = nullptr;
+
+  fIsPadRemoverData = kFALSE;
+
   fNumTbs = 512;
 
   fTargetFrameID = -1;
@@ -229,6 +235,20 @@ void STCore::SetGainReference(Double_t constant, Double_t linear, Double_t quadr
       fGainCalibrationPtr[iCobo] -> SetGainReference(constant, linear, quadratic);
 }
 
+Bool_t STCore::SetPadRemoverData(TString filename)
+{
+  fPadRemoverPtr[0] -> SetDatafile(filename);
+  fIsPadRemoverData = fPadRemoverPtr[0] -> Init();
+  if (fIsSeparatedData) {
+    for (Int_t iCobo = 1; iCobo < 12; iCobo++) {
+      fPadRemoverPtr[iCobo] -> SetDatafile(filename);
+      fIsPadRemoverData |= fPadRemoverPtr[iCobo] -> Init();
+    }
+  }
+
+  return fIsPadRemoverData;
+}
+
 Bool_t STCore::SetUAMap(TString filename)
 {
   return fMapPtr -> SetUAMap(filename);
@@ -286,6 +306,10 @@ void STCore::ProcessCobo(Int_t coboIdx)
 
         for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
           pad -> SetADC(iTb, adc[iTb]);
+
+        if (fPadRemoverPtr[coboIdx] -> CheckBadPad(row, layer, coboFrame -> GetEventID()))
+          for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
+            pad -> SetADC(iTb, 0);
 
         pad -> SetPedestalSubtracted(kTRUE);
       }
@@ -412,6 +436,9 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
           if (row == -2 || layer == -2)
             continue;
 
+          if (fPadRemoverPtr[0] -> CheckBadPad(row, layer, layeredFrame -> GetEventID()))
+            continue;
+
           STPad *pad = fPadArray.at(row*112 + layer);
           pad -> SetRow(row);
           pad -> SetLayer(layer);
@@ -471,6 +498,7 @@ void STCore::SetUseSeparatedData(Bool_t value) {
       fDecoderPtr[iCobo] = new GETDecoder();
       fPedestalPtr[iCobo] = new STPedestal();
       fGainCalibrationPtr[iCobo] = new STGainCalibration();
+      fPadRemoverPtr[iCobo] = new STPadRemover();
       fGGNoisePtr[iCobo] = new STGGNoiseSubtractor();
 //      fDecoderPtr[iCobo] -> SetDebugMode(1);
     }

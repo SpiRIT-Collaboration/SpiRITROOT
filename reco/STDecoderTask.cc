@@ -32,6 +32,8 @@ STDecoderTask::STDecoderTask()
     fMetaData[iCobo] = "";
   fDataNum = 0;
 
+  fPadRemoverData = "";
+
   fFPNPedestalRMS = -1;
 
   fExternalNumTbs = kFALSE;
@@ -168,6 +170,11 @@ STDecoderTask::Init()
 
     fDecoder -> SetGainReference(fGainConstant, fGainLinear, fGainQuadratic);
     fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set!");
+
+    if (fPadRemoverData.EqualTo(""))
+      fLogger -> Info(MESSAGE_ORIGIN, "No pad is removed!");
+    else
+      fDecoder -> SetPadRemoverData(fPadRemoverData);
   }
 
   return kSUCCESS;

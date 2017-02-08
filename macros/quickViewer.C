@@ -113,6 +113,8 @@ void quickViewer() {
     fCore -> InitGGNoiseSubtractor();
   }
 
+  fCore -> SetPadRemoverData(Form("%sBadPads.list", parameterDir.Data()));
+
   if (fUseMetadata) {
     std::ifstream metalistFile(metaFile.Data());
     TString dataFileWithPath;

@@ -55,6 +55,8 @@ class STDecoderTask : public FairTask {
     void SetMetaData(TString filename, Int_t coboIdx = 0);
     /// Setting which data to be decoded
     void SetData(Int_t value);
+    /// Setting pad remover data file
+    void SetPadRemoverData(TString filedata);
     /// Setting the FPN RMS value cut for pedestal region taking
     void SetFPNPedestal(Double_t rms);
     /// Setting the gating grid nose data file
@@ -99,6 +101,8 @@ class STDecoderTask : public FairTask {
     vector<TString> fDataList[12];      ///< Raw data file list
     TString fMetaData[12];              ///< Meta data files
     Int_t fDataNum;                     ///< Set which number in data list to be decoded
+
+    TString fPadRemoverData;            ///< Pad remover data
 
     Double_t fFPNPedestalRMS;           ///< RMS cut of baseline matching part selection
 

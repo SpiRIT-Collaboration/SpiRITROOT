@@ -41,6 +41,7 @@
 #pragma link C++ class STParReader+;
 #pragma link C++ class STStatic+;
 #pragma link C++ class STGGNoiseSubtractor+;
+#pragma link C++ class STPadRemover+;
 
 #pragma link C++ class STDecoderTask+;
 
