@@ -60,6 +60,7 @@ STFieldMap::STFieldMap(const char* mapName, const char* fileType)
   if ( fileType[0] == 'R' ) fFileName += ".root";
   else                      fFileName += ".dat";
   fType = 1;
+  cout << fFileName << endl;
 }
 // ------------------------------------------------------------------------
 
@@ -231,9 +232,9 @@ Bool_t STFieldMap::IsInside(Double_t x, Double_t y, Double_t z,
 			     Double_t& dx, Double_t& dy, Double_t& dz) {
 
   // --- Transform into local coordinate system
-  Double_t xl = x - fPosX;
-  Double_t yl = y - fPosY;
-  Double_t zl = z - fPosZ;
+  Double_t xl = (x - fPosX)*10.;
+  Double_t yl = (y - fPosY)*10.;
+  Double_t zl = (z - fPosZ)*10.;
 
   // ---  Check for being outside the map range
   if ( ! ( xl >= fXmin && xl < fXmax && yl >= fYmin && yl < fYmax &&
@@ -400,6 +401,72 @@ void STFieldMap::Reset() {
 // -----   Read field map from ASCII file (private)   ---------------------
 void STFieldMap::ReadAsciiFile(const char* fileName) {
 
+  Double_t bx = 0, by = 0, bz = 0;
+  Double_t xx = 0, yy = 0, zz = 0;
+
+  // Open file
+  cout << "-I- STFieldMap: Reading field map from ASCII file " << fileName << endl;
+  ifstream mapFile(fileName);
+  if ( ! mapFile.is_open() ) {
+    cerr << "-E- STFieldMap:ReadAsciiFile: Could not open file! " << endl;
+    Fatal("ReadAsciiFile","Could not open file");
+  }
+
+  for (int i = 0; i < 8; i++)
+    mapFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+  fNx = 301; fNy = 81; fNz = 301;
+  fXmin = 0; fXmax= 3000;
+  fYmin = -400; fYmax= 400;
+  fZmin = 0; fZmax= 3000;
+
+  fXstep = ( fXmax - fXmin ) / Double_t( fNx - 1 );
+  fYstep = ( fYmax - fYmin ) / Double_t( fNy - 1 );
+  fZstep = ( fZmax - fZmin ) / Double_t( fNz - 1 );
+
+  fBx = new TArrayD(fNx * fNy * fNz);
+  fBy = new TArrayD(fNx * fNy * fNz);
+  fBz = new TArrayD(fNx * fNy * fNz);
+
+  Int_t nTot = fNx * fNy * fNz;
+
+  Int_t index = 0;
+  div_t modul;
+  Int_t iDiv = TMath::Nint(nTot/100.);
+  for (Int_t ix=0; ix<fNx; ix++) {
+    for (Int_t iy = 0; iy<fNy; iy++) {
+      for (Int_t iz = 0; iz<fNz; iz++) {
+	if (! mapFile.good()) cerr << "-E- STFieldMap::ReadAsciiFile: " << "I/O Error at " << ix << " " << iy << " " << iz << endl;
+
+	index = ix*fNy*fNz + iy*fNz + iz;
+	modul = div(index,iDiv);
+	if ( modul.rem == 0 ) {
+	  Double_t perc = TMath::Nint(100.*index/nTot);
+	  cout << "\b\b\b\b\b\b" << setw(3) << perc << " % " << flush;
+	}
+	mapFile >> xx >> yy >> zz >>  bx >> by >> bz ;
+	fBx->AddAt(bx, index);
+	fBy->AddAt(by, index);
+	fBz->AddAt(bz, index);
+
+	if ( mapFile.eof() ) {
+	  cerr << endl << "-E- STFieldMap::ReadAsciiFile: EOF reached at " << ix << " " << iy << " " << iz << endl;
+	  mapFile.close();
+	  break;
+	}
+
+      }   // z-Loop
+    }     // y-Loop
+  }       // x-Loop
+
+  cout << "   " << index+1 << " read" << endl;
+  cout << "B field map loaded!" << endl;
+  mapFile.close();
+
+}
+/*
+void STFieldMap::ReadAsciiFile(const char* fileName) {
+
   Double_t bx=0., by=0., bz=0.;
   Double_t  xx, yy, zz;
   // Open file
@@ -496,6 +563,7 @@ void STFieldMap::ReadAsciiFile(const char* fileName) {
   mapFile.close();
 
 }
+*/
 // ------------------------------------------------------------------------
 
 
