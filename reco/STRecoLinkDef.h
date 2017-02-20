@@ -85,6 +85,7 @@
 #pragma link C++ class STHoughSpaceHelix+;
 
 #pragma link C++ class genfit::STSpacepointMeasurement+;
+#pragma link C++ class STGFBField+;
 #pragma link C++ class STGenfitTest+;
 #pragma link C++ class STGenfitTestE+;
 #pragma link C++ class STGenfitTask+;

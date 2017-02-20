@@ -44,7 +44,8 @@ STGenfitTestE::STGenfitTestE()
   fMeasurementFactory = new genfit::MeasurementFactory<genfit::AbsMeasurement>();
   fMeasurementFactory -> addProducer(fTPCDetID, fMeasurementProducer);
 
-  genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.));
+  //genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.));
+  genfit::FieldManager::getInstance() -> init(new STGFBField("samurai_field_map","A"));
   genfit::MaterialEffects *materialEffects = genfit::MaterialEffects::getInstance();
   materialEffects -> init(new genfit::TGeoMaterialInterface());
 

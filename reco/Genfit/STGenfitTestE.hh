@@ -15,6 +15,7 @@
 #include "DAF.h"
 #include "GFRaveVertexFactory.h"
 #include "ConstField.h"
+#include "STGFBField.hh"
 #include "FieldManager.h"
 #include "MaterialEffects.h"
 #include "TGeoMaterialInterface.h"

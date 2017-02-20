@@ -11,6 +11,7 @@ ${CMAKE_SOURCE_DIR}/par
 ${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/tool
 ${CMAKE_SOURCE_DIR}/util
+${CMAKE_SOURCE_DIR}/field
 ${CMAKE_SOURCE_DIR}/reco
 ${CMAKE_SOURCE_DIR}/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/reco/STConverter
@@ -111,6 +112,7 @@ HoughTracking/STHoughSpaceLine.cc
 HoughTracking/STHoughSpaceHelix.cc
 
 Genfit/STSpacepointMeasurement.cc
+Genfit/STGFBField.cc
 Genfit/STGenfitTest.cc
 Genfit/STGenfitTestE.cc
 
@@ -161,6 +163,7 @@ Set(DEPENDENCIES
     STTool
     STPar
     STUtil
+    STField
     Spectrum
     genfit2
 )
