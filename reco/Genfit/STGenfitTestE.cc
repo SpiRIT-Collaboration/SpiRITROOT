@@ -49,12 +49,13 @@ STGenfitTestE::STGenfitTestE(Bool_t loadSamurai)
   fMeasurementFactory = new genfit::MeasurementFactory<genfit::AbsMeasurement>();
   fMeasurementFactory -> addProducer(fTPCDetID, fMeasurementProducer);
 
-  if (loadSamurai) {
+  if (loadSamurai)
     genfit::FieldManager::getInstance() -> init(new STGFBField("samurai_field_map","A"));
-    genfit::MaterialEffects *materialEffects = genfit::MaterialEffects::getInstance();
-    materialEffects -> init(new genfit::TGeoMaterialInterface());
-  } else
+  else
     genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.));
+
+  genfit::MaterialEffects *materialEffects = genfit::MaterialEffects::getInstance();
+  materialEffects -> init(new genfit::TGeoMaterialInterface());
 
   TVector3 posTarget(0, -21.33, -0.89);
   TVector3 normalTarget(0, 0, 1);
