@@ -29,6 +29,11 @@ using namespace std;
 ClassImp(STGenfitTestE)
 
 STGenfitTestE::STGenfitTestE()
+:STGenfitTestE(kTRUE)
+{
+}
+
+STGenfitTestE::STGenfitTestE(Bool_t loadSamurai)
 {
   fTPCDetID = 0;
 
@@ -44,10 +49,12 @@ STGenfitTestE::STGenfitTestE()
   fMeasurementFactory = new genfit::MeasurementFactory<genfit::AbsMeasurement>();
   fMeasurementFactory -> addProducer(fTPCDetID, fMeasurementProducer);
 
-  //genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.));
-  genfit::FieldManager::getInstance() -> init(new STGFBField("samurai_field_map","A"));
-  genfit::MaterialEffects *materialEffects = genfit::MaterialEffects::getInstance();
-  materialEffects -> init(new genfit::TGeoMaterialInterface());
+  if (loadSamurai) {
+    genfit::FieldManager::getInstance() -> init(new STGFBField("samurai_field_map","A"));
+    genfit::MaterialEffects *materialEffects = genfit::MaterialEffects::getInstance();
+    materialEffects -> init(new genfit::TGeoMaterialInterface());
+  } else
+    genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.));
 
   TVector3 posTarget(0, -21.33, -0.89);
   TVector3 normalTarget(0, 0, 1);

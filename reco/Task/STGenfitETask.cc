@@ -37,6 +37,7 @@ void STGenfitETask::SetIterationCut(Int_t min, Int_t max)
 }
 
 void STGenfitETask::SetClusteringType(Int_t type) { fClusteringType = type; }
+void STGenfitETask::SetConstantField()            { fIsSamurai = kFALSE; }
 
 InitStatus
 STGenfitETask::Init()
@@ -55,7 +56,7 @@ STGenfitETask::Init()
 
   fTrackCandArray = new TClonesArray("STTrackCandidate");
 
-  fGenfitTest = new STGenfitTestE();
+  fGenfitTest = new STGenfitTestE(fIsSamurai);
   fGenfitTest -> SetMinIterations(fMinIterations);
   fGenfitTest -> SetMaxIterations(fMaxIterations);
 

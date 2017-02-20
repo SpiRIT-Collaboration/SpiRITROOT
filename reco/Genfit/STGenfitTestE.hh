@@ -29,6 +29,7 @@ class STGenfitTestE
 {
   public:
     STGenfitTestE();
+    STGenfitTestE(Bool_t loadSamurai);
     ~STGenfitTestE();
 
     void SetTargetPlane(TVector3 position, TVector3 normal);

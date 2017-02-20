@@ -16,6 +16,8 @@ class STGenfitETask : public STRecoTask
     void SetIterationCut(Int_t min, Int_t max);
     void SetClusteringType(Int_t type);
 
+    void SetConstantField();
+
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
 
@@ -29,6 +31,8 @@ class STGenfitETask : public STRecoTask
 
     Int_t fMinIterations = 5;
     Int_t fMaxIterations = 20;
+
+    Bool_t fIsSamurai = kTRUE;
 
     TString fGFRaveVertexMethod;
     genfit::GFRaveVertexFactory *fVertexFactory;
