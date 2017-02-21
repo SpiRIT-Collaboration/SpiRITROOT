@@ -14,6 +14,8 @@ class STGFBField : public TObject, public genfit::AbsBField
 
     TVector3 get(const TVector3& pos) const;
 
+    STFieldMap *GetFieldMap() { return fFieldMap; }
+
   private:
     STFieldMap *fFieldMap;
 

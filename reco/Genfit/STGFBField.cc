@@ -5,7 +5,7 @@ ClassImp(STGFBField)
 STGFBField::STGFBField(const char* mapName, const char* fileType)
 {
   fFieldMap = new STFieldMap(mapName, fileType);
-  fFieldMap -> SetPosition(0,-100,580);
+  fFieldMap -> SetPosition(0,-10,58);
   fFieldMap -> Init();
 }
 
