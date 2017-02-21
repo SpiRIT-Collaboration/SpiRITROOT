@@ -65,6 +65,7 @@ void STDecoderTask::SetNumTbs(Int_t numTbs)                                     
 void STDecoderTask::AddData(TString filename, Int_t coboIdx)                                  { fDataList[coboIdx].push_back(filename); }
 void STDecoderTask::SetMetaData(TString filename, Int_t coboIdx)                              { fMetaData[coboIdx] = filename; }
 void STDecoderTask::SetData(Int_t value)                                                      { fDataNum = value; }
+void STDecoderTask::SetPadRemoverData(TString filedata)                                       { fPadRemoverData = filedata; }
 void STDecoderTask::SetFPNPedestal(Double_t pedestalRMS)                                      { fFPNPedestalRMS = pedestalRMS; }
 void STDecoderTask::SetGGNoiseData(TString filename)                                          { fGGNoiseFile = filename; }
 void STDecoderTask::SetUseGainCalibration(Bool_t value)                                       { fUseGainCalibration = value; }
