@@ -48,10 +48,10 @@ STFieldMap::STFieldMap(const char* mapName, const char* fileType)
     fScale(1.0),
     funit(10.0),
     fPosX(0), fPosY(0), fPosZ(0),
-    fXmin(0), fXmax(0), fXstep(0),
-    fYmin(0), fYmax(0), fYstep(0),
-    fZmin(0), fZmax(0), fZstep(0),
-    fNx(0),fNy(0),fNz(0),
+    fXmin(0), fXmax(3000), fXstep(10),
+    fYmin(-400), fYmax(400), fYstep(10),
+    fZmin(0), fZmax(3000), fZstep(10),
+    fNx(301),fNy(81),fNz(301),
     fBx(NULL), fBy(NULL), fBz(NULL)   
 {
   SetName(mapName);
@@ -236,6 +236,9 @@ Bool_t STFieldMap::IsInside(Double_t x, Double_t y, Double_t z,
   Double_t yl = (y - fPosY)*10.;
   Double_t zl = (z - fPosZ)*10.;
 
+  xl=abs(xl);
+  zl=abs(zl);
+
   // ---  Check for being outside the map range
   if ( ! ( xl >= fXmin && xl < fXmax && yl >= fYmin && yl < fYmax &&
 	   zl >= fZmin && zl < fZmax ) ) {
@@ -243,6 +246,10 @@ Bool_t STFieldMap::IsInside(Double_t x, Double_t y, Double_t z,
     dx = dy = dz = 0.;
     return kFALSE;
   }
+
+  xl = xl - fXmin;
+  yl = yl - fYmin;
+  zl = zl - fZmin;
  
   // --- Determine grid cell
   ix = Int_t( xl / fXstep );
@@ -415,7 +422,9 @@ void STFieldMap::ReadAsciiFile(const char* fileName) {
   for (int i = 0; i < 8; i++)
     mapFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-  fNx = 301; fNy = 81; fNz = 301;
+  fNx = 301;
+  fNy = 81;
+  fNz = 301;
   fXmin = 0; fXmax= 3000;
   fYmin = -400; fYmax= 400;
   fZmin = 0; fZmax= 3000;
@@ -445,9 +454,9 @@ void STFieldMap::ReadAsciiFile(const char* fileName) {
 	  cout << "\b\b\b\b\b\b" << setw(3) << perc << " % " << flush;
 	}
 	mapFile >> xx >> yy >> zz >>  bx >> by >> bz ;
-	fBx->AddAt(bx, index);
-	fBy->AddAt(by, index);
-	fBz->AddAt(bz, index);
+	fBx->AddAt(bx*funit, index);
+	fBy->AddAt(by*funit, index);
+	fBz->AddAt(bz*funit, index);
 
 	if ( mapFile.eof() ) {
 	  cerr << endl << "-E- STFieldMap::ReadAsciiFile: EOF reached at " << ix << " " << iy << " " << iz << endl;
