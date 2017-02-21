@@ -34,8 +34,6 @@ void geomSpiRIT()
   // ----------------------------------------------------
   //  Dimensions (cm)
   // ----------------------------------------------------
-  TVector3 sTOP(300., 300., 300.); ///< size of top volume
-  TVector3 sTPC(300., 300., 300.); ///< size of tpc volume
   /* 
    * "Active"
    * Size of gas volume inside the field cage. 
@@ -44,6 +42,9 @@ void geomSpiRIT()
   Double_t xCage = 96.61;  ///< x-length of cage volume
   Double_t yCage = 51.01;  ///< y-length of cage volume, from cathode top to pad-plane bottom 
   Double_t zCage = 144.64; ///< z-length of cage volume
+
+  TVector3 sTOP(200., yCage/2., 200.); ///< size of top volume
+  TVector3 sTPC(200., yCage/2., 200.); ///< size of tpc volume
 
   Double_t rActiveCorner = 2.8495; ///< radius of active corner
   Double_t tCageFrame = 0.1575;    ///< Thickness of cage frame
