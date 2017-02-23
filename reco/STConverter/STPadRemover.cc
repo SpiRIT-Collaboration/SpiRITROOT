@@ -57,6 +57,7 @@ Bool_t STPadRemover::Init()
 
     data.fPads[layer*108 + row] = 1;
   }
+  fData.push_back(data);
   file.close();
 
 /*
