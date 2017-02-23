@@ -18,6 +18,12 @@
 
 #include "TString.h"
 
+class STPadRemoverData {
+  public:
+    Int_t fEventID;
+    Bool_t fPads[12096];
+};
+
 class STPadRemover {
   public:
     STPadRemover();
@@ -35,8 +41,10 @@ class STPadRemover {
     Bool_t fIsInitialized;
     TString fDatafile;
 
-    Int_t fEventID;
-    Bool_t fPads[12096];
+//    Int_t fEventID;
+    STPadRemoverData *fEvent;
+    std::vector<STPadRemoverData> fData;
+//    Bool_t fPads[12096];
 //    std::vector<std::pair<Int_t, Int_t>> fEventList;
 //    std::vector<std::pair<Int_t, Int_t>> fPadList;
 

@@ -33,7 +33,31 @@ Bool_t STPadRemover::Init()
     return fIsInitialized;
   }
 
-  FindEvent();
+  std::ifstream file(fDatafile.Data());
+  Bool_t found = kFALSE;
+  Int_t row = 0, layer = 0;
+
+  STPadRemoverData data;
+  file >> row >> layer;
+  data.fEventID = layer;
+  memset(data.fPads, 0, sizeof(Bool_t)*12096);
+
+  while (file >> row >> layer) {
+    if (file.eof())
+      break;
+
+    if (row == -1) {
+      fData.push_back(data);
+
+      data.fEventID = layer;
+      memset(data.fPads, 0, sizeof(Bool_t)*12096);
+
+      continue;
+    }
+
+    data.fPads[layer*108 + row] = 1;
+  }
+  file.close();
 
 /*
   std::ifstream file(fDatafile.Data());
@@ -76,7 +100,7 @@ Bool_t STPadRemover::CheckBadPad(Int_t row, Int_t layer, Int_t eventid)
   if (!found)
     return kFALSE;
 
-  return fPads[layer*108 + row];
+  return fEvent -> fPads[layer*108 + row];
 
 /*
   Int_t numEvents = fEventList.size();
@@ -101,41 +125,17 @@ void STPadRemover::ClassInit()
   fIsInitialized = kFALSE;
   fDatafile = "";
 
-  memset(fPads, 0, sizeof(Bool_t)*12096);
+//  memset(fPads, 0, sizeof(Bool_t)*12096);
 }
 
 Bool_t STPadRemover::FindEvent(Int_t eventid)
 {
-  if (fEventID == eventid)
-    return kTRUE;
-
-  std::ifstream file(fDatafile.Data());
-  Bool_t found = kFALSE;
-  Int_t row = 0, layer = 0;
-  while (file >> row >> layer) {
-    if (file.eof())
-      break;
-
-    if (row == -1) {
-      if (found)
-        break;
-
-      fEventID = layer;
-
-      memset(fPads, 0, sizeof(Bool_t)*12096);
-
-      if (fEventID == eventid)
-        found = kTRUE;
-
-      continue;
+  for (Int_t iEntry = 0; iEntry < fData.size(); iEntry++) {
+    if (fData[iEntry].fEventID == eventid) {
+      fEvent = &fData[iEntry];
+      return kTRUE;
     }
-
-    if (fEventID != eventid)
-      continue;
-
-    fPads[layer*108 + row] = 1;
   }
-  file.close();
 
-  return found;
+  return kFALSE;
 }
