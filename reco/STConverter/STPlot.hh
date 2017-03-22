@@ -58,6 +58,8 @@ class STPlot : public TObject
     void SetTbLowCut(Int_t value);
     void SetADCHighCut(Double_t value);
 
+    void SetMap(STMap *map);
+
   private:
     STCore *fCore;
     STMap *fMap;

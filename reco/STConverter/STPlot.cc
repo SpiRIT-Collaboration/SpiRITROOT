@@ -644,3 +644,5 @@ void STPlot::PrepareLayerHist()
 void STPlot::SetUseCut(Bool_t value)       { fUseCut = value; }
 void STPlot::SetTbLowCut(Int_t value)      { fPSA -> SetWindowStartTb(value); }
 void STPlot::SetADCHighCut(Double_t value) { fADCThreshold = value; }
+
+void STPlot::SetMap(STMap *map)            { fMap = map; }
