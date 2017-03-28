@@ -785,7 +785,7 @@ STHelixTrackFinder::Correlate(STHelixTrack *track, STHit *hit, Double_t rScale)
   rmsWCut = scale * rmsWCut;
 
   Double_t rmsHCut = track -> GetRMSH();
-  if (rmsHCut < 1) rmsHCut = 1;
+  if (rmsHCut < 2) rmsHCut = 2;
   if (rmsHCut > 4) rmsHCut = 4;
   rmsHCut = scale * rmsHCut;
 
