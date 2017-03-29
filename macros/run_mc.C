@@ -99,7 +99,7 @@ void run_mc
   // Field
   if (useFieldMapFile) {
     STFieldMap *fField = new STFieldMap("SamuraiMap_0.5T","A");
-    fField -> SetPosition(-130.55/2,-51.10/2,-159.64/2);
+    fField -> SetPosition(0., -10., 58.);
     fRun -> SetField(fField);
   }
   else {

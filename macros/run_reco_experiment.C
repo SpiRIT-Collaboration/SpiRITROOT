@@ -91,10 +91,12 @@ void run_reco_experiment
   auto helix = new STHelixTrackingTask();
   helix -> SetPersistence(false);
   helix -> SetClusterPersistence(false);
-
+  helix -> SetClusteringOption(2);
+  
   auto st_genfit = new STGenfitETask();
   st_genfit -> SetPersistence(true);
-
+  //  st_genfit -> SetConstantField();
+  
   auto pidmatching = new STPIDCorrelatorTask(false);
 
   auto st_genfit2 = new STGenfitSinglePIDTask();
