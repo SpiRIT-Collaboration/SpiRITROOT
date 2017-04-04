@@ -23,6 +23,40 @@ class STHelixTrackFinder
 
     void SetClusteringOption(Int_t opt);
 
+    /**
+     * Scale = alpha x fDefaultScale; where alpha is 1 for survived
+     * tracklets. Scale is multiplied to track cut.
+     * Default is 2.5
+    */
+    void SetDefaultCutScale(Double_t scale);
+
+    /**
+     * If hit is with in the range of track width cut (in xz plane),
+     * hit is satisfied with this cut to be added to the track.
+     *
+     * Cut value is limited in range
+     * fTrackWCutLL < [cut_value] < fTrackWCutHL
+     *
+     * The [final cut value] is scaled with the scale factor.
+     * [final cut value] = Scale x [cut_value] which means by default:
+     * 2.5 x fTrackWCutLL < 2.5 x [cut_value] < 2.5 x fTrackWCutHL
+    */
+    void SetTrackWidthCutLimits(Double_t lowLimit, Double_t highLimit);
+
+    /**
+     * If hit is with in the range of track width cut (in xz plane),
+     * hit is satisfied with this cut to be added to the track.
+     *
+     * Cut value is limited in range
+     * fTrackWCutLL < [cut_value] < fTrackWCutHL
+     *
+     * The [final cut value] is scaled with the scale factor.
+     * [final cut value] = Scale x [cut_value] which means by default:
+     * 2.5 x fTrackWCutLL < 2.5 x [cut_value] < 2.5 x fTrackWCutHL
+    */
+    void SetTrackHeightCutLimits(Double_t lowLimit, Double_t highLimit);
+
+
   private:
     /** 
      * Create new track with free hit from event map
@@ -134,6 +168,12 @@ class STHelixTrackFinder
     vhit_t fBadHits  = nullptr;  ///< Selected bad  hits from current fCandHits
 
     Int_t fClusteringOption = 0;
+
+    Double_t fDefaultScale = 2.5;
+    Double_t fTrackWCutLL = 4.;  //< Track width cut low limit
+    Double_t fTrackWCutHL = 10.; //< Track width cut high limit
+    Double_t fTrackHCutLL = 2.;  //< Track height cut low limit
+    Double_t fTrackHCutHL = 4.;  //< Track height cut high limit
 
 
   ClassDef(STHelixTrackFinder, 2)

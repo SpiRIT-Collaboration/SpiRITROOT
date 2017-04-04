@@ -4,6 +4,9 @@
 #include "FairRootManager.h"
 #include "FairRuntimeDb.h"
 
+#include <iostream>
+using namespace std;
+
 ClassImp(STHelixTrackingTask)
 
 STHelixTrackingTask::STHelixTrackingTask()
@@ -25,6 +28,7 @@ void STHelixTrackingTask::SetClusterPersistence(Bool_t value) { fIsClusterPersis
 
 void STHelixTrackingTask::SetNumTracksLowLimit(Int_t limit) { fNumTracksLowLimit = limit; }
 void STHelixTrackingTask::SetClusteringOption(Int_t opt) { fClusteringOption = opt; }
+STHelixTrackFinder *STHelixTrackingTask::GetTrackFinder() { return fTrackFinder; }
 
 InitStatus STHelixTrackingTask::Init()
 {

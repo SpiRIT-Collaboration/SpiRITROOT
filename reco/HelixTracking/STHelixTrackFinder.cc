@@ -158,7 +158,7 @@ STHelixTrackFinder::TrackInitialization(STHelixTrack *track)
 
           fFitter -> Fit(track);
 
-          if (!(track -> GetNumHits() < 10 && track -> GetHelixRadius() < 30) && (track -> TrackLength() > 2.5 * track -> GetRMSW()))
+          if (!(track -> GetNumHits() < 10 && track -> GetHelixRadius() < 30) && (track -> TrackLength() > fDefaultScale * track -> GetRMSW()))
             return true;
         }
         fFitter -> FitPlane(track);
@@ -774,19 +774,19 @@ STHelixTrackFinder::CheckHitOwner(STHit *hit)
 Double_t 
 STHelixTrackFinder::Correlate(STHelixTrack *track, STHit *hit, Double_t rScale)
 {
-  Double_t scale = rScale * 2.5;
+  Double_t scale = rScale * fDefaultScale;
   Double_t trackLength = track -> TrackLength();
   if (trackLength < 500.)
     scale = scale + (500. - trackLength)/500.;
 
   Double_t rmsWCut = track -> GetRMSW();
-  if (rmsWCut < 4) rmsWCut = 4;
-  if (rmsWCut > 10) rmsWCut = 10;
+  if (rmsWCut < fTrackWCutLL) rmsWCut = fTrackWCutLL;
+  if (rmsWCut > fTrackWCutHL) rmsWCut = fTrackWCutHL;
   rmsWCut = scale * rmsWCut;
 
   Double_t rmsHCut = track -> GetRMSH();
-  if (rmsHCut < 2) rmsHCut = 2;
-  if (rmsHCut > 4) rmsHCut = 4;
+  if (rmsHCut < fTrackHCutLL) rmsHCut = fTrackHCutLL;
+  if (rmsHCut > fTrackHCutHL) rmsHCut = fTrackHCutHL;
   rmsHCut = scale * rmsHCut;
 
   auto qHead = track -> Map(track -> PositionAtHead());
@@ -849,8 +849,8 @@ STHelixTrackFinder::CorrelateSimple(STHelixTrack *track, STHit *hit)
     auto perp = track -> PerpLine(hit -> GetPosition());
 
     Double_t rmsCut = track -> GetRMSH();
-    if (rmsCut < 1) rmsCut = 1;
-    if (rmsCut > 4) rmsCut = 4;
+    if (rmsCut < fTrackHCutLL) rmsCut = fTrackHCutLL;
+    if (rmsCut > fTrackHCutHL) rmsCut = fTrackHCutHL;
     rmsCut = 3 * rmsCut;
 
     if (perp.Y() > rmsCut)
@@ -865,8 +865,8 @@ STHelixTrackFinder::CorrelateSimple(STHelixTrack *track, STHit *hit)
     Double_t dist = (track -> PerpPlane(hit -> GetPosition())).Mag();
 
     Double_t rmsCut = track -> GetRMSH();
-    if (rmsCut < 1) rmsCut = 1;
-    if (rmsCut > 4) rmsCut = 4;
+    if (rmsCut < fTrackHCutLL) rmsCut = fTrackHCutLL;
+    if (rmsCut > fTrackHCutHL) rmsCut = fTrackHCutHL;
     rmsCut = 3 * rmsCut;
 
     if (dist < rmsCut)
@@ -969,3 +969,14 @@ STHelixTrackFinder::FindVertex(TClonesArray *tracks, Int_t nIterations)
 }
 
 void STHelixTrackFinder::SetClusteringOption(Int_t opt) { fClusteringOption = opt; }
+void STHelixTrackFinder::SetDefaultCutScale(Double_t scale) { fDefaultScale = scale; }
+void STHelixTrackFinder::SetTrackWidthCutLimits(Double_t lowLimit, Double_t highLimit)
+{
+  fTrackWCutLL = lowLimit;
+  fTrackHCutHL = highLimit;
+}
+void STHelixTrackFinder::SetTrackHeightCutLimits(Double_t lowLimit, Double_t highLimit)
+{
+  fTrackHCutLL = lowLimit;
+  fTrackHCutHL = highLimit;
+}

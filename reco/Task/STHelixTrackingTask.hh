@@ -22,6 +22,8 @@ class STHelixTrackingTask : public STRecoTask
     void SetNumTracksLowLimit(Int_t limit);
     void SetClusteringOption(Int_t opt);
 
+    STHelixTrackFinder *GetTrackFinder();
+
   private:
     TClonesArray *fHitArray = nullptr;
     TClonesArray *fHitClusterArray = nullptr;

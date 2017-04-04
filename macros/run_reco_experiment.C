@@ -121,6 +121,10 @@ void run_reco_experiment
   recoHeader -> Write("RecoHeader");
 
   run -> Init();
+  helix -> GetTrackFinder() -> SetDefaultCutScale(2.5);
+  helix -> GetTrackFinder() -> SetTrackWidthCutLimits(4, 10);
+  helix -> GetTrackFinder() -> SetTrackHeightCutLimits(2, 4);
+
   run -> Run(0, fNumEventsInSplit);
 
   cout << "Log    : " << log << endl;
