@@ -1,29 +1,43 @@
-#include "TGeoManager.h" 
+#include "TGeoManager.h"
 #include "TGeoMedium.h"
 #include "TGeoMaterial.h"
 #include "TGeoVolume.h"
 #include <vector>
 
 /*
- * TODO : variables 
- * TODO : Make volume in union volume using TGeoCompositeShape
- * - active            : ok
- * - cageFront         : ok
- * - cageSide          : ok
- * - cageCorner        : ok
- * - frontWindow       : ok
- * - frontWindowFrame  :
- * - copperStrips      :
- * - frontWindowCradle :
- * - bottomPlate       :
- * - backWindowFrame   :
- * - backWindow        :
- * - topFrame          :
- * - ribmain           :
- * - wirePlane         :
- * - padPlane          :
+ * SpiRIT-TPC geometry macro
+ *
+ * List of volumes
+ * - Top
+ *   - TPC
+ *     - active            : TGeoCompositeShape
+ *     - cageFront         : TGeoCompositeShape
+ *     - cageSide          : TGeoCompositeShape
+ *     - frontWindow       : TGeoVolume
+ *     - frontWindowFrame  : TGeoCompositeShape
+ *     - frontWindowCradle : TGeoCompositeShape
+ *     - bottomPlate       : TGeoCompositeShape
+ *     - backWindowFrame   : TGeoCompositeShape
+ *     - backWindow        : TGeoVolume
+ *     - topFrame          : TGeoCompositeShape
+ *     - topPlate          : TGeoVolume
+ *     - padPlane          : TGeoVolume
+ *     - padArray          : TGeoVolume
+*/
 
- * TODO : check overlabs
+/*
+ * All dimension units in [mm].
+ * Variable name that start with dx(dy,dz,dxy)   mean length in x(y,z,x&y).
+ * Variable name that start with offx(offy,offz) mean offset in x(y,z).
+ * Variable name that start with dw              mean thickness or width.
+ * Variable name that start with r               mean radius.
+ * T, B, L, R, S, F, B stands for Top, Bottom, Left, Right, Side, Front, Bottom
+*/
+
+/*
+ * TODO : check value
+ * TODO : overlap between topPlate and (padPlane, padArray)
+ * and more TODO inside the code
 */
 
 void geomSpiRIT()
@@ -32,35 +46,9 @@ void geomSpiRIT()
   TString dirGeom = dir + "/geometry/";
 
   // ----------------------------------------------------
-  //  Dimensions (cm)
-  // ----------------------------------------------------
-  /* 
-   * "Active"
-   * Size of gas volume inside the field cage. 
-   * Thickness of cage side(tCageFrame) is not included.
-   */ 
-  Double_t xCage = 96.61;  ///< x-length of cage volume
-  Double_t yCage = 51.01;  ///< y-length of cage volume, from cathode top to pad-plane bottom 
-  Double_t zCage = 144.64; ///< z-length of cage volume
-
-  TVector3 sTOP(200., yCage/2., 200.); ///< size of top volume
-  TVector3 sTPC(200., yCage/2., 200.); ///< size of tpc volume
-
-  Double_t rActiveCorner = 2.8495; ///< radius of active corner
-  Double_t tCageFrame = 0.1575;    ///< Thickness of cage frame
-  Double_t rCageCorner = rActiveCorner + tCageFrame; ///< radius of field cage corner
-
-  Double_t xActiveC = xCage - 2*rCageCorner; ///< x-length of active volume (=90.96 in Mike's macro)
-  Double_t yActiveC = 49.6;                  ///< y-length of acitve volume
-  Double_t zActiveC = zCage - 2*rCageCorner; ///< z-length of active volume (=138.96 in Mike's macro)
-
-  Double_t xPadPlane = 86.4;  ///< x-length of pad plane
-  Double_t yPadPlane = 0.1;   ///< height of pad plane, TODO : check the value 
-  Double_t zPadPlane = 134.4; ///< z-length of pad plane
-
-  // ----------------------------------------------------
   //  Mediums
   // ----------------------------------------------------
+
   FairGeoLoader *geoLoader = new FairGeoLoader("TGeo", "FairGeoLoader");
   FairGeoInterface *geoIF = geoLoader -> getGeoInterface();
   geoIF -> setMediaFile(dirGeom + "media.geo");
@@ -92,50 +80,135 @@ void geomSpiRIT()
   TGeoMedium *pcb = gGeoManager -> GetMedium("pcb");
   TGeoMedium *aluminium = gGeoManager -> GetMedium("aluminium");
   TGeoMedium *copper = gGeoManager -> GetMedium("copper");
-  
 
   // ----------------------------------------------------
-  //  TOP
+  //  Dimensions (cm)
   // ----------------------------------------------------
-  TGeoVolume* top = gGeoManager -> MakeBox("top",vacuum,sTOP.X(),sTOP.Y(),sTOP.Z());
+
+  // Active : Gas volume inside the field cage
+  Double_t dxActive = 96.61;  // x-length of active volume
+  Double_t dyActive = 49.6;   // y-length of active volume, from cathode top to pad-plane bottom 
+  Double_t dzActive = 144.64; // z-length of active volume
+
+  // Pad Plane dimension
+  Double_t dxPadPlane = 86.4;
+  Double_t dzPadPlane = 134.4;
+
+  // Top Plate dimension including top-frame, pad-plane and some part of active area
+  Double_t dxTopPlate = 152.4;
+  Double_t dzTopPlate = 206.06;
+  Double_t dyTopPlate = 10.9042;
+
+  Double_t dyBottomPlate = 1.0541; // thickness of the bottom plate
+
+  // For additional active volume just below pad plane. Middle is below Top.
+  Double_t dyActiveMiddle = 0.8763;  // TODO check this value
+  Double_t dyActiveTop = 1.8;        // TODO original value in macro was 1.905
+  Double_t dyActiveTopMiddle = dyActiveMiddle + dyActiveTop;
+
+  Double_t dzActiveMiddle = 143.899; // TODO Should be smaller than dzAtive. original value in macro was 143.899
+  Double_t dzActiveTop = 155.7;
+
+  // Tpc (World) dimension
+  Double_t dxTpc = 200.;
+  Double_t dyTpc = dyActive + dyTopPlate + dyBottomPlate + dyActiveTopMiddle; // = 64.2346
+  Double_t dzTpc = dzTopPlate; // = 206.06
+
+  Double_t dxTop = dxTpc + 10;
+  Double_t dyTop = dyTpc + 10;
+  Double_t dzTop = dzTpc + 10;
+
+  cout << "Tpc volume: " << dxTpc << ", " << dyTpc << ", " << dzTpc << endl;
+  cout << "Top volume: " << dxTop << ", " << dyTop << ", " << dzTop << endl;
+
+  Double_t dxTopFrameFloorSide = 17.5326;
+  Double_t dxTopFrameFloorFB = 95.8523;
+  Double_t dzTopFrameFloorFB = 8.0594;
+  Double_t dzTopFrameFloorSide = dzActiveMiddle + 2 * dzTopFrameFloorFB; // was Double_t dzTopFrameFloorSide = 160.0175;
+
+  Double_t dxTopFrameLexanFB = 126.6;
+  Double_t dxTopFrameLexanSide = 2.;
+  Double_t dzTopFrameLexanFB = 2.;
+  Double_t dzTopFrameLexanSide = dzActiveTop + 2 * dzTopFrameLexanFB; // was Double_t dzTopFrameLexanSide = 159.7;
+
+  // y-offset of origin from center of active volume. TODO check value
+  Double_t offyActiveToOrigin = dyActive/2 + dyActiveMiddle + dyActiveTop; // was Double_t offyActiveToOrigin = 27.5305; 
+
+  Double_t dwCage = 0.1575; // thickness of field cage frame
+  Double_t rActiveCorner = 2.8495; // radius of active corner
+  Double_t rCageCorner = rActiveCorner + dwCage; // radius of outer field cage corner
+
+  Double_t dxActiveIn = dxActive - 2 * rCageCorner; // x-length of active volume
+  Double_t dzActiveIn = dzActive - 2 * rCageCorner; // z-length of active volume
+
+  // origin is at the front(z) and xy-center of the pad plane.
+  Double_t offzPadPlane = 5.08548; // distance between active volume center and pad plane center. TODO check value 
+  Double_t offzTpc = offzPadPlane + dzPadPlane/2; // z-distance between active volume and origin
+  Double_t offyTpc = (dyTopPlate +  dyActiveTopMiddle - dyBottomPlate)/2;
+  Double_t offyTop = offyTpc - offyActiveToOrigin;
+  Double_t offsetTop[] = {0,offyTop,offzTpc};
+  Double_t offsetTpc[] = {0,offyTpc,0};
+
+  // ----------------------------------------------------
+  //  Top (World)
+  // ----------------------------------------------------
+
+  auto boxTop = new TGeoBBox(dxTop/2,dyTop/2,dzTop/2,offsetTop);
+  TGeoVolume *top;
+  if (boxTop -> IsRunTimeShape()) {
+    top = gGeoManager -> MakeVolumeMulti("top", vacuum);
+    top -> SetShape(boxTop);
+  } else {
+    top = new TGeoVolume("top", boxTop, vacuum);
+  }
+  gGeoManager -> SetTopVolume(top);
   gGeoManager -> SetTopVolume(top);
 
   // ----------------------------------------------------
   //  TPC
   // ----------------------------------------------------
-  TGeoVolume* tpc = gGeoManager -> MakeBox("tpc",vacuum,sTPC.X(),sTPC.Y(),sTPC.Z());
 
-  TGeoRotation*   rotatTPC = new TGeoRotation("rotatTPC",180.0,180.0,0.0);
-  TGeoCombiTrans* combiTPC  = new TGeoCombiTrans("combiTPC",0.0,-27.5305,5.08548+134.4/2.0,rotatTPC);
+  auto boxTpc = new TGeoBBox(dxTpc/2,dyTpc/2,dzTpc/2,offsetTpc);
+  TGeoVolume *tpc;
+  if (boxTpc -> IsRunTimeShape()) {
+    tpc = gGeoManager -> MakeVolumeMulti("tpc", vacuum);
+    tpc -> SetShape(boxTpc);
+  } else {
+    tpc = new TGeoVolume("tpc", boxTpc, vacuum);
+  }
+
+  TGeoRotation*   rotatTpc = new TGeoRotation("rotatTpc",180,180,0);
+  TGeoCombiTrans* combiTpc = new TGeoCombiTrans("combiTpc",0,-offyActiveToOrigin,offzTpc,rotatTpc);
 
   // ----------------------------------------------------
   //  Active Volume (Union)
   // ----------------------------------------------------
-  TGeoVolume* activeCenter  = gGeoManager -> MakeBox("activeCenter",p10,xActiveC/2,yActiveC/2,zActiveC/2);
-  TGeoVolume* activeTop     = gGeoManager -> MakeBox("activeTop",   p10,xActiveC/2,yActiveC/2,rActiveCorner/2);
-  TGeoVolume* activeBottom  = gGeoManager -> MakeBox("activeBottom",p10,xActiveC/2,yActiveC/2,rActiveCorner/2);
-  TGeoVolume* activeRight   = gGeoManager -> MakeBox("activeRight", p10,rActiveCorner/2,yActiveC/2,zActiveC/2);
-  TGeoVolume* activeLeft    = gGeoManager -> MakeBox("activeLeft",  p10,rActiveCorner/2,yActiveC/2,zActiveC/2);
-  TGeoVolume* activeCorner1 = gGeoManager -> MakeTubs("activeCorner1",p10,0.,rActiveCorner,yActiveC/2,0,   90. );
-  TGeoVolume* activeCorner2 = gGeoManager -> MakeTubs("activeCorner2",p10,0.,rActiveCorner,yActiveC/2,90., 180.);
-  TGeoVolume* activeCorner3 = gGeoManager -> MakeTubs("activeCorner3",p10,0.,rActiveCorner,yActiveC/2,180.,270.);
-  TGeoVolume* activeCorner4 = gGeoManager -> MakeTubs("activeCorner4",p10,0.,rActiveCorner,yActiveC/2,270.,360.);
 
-  Double_t offXActive = xActiveC/2+rActiveCorner/2;
-  Double_t offZActive = zActiveC/2+rActiveCorner/2;
+  TGeoVolume* activeCenter  = gGeoManager -> MakeBox("activeCenter",p10,dxActiveIn/2,dyActive/2,dzActiveIn/2);
+  TGeoVolume* activeFront   = gGeoManager -> MakeBox("activeFront", p10,dxActiveIn/2,dyActive/2,rActiveCorner/2);
+  TGeoVolume* activeBack    = gGeoManager -> MakeBox("activeBack",  p10,dxActiveIn/2,dyActive/2,rActiveCorner/2);
+  TGeoVolume* activeRight   = gGeoManager -> MakeBox("activeRight", p10,rActiveCorner/2,dyActive/2,dzActiveIn/2);
+  TGeoVolume* activeLeft    = gGeoManager -> MakeBox("activeLeft",  p10,rActiveCorner/2,dyActive/2,dzActiveIn/2);
+  TGeoVolume* activeCorner1 = gGeoManager -> MakeTubs("activeCorner1",p10,0.,rActiveCorner,dyActive/2,  0., 90.);
+  TGeoVolume* activeCorner2 = gGeoManager -> MakeTubs("activeCorner2",p10,0.,rActiveCorner,dyActive/2, 90.,180.);
+  TGeoVolume* activeCorner3 = gGeoManager -> MakeTubs("activeCorner3",p10,0.,rActiveCorner,dyActive/2,180.,270.);
+  TGeoVolume* activeCorner4 = gGeoManager -> MakeTubs("activeCorner4",p10,0.,rActiveCorner,dyActive/2,270.,360.);
 
-  TGeoTranslation* transActiveTop     = new TGeoTranslation("transActiveTop",   0,0, offZActive);
-  TGeoTranslation* transActiveBottom  = new TGeoTranslation("transActiveBottom",0,0,-offZActive);
-  TGeoTranslation* transActiveRight   = new TGeoTranslation("transActiveRight",  offXActive,0,0);
-  TGeoTranslation* transActiveLeft    = new TGeoTranslation("transActiveLeft",  -offXActive,0,0);
+  Double_t offxActive = dxActiveIn/2 + rActiveCorner/2;
+  Double_t offzActive = dzActiveIn/2 + rActiveCorner/2;
+
+  TGeoTranslation* transActiveFront   = new TGeoTranslation("transActiveFront",0,0, offzActive);
+  TGeoTranslation* transActiveBack    = new TGeoTranslation("transActiveBack", 0,0,-offzActive);
+  TGeoTranslation* transActiveRight   = new TGeoTranslation("transActiveRight", offxActive,0,0);
+  TGeoTranslation* transActiveLeft    = new TGeoTranslation("transActiveLeft", -offxActive,0,0);
   TGeoRotation*    rotatCorner        = new TGeoRotation("rotatCorner",0,90,0);
-  TGeoCombiTrans*  combiActiveCorner1 = new TGeoCombiTrans("combiActiveCorner1", xActiveC/2,0, zActiveC/2,rotatCorner);
-  TGeoCombiTrans*  combiActiveCorner2 = new TGeoCombiTrans("combiActiveCorner2",-xActiveC/2,0, zActiveC/2,rotatCorner);
-  TGeoCombiTrans*  combiActiveCorner3 = new TGeoCombiTrans("combiActiveCorner3",-xActiveC/2,0,-zActiveC/2,rotatCorner);
-  TGeoCombiTrans*  combiActiveCorner4 = new TGeoCombiTrans("combiActiveCorner4", xActiveC/2,0,-zActiveC/2,rotatCorner);
+  TGeoCombiTrans*  combiActiveCorner1 = new TGeoCombiTrans("combiActiveCorner1", dxActiveIn/2,0, dzActiveIn/2,rotatCorner);
+  TGeoCombiTrans*  combiActiveCorner2 = new TGeoCombiTrans("combiActiveCorner2",-dxActiveIn/2,0, dzActiveIn/2,rotatCorner);
+  TGeoCombiTrans*  combiActiveCorner3 = new TGeoCombiTrans("combiActiveCorner3",-dxActiveIn/2,0,-dzActiveIn/2,rotatCorner);
+  TGeoCombiTrans*  combiActiveCorner4 = new TGeoCombiTrans("combiActiveCorner4", dxActiveIn/2,0,-dzActiveIn/2,rotatCorner);
 
-  transActiveTop     -> RegisterYourself();
-  transActiveBottom  -> RegisterYourself();
+  transActiveFront   -> RegisterYourself();
+  transActiveBack    -> RegisterYourself();
   transActiveRight   -> RegisterYourself();
   transActiveLeft    -> RegisterYourself();
   combiActiveCorner1 -> RegisterYourself();
@@ -143,51 +216,66 @@ void geomSpiRIT()
   combiActiveCorner3 -> RegisterYourself();
   combiActiveCorner4 -> RegisterYourself();
 
+  // Addition to Active Volume Below pad plane
+  // Middle is below Top. Middle_y = TopFrameFloor_y, Top_y = TopFrameLexan_y,
+
+  Double_t offyActiveMiddle = (dyActive + dyActiveMiddle)/2;
+  Double_t offyActiveTop = offyActiveMiddle + dyActiveTopMiddle/2;
+  Double_t offzActiveMiddle = -(dzActive - dzActiveMiddle)/2;
+
+  TGeoVolume *activeMiddle = gGeoManager -> MakeBox("activeMiddle",p10,dxTopFrameFloorFB/2,dyActiveMiddle/2,dzActiveMiddle/2);
+  TGeoVolume *activeTop = gGeoManager -> MakeBox("activeTop",p10,dxTopFrameLexanFB/2,dyActiveTop/2,dzActiveTop/2);
+
+  TGeoTranslation *transActiveMiddle = new TGeoTranslation("transActiveMiddle",0,offyActiveMiddle,offzActiveMiddle);
+  TGeoTranslation *transActiveTop = new TGeoTranslation("transActiveTop",0,offyActiveTop,0);
+
+  transActiveMiddle -> RegisterYourself();
+  transActiveTop -> RegisterYourself();
+
   TGeoCompositeShape* activeComposite
-    = new TGeoCompositeShape("activeComposite","activeCenter+activeTop:transActiveTop+activeBottom:transActiveBottom+activeRight:transActiveRight+activeLeft:transActiveLeft+activeCorner1:combiActiveCorner1+activeCorner2:combiActiveCorner2+activeCorner3:combiActiveCorner3+activeCorner4:combiActiveCorner4");
+    = new TGeoCompositeShape("activeComposite","activeCenter+activeFront:transActiveFront+activeBack:transActiveBack+activeRight:transActiveRight+activeLeft:transActiveLeft+activeCorner1:combiActiveCorner1+activeCorner2:combiActiveCorner2+activeCorner3:combiActiveCorner3+activeCorner4:combiActiveCorner4+activeMiddle:transActiveMiddle+activeTop:transActiveTop");
   TGeoVolume *active = new TGeoVolume("field_cage_in",activeComposite);
-  active -> SetMedium(p10);
+
 
   // ----------------------------------------------------
-  //  Field Cage Corner Frame (what is this ???)
+  //  Field Cage Corner Frame
   // ----------------------------------------------------
-  TGeoVolume *cageCorner1 = gGeoManager->MakeTubs("cageCorner1",aluminium,rActiveCorner,rCageCorner,yActiveC/2,0  ,90 );
-  TGeoVolume *cageCorner2 = gGeoManager->MakeTubs("cageCorner2",aluminium,rActiveCorner,rCageCorner,yActiveC/2,90 ,180);
-  TGeoVolume *cageCorner3 = gGeoManager->MakeTubs("cageCorner3",aluminium,rActiveCorner,rCageCorner,yActiveC/2,180,270);
-  TGeoVolume *cageCorner4 = gGeoManager->MakeTubs("cageCorner4",aluminium,rActiveCorner,rCageCorner,yActiveC/2,270,360);
 
-  TGeoCompositeShape* cageCornerComposite = new TGeoCompositeShape("cageCornerComposite", "cageCorner1:combiActiveCorner1+cageCorner2:combiActiveCorner2+cageCorner3:combiActiveCorner3+cageCorner4:combiActiveCorner4");
-  TGeoVolume *cageCorner = new TGeoVolume("cageCorner",cageCornerComposite);
-  cageCorner -> SetMedium(aluminium);
+  TGeoVolume *cageCorner1 = gGeoManager -> MakeTubs("cageCorner1",aluminium,rActiveCorner,rCageCorner,dyActive/2,0  ,90 );
+  TGeoVolume *cageCorner2 = gGeoManager -> MakeTubs("cageCorner2",aluminium,rActiveCorner,rCageCorner,dyActive/2,90 ,180);
+  TGeoVolume *cageCorner3 = gGeoManager -> MakeTubs("cageCorner3",aluminium,rActiveCorner,rCageCorner,dyActive/2,180,270);
+  TGeoVolume *cageCorner4 = gGeoManager -> MakeTubs("cageCorner4",aluminium,rActiveCorner,rCageCorner,dyActive/2,270,360);
 
   // ----------------------------------------------------
   //  Field Cage Frame
   // ----------------------------------------------------
-  Double_t xCageFrontRL = 40.48;
-  Double_t xCageFrontTB = xActiveC - 2*xCageFrontRL;
-  Double_t yCageFrontT  = 13.0;
-  Double_t yCageFrontB  = 19.6;
 
-  TGeoVolume* cageRight  = gGeoManager -> MakeBox("cageRight" ,pcb,tCageFrame/2,yActiveC/2,zActiveC/2);
-  TGeoVolume* cageLeft   = gGeoManager -> MakeBox("cageLeft"  ,pcb,tCageFrame/2,yActiveC/2,zActiveC/2);
-  TGeoVolume* cageFrontR = gGeoManager -> MakeBox("cageFrontR",pcb,xCageFrontRL/2,yActiveC/2,tCageFrame/2);  ///< right section of field front cage frame
-  TGeoVolume* cageFrontL = gGeoManager -> MakeBox("cageFrontL",pcb,xCageFrontRL/2,yActiveC/2,tCageFrame/2);  ///< left section of field front cage frame
-  TGeoVolume* cageFrontT = gGeoManager -> MakeBox("cageFrontT",pcb,xCageFrontTB/2,yCageFrontT/2,tCageFrame/2); ///< top section of field front cage frame
-  TGeoVolume* cageFrontB = gGeoManager -> MakeBox("cageFrontB",pcb,xCageFrontTB/2,yCageFrontB/2,tCageFrame/2); ///< bottom section of field front cage frame
+  Double_t dxCageFrontRL = 40.48;
+  Double_t dxCageFrontTB = dxActiveIn - 2*dxCageFrontRL;
+  Double_t dyCageFrontT  = 13.0;
+  Double_t dyCageFrontHole = 17;
+  Double_t dyCageFrontB  = dyActive - dyCageFrontT - dyCageFrontHole;
 
-  Double_t offXCageSide   = tCageFrame/2+xActiveC/2+rActiveCorner;
-  Double_t offZCageFront  =  zActiveC/2+rActiveCorner+tCageFrame/2;
-  Double_t offXCageFrontR =  xActiveC/2-xCageFrontRL/2;
-  Double_t offXCageFrontL = -xActiveC/2+xCageFrontRL/2;
-  Double_t offYCageFrontT =  yActiveC/2-yCageFrontT/2;
-  Double_t offYCageFrontB = -yActiveC/2+yCageFrontB/2;
+  TGeoVolume* cageRight  = gGeoManager -> MakeBox("cageRight" ,aluminium,dwCage/2,dyActive/2,dzActiveIn/2);
+  TGeoVolume* cageLeft   = gGeoManager -> MakeBox("cageLeft"  ,aluminium,dwCage/2,dyActive/2,dzActiveIn/2);
+  TGeoVolume* cageFrontR = gGeoManager -> MakeBox("cageFrontR",aluminium,dxCageFrontRL/2,dyActive/2,dwCage/2);
+  TGeoVolume* cageFrontL = gGeoManager -> MakeBox("cageFrontL",aluminium,dxCageFrontRL/2,dyActive/2,dwCage/2);
+  TGeoVolume* cageFrontT = gGeoManager -> MakeBox("cageFrontT",aluminium,dxCageFrontTB/2,dyCageFrontT/2,dwCage/2);
+  TGeoVolume* cageFrontB = gGeoManager -> MakeBox("cageFrontB",aluminium,dxCageFrontTB/2,dyCageFrontB/2,dwCage/2);
 
-  TGeoTranslation* transCageRight  = new TGeoTranslation("transCageRight", offXCageSide,0,0);
-  TGeoTranslation* transCageLeft   = new TGeoTranslation("transCageLeft", -offXCageSide,0,0);
-  TGeoTranslation* transCageFrontR = new TGeoTranslation("transCageFrontR",offXCageFrontR,0,offZCageFront);
-  TGeoTranslation* transCageFrontL = new TGeoTranslation("transCageFrontL",offXCageFrontL,0,offZCageFront);
-  TGeoTranslation* transCageFrontT = new TGeoTranslation("transCageFrontT",0,offYCageFrontT,offZCageFront);
-  TGeoTranslation* transCageFrontB = new TGeoTranslation("transCageFrontB",0,offYCageFrontB,offZCageFront);
+  Double_t offxCageSide   =  dwCage/2 + dxActiveIn/2 + rActiveCorner;
+  Double_t offzCageFront  =  dzActiveIn/2 + rActiveCorner+dwCage/2;
+  Double_t offxCageFrontR =  dxActiveIn/2 - dxCageFrontRL/2;
+  Double_t offxCageFrontL = -dxActiveIn/2 + dxCageFrontRL/2;
+  Double_t offyCageFrontT =  dyActive/2 - dyCageFrontT/2;
+  Double_t offyCageFrontB = -dyActive/2 + dyCageFrontB/2;
+
+  TGeoTranslation* transCageRight  = new TGeoTranslation("transCageRight", offxCageSide,0,0);
+  TGeoTranslation* transCageLeft   = new TGeoTranslation("transCageLeft", -offxCageSide,0,0);
+  TGeoTranslation* transCageFrontR = new TGeoTranslation("transCageFrontR",offxCageFrontR,0,offzCageFront);
+  TGeoTranslation* transCageFrontL = new TGeoTranslation("transCageFrontL",offxCageFrontL,0,offzCageFront);
+  TGeoTranslation* transCageFrontT = new TGeoTranslation("transCageFrontT",0,offyCageFrontT,offzCageFront);
+  TGeoTranslation* transCageFrontB = new TGeoTranslation("transCageFrontB",0,offyCageFrontB,offzCageFront);
 
   transCageRight  -> RegisterYourself();
   transCageLeft   -> RegisterYourself();
@@ -196,624 +284,389 @@ void geomSpiRIT()
   transCageFrontT -> RegisterYourself();
   transCageFrontB -> RegisterYourself();
 
-  TGeoCompositeShape* cageSideComposite = new TGeoCompositeShape("cageSideComposite","cageRight:transCageRight+cageLeft:transCageLeft");
+  TGeoCompositeShape* cageSideComposite = new TGeoCompositeShape("cageSideComposite","cageRight:transCageRight+cageLeft:transCageLeft+cageCorner1:combiActiveCorner1+cageCorner2:combiActiveCorner2+cageCorner3:combiActiveCorner3+cageCorner4:combiActiveCorner4");
   TGeoVolume *cageSide = new TGeoVolume("cageSide",cageSideComposite);
-  cageSide -> SetMedium(pcb);
 
-  TGeoCompositeShape* cageFrontComposite = new TGeoCompositeShape("cageFrontComposite","cageFrontR:transCageFrontR+cageFrontL:transCageFrontL+cageFrontT:transCageFrontT+cageFrontB:transCageFrontB");
+  TGeoCompositeShape* cageFrontComposite = new TGeoCompositeShape("cageFrontComposite","cageFrontT:transCageFrontT+cageFrontB:transCageFrontB+cageFrontR:transCageFrontR+cageFrontL:transCageFrontL");
   TGeoVolume *cageFront = new TGeoVolume("cageFront",cageFrontComposite);
-  cageFront -> SetMedium(pcb);
 
   // ----------------------------------------------------
-  //  Front Widow & Front Window Frame (from Mike's macro)
+  //  Front Widow & Front Window Frame
   // ----------------------------------------------------
-  Double_t fwindowz=0.005;
-  Double_t fwindowy=7.0;
-  Double_t fwindowx1=5.73;
-  Double_t fwindowx2=7.0;
-  Double_t fwinframesidex=1.45;
-  Double_t fwinframesidey=16.9;
-  Double_t fwinframez=0.005;
-  Double_t fwinframetopx=7.0;
-  Double_t fwinframetopy=1.45;
-  Double_t fwinframebotx=7.0;
-  Double_t fwinframeboty=8.45;
-  Double_t trfwinframesidex=fwinframesidex/2.+fwinframetopx/2.;
-  Double_t trfwinframesidey=offYCageFrontT-yCageFrontT/2.0-0.05-fwinframesidey/2.;
-  Double_t trfwinframetopy=offYCageFrontT-yCageFrontT/2.-0.05-fwinframetopy/2.;
-  Double_t trfwinframeboty=offYCageFrontT-yCageFrontT/2.-0.05-fwinframetopy-fwindowy-fwinframeboty/2.;
-  Double_t trfwindowy=offYCageFrontT-yCageFrontT/2.-0.05-fwinframetopy-fwindowy/2.;
-  Double_t trfwindowz=zActiveC/2.+rActiveCorner+fwindowz/2.;
-  Double_t trfwinframez=trfwindowz;
-  Double_t trapbase=0.635;
-  Double_t traptheta=TMath::RadToDeg()*TMath::ATan((trapbase/2.0)/fwinframez);
-  Double_t trtrapx=0.16-3.50125;
 
-  TGeoVolume *frontWindowFrameR = gGeoManager->MakeBox("frontWindowFrameR",aluminium,fwinframesidex/2.,fwinframesidey/2.,fwinframez/2.);
-  TGeoVolume *frontWindowFrameL = gGeoManager->MakeBox("frontWindowFrameL",aluminium,fwinframesidex/2.,fwinframesidey/2.,fwinframez/2.);
-  TGeoVolume *frontWindowFrameT = gGeoManager->MakeBox("frontWindowFrameT",aluminium,fwinframetopx/2.,fwinframetopy/2.,fwinframez/2.);
-  TGeoVolume *frontWindowFrameB = gGeoManager->MakeBox("frontWindowFrameB",aluminium,fwinframebotx/2.,fwinframeboty/2.,fwinframez/2.);
-  TGeoVolume *frontWindowTrapR  = gGeoManager->MakeTrap("frontWindowTrapR",aluminium,fwinframez/2.0,traptheta,0.0,fwindowy/2.0,trapbase/2.0,trapbase/2.0,0.0,fwindowy/2.0,0.0,0.0,0.0);
-  TGeoVolume *frontWindowTrapL  = gGeoManager->MakeTrap("frontWindowTrapL",aluminium,fwinframez/2.0,-traptheta,0.0,fwindowy/2.0,trapbase/2.0,trapbase/2.0,0.0,fwindowy/2.0,0.0,0.0,0.0);
+  Double_t yGapFrontWindowToCage = 0.05;
 
-  TGeoTranslation *trfwinframel = new TGeoTranslation("transFrontWindowFrameL",trfwinframesidex,trfwinframesidey,trfwinframez);
-  TGeoTranslation *trfwinframer = new TGeoTranslation("transFrontWindowFrameR",-trfwinframesidex,trfwinframesidey,trfwinframez);
-  TGeoTranslation *trfwinframet = new TGeoTranslation("transFrontWindowFrameT",0.0,trfwinframetopy,trfwinframez);
-  TGeoTranslation *trfwinframeb = new TGeoTranslation("transFrontWindowFrameB",0.0,trfwinframeboty,trfwinframez);
-  TGeoTranslation *trfwintrapl  = new TGeoTranslation("transFrontWindowTrapL",trtrapx,trfwindowy,trfwinframez);
-  TGeoTranslation *trfwintrapr  = new TGeoTranslation("transFrontWindowTrapR",-trtrapx,trfwindowy,trfwinframez);
+  Double_t dwFrontWindowFrame = 1.45;
+  Double_t dyFrontWindowFrame = dyActive - dyCageFrontT - dyCageFrontB - 2*yGapFrontWindowToCage;
+  Double_t dxFrontWindowFrame = dyFrontWindowFrame/2;// - dwFrontWindowFrame;
 
-  trfwinframel -> RegisterYourself();
-  trfwinframer -> RegisterYourself();
-  trfwinframet -> RegisterYourself();
-  trfwinframeb -> RegisterYourself();
-  trfwintrapl  -> RegisterYourself();
-  trfwintrapr  -> RegisterYourself();
+  Double_t dxyFrontWindow = dyFrontWindowFrame/2 - dwFrontWindowFrame;
+  Double_t dxFrontWindowIn = 5.73;
+  Double_t dzFrontWindow = 0.005;
 
-  TGeoVolume *frontWindow = gGeoManager->MakeTrd1("frontWindow",kapton,fwindowx1/2.,fwindowx2/2.,fwindowy/2.0,fwindowz/2.0);
-  TGeoTranslation *trfwindow = new TGeoTranslation(0.0,trfwindowy,trfwinframez);
+  Double_t offyFrontWindow = offyCageFrontT - dyCageFrontT/2 - yGapFrontWindowToCage - dwFrontWindowFrame - dxyFrontWindow/2;
+  Double_t offzFrontWindow = dzActiveIn/2 + rActiveCorner + dzFrontWindow/2;
 
-  TGeoCompositeShape* frontWindowFrameComposite = new TGeoCompositeShape("frontWindowFrameComposite","frontWindowFrameR:transFrontWindowFrameR+frontWindowFrameL:transFrontWindowFrameL+frontWindowFrameT:transFrontWindowFrameT+frontWindowFrameB:transFrontWindowFrameB+frontWindowTrapR:transFrontWindowTrapR+frontWindowTrapL:transFrontWindowTrapL");
+  Double_t offxFrontWindowFrameS = (dwFrontWindowFrame + dxyFrontWindow)/2;
+  Double_t offyFrontWindowFrame  = offyCageFrontT - dyCageFrontT/2 - yGapFrontWindowToCage - dyFrontWindowFrame/2;
+  Double_t offyFrontWindowFrameT = offyCageFrontT - dyCageFrontT/2 - yGapFrontWindowToCage - dwFrontWindowFrame/2;
+  Double_t offyFrontWindowFrameB = offyCageFrontT - dyCageFrontT/2 - yGapFrontWindowToCage - dwFrontWindowFrame - dxyFrontWindow - dxFrontWindowFrame/2;
+
+  Double_t dxFrontWindowInnerFrame = (dxyFrontWindow - dxFrontWindowIn)/2;
+  Double_t thetaFrontWindowFrame2 = TMath::RadToDeg()*TMath::ATan(dxFrontWindowInnerFrame/2/dzFrontWindow);
+  Double_t offxFrontWindowFrame2 = 0.16 - 3.50125; // TODO ???
+
+  TGeoVolume *FWFR = gGeoManager -> MakeBox("FWFR",aluminium,dwFrontWindowFrame/2,dyFrontWindowFrame/2,dzFrontWindow/2);
+  TGeoVolume *FWFL = gGeoManager -> MakeBox("FWFL",aluminium,dwFrontWindowFrame/2,dyFrontWindowFrame/2,dzFrontWindow/2);
+  TGeoVolume *FWFT = gGeoManager -> MakeBox("FWFT",aluminium,dxyFrontWindow/2,dwFrontWindowFrame/2,dzFrontWindow/2);
+  TGeoVolume *FWFB = gGeoManager -> MakeBox("FWFB",aluminium,dxyFrontWindow/2,dxFrontWindowFrame/2,dzFrontWindow/2);
+  TGeoVolume *FWF2R = gGeoManager -> MakeTrap("FWF2R",aluminium,dzFrontWindow/2,thetaFrontWindowFrame2,0,dxyFrontWindow/2,
+                                                                                          dxFrontWindowInnerFrame/2,dxFrontWindowInnerFrame/2,0,
+                                                                                          dxyFrontWindow/2,0,0,0);
+  TGeoVolume *FWF2L = gGeoManager -> MakeTrap("FWF2L",aluminium,dzFrontWindow/2,-thetaFrontWindowFrame2,0,dxyFrontWindow/2,
+                                                                                          dxFrontWindowInnerFrame/2,dxFrontWindowInnerFrame/2,0,
+                                                                                          dxyFrontWindow/2,0,0,0);
+
+  TGeoTranslation *transFWFL = new TGeoTranslation("transFWFL", offxFrontWindowFrameS,offyFrontWindowFrame,offzFrontWindow);
+  TGeoTranslation *transFWFR = new TGeoTranslation("transFWFR",-offxFrontWindowFrameS,offyFrontWindowFrame,offzFrontWindow);
+  TGeoTranslation *transFWFT = new TGeoTranslation("transFWFT",0,offyFrontWindowFrameT,offzFrontWindow);
+  TGeoTranslation *transFWFB = new TGeoTranslation("transFWFB",0,offyFrontWindowFrameB,offzFrontWindow);
+  TGeoTranslation *transFWTL = new TGeoTranslation("transFWF2L", offxFrontWindowFrame2,offyFrontWindow,offzFrontWindow);
+  TGeoTranslation *transFWTR = new TGeoTranslation("transFWF2R",-offxFrontWindowFrame2,offyFrontWindow,offzFrontWindow);
+
+  transFWFL -> RegisterYourself();
+  transFWFR -> RegisterYourself();
+  transFWFT -> RegisterYourself();
+  transFWFB -> RegisterYourself();
+  transFWTL -> RegisterYourself();
+  transFWTR -> RegisterYourself();
+
+  TGeoVolume *frontWindow = gGeoManager -> MakeTrd1("frontWindow",kapton,dxFrontWindowIn/2,dxyFrontWindow/2,dxyFrontWindow/2,dzFrontWindow/2);
+  TGeoTranslation *transFrontWindow = new TGeoTranslation("transFrontWindow",0,offyFrontWindow,offzFrontWindow);
+
+  TGeoCompositeShape* frontWindowFrameComposite = new TGeoCompositeShape("FWFComposite","FWFR:transFWFR+FWFL:transFWFL+FWFT:transFWFT+FWFB:transFWFB+FWF2R:transFWF2R+FWF2L:transFWF2L");
   TGeoVolume *frontWindowFrame = new TGeoVolume("frontWindowFrame",frontWindowFrameComposite);
-  frontWindowFrame -> SetMedium(aluminium);
 
   // ----------------------------------------------------
-  //  Copper Strips (from Mike's macro)
+  //  Front Window Cradle
   // ----------------------------------------------------
-  Double_t stripx=0.004;
-  Double_t stripy=0.6;
-  Double_t stripz=zActiveC;
-  Double_t halfstripy=0.3;
-  Double_t trstripoutx=xActiveC/2.+rActiveCorner+tCageFrame+stripx/2.;
-  Double_t trstripinx=xActiveC/2.+rActiveCorner-stripx/2.;
-  Double_t trstripouty1=yActiveC/2.-0.2-stripy/2.;
-  Double_t trstripiny1=trstripouty1-0.5;
-  Double_t trhalfstripy=yActiveC/2.-halfstripy/2.;
-  Double_t fstriplx=2.0*xCageFrontRL+xCageFrontTB;
-  Double_t fstripsx=xCageFrontRL;
-  Double_t trfoutstripz=zActiveC/2.+rActiveCorner+tCageFrame+stripx/2.;
-  Double_t trfstripsx=offXCageFrontR;
-  Double_t fhalfstripsx=fstriplx-2*fstripsx;
 
-  Double_t trfinstripz=zActiveC/2.+rActiveCorner-stripx/2.;
-  Double_t trfhalfstripsyup=trstripiny1-1.0*12+halfstripy/2.;
-  Double_t trfhalfstripsydown=trstripiny1-1.0*29-halfstripy/2.;
+  Double_t dwFrontWindowCradle = 5.31;
+  Double_t dzFrontWindowCradle = 1.27;
+  Double_t dxFrontWindowCradle = 17.62;
+  Double_t dyFrontWindowCradle = 14.0;
 
-  TGeoVolume *copperStrips = gGeoManager -> MakeBox("copperStrips",vacuum,200.,200.,200.);
-              copperStrips -> SetVisibility(kFALSE);
-  TGeoVolume *strip        = gGeoManager -> MakeBox("strip",copper,stripx/2.,stripy/2.,stripz/2.);
-  TGeoVolume *halfstrip    = gGeoManager -> MakeBox("halfstrip",copper,stripx/2.,halfstripy/2.,stripz/2.);
-  TGeoVolume *fstripl      = gGeoManager -> MakeBox("fstripl",copper,fstriplx/2.,stripy/2.,stripx/2.);
-  TGeoVolume *fstrips      = gGeoManager -> MakeBox("fstrips",copper,fstripsx/2.,stripy/2.,stripx/2.);
-  TGeoVolume *fhalfstripl  = gGeoManager -> MakeBox("fhalfstripl",copper,fstriplx/2.,halfstripy/2.,stripx/2.);
-  TGeoVolume *fhalfstrips  = gGeoManager -> MakeBox("fhalfstrips",copper,fhalfstripsx/2.,halfstripy/2.,stripx/2.);
+  Double_t dxFrontWindowCradleTB = 6.35;
+  Double_t dyFrontWindowCradleTop = 9.19;
+  Double_t dyFrontWindowCradleBottom = dyActive - dyFrontWindowCradle - 2*dwFrontWindowCradle - dyFrontWindowCradleTop;
 
-  Int_t colorStrip = kOrange+1;
-  strip       -> SetLineColor(colorStrip);
-  halfstrip   -> SetLineColor(colorStrip);
-  fstripl     -> SetLineColor(colorStrip);
-  fstrips     -> SetLineColor(colorStrip);
-  fhalfstripl -> SetLineColor(colorStrip);
-  fhalfstrips -> SetLineColor(colorStrip);
+  Double_t offyFrontWindowCradleTop = dyActive/2. - dyFrontWindowCradleTop/2.;
+  Double_t offzFrontWindowCradle = dzActiveIn/2. + rActiveCorner + dwCage + dzFrontWindowCradle/2.;
+  Double_t offyFrontWindowCradleBottom = -dyActive/2. + dyFrontWindowCradleBottom/2.;
 
-  for (Int_t i=0; i<49; i++) {
-    copperStrips->AddNode(strip,i+1,new TGeoTranslation(trstripoutx,trstripouty1-1.0*i,0.0));
-    copperStrips->AddNode(strip,i+1+49,new TGeoTranslation(trstripinx,trstripiny1-1.0*i,0.0));
-    copperStrips->AddNode(strip,i+1+2*49,new TGeoTranslation(-trstripoutx,trstripouty1-1.0*i,0.0));
-    copperStrips->AddNode(strip,i+1+3*49,new TGeoTranslation(-trstripinx,trstripiny1-1.0*i,0.0));
-  }
+  // middle bottom, middle top, middle side
+  Double_t offyFrontWindowCradleMB = offyFrontWindowCradleBottom + dyFrontWindowCradleBottom/2. + dwFrontWindowCradle/2.;
+  Double_t offyFrontWindowCradleMT = offyFrontWindowCradleTop - dyFrontWindowCradleTop/2. - dwFrontWindowCradle/2.;
+  Double_t offxFrontWindowCradleMS = dxFrontWindowCradle/2. - dwFrontWindowCradle/2.;
+  Double_t offyFrontWindowCradleMS = dyActive/2. - dyFrontWindowCradleTop - dwFrontWindowCradle - dyFrontWindowCradle/2.;
 
-  copperStrips->AddNode(halfstrip,1,new TGeoTranslation(trstripinx,trhalfstripy,0.0));
-  copperStrips->AddNode(halfstrip,2,new TGeoTranslation(-trstripinx,trhalfstripy,0.0));
+  TGeoVolume *FWCT  = gGeoManager -> MakeBox("FWCT",aluminium,dxFrontWindowCradleTB/2.,dyFrontWindowCradleTop/2.,dzFrontWindowCradle/2.);
+  TGeoVolume *FWCB  = gGeoManager -> MakeBox("FWCB",aluminium,dxFrontWindowCradleTB/2.,dyFrontWindowCradleBottom/2.,dzFrontWindowCradle/2.);
+  TGeoVolume *FWCMB = gGeoManager -> MakeBox("FWCMB",aluminium,dxFrontWindowCradle/2.,dwFrontWindowCradle/2.,dzFrontWindowCradle/2.);
+  TGeoVolume *FWCMT = gGeoManager -> MakeBox("FWCMT",aluminium,dxFrontWindowCradle/2.,dwFrontWindowCradle/2.,dzFrontWindowCradle/2.);
+  TGeoVolume *FWCML = gGeoManager -> MakeBox("FWCML",aluminium,dwFrontWindowCradle/2.,dyFrontWindowCradle/2.,dzFrontWindowCradle/2.);
+  TGeoVolume *FWCMR = gGeoManager -> MakeBox("FWCMR",aluminium,dwFrontWindowCradle/2.,dyFrontWindowCradle/2.,dzFrontWindowCradle/2.);
 
-  for (Int_t i=0; i<49; i++) {
-    if (i<13) copperStrips->AddNode(fstripl,i+1,new TGeoTranslation(0.0,trstripouty1-1.0*i,trfoutstripz));
-    if (i>=13 && i<30) {
-      copperStrips->AddNode(fstrips,i+1-13,new TGeoTranslation(trfstripsx,trstripouty1-1.0*i,trfoutstripz));
-      copperStrips->AddNode(fstrips,i+1+4,new TGeoTranslation(-trfstripsx,trstripouty1-1.0*i,trfoutstripz));
-    }
-    if (i>=30) copperStrips->AddNode(fstripl,i+1-17,new TGeoTranslation(0.0,trstripouty1-1.0*i,trfoutstripz));
+  TGeoTranslation *transFWCT  = new TGeoTranslation("transFWCT",0,offyFrontWindowCradleTop,offzFrontWindowCradle);
+  TGeoTranslation *transFWCB  = new TGeoTranslation("transFWCB",0,offyFrontWindowCradleBottom,offzFrontWindowCradle);
+  TGeoTranslation *transFWCMB = new TGeoTranslation("transFWCMB",0,offyFrontWindowCradleMB,offzFrontWindowCradle);
+  TGeoTranslation *transFWCMT = new TGeoTranslation("transFWCMT",0,offyFrontWindowCradleMT,offzFrontWindowCradle);
+  TGeoTranslation *transFWCML = new TGeoTranslation("transFWCML",offxFrontWindowCradleMS,offyFrontWindowCradleMS,offzFrontWindowCradle);
+  TGeoTranslation *transFWCMR = new TGeoTranslation("transFWCMR",-offxFrontWindowCradleMS,offyFrontWindowCradleMS,offzFrontWindowCradle);
 
-    if (i<12) copperStrips->AddNode(fstripl,33+i+1,new TGeoTranslation(0.0,trstripiny1-1.0*i,trfinstripz));
-    if (i>=12 && i<30) {
-      copperStrips->AddNode(fstrips,35+i-12,new TGeoTranslation(trfstripsx,trstripiny1-1.0*i,trfinstripz));
-      copperStrips->AddNode(fstrips,35+i+6,new TGeoTranslation(-trfstripsx,trstripiny1-1.0*i,trfinstripz));
-	}
-    if (i>=30) copperStrips->AddNode(fstripl,33+i+1-18,new TGeoTranslation(0.0,trstripiny1-1.0*i,trfinstripz));
-  }
+  transFWCT  -> RegisterYourself();
+  transFWCB  -> RegisterYourself();
+  transFWCMB -> RegisterYourself();
+  transFWCMT -> RegisterYourself();
+  transFWCML -> RegisterYourself();
+  transFWCMR -> RegisterYourself();
 
-  copperStrips->AddNode(fhalfstripl,1,new TGeoTranslation(0.0,trhalfstripy,trfinstripz));
-  copperStrips->AddNode(fhalfstrips,1,new TGeoTranslation(0.0,trfhalfstripsyup,trfinstripz));
-  copperStrips->AddNode(fhalfstrips,2,new TGeoTranslation(0.0,trfhalfstripsydown,trfinstripz));  
+  TGeoCompositeShape* frontWindowCradleComposite = new TGeoCompositeShape("frontWindowCradleComposite","FWCT:transFWCT+FWCB:transFWCB+FWCMT:transFWCMT+FWCMB:transFWCMB+FWCML:transFWCML+FWCMR:transFWCMR");
+  TGeoVolume *frontWindowCradle = new TGeoVolume("frontWindowCradle",frontWindowCradleComposite);
 
   // ----------------------------------------------------
-  //  Front Window Cradle (from Mike's macro)
+  //  Bottom Plate
   // ----------------------------------------------------
-  Double_t fwincradletoptopx=6.35;
-  Double_t fwincradletoptopy=9.19;
-  Double_t fwincradlez=1.27;
-  Double_t trfwincradlez=zActiveC/2.+rActiveCorner+tCageFrame+stripx+fwincradlez/2.;
-  Double_t trfwincradletoptopy=yActiveC/2.-fwincradletoptopy/2.;
-  Double_t fwincradlebotboty=15.79;
-  Double_t trfwincradlebotboty=-yActiveC/2.+fwincradlebotboty/2.;
-  Double_t fwincradlemiddlebottomx=17.62;
-  Double_t fwincradlemiddlebottomy=5.31;
-  Double_t trfwincradlemiddlebottomy=trfwincradlebotboty+fwincradlebotboty/2.+fwincradlemiddlebottomy/2.;
-  Double_t trfwincradlemiddletopy=trfwincradletoptopy-fwincradletoptopy/2.-fwincradlemiddlebottomy/2.;
-  Double_t fwincradlemiddlesidex=5.31;
-  Double_t fwincradlemiddlesidey=14.0;
-  Double_t trfwincradlemiddlesidex=fwincradlemiddlebottomx/2.-fwincradlemiddlesidex/2.;
-  Double_t trfwincradlemiddlesidey=yActiveC/2.-fwincradletoptopy-fwincradlemiddlebottomy-fwincradlemiddlesidey/2.;
 
-  TGeoVolumeAssembly *frontWindowCradle = gGeoManager->MakeVolumeAssembly("frontWindowCradle");
-                      frontWindowCradle -> SetMedium(vacuum);
-  TGeoVolume *fwincradletoptop       = gGeoManager->MakeBox("fwincradletoptop",aluminium,fwincradletoptopx/2.,fwincradletoptopy/2.,fwincradlez/2.);
-  TGeoVolume *fwincradlebottombottom = gGeoManager->MakeBox("fwincradlebottombottom",aluminium,fwincradletoptopx/2.,fwincradlebotboty/2.,fwincradlez/2.);
-  TGeoVolume *fwincradlemiddlebottom = gGeoManager->MakeBox("fwincradlemiddlebottom",aluminium,fwincradlemiddlebottomx/2.,fwincradlemiddlebottomy/2.,fwincradlez/2.);
-  TGeoVolume *fwincradlemiddleside   = gGeoManager->MakeBox("fwincradlemiddleside",aluminium,fwincradlemiddlesidex/2.,fwincradlemiddlesidey/2.,fwincradlez/2.);
+  Double_t rBottomPlateCorner = 3.5;
+  Double_t dzBottomPlate = dzActive + 2*rBottomPlateCorner;
+  Double_t offyBottomPlate = -(dyActive + dyBottomPlate)/2.;
+  Double_t offyBottomPlateRL = (dxActive + rBottomPlateCorner)/2.;
 
-  //Int_t colorCradle = kBlue+3;
-  Int_t colorCradle = 15;
-  fwincradletoptop       -> SetLineColor(colorCradle);
-  fwincradlebottombottom -> SetLineColor(colorCradle);
-  fwincradlemiddlebottom -> SetLineColor(colorCradle);
-  fwincradlemiddleside   -> SetLineColor(colorCradle);
+  TGeoVolume *bottomPlateCenter  = gGeoManager -> MakeBox("bottomPlateCenter",aluminium,dxActive/2.,dyBottomPlate/2.,dzBottomPlate/2.);
+  TGeoVolume *bottomPlateLeft    = gGeoManager -> MakeBox("bottomPlateLeft",  aluminium,rBottomPlateCorner/2.,dyBottomPlate/2.,dzActive/2.);
+  TGeoVolume *bottomPlateRight   = gGeoManager -> MakeBox("bottomPlateRight", aluminium,rBottomPlateCorner/2.,dyBottomPlate/2.,dzActive/2.);
+  TGeoVolume *bottomPlateCorner1 = gGeoManager -> MakeTubs("bottomPlateCorner1",aluminium,0,rBottomPlateCorner,dyBottomPlate/2,0,90);
+  TGeoVolume *bottomPlateCorner2 = gGeoManager -> MakeTubs("bottomPlateCorner2",aluminium,0,rBottomPlateCorner,dyBottomPlate/2,90,180);
+  TGeoVolume *bottomPlateCorner3 = gGeoManager -> MakeTubs("bottomPlateCorner3",aluminium,0,rBottomPlateCorner,dyBottomPlate/2,180,270);
+  TGeoVolume *bottomPlateCorner4 = gGeoManager -> MakeTubs("bottomPlateCorner4",aluminium,0,rBottomPlateCorner,dyBottomPlate/2,270,360);
 
-  TGeoTranslation *trfwincradletoptop = new TGeoTranslation(0.0,trfwincradletoptopy,trfwincradlez);
-  TGeoTranslation *trfwincradlebottombottom = new TGeoTranslation(0.0,trfwincradlebotboty,trfwincradlez);
-  TGeoTranslation *trfwincradlemiddlebottom = new TGeoTranslation(0.0,trfwincradlemiddlebottomy,trfwincradlez);
-  TGeoTranslation *trfwincradlemiddletop = new TGeoTranslation(0.0,trfwincradlemiddletopy,trfwincradlez);
-  TGeoTranslation *trfwincradlemiddleleft = new TGeoTranslation(trfwincradlemiddlesidex,trfwincradlemiddlesidey,trfwincradlez);
-  TGeoTranslation *trfwincradlemiddleright = new TGeoTranslation(-trfwincradlemiddlesidex,trfwincradlemiddlesidey,trfwincradlez);
+  TGeoTranslation *transBottomPlateCenter = new TGeoTranslation("transBottomPlateCenter",0,offyBottomPlate,0);
+  TGeoTranslation *transBottomPlateLeft   = new TGeoTranslation("transBottomPlateLeft",  offyBottomPlateRL,offyBottomPlate,0);
+  TGeoTranslation *transBottomPlateRight  = new TGeoTranslation("transBottomPlateRight",-offyBottomPlateRL,offyBottomPlate,0);
+  TGeoCombiTrans *combiBottomPlateCorner1 = new TGeoCombiTrans("combiBottomPlateCorner1", dxActive/2,offyBottomPlate, dzActive/2,rotatCorner);
+  TGeoCombiTrans *combiBottomPlateCorner2 = new TGeoCombiTrans("combiBottomPlateCorner2",-dxActive/2,offyBottomPlate, dzActive/2,rotatCorner);
+  TGeoCombiTrans *combiBottomPlateCorner3 = new TGeoCombiTrans("combiBottomPlateCorner3",-dxActive/2,offyBottomPlate,-dzActive/2,rotatCorner);
+  TGeoCombiTrans *combiBottomPlateCorner4 = new TGeoCombiTrans("combiBottomPlateCorner4", dxActive/2,offyBottomPlate,-dzActive/2,rotatCorner);
 
-  frontWindowCradle->AddNode(fwincradletoptop,1,trfwincradletoptop);
-  frontWindowCradle->AddNode(fwincradlebottombottom,1,trfwincradlebottombottom);
-  frontWindowCradle->AddNode(fwincradlemiddlebottom,1,trfwincradlemiddlebottom);
-  frontWindowCradle->AddNode(fwincradlemiddlebottom,2,trfwincradlemiddletop);
-  frontWindowCradle->AddNode(fwincradlemiddleside,1,trfwincradlemiddleleft);
-  frontWindowCradle->AddNode(fwincradlemiddleside,2,trfwincradlemiddleright);
+  transBottomPlateCenter  -> RegisterYourself();
+  transBottomPlateLeft    -> RegisterYourself();
+  transBottomPlateRight   -> RegisterYourself();
+  combiBottomPlateCorner1 -> RegisterYourself();
+  combiBottomPlateCorner2 -> RegisterYourself();
+  combiBottomPlateCorner3 -> RegisterYourself();
+  combiBottomPlateCorner4 -> RegisterYourself();
 
-  // ----------------------------------------------------
-  //  Bottom Plate (from Mike's macro)
-  // ----------------------------------------------------
-  //TGeoVolume *bottomPlate = gGeoManager->MakeBox("bottomPlate",vacuum,200.,200.,200.);
-  TGeoVolumeAssembly *bottomPlate = gGeoManager->MakeVolumeAssembly("bottomPlate");
-  bottomPlate -> SetMedium(vacuum);
-  bottomPlate -> SetVisibility(kFALSE);
-  Double_t bottomcenterx=94.6;
-  Double_t bottomcentery=1.0541;
-  Double_t bottomcenterz=149.86;
-  TGeoVolume *bottomcenter = gGeoManager->MakeBox("bottomcenter",aluminium,bottomcenterx/2.,bottomcentery/2.,bottomcenterz/2.);
-  Double_t trbottomcentery=-yActiveC/2.-bottomcentery/2.;
-  TGeoTranslation *trbottomcenter = new TGeoTranslation(0.0,trbottomcentery,0.0);
-  Double_t bottomradius=3.5;
-  Double_t bottomsidex=bottomradius;
-  Double_t bottomsidey=bottomcentery;
-  Double_t bottomsidez=bottomcenterz-2*bottomradius;
-  TGeoVolume *bottomoutr = gGeoManager->MakeBox("bottomoutr",aluminium,bottomsidex/2.,bottomsidey/2.,bottomsidez/2.);
-  TGeoVolume *bottomoutl = gGeoManager->MakeBox("bottomoutl",aluminium,bottomsidex/2.,bottomsidey/2.,bottomsidez/2.);
-  Double_t trbottomsidex=bottomcenterx/2.+bottomsidex/2.;
-  TGeoTranslation *trbottomoutsidel = new TGeoTranslation(trbottomsidex,trbottomcentery,0.0);
-  TGeoTranslation *trbottomoutsider = new TGeoTranslation(-trbottomsidex,trbottomcentery,0.0);
-  TGeoVolume *bpcorner1 = gGeoManager->MakeTubs("bpcorner1",aluminium,0.0,bottomradius,bottomcentery/2.0,0.0,90.0);
-  TGeoVolume *bpcorner2 = gGeoManager->MakeTubs("bpcorner2",aluminium,0.0,bottomradius,bottomcentery/2.0,90.0,180.0);
-  TGeoVolume *bpcorner3 = gGeoManager->MakeTubs("bpcorner3",aluminium,0.0,bottomradius,bottomcentery/2.0,180.0,270.0);
-  TGeoVolume *bpcorner4 = gGeoManager->MakeTubs("bpcorner4",aluminium,0.0,bottomradius,bottomcentery/2.0,270.0,360.0);
-  TGeoCombiTrans *cobpcorner1 = new TGeoCombiTrans("cobpcorner1",bottomcenterx/2.0,trbottomcentery,bottomsidez/2.0,rotatCorner);
-  TGeoCombiTrans *cobpcorner2 = new TGeoCombiTrans("cobpcorner2",-bottomcenterx/2.0,trbottomcentery,bottomsidez/2.0,rotatCorner);
-  TGeoCombiTrans *cobpcorner3 = new TGeoCombiTrans("cobpcorner3",-bottomcenterx/2.0,trbottomcentery,-bottomsidez/2.0,rotatCorner);
-  TGeoCombiTrans *cobpcorner4 = new TGeoCombiTrans("cobpcorner4",bottomcenterx/2.0,trbottomcentery,-bottomsidez/2.0,rotatCorner);
-
-  bottomPlate->AddNode(bottomcenter,1,trbottomcenter);
-  bottomPlate->AddNode(bottomoutl,1,trbottomoutsidel);
-  bottomPlate->AddNode(bottomoutr,1,trbottomoutsider);
-  bottomPlate->AddNode(bpcorner1,1,cobpcorner1);
-  bottomPlate->AddNode(bpcorner2,1,cobpcorner2);
-  bottomPlate->AddNode(bpcorner3,1,cobpcorner3);
-  bottomPlate->AddNode(bpcorner4,1,cobpcorner4);
+  TGeoCompositeShape* bottomPlateComposite = new TGeoCompositeShape("bottomPlateComposite","bottomPlateCenter:transBottomPlateCenter+bottomPlateRight:transBottomPlateRight+bottomPlateLeft:transBottomPlateLeft+bottomPlateCorner1:combiBottomPlateCorner1+bottomPlateCorner2:combiBottomPlateCorner2+bottomPlateCorner3:combiBottomPlateCorner3+bottomPlateCorner4:combiBottomPlateCorner4");
+  TGeoVolume *bottomPlate = new TGeoVolume("bottomPlate",bottomPlateComposite);
 
   Int_t colorBottomPlate = 18;
-  bottomcenter->SetLineColor(colorBottomPlate);
-  bottomoutr->SetLineColor(colorBottomPlate);
-  bottomoutl->SetLineColor(colorBottomPlate);
-  bpcorner1->SetLineColor(colorBottomPlate);
-  bpcorner2->SetLineColor(colorBottomPlate);
-  bpcorner3->SetLineColor(colorBottomPlate);
-  bpcorner4->SetLineColor(colorBottomPlate);
 
   // ----------------------------------------------------
-  //  Back Window Frame (from Mike's macro)
+  //  Back Window Frame & Back Window
   // ----------------------------------------------------
-  Double_t backwindowtopx=89.6584;
-  Double_t backwindowtopy=3.15;
-  Double_t backwindowtopz=1.27;
-  //TGeoVolume *backWindowFrame = gGeoManager->MakeBox("backWindowFrame",vacuum,200.,200.,200.);
-  TGeoVolumeAssembly *backWindowFrame = gGeoManager->MakeVolumeAssembly("backWindowFrame");
-  backWindowFrame -> SetMedium(vacuum);
-  backWindowFrame->SetVisibility(kFALSE);
-  TGeoVolume *backwindowtop = gGeoManager->MakeBox("backwindowtop",aluminium,backwindowtopx/2.0,backwindowtopy/2.0,backwindowtopz/2.0);
-  Double_t trbackwindowtopy=yActiveC/2.0-backwindowtopy/2.0;
-  TGeoTranslation *trbackwindowtop = new TGeoTranslation(0.0,trbackwindowtopy,0.0);
-  Double_t backwindowbottomx=89.6584;
-  Double_t backwindowbottomy=3.55;
-  Double_t backwindowbottomz=1.27;
-  TGeoVolume *backwindowbottom = gGeoManager->MakeBox("backwindowbottom",aluminium,backwindowbottomx/2.0,backwindowbottomy/2.0,backwindowbottomz/2.0);
-  Double_t trbackwindowbottomy=-yActiveC/2.0+backwindowbottomy/2.0;
-  TGeoTranslation *trbackwindowbottom = new TGeoTranslation(0.0,trbackwindowbottomy,0.0);
-  Double_t backwindowsidex=2.4492;
-  Double_t backwindowsidey=42.9;
-  Double_t backwindowsidez=1.27;
-  TGeoVolume *backwindowside = gGeoManager->MakeBox("backwindowside",aluminium,backwindowsidex/2.0,backwindowsidey/2.0,backwindowsidez/2.0);
-  Double_t trbackwindowsidex=backwindowtopx/2.0-backwindowsidex/2.0;
-  Double_t trbackwindowsidey=(backwindowbottomy-backwindowtopy)/2.0;
-  TGeoTranslation *trbackwindowleft = new TGeoTranslation(trbackwindowsidex,trbackwindowsidey,0.0);
-  TGeoTranslation *trbackwindowright = new TGeoTranslation(-trbackwindowsidex,trbackwindowsidey,0.0);
-  Double_t trbackwindowframez=zActiveC/2.0+rActiveCorner+backwindowtopz/2.0;
-  TGeoTranslation *trbackwindowframe = new TGeoTranslation(0.0,0.0,-trbackwindowframez);
-  
-  Double_t backwindowtop2x=89.76;
-  Double_t backwindowtop2y=4.5;
-  Double_t backwindowtop2z=0.635;
-  Double_t backwindowside2x=4.5;
-  Double_t backwindowside2y=38.9;
-  Double_t backwindowside2z=0.635;
-  Double_t backwindowbottom2x=89.76;
-  Double_t backwindowbottom2y=4.8475;
-  Double_t backwindowbottom2z=0.635;
-  TGeoVolume *backwindowtop2 = gGeoManager->MakeBox("backwindowtop2",aluminium,backwindowtop2x/2.0,backwindowtop2y/2.0,backwindowtop2z/2.0);
-  Double_t trbackwindowtop2y=backwindowbottom2y/2.0+backwindowside2y/2.0;
-  Double_t trbackwindowtop2z=-backwindowtop2z/2.0-backwindowtopz/2.0;
-  TGeoTranslation *trbackwindowtop2 = new TGeoTranslation(0.0,trbackwindowtop2y,trbackwindowtop2z);
 
-  TGeoVolume *backwindowbottom2 = gGeoManager->MakeBox("backwindowbottom2",aluminium,backwindowbottom2x/2.0,backwindowbottom2y/2.0,backwindowbottom2z/2.0);
-  Double_t trbackwindowbottom2y=-backwindowside2y/2.0-backwindowtop2y/2.0;
-  Double_t trbackwindowbottom2z=trbackwindowtop2z;
-  TGeoTranslation *trbackwindowbottom2 = new TGeoTranslation(0.0,trbackwindowbottom2y,trbackwindowbottom2z);
+  Double_t dxBackWindow = 89.76;
+  Double_t dyBackWindow = dyActive; // TODO was 48.2475;
+  Double_t dzBackWindow = 0.0125;
 
-  TGeoVolume *backwindowside2 = gGeoManager->MakeBox("backwindowside2",aluminium,backwindowside2x/2.0,backwindowside2y/2.0,backwindowside2z/2.0);
-  Double_t trbackwindowside2x=backwindowtop2x/2.0-backwindowside2x/2.0;
-  Double_t trbackwindowside2z=trbackwindowtop2z;
-  Double_t trbackwindowside2y=(backwindowbottom2y-backwindowtop2y)/2.0;
-  TGeoTranslation *trbackwindowleft2 = new TGeoTranslation(trbackwindowside2x,trbackwindowside2y,trbackwindowside2z);
-  TGeoTranslation *trbackwindowright2 = new TGeoTranslation(-trbackwindowside2x,trbackwindowside2y,trbackwindowside2z);
+  Double_t dxBackWindowFrame = 89.6584;
+  Double_t dyBackWindowFrameT = 3.15; // top frame
+  Double_t dyBackWindowFrameB = 3.55; // bottom frame
+  Double_t dzBackWindowFrame = 1.27;
+  Double_t dxBackWindowFrameSide = 2.4492;
+  Double_t dyBackWindowFrameSide = dyActive - dyBackWindowFrameT - dyBackWindowFrameB;
+  cout << dyBackWindowFrameSide << endl;
 
-  backWindowFrame->AddNode(backwindowtop,1,trbackwindowtop);
-  backWindowFrame->AddNode(backwindowbottom,1,trbackwindowbottom);
-  backWindowFrame->AddNode(backwindowside,1,trbackwindowleft);
-  backWindowFrame->AddNode(backwindowside,1,trbackwindowright);
-  backWindowFrame->AddNode(backwindowtop2,1,trbackwindowtop2);
-  backWindowFrame->AddNode(backwindowbottom2,1,trbackwindowbottom2);
-  backWindowFrame->AddNode(backwindowside2,1,trbackwindowleft2);
-  backWindowFrame->AddNode(backwindowside2,2,trbackwindowright2);
+  Double_t dwBackWindowFrame2 = 4.5;
+  Double_t dzBackWindowFrame2 = 0.635;
+  Double_t dxBackWindowFrame2TB = dxBackWindow;
+  Double_t dyBackWindowFrame2B = 4.8475;
+  Double_t dyBackWindowFrame2S = dyActive - dwBackWindowFrame2 - dyBackWindowFrame2B;
 
-  Int_t colorBackWindow = 13;
-  Int_t colorBackWindow2 = 15;
-  backwindowtop     -> SetLineColor(colorBackWindow);
-  backwindowbottom  -> SetLineColor(colorBackWindow);
-  backwindowside    -> SetLineColor(colorBackWindow);
-  backwindowside    -> SetLineColor(colorBackWindow);
-  backwindowtop2    -> SetLineColor(colorBackWindow2);
-  backwindowbottom2 -> SetLineColor(colorBackWindow2);
-  backwindowside2   -> SetLineColor(colorBackWindow2);
-  backwindowside2   -> SetLineColor(colorBackWindow2);
+  Double_t offzBackWindow = -dzActiveIn/2 - rActiveCorner - dzBackWindowFrame - dzBackWindowFrame2 - dzBackWindow/2;
 
-  // ----------------------------------------------------
-  //  Back Window (from Mike's macro)
-  // ----------------------------------------------------
-  Double_t backwindowx=89.76;
-  Double_t backwindowy=48.2475;
-  Double_t backwindowz=0.0125; // TODO
-  TGeoVolume *backWindow = gGeoManager->MakeBox("backWindow",kapton,backwindowx/2.0,backwindowy/2.0,backwindowz/2.0);
-  Double_t trbackwindowz=-zActiveC/2.0-rActiveCorner-backwindowtopz-backwindowtop2z-backwindowz/2.0;
-  TGeoTranslation *trbackwindow = new TGeoTranslation(0.0,0.0,trbackwindowz);
+  Double_t offyBackWindowFrameT = dyActive/2 - dyBackWindowFrameT/2;
+  Double_t offyBackWindowFrameB = -dyActive/2 + dyBackWindowFrameB/2;
+  Double_t offxBackWindowFrameS = dxBackWindowFrame/2 - dxBackWindowFrameSide/2;
+  Double_t offyBackWindowFrameS = (dyBackWindowFrameB - dyBackWindowFrameT)/2;
+  Double_t offzBackWindowFrame = -(dzActiveIn/2 + rActiveCorner + dzBackWindowFrame/2);
+
+  Double_t offyBackWindowFrame2T = dyBackWindowFrame2B/2 + dyBackWindowFrame2S/2;
+  Double_t offyBackWindowFrame2B = -dyBackWindowFrame2S/2 - dwBackWindowFrame2/2;
+  Double_t offzBackWindowFrame2TB = -dzBackWindowFrame2/2 - dzBackWindowFrame/2 + offzBackWindowFrame;
+  Double_t offxBackWindowFrame2S = dxBackWindowFrame2TB/2 - dwBackWindowFrame2/2;
+  Double_t offzBackWindowFrame2S = offzBackWindowFrame2TB;
+  Double_t offyBackWindowFrame2S = (dyBackWindowFrame2B - dwBackWindowFrame2)/2;
+
+  TGeoVolume *backWindow = gGeoManager -> MakeBox("backWindow",kapton,dxBackWindow/2,dyBackWindow/2,dzBackWindow/2);
+  TGeoTranslation *trbackwindow = new TGeoTranslation(0,0,offzBackWindow);
+
+  TGeoVolume *BWFT  = gGeoManager -> MakeBox("BWFT", aluminium,dxBackWindowFrame/2,dyBackWindowFrameT/2,dzBackWindowFrame/2);
+  TGeoVolume *BWFB  = gGeoManager -> MakeBox("BWFB", aluminium,dxBackWindowFrame/2,dyBackWindowFrameB/2,dzBackWindowFrame/2);
+  TGeoVolume *BWFL  = gGeoManager -> MakeBox("BWFL", aluminium,dxBackWindowFrameSide/2,dyBackWindowFrameSide/2,dzBackWindowFrame/2);
+  TGeoVolume *BWFR  = gGeoManager -> MakeBox("BWFR", aluminium,dxBackWindowFrameSide/2,dyBackWindowFrameSide/2,dzBackWindowFrame/2);
+  TGeoVolume *BWF2T = gGeoManager -> MakeBox("BWF2T",aluminium,dxBackWindowFrame2TB/2,dwBackWindowFrame2/2,dzBackWindowFrame2/2);
+  TGeoVolume *BWF2B = gGeoManager -> MakeBox("BWF2B",aluminium,dxBackWindowFrame2TB/2,dyBackWindowFrame2B/2,dzBackWindowFrame2/2);
+  TGeoVolume *BWF2L = gGeoManager -> MakeBox("BWF2L",aluminium,dwBackWindowFrame2/2,dyBackWindowFrame2S/2,dzBackWindowFrame2/2);
+  TGeoVolume *BWF2R = gGeoManager -> MakeBox("BWF2R",aluminium,dwBackWindowFrame2/2,dyBackWindowFrame2S/2,dzBackWindowFrame2/2);
+
+  TGeoTranslation *transBWFT  = new TGeoTranslation("transBWFT",0,offyBackWindowFrameT,offzBackWindowFrame);
+  TGeoTranslation *transBWFB  = new TGeoTranslation("transBWFB",0,offyBackWindowFrameB,offzBackWindowFrame);
+  TGeoTranslation *transBWFL  = new TGeoTranslation("transBWFL", offxBackWindowFrameS,offyBackWindowFrameS,offzBackWindowFrame);
+  TGeoTranslation *transBWFR  = new TGeoTranslation("transBWFR",-offxBackWindowFrameS,offyBackWindowFrameS,offzBackWindowFrame);
+  TGeoTranslation *transBWF2T = new TGeoTranslation("transBWF2T",0,offyBackWindowFrame2T,offzBackWindowFrame2TB);
+  TGeoTranslation *transBWF2B = new TGeoTranslation("transBWF2B",0,offyBackWindowFrame2B,offzBackWindowFrame2TB);
+  TGeoTranslation *transBWF2L = new TGeoTranslation("transBWF2L", offxBackWindowFrame2S,offyBackWindowFrame2S,offzBackWindowFrame2S);
+  TGeoTranslation *transBWF2R = new TGeoTranslation("transBWF2R",-offxBackWindowFrame2S,offyBackWindowFrame2S,offzBackWindowFrame2S);
+
+  transBWFT  -> RegisterYourself();
+  transBWFB  -> RegisterYourself();
+  transBWFL  -> RegisterYourself();
+  transBWFR  -> RegisterYourself();
+  transBWF2T -> RegisterYourself();
+  transBWF2B -> RegisterYourself();
+  transBWF2L -> RegisterYourself();
+  transBWF2R -> RegisterYourself();
+
+  TGeoCompositeShape* backWindowFrameComposite = new TGeoCompositeShape("backWindowFrameComposite","BWFT:transBWFT+BWFB:transBWFB+BWFL:transBWFL+BWFR:transBWFR+BWF2T:transBWF2T+BWF2B:transBWF2B+BWF2L:transBWF2L+BWF2R:transBWF2R");
+  TGeoVolume *backWindowFrame = new TGeoVolume("backWindowFrame",backWindowFrameComposite);
   
   // ----------------------------------------------------
-  //  Top Frame (from Mike's macro)
+  //  Top Frame
   // ----------------------------------------------------
-  //TGeoVolume *topFrame = gGeoManager->MakeBox("topFrame",vacuum,200.,200.,200.);
-  TGeoVolumeAssembly *topFrame = gGeoManager->MakeVolumeAssembly("topFrame");
-  topFrame -> SetMedium(vacuum);
-  topFrame->SetVisibility(kFALSE);
-  Double_t topframesidex=17.5326;
-  Double_t topframesidey=0.8763;
-  Double_t topframesidez=160.0175;
-  TGeoVolume *topframeside = gGeoManager->MakeBox("topframeside",aluminium,topframesidex/2.0,topframesidey/2.0,topframesidez/2.0);
-  Double_t topframefbx=95.8523;
-  Double_t topframefby=0.8763;
-  Double_t topframefbz=8.0594;
-  TGeoVolume *topframefb = gGeoManager->MakeBox("topframefb",aluminium,topframefbx/2.0,topframefby/2.0,topframefbz/2.0);
-  Double_t trtopframesidex=topframefbx/2.0+topframesidex/2.0;
-  Double_t trtopframesidey=topframefby/2.0+yActiveC/2.0;
-  TGeoTranslation *trtopframeleft = new TGeoTranslation(trtopframesidex,trtopframesidey,0.0);
-  TGeoTranslation *trtopframeright = new TGeoTranslation(-trtopframesidex,trtopframesidey,0.0);
-  Double_t trtopframefbz=topframesidez/2.0-topframefbz/2.0;
-  TGeoTranslation *trtopframefront = new TGeoTranslation(0.0,trtopframesidey,trtopframefbz);
-  TGeoTranslation *trtopframeback = new TGeoTranslation(0.0,trtopframesidey,-trtopframefbz);
-  topFrame->AddNode(topframeside,1,trtopframeleft);
-  topFrame->AddNode(topframeside,2,trtopframeright);
-  topFrame->AddNode(topframefb,1,trtopframefront);
-  topFrame->AddNode(topframefb,2,trtopframeback);
 
-  Int_t colorTopFrame = 12;
-  topframeside -> SetLineColor(colorTopFrame);
-  topframeside -> SetLineColor(colorTopFrame);
-  topframefb   -> SetLineColor(colorTopFrame);
-  topframefb   -> SetLineColor(colorTopFrame);
+  Double_t offxTopFrameSide = dxTopFrameFloorFB/2 + dxTopFrameFloorSide/2;
+  Double_t offyTopFrameSide = dyActiveMiddle/2 + dyActive/2;
+  Double_t offzTopFrameFB = dzTopFrameFloorSide/2 - dzTopFrameFloorFB/2;
+
+  TGeoVolume *topFrameF = gGeoManager -> MakeBox("topFrameF",aluminium,dxTopFrameFloorFB/2,dyActiveMiddle/2,dzTopFrameFloorFB/2);
+  TGeoVolume *topFrameB = gGeoManager -> MakeBox("topFrameB",aluminium,dxTopFrameFloorFB/2,dyActiveMiddle/2,dzTopFrameFloorFB/2);
+  TGeoVolume *topFrameL = gGeoManager -> MakeBox("topFrameL",aluminium,dxTopFrameFloorSide/2,dyActiveMiddle/2,dzTopFrameFloorSide/2);
+  TGeoVolume *topFrameR = gGeoManager -> MakeBox("topFrameR",aluminium,dxTopFrameFloorSide/2,dyActiveMiddle/2,dzTopFrameFloorSide/2);
+
+  TGeoTranslation *transTopFrameF = new TGeoTranslation("transTopFrameF",0,offyTopFrameSide, offzTopFrameFB);
+  TGeoTranslation *transTopFrameB = new TGeoTranslation("transTopFrameB",0,offyTopFrameSide,-offzTopFrameFB);
+  TGeoTranslation *transTopFrameL = new TGeoTranslation("transTopFrameL", offxTopFrameSide,offyTopFrameSide,0);
+  TGeoTranslation *transTopFrameR = new TGeoTranslation("transTopFrameR",-offxTopFrameSide,offyTopFrameSide,0);
+
+  transTopFrameF -> RegisterYourself();
+  transTopFrameB -> RegisterYourself();
+  transTopFrameL -> RegisterYourself();
+  transTopFrameR -> RegisterYourself();
 
   //Making Lexan part (currently called Aluminum)
-  Double_t topframefblexanx=126.6;
-  Double_t topframefblexany=1.905;
-  Double_t topframefblexanz=2.0;
-  Double_t topframesidelexanx=2.0;
-  Double_t topframesidelexany=1.905;
-  Double_t topframesidelexanz=159.7;
-  TGeoVolume *topframefblexan = gGeoManager->MakeBox("topframefblexan",aluminium,topframefblexanx/2.0,topframefblexany/2.0,topframefblexanz/2.0);
-  TGeoVolume *topframesidelexan = gGeoManager->MakeBox("topframesidelexan",aluminium,topframesidelexanx/2.0,topframesidelexany/2.0,topframesidelexanz/2.0);
-  Double_t trtopframesidelexanx=topframefblexanx/2.0+topframesidelexanx/2.0;
-  Double_t trtopframesidelexany=yActiveC/2.0+topframesidelexany/2.0+0.8763; //where does the last part come from???
-  TGeoTranslation *trtopframeleftlexan = new TGeoTranslation(trtopframesidelexanx,trtopframesidelexany,0.0);
-  TGeoTranslation *trtopframerightlexan = new TGeoTranslation(-trtopframesidelexanx,trtopframesidelexany,0.0);
-  Double_t trtopframefblexanz=topframesidelexanz/2.0-topframefblexanz/2.0;
-  TGeoTranslation *trtopframefrontlexan = new TGeoTranslation(0.0,trtopframesidelexany,trtopframefblexanz);
-  TGeoTranslation *trtopframebacklexan = new TGeoTranslation(0.0,trtopframesidelexany,-trtopframefblexanz);
-  topFrame->AddNode(topframesidelexan,1,trtopframeleftlexan);
-  topFrame->AddNode(topframesidelexan,2,trtopframerightlexan);
-  topFrame->AddNode(topframefblexan,1,trtopframefrontlexan);
-  topFrame->AddNode(topframefblexan,2,trtopframebacklexan);
+  Double_t offxTopFrameLexanSide = dxTopFrameLexanFB/2 + dxTopFrameLexanSide/2;
+  Double_t offyTopFrameLexanSide = dyActiveTop/2 + dyActiveMiddle + dyActive/2;
+  Double_t offzTopFrameLexanFB   = dzTopFrameLexanSide/2 - dzTopFrameLexanFB/2;
 
-  Int_t colorTopLexan = 12;
-  topframesidelexan -> SetLineColor(colorTopLexan);
-  topframesidelexan -> SetLineColor(colorTopLexan);
-  topframefblexan -> SetLineColor(colorTopLexan);
-  topframefblexan -> SetLineColor(colorTopLexan);
+  TGeoVolume *topFrameLexanF = gGeoManager -> MakeBox("topFrameLexanF",aluminium,dxTopFrameLexanFB/2,  dyActiveTop/2,dzTopFrameLexanFB/2);
+  TGeoVolume *topFrameLexanB = gGeoManager -> MakeBox("topFrameLexanB",aluminium,dxTopFrameLexanFB/2,  dyActiveTop/2,dzTopFrameLexanFB/2);
+  TGeoVolume *topFrameLexanL = gGeoManager -> MakeBox("topFrameLexanL",aluminium,dxTopFrameLexanSide/2,dyActiveTop/2,dzTopFrameLexanSide/2);
+  TGeoVolume *topFrameLexanR = gGeoManager -> MakeBox("topFrameLexanR",aluminium,dxTopFrameLexanSide/2,dyActiveTop/2,dzTopFrameLexanSide/2);
+
+  TGeoTranslation *transTopFrameLexanF = new TGeoTranslation("transTopFrameLexanF",0,offyTopFrameLexanSide,offzTopFrameLexanFB);
+  TGeoTranslation *transTopFrameLexanB = new TGeoTranslation("transTopFrameLexanB",0,offyTopFrameLexanSide,-offzTopFrameLexanFB);
+  TGeoTranslation *transTopFrameLexanL = new TGeoTranslation("transTopFrameLexanL",offxTopFrameLexanSide,offyTopFrameLexanSide,0);
+  TGeoTranslation *transTopFrameLexanR = new TGeoTranslation("transTopFrameLexanR",-offxTopFrameLexanSide,offyTopFrameLexanSide,0);
+
+  transTopFrameLexanF -> RegisterYourself();
+  transTopFrameLexanB -> RegisterYourself();
+  transTopFrameLexanL -> RegisterYourself();
+  transTopFrameLexanR -> RegisterYourself();
+
+  TGeoCompositeShape* topFrameComposite = new TGeoCompositeShape("topFrameComposite","topFrameF:transTopFrameF+topFrameB:transTopFrameB+topFrameL:transTopFrameL+topFrameR:transTopFrameR+topFrameLexanF:transTopFrameLexanF+topFrameLexanB:transTopFrameLexanB+topFrameLexanL:transTopFrameLexanL+topFrameLexanR:transTopFrameLexanR");
+  TGeoVolume *topFrame = new TGeoVolume("topFrame",topFrameComposite);
 
   // ----------------------------------------------------
-  //  Rib (from Mike's macro)
+  //  Top Plate
   // ----------------------------------------------------
-  //TGeoVolume *ribmain = gGeoManager->MakeBox("ribmain",vacuum,200.,200.,200.); // TODO : find appropriate name
-  TGeoVolumeAssembly *ribmain = gGeoManager->MakeVolumeAssembly("ribmain");
-  ribmain -> SetMedium(vacuum);
-  ribmain->SetVisibility(kFALSE);
-  Double_t ribx=152.4;
-  Double_t riby=10.9042;
-  Double_t ribz=206.06;
-  TGeoVolume *rib = gGeoManager->MakeBox("rib",aluminium,ribx/2.0,riby/2.0,ribz/2.0);
-  //Adding some lips to close area
-  Double_t riblipsidex=10.74125;
-  Double_t riblipsidey=3.01498;
-  Double_t riblipsidez=206.06;
-  TGeoVolume *riblipside = gGeoManager->MakeBox("riblipside",aluminium,riblipsidex/2.0,riblipsidey/2.0,riblipsidez/2.0);
 
-  //Squeak still needs to finish the rib assembly
-  TGeoTranslation *trriblipsideleft = new TGeoTranslation(70.829375,-6.95959,0.0);
-  TGeoTranslation *trriblipsideright = new TGeoTranslation(-70.829375,-6.95959,0.0);
-  TGeoVolume *riblipfb = gGeoManager->MakeBox("riblipfb",aluminium,130.9175/2.0,3.01498/2.0,23.02125/2.0);
-  TGeoTranslation *trriblipfbfront = new TGeoTranslation(0.0,-6.95959,91.51938);
-  TGeoTranslation *trriblipfbback = new TGeoTranslation(0.0,-6.95959,-91.51938);
-
-  Int_t colorRib = 18;
-  rib        -> SetLineColor(colorRib);
-  riblipside -> SetLineColor(colorRib);
-  riblipfb   -> SetLineColor(colorRib);
-
-  ribmain->AddNode(rib,1);
-  //ribmain->AddNode(riblipside,1,trriblipsideleft);
-  //ribmain->AddNode(riblipside,2,trriblipsideright);
-  //ribmain->AddNode(riblipfb,1,trriblipfbfront);
-  //ribmain->AddNode(riblipfb,1,trriblipfbback);
-  //TGeoTranslation *trrib = new TGeoTranslation(0.0,33.26708,0.0);
-  TGeoTranslation *trrib = new TGeoTranslation(0.0,yActiveC/2+riby/2,0.0);
+  TGeoVolume *topPlate = gGeoManager -> MakeBox("topPlate",aluminium,dxTopPlate/2,dyTopPlate/2,dzTopPlate/2);
+  TGeoTranslation *transTopPlateVolume = new TGeoTranslation(0,dyActive/2+dyTopPlate/2+dyActiveTopMiddle,0);
 
   // ----------------------------------------------------
-  //  Wire Plane (from Mike's macro)
+  //  Pad Plane
+  //  Make Pad Plane (Setting to be .062 inches (.15748 cm) thick TODO ???
   // ----------------------------------------------------
-  //TGeoVolume *wirePlane = gGeoManager->MakeBox("wirePlane",vacuum,200.,200.,200.);
-  TGeoVolumeAssembly *wirePlane = gGeoManager->MakeVolumeAssembly("wirePlane");
-  wirePlane -> SetMedium(vacuum);
-  wirePlane->SetVisibility(kFALSE);
-  //Outer Bars
-  Double_t wpoutbarx=2.0;
-  Double_t wpoutbary=1.4;
-  Double_t wpoutbarz=145.6;
-  TGeoVolume *wpoutbar = gGeoManager->MakeBox("wpoutbar",aluminium,wpoutbarx/2.0,wpoutbary/2.0,wpoutbarz/2.0);
-  //The spacing variables are measured from inside edge to inside edge
-  Double_t wpoutspacing=118.32;
-  Double_t wpmidspacing=113.52;
-  Double_t wpinspacing=103.17;
-  Double_t trwpoutbarx=wpoutspacing/2.0+wpoutbarx/2.0;
-  TGeoTranslation *trwpoutbarleft = new TGeoTranslation(trwpoutbarx,0.0,0.0);
-  TGeoTranslation *trwpoutbarright = new TGeoTranslation(-trwpoutbarx,0.0,0.0);
-  wirePlane->AddNode(wpoutbar,1,trwpoutbarleft);
-  wirePlane->AddNode(wpoutbar,1,trwpoutbarright);
-  wpoutbar->SetLineColor(kBlue);
-  //Middle Bars
-  Double_t wpmidbarx=2.0;
-  Double_t wpmidbary=0.8;
-  Double_t wpmidbarz=145.6;
-  TGeoVolume *wpmidbar = gGeoManager->MakeBox("wpmidbar",aluminium,wpmidbarx/2.0,wpmidbary/2.0,wpmidbarz/2.0);
-  Double_t trwpmidbarx=wpmidspacing/2.0+wpmidbarx/2.0;
-  Double_t trwpmidbary=wpoutbary/2.0-wpmidbary/2.0;
-  TGeoTranslation *trwpmidbarleft = new TGeoTranslation(trwpmidbarx,trwpmidbary,0.0);
-  TGeoTranslation *trwpmidbarright = new TGeoTranslation(-trwpmidbarx,trwpmidbary,0.0);
-  wirePlane->AddNode(wpmidbar,1,trwpmidbarleft);
-  wirePlane->AddNode(wpmidbar,1,trwpmidbarright);
-  wpmidbar->SetLineColor(kBlue);
-  //Inner Bars
-  Double_t wpinbarx=2.0;
-  Double_t wpinbary=0.4;
-  Double_t wpinbarz=145.6;
-  TGeoVolume *wpinbar = gGeoManager->MakeBox("wpinbar",aluminium,wpinbarx/2.0,wpinbary/2.0,wpinbarz/2.0);
-  Double_t trwpinbarx=wpinspacing/2.0+wpinbarx/2.0;
-  Double_t trwpinbary=wpoutbary/2.0-wpinbary/2.0;
-  TGeoTranslation *trwpinbarleft = new TGeoTranslation(trwpinbarx,trwpinbary,0.0);
-  TGeoTranslation *trwpinbarright = new TGeoTranslation(-trwpinbarx,trwpinbary,0.0);
-  wirePlane->AddNode(wpinbar,1,trwpinbarleft);
-  wirePlane->AddNode(wpinbar,1,trwpinbarright);
-  wpinbar->SetLineColor(kBlue);
-  //Wires
-  //Squeak is down to here
-  TGeoRotation *rowire = new TGeoRotation("rocorner",90.0,90.0,0.0);
-  TGeoVolume *wpoutwire = gGeoManager->MakeTube("wpoutwire",copper,0.0,0.00375,122.32/2.0);
-  TGeoVolume *wpmidwire = gGeoManager->MakeTube("wpmidwire",copper,0.0,0.00375,117.52/2.0);
-  TGeoVolume *wpinwire = gGeoManager->MakeTube("wpinwire",copper,0.0,0.001,107.17/2.0);
 
-  Int_t colorWireBar = 12;
-  wpoutbar  -> SetLineColor(colorWireBar);
-  wpmidbar  -> SetLineColor(colorWireBar);
-  wpinbar   -> SetLineColor(colorWireBar);
-  Int_t colorWire= kYellow-9;
-  wpoutwire -> SetLineColor(colorWire);
-  wpmidwire -> SetLineColor(colorWire);
-  wpinwire  -> SetLineColor(colorWire);
+  Double_t dyPadPlanePcb = 0.254;
+  Double_t dyPad = 0.01;
+  Double_t offyPadPlane = offyActiveToOrigin - dyPadPlanePcb/2;
+  Double_t offyPadArray = offyActiveToOrigin + dyPad/2;
 
-  TGeoCombiTrans *cowireout[1455];
-  TGeoCombiTrans *cowiremid[1455];
-  TGeoCombiTrans *cowirein[363];
+  TGeoVolume *padPlane = gGeoManager -> MakeBox("padPlane",pcb,dxPadPlane/2,dyPadPlanePcb/2,dzPadPlane/2);
+  TGeoVolume *padArray = gGeoManager -> MakeBox("padArray",copper,dxPadPlane/2,dyPad/2,dzPadPlane/2);
 
-  for (Int_t i=0; i<1455; i++) {
-    cowireout[i] = new TGeoCombiTrans("cowireout",0.0,-0.7127,72.75-0.1*i,rowire);
-    cowiremid[i] = new TGeoCombiTrans("cowiremid",0.0,-0.1127,72.75-0.1*i,rowire);
-    //wirePlane->AddNode(wpoutwire,i+1,cowireout[i]);
-    //wirePlane->AddNode(wpmidwire,i+1,cowiremid[i]);
-  }
-  for (Int_t i=0; i<363; i++) {
-    cowirein[i] = new TGeoCombiTrans("cowirein",0.0,0.2873,72.6-0.4*i,rowire);
-    //wirePlane->AddNode(wpinwire,i+1,cowirein[i]);
-  }
-  TGeoTranslation *trwireplane = new TGeoTranslation(0.0,26.9575,4.804);
+  TGeoTranslation *transPadPlane = new TGeoTranslation(0,offyPadPlane,offzPadPlane); //need to verify z shift
+  TGeoTranslation *transPadArray = new TGeoTranslation(0,offyPadArray,offzPadPlane);
 
   // ----------------------------------------------------
-  //  Pad Plane (from Mike's macro)
+  //  Set Medium
   // ----------------------------------------------------
-  //Make Pad Plane (Setting to be .062 inches (.15748 cm) thick
-  //TGeoVolume *padPlane = gGeoManager->MakeBox("padPlane",vacuum,200.,200.,200.);
-  TGeoVolumeAssembly *padPlane = gGeoManager->MakeVolumeAssembly("padPlane");
-  padPlane -> SetMedium(vacuum);
-  padPlane->SetVisibility(kFALSE);
-  Double_t padplanepcbx=86.6;
-  Double_t padplanepcby=0.254;
-  Double_t padplanepcbz=134.4;
-  TGeoVolume *padplaneplane = gGeoManager->MakeBox("padplaneplane",pcb,padplanepcbx/2.0,padplanepcby/2.0,padplanepcbz/2.0);
-  Int_t colorPad = kRed+4;
-  padplaneplane -> SetLineColor(colorPad);
-  padPlane->AddNode(padplaneplane,1);
-  Double_t padx=86.6;
-  Double_t pady=0.01;
-  Double_t padz=134.4;
-  TGeoVolume *pad = gGeoManager->MakeBox("pad",copper,padx/2.0,pady/2.0,padz/2.0);
-  Double_t trpady=padplanepcby/2.0+pady/2.0;
-  TGeoTranslation *trpad = new TGeoTranslation(0.0,trpady,0.0);
-  //padPlane->AddNode(pad,1,trpad);
 
-  /* TGeoVolume *pad = gGeoManager->MakeBox("pad",copper,0.8/2.0,0.01/2.0,1.2/2.0); */
-  /* pad->SetLineColor(kBlue); */
-  /* padplaneplane->SetLineColor(kMagenta); */
-  /* Int_t padrun=1; */
-  /* TGeoTranslation *trpad[108][112]; */
-  /* for (Int_t i=0; i<108; i++) { */
-  /*   for (Int_t j=0; j<112; j++) { */
-  /*     trpad[i][j] = new TGeoTranslation(42.8-0.8*i,-0.08374,66.6-1.2*j); */
-  /*     padPlane->AddNode(pad,padrun,trpad[i][j]); */
-  /*     padrun++; */
-  /*   } */
-  /* } */
-  TGeoTranslation *trpadplane = new TGeoTranslation(0.0,27.5305,5.08548); //need to verify z shift
-
-  // ----------------------------------------------------
-  //  Addition to Active Volume (from Mike's macro)
-  // ----------------------------------------------------
-  /*
-  TGeoVolume *actup1 = gGeoManager->MakeBox("actup1",p10,95.8523/2.0,0.8763/2.0,143.8987/2.0);
-  TGeoTranslation *tractup1 = new TGeoTranslation(0.0,25.23815,0.0);
-  TGeoVolume *actup2 = gGeoManager->MakeBox("actup2",p10,126.6/2.0,1.905/2.0,154.7/2.0);
-  TGeoTranslation *tractup2 = new TGeoTranslation(0.0,26.6288,0.0);
-  active->AddNode(actup1,1,tractup1);
-  active->AddNode(actup2,1,tractup2);
-  */
-
-
-
-
-
-
-
-
-
-
-
-
+  active            -> SetMedium(p10);
+  cageSide          -> SetMedium(aluminium);
+  cageFront         -> SetMedium(aluminium);
+  frontWindow       -> SetMedium(kapton);
+  frontWindowFrame  -> SetMedium(aluminium);
+  frontWindowCradle -> SetMedium(vacuum);
+  backWindow        -> SetMedium(kapton);
+  backWindowFrame   -> SetMedium(vacuum);
+  topFrame          -> SetMedium(vacuum);
+  topPlate          -> SetMedium(aluminium);
+  bottomPlate       -> SetMedium(vacuum);
+  padPlane          -> SetMedium(pcb);
+  padArray          -> SetMedium(copper);
 
   // ----------------------------------------------------
   //  AddNode to TOP
   // ----------------------------------------------------
-  top -> AddNode(tpc,1,combiTPC);
+
+  top -> AddNode(tpc,1,combiTpc);
  
   // ----------------------------------------------------
   //  AddNode to TPC
+  //  *** Note when adding node, that center of TPC is center of active volume.
   // ----------------------------------------------------
+
   tpc -> AddNode(active,1);
   tpc -> AddNode(cageFront,1);
   tpc -> AddNode(cageSide,1);
-  tpc -> AddNode(cageCorner,1);
-  tpc -> AddNode(frontWindow,1,trfwindow);
+  tpc -> AddNode(frontWindow,1,transFrontWindow);
   tpc -> AddNode(frontWindowFrame,1);
-  //tpc -> AddNode(copperStrips,1);
   tpc -> AddNode(frontWindowCradle,1);
   tpc -> AddNode(bottomPlate,1);
-  tpc -> AddNode(backWindowFrame,1,trbackwindowframe);
+  tpc -> AddNode(backWindowFrame,1);
   tpc -> AddNode(backWindow,1,trbackwindow);
   tpc -> AddNode(topFrame,1);
-  tpc -> AddNode(ribmain,1,trrib);
-  tpc -> AddNode(wirePlane,1,trwireplane);
-  //tpc -> AddNode(padPlane,1,trpadplane);
+  tpc -> AddNode(topPlate,1,transTopPlateVolume);
+  /*
+  */
+  //tpc -> AddNode(padPlane,1,transPadPlane); // TODO decide whether to add pad-plane to node or not, overlap with topPlate
+  //tpc -> AddNode(padArray,1,transPadArray); // TODO decide whether to add pad-plane to node or not, overlap with topPlate
 
   // ----------------------------------------------------
   //  Visual Attributes 
   // ----------------------------------------------------
-  Int_t transparency = 70;
-  Int_t transparencyActive = 70 + transparency; if(transparencyActive>100) transparencyActive = 100;
-  Int_t transparencyWindow = 50 + transparency; if(transparencyWindow>100) transparencyWindow = 100;
-  Int_t transparencyWire   = 50 + transparency; if(transparencyWire  >100) transparencyWire   = 100;
 
-  active            -> SetVisibility(kFALSE);
+  Int_t transparency = 70;
+  Int_t transparencyActive = 70 + transparency; if (transparencyActive > 100) transparencyActive = 100;
+  Int_t transparencyWindow = 50 + transparency; if (transparencyWindow > 100) transparencyWindow = 100;
+  Int_t transparencyWire   = 50 + transparency; if (transparencyWire   > 100) transparencyWire   = 100;
+
+  //active            -> SetVisibility(false);
+  active            -> SetTransparency(transparency);
   cageFront         -> SetTransparency(transparency);
   cageSide          -> SetTransparency(transparency);
-  cageCorner        -> SetTransparency(transparency);
   frontWindow       -> SetTransparency(transparencyWindow);
   frontWindowFrame  -> SetTransparency(transparency);
-  copperStrips      -> SetTransparency(transparency);
   frontWindowCradle -> SetTransparency(transparency);
   bottomPlate       -> SetTransparency(transparency);
   backWindowFrame   -> SetTransparency(transparency);
   backWindow        -> SetTransparency(transparencyWindow);
   topFrame          -> SetTransparency(transparency);
-  ribmain           -> SetTransparency(transparency);
-  wirePlane         -> SetTransparency(transparencyWire);
+  topPlate          -> SetTransparency(transparency);
   padPlane          -> SetTransparency(transparency);
+  padArray          -> SetTransparency(transparency);
 
   active            -> SetLineColor(kBlue-10);
-  //cageFront         -> SetLineColor(kOrange-7);
   cageFront         -> SetLineColor(kBlue-4);
-  //cageFront         -> SetLineColor(kOrange-4);
   cageSide          -> SetLineColor(18);
-  cageCorner        -> SetLineColor(18);
   frontWindow       -> SetLineColor(18);
   frontWindowFrame  -> SetLineColor(0);
-  copperStrips      -> SetLineColor(colorStrip);
-  frontWindowCradle -> SetLineColor(colorCradle);
-  bottomPlate       -> SetLineColor(colorBottomPlate);
-  backWindowFrame   -> SetLineColor(colorBackWindow);
+  frontWindowCradle -> SetLineColor(15);
+  bottomPlate       -> SetLineColor(18);
+  backWindowFrame   -> SetLineColor(13);
   backWindow        -> SetLineColor(12);
-  topFrame          -> SetLineColor(colorTopFrame);
-  ribmain           -> SetLineColor(colorRib);
-  wirePlane         -> SetLineColor(colorWire);
-  padPlane          -> SetLineColor(colorPad);
+  topFrame          -> SetLineColor(12);
+  topPlate          -> SetLineColor(18);
+  padPlane          -> SetLineColor(kRed+4);
+  padArray          -> SetLineColor(kRed);
 
   // ----------------------------------------------------
   //  End of Building Geometry
   // ----------------------------------------------------
+
   gGeoManager -> CloseGeometry();
-  top->Draw("ogl");
+  gGeoManager -> CheckOverlaps();
+
+  //To check top volume visually, uncomment two lines below
+  //top -> SetLineColor(kYellow);
+  //top -> SetTransparency(95);
+  //gGeoManager -> SetTopVisible(true);
+
+  top -> Draw("ogl");
 
   TString geoFileName    = dirGeom + "geomSpiRIT.root";
   TString geoManFileName = dirGeom + "geomSpiRIT.man.root";
