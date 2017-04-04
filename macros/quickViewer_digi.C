@@ -24,16 +24,22 @@ TString fParameterFile = "ST.parameters.Commissioning_201604.par";
 
 TChain *fChain = NULL;
 TClonesArray *fEventArray = nullptr;
+TString fileName;
 STPlot *fPlot = NULL;
 Int_t fEventID = 0;
 
 void next(Int_t eventID = -1) {
-  fEventID = eventID;
+  if (eventID == -1)
+    fEventID++;
+  else
+    fEventID = eventID;
 
   fChain -> GetEntry(fEventID);
-  auto event = (STRawEvent *) fEventArray -> At(fEventID);
+  auto event = (STRawEvent *) fEventArray -> At(0);
 
   fPlot -> SetEvent(event);
+  fPlot -> SetPadplaneTitle(Form("Name:%s - Event ID: %d - Top view", fileName.Data(), fEventID));
+  fPlot -> SetSideviewTitle(Form("Name:%s - Event ID: %d - Beam right view", fileName.Data(), fEventID));
   fPlot -> DrawPadplane();
   fPlot -> DrawSideview();
 }
@@ -49,7 +55,7 @@ void quickViewer_digi() {
 
   fChain = new TChain("cbmsim");
 
-  TString fileName = gSystem -> Getenv("NAME");
+  fileName = gSystem -> Getenv("NAME");
 
   TString workDir = gSystem -> Getenv("VMCWORKDIR");
   TString parameterDir = workDir + "/parameters/";
@@ -81,7 +87,7 @@ void quickViewer_digi() {
   fPlot -> SetSideviewTitle(Form("Name:%s - Event ID: %d - Beam right view", fileName.Data(), fEventID));
 
   fChain -> GetEntry(fEventID);
-  auto event = (STRawEvent *) fEventArray -> At(fEventID);
+  auto event = (STRawEvent *) fEventArray -> At(0);
 
   fPlot -> SetEvent(event);
   fPlot -> DrawPadplane();
