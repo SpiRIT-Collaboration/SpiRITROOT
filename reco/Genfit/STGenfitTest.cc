@@ -6,6 +6,7 @@
 #include "STTrackCandidate.hh"
 #include "STGlobal.hh"
 #include "STDebugLogger.hh"
+#include "STGFBField.hh"
 
 // GENFIT2 classes
 #include "Track.h"
@@ -32,6 +33,11 @@ using namespace std;
 ClassImp(STGenfitTest)
 
 STGenfitTest::STGenfitTest()
+:STGenfitTest(kTRUE)
+{
+}
+
+STGenfitTest::STGenfitTest(Bool_t loadSamurai)
 {
   fTPCDetID = 0;
   fCurrentDirection = 1;
@@ -48,7 +54,10 @@ STGenfitTest::STGenfitTest()
   fMeasurementFactory = new genfit::MeasurementFactory<genfit::AbsMeasurement>();
   fMeasurementFactory -> addProducer(fTPCDetID, fMeasurementProducer);
 
-  genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.));
+  if (loadSamurai)
+    genfit::FieldManager::getInstance() -> init(new STGFBField("samurai_field_map","A"));
+  else
+    genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.));
   genfit::MaterialEffects *materialEffects = genfit::MaterialEffects::getInstance();
   materialEffects -> init(new genfit::TGeoMaterialInterface());
 

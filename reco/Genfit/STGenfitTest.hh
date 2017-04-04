@@ -28,6 +28,7 @@ class STGenfitTest
 {
   public:
     STGenfitTest();
+    STGenfitTest(Bool_t loadSamurai);
     ~STGenfitTest();
 
     void Init();
