@@ -128,14 +128,16 @@ void STGenfitSinglePIDTask::Exec(Option_t *opt)
     recoTrack -> SetIsFitted();
     recoTrack -> SetTrackCandidate(candTrack);
     genfitTrackArray.push_back(track);
-
-    fGenfitTest -> CalculatedEdx2(track, recoTrack, helixTrack);
+fGenfitTest -> CalculatedEdx2(track, recoTrack, helixTrack);
 
     helixTrack -> SetGenfitID(recoTrack -> GetTrackID());
     helixTrack -> SetGenfitMomentum(candTrack -> GetP());
   }
 
   LOG(INFO) << Space() << "STTrack " << fTrackArray -> GetEntriesFast() << FairLogger::endl;
+
+  if (genfitTrackArray.size() < 2)
+    return;
 
   vector<genfit::GFRaveVertex *> vertices;
   try {

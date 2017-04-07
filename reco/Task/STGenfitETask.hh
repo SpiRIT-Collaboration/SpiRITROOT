@@ -24,7 +24,6 @@ class STGenfitETask : public STRecoTask
   private:
     TClonesArray *fTrackArray = nullptr;
     TClonesArray *fTrackCandArray = nullptr;
-    TClonesArray *fVertexArray = nullptr;
     TClonesArray *fHelixTrackArray = nullptr;
 
     STGenfitTestE *fGenfitTest;
@@ -33,9 +32,6 @@ class STGenfitETask : public STRecoTask
     Int_t fMaxIterations = 20;
 
     Bool_t fIsSamurai = kTRUE;
-
-    TString fGFRaveVertexMethod;
-    genfit::GFRaveVertexFactory *fVertexFactory;
 
     STDatabasePDG* fPDGDB;
 
