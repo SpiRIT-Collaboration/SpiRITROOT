@@ -116,7 +116,7 @@ void STGenfitETask::Exec(Option_t *opt)
 
       fGenfitTest -> VarifyClusters(track0, helixTrack);
       */
-      genfit::Track *track = fGenfitTest -> FitTrack(candTrack, helixTrack, pdg);
+      genfit::Track *track = fGenfitTest -> FitTrack(helixTrack, pdg);
       if (track == nullptr)
         continue;
 

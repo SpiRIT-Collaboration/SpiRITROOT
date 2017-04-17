@@ -24,6 +24,11 @@
 #pragma link C++ class STRecoHeader+;
 #pragma link C++ class STMCRecoMatching+;
 
+#pragma link C++ class STdEdxPoint+;
+#pragma link C++ class STRecoTrack+;
+#pragma link C++ class STRecoTrackCand+;
+#pragma link C++ class STRecoTrackCandList+;
+
 #pragma link C++ class STSlimPad+;
 #pragma link C++ class std::vector<Short_t>+;
 #pragma link C++ class std::vector<Float_t>+;

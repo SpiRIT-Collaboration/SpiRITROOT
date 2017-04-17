@@ -5,6 +5,7 @@ ${ROOT_INCLUDE_DIR}
 ${GENFIT2_INCLUDE_DIR}
 ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
+${CMAKE_SOURCE_DIR}/global
 ${CMAKE_SOURCE_DIR}/format
 )
 
@@ -41,6 +42,11 @@ STHelixTrack.cc
 STVertex.cc
 STRecoHeader.cc
 STMCRecoMatching.cc
+
+STdEdxPoint.cc
+STRecoTrack.cc
+STRecoTrackCand.cc
+STRecoTrackCandList.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
@@ -53,6 +59,7 @@ Set(DEPENDENCIES
     Stack
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory
+    STGlobal
     genfit2	    
 )
 

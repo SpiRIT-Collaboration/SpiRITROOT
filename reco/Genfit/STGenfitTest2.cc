@@ -1,10 +1,11 @@
-#include "STGenfitTestE.hh"
+#include "STGenfitTest2.hh"
 
 // SPiRITROOT classes
 #include "STGenfitTask.hh"
 #include "STTrackCandidate.hh"
 #include "STGlobal.hh"
 #include "STDebugLogger.hh"
+#include "STdEdxPoint.hh"
 
 // GENFIT2 classes
 #include "Track.h"
@@ -26,14 +27,14 @@
 
 using namespace std;
 
-ClassImp(STGenfitTestE)
+ClassImp(STGenfitTest2)
 
-STGenfitTestE::STGenfitTestE()
-:STGenfitTestE(kTRUE)
+STGenfitTest2::STGenfitTest2()
+:STGenfitTest2(true)
 {
 }
 
-STGenfitTestE::STGenfitTestE(Bool_t loadSamurai)
+STGenfitTest2::STGenfitTest2(bool loadSamurai)
 {
   fTPCDetID = 0;
 
@@ -74,24 +75,16 @@ STGenfitTestE::STGenfitTestE(Bool_t loadSamurai)
   fKatanaPlane = genfit::SharedPlanePtr(new genfit::DetPlane(posKatana, normalKatana));
 }
 
-void STGenfitTestE::SetTargetPlane(TVector3 position, TVector3 normal)
-{
-  fTargetPlane = genfit::SharedPlanePtr(new genfit::DetPlane(0.1*position, 0.1*normal));
-}
-void STGenfitTestE::SetMinIterations(Int_t value) { 
-  fKalmanFitter -> setMinIterations(value);
-}
-void STGenfitTestE::SetMaxIterations(Int_t value) { 
-  fKalmanFitter -> setMaxIterations(value);
-}
+void STGenfitTest2::SetMinIterations(Int_t value) { fKalmanFitter -> setMinIterations(value); }
+void STGenfitTest2::SetMaxIterations(Int_t value) { fKalmanFitter -> setMaxIterations(value); }
 
-void STGenfitTestE::Init()
+void STGenfitTest2::Init()
 {
   fHitClusterArray -> Delete();
   fGenfitTrackArray -> Delete();
 }
 
-genfit::Track* STGenfitTestE::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
+genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
 {
   fHitClusterArray -> Delete();
   genfit::TrackCand trackCand;
@@ -137,32 +130,50 @@ genfit::Track* STGenfitTestE::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
 
   genfit::Track *gfTrack = new ((*fGenfitTrackArray)[fGenfitTrackArray -> GetEntriesFast()]) genfit::Track(trackCand, *fMeasurementFactory);
   gfTrack -> addTrackRep(new genfit::RKTrackRep(pdg));
-  Bool_t isFitted = ProcessTrack(gfTrack);
 
-  if (!isFitted)
-    return nullptr;
-
-  return gfTrack;
-}
-
-Bool_t
-STGenfitTestE::ProcessTrack(genfit::Track *gfTrack)
-{
-  Bool_t isFitted = kFALSE;
+  bool isFitted = false;
 
   genfit::RKTrackRep *trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
 
   try {
     fKalmanFitter -> processTrackWithRep(gfTrack, trackRep, false);
     if (gfTrack -> getFitStatus(trackRep) -> isFitted())
-      isFitted = kTRUE;
+      isFitted = true;
   } catch (genfit::Exception &e) {}
 
-  return isFitted;
+  genfit::FitStatus *fitStatus;
+  try {
+    fitStatus = gfTrack -> getFitStatus(trackRep);
+  } catch (genfit::Exception &e) {
+    return nullptr;
+  }
+
+  if (fitStatus -> isFitted() == false || fitStatus -> isFitConverged() == false)
+    return nullptr;
+
+  genfit::MeasuredStateOnPlane fitState;
+  try {
+    fitState = gfTrack -> getFittedState();
+  } catch (genfit::Exception &e) {}
+
+  for (auto cluster : *clusterArray) {
+    if (cluster -> IsStable() == false)
+      continue;
+    auto position = cluster -> GetPosition();
+    try {
+      trackRep -> extrapolateToPoint(fitState, .1*position);
+      auto poca = 10*fitState.getPos();
+      auto d = position - poca;
+      d.SetY(0);
+      if (d.Mag() > 5)
+        cluster -> SetIsStable(false);
+    } catch (genfit::Exception &e) {}
+  }
+
+  return gfTrack;
 }
 
-void 
-STGenfitTestE::SetTrackParameters(STTrackCandidate *recoTrack, genfit::Track *gfTrack, TVector3 vertex)
+void STGenfitTest2::GetTrackParameters(genfit::Track *gfTrack, TVector3 &mom, TVector3 &momentumTargetPlane, TVector3 &posTargetPlane)
 {
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
@@ -176,55 +187,97 @@ STGenfitTestE::SetTrackParameters(STTrackCandidate *recoTrack, genfit::Track *gf
     return;
   }
 
-  if (fitStatus -> isFitted() == kFALSE || fitStatus -> isFitConverged() == kFALSE)
-    return;
-
-  if (vertex.Z() > -900) {
-    try {
-      trackRep -> extrapolateToPoint(fitState, .1*vertex);
-    } catch (genfit::Exception &e) {
-    }
-  }
-
   TVector3 posReco(-999,-999,-999);
-  TVector3 momReco(-999,-999,-999);
-
   TMatrixDSym covMat(6,6);
-  Double_t bChi2 = 0, fChi2 = 0, bNdf = 0, fNdf = 0;
-
-  Double_t pVal = 0;
 
   try {
-    fitState.getPosMomCov(posReco, momReco, covMat);
-    pVal = fitStatus -> getPVal();
-    fKalmanFitter -> getChiSquNdf(gfTrack, trackRep, bChi2, fChi2, bNdf, fNdf);
-
+    fitState.getPosMomCov(posReco, mom, covMat);
   } catch (genfit::Exception &e) {
     return;
   }
 
-  if (fNdf < 3)
+  if (mom.Z() < 0)
+    mom = -mom;
+  mom = 1000*mom;
+
+  try { 
+    trackRep -> extrapolateToPlane(fitState, fTargetPlane); 
+    momentumTargetPlane = fitState.getMom();
+    posTargetPlane = fitState.getPos();
+  } catch (genfit::Exception &e) {
+  }
+
+  momentumTargetPlane = 1000*momentumTargetPlane;
+  posTargetPlane = 10*posTargetPlane;
+}
+
+void STGenfitTest2::GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVector3 &kyotoR, TVector3 &katana)
+{
+  genfit::RKTrackRep *trackRep;
+  genfit::MeasuredStateOnPlane fitState;
+  genfit::FitStatus *fitStatus;
+
+  try {
+    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+    fitState = gfTrack -> getFittedState();
+    fitStatus = gfTrack -> getFitStatus(trackRep);
+  } catch (genfit::Exception &e) {
     return;
+  }
 
-  if (momReco.Z() < 0)
-    momReco = -momReco;
+  try { 
+    trackRep -> extrapolateToPlane(fitState, fKyotoLPlane); 
+    kyotoL = 10*fitState.getPos();
+  } catch (genfit::Exception &e) {
+  }
 
-  recoTrack -> SetVertex(posReco*10.);
-  recoTrack -> SetMomentum(momReco*1000.);
-  recoTrack -> SetPID(trackRep -> getPDG());
-  recoTrack -> SetMass(fitState.getMass()*1000);
-  recoTrack -> SetChi2(fChi2);
-  recoTrack -> SetNDF(fNdf);
-  recoTrack -> SetPVal(pVal);
-  recoTrack -> SetCovSeed(covMat);
+  try { 
+    trackRep -> extrapolateToPlane(fitState, fKyotoRPlane); 
+    kyotoR = 10*fitState.getPos();
+  } catch (genfit::Exception &e) {
+  }
 
-  Double_t charge = DetermineCharge(recoTrack, gfTrack);
-  recoTrack -> SetCharge(charge);
-  ProcessExtrapolation(recoTrack, gfTrack);
+  try { 
+    trackRep -> extrapolateToPlane(fitState, fKatanaPlane); 
+    katana = 10*fitState.getPos();
+  } catch (genfit::Exception &e) {
+  }
+}
+
+void STGenfitTest2::GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 vertex, TVector3 &momVertex, Double_t &charge)
+{
+  genfit::RKTrackRep *trackRep;
+  genfit::MeasuredStateOnPlane fitState;
+  genfit::FitStatus *fitStatus;
+
+  try {
+    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+    fitState = gfTrack -> getFittedState();
+    fitStatus = gfTrack -> getFitStatus(trackRep);
+  } catch (genfit::Exception &e) {
+    momVertex = TVector3(0,0,0);
+  }
+
+  try {
+    trackRep -> extrapolateToPoint(fitState, .1*vertex);
+  } catch (genfit::Exception &e) {
+  }
+
+  TVector3 posVertex(-999,-999,-999);
+  TMatrixDSym covMat(6,6);
+
+  try {
+    fitState.getPosMomCov(posVertex, momVertex, covMat);
+  } catch (genfit::Exception &e) {
+    momVertex = TVector3(0,0,0);
+  }
+
+  momVertex = 1000*momVertex;
+  charge = DetermineCharge(gfTrack);
 }
 
 Int_t
-STGenfitTestE::DetermineCharge(STTrackCandidate *recoTrack, genfit::Track *gfTrack)
+STGenfitTest2::DetermineCharge(genfit::Track *gfTrack)
 {
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
@@ -276,91 +329,12 @@ STGenfitTestE::DetermineCharge(STTrackCandidate *recoTrack, genfit::Track *gfTra
   return sum > 0 ? -1 : 1;
 }
 
-void 
-STGenfitTestE::ProcessExtrapolation(STTrackCandidate *recoTrack, genfit::Track *gfTrack)
-{
-  genfit::RKTrackRep *trackRep;
-  genfit::MeasuredStateOnPlane fitState;
-
-  try {
-    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
-    fitState = gfTrack -> getFittedState();
-  } catch (genfit::Exception &e) {
-    return;
-  }
-
-  TVector3 momTarget(-99999,-99999,-99999);
-  TVector3 posTarget(-99999,-99999,-99999);
-  try { 
-    trackRep -> extrapolateToPlane(fitState, fTargetPlane); 
-    momTarget = fitState.getMom();
-    recoTrack -> SetBeamMomentum(momTarget);
-    posTarget = fitState.getPos();
-    recoTrack -> SetBeamVertex(posTarget*10.);
-  } catch (genfit::Exception &e) {
-  }
-
-  TVector3 posKyotoL(-99999,-99999,-99999);
-  try { 
-    trackRep -> extrapolateToPlane(fitState, fKyotoLPlane); 
-    posKyotoL = fitState.getPos();
-    recoTrack -> SetKyotoLHit(posKyotoL*10.);
-  } catch (genfit::Exception &e) {
-  }
-
-  TVector3 posKyotoR(-99999,-99999,-99999);
-  try { 
-    trackRep -> extrapolateToPlane(fitState, fKyotoRPlane); 
-    posKyotoR = fitState.getPos();
-    recoTrack -> SetKyotoRHit(posKyotoR*10.);
-  } catch (genfit::Exception &e) {
-  }
-
-  TVector3 posKatana(-99999,-99999,-99999);
-  try { 
-    trackRep -> extrapolateToPlane(fitState, fKatanaPlane); 
-    posKatana = fitState.getPos();
-    recoTrack -> SetKatanaHit(posKatana*10.);
-  } catch (genfit::Exception &e) {
-  }
-}
-
-void
-STGenfitTestE::VarifyClusters(genfit::Track *gfTrack, STHelixTrack *helixTrack)
-{
-  genfit::MeasuredStateOnPlane fitState;
-  genfit::RKTrackRep *trackRep;
-  try {
-    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
-    fitState = gfTrack -> getFittedState();
-  } catch (genfit::Exception &e) {}
-
-  auto clusterArray = helixTrack -> GetClusterArray();
-  auto numClusters = clusterArray -> size();
-
-  for (auto iCluster = 0; iCluster < numClusters; iCluster++)
-  {
-    auto cluster = clusterArray -> at(iCluster);
-    if (cluster -> IsStable() == false)
-      continue;
-    auto position = cluster -> GetPosition();
-    try {
-      trackRep -> extrapolateToPoint(fitState, .1*position);
-      auto poca = 10*fitState.getPos();
-      auto d = position - poca;
-      d.SetY(0);
-      if (d.Mag() > 5)
-        cluster -> SetIsStable(false);
-    } catch (genfit::Exception &e) {}
-  }
-}
-
-Bool_t 
-STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrackCandidate *recoTrack, STHelixTrack *helixTrack)
+bool 
+STGenfitTest2::GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray)
 {
   Int_t numPoints = helixTrack -> GetNumStableClusters();
   if (numPoints < 3)
-    return kFALSE;
+    return false;
 
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
@@ -368,7 +342,7 @@ STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrackCandidate *recoTrack
     trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
     fitState = gfTrack -> getFittedState();
   } catch (genfit::Exception &e) {
-    return kFALSE;
+    return false;
   }
 
   auto clusterArray = helixTrack -> GetClusterArray();
@@ -381,18 +355,13 @@ STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrackCandidate *recoTrack
   try {
     dLength = trackRep -> extrapolateToPoint(fitState, .1*position);
   } catch (genfit::Exception &e) {
-    recoTrack -> SetTotaldEdx(-1);
-    return kFALSE;
+    return false;
   }
   dLength = 0;
-
-  Double_t totaldE = 0;
-  Double_t totaldx = 0;
 
   for (auto iCluster = 1; iCluster < numClusters; iCluster++)
   {
     auto curCluster = clusterArray -> at(iCluster);
-
 
     Double_t length = .5*std::abs(dLength);
 
@@ -401,8 +370,8 @@ STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrackCandidate *recoTrack
       dLength = trackRep -> extrapolateToPoint(fitState, .1*position);
       curCluster -> SetPOCA(10*fitState.getPos());
     } catch (genfit::Exception &e) {
-      recoTrack -> SetTotaldEdx(-1);
-      return kFALSE;
+      dEdxPointArray -> clear();
+      return false;
     }
 
     length += .5*std::abs(dLength);
@@ -412,29 +381,21 @@ STGenfitTestE::CalculatedEdx(genfit::Track *gfTrack, STTrackCandidate *recoTrack
     {
       Double_t dE = preCluster -> GetCharge();
       Double_t dx = preCluster -> GetLength();
-
-      Double_t dEdx = dE/dx;
-      recoTrack -> AdddEdx(dEdx);
-
-      totaldE += dE;
-      totaldx += dx;
+      dEdxPointArray -> push_back(STdEdxPoint(999, dE, dx));
     }
 
     preCluster = curCluster;
   }
 
-  recoTrack -> SetTrackLength(totaldx);
-  recoTrack -> SetTotaldEdx(totaldE/totaldx);
-
-  return kTRUE;
+  return true;
 }
 
-Bool_t 
-STGenfitTestE::CalculatedEdx2(genfit::Track *gfTrack, STTrackCandidate *recoTrack, STHelixTrack *helixTrack)
+bool 
+STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray)
 {
   Int_t numPoints = helixTrack -> GetNumStableClusters();
   if (numPoints < 3)
-    return kFALSE;
+    return false;
 
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
@@ -442,14 +403,11 @@ STGenfitTestE::CalculatedEdx2(genfit::Track *gfTrack, STTrackCandidate *recoTrac
     trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
     fitState = gfTrack -> getFittedState();
   } catch (genfit::Exception &e) {
-    return kFALSE;
+    return false;
   }
 
   auto clusterArray = helixTrack -> GetClusterArray();
   auto numClusters = clusterArray -> size();
-
-  Double_t totaldE = 0;
-  Double_t totaldx = 0;
 
   for (auto iCluster = 0; iCluster < numClusters; iCluster++)
   {
@@ -461,7 +419,7 @@ STGenfitTestE::CalculatedEdx2(genfit::Track *gfTrack, STTrackCandidate *recoTrac
     auto layer = cluster -> GetLayer();
     auto position = cluster -> GetPosition();
 
-    Bool_t buildByLayer = true;
+    bool buildByLayer = true;
     if (layer == -1)
       buildByLayer = false;
 
@@ -499,15 +457,11 @@ STGenfitTestE::CalculatedEdx2(genfit::Track *gfTrack, STTrackCandidate *recoTrac
       continue;
     }
 
-    Double_t dEdx = dE/dx;
-    recoTrack -> AdddEdx(dEdx);
-
-    totaldE += dE;
-    totaldx += dx;
+    if (layer == -1)
+      dEdxPointArray -> push_back(STdEdxPoint(-row, dE, dx));
+    else
+      dEdxPointArray -> push_back(STdEdxPoint(layer, dE, dx));
   }
 
-  recoTrack -> SetTrackLength(totaldx);
-  recoTrack -> SetTotaldEdx(totaldE/totaldx);
-
-  return kTRUE;
+  return true;
 }

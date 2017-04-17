@@ -5,6 +5,7 @@ ${ROOT_INCLUDE_DIR}
 ${GENFIT2_INCLUDE_DIR}
 ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
+${CMAKE_SOURCE_DIR}/global
 ${CMAKE_SOURCE_DIR}/mc
 ${CMAKE_SOURCE_DIR}/stack
 ${CMAKE_SOURCE_DIR}/par
@@ -26,6 +27,7 @@ ${CMAKE_SOURCE_DIR}/reco/LinearTracking
 ${CMAKE_SOURCE_DIR}/reco/CurveTracking
 ${CMAKE_SOURCE_DIR}/reco/HelixTracking
 ${CMAKE_SOURCE_DIR}/reco/Task
+${CMAKE_SOURCE_DIR}/reco/PID
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -55,6 +57,9 @@ Task/STMCTruthTask.cc
 Task/STPIDCorrelatorTask.cc
 Task/STRiemannToHelixTask.cc
 Task/STGenfitSinglePIDTask.cc
+Task/STGenfitPIDTask.cc
+
+PID/STPIDTest.cc
 
 GETDecoder/GETDecoder.cc
 GETDecoder/GETFrameInfo.cc
@@ -115,6 +120,7 @@ Genfit/STSpacepointMeasurement.cc
 Genfit/STGFBField.cc
 Genfit/STGenfitTest.cc
 Genfit/STGenfitTestE.cc
+Genfit/STGenfitTest2.cc
 
 Tracking/STVTrackFinder.cc
 
@@ -159,6 +165,7 @@ Set(DEPENDENCIES
     Stack
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
+    STGlobal
     STFormat
     STTool
     STPar

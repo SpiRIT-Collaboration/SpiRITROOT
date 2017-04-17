@@ -194,6 +194,7 @@ ENDIF(HAS_CXX11_SHAREDPOINTER)
 # cause another cmake executable to run.  The same process will walk through
 # the project's entire directory structure.
 
+add_subdirectory(global)
 add_subdirectory(mc)
 add_subdirectory(digi)
 add_subdirectory(eventdisplay)

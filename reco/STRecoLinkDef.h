@@ -17,6 +17,8 @@
 #pragma link C++ class STPIDCorrelatorTask+;
 #pragma link C++ class STRiemannToHelixTask+;
 
+#pragma link C++ class STPIDTest+;
+
 #pragma link C++ class GETDecoder+;
 #pragma link C++ class GETFrameInfo+;
 #pragma link C++ class GETHeaderBase+;
@@ -88,8 +90,10 @@
 #pragma link C++ class STGFBField+;
 #pragma link C++ class STGenfitTest+;
 #pragma link C++ class STGenfitTestE+;
+#pragma link C++ class STGenfitTest2+;
 #pragma link C++ class STGenfitTask+;
 #pragma link C++ class STGenfitSinglePIDTask+;
+#pragma link C++ class STGenfitPIDTask+;
 
 #pragma link C++ class STSource+;
 

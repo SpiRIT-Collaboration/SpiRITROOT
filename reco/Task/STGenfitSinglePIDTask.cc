@@ -118,7 +118,7 @@ void STGenfitSinglePIDTask::Exec(Option_t *opt)
     STTrackCandidate *candTrack = (STTrackCandidate *) fTrackCandArray -> ConstructedAt(trackCandID);
     candTrack -> SetCharge(helixTrack -> Charge());
 
-    genfit::Track *track = fGenfitTest -> FitTrack(candTrack, helixTrack, pdg);
+    genfit::Track *track = fGenfitTest -> FitTrack(helixTrack, pdg);
     if (track == nullptr)
       continue;
 
