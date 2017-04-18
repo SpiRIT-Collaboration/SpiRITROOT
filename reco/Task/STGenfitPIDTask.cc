@@ -48,7 +48,7 @@ STGenfitPIDTask::Init()
   fCandListArray = new TClonesArray("STRecoTrackCandList");
   fRootManager -> Register("STCandList", "SpiRIT", fCandListArray, fIsListPersistence);
 
-  fRecoTrackArray = new TClonesArray("STRecoTrackArray");
+  fRecoTrackArray = new TClonesArray("STRecoTrack");
   fRootManager -> Register("STRecoTrack", "SpiRIT", fRecoTrackArray, fIsPersistence);
 
   fGenfitTest = new STGenfitTest2(fIsSamurai);
@@ -119,7 +119,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       else if (pid == STPID::k4He)      pdg = 1000020040; 
       else continue;
 
-      auto recoTrackCand = (STRecoTrackCand *) fCandListArray -> At(iPID);
+      auto recoTrackCand = candList -> GetRecoTrackCand(iPID);
 
       genfit::Track *gfTrack = fGenfitTest -> FitTrack(helixTrack, pdg);
       if (gfTrack == nullptr) {
@@ -171,6 +171,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     recoTrack -> SetPosKatana(katana);
   }
 
+  LOG(INFO) << Space() << "STRecoTrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
+
   vector<genfit::GFRaveVertex *> vertices;
   try {
     fVertexFactory -> findVertices(&vertices, gfTrackArrayToVertex);
@@ -210,6 +212,5 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     delete vertex;
   }
 
-  LOG(INFO) << Space() << "STRecoTrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
   LOG(INFO) << Space() << "STVertex " << fVertexArray -> GetEntriesFast() << FairLogger::endl;
 }

@@ -381,7 +381,7 @@ STGenfitTest2::GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helix
     {
       Double_t dE = preCluster -> GetCharge();
       Double_t dx = preCluster -> GetLength();
-      dEdxPointArray -> push_back(STdEdxPoint(999, dE, dx));
+      dEdxPointArray -> push_back(STdEdxPoint(dE, dx));
     }
 
     preCluster = curCluster;
@@ -457,10 +457,7 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
       continue;
     }
 
-    if (layer == -1)
-      dEdxPointArray -> push_back(STdEdxPoint(-row, dE, dx));
-    else
-      dEdxPointArray -> push_back(STdEdxPoint(layer, dE, dx));
+    dEdxPointArray -> push_back(STdEdxPoint(dE, dx));
   }
 
   return true;

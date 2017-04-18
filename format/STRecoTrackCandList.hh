@@ -20,7 +20,7 @@ class STRecoTrackCandList : public TObjArray
     virtual void Clear(Option_t *option = "");
     virtual void Print(Option_t *option = "") const;
 
-    STRecoTrackCand *GetRecoTrackCand(STPID::PID pid);
+    STRecoTrackCand *GetRecoTrackCand(Int_t pid);
 
     void AddHitID(Int_t val) { fHitIDArray.push_back(val); }
     vector<Int_t> *GetHitIDArray() { return &fHitIDArray; }

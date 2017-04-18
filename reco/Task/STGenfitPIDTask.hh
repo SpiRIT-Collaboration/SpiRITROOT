@@ -1,5 +1,5 @@
-#ifndef STGENFITETASK
-#define STGENFITETASK
+#ifndef STGENFITPIDTASK_HH
+#define STGENFITPIDTASK_HH
 
 #include "STRecoTask.hh"
 #include "STHelixTrack.hh"

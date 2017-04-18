@@ -30,9 +30,9 @@ void STRecoTrackCandList::Print(Option_t *option) const
     At(iPID) -> Print();
 }
 
-STRecoTrackCand *STRecoTrackCandList::GetRecoTrackCand(STPID::PID pid)
+STRecoTrackCand *STRecoTrackCandList::GetRecoTrackCand(Int_t pid)
 {
-  if (pid == STPID::kNon)
+  if (pid == -1)
     return nullptr;
   return (STRecoTrackCand *) this -> At(pid);
 }

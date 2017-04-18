@@ -10,7 +10,7 @@ STRecoTrackCand::STRecoTrackCand()
 
 void STRecoTrackCand::Clear(Option_t *option)
 {
-  fPID = STPID::kNon;
+  //fPID = STPID::kNon;
   fPIDProbability = 0;
 
   fMomentum.SetXYZ(0,0,0);
