@@ -4,6 +4,7 @@
 #define NUMSTPID 6
 
 #include "TObject.h"
+#include "TString.h"
 #include <map>
 
 class STPID : public TObject {
@@ -19,17 +20,31 @@ class STPID : public TObject {
     };
 
     friend std::ostream& operator<<(std::ostream& out, const PID value) {
-      static std::map<PID, std::string> strings;
-      if (strings.size() == 0) {
-        strings[kNon]      = "Non";
-        strings[kPion]     = "Pion";
-        strings[kProton]   = "Proton";
-        strings[kDeuteron] = "Deuteron";
-        strings[kTriton]   = "Triton";
-        strings[k3He]      = "3He";
-        strings[k4He]      = "4He";
+      static std::map<PID, std::string> particleNames;
+      if (particleNames.size() == 0) {
+        particleNames[kNon]      = "Non";
+        particleNames[kPion]     = "Pion";
+        particleNames[kProton]   = "Proton";
+        particleNames[kDeuteron] = "Deuteron";
+        particleNames[kTriton]   = "Triton";
+        particleNames[k3He]      = "3He";
+        particleNames[k4He]      = "4He";
       }   
-      return out << strings[value];
+      return out << particleNames[value];
+    }
+
+    static TString GetName(PID pid) {
+      static std::map<PID, std::string> particleNames;
+      if (particleNames.size() == 0) {
+        particleNames[kNon]      = "Non";
+        particleNames[kPion]     = "Pion";
+        particleNames[kProton]   = "Proton";
+        particleNames[kDeuteron] = "Deuteron";
+        particleNames[kTriton]   = "Triton";
+        particleNames[k3He]      = "3He";
+        particleNames[k4He]      = "4He";
+      }
+      return TString(particleNames[pid].c_str());
     }
 
     static Int_t GetNUMSTPID() { return NUMSTPID; } 
