@@ -275,6 +275,14 @@ void STPadPlaneMap::GetLayerHits(Int_t layer, hits_t *array)
     fPadMap[row][layer] -> GetHits(array);
 }
 
+STPadHitContainer *STPadPlaneMap::GetPad(Int_t row, Int_t layer)
+{
+  if (row < 0 || row >= 108 || layer< 0 || layer>= 112 )
+    return nullptr;
+
+  return fPadMap[row][layer];
+}
+
 Int_t STPadPlaneMap::CalculateRow(Double_t x)   { return Int_t((x+432)/8); }
 Int_t STPadPlaneMap::CalculateLayer(Double_t z) { return Int_t(z/12); }
 Double_t STPadPlaneMap::CalculateX(Int_t row)   { return (row+0.5)*8.-432.; }

@@ -60,6 +60,8 @@ class STPadPlaneMap
     Double_t CalculateX(Int_t row);
     Double_t CalculateZ(Int_t layer);
 
+    STPadHitContainer *GetPad(Int_t row, Int_t layer);
+
   private:
     STPadHitContainer *fPadMap[108][112];
 
