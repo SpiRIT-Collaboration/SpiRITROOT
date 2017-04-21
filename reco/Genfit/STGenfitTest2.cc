@@ -244,7 +244,7 @@ void STGenfitTest2::GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVe
   }
 }
 
-void STGenfitTest2::GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 vertex, TVector3 &momVertex, Double_t &charge)
+void STGenfitTest2::GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 vertex, TVector3 &momVertex, TVector3 &pocaVertex, Double_t &charge)
 {
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
@@ -263,16 +263,16 @@ void STGenfitTest2::GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 verte
   } catch (genfit::Exception &e) {
   }
 
-  TVector3 posVertex(-999,-999,-999);
   TMatrixDSym covMat(6,6);
 
   try {
-    fitState.getPosMomCov(posVertex, momVertex, covMat);
+    fitState.getPosMomCov(pocaVertex, momVertex, covMat);
   } catch (genfit::Exception &e) {
     momVertex = TVector3(0,0,0);
   }
 
   momVertex = 1000*momVertex;
+  pocaVertex = 10*pocaVertex;
   charge = DetermineCharge(gfTrack);
 }
 

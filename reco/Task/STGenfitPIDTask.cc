@@ -57,6 +57,19 @@ STGenfitPIDTask::Init()
   fVertexArray = new TClonesArray("STVertex");
   fRootManager -> Register("STVertex", "SpiRIT", fVertexArray, fIsPersistence);
 
+  if (!fBDCName.IsNull()) {
+    fFileBDC = new TFile(fBDCName);
+    fTreeBDC = (TTree *) fFileBDC -> Get("TBDC");
+    fTreeBDC -> SetBranchAddress("ProjX",&fXBDC);
+    fTreeBDC -> SetBranchAddress("ProjY",&fYBDC);
+    fTreeBDC -> SetBranchAddress("ProjZ",&fZBDC);
+    fTreeBDC -> SetBranchAddress("ProjdX",&fdXBDC);
+    fTreeBDC -> SetBranchAddress("ProjdY",&fdYBDC);
+    fTreeBDC -> SetBranchAddress("ProjdZ",&fdZBDC);
+
+    fCovMatBDC = new TMatrixDSym(3);
+  }
+
   fVertexFactory = new genfit::GFRaveVertexFactory(/* verbosity */ 2, /* useVacuumPropagator */ false);
   //fVertexFactory -> setMethod("kalman-smoothing:1");
   fGFRaveVertexMethod = "avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5";
@@ -113,10 +126,10 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       Int_t pdg;
            if (pid == STPID::kPion)     pdg = 211; 
       else if (pid == STPID::kProton)   pdg = 2212; 
-      else if (pid == STPID::kDeuteron) pdg = 1000010020; 
-      else if (pid == STPID::kTriton)   pdg = 1000010030; 
-      else if (pid == STPID::k3He)      pdg = 1000020030; 
-      else if (pid == STPID::k4He)      pdg = 1000020040; 
+      //else if (pid == STPID::kDeuteron) pdg = 1000010020;
+      //else if (pid == STPID::kTriton)   pdg = 1000010030;
+      //else if (pid == STPID::k3He)      pdg = 1000020030;
+      //else if (pid == STPID::k4He)      pdg = 1000020040;
       else continue;
 
       auto recoTrackCand = candList -> GetRecoTrackCand(iPID);
@@ -176,9 +189,19 @@ void STGenfitPIDTask::Exec(Option_t *opt)
   if (gfTrackArrayToVertex.size() < 2)
     return;
 
+  if (!fBDCName.IsNull()) {
+    fTreeBDC -> GetEntry(fEventHeader -> GetEventID());
+    TVector3 posBDC(fXBDC-1.462,fYBDC-235.57,fZBDC+580.4);
+    (*fCovMatBDC)[0][0] = fdXBDC;
+    (*fCovMatBDC)[1][1] = fdYBDC;
+    (*fCovMatBDC)[2][2] = fdZBDC;
+
+    fVertexFactory -> setBeamspot(posBDC, *fCovMatBDC);
+  }
+
   vector<genfit::GFRaveVertex *> vertices;
   try {
-    fVertexFactory -> findVertices(&vertices, gfTrackArrayToVertex);
+    fVertexFactory -> findVertices(&vertices, gfTrackArrayToVertex, !fBDCName.IsNull());
   } catch (...) {
   }
 
@@ -203,9 +226,11 @@ void STGenfitPIDTask::Exec(Option_t *opt)
           recoTrack -> SetVertexID(iVert);
 
           TVector3 momVertex;
+          TVector3 pocaVertex;
           Double_t charge;
-          fGenfitTest -> GetMomentumWithVertex(gfTrack, 10*vertex->getPos() , momVertex, charge);
+          fGenfitTest -> GetMomentumWithVertex(gfTrack, 10*vertex->getPos(), momVertex, pocaVertex, charge);
           recoTrack -> SetMomentum(momVertex);
+          recoTrack -> SetPOCAVertex(pocaVertex);
           recoTrack -> SetCharge(charge);
         }
       }
@@ -217,3 +242,5 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
   LOG(INFO) << Space() << "STVertex " << fVertexArray -> GetEntriesFast() << FairLogger::endl;
 }
+
+void STGenfitPIDTask::SetBDCFile(TString fileName) { fBDCName = fileName; }
