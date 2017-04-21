@@ -415,8 +415,8 @@ STHelixTrackFinder::HitClustering2(STHelixTrack *track)
       return false;
 
     Int_t layer = z / 12;
-    if (layer > 89 && layer < 100)
-      return false;
+    //if (layer > 89 && layer < 100)
+      //return false;
 
     return true;
   };
