@@ -24,6 +24,7 @@ class STRecoTrack : public STRecoTrackCand
     Int_t fCharge; ///< Charge of the particle
     Int_t fVertexID; ///< ID from vertex branch
 
+    TVector3 fPOCAVertex; ///< point of closest approach to vertex
     TVector3 fPosKyotoL; ///< position at extrapolation to left kyoto plane
     TVector3 fPosKyotoR; ///< position at extrapolation to right kyoto plane
     TVector3 fPosKatana; ///< position at extrapolation to katana plane
@@ -40,6 +41,9 @@ class STRecoTrack : public STRecoTrackCand
     void SetVertexID(Int_t val) { fVertexID = val; }
     Int_t GetVertexID() { return fVertexID; }
 
+    void SetPOCAVertex(TVector3 val) { fPOCAVertex = val; }
+    TVector3 GetPOCAVertex() { return fPOCAVertex; }
+
     void SetPosKyotoL(TVector3 val) { fPosKyotoL = val; }
     TVector3 GetPosKyotoL() { return fPosKyotoL; }
 
@@ -50,7 +54,7 @@ class STRecoTrack : public STRecoTrackCand
     TVector3 GetPosKatana() { return fPosKatana; }
 
 
-  ClassDef(STRecoTrack, 1);
+  ClassDef(STRecoTrack, 2);
 };
 
 #endif
