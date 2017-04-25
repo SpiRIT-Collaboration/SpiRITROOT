@@ -213,4 +213,9 @@ configure_file(${CMAKE_SOURCE_DIR}/CTestCustom.cmake
                ${CMAKE_BINARY_DIR}/CTestCustom.cmake
               )
 
+configure_file(${VMCWORKDIR}/cmake/STLog.cmake.in ${VMCWORKDIR}/cmake/STLog.cmake @ONLY)
+add_custom_target(STLOG ALL
+                  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/STLog.cmake
+                  VERBATIM)
 
+file(MAKE_DIRECTORY ${VMCWORKDIR}/macros/data)
