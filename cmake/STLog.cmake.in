@@ -20,5 +20,5 @@ if(CREATE_GIT_LOG)
   cmake_host_system_information(RESULT STHOSTNAME QUERY HOSTNAME)
   set(STUSERNAME $ENV{USER})
 
-  configure_file(${STPATH}/cmake/STCompiled.h.in  ${STPATH}/VERSION @ONLY)
+  configure_file(${STPATH}/cmake/STCompiled.h.in  ${STPATH}/VERSION.compiled @ONLY)
 endif()
