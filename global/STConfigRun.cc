@@ -1,24 +1,13 @@
 #include "STCompiled.h"
 #include "STConfigRun.hh"
 #include "TSystem.h"
-#include <fstream>
 #include "dirent.h"
 
-STConfigRun* STConfigRun::fInstance = nullptr;
-STConfigRun* STConfigRun::Instance() 
+ClassImp(STConfigRun)
+
+TString STConfigRun::SpiRITROOTPath()
 {
-  if (fInstance == nullptr)
-    return new STConfigRun();
-  return fInstance; 
-}
-
-STConfigRun::STConfigRun()
-{
-  fInstance = this;
-
-  fSpiRITROOTPath = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
-
-  cout << "[STConfigRun] Using SpiRITROOT version: " + TString(STVERSION) << endl;
+  return TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
 }
 
 TString STConfigRun::SpiRITROOTVersion()
@@ -29,7 +18,7 @@ TString STConfigRun::SpiRITROOTVersion()
 TString STConfigRun::RecoFileName(Int_t runNo, Int_t splitNo, TString path, TString tag)
 {
   if (path.IsNull())
-    path = fSpiRITROOTPath + "macros/data/";
+    path = STConfigRun::SpiRITROOTPath() + "macros/data/";
   else
     path = path + "/";
 
@@ -46,7 +35,7 @@ vector<TString> STConfigRun::GetListOfRecoFiles(Int_t runNo, TString path, TStri
   vector<TString> list;
 
   if (path.IsNull())
-    path = fSpiRITROOTPath + "macros/data/";
+    path = STConfigRun::SpiRITROOTPath() + "macros/data/";
   else
     path = path + "/";
 
@@ -81,9 +70,9 @@ vector<TString> STConfigRun::GetListOfRecoFiles(Int_t runNo, TString path, TStri
 TString STConfigRun::ParameterFileName(TString name)
 {
   if (name.IsNull())
-    name = "ST.parameters.Commissioning_201604.par",
+    name = "ST.parameters.Commissioning_201604.par";
 
-  name = fSpiRITROOTPath + "parameters/" + name;
+  name = STConfigRun::SpiRITROOTPath() + "parameters/" + name;
 
   return name;
 }
@@ -93,7 +82,7 @@ TString STConfigRun::GeometryFileName(TString name)
   if (name.IsNull())
     name = "geomSpiRIT.man.root";
 
-  name = fSpiRITROOTPath + "geometry/" + name;
+  name = STConfigRun::SpiRITROOTPath() + "geometry/" + name;
 
   return name;
 }

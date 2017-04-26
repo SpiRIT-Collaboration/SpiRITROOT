@@ -1,8 +1,1 @@
-#ifndef STVERSION
-
-#define STVERSION "@STVERSION@"
-
-#define STHOSTNAME "@STHOSTNAME@"
-#define STUSERNAME "@STUSERNAME@"
-
-#endif
+@STVERSION@
