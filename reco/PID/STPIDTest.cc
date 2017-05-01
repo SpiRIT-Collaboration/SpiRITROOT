@@ -1,6 +1,7 @@
 #include "STPIDTest.hh"
 #include "TMath.h"
 
+#include "float.h"
 #include <iostream>
 using namespace std;
 
@@ -53,6 +54,9 @@ Double_t STPIDTest::GetProbability(STPID::PID stpid, Double_t p, Double_t dedx)
     fGausFunction -> SetParameters(1,mu,sigma);
     prob = fGausFunction -> Eval(dedx);
   }
+
+  if (stpid == STPID::kProton && prob == 0)
+    prob = DBL_MIN;
 
   return prob;
 }
