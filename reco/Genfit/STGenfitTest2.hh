@@ -9,6 +9,7 @@
 #include "STTrack.hh"
 #include "STTrackCandidate.hh"
 #include "STdEdxPoint.hh"
+#include "STRecoTrack.hh"
 
 // GENFIT2 classes
 #include "AbsKalmanFitter.h"
@@ -46,6 +47,9 @@ class STGenfitTest2
     bool GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray);
     bool GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray);
 
+    genfit::Track* SetTrack(STRecoTrack *recoTrack, TClonesArray *clusterArray);
+    bool ExtrapolateTrack(Double_t distance, TVector3 &position, Int_t direction = 1);
+
   private:
     Int_t DetermineCharge(genfit::Track *gfTrack);
 
@@ -63,6 +67,10 @@ class STGenfitTest2
     genfit::SharedPlanePtr fKyotoLPlane;
     genfit::SharedPlanePtr fKyotoRPlane;
     genfit::SharedPlanePtr fKatanaPlane;
+
+    genfit::RKTrackRep *fCurrentTrackRep;
+    genfit::MeasuredStateOnPlane fCurrentFitState;
+    genfit::FitStatus *fCurrentFitStatus;
 
   ClassDef(STGenfitTest2, 1)
 };

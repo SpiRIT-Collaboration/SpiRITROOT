@@ -131,14 +131,10 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
   genfit::Track *gfTrack = new ((*fGenfitTrackArray)[fGenfitTrackArray -> GetEntriesFast()]) genfit::Track(trackCand, *fMeasurementFactory);
   gfTrack -> addTrackRep(new genfit::RKTrackRep(pdg));
 
-  bool isFitted = false;
-
   genfit::RKTrackRep *trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
 
   try {
     fKalmanFitter -> processTrackWithRep(gfTrack, trackRep, false);
-    if (gfTrack -> getFitStatus(trackRep) -> isFitted())
-      isFitted = true;
   } catch (genfit::Exception &e) {}
 
   genfit::FitStatus *fitStatus;
@@ -171,6 +167,79 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
   }
 
   return gfTrack;
+}
+
+genfit::Track* STGenfitTest2::SetTrack(STRecoTrack *recoTrack, TClonesArray *clusterArray)
+{
+  fHitClusterArray -> Delete();
+  genfit::TrackCand trackCand;
+
+  auto clusterIDArray = recoTrack -> GetClusterIDArray();
+  Int_t idx = 0;
+  for (auto id : *clusterIDArray) {
+    auto cluster = (STHitCluster *) clusterArray -> At(id);
+    new ((*fHitClusterArray)[idx]) STHitCluster(*cluster);
+    trackCand.addHit(fTPCDetID, idx);
+    idx++;
+  }
+
+  STHitCluster *refCluster;
+  for (auto id : *clusterIDArray) {
+    auto cluster = (STHitCluster *) clusterArray -> At(id);
+    if (cluster -> IsStable()) {
+      refCluster = cluster;
+      break;
+    }
+  }
+
+  TVector3 posSeed = refCluster -> GetPosition();
+  posSeed.SetMag(posSeed.Mag()/10.);
+
+  TMatrixDSym covSeed(6);
+  TMatrixD covMatrix = refCluster -> GetCovMatrix();
+  for (Int_t iComp = 0; iComp < 3; iComp++)
+    covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
+  for (Int_t iComp = 3; iComp < 6; iComp++)
+    covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
+
+  auto momReco = recoTrack -> GetMomentum();
+
+  trackCand.setCovSeed(covSeed);
+  trackCand.setPosMomSeed(posSeed, momReco, recoTrack -> GetCharge());
+
+  genfit::Track *gfTrack = new ((*fGenfitTrackArray)[fGenfitTrackArray -> GetEntriesFast()]) genfit::Track(trackCand, *fMeasurementFactory);
+  gfTrack -> addTrackRep(new genfit::RKTrackRep(STPID::GetPDG(recoTrack->GetPID())));
+
+  fCurrentTrackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+  try {
+    fKalmanFitter -> processTrackWithRep(gfTrack, fCurrentTrackRep, false);
+  } catch (genfit::Exception &e) {}
+
+  try {
+    fCurrentFitStatus = gfTrack -> getFitStatus(fCurrentTrackRep);
+    fCurrentFitState = gfTrack -> getFittedState();
+  } catch (genfit::Exception &e) {
+    return nullptr;
+  }
+
+  if (fCurrentFitStatus -> isFitted() == false || fCurrentFitStatus -> isFitConverged() == false)
+    return nullptr;
+
+  return gfTrack;
+}
+
+bool STGenfitTest2::ExtrapolateTrack(Double_t distance, TVector3 &position, Int_t direction)
+{
+  Double_t d = direction * 0.1 * distance;
+
+  try {
+    fCurrentTrackRep -> extrapolateBy(fCurrentFitState, d);
+  } catch (genfit::Exception &e) {
+    return false;
+  }
+
+  position = fCurrentFitState.getPos();
+  return true;
 }
 
 void STGenfitTest2::GetTrackParameters(genfit::Track *gfTrack, TVector3 &mom, TVector3 &momentumTargetPlane, TVector3 &posTargetPlane)
