@@ -47,8 +47,16 @@ class STGenfitTest2
     bool GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray);
     bool GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray);
 
+    /// Set genfit-track to use ExtrapolateTrack() method.
     genfit::Track* SetTrack(STRecoTrack *recoTrack, TClonesArray *clusterArray);
+
+    /// Track given from SetTrack(), is extrapolated by given 'distance(mm)'.
+    /// If extrapolation success, return true and set 'position(mm)'. If it fails, return false.
     bool ExtrapolateTrack(Double_t distance, TVector3 &position, Int_t direction = 1);
+
+    /// Track given from SetTrack(), is extrapolated to 'to(mm)'.
+    /// If extrapolation success, return true and set 'position(mm)'. If it fails, return false.
+    bool ExtrapolateTo(TVector3 to, TVector3 &position);
 
   private:
     Int_t DetermineCharge(genfit::Track *gfTrack);

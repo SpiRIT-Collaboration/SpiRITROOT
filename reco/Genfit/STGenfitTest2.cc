@@ -238,7 +238,19 @@ bool STGenfitTest2::ExtrapolateTrack(Double_t distance, TVector3 &position, Int_
     return false;
   }
 
-  position = fCurrentFitState.getPos();
+  position = 10 * fCurrentFitState.getPos();
+  return true;
+}
+
+bool STGenfitTest2::ExtrapolateTo(TVector3 to, TVector3 &position)
+{
+  try {
+    fCurrentTrackRep -> extrapolateToPoint(fCurrentFitState, .1*to);
+  } catch (genfit::Exception &e) {
+    return false;
+  }
+
+  position = 10 * fCurrentFitState.getPos();
   return true;
 }
 
