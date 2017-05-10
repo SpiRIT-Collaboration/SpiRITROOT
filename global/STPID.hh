@@ -47,6 +47,20 @@ class STPID : public TObject {
       return TString(particleNames[pid].c_str());
     }
 
+    static Int_t GetPDG(PID pid) {
+      static std::map<PID, Int_t> particlePDG;
+      if (particlePDG.size() == 0) {
+        particlePDG[kNon]      = 0;
+        particlePDG[kPion]     = 211;
+        particlePDG[kProton]   = 2212;
+        particlePDG[kDeuteron] = 1000010020;
+        particlePDG[kTriton]   = 1000010030;
+        particlePDG[k3He]      = 1000020030;
+        particlePDG[k4He]      = 1000020040;
+      }
+      return particlePDG[pid];
+    }
+
     static Int_t GetNUMSTPID() { return NUMSTPID; } 
 
   ClassDef(STPID, 1)

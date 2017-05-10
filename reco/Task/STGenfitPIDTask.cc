@@ -113,6 +113,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     for (auto cluster : *clusterArray) {
       if (cluster -> IsStable()) {
         candList -> AddHitID(cluster -> GetClusterID());
+        recoTrack -> AddClusterID(cluster -> GetClusterID());
       }
     }
 
