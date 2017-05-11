@@ -152,3 +152,8 @@ STPSA::CalculateZ(Double_t layer)
 }
 
 void STPSA::SetWindowStartTb(Int_t value) { fWindowStartTb = value; }
+
+void STPSA::SetTbOffsets(Double_t *tbOffsets) {
+  for (auto i = 0; i < 3; ++i)
+    fTbOffsets[i] = tbOffsets[i];
+}

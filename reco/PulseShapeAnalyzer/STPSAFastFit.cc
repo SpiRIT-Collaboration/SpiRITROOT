@@ -244,6 +244,10 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
         << "Found hit!"
         << FairLogger::endl;
 #endif
+      if (layer >= 84) tbHit += fTbOffsets[2];
+      else if (layer >= 56) tbHit += fTbOffsets[1];
+      else if (layer >= 28) tbHit += fTbOffsets[0];
+
       yHit = tbHit * fTbToYConv;
 
       STHit *hit = (STHit *) hitArray -> ConstructedAt(hitNum);

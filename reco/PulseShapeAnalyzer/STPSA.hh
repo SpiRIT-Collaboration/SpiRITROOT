@@ -46,6 +46,8 @@ class STPSA
 
     void SetWindowStartTb(Int_t value);
 
+    void SetTbOffsets(Double_t *tbOffsets);
+
   protected:
     FairLogger *fLogger;      ///< logger pointer
     STDigiPar *fPar;          ///< parameter container
@@ -69,6 +71,8 @@ class STPSA
     Double_t fThreshold;          ///< threshold of ADC value
     Int_t fLayerLowCut;
     Int_t fLayerHighCut;
+
+    Double_t fTbOffsets[3];
 
     Double_t CalculateX(Double_t row);      ///< Calculate x position in mm. This returns the center position of given pad row.
     Double_t CalculateY(Double_t peakIdx);  ///< Calculate y position in mm using the peak index.

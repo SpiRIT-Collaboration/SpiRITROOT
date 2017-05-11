@@ -91,6 +91,12 @@ void STPSAETask::Exec(Option_t *opt)
   if (fEventHeader -> IsBadEvent())
     return;
 
+  Double_t tbOffsets[4];
+  tbOffsets[0] = fEventHeader -> GetTbOffset1();
+  tbOffsets[1] = fEventHeader -> GetTbOffset2();
+  tbOffsets[2] = fEventHeader -> GetTbOffset3();
+  fPSA -> SetTbOffsets(tbOffsets);
+
   STRawEvent *rawEvent = (STRawEvent *) fRawEventArray -> At(0);
 
   fPSA -> Analyze(rawEvent, fHitArray);
