@@ -115,8 +115,8 @@ void STEventPreviewTask::CalculateTbOffsets(STRawEvent *rawEvent, Double_t &tbRe
   }
 
   tbRef0 = tbRef[0];
-  for (auto section = 1; section < 4; ++section)
-    tbOffsets[section] = tbRef[section] - tbRef[0];
+  for (auto section = 0; section < 3; ++section)
+    tbOffsets[section] = tbRef[section+1] - tbRef[0];
 }
 
 

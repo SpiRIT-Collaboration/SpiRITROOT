@@ -91,6 +91,10 @@ STPSA::STPSA()
     fWindowEndTb = 512;
 
   fTbToYConv = -fTBTime * fDriftVelocity / 100.;
+
+  fTbOffsets[0] = 0.;
+  fTbOffsets[1] = 0.;
+  fTbOffsets[2] = 0.;
 }
 
 STPSA::~STPSA()
