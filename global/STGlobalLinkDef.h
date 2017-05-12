@@ -5,6 +5,6 @@
 #pragma link off all functions;
 
 #pragma link C++ class STPID+;
-#pragma link C++ class STConfigRun+;
+//#pragma link C++ class STConfigRun+;
 
 #endif
