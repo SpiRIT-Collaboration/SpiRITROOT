@@ -472,13 +472,13 @@ STHelixTrackFinder::HitClustering2(STHelixTrack *track)
   Int_t layerMax = curHit -> GetLayer();
 
   if (buildByLayer) {
-    layerMin = layerMin = 0;
-    layerMin = layerMax = -1;
+    layerMin = 0;
+    layerMax = -1;
     lastCluster -> SetRow(-1);
     lastCluster -> SetLayer(curHit -> GetLayer());
   } else {
-    rowMin = rowMin = 0;
-    rowMin = rowMax = -1;
+    rowMin = 0;
+    rowMax = -1;
     lastCluster -> SetRow(curHit -> GetRow());
     lastCluster -> SetLayer(-1);
   }
