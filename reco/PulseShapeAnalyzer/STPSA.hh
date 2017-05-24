@@ -18,6 +18,7 @@
 #include "STPad.hh"
 #include "STEvent.hh"
 #include "STHit.hh"
+#include "STMap.hh"
 #include "STDigiPar.hh"
 
 // FairRoot classes
@@ -52,6 +53,8 @@ class STPSA
     FairLogger *fLogger;      ///< logger pointer
     STDigiPar *fPar;          ///< parameter container
 
+    STMap *fPadMap;
+
     Double_t fPadPlaneX;      ///< pad plane size x in mm
     Double_t fPadSizeX;       ///< pad size x in mm
     Double_t fPadSizeZ;       ///< pad size y in mm
@@ -72,7 +75,7 @@ class STPSA
     Int_t fLayerLowCut;
     Int_t fLayerHighCut;
 
-    Double_t fTbOffsets[3];
+    Double_t fTbOffsets[12];
 
     Double_t CalculateX(Double_t row);      ///< Calculate x position in mm. This returns the center position of given pad row.
     Double_t CalculateY(Double_t peakIdx);  ///< Calculate y position in mm using the peak index.

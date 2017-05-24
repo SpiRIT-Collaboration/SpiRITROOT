@@ -54,15 +54,10 @@ void STEventHeader::SetIsBeamEvent()           { fStatus = 4; }
 void STEventHeader::SetIsCosmicEvent()         { fStatus = 5; }
 void STEventHeader::SetIsBadEvent()            { fStatus = 6; }
 
-void STEventHeader::SetTbOffsets(Double_t tbRef0, Double_t tbOffset1, Double_t tbOffset2, Double_t tbOffset3)
+void STEventHeader::SetTbOffsets(Double_t *tbOffsets)
 {
-  fTbRef0 = tbRef0;
-  fTbOffset1 = tbOffset1;
-  fTbOffset2 = tbOffset2;
-  fTbOffset3 = tbOffset3;
+  for (auto coboIdx = 0; coboIdx < 12; ++coboIdx)
+    fTbOffsets[coboIdx] = tbOffsets[coboIdx];
 }
 
-Double_t STEventHeader::GetTbRef0() { return fTbRef0; }
-Double_t STEventHeader::GetTbOffset1() { return fTbOffset1; }
-Double_t STEventHeader::GetTbOffset2() { return fTbOffset2; }
-Double_t STEventHeader::GetTbOffset3() { return fTbOffset3; }
+Double_t *STEventHeader::GetTbOffsets() { return fTbOffsets; }

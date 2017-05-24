@@ -136,6 +136,8 @@ STPSAFastFit::Analyze(STRawEvent *rawEvent, TClonesArray *hitArray)
   LOG(INFO) << "Joining completed! Merging data!"  << FairLogger::endl;
 #endif
 
+  Int_t row, layer, uaIdx, coboIdx, asadIdx, agetIdx, chIdx;
+
   Int_t hitNum = 0;
   for (Int_t iThread = 0; iThread < NUMTHREAD; iThread++) {
     Int_t numHits = fThreadHitArray[iThread] -> GetEntriesFast();
@@ -144,8 +146,13 @@ STPSAFastFit::Analyze(STRawEvent *rawEvent, TClonesArray *hitArray)
       STHit *hit = (STHit *) fThreadHitArray[iThread] -> At(iHit);
       hit -> SetHitID(hitNum++);
 
-      Double_t x = hit -> GetZ();
-      Double_t y = hit -> GetY();
+      fPadMap -> GetMapData(hit->GetRow(), hit->GetLayer(), uaIdx, coboIdx, asadIdx, agetIdx, chIdx);
+
+      auto tbHit = hit -> GetTb() - fTbOffsets[coboIdx];
+      auto yHit = tbHit * fTbToYConv;
+
+      hit -> SetTb(tbHit);
+      hit -> SetY(yHit);
 
       new ((*hitArray)[hitArray->GetEntriesFast()]) STHit(hit);
     }
@@ -244,10 +251,6 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
         << "Found hit!"
         << FairLogger::endl;
 #endif
-      if (layer >= 84) tbHit -= fTbOffsets[2];
-      else if (layer >= 56) tbHit -= fTbOffsets[1];
-      else if (layer >= 28) tbHit -= fTbOffsets[0];
-
       yHit = tbHit * fTbToYConv;
 
       STHit *hit = (STHit *) hitArray -> ConstructedAt(hitNum);

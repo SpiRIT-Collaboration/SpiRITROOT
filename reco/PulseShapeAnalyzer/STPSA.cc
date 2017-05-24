@@ -33,6 +33,9 @@ STPSA::STPSA()
 
   FairRun *run = FairRun::Instance();
 
+  TString uaName;
+  TString agetName;
+
   if (run)
   {
     FairRuntimeDb *db = run -> GetRuntimeDb();
@@ -55,6 +58,9 @@ STPSA::STPSA()
     fDriftVelocity  = fPar -> GetDriftVelocity();
     fMaxDriftLength = fPar -> GetDriftLength();
 
+    uaName   = fPar -> GetUAMapFileName();
+    agetName = fPar -> GetAGETMapFileName();
+
     fThreshold = -1;
   }
 
@@ -75,6 +81,9 @@ STPSA::STPSA()
     fDriftVelocity  = fParReader -> GetDoublePar("DriftVelocity");
     fMaxDriftLength = fParReader -> GetDoublePar("DriftLength");
 
+    uaName   = fParReader -> GetFilePar(3);
+    agetName = fParReader -> GetFilePar(2);
+
     Int_t samplingRate = fParReader -> GetIntPar("SamplingRate");
     switch (samplingRate) {
       case 25:  fTBTime = 40; break;
@@ -92,9 +101,12 @@ STPSA::STPSA()
 
   fTbToYConv = -fTBTime * fDriftVelocity / 100.;
 
-  fTbOffsets[0] = 0.;
-  fTbOffsets[1] = 0.;
-  fTbOffsets[2] = 0.;
+  fPadMap = new STMap();
+  fPadMap -> SetUAMap(uaName);
+  fPadMap -> SetAGETMap(agetName);
+
+  for (auto coboIdx = 0; coboIdx < 12; ++coboIdx)
+    fTbOffsets[coboIdx] = 0.;
 }
 
 STPSA::~STPSA()
@@ -158,6 +170,6 @@ STPSA::CalculateZ(Double_t layer)
 void STPSA::SetWindowStartTb(Int_t value) { fWindowStartTb = value; }
 
 void STPSA::SetTbOffsets(Double_t *tbOffsets) {
-  for (auto i = 0; i < 3; ++i)
-    fTbOffsets[i] = tbOffsets[i];
+  for (auto coboIdx = 0; coboIdx < 12; ++coboIdx)
+    fTbOffsets[coboIdx] = tbOffsets[coboIdx];
 }

@@ -34,12 +34,8 @@ class STEventHeader : public TNamed
     void SetIsCosmicEvent();
     void SetIsBadEvent();
 
-    void SetTbOffsets(Double_t tbRef0, Double_t tbOffset1, Double_t tbOffset2, Double_t tbOffset3);
-
-    Double_t GetTbRef0();
-    Double_t GetTbOffset1();
-    Double_t GetTbOffset2();
-    Double_t GetTbOffset3();
+    void SetTbOffsets(Double_t *tbOffsets);
+    Double_t *GetTbOffsets();
 
   private:
     Int_t fEventID; ///< Original event ID from the run
@@ -58,10 +54,7 @@ class STEventHeader : public TNamed
     */
     Int_t fStatus;
 
-    Double_t fTbRef0;
-    Double_t fTbOffset1;
-    Double_t fTbOffset2;
-    Double_t fTbOffset3;
+    Double_t fTbOffsets[12];
 
   ClassDef(STEventHeader, 1)
 };
