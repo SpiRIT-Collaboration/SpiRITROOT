@@ -11,6 +11,7 @@ void STRecoTrack::Clear(Option_t *option)
 {
   STRecoTrackCand::Clear();
 
+  fCharge = -2;
   fVertexID = -1;
   fPOCAVertex.SetXYZ(0,0,0);
   fPosKyotoL.SetXYZ(0,0,0);
