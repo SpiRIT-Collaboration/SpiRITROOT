@@ -32,7 +32,6 @@ InitStatus STEventPreviewTask::Init()
   fRawEventArray = (TClonesArray *) fRootManager -> GetObject("STRawEvent");
   if (fRawEventArray == nullptr) {
     LOG(ERROR) << "Cannot find STRawEvent array!" << FairLogger::endl;
-    //return kERROR;
   }
 
   fEventHeader = new STEventHeader();
@@ -48,10 +47,6 @@ InitStatus STEventPreviewTask::Init()
     fPadMap = new STMap();
     fPadMap -> SetUAMap(fDigiPar -> GetUAMapFileName());
     fPadMap -> SetAGETMap(fDigiPar -> GetAGETMapFileName());
-
-    for (auto coboIdx = 0; coboIdx < 12; ++coboIdx)
-      fHistGG[coboIdx] = new TH1D(Form("histGG%d",coboIdx),"",NTB_GGCALIB,0,NTB_GGCALIB);
-    fF1GG = new TF1("f1GG","[0]*TMath::Landau(x,[1],[2])+[3]",0,50);
   }
 
   return kSUCCESS;
@@ -85,10 +80,8 @@ void STEventPreviewTask::Exec(Option_t *opt)
     CalculateTbOffsets(rawEvent, tbOffsets);
     fEventHeader -> SetTbOffsets(tbOffsets);
 
-    LOG(INFO) << Space() << "tb-calib.:";
     for (auto coboIdx = 0; coboIdx < 12; ++coboIdx)
-      LOG(INFO) << Form(" %d:%.2f",coboIdx,tbOffsets[coboIdx]);
-    LOG(INFO) << "." << FairLogger::endl;
+      LOG(INFO) << Space() << Form("%d: %.2f (%d)",coboIdx,tbOffsets[coboIdx],nFilled[coboIdx]) << FairLogger::endl;
   }
 }
 
@@ -118,25 +111,23 @@ void STEventPreviewTask::CalculateTbOffsets(STRawEvent *rawEvent, Double_t *tbOf
 {
   Double_t tbRef[12] = {0};
 
-  for (auto coboIdx = 0; coboIdx < 12; ++coboIdx) {
-    SetAverageHistograms(rawEvent);
-    auto f1 = FitGG(fHistGG[coboIdx]);
-    tbRef[coboIdx] = f1 -> GetParameter(1);
-  }
+  SetAverageBuffer(rawEvent);
+
+  for (auto coboIdx = 0; coboIdx < 12; ++coboIdx)
+    tbRef[coboIdx] = FindSecondPeak(coboIdx);
 
   for (auto coboIdx = 0; coboIdx < 12; ++coboIdx)
     tbOffsets[coboIdx] = tbRef[coboIdx] - tbRef[0];
 }
 
-TH1D *STEventPreviewTask::GetAverageHist(Int_t coboIdx)
+void STEventPreviewTask::SetAverageBuffer(STRawEvent *rawEvent)
 {
-  return fHistGG[coboIdx];
-}
+  for (auto coboIdx = 0; coboIdx < 12; ++coboIdx) {
+    nFilled[coboIdx] = 0;
 
-void STEventPreviewTask::SetAverageHistograms(STRawEvent *rawEvent)
-{
-  for (auto coboIdx = 0; coboIdx < 12; ++coboIdx)
-    fHistGG[coboIdx] -> Reset();
+    for (auto tb = 0; tb < 100; ++tb)
+      fBuffer[coboIdx][tb] = 0;
+  }
 
   Int_t uaIdx, coboIdx, asadIdx, agetIdx, chIdx;
   for (auto row = 0; row < 108; row++) {
@@ -156,33 +147,29 @@ void STEventPreviewTask::SetAverageHistograms(STRawEvent *rawEvent)
 
       fPadMap -> GetMapData(row, layer, uaIdx, coboIdx, asadIdx, agetIdx, chIdx);
 
-      auto histAverage = fHistGG[coboIdx];
-      auto nContents = histAverage -> GetBinContent(0);
-      for (auto itb = 0; itb < NTB_GGCALIB; ++itb) {
-        auto contentAverage = histAverage -> GetBinContent(itb+1);
-        contentAverage = (nContents*contentAverage + adc[itb]) / (nContents+1);
-        histAverage -> SetBinContent(itb+1, contentAverage);
-      }
-      histAverage -> Fill(-1);
+      for (auto itb = 0; itb < NTB_GGCALIB; ++itb)
+        fBuffer[coboIdx][itb] += adc[itb];
+
+      nFilled[coboIdx] += 1;
     }
   }
+
+  for (auto cobo = 0; cobo < 12; ++cobo)
+    for (auto itb = 0; itb < NTB_GGCALIB; ++itb)
+      fBuffer[cobo][itb] = fBuffer[cobo][itb]/nFilled[cobo];
 }
 
-TF1 *STEventPreviewTask::FitGG(TH1D *hist)
+Double_t STEventPreviewTask::FindSecondPeak(Int_t cobo)
 {
-  // find rough position and value of first(-) and second(+) peak
   Double_t tbStart = 0;
   Double_t tbFirstPeak = 0;
   Double_t tbSecondPeak = 0;
-  Double_t tbThirdPeak = 0;
 
   Double_t adcFirstPeak = 0;
-  Double_t adcSecondPeak = 0;
 
   for (auto itb = 0; itb < 100; ++itb) {
-    Double_t tb = itb + 0.5;
-    Double_t adc1 = hist -> GetBinContent(itb+1);
-    Double_t adc2 = hist -> GetBinContent(itb+2);
+    Double_t adc1 = fBuffer[cobo][itb];
+    Double_t adc2 = fBuffer[cobo][itb+1];
 
     if (tbStart == 0) {
       Double_t diffp = TMath::Abs(adc2 - adc1);
@@ -204,74 +191,18 @@ TF1 *STEventPreviewTask::FitGG(TH1D *hist)
     else if (tbSecondPeak == 0) {
       Double_t diff = adc2 - adc1;
       if (diff < 0) {
-        tbSecondPeak = itb;
-        adcSecondPeak = adc1;
-        continue;
-      } else
-        continue;
-    }
-    else if (tbThirdPeak == 0) {
-      Double_t diff = adc2 - adc1;
-      if (diff > 0) {
-        tbThirdPeak = itb;
+        Double_t adc0 = fBuffer[cobo][itb-1];
+        tbSecondPeak = ((itb-1)*adc0 + itb*adc1 + (itb+1)*adc2)/(adc0+adc1+adc2);
         break;
       } else
         continue;
     }
   }
 
-  fF1GG -> SetParameters(adcSecondPeak*10,tbSecondPeak,(tbSecondPeak-tbFirstPeak)/2.,adcFirstPeak);
-  fF1GG -> SetRange(tbFirstPeak+1,tbThirdPeak-3);
-  hist -> Fit(fF1GG,"Q0R");
-
-  return fF1GG;
-}
-
-Double_t STEventPreviewTask::FindSecondPeak(TH1D *hist)
-{
-  Double_t tbStart = 0;
-  Double_t tbFirstPeak = 0;
-  Double_t tbSecondPeak = 0;
-
-  Double_t adcFirstPeak = 0;
-  Double_t adcSecondPeak = 0;
-
-  for (auto itb = 0; itb < 100; ++itb) {
-    Double_t tb = itb + 0.5;
-    Double_t adc1 = hist -> GetBinContent(itb+1);
-    Double_t adc2 = hist -> GetBinContent(itb+2);
-
-    if (tbStart == 0) {
-      Double_t diffp = TMath::Abs(adc2 - adc1);
-      if (diffp > 20) {
-        tbStart = itb;
-        continue;
-      } else
-        continue;
-    }
-    else if (tbFirstPeak == 0) {
-      Double_t diff = adc2 - adc1;
-      if (diff > 0) {
-        tbFirstPeak = itb;
-        adcFirstPeak = adc1;
-        continue;
-      } else
-        continue;
-    }
-    else if (tbSecondPeak == 0) {
-      Double_t diff = adc2 - adc1;
-      if (diff < 0) {
-        //adcSecondPeak = adc1;
-        Double_t adc0 = hist -> GetBinContent(itb);
-        tbSecondPeak = (itb*adc0+(itb+1)*adc1+(itb+2)*adc2)/(adc0+adc1+adc2);
-        break;
-      } else
-        continue;
-    }
-  }
-
-  return tbSecondPeak-0.5;
+  return tbSecondPeak+0.5;
 }
 
 void STEventPreviewTask::IdentifyEvent(Bool_t val) { fIdentifyEvent = val; }
 void STEventPreviewTask::CalibrateTb(Bool_t val) { fCalibrateTb = val; }
+
+Double_t STEventPreviewTask::GetBuffer(Int_t cobo, Int_t tb) { return fBuffer[cobo][tb]; }

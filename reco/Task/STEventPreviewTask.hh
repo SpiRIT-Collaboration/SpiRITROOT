@@ -24,13 +24,12 @@ class STEventPreviewTask : public STRecoTask
     void IdentifyEvent(Bool_t val = true);
     void CalibrateTb(Bool_t val = true);
 
-    /// Find reference timebucket from section0(tbRef0),
-    /// calculate offsets for other 3 sections(tbOffsets[3])
+    /// calculate time offsets for 12 cobos
     void CalculateTbOffsets(STRawEvent *rawEvent, Double_t *tbOffsets);
-    void SetAverageHistograms(STRawEvent *rawEvent);
-    TH1D *GetAverageHist(Int_t coboIdx); ///< draw average histogram for selected coboIdx
-    TF1 *FitGG(TH1D *hist); ///< landau fit
-    Double_t FindSecondPeak(TH1D *hist);
+    void SetAverageBuffer(STRawEvent *rawEvent);
+    Double_t FindSecondPeak(Int_t cobo);
+
+    Double_t GetBuffer(Int_t cobo, Int_t tb);
 
   private:
     void LayerTest(STRawEvent *rawEvent);
@@ -43,8 +42,8 @@ class STEventPreviewTask : public STRecoTask
 
     STMap *fPadMap = nullptr;
 
-    TH1D *fHistGG[12];
-    TF1 *fF1GG = nullptr;
+    Double_t fBuffer[12][100];
+    Int_t nFilled[12];
 
   ClassDef(STEventPreviewTask, 2)
 };
