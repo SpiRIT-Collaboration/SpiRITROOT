@@ -88,6 +88,7 @@ STConverter/STPlot.cc
 STConverter/STParReader.cc
 STConverter/STStatic.cc
 STConverter/STGGNoiseSubtractor.cc
+STConverter/STGainMatching.cc
 
 PulseShapeAnalyzer/STPSA.cc
 PulseShapeAnalyzer/STPSASimple.cc

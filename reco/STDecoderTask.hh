@@ -65,6 +65,8 @@ class STDecoderTask : public FairTask {
     void SetGainCalibrationData(TString filename);
     /// Setting gain calibration reference.
     void SetGainReference(Double_t constant, Double_t linear, Double_t quadratic = 0.);
+    /// Setting gain matching data.
+    void SetGainMatchingData(TString filename);
     /// Setting to decode old data file
     void SetOldData(Bool_t oldData = kTRUE);
     /// Setting to use not merged data files
@@ -109,6 +111,7 @@ class STDecoderTask : public FairTask {
     Double_t fGainConstant;             ///< Gain calibration reference constant
     Double_t fGainLinear;               ///< Gain calibration reference coefficient of linear term
     Double_t fGainQuadratic;            ///< Gain calibration reference coefficient of quadratic term
+    TString fGainMatchingData;          ///< Gain matching data
 
     Bool_t fExternalNumTbs;             ///< Flag for checking if the number of time buckets is set by the user.
     Int_t fNumTbs;                      ///< The number of time buckets

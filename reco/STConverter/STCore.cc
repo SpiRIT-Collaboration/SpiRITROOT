@@ -80,6 +80,12 @@ void STCore::Initialize()
 
   fIsGainCalibrationData = kFALSE;
 
+  fGainMatchingPtr[0] = new STGainMatching();
+  for (Int_t iCobo = 1; iCobo < 12; iCobo++)
+    fGainMatchingPtr[iCobo] = nullptr;
+
+  fIsGainMatchingData = kFALSE;
+
   fNumTbs = 512;
 
   fTargetFrameID = -1;
@@ -229,6 +235,18 @@ void STCore::SetGainReference(Double_t constant, Double_t linear, Double_t quadr
       fGainCalibrationPtr[iCobo] -> SetGainReference(constant, linear, quadratic);
 }
 
+Bool_t STCore::SetGainMatchingData(TString filename)
+{
+  fGainMatchingPtr[0] -> SetDatafile(filename);
+  fIsGainMatchingData = fGainMatchingPtr[0] -> Init();
+  for (Int_t iCobo = 1; iCobo < 12; iCobo++) {
+    fGainMatchingPtr[iCobo] -> SetDatafile(filename);
+    fIsGainMatchingData |= fGainMatchingPtr[iCobo] -> Init();
+  }
+
+  return fIsGainMatchingData;
+}
+
 Bool_t STCore::SetUAMap(TString filename)
 {
   return fMapPtr -> SetUAMap(filename);
@@ -283,6 +301,9 @@ void STCore::ProcessCobo(Int_t coboIdx)
 
         if (fIsGainCalibrationData)
           fGainCalibrationPtr[coboIdx] -> CalibrateADC(row, layer, fNumTbs, adc);
+
+        if (fIsGainMatchingData)
+          fGainMatchingPtr[coboIdx] -> CalibrateADC(layer, fNumTbs, adc);
 
         for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
           pad -> SetADC(iTb, adc[iTb]);
@@ -432,6 +453,9 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
           if (fIsGainCalibrationData)
             fGainCalibrationPtr[0] -> CalibrateADC(row, layer, fNumTbs, adc);
 
+          if (fIsGainMatchingData)
+            fGainMatchingPtr[0] -> CalibrateADC(layer, fNumTbs, adc);
+
           for (Int_t iTb = 0; iTb < fNumTbs; iTb++)
             pad -> SetADC(iTb, adc[iTb]);
 
@@ -471,6 +495,7 @@ void STCore::SetUseSeparatedData(Bool_t value) {
       fDecoderPtr[iCobo] = new GETDecoder();
       fPedestalPtr[iCobo] = new STPedestal();
       fGainCalibrationPtr[iCobo] = new STGainCalibration();
+      fGainMatchingPtr[iCobo] = new STGainMatching();
       fGGNoisePtr[iCobo] = new STGGNoiseSubtractor();
 //      fDecoderPtr[iCobo] -> SetDebugMode(1);
     }

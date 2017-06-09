@@ -113,6 +113,8 @@ void quickViewer() {
     fCore -> InitGGNoiseSubtractor();
   }
 
+  fCore -> SetGainMatchingData(Form("%sRelativeGain.list", parameterDir));
+
   if (fUseMetadata) {
     std::ifstream metalistFile(metaFile.Data());
     TString dataFileWithPath;
