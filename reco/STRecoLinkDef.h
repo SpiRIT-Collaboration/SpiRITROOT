@@ -16,6 +16,7 @@
 #pragma link C++ class STMCTruthTask+;
 #pragma link C++ class STPIDCorrelatorTask+;
 #pragma link C++ class STRiemannToHelixTask+;
+#pragma link C++ class STPSAGradTask+;
 
 #pragma link C++ class STPIDTest+;
 
@@ -56,6 +57,7 @@
 #pragma link C++ class STPSALayerOPTICS+;
 #pragma link C++ class STPSAFast+;
 #pragma link C++ class STPSAFastFit+;
+#pragma link C++ class STPSAGrad+;
 #pragma link C++ class STPulse+;
 
 #pragma link C++ class STHitClusteringTask+;

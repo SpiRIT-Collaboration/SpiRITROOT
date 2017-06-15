@@ -1,17 +1,16 @@
 void run_reco_experiment
 (
- Int_t fRunNo = 3204,
- Int_t fNumEventsInRun = 10,
- Int_t fSplitNo = 0,
- Int_t fNumEventsInSplit = 10,
- TString fGCData = "",
- TString fGGData = "",
- std::vector<Int_t> fSkipEventArray = {},
- Double_t fPSAThreshold = 30,
- TString fParameterFile = "ST.parameters.Commissioning_201604.par",
- TString fPathToData = "",
- Bool_t fUseMeta = kFALSE,
- TString fSupplePath = ""
+  Int_t fRunNo = 3193,
+  Int_t fNumEventsInRun = 10000,
+  Int_t fSplitNo = 0,
+  Int_t fNumEventsInSplit = 1000,
+  TString fGCData = "",
+  TString fGGData = "",
+  Double_t fPSAThreshold = 30,
+  TString fParameterFile = "ST.parameters.Commissioning_201604.par",
+  TString fPathToData = "",
+  Bool_t fUseMeta = kTRUE,
+  TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement"
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -84,16 +83,14 @@ void run_reco_experiment
   preview -> SetSkippingEvents(fSkipEventArray);
   preview -> SetPersistence(true);
 
-  auto psa = new STPSAETask();
+  auto psa = new STPSAGradTask();
   psa -> SetPersistence(true);
   psa -> SetThreshold(fPSAThreshold);
-  psa -> SetLayerCut(-1, 112);
-  //  psa -> SetLayerCut(-1, 90);
-  psa -> SetPulserData("pulser_117ns.dat");
+  psa -> SetLayerCut(-1, 90);
 
   auto helix = new STHelixTrackingTask();
   helix -> SetPersistence(true);
-  helix -> SetClusterPersistence(true);
+  helix -> SetClusterPersistence(false);
   helix -> SetClusteringOption(2);
   helix -> SetSaturationOption(1); 
   

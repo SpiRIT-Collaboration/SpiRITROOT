@@ -58,6 +58,7 @@ Task/STPIDCorrelatorTask.cc
 Task/STRiemannToHelixTask.cc
 Task/STGenfitSinglePIDTask.cc
 Task/STGenfitPIDTask.cc
+Task/STPSAGradTask.cc
 
 PID/STPIDTest.cc
 
@@ -98,6 +99,7 @@ PulseShapeAnalyzer/STPSALayerOPTICS.cc
 PulseShapeAnalyzer/STPSADF.cc
 PulseShapeAnalyzer/STPSAFast.cc
 PulseShapeAnalyzer/STPSAFastFit.cc
+PulseShapeAnalyzer/STPSAGrad.cc
 PulseShapeAnalyzer/STPulse.cc
 
 HitClustering/STClusterizer.cc
