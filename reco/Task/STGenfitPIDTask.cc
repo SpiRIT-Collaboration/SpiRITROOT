@@ -187,8 +187,11 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
   LOG(INFO) << Space() << "STRecoTrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
 
-  if (gfTrackArrayToVertex.size() < 2)
+  if (gfTrackArrayToVertex.size() < 2) {
+    for (auto recoTrack : recoTrackArrayToVertex)
+      recoTrack -> SetCharge(1);
     return;
+  }
 
   if (!fBDCName.IsNull()) {
     fTreeBDC -> GetEntry(fEventHeader -> GetEventID());
