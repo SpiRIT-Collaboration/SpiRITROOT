@@ -68,6 +68,7 @@ InitStatus STPSAETask::Init()
     fPSA = new STPSAFastFit(fShapingTime);
   fPSA -> SetThreshold(fThreshold);
   fPSA -> SetLayerCut(fLayerLowCut, fLayerHighCut);
+  fPSA -> SetGainMatchingScale(fGainMatchingScale);
 
   fShapingTime = fPSA -> GetShapingTime();
 
@@ -107,3 +108,5 @@ void STPSAETask::Exec(Option_t *opt)
 
   LOG(INFO) << Space() << "STHit " << fHitArray -> GetEntriesFast() << FairLogger::endl;
 }
+
+void STPSAETask::SetGainMatchingScale(Double_t val) { fGainMatchingScale = val; }

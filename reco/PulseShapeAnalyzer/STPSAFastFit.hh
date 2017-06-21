@@ -53,11 +53,11 @@ class STPSAFastFit : public STPSA, public STPulse
      * This process is Iteration based process using method LSFitPuse();
      */
 #ifdef DEBUG_PSA_ITERATION
-    Bool_t FitPulse(Double_t *adc, Int_t tbStart, Int_t tbPeak,
+    Bool_t FitPulse(Double_t *adc, Int_t tbStart, Int_t tbPeak, Double_t adcHighLimit,
                     Double_t &tbHit, Double_t &amplitude, 
                     Double_t &squareSum, Int_t &ndf, Int_t &option);
 #else
-    Bool_t FitPulse(Double_t *adc, Int_t tbStart, Int_t tbPeak,
+    Bool_t FitPulse(Double_t *adc, Int_t tbStart, Int_t tbPeak, Double_t adcHighLimit,
                     Double_t &tbHit, Double_t &amplitude, 
                     Double_t &squareSum, Int_t &ndf);
 #endif
@@ -75,6 +75,8 @@ class STPSAFastFit : public STPSA, public STPulse
      */
     Bool_t TestPulse(Double_t *adc, Double_t tbHitPre, Double_t amplitudePre, 
                      Double_t tbHit, Double_t amplitude);
+
+    void SetGainMatchingScale(Double_t val);
 
   private:
     TClonesArray **fThreadHitArray; ///< TClonesArray object for thread
@@ -130,6 +132,8 @@ class STPSAFastFit : public STPSA, public STPulse
      * betaCut = fBetaCut * peak^2
      */
     Double_t fBetaCut = 1.e-3; 
+
+    Double_t fGainMatchingScale = 1;
 
   ClassDef(STPSAFastFit, 2)
 };
