@@ -222,6 +222,10 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
   Double_t tbHitPre = 0;
   Double_t amplitudePre = 0;
 
+  Double_t adcHighLimit = 3500;
+  if (layer > 89 && layer < 100)
+    adcHighLimit = fGainMatchingScale * adcHighLimit;
+
 #ifdef DEBUG_WHERE
   LOG(INFO) << "Start" << FairLogger::endl;
 #endif
@@ -230,7 +234,7 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
     if (tbStart > fTbStartCut - 1)
       break;
 
-    if (FitPulse(adc, tbStart, tbCurrent, tbHit, amplitude, squareSum, ndf) == kFALSE)
+    if (FitPulse(adc, tbStart, tbCurrent, adcHighLimit, tbHit, amplitude, squareSum, ndf) == kFALSE)
       continue;
 
 #ifdef DEBUG_PEAKFINDING
@@ -255,7 +259,8 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
 
       STHit *hit = (STHit *) hitArray -> ConstructedAt(hitNum);
       hit -> Clear();
-      if (amplitude > 3500) amplitude = 3500;
+      if (amplitude > adcHighLimit)
+        amplitude = adcHighLimit;
       hit -> SetHit(hitNum, xPos, yHit, zPos, amplitude);
       hit -> SetRow(row);
       hit -> SetLayer(layer);
@@ -352,6 +357,7 @@ Bool_t
 STPSAFastFit::FitPulse(Double_t *adc, 
                           Int_t tbStart,
                           Int_t tbPeak,
+                       Double_t adcHighLimit,
                        Double_t &tbHit, 
                        Double_t &amplitude,
                        Double_t &squareSum,
@@ -362,6 +368,7 @@ Bool_t
 STPSAFastFit::FitPulse(Double_t *adc, 
                           Int_t tbStart,
                           Int_t tbPeak,
+                       Double_t adcHighLimit,
                        Double_t &tbHit, 
                        Double_t &amplitude,
                        Double_t &squareSum,
@@ -374,7 +381,7 @@ STPSAFastFit::FitPulse(Double_t *adc,
 #endif
   Double_t adcPeak = adc[tbPeak];
 
-  if (adcPeak > 3500) // if peak value is larger than 3500(mostly saturated)
+  if (adcPeak > adcHighLimit) // if peak value is larger than adcHighLimit(mostly saturated)
   {
     ndf = tbPeak - tbStart;
     if (ndf > fNDFTbs) ndf = fNDFTbs;
@@ -490,8 +497,8 @@ STPSAFastFit::FitPulse(Double_t *adc,
 
   Int_t countIteration = 0;
 
-  // if peak value is larger than 3500(mostly saturated)
-  if (adc[tbPeak] > 3500) 
+  // if peak value is larger than adcHighLimit(mostly saturated)
+  if (adc[tbPeak] > adcHighLimit)
   {
     ndf = tbPeak - tbStart + 1;
     if (ndf > fNDFTbs) ndf = fNDFTbs;
@@ -664,3 +671,5 @@ STPSAFastFit::TestPulse(Double_t *adc,
 
   return kTRUE;
 }
+
+void STPSAFastFit::SetGainMatchingScale(Double_t val) { fGainMatchingScale = val; }
