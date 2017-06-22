@@ -28,6 +28,7 @@ void STHelixTrackingTask::SetClusterPersistence(Bool_t value) { fIsClusterPersis
 
 void STHelixTrackingTask::SetNumTracksLowLimit(Int_t limit) { fNumTracksLowLimit = limit; }
 void STHelixTrackingTask::SetClusteringOption(Int_t opt) { fClusteringOption = opt; }
+void STHelixTrackingTask::SetSaturationOption(Int_t opt) { fSaturationOption = opt; }
 STHelixTrackFinder *STHelixTrackingTask::GetTrackFinder() { return fTrackFinder; }
 
 InitStatus STHelixTrackingTask::Init()
@@ -49,6 +50,7 @@ InitStatus STHelixTrackingTask::Init()
 
   fTrackFinder = new STHelixTrackFinder();
   fTrackFinder -> SetClusteringOption(fClusteringOption);
+  fTrackFinder -> SetSaturationOption(fSaturationOption);
 
   if (fRecoHeader != nullptr) {
     fRecoHeader -> SetPar("helix_numTracksLowLimit", fNumTracksLowLimit);

@@ -7,6 +7,114 @@ using namespace std;
 
 ClassImp(STHelixTrackFinder)
 
+class containHits {
+public:
+  int index;
+  std::vector<STHit*> sat;//saturated hits 
+  std::vector<STHit*> notsat;//not saturated hits
+};
+
+class checkIdx {
+public:
+  checkIdx(const int &idx) : id(idx){}
+  bool operator()(const containHits a){
+    if(id == a.index)
+      return true;
+    else
+      return false;
+  }
+  private:
+    int id;
+  };
+  
+static void myFitFunction(Int_t& npar, Double_t* deriv, Double_t &f, Double_t* par, Int_t flag)
+{
+  MyFitFunction* fitFunc = MyFitFunction::Instance();
+  f = fitFunc->Function(npar, deriv, f, par, flag);
+}
+
+Double_t MyFitFunction::Function(Int_t& npar, Double_t* deriv, Double_t &f, Double_t* par, Int_t flag)
+{
+  double chisq =0;
+  vector<double> stat_array = getmean(par);
+  double mean      = stat_array.at(0);
+  double total_chg = stat_array.at(1);
+  
+  int num_elem = hits_pos_ary->size();
+  for (int i=0; i<num_elem; i++)
+    {
+      double v  = total_chg*PRF(hits_pos_ary->at(i)-mean,par);
+      if ( v != 0.0 )
+	{
+	  double n = hits_chg_ary->at(i);
+	  chisq += pow(n-v,2)/v;
+	}
+      else
+	{
+	  //	  cout << "WARNING -- pdf is negative!!!" << endl;
+	}
+    }
+  
+ return chisq;        
+}
+
+double MyFitFunction::PRF(double x, double par[])
+{
+  double h_w = 4; //half width
+  double x1 = x-h_w;
+  double x2 = x+h_w;
+  
+  double sigma = 3.4;
+  double x1_p = x1/(sqrt(2)*sigma);
+  double x2_p = x2/(sqrt(2)*sigma);
+  
+  return .5*(TMath::Erf(x2_p)-TMath::Erf(x1_p));
+  
+};
+
+std::vector<double> MyFitFunction::getmean(double par[])
+{
+  vector<double> output;
+  double mean=0;
+  double chg =0;
+  //Here we loop over non-saturated hits
+  int num_elem = hits_pos_ary->size();
+  for(int i=0;i<num_elem;++i){
+    mean += hits_pos_ary->at(i)*hits_chg_ary->at(i);
+    chg += hits_chg_ary->at(i);
+  }
+  
+  //Here we loop over saturated hits
+  num_elem = s_hits_pos_ary->size();
+  for(int i=0;i<num_elem;++i){
+    mean += s_hits_pos_ary->at(i)*par[i];
+    chg += par[i];
+  }
+  mean  = mean/chg;
+  output.push_back(mean);
+  output.push_back(chg);
+  
+  return output;
+  
+};
+
+void MyFitFunction::SetAryPointers(std::vector<double> *a, std::vector<double> *a_chg, std::vector<double> *b, std::vector<double> *b_chg)
+{
+  hits_pos_ary = a;
+  hits_chg_ary = a_chg;
+  s_hits_pos_ary = b;
+  s_hits_chg_ary = b_chg;
+
+}
+
+MyFitFunction* MyFitFunction::_instance = 0;
+
+MyFitFunction* MyFitFunction::Instance()
+{
+  if (!_instance) _instance = new MyFitFunction;
+  return _instance;
+}
+
 STHelixTrackFinder::STHelixTrackFinder()
 {
   fFitter = new STHelixTrackFitter();
@@ -91,6 +199,8 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
   for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
     auto track = (STHelixTrack *) fTrackArray -> At(iTrack);
     track -> DetermineParticleCharge(vertex);
+    if (fSaturationOption == 1)
+      De_Saturate(track);
     if (fClusteringOption == 0)
       HitClustering(track, 24);
     else if (fClusteringOption == 1)
@@ -415,8 +525,8 @@ STHelixTrackFinder::HitClustering2(STHelixTrack *track)
       return false;
 
     Int_t layer = z / 12;
-    //if (layer > 89 && layer < 100)
-      //return false;
+    //    if (layer > 89 && layer < 100)
+    //      return false;
 
     return true;
   };
@@ -428,11 +538,10 @@ STHelixTrackFinder::HitClustering2(STHelixTrack *track)
 
     auto direction = track -> Direction(alpha);
     Double_t angle = TMath::ATan2(TMath::Abs(direction.Z()), direction.X());
-    //if (angle > TMath::ATan2(12,8) && angle < TMath::ATan2(12,-8))
     if (angle > TMath::ATan2(1,1) && angle < TMath::ATan2(1,-1))
       return true;
     else
-      return false;
+    return false;
   };
 
   auto SetClusterLength = [track](STHitCluster *cluster) {
@@ -472,13 +581,13 @@ STHelixTrackFinder::HitClustering2(STHelixTrack *track)
   Int_t layerMax = curHit -> GetLayer();
 
   if (buildByLayer) {
-    layerMin = 0;
-    layerMax = -1;
+    layerMin = layerMin = 0;
+    layerMin = layerMax = -1;
     lastCluster -> SetRow(-1);
     lastCluster -> SetLayer(curHit -> GetLayer());
   } else {
-    rowMin = 0;
-    rowMax = -1;
+    rowMin = rowMin = 0;
+    rowMin = rowMax = -1;
     lastCluster -> SetRow(curHit -> GetRow());
     lastCluster -> SetLayer(-1);
   }
@@ -969,6 +1078,7 @@ STHelixTrackFinder::FindVertex(TClonesArray *tracks, Int_t nIterations)
 }
 
 void STHelixTrackFinder::SetClusteringOption(Int_t opt) { fClusteringOption = opt; }
+void STHelixTrackFinder::SetSaturationOption(Int_t opt) { fSaturationOption = opt; }
 void STHelixTrackFinder::SetDefaultCutScale(Double_t scale) { fDefaultScale = scale; }
 void STHelixTrackFinder::SetTrackWidthCutLimits(Double_t lowLimit, Double_t highLimit)
 {
@@ -980,3 +1090,309 @@ void STHelixTrackFinder::SetTrackHeightCutLimits(Double_t lowLimit, Double_t hig
   fTrackHCutLL = lowLimit;
   fTrackHCutHL = highLimit;
 }
+/*
+double STHelixTrackFinder::PRF(double x, double par[])
+{
+  double h_w = 4; //half width
+  double x1 = x-h_w;
+  double x2 = x+h_w;
+  
+  double sigma = 3.4;
+  double x1_p = x1/(sqrt(2)*sigma);
+  double x2_p = x2/(sqrt(2)*sigma);
+  
+  return .5*(TMath::Erf(x2_p)-TMath::Erf(x1_p));
+  
+};
+
+std::vector<double> STHelixTrackFinder:: getmean(double par[])
+{
+  vector<double> output;
+  double mean=0;
+  double chg =0;
+  //Here we loop over non-saturated hits
+  int num_elem = hits_pos_ary.size();
+  for(int i=0;i<num_elem;++i){
+    mean += hits_pos_ary.at(i)*hits_chg_ary.at(i);
+    chg += hits_chg_ary.at(i);
+  }
+  
+  //Here we loop over saturated hits
+  num_elem = s_hits_pos_ary.size();
+  for(int i=0;i<num_elem;++i){
+    mean += s_hits_pos_ary.at(i)*par[i];
+    chg += par[i];
+  }
+  mean  = mean/chg;
+  output.push_back(mean);
+  output.push_back(chg);
+  
+  return output;
+  
+};
+
+void STHelixTrackFinder::fcn(int& npar, double* deriv, double& f, double *par, int flag)
+{
+  double chisq =0;
+  vector<double> stat_array = getmean(par);
+  double mean      = stat_array.at(0);
+  double total_chg = stat_array.at(1);
+  
+  int num_elem = hits_pos_ary.size();
+  for (int i=0; i<num_elem; i++)
+    {
+      double v  = total_chg*PRF(hits_pos_ary.at(i)-mean,par);
+      if ( v != 0.0 )
+	{
+	  double n = hits_chg_ary.at(i);
+	  chisq += pow(n-v,2)/v;
+	}
+      else
+	{
+	  cout << "WARNING -- pdf is negative!!!" << endl;
+	}
+    }
+  
+  f = chisq;        
+};                  
+*/
+std::vector<double> STHelixTrackFinder::minimize(const int npar)
+{
+  // Initialize minuit, set initial values etc. of parameters.
+  vector<double> f_par;
+  TMinuit minuit(npar);
+  minuit.SetPrintLevel(-1);
+  minuit.SetFCN(myFitFunction);
+  
+  double par[npar];               // the start values
+  double stepSize[npar];          // step sizes
+  double minVal[npar];            // minimum bound on parameter
+  double maxVal[npar];            // maximum bound on parameter
+  string parName[npar];
+  
+  for( int i =0;i < npar; ++i)
+    {
+      par[i] = 4000.;            // a guess at the true value.
+      stepSize[i] = 1.;       // take e.g. 0.1 of start value
+      minVal[i] = 3500;   // if min and max values = 0, parameter is unbounded.  Only set bounds if you really think it's right!
+      maxVal[i] = 100000;
+      parName[i] = "miss charge";
+    }
+  
+  for (int i=0; i<npar; i++)
+    {
+      minuit.DefineParameter(i, parName[i].c_str(),
+			     par[i], stepSize[i], minVal[i], maxVal[i]);
+    }
+  
+  // Do the minimization!
+  
+  minuit.Migrad();       // Minuit's best minimization algorithm
+  double outpar[npar], err[npar];
+  for (int i=0; i<npar; i++){
+    minuit.GetParameter(i,outpar[i],err[i]);
+    f_par.push_back(outpar[i]);
+  }
+  //       cout << endl << endl << endl;
+  //       cout << "*********************************" << endl;
+  //       cout << "   "<<parName[0]<<": " << outpar[0] << " +/- " << err[0] << endl;
+  
+  return f_par;
+};
+
+void STHelixTrackFinder::De_Saturate(STHelixTrack *track)
+{
+  track -> SortHitsByTimeOrder();
+  auto trackHits = track -> GetHitArray();
+  auto numHits = trackHits -> size();
+  
+  auto CheckBuildByLayer = [track](STHit *hit) {
+    TVector3 q;
+    Double_t alpha;
+    track -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
+    
+    auto direction = track -> Direction(alpha);
+    //angle defined from x axis not z
+    Double_t angle = TMath::ATan2(TMath::Abs(direction.Z()), direction.X());
+    if (angle > TMath::ATan2(1,1) && angle < TMath::ATan2(1,-1))
+      return true;
+    else
+      return false;
+    };
+  
+  
+  std::vector<containHits> byLayer; 
+  std::vector<containHits> byRow;  
+  
+  for (auto iHit = 0; iHit < numHits; iHit++)
+    {
+      auto curHit = (STHit*)trackHits -> at(iHit);
+	
+      bool buildByLayer = CheckBuildByLayer(curHit);//false is by layer
+      
+      auto row = curHit -> GetRow();
+      auto layer = curHit -> GetLayer();
+      auto charge = curHit -> GetCharge();
+      
+      //make a class for if not in vector
+      containHits cont;
+      cont.index = layer;
+      if(charge >= 3500)//sat defined in PSA to be 3500
+	cont.sat.push_back(curHit);
+      else
+	cont.notsat.push_back(curHit);
+
+      //      cout<<"IN row,layer"<<row<<" "<<layer<<endl;
+      //cout<<"BuildByLayer is "<<buildByLayer<<endl;
+      
+      if(buildByLayer)
+	{//by layer 
+	  auto it = std::find_if(byLayer.begin(),byLayer.end(),checkIdx(layer));
+	  if(it == byLayer.end())
+	    byLayer.push_back(cont);//not in vect yet; so store
+	  else
+	    {//in vector
+	      auto idx = std::distance(byLayer.begin(),it);
+	      if(charge >= 3500)
+		byLayer.at(idx).sat.push_back(curHit);
+	      else
+		byLayer.at(idx).notsat.push_back(curHit);
+	    }
+	}
+      else
+	{//by row
+	  auto it = std::find_if(byRow.begin(),byRow.end(),checkIdx(row));
+	  if(it == byRow.end())
+	    byRow.push_back(cont);//not in vect yet; so store
+	  else
+	    {//in vect
+	      auto idx = std::distance(byRow.begin(),it);
+	      if(charge >= 3500)
+		byRow.at(idx).sat.push_back(curHit);
+	      else
+		byRow.at(idx).notsat.push_back(curHit);
+	    }
+	}
+    }//end of Hit loop
+  //  cout<<"GREAT YOU MADE IT TO THE END OF THE HIT LOOP"<<endl;  
+
+  //*******
+  //Section to do extrapolation
+  //Now that we have the hits in a track organized into saturated
+  //and non saturated hits we can now loop over the hits and extrapolate
+  //the saturated hits by using the non saturated hits and doing a ChiSq min
+  //*******
+  
+  //MAYBE add some checks here
+  //Check ideas:
+  //Check that there are more non-saturated pads than saturated for fit sake
+  //Check if there are multiple sat pad they are next to each other
+  //If not this might indicate delta electrons which of course dont follow
+  // the pad response function
+  //Check to see distribution is falling off from saturated pads
+
+  //inputs for MINUIT funciton 
+      
+    //*********
+    //Start MINUIT section
+    //*********
+    
+    //need to put in Row PRF
+    //End of MINUIT fit
+    
+    int nLayer = byLayer.size();
+    int nRow = byRow.size();
+    //    cout<<"number of layers "<<nLayer<<endl;
+    //    cout<<"number of rows "<<nRow<<endl;
+
+    MyFitFunction* fitFunc = MyFitFunction::Instance();
+    std::vector<double> *hits_pos_ary_t   = new std::vector<double>;
+    std::vector<double> *hits_chg_ary_t   = new std::vector<double>;
+    std::vector<double> *s_hits_pos_ary_t = new std::vector<double>;
+    std::vector<double> *s_hits_chg_ary_t = new std::vector<double>;
+
+    fitFunc->SetAryPointers(hits_pos_ary_t,hits_chg_ary_t,s_hits_pos_ary_t,s_hits_chg_ary_t);    
+
+    for(int iLayer = 0;iLayer < nLayer; ++iLayer)
+      {
+	containHits content = byLayer.at(iLayer);
+	std::vector<STHit *>saturated = content.sat; 
+	std::vector<STHit *>non_sat   = content.notsat; 
+	int nSat   = saturated.size();
+	int notSat = non_sat.size();
+	//		cout<<"In layer "<<iLayer<<endl;
+	//		cout<<"Number of sat "<<nSat<<" not sat "<<notSat<<endl;
+	//Conditions of extrapolation
+	if(nSat == 0)
+	 continue;//if no saturated hits continue
+	if(notSat == 0)
+	  continue;
+	//	if(!(notSat > nSat))
+	//	  continue;//at least more non-sat hits than sat for extrapolation
+	if(nSat>4)
+	  continue;//for now try only two sat pads
+
+	hits_pos_ary_t->clear();
+	hits_chg_ary_t->clear();
+	s_hits_pos_ary_t->clear();
+	s_hits_chg_ary_t->clear();
+	
+	//Filling inputs for minimize function
+	for(int iHit = 0; iHit < nSat; ++iHit)
+	  {
+	    STHit * hit = saturated.at(iHit);
+	    double x = hit -> GetX(); //by layer clustering so look along x
+	    double chg = hit -> GetCharge();
+	    s_hits_pos_ary_t->push_back(x);
+	    s_hits_chg_ary_t->push_back(chg);
+	  }
+	for(int iHit = 0; iHit < notSat; ++iHit)
+	  {
+	    STHit * hit = non_sat.at(iHit);
+	    double x = hit -> GetX(); 
+	    double chg = hit -> GetCharge();
+	    hits_pos_ary_t->push_back(x);
+	    hits_chg_ary_t->push_back(chg);
+	 }
+	
+	if(s_hits_pos_ary_t->size()!=s_hits_chg_ary_t->size())
+	  cout<<"ARRRAY SIZES NOT EQUAL!!!!!!!!!!!!!!!!!"<<endl;
+	
+	//Get predicted value in saturated pad pos
+	const int npar = s_hits_pos_ary_t->size();;
+	vector<double>outpar = minimize(npar);
+
+
+	int nHits = s_hits_chg_ary_t->size();
+	for(int iHit = 0; iHit < nHits; ++iHit)
+	  {
+	      //Create new hits
+	    STHit * oldHit = saturated.at(iHit);
+	    TVector3 oldvec = (TVector3)oldHit -> GetPosition();
+	    double newChg = outpar.at(iHit);
+	    if(abs(newChg-3500)<.001)//min bound 
+	      continue;
+	    else if(abs(newChg-100000)<.001)//max bound
+	      continue;
+	    /*
+	    cout<<"Old hit info"<<endl;
+	    cout<<"Hit ID"<<oldHit->GetHitID();
+	    cout<<"Charge "<<oldHit->GetCharge()<<endl;
+	    cout<<"Pos x,y,z "<<oldvec.X()<<","<<oldvec.Y()<<","<<oldvec.Z()<<endl;
+	    cout<<"row, layer "<<oldHit->GetRow()<<","<<oldHit->GetLayer()<<endl;
+	    */
+	    STHit *newHit = new STHit(oldHit);
+	    newHit->SetCharge(newChg);
+	    /*
+	    cout<<"New hit info"<<endl;
+	    cout<<"Hit ID"<<newHit->GetHitID();
+	    cout<<"Charge "<<newHit->GetCharge()<<endl;
+	    cout<<"Pos x,y,z "<<newHit->GetX()<<","<<newHit->GetY()<<","<<newHit->GetZ()<<endl;
+	    cout<<"row, layer "<<newHit->GetRow()<<","<<newHit->GetLayer()<<endl;
+	    */
+	    track -> Remove(oldHit);
+	    track -> AddHit(newHit);
+	    }
+      }//layer loop  
+  }
+

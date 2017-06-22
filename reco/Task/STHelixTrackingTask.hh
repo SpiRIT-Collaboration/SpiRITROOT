@@ -21,7 +21,8 @@ class STHelixTrackingTask : public STRecoTask
 
     void SetNumTracksLowLimit(Int_t limit);
     void SetClusteringOption(Int_t opt);
-
+    void SetSaturationOption(Int_t opt);
+  
     STHelixTrackFinder *GetTrackFinder();
 
   private:
@@ -35,7 +36,7 @@ class STHelixTrackingTask : public STRecoTask
 
     Int_t fNumTracksLowLimit = 1;
     Int_t fClusteringOption = 2;
-
+    Int_t fSaturationOption = 1;
 
   ClassDef(STHelixTrackingTask, 1)
 };

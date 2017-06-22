@@ -173,6 +173,7 @@ Set(DEPENDENCIES
     STUtil
     STField
     Spectrum
+    Minuit
     genfit2
 )
 
