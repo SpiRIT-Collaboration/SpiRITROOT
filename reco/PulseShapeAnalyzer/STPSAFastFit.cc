@@ -223,7 +223,7 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
   Double_t amplitudePre = 0;
 
   Double_t adcHighLimit = 3500;
-  if (layer > 89 && layer < 100)
+  if ( (layer >= 91 && layer <= 98) || layer >= 108 )
     adcHighLimit = fGainMatchingScale * adcHighLimit;
 
 #ifdef DEBUG_WHERE
