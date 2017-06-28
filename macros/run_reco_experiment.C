@@ -93,7 +93,8 @@ void run_reco_experiment
   helix -> SetPersistence(true);
   helix -> SetClusterPersistence(true);
   helix -> SetClusteringOption(2);
-
+  helix -> SetSaturationOption(1); 
+  
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
   genfitPID -> SetBDCFile("");  
