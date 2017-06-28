@@ -1,16 +1,16 @@
 void run_reco_experiment
 (
-  Int_t fRunNo = 3000,
-  Int_t fNumEventsInRun = 20,
-  Int_t fSplitNo = 0,
-  Int_t fNumEventsInSplit = 100,
-  TString fGCData = "",
-  TString fGGData = "",
-  Double_t fPSAThreshold = 30,
-  TString fParameterFile = "ST.parameters.Commissioning_201604.par",
-  TString fPathToData = "",
-  Bool_t fUseMeta = kFALSE,
-  TString fSupplePath = "/data/Q16264/rawdataSupplement"
+ Int_t fRunNo = 3204,
+ Int_t fNumEventsInRun = 10,
+ Int_t fSplitNo = 0,
+ Int_t fNumEventsInSplit = 10,
+ TString fGCData = "",
+ TString fGGData = "",
+ Double_t fPSAThreshold = 30,
+ TString fParameterFile = "ST.parameters.Commissioning_201604.par",
+ TString fPathToData = "",
+ Bool_t fUseMeta = kFALSE,
+ TString fSupplePath = ""
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -83,32 +83,28 @@ void run_reco_experiment
   preview -> SetPersistence(true);
 
   auto psa = new STPSAETask();
-  psa -> SetPersistence(false);
+  psa -> SetPersistence(true);
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
+  //  psa -> SetLayerCut(-1, 90);
   psa -> SetPulserData("pulser_117ns.dat");
 
   auto helix = new STHelixTrackingTask();
-  helix -> SetPersistence(false);
-  helix -> SetClusterPersistence(false);
+  helix -> SetPersistence(true);
+  helix -> SetClusterPersistence(true);
   helix -> SetClusteringOption(2);
-  
-  auto st_genfit = new STGenfitETask();
-  st_genfit -> SetPersistence(true);
-  //  st_genfit -> SetConstantField();
-  
-  auto pidmatching = new STPIDCorrelatorTask(false);
 
-  auto st_genfit2 = new STGenfitSinglePIDTask();
-  st_genfit2 -> SetPersistence(true);
-
+  auto genfitPID = new STGenfitPIDTask();
+  genfitPID -> SetPersistence(true);
+  genfitPID -> SetBDCFile("");  
+  //  genfitPID -> SetBDCFile("beam_run2894.ridf.root");
+  genfitPID -> SetConstantField();
+  
   run -> AddTask(decoder);
   run -> AddTask(preview);
   run -> AddTask(psa);
   run -> AddTask(helix);
-  run -> AddTask(st_genfit);
-  run -> AddTask(pidmatching);
-  run -> AddTask(st_genfit2);
+  run -> AddTask(genfitPID);
 
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");

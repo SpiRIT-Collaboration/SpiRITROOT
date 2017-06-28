@@ -127,8 +127,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       Int_t pdg;
            if (pid == STPID::kPion)     pdg = 211; 
       else if (pid == STPID::kProton)   pdg = 2212; 
-      //else if (pid == STPID::kDeuteron) pdg = 1000010020;
-      //else if (pid == STPID::kTriton)   pdg = 1000010030;
+      else if (pid == STPID::kDeuteron) pdg = 1000010020;
+      else if (pid == STPID::kTriton)   pdg = 1000010030;
       //else if (pid == STPID::k3He)      pdg = 1000020030;
       //else if (pid == STPID::k4He)      pdg = 1000020040;
       else continue;
