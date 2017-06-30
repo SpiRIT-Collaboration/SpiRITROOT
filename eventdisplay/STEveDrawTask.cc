@@ -91,7 +91,7 @@ STEveDrawTask::STEveDrawTask()
   fRnrSelf [kRecoTrack] = kFALSE;
 
   fCTFitter = new STCurveTrackFitter();
-  fGenfitTest = new STGenfitTest();
+  fGenfitTest = new STGenfitTest2();
 
   fRGBAPalette = new TEveRGBAPalette(0, 4096);
 
@@ -137,7 +137,7 @@ STEveDrawTask::Init()
   fHelixTrackArray      = (TClonesArray*) ioMan -> GetObject("STHelixTrack");
   fCurveTrackArray      = (TClonesArray*) ioMan -> GetObject("STCurveTrack");
   fRawEventArray        = (TClonesArray*) ioMan -> GetObject("STRawEvent");
-  fRecoTrackArray       = (TClonesArray*) ioMan -> GetObject("STTrack");
+  fRecoTrackArray       = (TClonesArray*) ioMan -> GetObject("STRecoTrack");
 
   fHitArray             = (TClonesArray*) ioMan -> GetObject("STHit");
   fHitClusterArray      = (TClonesArray*) ioMan -> GetObject("STHitCluster");
@@ -831,7 +831,7 @@ STEveDrawTask::DrawRecoTracks()
   if (fEvent == NULL && fHitClusterArray == nullptr)
     return;
 
-  STTrack* track = NULL;
+  STRecoTrack* track = NULL;
   TEveLine* recoTrackLine = NULL;
 
   Int_t nTracks = fRecoTrackArray -> GetEntries();
@@ -856,22 +856,15 @@ STEveDrawTask::DrawRecoTracks()
 
   for (Int_t iTrack = 0; iTrack < nTracks; iTrack++) 
   {
-    track = (STTrack*) fRecoTrackArray -> At(iTrack);
+    track = (STRecoTrack*) fRecoTrackArray -> At(iTrack);
 
-    if (track -> GetNDF() < 5)
+    if (track -> GetClusterIDArray() -> size() < 5)
       continue;
 
     recoTrackLine = fRecoTrackSetArray.at(iTrack);
 
-    Bool_t isFitted = track -> IsFitted();
-    if (!isFitted) 
-      continue;
-
-    if (fEvent != NULL)
-      isFitted = fGenfitTest -> SetTrack(fEvent, track);
-    else
-      isFitted = fGenfitTest -> SetTrack(fHitClusterArray, track);
-    if (!isFitted) 
+    auto gfTrack = fGenfitTest -> SetTrack(track, fHitClusterArray);
+    if (gfTrack == nullptr)
       continue;
 
     for (Int_t i = 0; i < 100; i++) {
@@ -880,7 +873,7 @@ STEveDrawTask::DrawRecoTracks()
       if (!isExtrapolated)
         break;
 
-      //position = 0.1 * position;
+      position = 0.1 * position;
 
       Double_t y = position.Y();
       if (y > -fWindowYStart || y < -fWindowYEnd)

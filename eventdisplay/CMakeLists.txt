@@ -19,6 +19,8 @@ ${CMAKE_SOURCE_DIR}/reco/RiemannTracking
 ${CMAKE_SOURCE_DIR}/reco/LinearTracking
 ${CMAKE_SOURCE_DIR}/reco/CurveTracking
 ${CMAKE_SOURCE_DIR}/reco/Genfit
+${CMAKE_SOURCE_DIR}/global
+${CMAKE_SOURCE_DIR}/field
 )
 
 include_directories(${INCLUDE_DIRECTORIES})

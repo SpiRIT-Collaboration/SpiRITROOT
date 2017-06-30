@@ -29,6 +29,7 @@
 // SPiRIT class headers
 #include "STEveManager.hh"
 #include "STTrack.hh"
+#include "STRecoTrack.hh"
 #include "STRiemannTrack.hh"
 #include "STHelixTrack.hh"
 #include "STCurveTrackFitter.hh"
@@ -44,6 +45,7 @@
 #include "STPad.hh"
 #include "STPulse.hh"
 #include "STGenfitTest.hh"
+#include "STGenfitTest2.hh"
 
 // STL class headers
 #include <vector>
@@ -217,7 +219,7 @@ class STEveDrawTask : public STEveTask
 
     STCurveTrackFitter* fCTFitter = NULL;
 
-    STGenfitTest *fGenfitTest = NULL;
+    STGenfitTest2 *fGenfitTest = NULL;
 
 
     static STEveDrawTask* fInstance;
