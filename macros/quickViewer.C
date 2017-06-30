@@ -13,17 +13,17 @@
 TString fParameterFile = "ST.parameters.Commissioning_201604.par";
 
 // Set use the meta data files
-Bool_t fUseMetadata = kFALSE;
+Bool_t fUseMetadata = kTRUE;
 
 // Set the supplement path which contains data list and meta data
 // Only works when fUseMetadata is kTRUE
-TString supplementPath = "/data/Q16264/rawdataSupplement";
+TString supplementPath = "/mnt/spirit/rawdata/misc/rawdataSupplement";
 
 // Set use the gain calibration data file.
 Bool_t fUseGainCalibration = kFALSE;
 
 // FPN pedestal range selection threshold
-Int_t fFPNThreshold = 5;
+Int_t fFPNThreshold = 10;
 
 // Set the gating grid noise data. If left blank, it will use FPN pedestal.
 TString fGGNoiseData = "";
@@ -113,7 +113,7 @@ void quickViewer() {
     fCore -> InitGGNoiseSubtractor();
   }
 
-  fCore -> SetGainMatchingData(Form("%sRelativeGain.list", parameterDir));
+  fCore -> SetGainMatchingData(Form("%sRelativeGain.list", parameterDir.Data()));
 
   if (fUseMetadata) {
     std::ifstream metalistFile(metaFile.Data());
