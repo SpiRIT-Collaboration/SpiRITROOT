@@ -31,6 +31,8 @@ class STEventPreviewTask : public STRecoTask
 
     Double_t GetBuffer(Int_t cobo, Int_t tb);
 
+    void SetSkippingEvents(std::vector<Int_t> array);
+
   private:
     void LayerTest(STRawEvent *rawEvent);
 
@@ -44,6 +46,9 @@ class STEventPreviewTask : public STRecoTask
 
     Double_t fBuffer[12][100];
     Int_t nFilled[12];
+
+    Int_t fNumSkipEvents = 0;
+    std::vector<Int_t> fSkipEventArray;
 
   ClassDef(STEventPreviewTask, 2)
 };

@@ -62,6 +62,10 @@ void STEventPreviewTask::Exec(Option_t *opt)
   if (fIdentifyEvent)
     LayerTest(rawEvent);
 
+  for (auto iSkip = 0; iSkip < fNumSkipEvents; iSkip++)
+    if (rawEvent -> GetEventID() == fSkipEventArray[iSkip])
+      fEventHeader -> SetIsBadEvent();
+
   TString status = "Unidentified Event";
        if (fEventHeader -> IsEmptyEvent())        status = "Empty Event";
   else if (fEventHeader -> IsCollisionEvent())    status = "Collision Event";
@@ -206,3 +210,8 @@ void STEventPreviewTask::IdentifyEvent(Bool_t val) { fIdentifyEvent = val; }
 void STEventPreviewTask::CalibrateTb(Bool_t val) { fCalibrateTb = val; }
 
 Double_t STEventPreviewTask::GetBuffer(Int_t cobo, Int_t tb) { return fBuffer[cobo][tb]; }
+
+void STEventPreviewTask::SetSkippingEvents(std::vector<Int_t> array) {
+  fNumSkipEvents = array.size();
+  fSkipEventArray = array;
+}
