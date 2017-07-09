@@ -6,6 +6,7 @@ void run_reco_experiment
  Int_t fNumEventsInSplit = 10,
  TString fGCData = "",
  TString fGGData = "",
+ std::vector<Int_t> fSkipEventArray = {},
  Double_t fPSAThreshold = 30,
  TString fParameterFile = "ST.parameters.Commissioning_201604.par",
  TString fPathToData = "",
@@ -80,6 +81,7 @@ void run_reco_experiment
   }
 
   auto preview = new STEventPreviewTask();
+  preview -> SetSkippingEvents(fSkipEventArray);
   preview -> SetPersistence(true);
 
   auto psa = new STPSAETask();
