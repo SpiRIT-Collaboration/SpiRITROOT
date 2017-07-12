@@ -99,13 +99,3 @@ Double_t STPad::GetADC(Int_t idx)
 
   return fAdc[idx];
 }
-
-std::vector<STHit*> *STPad::GetHitPointerArray() { return &fHitArray; }
-
- void  STPad::AddHit(STHit* hit)  { fHitArray.push_back(hit); }
- void  STPad::ClearHits()         { fHitArray.clear();        }
-Int_t  STPad::GetNumHits()        { return fHitArray.size();  }
-STHit *STPad::GetHit(Int_t hitNo)
-{
-  return (hitNo < GetNumHits() ? fHitArray[hitNo] : NULL);
-}

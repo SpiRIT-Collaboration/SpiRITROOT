@@ -70,8 +70,6 @@ class STPad : public TObject
     Bool_t fIsGainCalibrated;
     Double_t fAdc[512];
 
-    std::vector<STHit*> fHitArray; //! < STHit pointer array
-
   ClassDef(STPad, 4);
 };
 
