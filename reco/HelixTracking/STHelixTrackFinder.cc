@@ -1078,7 +1078,11 @@ STHelixTrackFinder::FindVertex(TClonesArray *tracks, Int_t nIterations)
 }
 
 void STHelixTrackFinder::SetClusteringOption(Int_t opt) { fClusteringOption = opt; }
-void STHelixTrackFinder::SetSaturationOption(Int_t opt) { fSaturationOption = opt; }
+void STHelixTrackFinder::SetSaturationOption(Int_t opt)
+{
+  fSaturationOption = opt;
+  std::cout << "== [STHelixTrackFinder] DeSaturation process is turned " << (opt ? "on" : "off") << "!" << std::endl;
+}
 void STHelixTrackFinder::SetDefaultCutScale(Double_t scale) { fDefaultScale = scale; }
 void STHelixTrackFinder::SetTrackWidthCutLimits(Double_t lowLimit, Double_t highLimit)
 {
