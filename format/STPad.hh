@@ -52,13 +52,6 @@ class STPad : public TObject
     Double_t *GetADC();
     Double_t GetADC(Int_t idx);
 
-    std::vector<STHit*> *GetHitPointerArray(); ///< Get hit ID array
-
-     void AddHit(STHit* hit);
-     void ClearHits();
-    Int_t GetNumHits();
-    STHit *GetHit(Int_t hitNo);
-
   private:
     Int_t fLayer;
     Int_t fRow;  
