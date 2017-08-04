@@ -1388,6 +1388,7 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer, Bool_t forceUpdate)
   fCurrentRow = row;
   fCurrentLayer = layer;
   fEveManager -> SetRowLayer(row, layer);
+  /*
   if (currentEvent != fCurrentEvent) 
   {
     fCurrentEvent = currentEvent;
@@ -1398,6 +1399,7 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer, Bool_t forceUpdate)
     else if (fHitArray != nullptr)
       fRawEvent -> SetHits(fHitArray);
   }
+  */
   STPad* pad = fRawEvent -> GetPad(row, layer);
   if (pad == NULL) 
     return;
