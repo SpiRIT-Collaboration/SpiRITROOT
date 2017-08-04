@@ -100,6 +100,7 @@ STPad *STRawEvent::GetPad(Int_t row, Int_t layer)
   return 0;
 }
 
+/*
 void STRawEvent::SetHits(STEvent* event)
 {
   Int_t numHits = event -> GetNumHits();
@@ -125,3 +126,4 @@ void STRawEvent::ClearHits()
   for (Int_t iPad = 0; iPad < GetNumPads(); iPad++) 
     fPadArray.at(iPad).ClearHits();
 }
+*/

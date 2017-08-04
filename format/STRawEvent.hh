@@ -47,9 +47,11 @@ class STRawEvent : public TNamed {
     STPad *GetPad(Int_t padNo);
     STPad *GetPad(Int_t row, Int_t layer); 
 
+/*
     void SetHits(STEvent* event);
     void SetHits(TClonesArray *array);
     void ClearHits();
+    */
 
   private:
     Int_t fEventID;
