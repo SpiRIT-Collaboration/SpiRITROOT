@@ -1419,6 +1419,7 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer, Bool_t forceUpdate)
   fCvsPad -> cd();
   fHistPad -> Draw();
 
+/*
   Int_t numHits = pad -> GetNumHits();
   Int_t numMoreHits = numHits - fPulseFunctionArray.size();
 
@@ -1440,6 +1441,7 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer, Bool_t forceUpdate)
     f -> SetParameter(1, hit -> GetTb());
     f -> Draw("same");
   }
+  */
 
   fPulseSum -> Set(0);
   fPulseSum -> Clear();
@@ -1451,11 +1453,13 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer, Bool_t forceUpdate)
   {
     xGraph += 0.1;
     yGraph  = 0;
+    /*
     for (Int_t iHit = 0; iHit < numHits; iHit++)
     {
       TF1* f = fPulseFunctionArray.at(iHit);
       yGraph += f -> Eval(xGraph);
     }
+    */
     fPulseSum -> SetPoint(countPoints++, xGraph, yGraph);
   }
   fPulseSum -> Draw("samel");
