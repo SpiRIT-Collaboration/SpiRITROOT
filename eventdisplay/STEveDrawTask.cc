@@ -91,7 +91,7 @@ STEveDrawTask::STEveDrawTask()
   fRnrSelf [kRecoTrack] = kFALSE;
 
   fCTFitter = new STCurveTrackFitter();
-  fGenfitTest = new STGenfitTest2();
+  fGenfitTest = new STGenfitTest2(kFALSE);
 
   fRGBAPalette = new TEveRGBAPalette(0, 4096);
 
@@ -1388,18 +1388,18 @@ STEveDrawTask::DrawPad(Int_t row, Int_t layer, Bool_t forceUpdate)
   fCurrentRow = row;
   fCurrentLayer = layer;
   fEveManager -> SetRowLayer(row, layer);
-  /*
   if (currentEvent != fCurrentEvent) 
   {
     fCurrentEvent = currentEvent;
     fRawEvent = (STRawEvent*) fRawEventArray -> At(0);
+    /*
     fRawEvent -> ClearHits();
     if (fEvent != NULL)
       fRawEvent -> SetHits(fEvent);
     else if (fHitArray != nullptr)
       fRawEvent -> SetHits(fHitArray);
+    */
   }
-  */
   STPad* pad = fRawEvent -> GetPad(row, layer);
   if (pad == NULL) 
     return;
