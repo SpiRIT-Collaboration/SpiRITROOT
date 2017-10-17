@@ -109,6 +109,8 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
       break;
     }
   }
+  if (refCluster == nullptr)
+    return nullptr;
 
   TVector3 posSeed = refCluster -> GetPosition();
   posSeed.SetMag(posSeed.Mag()/10.);
@@ -191,6 +193,9 @@ genfit::Track* STGenfitTest2::SetTrack(STRecoTrack *recoTrack, TClonesArray *clu
       break;
     }
   }
+
+  if (refCluster == nullptr)
+    return nullptr;
 
   TVector3 posSeed = refCluster -> GetPosition();
   posSeed.SetMag(posSeed.Mag()/10.);
