@@ -80,7 +80,11 @@ class STDecoderTask : public FairTask {
 
     /// If set, decoded raw data is written in ROOT file with STRawEvent class.
     void SetPersistence(Bool_t value = kTRUE);
-
+    // If set, events are embedded from MC sample
+    void SetEmbedding(Bool_t value = kTRUE);
+    // MC file for embedding
+    void SetEmbedFile(TString filename);
+  
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
     /// Setting parameter containers. This will be called inbetween Init() and Run().
@@ -90,6 +94,10 @@ class STDecoderTask : public FairTask {
     /// Finishing the event.
     virtual void FinishEvent();
 
+    // Embed montecarlo events
+    STRawEvent* Embedding(TString datafile, Int_t eventId);
+    
+  
     /// Read event for STSource
     Int_t ReadEvent(Int_t eventID);
 
@@ -117,10 +125,13 @@ class STDecoderTask : public FairTask {
     Int_t fNumTbs;                      ///< The number of time buckets
 
     Bool_t fIsPersistence;              ///< Persistence check variable
-
+    Bool_t fIsEmbedding;                ///< Enabling embedding
+    TString fEmbedFile;                 ///< MC file for embedding
+  
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fRawEventArray;       ///< STRawEvent container
     STRawEvent *fRawEvent;              ///< Current raw event for run
+    STRawEvent *fRawEventMC;            ///< Current raw event for MC run  
 
     Bool_t fOldData;                    ///< Set to decode old data
     Bool_t fIsSeparatedData;            ///< Set to use separated data files

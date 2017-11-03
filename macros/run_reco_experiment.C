@@ -1,17 +1,17 @@
 void run_reco_experiment
 (
- Int_t fRunNo = 3204,
- Int_t fNumEventsInRun = 10,
+ Int_t fRunNo = 2894,
+ Int_t fNumEventsInRun = 100,
  Int_t fSplitNo = 0,
- Int_t fNumEventsInSplit = 10,
+ Int_t fNumEventsInSplit = 100,
  TString fGCData = "",
  TString fGGData = "",
  std::vector<Int_t> fSkipEventArray = {},
  Double_t fPSAThreshold = 30,
  TString fParameterFile = "ST.parameters.Commissioning_201604.par",
  TString fPathToData = "",
- Bool_t fUseMeta = kFALSE,
- TString fSupplePath = ""
+ Bool_t fUseMeta = kTRUE,
+ TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement"
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -69,7 +69,9 @@ void run_reco_experiment
   decoder -> SetGGNoiseData(fGGData);
   decoder -> SetDataList(raw);
   decoder -> SetEventID(start);
-
+  decoder -> SetEmbedding(false);
+  decoder -> SetEmbedFile("");
+  
   if (fUseMeta) {
     std::ifstream metalistFile(metaFile.Data());
     TString dataFileWithPath;
@@ -85,23 +87,23 @@ void run_reco_experiment
   preview -> SetPersistence(true);
 
   auto psa = new STPSAETask();
-  psa -> SetPersistence(true);
+  psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
-  psa -> SetLayerCut(-1, 112);
-  //  psa -> SetLayerCut(-1, 90);
+  //  psa -> SetLayerCut(-1, 112);
+  psa -> SetLayerCut(-1, 90);
   psa -> SetPulserData("pulser_117ns.dat");
 
   auto helix = new STHelixTrackingTask();
-  helix -> SetPersistence(true);
-  helix -> SetClusterPersistence(true);
+  helix -> SetPersistence(false);
+  helix -> SetClusterPersistence(false);
   helix -> SetClusteringOption(2);
   helix -> SetSaturationOption(1); 
   
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
   genfitPID -> SetBDCFile("");  
-  //  genfitPID -> SetBDCFile("beam_run2894.ridf.root");
   genfitPID -> SetConstantField();
+  genfitPID -> SetListPersistence(true);
   
   run -> AddTask(decoder);
   run -> AddTask(preview);
