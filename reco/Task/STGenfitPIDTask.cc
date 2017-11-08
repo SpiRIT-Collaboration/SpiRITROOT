@@ -145,6 +145,10 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
       TVector3 mom, momTargetPlane, posTargetPlane;
       fGenfitTest -> GetTrackParameters(gfTrack, mom, momTargetPlane, posTargetPlane);
+      if (mom.Z() < 0)
+        mom = -mom;
+      if (momTargetPlane.Z() < 0)
+        momTargetPlane = -momTargetPlane;
       recoTrackCand -> SetMomentum(mom);
       recoTrackCand -> SetMomentumTargetPlane(momTargetPlane);
       recoTrackCand -> SetPosTargetPlane(posTargetPlane);
@@ -233,6 +237,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
           TVector3 pocaVertex;
           Double_t charge;
           fGenfitTest -> GetMomentumWithVertex(gfTrack, 10*vertex->getPos(), momVertex, pocaVertex, charge);
+          if (momVertex.Z() < 0)
+            momVertex = -momVertex;
           recoTrack -> SetMomentum(momVertex);
           recoTrack -> SetPOCAVertex(pocaVertex);
           recoTrack -> SetCharge(charge);
