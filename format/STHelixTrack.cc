@@ -546,7 +546,7 @@ STHelixTrack::ExtrapolateToPointAlpha(TVector3 pointGiven, TVector3 &pointOnHeli
       point1.SetY(point1.Y() + 2*TMath::Pi()*fAlphaSlope);
       y1 = std::abs(point1.Y() - pointGiven.Y());
 
-      if (y0 - y1 < 1.e10)
+      if (std::abs(y0) < std::abs(y1))
         break;
       else {
         alpha0 = alpha1;
@@ -568,7 +568,7 @@ STHelixTrack::ExtrapolateToPointAlpha(TVector3 pointGiven, TVector3 &pointOnHeli
       point1.SetY(point1.Y() - 2*TMath::Pi()*fAlphaSlope);
       y1 = std::abs(point1.Y() - pointGiven.Y());
 
-      if (y0 - y1 < 1.e10)
+      if (std::abs(y0) < std::abs(y1))
         break;
       else {
         alpha0 = alpha1;
