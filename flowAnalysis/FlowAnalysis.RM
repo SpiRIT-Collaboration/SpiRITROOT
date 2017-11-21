@@ -1,0 +1,46 @@
+1. Assemble_flowv4.C(.h, .sh)
+
+purpose: Assemble four root files into one. (TPC, Beam, Kyoto, Katana)
+selection: No event selection
+Input:
+	TPC (run2881_s0.reco.v1.04.root),
+	BEAM (beam_run2881.ridf.root),
+	Kyoto (run2881.kyotopos.root),
+	Katana
+Output: run2881_flw_v4.#.root
+command: RUN=2881 VER=4.# root Assemble_flowv4.C
+
+
+2. AsmFlw_getEvents_v2.C(.h .sh)
+
+purpose: Set event and track selection flags, Make mixed events
+selection: Good events and tracks were selectively stored.
+	   Vertex oriented to the target
+	   Beam ID selection
+	   Track vertex distance
+	   STParticle(TObject) is assigned.
+	   Set track PID ( Graphical cut is applied.)
+	   Set Pt weight ( if ycm > 0, Pt weight = 1, otherwise -1 )
+Input: run2881_flw_v4.#.root
+Output:
+	(REAL) run2881_rdflw_v4.#.#.root ( when MIX=0 )
+	(MIXed) run2881_mxflw_v4.#.#.root ( when MIX=1 )
+command: RUN=2881 VER=4.#.# MIX=0/1 root AsmFlw_getEvents.C
+	 Plotting MACRO : source runList108.sh, RUN={$FULL} VER=4.#.# root drawRDvsMX.C
+
+3. calcFlattenParameter.C
+
+purpose: Get flattening correction parameters dividing along with multiplicity and polar angle
+command: RUN={2900,2881,….} VER=4.#.# MIX=0/1 root calcFlattenParameter.C
+	 STFlowCorrection.hh is needed to be complied and loaded in .rootlogon.C such as
+
+	 gSystem->Load(“STFlowCorrection_cc.so”);
+
+Output database: (REAL) db/cfrun2900_rdflw_v4.#.#.m#n#mtktheta.txt
+
+
+4. getFlatten2Dcorrected.C(.h, .sh)
+
+purpose: Collect phi with flatten parameters
+command: RUN=2881 VER=4.#.# BRUN=2900 BVER=4.#.# CVER=#1 root getFlatten2Dcorrected.C
+
