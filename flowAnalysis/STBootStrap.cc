@@ -1,4 +1,7 @@
 #include "STBootStrap.hh"
+
+ClassImp(STBootStrap)
+
 STBootStrap::STBootStrap(UInt_t ival1, UInt_t ival2, Double_t *sample)
 {
   clear();

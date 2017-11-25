@@ -105,10 +105,4 @@ private:
   ClassDef(STFlowCorrection,0);
 };
 
-
-#ifdef __MAKECINT__
-#pragma link off all   globals;
-#pragma link c++ class STFlowCorrection+;
-#endif
-
 #endif

@@ -1,7 +1,6 @@
 #ifndef STBOOTSTRAP_HH
 #define STBOOTSTRAP_HH
 
-
 #include "TRandom3.h"
 #include "TVector2.h"
 #include "TMath.h"
@@ -64,6 +63,8 @@ private:
 
   TRandom3 rnd;
 
+
+  ClassDef(STBootStrap, 0)
 };
 
 #endif
