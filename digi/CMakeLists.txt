@@ -7,6 +7,7 @@ ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/mc
 ${CMAKE_SOURCE_DIR}/par
+${CMAKE_SOURCE_DIR}/stack
 ${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/tool
 ${CMAKE_SOURCE_DIR}/digi
@@ -49,6 +50,7 @@ Set(DEPENDENCIES
   STUtil
   STReco
   STTool
+  MathMore
 )
 
 GENERATE_LIBRARY()

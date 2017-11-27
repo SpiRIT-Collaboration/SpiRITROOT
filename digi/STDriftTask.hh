@@ -29,11 +29,13 @@
 
 // SPiRIT-TPC class headers
 #include "STMCPoint.hh"
+#include "STMCTrack.h"
 #include "STDriftedElectron.hh"
 #include "STDigiPar.hh"
 
 // ROOT class headers
 #include "TClonesArray.h"
+#include "Math/Interpolator.h"
 
 class STDriftTask : public FairTask
 {
@@ -46,15 +48,27 @@ class STDriftTask : public FairTask
     virtual void Exec(Option_t* opt); //!< Executed for each event.
     virtual void SetParContainers();  //!< Load the parameter container from the runtime database.
 
-    void SetPersistence(Bool_t value = kTRUE);
-
+   void SetPersistence(Bool_t value = kTRUE);
+   void SetParticleForCorrection(TString value);
+   void SetVerbose(Bool_t value = kTRUE);
+   void SetSplineInterpolation(Bool_t value = kFALSE);
+   Double_t BichselCorrection(TString species, Double_t value);
+   ROOT::Math::Interpolator* BichselCorrection(TString species);
+  
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
-
+    TString fSpecies; ///< set the species for the energy loss correction
+    Bool_t fSpline; // use spline interpolation instead of analitical function
+    Bool_t fVerbose; // testing with cout 
+    ROOT::Math::Interpolator* fInterpolator; 
+    Double_t fPmin, fPmax;
+  
     Int_t fEventID; //!< EventID
 
     TClonesArray* fMCPointArray;     //!< [INPUT] Array of STMCPoint.
+    TClonesArray* fMCTrackArray;     //!< [INPUT] Array of PrimaryTrack.  
     STMCPoint* fMCPoint;             //!< [INPUT] MC data container (position, time, energyloss etc.)
+    STMCTrack* fMCTrack;             //!< [INPUT] MC data container (momentum)
 
     TClonesArray* fElectronArray;    //!< [OUTPUT] Array of STDriftedElectron.
 

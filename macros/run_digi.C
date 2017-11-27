@@ -12,7 +12,7 @@
  *   @ name : Name of simulation. Should be same with MC simulation.
  */
 
-void run_digi(TString name = "urqmd_short")
+void run_digi(TString name = "protons_75_events")
 {
   // -----------------------------------------------------------------
   // FairRun
@@ -23,15 +23,18 @@ void run_digi(TString name = "urqmd_short")
   // Set digitization tasks
   STDriftTask* fDriftTask = new STDriftTask(); 
   fDriftTask -> SetPersistence(true);
+  fDriftTask -> SetParticleForCorrection("p");
+  fDriftTask -> SetSplineInterpolation(false);
+  fDriftTask -> SetVerbose(false);  
   fRun -> AddTask(fDriftTask);
 
   STPadResponseTask* fPadResponseTask = new STPadResponseTask(); 
-  fPadResponseTask -> SetPersistence(kFALSE);
+  fPadResponseTask -> SetPersistence(true);
   fPadResponseTask -> AssumeGausPRF();
   fRun -> AddTask(fPadResponseTask);
 
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
-  fElectronicsTask -> SetPersistence(kTRUE);
+  fElectronicsTask -> SetPersistence(true);
   fElectronicsTask -> SetADCConstant(1);
   fRun -> AddTask(fElectronicsTask);
 
