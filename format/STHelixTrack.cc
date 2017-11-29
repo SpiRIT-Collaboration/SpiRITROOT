@@ -168,7 +168,11 @@ void STHelixTrack::DeleteHits()
 
 void STHelixTrack::SortHits(bool increasing)
 {
-  if (increasing) {
+  if (YLengthInPeriod() < 25) {
+    auto sorting = STHitByDistanceTo(fVertexPosition);
+    sort(fMainHits.begin(), fMainHits.end(), sorting);
+  }
+  else if (increasing) {
     auto sorting = STHitSortByIncreasingLength(this);
     sort(fMainHits.begin(), fMainHits.end(), sorting);
   } else {
@@ -252,6 +256,8 @@ void STHelixTrack::SetAlphaTail(Double_t alpha)  { fAlphaTail = alpha; }
 
 void STHelixTrack::DetermineParticleCharge(TVector3 vertex)
 {
+  fVertexPosition = vertex;
+
   Double_t lHead = ExtrapolateToAlpha(fAlphaHead);
   Double_t lTail = ExtrapolateToAlpha(fAlphaTail);
 
