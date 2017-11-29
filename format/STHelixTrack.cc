@@ -168,7 +168,7 @@ void STHelixTrack::DeleteHits()
 
 void STHelixTrack::SortHits(bool increasing)
 {
-  if (YLengthInPeriod() < 25) {
+  if (TMath::Abs(YLengthInPeriod()) < 50) {
     auto sorting = STHitByDistanceTo(fVertexPosition);
     sort(fMainHits.begin(), fMainHits.end(), sorting);
   }
