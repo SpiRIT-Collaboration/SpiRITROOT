@@ -22,6 +22,7 @@ class STRecoTrack : public STRecoTrackCand
 {
   private:
     Int_t fCharge; ///< Charge of the particle
+    Double_t fEffectiveArea;
     Int_t fVertexID; ///< ID from vertex branch
 
     TVector3 fPOCAVertex; ///< point of closest approach to vertex
@@ -36,6 +37,9 @@ class STRecoTrack : public STRecoTrackCand
     virtual ~STRecoTrack() {}
 
     virtual void Clear(Option_t *option = "");
+
+    void SetEffectiveArea(Double_t val) { fEffectiveArea = val; }
+    Double_t GetEffectiveArea() { return fEffectiveArea; }
 
     void SetCharge(Int_t val) { fCharge = val; }
     Int_t GetCharge() { return fCharge; }
@@ -58,7 +62,7 @@ class STRecoTrack : public STRecoTrackCand
     void AddClusterID(Int_t id) { fClusterIDArray.push_back(id); }
     vector<Int_t> *GetClusterIDArray() { return &fClusterIDArray; }
 
-  ClassDef(STRecoTrack, 2);
+  ClassDef(STRecoTrack, 3);
 };
 
 #endif

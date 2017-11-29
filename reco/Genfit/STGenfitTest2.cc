@@ -362,7 +362,7 @@ void STGenfitTest2::GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 verte
   charge = DetermineCharge(gfTrack);
 }
 
-Int_t
+Double_t
 STGenfitTest2::DetermineCharge(genfit::Track *gfTrack)
 {
   genfit::RKTrackRep *trackRep;
@@ -409,10 +409,10 @@ STGenfitTest2::DetermineCharge(genfit::Track *gfTrack)
 
     pos1.SetY(0);
     pos2.SetY(0);
-    sum += ((pos1-ref).Cross(pos2-ref)).Y();
+    sum += ((pos2-ref).Cross(pos1-ref)).Y();
   }
 
-  return sum > 0 ? -1 : 1;
+  return sum;
 }
 
 bool 

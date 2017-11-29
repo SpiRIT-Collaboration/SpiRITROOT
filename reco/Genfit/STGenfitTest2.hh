@@ -59,7 +59,7 @@ class STGenfitTest2
     bool ExtrapolateTo(TVector3 to, TVector3 &position);
 
   private:
-    Int_t DetermineCharge(genfit::Track *gfTrack);
+    Double_t DetermineCharge(genfit::Track *gfTrack);
 
   private:
     Int_t fTPCDetID;

@@ -235,13 +235,17 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
           TVector3 momVertex;
           TVector3 pocaVertex;
-          Double_t charge;
-          fGenfitTest -> GetMomentumWithVertex(gfTrack, 10*vertex->getPos(), momVertex, pocaVertex, charge);
+          Double_t area;
+          fGenfitTest -> GetMomentumWithVertex(gfTrack, 10*vertex->getPos(), momVertex, pocaVertex, area);
           if (momVertex.Z() < 0)
             momVertex = -momVertex;
           recoTrack -> SetMomentum(momVertex);
           recoTrack -> SetPOCAVertex(pocaVertex);
-          recoTrack -> SetCharge(charge);
+          recoTrack -> SetEffectiveArea(area);
+          if (area > 0)
+            recoTrack -> SetCharge(1);
+          else
+            recoTrack -> SetCharge(-1);
         }
       }
     }
