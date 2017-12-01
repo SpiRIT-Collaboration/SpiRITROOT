@@ -249,9 +249,9 @@ ROOT::Math::Interpolator* STDriftTask::BichselCorrection(TString species)
     else if(species == "pi")
       pB[i]=betagamma*139.57;
     else if(species == "d")
-      p=betagamma*(938.27+939.57);
+      pB[i]=betagamma*(938.27+939.57);
     else if(species == "t")
-      p=betagamma*(938.27+2*939.57);
+      pB[i]=betagamma*(938.27+2*939.57);
     else{
       std::cout << "It needs implementation, sorry!" << std::endl;
       exit(0);}
