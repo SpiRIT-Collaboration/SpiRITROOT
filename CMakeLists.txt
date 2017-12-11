@@ -206,7 +206,6 @@ add_subdirectory(reco)
 add_subdirectory(field)
 add_subdirectory(util)
 add_subdirectory(generators)
-add_subdirectory(flowAnalysis)
 
 WRITE_CONFIG_FILE(config.sh)
  
