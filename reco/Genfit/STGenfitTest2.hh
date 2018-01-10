@@ -41,7 +41,7 @@ class STGenfitTest2
     genfit::Track* FitTrack(STHelixTrack *helixTrack, Int_t pdg = 2212);
 
     void GetTrackParameters(genfit::Track *gfTrack, TVector3 &mom, TVector3 &momentumTargetPlane, TVector3 &posTargetPlane);
-    void GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVector3 &kyotoR, TVector3 &katana);
+    void GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVector3 &kyotoR, TVector3 &katana, TVector3 &neuland);
     void GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 vertex, TVector3 &momVertex, TVector3 &pocaVertex, Double_t &charge);
 
     bool GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray);
@@ -75,12 +75,13 @@ class STGenfitTest2
     genfit::SharedPlanePtr fKyotoLPlane;
     genfit::SharedPlanePtr fKyotoRPlane;
     genfit::SharedPlanePtr fKatanaPlane;
+    genfit::SharedPlanePtr fNeulandPlane;
 
     genfit::RKTrackRep *fCurrentTrackRep;
     genfit::MeasuredStateOnPlane fCurrentFitState;
     genfit::FitStatus *fCurrentFitStatus;
 
-  ClassDef(STGenfitTest2, 1)
+  ClassDef(STGenfitTest2, 2)
 };
 
 #endif

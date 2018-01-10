@@ -73,6 +73,10 @@ STGenfitTest2::STGenfitTest2(bool loadSamurai)
   TVector3 posKatana(-20, -21.33, 186.7);
   TVector3 normalKatana(0, 0, -1);
   fKatanaPlane = genfit::SharedPlanePtr(new genfit::DetPlane(posKatana, normalKatana));
+
+  TVector3 posNeuland(436.21, -21.33, 826.92);
+  TVector3 normalNeuland(-0.494, 0, -0.870);
+  fNeulandPlane = genfit::SharedPlanePtr(new genfit::DetPlane(posNeuland, normalNeuland));
 }
 
 void STGenfitTest2::SetMinIterations(Int_t value) { fKalmanFitter -> setMinIterations(value); }
@@ -297,7 +301,7 @@ void STGenfitTest2::GetTrackParameters(genfit::Track *gfTrack, TVector3 &mom, TV
   mom = 1000*mom;
 }
 
-void STGenfitTest2::GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVector3 &kyotoR, TVector3 &katana)
+void STGenfitTest2::GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVector3 &kyotoR, TVector3 &katana, TVector3 &neuland)
 {
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
@@ -326,6 +330,12 @@ void STGenfitTest2::GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVe
   try { 
     trackRep -> extrapolateToPlane(fitState, fKatanaPlane); 
     katana = 10*fitState.getPos();
+  } catch (genfit::Exception &e) {
+  }
+
+  try { 
+    trackRep -> extrapolateToPlane(fitState, fNeulandPlane); 
+    neuland = 10*fitState.getPos();
   } catch (genfit::Exception &e) {
   }
 }
