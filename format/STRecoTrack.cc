@@ -17,5 +17,6 @@ void STRecoTrack::Clear(Option_t *option)
   fPosKyotoL.SetXYZ(0,0,0);
   fPosKyotoR.SetXYZ(0,0,0);
   fPosKatana.SetXYZ(0,0,0);
+  fPosNeuland.SetXYZ(0,0,0);
   fClusterIDArray.clear();
 }

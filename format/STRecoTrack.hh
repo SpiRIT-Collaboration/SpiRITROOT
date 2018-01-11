@@ -28,6 +28,7 @@ class STRecoTrack : public STRecoTrackCand
     TVector3 fPosKyotoL; ///< position at extrapolation to left kyoto plane
     TVector3 fPosKyotoR; ///< position at extrapolation to right kyoto plane
     TVector3 fPosKatana; ///< position at extrapolation to katana plane
+    TVector3 fPosNeuland; ///< position at extrapolation to NeuLAND plane
 
     vector<Int_t> fClusterIDArray; ///< Array of cluster-ID
 
@@ -55,10 +56,13 @@ class STRecoTrack : public STRecoTrackCand
     void SetPosKatana(TVector3 val) { fPosKatana = val; }
     TVector3 GetPosKatana() { return fPosKatana; }
 
+    void SetPosNeuland(TVector3 val) { fPosNeuland = val; }
+    TVector3 GetPosNeuland() { return fPosNeuland; }
+
     void AddClusterID(Int_t id) { fClusterIDArray.push_back(id); }
     vector<Int_t> *GetClusterIDArray() { return &fClusterIDArray; }
 
-  ClassDef(STRecoTrack, 2);
+  ClassDef(STRecoTrack, 3);
 };
 
 #endif
