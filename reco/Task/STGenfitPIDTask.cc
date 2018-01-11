@@ -181,12 +181,13 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     helixTrack -> SetIsGenfitTrack();
     helixTrack -> SetGenfitMomentum(bestRecoTrackCand -> GetMomentum().Mag());
 
-    TVector3 kyotoL, kyotoR, katana;
-    fGenfitTest -> GetPosOnPlanes(bestRecoTrackCand -> GetGenfitTrack(), kyotoL, kyotoR, katana);
+    TVector3 kyotoL, kyotoR, katana, neuland;
+    fGenfitTest -> GetPosOnPlanes(bestRecoTrackCand -> GetGenfitTrack(), kyotoL, kyotoR, katana, neuland);
     bestRecoTrackCand -> Copy(recoTrack);
     recoTrack -> SetPosKyotoL(kyotoL);
     recoTrack -> SetPosKyotoR(kyotoR);
     recoTrack -> SetPosKatana(katana);
+    recoTrack -> SetPosNeuland(neuland);
   }
 
   LOG(INFO) << Space() << "STRecoTrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
