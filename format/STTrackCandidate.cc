@@ -36,6 +36,9 @@ void STTrackCandidate::Clear(Option_t *option)
   fKatanax = -99999;
   fKatanay = -99999;
   fKatanaz = -99999;
+  fNeulandx = -99999;
+  fNeulandy = -99999;
+  fNeulandz = -99999;
 
   fPx = -99999;
   fPy = -99999;
@@ -68,6 +71,7 @@ void STTrackCandidate::SetBeamMomentum(Double_t x, Double_t y, Double_t z)  { fB
 void STTrackCandidate::SetKyotoLHit(TVector3 vector)                         { fKyotoLx = vector.X(); fKyotoLy = vector.Y(); fKyotoLz = vector.Z(); }
 void STTrackCandidate::SetKyotoRHit(TVector3 vector)                         { fKyotoRx = vector.X(); fKyotoRy = vector.Y(); fKyotoRz = vector.Z(); }
 void STTrackCandidate::SetKatanaHit(TVector3 vector)                         { fKatanax = vector.X(); fKatanay = vector.Y(); fKatanaz = vector.Z(); }
+void STTrackCandidate::SetNeulandHit(TVector3 vector)                        { fNeulandx = vector.X(); fNeulandy = vector.Y(); fNeulandz = vector.Z(); }
 
 void STTrackCandidate::SetMomentum(TVector3 vector)                       { fPx = vector.X(); fPy = vector.Y(); fPz = vector.Z(); }
 void STTrackCandidate::SetMomentum(Double_t px, Double_t py, Double_t pz) { fPx = px; fPy = py; fPz = pz; }
@@ -120,6 +124,11 @@ TVector3 STTrackCandidate::GetKatanaHit()                { return TVector3(fKata
 Double_t STTrackCandidate::GetKatanaHitX()               { return fKatanax; }
 Double_t STTrackCandidate::GetKatanaHitY()               { return fKatanay; }
 Double_t STTrackCandidate::GetKatanaHitZ()               { return fKatanaz; }
+
+TVector3 STTrackCandidate::GetNeulandHit()               { return TVector3(fNeulandx, fNeulandy, fNeulandz); }
+Double_t STTrackCandidate::GetNeulandHitX()              { return fNeulandx; }
+Double_t STTrackCandidate::GetNeulandHitY()              { return fNeulandy; }
+Double_t STTrackCandidate::GetNeulandHitZ()              { return fNeulandz; }
 
 TVector3 STTrackCandidate::GetMomentum() const           { return TVector3(fPx, fPy, fPz); }
 Double_t STTrackCandidate::GetP() const                  { return GetMomentum().Mag(); }
@@ -183,6 +192,7 @@ void STTrackCandidate::SetTrackCandidate(STTrackCandidate *track)
   SetKyotoLHit(track -> GetKyotoLHit());
   SetKyotoRHit(track -> GetKyotoRHit());
   SetKatanaHit(track -> GetKatanaHit());
+  SetNeulandHit(track -> GetNeulandHit());
   SetMomentum(track -> GetMomentum());
 
   fTrackLength = track -> GetTrackLength();

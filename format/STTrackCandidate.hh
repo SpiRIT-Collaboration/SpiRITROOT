@@ -34,6 +34,8 @@ class STTrackCandidate : public TObject {
     void SetKyotoRHit(Double_t x, Double_t y, Double_t z);
     void SetKatanaHit(TVector3 vector);
     void SetKatanaHit(Double_t x, Double_t y, Double_t z);
+    void SetNeulandHit(TVector3 vector);
+    void SetNeulandHit(Double_t x, Double_t y, Double_t z);
 
     void SetMomentum(TVector3 vector);
     void SetMomentum(Double_t px, Double_t py, Double_t pz);
@@ -84,6 +86,10 @@ class STTrackCandidate : public TObject {
     Double_t GetKatanaHitX();
     Double_t GetKatanaHitY();
     Double_t GetKatanaHitZ();
+    TVector3 GetNeulandHit();   ///< Hit position in NeuLAND plane
+    Double_t GetNeulandHitX();
+    Double_t GetNeulandHitY();
+    Double_t GetNeulandHitZ();
 
     TVector3 GetMomentum() const; ///< Momentum vector
     Double_t GetP() const;        ///< Magnitude of momentum
@@ -152,6 +158,9 @@ class STTrackCandidate : public TObject {
     Double_t fKatanax;
     Double_t fKatanay;
     Double_t fKatanaz;
+    Double_t fNeulandx;
+    Double_t fNeulandy;
+    Double_t fNeulandz;
 
     Double_t fPx;
     Double_t fPy;
@@ -169,7 +178,7 @@ class STTrackCandidate : public TObject {
 
     TMatrixDSym fCovSeed;
 
-  ClassDef(STTrackCandidate, 4)
+  ClassDef(STTrackCandidate, 5)
 };
 
 #endif
