@@ -33,11 +33,7 @@ void STRecoTrackCand::Copy(TObject *obj) const
   cand -> SetMomentum(fMomentum);
   cand -> SetMomentumTargetPlane(fMomentumTargetPlane);
   cand -> SetPosTargetPlane(fPosTargetPlane);
-
-  auto dedxPointArray = cand -> GetdEdxPointArray();
-  dedxPointArray -> clear();
-  for (auto point : fdEdxPointArray)
-    dedxPointArray -> push_back(point);
+  cand -> SetGenfitTrack(fGenfitTrack);
 }
 
 Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut)
@@ -63,4 +59,3 @@ Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut)
 
   return dEdx;
 }
-

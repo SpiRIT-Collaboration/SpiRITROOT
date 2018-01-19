@@ -32,6 +32,10 @@ class STRecoTrack : public STRecoTrackCand
 
     vector<Int_t> fClusterIDArray; ///< Array of cluster-ID
 
+    Double_t fEffCurvature1;
+    Double_t fEffCurvature2;
+    Double_t fEffCurvature3;
+
   public:
     STRecoTrack();
     virtual ~STRecoTrack() {}
@@ -61,6 +65,13 @@ class STRecoTrack : public STRecoTrackCand
 
     void AddClusterID(Int_t id) { fClusterIDArray.push_back(id); }
     vector<Int_t> *GetClusterIDArray() { return &fClusterIDArray; }
+
+    void SetEffCurvature1(Double_t val) { fEffCurvature1 = val; }
+    void SetEffCurvature2(Double_t val) { fEffCurvature2 = val; }
+    void SetEffCurvature3(Double_t val) { fEffCurvature3 = val; }
+    Double_t GetEffCurvature1() { return fEffCurvature1; }
+    Double_t GetEffCurvature2() { return fEffCurvature2; }
+    Double_t GetEffCurvature3() { return fEffCurvature3; }
 
   ClassDef(STRecoTrack, 3);
 };
