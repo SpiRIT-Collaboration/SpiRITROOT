@@ -95,6 +95,7 @@
 #pragma link C++ class STGenfitTask+;
 #pragma link C++ class STGenfitSinglePIDTask+;
 #pragma link C++ class STGenfitPIDTask+;
+#pragma link C++ class STGenfitVATask+;
 
 #pragma link C++ class STSource+;
 
