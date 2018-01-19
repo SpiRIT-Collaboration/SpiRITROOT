@@ -8,8 +8,8 @@ void run_reco_experiment
  TString fGGData = "",
  std::vector<Int_t> fSkipEventArray = {},
  Double_t fPSAThreshold = 30,
- TString fParameterFile = "ST.parameters.Commissioning_201604.par",
- TString fPathToData = "",
+ TString fParameterFile = "ST.parameters.PhysicsRuns_201707.par",
+ TString fPathToData = "/mnt/spirit/analysis/changj/SpiRITROOT.addVertexToPoint/macros/data/Sn132-noLayerCut-GC-DS-GiordanoCommentOut-bShift-By/",
  Bool_t fUseMeta = kTRUE,
  TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement"
 )
@@ -64,7 +64,7 @@ void run_reco_experiment
     decoder -> SetUseGainCalibration(false);
   else {
     decoder -> SetUseGainCalibration(true);
-    decoder -> SetGainCalibrationData(fGCData);
+//    decoder -> SetGainCalibrationData(fGCData);
   }
   decoder -> SetGGNoiseData(fGGData);
   decoder -> SetDataList(raw);
@@ -89,8 +89,8 @@ void run_reco_experiment
   auto psa = new STPSAETask();
   psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
-  //  psa -> SetLayerCut(-1, 112);
-  psa -> SetLayerCut(-1, 90);
+  psa -> SetLayerCut(-1, 112);
+  //psa -> SetLayerCut(-1, 90);
   psa -> SetPulserData("pulser_117ns.dat");
 
   auto helix = new STHelixTrackingTask();
@@ -102,14 +102,20 @@ void run_reco_experiment
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
   genfitPID -> SetBDCFile("");  
-  genfitPID -> SetConstantField();
+//  genfitPID -> SetConstantField();
   genfitPID -> SetListPersistence(true);
+
+  auto genfitVA = new STGenfitVATask();
+  genfitVA -> SetPersistence(true);
+//  genfitVA -> SetConstantField();
+  genfitVA -> SetListPersistence(true);
   
   run -> AddTask(decoder);
   run -> AddTask(preview);
   run -> AddTask(psa);
   run -> AddTask(helix);
   run -> AddTask(genfitPID);
+  run -> AddTask(genfitVA);
 
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
