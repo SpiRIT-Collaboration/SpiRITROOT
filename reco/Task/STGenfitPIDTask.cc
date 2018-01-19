@@ -108,6 +108,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
     auto candList = (STRecoTrackCandList *) fCandListArray -> ConstructedAt(trackID);
     auto recoTrack = (STRecoTrack *) fRecoTrackArray -> ConstructedAt(trackID);
+    recoTrack -> SetHelixTrack(helixTrack);
 
     auto clusterArray = helixTrack -> GetClusterArray();
     for (auto cluster : *clusterArray) {
@@ -177,7 +178,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     gfTrackArrayToVertex.push_back(bestRecoTrackCand -> GetGenfitTrack());
     recoTrackArrayToVertex.push_back(recoTrack);
 
-    helixTrack -> SetGenfitID(iHelix);
+    helixTrack -> SetGenfitID(trackID);
     helixTrack -> SetIsGenfitTrack();
     helixTrack -> SetGenfitMomentum(bestRecoTrackCand -> GetMomentum().Mag());
 
@@ -236,13 +237,20 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
           TVector3 momVertex;
           TVector3 pocaVertex;
-          Double_t charge;
-          fGenfitTest -> GetMomentumWithVertex(gfTrack, 10*vertex->getPos(), momVertex, pocaVertex, charge);
+          fGenfitTest -> GetMomentumWithVertex(gfTrack, 10*vertex->getPos(), momVertex, pocaVertex);
           if (momVertex.Z() < 0)
             momVertex = -momVertex;
           recoTrack -> SetMomentum(momVertex);
           recoTrack -> SetPOCAVertex(pocaVertex);
+
+          Double_t effCurvature1;
+          Double_t effCurvature2;
+          Double_t effCurvature3;
+          Double_t charge = fGenfitTest -> DetermineCharge(recoTrack, vertex -> getPos(), effCurvature1, effCurvature2, effCurvature3);
           recoTrack -> SetCharge(charge);
+          recoTrack -> SetEffCurvature1(effCurvature1);
+          recoTrack -> SetEffCurvature2(effCurvature2);
+          recoTrack -> SetEffCurvature3(effCurvature3);
         }
       }
     }

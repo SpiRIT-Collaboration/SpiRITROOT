@@ -42,7 +42,7 @@ class STGenfitTest2
 
     void GetTrackParameters(genfit::Track *gfTrack, TVector3 &mom, TVector3 &momentumTargetPlane, TVector3 &posTargetPlane);
     void GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVector3 &kyotoR, TVector3 &katana, TVector3 &neuland);
-    void GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 vertex, TVector3 &momVertex, TVector3 &pocaVertex, Double_t &charge);
+    void GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 vertex, TVector3 &momVertex, TVector3 &pocaVertex);
 
     bool GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray);
     bool GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray);
@@ -58,8 +58,7 @@ class STGenfitTest2
     /// If extrapolation success, return true and set 'position(mm)'. If it fails, return false.
     bool ExtrapolateTo(TVector3 to, TVector3 &position);
 
-  private:
-    Int_t DetermineCharge(genfit::Track *gfTrack);
+    Int_t DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Double_t &effCurvature1, Double_t &effCurvature2, Double_t &effCurvature3);
 
   private:
     Int_t fTPCDetID;

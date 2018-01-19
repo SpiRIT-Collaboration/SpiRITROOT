@@ -6,6 +6,7 @@
 #include "STGlobal.hh"
 #include "STDebugLogger.hh"
 #include "STdEdxPoint.hh"
+#include "STGeoLine.hh"
 
 // GENFIT2 classes
 #include "Track.h"
@@ -340,7 +341,7 @@ void STGenfitTest2::GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVe
   }
 }
 
-void STGenfitTest2::GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 vertex, TVector3 &momVertex, TVector3 &pocaVertex, Double_t &charge)
+void STGenfitTest2::GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 posVertex, TVector3 &momVertex, TVector3 &pocaVertex)
 {
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
@@ -355,7 +356,7 @@ void STGenfitTest2::GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 verte
   }
 
   try {
-    trackRep -> extrapolateToPoint(fitState, .1*vertex);
+    trackRep -> extrapolateToPoint(fitState, .1*posVertex);
   } catch (genfit::Exception &e) {
   }
 
@@ -369,67 +370,208 @@ void STGenfitTest2::GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 verte
 
   momVertex = 1000*momVertex;
   pocaVertex = 10*pocaVertex;
-  charge = DetermineCharge(gfTrack);
 }
 
 Int_t
-STGenfitTest2::DetermineCharge(genfit::Track *gfTrack)
+STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Double_t &effCurvature1, Double_t &effCurvature2, Double_t &effCurvature3)
 {
+  effCurvature1 = 0.;
+  effCurvature2 = 0.;
+  effCurvature3 = 0.;
+
+  auto helixTrack = recoTrack -> GetHelixTrack();
+  auto gfTrack = recoTrack -> GetGenfitTrack();
+
   genfit::RKTrackRep *trackRep;
   genfit::MeasuredStateOnPlane fitState;
-
   try {
     trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
     fitState = gfTrack -> getFittedState();
   } catch (genfit::Exception &e) {
-    return 0;
+    return false;
   }
 
-  std::vector<genfit::TrackPoint *> pointArray = gfTrack -> getPointsWithMeasurement();
-  Int_t numPoints = pointArray.size();
+  auto clusterArray = helixTrack -> GetClusterArray();
+  auto numClusters = clusterArray -> size();
+  auto dedxArray = recoTrack -> GetdEdxPointArray();
+  dedxArray -> clear();
+  vector<STdEdxPoint> dedxArrayTemp;
 
-  genfit::STSpacepointMeasurement *point = (genfit::STSpacepointMeasurement *) pointArray.at(0) -> getRawMeasurement(0);
+  //////////////////////////////////////////////////////////////////////////////////
+  // Set dedx points
+  //////////////////////////////////////////////////////////////////////////////////
+  for (auto iCluster = 0; iCluster < numClusters; iCluster++)
+  {
+    auto cluster = clusterArray -> at(iCluster);
+    if (!cluster -> IsStable())
+      continue;
+
+    STdEdxPoint dedx;
+    dedx.fClusterID = cluster -> GetClusterID();
+    dedx.fPosition = cluster -> GetPosition();
+
+    auto row = cluster -> GetRow();
+    auto layer = cluster -> GetLayer();
+    auto position = cluster -> GetPosition();
+
+    bool buildByLayer = true;
+    if (layer == -1)
+      buildByLayer = false;
+
+    TVector3 pointRef1 = .1*position;
+    TVector3 pointRef2 = .1*position;
+    TVector3 normalRef(0,0,0);
+    if (buildByLayer) {
+      normalRef = TVector3(0,0,1);
+      pointRef1.SetZ(.1*(layer*12.));
+      pointRef2.SetZ(.1*((layer+1)*12.));
+    } else {
+      normalRef = TVector3(1,0,0);
+      pointRef1.SetX(.1*(row*8.-432.));
+      pointRef2.SetX(.1*((row+1)*8.-432.));
+    }
+
+    genfit::SharedPlanePtr referencePlane1 = genfit::SharedPlanePtr(new genfit::DetPlane(pointRef1, normalRef));
+    genfit::SharedPlanePtr referencePlane2 = genfit::SharedPlanePtr(new genfit::DetPlane(pointRef2, normalRef));
+
+    try {
+      trackRep -> extrapolateToPlane(fitState, referencePlane1);
+      Double_t l2 = 10 * trackRep -> extrapolateToPlane(fitState, referencePlane2);
+      cluster -> SetLength(std::abs(l2));
+      cluster -> SetPOCA(10*fitState.getPos());
+    } catch (genfit::Exception &e) {
+      cluster -> SetIsStable(false);
+      continue;
+    }
+
+    Double_t dE = cluster -> GetCharge();
+    Double_t dx = cluster -> GetLength();
+
+    if (dx > 20) {
+      cluster -> SetIsStable(false);
+      continue;
+    }
+
+    dedx.fdE = dE;
+    dedx.fdx = dx;
+    dedx.fLength = 88;
+    dedxArrayTemp.push_back(dedx);
+  }
+
+  auto numdedx = dedxArrayTemp.size();
+  if (numdedx < 5)
+    return 0;
+
+  //////////////////////////////////////////////////////////////////////////////////
+  // Length Calculation
+  //////////////////////////////////////////////////////////////////////////////////
+  bool failExtrapolation = false;
+  for (auto idedx = 0; idedx < numdedx; ++idedx)
+  {
+    auto dedx = dedxArrayTemp.at(idedx);
+
+    try { trackRep -> extrapolateToPoint(fitState, .1*posVertex); }
+    catch (genfit::Exception &e) { failExtrapolation = true; break; }
+
+    Double_t length = -999;
+    try { length = std::abs(10*trackRep -> extrapolateToPoint(fitState, .1*dedx.fPosition)); }
+    catch (genfit::Exception &e) { failExtrapolation = true; break; }
+    dedx.fLength = length;
+
+    dedxArray -> push_back(dedx);
+  }
+
+  if (failExtrapolation)
+    return 0;
+
+  sort(dedxArray->begin(), dedxArray->end(), STdEdxPointSortByLength());
+
+  //////////////////////////////////////////////////////////////////////////////////
+  // Effective Curvature
+  //////////////////////////////////////////////////////////////////////////////////
+
+  auto posdEdx0 = (dedxArray -> at(0)).fPosition;
+  TVector3 pocaPoint0;
   try {
-    trackRep -> extrapolateToMeasurement(fitState, point);
+    trackRep -> extrapolateToPoint(fitState, .1*posdEdx0);
+    pocaPoint0 = 10*fitState.getPos();
   } catch (genfit::Exception &e) {
     return 0;
   }
-  TVector3 ref = fitState.getPos();
-  ref.SetY(0);
 
-  Double_t sum = 0;
+  auto posdEdx1 = (dedxArray -> at(1)).fPosition;
+  TVector3 pocaPointB;
+  try {
+    trackRep -> extrapolateToPoint(fitState, .1*posdEdx1);
+    pocaPointB = 10*fitState.getPos();
+  } catch (genfit::Exception &e) {
+    return 0;
+  }
+  TVector3 pocaPointC = pocaPointB;
 
-  for (Int_t iPoint = 1; iPoint < numPoints-1; iPoint++)
+  // 1
+  TVector3 point0ToB = pocaPointB - pocaPoint0;
+  TVector3 point0ToC = point0ToB;
+  // 2
+  TVector3 pointAToB = pocaPointB - pocaPoint0;
+  TVector3 pointBToC = pointAToB;
+  // 3
+  auto posdEdxEnd = (dedxArray -> at(numdedx-1)).fPosition;
+  TVector3 pocaPointEnd;
+  try {
+    trackRep -> extrapolateToPoint(fitState, .1*posdEdxEnd);
+    pocaPointEnd = 10*fitState.getPos();
+  } catch (genfit::Exception &e) {
+    return 0;
+  }
+  STGeoLine line0ToEnd(pocaPoint0, pocaPointEnd);
+  auto lineToPoint = line0ToEnd.POCATo(pocaPointB);
+  effCurvature3 += ((line0ToEnd.Direction()).Cross(lineToPoint)).Y()/2.;
+
+  for (auto idedx = 2; idedx < numdedx; ++idedx)
   {
-    genfit::STSpacepointMeasurement *point1 = (genfit::STSpacepointMeasurement *) pointArray.at(iPoint) -> getRawMeasurement(0);
-    try {
-      trackRep -> extrapolateToMeasurement(fitState, point1);
-    } catch (genfit::Exception &e) {
-      return 0;
-    }
-    TVector3 pos1 = fitState.getPos();
+    point0ToB = point0ToC;
 
-    genfit::STSpacepointMeasurement *point2 = (genfit::STSpacepointMeasurement *) pointArray.at(iPoint+1) -> getRawMeasurement(0);
-    try {
-      trackRep -> extrapolateToMeasurement(fitState, point2);
-    } catch (genfit::Exception &e) {
-      return 0;
-    }
-    TVector3 pos2 = fitState.getPos();
+    pocaPointB = pocaPointC;
+    pointAToB = pointBToC;
 
-    pos1.SetY(0);
-    pos2.SetY(0);
-    sum += ((pos1-ref).Cross(pos2-ref)).Y();
+    auto dedx = dedxArray -> at(idedx);
+    auto posdEdx = dedx.fPosition;
+
+    try {
+      trackRep -> extrapolateToPoint(fitState, .1*posdEdx);
+      pocaPointC = 10*fitState.getPos();
+    } catch (genfit::Exception &e) {
+      failExtrapolation = true;
+      break;
+    }
+
+    point0ToC = pocaPointC - pocaPoint0;
+    point0ToB.SetY(0);
+    point0ToC.SetY(0);
+    effCurvature1 += ((point0ToB).Cross(point0ToC)).Y()/2.;
+
+    pointBToC = pocaPointC - pocaPointB;
+    pointAToB.SetY(0);
+    pointBToC.SetY(0);
+    effCurvature2 += ((pointAToB).Cross(pointBToC)).Y()/2.;
+
+    lineToPoint = line0ToEnd.POCATo(pocaPointC);
+    effCurvature3 += ((line0ToEnd.Direction()).Cross(lineToPoint)).Y()/2.;
   }
 
-  return sum > 0 ? -1 : 1;
+  if (failExtrapolation)
+    return 0;
+
+  Int_t charge = effCurvature1 > 0 ? -1 : 1;
+
+  return charge;
 }
 
 bool 
 STGenfitTest2::GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray)
 {
-  Int_t numPoints = helixTrack -> GetNumStableClusters();
-  if (numPoints < 3)
+  Int_t numPoints = helixTrack -> GetNumStableClusters(); if (numPoints < 3)
     return false;
 
   genfit::RKTrackRep *trackRep;
@@ -477,7 +619,7 @@ STGenfitTest2::GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helix
     {
       Double_t dE = preCluster -> GetCharge();
       Double_t dx = preCluster -> GetLength();
-      dEdxPointArray -> push_back(STdEdxPoint(dE, dx));
+      dEdxPointArray -> push_back(STdEdxPoint(-1, dE, dx, -999));
     }
 
     preCluster = curCluster;
@@ -553,7 +695,7 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
       continue;
     }
 
-    dEdxPointArray -> push_back(STdEdxPoint(dE, dx));
+    dEdxPointArray -> push_back(STdEdxPoint(cluster -> GetClusterID(), dE, dx, -999));
   }
 
   return true;
