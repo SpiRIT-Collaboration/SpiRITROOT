@@ -141,6 +141,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     auto vaTrack = (STRecoTrack *) fVATrackArray -> ConstructedAt(trackID);
 
     auto helixTrack = (STHelixTrack *) fHelixTrackArray -> At(iTrack);
+    vaTrack -> SetHelixTrack(helixTrack);
 
     auto clusterArray = helixTrack -> GetClusterArray();
     clusterArray -> insert(clusterArray -> begin(), vertexCluster);
@@ -215,25 +216,33 @@ void STGenfitVATask::Exec(Option_t *opt)
     helixTrack -> SetIsGenfitTrack();
     helixTrack -> SetGenfitMomentum(bestRecoTrackCand -> GetMomentum().Mag());
 
-    TVector3 kyotoL, kyotoR, katana;
-    fGenfitTest -> GetPosOnPlanes(bestRecoTrackCand -> GetGenfitTrack(), kyotoL, kyotoR, katana);
+    TVector3 kyotoL, kyotoR, katana, neuland;
+    fGenfitTest -> GetPosOnPlanes(bestRecoTrackCand -> GetGenfitTrack(), kyotoL, kyotoR, katana, neuland);
     bestRecoTrackCand -> Copy(vaTrack);
     vaTrack -> SetPosKyotoL(kyotoL);
     vaTrack -> SetPosKyotoR(kyotoR);
     vaTrack -> SetPosKatana(katana);
+    vaTrack -> SetPosNeuland(neuland);
 
     vaTrack -> SetVertexID(chosenVID);
 
     genfit::Track *gfTrack = bestRecoTrackCand -> GetGenfitTrack();
     TVector3 momVertex;
     TVector3 pocaVertex;
-    Double_t charge;
-    fGenfitTest -> GetMomentumWithVertex(gfTrack, vertex -> GetPos(), momVertex, pocaVertex, charge);
+    fGenfitTest -> GetMomentumWithVertex(gfTrack, vertex -> GetPos(), momVertex, pocaVertex);
     if (momVertex.Z() < 0)
       momVertex = -momVertex;
     vaTrack -> SetMomentum(momVertex);
     vaTrack -> SetPOCAVertex(pocaVertex);
+
+    Double_t effCurvature1;
+    Double_t effCurvature2;
+    Double_t effCurvature3;
+    Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vertex -> GetPos(), effCurvature1, effCurvature2, effCurvature3);
     vaTrack -> SetCharge(charge);
+    vaTrack -> SetEffCurvature1(effCurvature1);
+    vaTrack -> SetEffCurvature2(effCurvature2);
+    vaTrack -> SetEffCurvature3(effCurvature3);
   }
 
   LOG(INFO) << Space() << "VATrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
