@@ -176,6 +176,100 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
   return gfTrack;
 }
 
+genfit::Track* STGenfitTest2::FitTrackWithVertex(STHelixTrack *helixTrack, STHitCluster *vertex, Int_t pdg)
+{
+  fHitClusterArray -> Delete();
+  genfit::TrackCand trackCand;
+
+  UInt_t numHits = helixTrack -> GetNumStableClusters();
+  if (numHits < 3) 
+    return nullptr;
+
+//  new ((&fHitClusterArray)[0]) STHitCluster(vertex);
+//  trackCand.addHit(fTPCDetID, 0);
+
+  auto clusterArray = helixTrack -> GetClusterArray();
+  for (auto cluster : *clusterArray) {
+    if (cluster -> IsStable() == false)
+      continue;
+    
+    Int_t idx = fHitClusterArray->GetEntriesFast();
+    new ((*fHitClusterArray)[idx]) STHitCluster(cluster);
+    trackCand.addHit(fTPCDetID, idx);
+  }
+
+  STHitCluster *refCluster = vertex;
+/*
+  STHitCluster *refCluster;
+  for (auto cluster : *clusterArray) {
+    if (cluster -> IsStable()) {
+      refCluster = cluster;
+      break;
+    }
+  }
+  if (refCluster == nullptr)
+    return nullptr;
+    */
+
+  TVector3 posSeed = refCluster -> GetPosition();
+  posSeed.SetMag(posSeed.Mag()/10.);
+
+  TMatrixDSym covSeed(6);
+  TMatrixD covMatrix = refCluster -> GetCovMatrix();
+  for (Int_t iComp = 0; iComp < 3; iComp++)
+    covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
+  for (Int_t iComp = 3; iComp < 6; iComp++)
+    covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
+
+  Double_t dip = helixTrack -> DipAngle();
+  Double_t momSeedMag = helixTrack -> Momentum();
+  TVector3 momSeed(0., 0., momSeedMag);
+  momSeed.SetTheta(TMath::Pi()/2. - dip);
+
+  trackCand.setCovSeed(covSeed);
+  trackCand.setPosMomSeed(posSeed, momSeed, helixTrack -> Charge());
+
+  genfit::Track *gfTrack = new ((*fGenfitTrackArray)[fGenfitTrackArray -> GetEntriesFast()]) genfit::Track(trackCand, *fMeasurementFactory);
+  gfTrack -> addTrackRep(new genfit::RKTrackRep(pdg));
+
+  genfit::RKTrackRep *trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+
+  try {
+    fKalmanFitter -> processTrackWithRep(gfTrack, trackRep, false);
+  } catch (genfit::Exception &e) {}
+
+  genfit::FitStatus *fitStatus;
+  try {
+    fitStatus = gfTrack -> getFitStatus(trackRep);
+  } catch (genfit::Exception &e) {
+    return nullptr;
+  }
+
+  if (fitStatus -> isFitted() == false || fitStatus -> isFitConverged() == false)
+    return nullptr;
+
+  genfit::MeasuredStateOnPlane fitState;
+  try {
+    fitState = gfTrack -> getFittedState();
+  } catch (genfit::Exception &e) {}
+
+  for (auto cluster : *clusterArray) {
+    if (cluster -> IsStable() == false)
+      continue;
+    auto position = cluster -> GetPosition();
+    try {
+      trackRep -> extrapolateToPoint(fitState, .1*position);
+      auto poca = 10*fitState.getPos();
+      auto d = position - poca;
+      d.SetY(0);
+      if (d.Mag() > 5)
+        cluster -> SetIsStable(false);
+    } catch (genfit::Exception &e) {}
+  }
+
+  return gfTrack;
+}
+
 genfit::Track* STGenfitTest2::SetTrack(STRecoTrack *recoTrack, TClonesArray *clusterArray)
 {
   fHitClusterArray -> Delete();
