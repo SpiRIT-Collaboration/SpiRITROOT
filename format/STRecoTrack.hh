@@ -23,6 +23,7 @@ class STRecoTrack : public STRecoTrackCand
   private:
     Int_t fCharge; ///< Charge of the particle
     Int_t fVertexID; ///< ID from vertex branch
+    Int_t fHelixID; ///< Helix track ID
 
     TVector3 fPOCAVertex; ///< point of closest approach to vertex
     TVector3 fPosKyotoL; ///< position at extrapolation to left kyoto plane
@@ -47,6 +48,9 @@ class STRecoTrack : public STRecoTrackCand
 
     void SetVertexID(Int_t val) { fVertexID = val; }
     Int_t GetVertexID() { return fVertexID; }
+
+    void SetHelixID(Int_t val) { fHelixID = val; }
+    Int_t GetHelixID() { return fHelixID; }
 
     void SetPOCAVertex(TVector3 val) { fPOCAVertex = val; }
     TVector3 GetPOCAVertex() { return fPOCAVertex; }

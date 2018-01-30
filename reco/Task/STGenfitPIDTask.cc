@@ -108,6 +108,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
     auto candList = (STRecoTrackCandList *) fCandListArray -> ConstructedAt(trackID);
     auto recoTrack = (STRecoTrack *) fRecoTrackArray -> ConstructedAt(trackID);
+    recoTrack -> SetHelixID(iHelix);
     recoTrack -> SetHelixTrack(helixTrack);
 
     auto clusterArray = helixTrack -> GetClusterArray();

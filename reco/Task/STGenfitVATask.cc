@@ -140,7 +140,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     auto candList = (STRecoTrackCandList *) fCandListArray -> ConstructedAt(trackID);
     auto vaTrack = (STRecoTrack *) fVATrackArray -> ConstructedAt(trackID);
 
-    auto helixTrack = (STHelixTrack *) fHelixTrackArray -> At(iTrack);
+    auto helixTrack = (STHelixTrack *) fHelixTrackArray -> At(track -> GetHelixID());
     vaTrack -> SetHelixTrack(helixTrack);
 
     auto clusterArray = helixTrack -> GetClusterArray();
