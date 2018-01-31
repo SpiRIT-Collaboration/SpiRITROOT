@@ -77,7 +77,7 @@ class STRecoTrack : public STRecoTrackCand
     Double_t GetEffCurvature2() { return fEffCurvature2; }
     Double_t GetEffCurvature3() { return fEffCurvature3; }
 
-  ClassDef(STRecoTrack, 3);
+  ClassDef(STRecoTrack, 4);
 };
 
 #endif

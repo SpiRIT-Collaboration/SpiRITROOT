@@ -58,7 +58,7 @@ class STRecoTrackCand : public TObject
     void SetHelixTrack(STHelixTrack *val) { fHelixTrack = val; }
     STHelixTrack *GetHelixTrack() { return fHelixTrack; }
 
-  ClassDef(STRecoTrackCand, 1)
+  ClassDef(STRecoTrackCand, 2)
 };
 
 #endif

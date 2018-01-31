@@ -18,7 +18,7 @@ class STdEdxPoint : public TObject {
     Double_t fLength;   ///< Length from vertex to this point (mm)
     TVector3 fPosition; ///<
 
-  ClassDef(STdEdxPoint, 1)
+  ClassDef(STdEdxPoint, 2)
 };
 
 class STdEdxPointSortByLength {
