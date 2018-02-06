@@ -22,6 +22,7 @@ class STRecoTrack : public STRecoTrackCand
 {
   private:
     Int_t fCharge; ///< Charge of the particle
+    Int_t fParentID; ///< ID from parent track
     Int_t fVertexID; ///< ID from vertex branch
     Int_t fHelixID; ///< Helix track ID
 
@@ -45,6 +46,9 @@ class STRecoTrack : public STRecoTrackCand
 
     void SetCharge(Int_t val) { fCharge = val; }
     Int_t GetCharge() { return fCharge; }
+
+    void SetParentID(Int_t val) { fParentID = val; }
+    Int_t GetParentID() { return fParentID; }
 
     void SetVertexID(Int_t val) { fVertexID = val; }
     Int_t GetVertexID() { return fVertexID; }
