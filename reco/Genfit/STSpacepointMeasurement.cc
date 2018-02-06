@@ -22,6 +22,7 @@ Rearranged by: Genie Jhang (geniejhang@nuclear.korea.ac.kr, Korea University)
 */
 
 #include "STSpacepointMeasurement.hh"
+#include "TMatrixD.h"
 
 ClassImp(genfit::STSpacepointMeasurement)
 
@@ -35,15 +36,16 @@ STSpacepointMeasurement::STSpacepointMeasurement(const STHitCluster *detHit, con
 :SpacepointMeasurement()
 {
   TVector3 pos = detHit -> GetPosition();
+  TMatrixD mat = detHit -> GetCovMatrix();
 
   rawHitCoords_(0) = pos.X()/10.;
   rawHitCoords_(1) = pos.Y()/10.;
   rawHitCoords_(2) = pos.Z()/10.;
 
   TMatrixDSym cov(3);
-  cov(0,0) = 0.2*0.2;
-  cov(1,1) = 0.1*0.1;
-  cov(2,2) = 0.2*0.2;
+  cov(0,0) = mat(0,0)/100.;
+  cov(1,1) = mat(1,1)/100.;
+  cov(2,2) = mat(2,2)/100.;
 
   rawHitCov_ = cov;
   detId_ = hit -> getDetId();

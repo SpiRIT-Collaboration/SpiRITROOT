@@ -91,10 +91,12 @@ STHitCluster::AddHit(STHit *hit)
     else
       CalculateCovMatrix(hitPos, charge);
 
+    /*
     if (fCovMatrix(0, 0) < .64)
       fCovMatrix(0, 0) = .64;
     if (fCovMatrix(2, 2) < 1.44)
       fCovMatrix(2, 2) = 1.44;
+      */
   }
 
   fDx = sqrt(fCovMatrix(0, 0));
