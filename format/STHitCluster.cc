@@ -68,36 +68,23 @@ vector<STHit*> *STHitCluster::GetHitPtrs()          { return &fHitPtrArray; }
 void
 STHitCluster::AddHit(STHit *hit)
 {
-  TVector3 hitPos = hit -> GetPosition();
-  Double_t charge = hit -> GetCharge();
+  auto charge = hit -> GetCharge();
+  auto chargeSum = fCharge + charge;
 
-  Int_t numHits = GetNumHits();
-  if (numHits == 0) {
-    fX = hitPos.X();
-    fY = hitPos.Y();
-    fZ = hitPos.Z();
-    fCovMatrix(0, 0) = hit -> GetDx()*hit -> GetDx();
-    fCovMatrix(1, 1) = hit -> GetDy()*hit -> GetDy();
-    fCovMatrix(2, 2) = hit -> GetDz()*hit -> GetDz();
-  }
-  else {
-    CalculatePosition(hitPos, charge);
-    if (numHits == 1) {
-      fCovMatrix(0, 0) = 0;
-      fCovMatrix(1, 1) = 0;
-      fCovMatrix(2, 2) = 0;
-      CalculateCovMatrix(hitPos, charge);
-    }
-    else
-      CalculateCovMatrix(hitPos, charge);
+  for (int i = 0; i < 3; ++i)
+    operator[](i) = (fCharge*operator[](i) + charge*(*hit)[i]) / chargeSum;
 
-    /*
-    if (fCovMatrix(0, 0) < .64)
-      fCovMatrix(0, 0) = .64;
-    if (fCovMatrix(2, 2) < 1.44)
-      fCovMatrix(2, 2) = 1.44;
-      */
+  if (fCharge == 0) {
+    for (int i = 0; i < 3; ++i)
+    for (int j = 0; j < 3; ++j)
+      fCovMatrix(i,i) = 0;
+  } else {
+    for (int i = 0; i < 3; ++i)
+    for (int j = 0; j < 3; ++j)
+      fCovMatrix(i,j) = fCharge*fCovMatrix(i,j)/chargeSum + charge*(operator[](i)-(*hit)[i])*(operator[](j)-(*hit)[j])/fCharge;
   }
+
+  fCharge = chargeSum;
 
   fDx = sqrt(fCovMatrix(0, 0));
   fDy = sqrt(fCovMatrix(1, 1));
@@ -136,6 +123,7 @@ STHitCluster::CalculateCovMatrix(TVector3 hitPos, Double_t charge)
     }
   }
 }
+
 
 void STHitCluster::SetClusterID(Int_t clusterID)
 {

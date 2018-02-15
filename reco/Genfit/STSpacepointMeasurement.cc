@@ -37,15 +37,20 @@ STSpacepointMeasurement::STSpacepointMeasurement(const STHitCluster *detHit, con
 {
   TVector3 pos = detHit -> GetPosition();
   TMatrixD mat = detHit -> GetCovMatrix();
+  Double_t charge = detHit -> GetCharge();
 
   rawHitCoords_(0) = pos.X()/10.;
   rawHitCoords_(1) = pos.Y()/10.;
   rawHitCoords_(2) = pos.Z()/10.;
 
   TMatrixDSym cov(3);
-  cov(0,0) = mat(0,0)/100.;
-  cov(1,1) = mat(1,1)/100.;
-  cov(2,2) = mat(2,2)/100.;
+  cov(0,0) = mat(0,0)/100./charge;
+  cov(1,1) = mat(1,1)/100./charge;
+  cov(2,2) = mat(2,2)/100./charge;
+
+  cov(0,1) = mat(0,1)/100./charge;
+  cov(1,2) = mat(1,2)/100./charge;
+  cov(2,0) = mat(2,0)/100./charge;
 
   rawHitCov_ = cov;
   detId_ = hit -> getDetId();

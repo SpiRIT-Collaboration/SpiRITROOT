@@ -13,6 +13,7 @@
 #include "TObject.h"
 #include "TVector3.h"
 #include "TMath.h"
+#include "TError.h"
 
 #include <vector>
 
@@ -82,6 +83,33 @@ class STHit : public TObject
 
     Int_t GetNumTrackCands();
     std::vector<Int_t> *GetTrackCandArray();
+
+    inline Double_t & operator[](int i) {
+      switch(i) {
+        case 0:
+          return fX;
+        case 1:
+          return fY;
+        case 2:
+          return fZ;
+        default:
+          Error("operator[](i)", "bad index (%d) returning 0",i);
+      }
+      return fX;
+    }
+    inline Double_t operator[](int i) const {
+      switch(i) {
+        case 0:
+          return fX;
+        case 1:
+          return fY;
+        case 2:
+          return fZ;
+        default:
+          Error("operator[](i)", "bad index (%d) returning 0",i);
+      }
+      return 0.;
+    }
 
   protected:
       Bool_t fIsClustered; ///< Clustered flag
