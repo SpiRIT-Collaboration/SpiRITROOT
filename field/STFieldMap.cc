@@ -133,6 +133,7 @@ Double_t STFieldMap::GetBx(Double_t x, Double_t y, Double_t z) {
   Int_t ix    = 0;
   Int_t iy    = 0;
   Int_t iz    = 0;
+  Int_t af    = x < fPosX ? -1 : 1; 
   Double_t dx = 0.;
   Double_t dy = 0.;
   Double_t dz = 0.;
@@ -150,7 +151,7 @@ Double_t STFieldMap::GetBx(Double_t x, Double_t y, Double_t z) {
   fHa[1][1][1] = fBx->At((ix+1)*fNy*fNz + (iy+1)*fNz + (iz+1));
 
   // Return interpolated field value
-  return Interpolate(dx, dy, dz);
+  return af*Interpolate(dx, dy, dz);
 
   }
 
@@ -199,6 +200,7 @@ Double_t STFieldMap::GetBz(Double_t x, Double_t y, Double_t z) {
   Int_t ix    = 0;
   Int_t iy    = 0;
   Int_t iz    = 0;
+  Int_t af    = z < fPosZ ? -1 : 1; 
   Double_t dx = 0.;
   Double_t dy = 0.;
   Double_t dz = 0.;
@@ -216,7 +218,7 @@ Double_t STFieldMap::GetBz(Double_t x, Double_t y, Double_t z) {
   fHa[1][1][1] = fBz->At((ix+1)*fNy*fNz + (iy+1)*fNz + (iz+1));
 
   // Return interpolated field value
-  return Interpolate(dx, dy, dz);
+  return af*Interpolate(dx, dy, dz);
 
   }
 
@@ -255,6 +257,7 @@ Bool_t STFieldMap::IsInside(Double_t x, Double_t y, Double_t z,
   ix = Int_t( xl / fXstep );
   iy = Int_t( yl / fYstep );
   iz = Int_t( zl / fZstep );
+
 
 
   // Relative distance from grid point (in units of cell size)
@@ -454,6 +457,9 @@ void STFieldMap::ReadAsciiFile(const char* fileName) {
 	  cout << "\b\b\b\b\b\b" << setw(3) << perc << " % " << flush;
 	}
 	mapFile >> xx >> yy >> zz >>  bx >> by >> bz ;
+	bx = bx>1e-10 ? bx : 0;
+	by = by>1e-10 ? by : 0;
+	bz = bz>1e-10 ? bz : 0;
 	fBx->AddAt(bx*funit, index);
 	fBy->AddAt(by*funit, index);
 	fBz->AddAt(bz*funit, index);
