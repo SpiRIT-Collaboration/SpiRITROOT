@@ -36,6 +36,7 @@ class STPSAETask : public STRecoTask
     void UseDefautPulserData(Int_t shapingTime);
 
     void SetGainMatchingScale(Double_t val);
+    void SetGainMatchingData(TString filename);
 
   private:
     TClonesArray *fRawEventArray = nullptr;
@@ -53,6 +54,7 @@ class STPSAETask : public STRecoTask
     Int_t fNumHitsLowLimit = 1;
 
     Double_t fGainMatchingScale = 1;
+    TString fGainMatchingData = "";
 
   ClassDef(STPSAETask, 1)
 };

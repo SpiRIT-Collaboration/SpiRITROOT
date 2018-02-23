@@ -69,6 +69,7 @@ InitStatus STPSAETask::Init()
   fPSA -> SetThreshold(fThreshold);
   fPSA -> SetLayerCut(fLayerLowCut, fLayerHighCut);
   fPSA -> SetGainMatchingScale(fGainMatchingScale);
+  fPSA -> SetGainMatchingData(fGainMatchingData);
 
   fShapingTime = fPSA -> GetShapingTime();
 
@@ -110,3 +111,4 @@ void STPSAETask::Exec(Option_t *opt)
 }
 
 void STPSAETask::SetGainMatchingScale(Double_t val) { fGainMatchingScale = val; }
+void STPSAETask::SetGainMatchingData(TString filename) { fGainMatchingData = filename; }
