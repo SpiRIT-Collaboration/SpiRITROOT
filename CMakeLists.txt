@@ -14,6 +14,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.2 FATAL_ERROR)
 foreach(p
   CMP0025 # CMake 3.0
   CMP0042 # CMake 3.0
+  CMP0054 # CMake 3.9
   )
   if(POLICY ${p})
   cmake_policy(SET ${p} NEW)
@@ -106,6 +107,7 @@ find_package(GEANT4 REQUIRED)
 find_package(GEANT4DATA)
 find_package(GEANT4VMC)
 find_package(CLHEP)
+find_package(Eigen3 REQUIRED)
 find_package(GENFIT2 REQUIRED)
 find_package(ANAROOT REQUIRED)
 find_package(RAVE REQUIRED)
