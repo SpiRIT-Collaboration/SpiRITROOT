@@ -30,10 +30,12 @@
  *             kFALSE to use field map file 'SamuraiMap_0.5T.dat'.
  */
 
+void AddIons(FairRunSim *fRun, TString event);
+
 void run_mc
 (
   TString name  = "urqmd_short",
-  TString event = "UrQMD_300AMeV_short.egen",
+  TString event = "urqmd_132sn124sn270amevb0012_10event.dat",
   Bool_t  useFieldMapFile = kFALSE
 )
 {
@@ -73,6 +75,7 @@ void run_mc
   fRun -> SetOutputFile(outputFile);
   fRun -> SetGenerateRunInfo(kFALSE);
   fRun -> SetMaterials("media.geo");
+  AddIons(fRun, event);
 
 
   // -----------------------------------------------------------------
@@ -151,4 +154,49 @@ void run_mc
   cout << endl << endl;
   cout << "Macro finished succesfully."  << endl << endl;
   cout << "- Output file : " << outputFile << endl << endl;
+}
+
+void AddIons(FairRunSim *fRun, TString event)
+{
+  TString symbol[50] = {"H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
+                        "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca",
+                        "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
+                        "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr",
+                        "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn"};
+
+  TString input_dir = gSystem -> Getenv("VMCWORKDIR");
+  TString fGenFileName = input_dir + "/input/" + event;
+  LOG(INFO) << "Opening EventGen file for adding ions: " << fGenFileName <<FairLogger::endl;
+
+  ifstream fGenFile(fGenFileName.Data());
+  if(!fGenFile.is_open())
+    LOG(FATAL) << "Cannont open EventGen file: " << fGenFileName << FairLogger::endl;
+
+  vector<Int_t> ions;
+  Int_t nEvents, pdg, eventID, nTracks;
+  Double_t tmp, b;
+
+  fGenFile >> nEvents;
+
+  for (Int_t iEvent = 0; iEvent < nEvents; iEvent++) {
+    fGenFile >> eventID >> nTracks >> b;
+
+    for(Int_t iTrack = 0; iTrack < nTracks; iTrack++) {
+      fGenFile >> pdg >> tmp >> tmp >> tmp;
+      if (pdg > 3000)
+        ions.push_back(pdg);
+    }
+  }
+
+  fGenFile.close();
+
+  std::sort(ions.begin(), ions.end());
+  ions.resize(std::distance(ions.begin(), std::unique(ions.begin(), ions.end())));
+
+  for (Int_t iIon = 0; iIon < ions.size(); iIon++) {
+    auto z = (ions.at(iIon)%10000000)/10000;
+    auto a = (ions.at(iIon)%10000)/10;
+
+    fRun -> AddNewIon(new FairIon(Form("%d", a) + symbol[z], z, a, z));
+  }
 }
