@@ -5,6 +5,7 @@
 
 #include "STEventGenGenerator.hh"
 #include "TSystem.h"
+#include "FairMCEventHeader.h"
 
 ClassImp(STEventGenGenerator);
 
@@ -42,10 +43,19 @@ STEventGenGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 {
   Int_t eventID;
   Int_t nTracks;
+  Double_t b;
 
-  if(!(fGenFile>>eventID>>nTracks)) {
+  if(!(fGenFile>>eventID>>nTracks>>b)) {
     LOG(INFO)<<"End of EventGen."<<FairLogger::endl;
     return kFALSE;
+  }
+
+  FairMCEventHeader* event = primGen -> GetEvent();
+  if( event && (!event -> IsSet()) ){
+    event -> SetEventID(eventID);
+    event -> SetB(b);
+    event -> SetNPrim(nTracks);
+    event -> MarkSet(kTRUE);
   }
 
   Int_t pdg;
