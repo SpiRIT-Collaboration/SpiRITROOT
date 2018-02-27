@@ -71,6 +71,7 @@ void geomSpiRIT_mk()
   FairGeoMedium *FGMppo         = media -> getMedium("PPO");
   FairGeoMedium *FGMpopop       = media -> getMedium("POPOP");
   FairGeoMedium *FGMbc404       = media -> getMedium("bc404");
+  FairGeoMedium *FGMpolyvinyltoruene = media -> getMedium("polyvinyltoruene");
 
   geoBuilder -> createMedium(FGMvacuum);
   geoBuilder -> createMedium(FGMp10);
@@ -84,6 +85,7 @@ void geomSpiRIT_mk()
   geoBuilder -> createMedium(FGMppo);
   geoBuilder -> createMedium(FGMpopop);
   geoBuilder -> createMedium(FGMbc404);
+  geoBuilder -> createMedium(FGMpolyvinyltoruene);
   
   gGeoManager = (TGeoManager *) gROOT -> FindObject("FAIRGeom");
   gGeoManager -> SetName("SpiRIT");
@@ -100,6 +102,8 @@ void geomSpiRIT_mk()
   TGeoMedium *ppo         = gGeoManager -> GetMedium("ppo");
   TGeoMedium *popop       = gGeoManager -> GetMedium("popop");
   TGeoMedium *bc404       = gGeoManager -> GetMedium("bc404");
+  TGeoMedium *polyvinyltoruene = gGeoManager -> GetMedium("polyvinyltoruene");
+
   
 
   // ----------------------------------------------------
@@ -880,9 +884,9 @@ void geomSpiRIT_mk()
   Double_t dlKatanaV = 40.;
   Double_t dwKatanaV = 10.;
   Double_t dtKatanaV = .1;
-  TGeoVolume * katanaVPlaL = gGeoManager -> MakeBox("katanaVPlaL",bc404,dwKatanaV/2,dlKatanaV/2,dtKatanaV/2);
-  TGeoVolume * katanaVPlaM = gGeoManager -> MakeBox("katanaVPlaM",bc404,dwKatanaV/2,dlKatanaV/2,dtKatanaV/2);
-  TGeoVolume * katanaVPlaR = gGeoManager -> MakeBox("katanaVPlaR",bc404,dwKatanaV/2,dlKatanaV/2,dtKatanaV/2);
+  TGeoVolume * katanaVPlaL = gGeoManager -> MakeBox("katanaVPlaL",polyvinyltoruene,dwKatanaV/2,dlKatanaV/2,dtKatanaV/2);
+  TGeoVolume * katanaVPlaM = gGeoManager -> MakeBox("katanaVPlaM",polyvinyltoruene,dwKatanaV/2,dlKatanaV/2,dtKatanaV/2);
+  TGeoVolume * katanaVPlaR = gGeoManager -> MakeBox("katanaVPlaR",polyvinyltoruene,dwKatanaV/2,dlKatanaV/2,dtKatanaV/2);
   
   Double_t offxKatanaVPla = 21.6; // for 132Sn
   //Double_t offxKatanaVPla = 24.6; // for 108Sn
@@ -952,9 +956,9 @@ void geomSpiRIT_mk()
   p10gas            -> SetMedium(p10);
 
   for(Int_t ik=0; ik<60; ik++) kyoto[ik] -> SetMedium(polystyrene);
-  katanaVPlaL       -> SetMedium(bc404);
-  katanaVPlaM       -> SetMedium(bc404);
-  katanaVPlaR       -> SetMedium(bc404);
+  katanaVPlaL       -> SetMedium(polyvinyltoruene);
+  katanaVPlaM       -> SetMedium(polyvinyltoruene);
+  katanaVPlaR       -> SetMedium(polyvinyltoruene);
 
   outerAir          -> SetMedium(air);
 
