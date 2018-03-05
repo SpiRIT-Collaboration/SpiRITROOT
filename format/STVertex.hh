@@ -53,6 +53,9 @@ class STVertex : public TObject {
     Int_t GetID()        const { return fID; }
     void Print(const Option_t * = "") const;
 
+    void SetIsCollisionVertex(bool val = true) { fCollisionVertex = val; }
+    bool IsCollisionVertex() { return fCollisionVertex; }
+
   private:
     TVector3 fPos;
     TMatrixDSym fCov;
@@ -60,9 +63,11 @@ class STVertex : public TObject {
     Double_t fChi2;
     Int_t fID;
 
+    bool fCollisionVertex = false;
+
     std::vector<genfit::GFRaveTrackParameters *> fSmoothedTracks; //->
 
-  ClassDef(STVertex, 1)
+  ClassDef(STVertex, 2)
 };
 
 #endif

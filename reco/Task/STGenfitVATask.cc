@@ -122,6 +122,7 @@ void STGenfitVATask::Exec(Option_t *opt)
   }
 
   auto vertex = (STVertex *) fVertexArray -> At(chosenVID);
+  vertex -> SetIsCollisionVertex();
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();
   for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
