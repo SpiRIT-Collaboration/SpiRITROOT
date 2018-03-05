@@ -200,7 +200,7 @@ void STGenfitVATask::Exec(Option_t *opt)
       vaTrackCand -> SetMomentumTargetPlane(momTargetPlane);
       vaTrackCand -> SetPosTargetPlane(posTargetPlane);
 
-      fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, vaTrackCand -> GetdEdxPointArray());
+      fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, vaTrackCand -> GetdEdxPointArray(), true);
 
       auto prob = fPIDTest -> GetProbability(pid, mom.Mag(), vaTrackCand -> GetdEdxWithCut(0,0.7));
       vaTrackCand -> SetPIDProbability(prob);

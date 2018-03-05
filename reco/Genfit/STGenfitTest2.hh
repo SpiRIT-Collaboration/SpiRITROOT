@@ -46,7 +46,7 @@ class STGenfitTest2
     void GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 vertex, TVector3 &momVertex, TVector3 &pocaVertex);
 
     bool GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray);
-    bool GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray);
+    bool GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray, bool ignoreFirst = false);
 
     /// Set genfit-track to use ExtrapolateTrack() method.
     genfit::Track* SetTrack(STRecoTrack *recoTrack, TClonesArray *clusterArray);

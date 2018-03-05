@@ -725,7 +725,7 @@ STGenfitTest2::GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helix
 }
 
 bool 
-STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray)
+STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray, bool ignoreFirst)
 {
   Int_t numPoints = helixTrack -> GetNumStableClusters();
   if (numPoints < 3)
@@ -743,7 +743,10 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
   auto clusterArray = helixTrack -> GetClusterArray();
   auto numClusters = clusterArray -> size();
 
-  for (auto iCluster = 0; iCluster < numClusters; iCluster++)
+  auto iCluster0 = 0;
+  if (ignoreFirst)
+    iCluster0 = 1;
+  for (auto iCluster = iCluster0; iCluster < numClusters; iCluster++)
   {
     auto cluster = clusterArray -> at(iCluster);
     if (!cluster -> IsStable())
