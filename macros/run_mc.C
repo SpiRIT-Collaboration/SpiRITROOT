@@ -197,6 +197,6 @@ void AddIons(FairRunSim *fRun, TString event)
     auto z = (ions.at(iIon)%10000000)/10000;
     auto a = (ions.at(iIon)%10000)/10;
 
-    fRun -> AddNewIon(new FairIon(Form("%d", a) + symbol[z], z, a, z));
+    fRun -> AddNewIon(new FairIon(Form("%d", a) + symbol[z - 1], z, a, z));
   }
 }
