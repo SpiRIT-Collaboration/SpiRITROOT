@@ -111,6 +111,13 @@ class STHit : public TObject
       return 0.;
     }
 
+    void SetS(Double_t val) { fS = val; }
+    Double_t GetS() const { return fS; }
+
+    virtual Int_t Compare(const TObject *obj) const;
+    virtual Bool_t IsSortable() const { return true; }
+
+
   protected:
       Bool_t fIsClustered; ///< Clustered flag
        Int_t fHitID;       ///< Hit ID
@@ -131,9 +138,11 @@ class STHit : public TObject
     Double_t fChi2;        ///< Chi-square of hit time fit
        Int_t fNDF;         ///< NDF of hit time fit
 
+    Double_t fS = 0;       //!
+
     std::vector<Int_t> fTrackCandArray; //! <
 
-  ClassDef(STHit, 7);
+  ClassDef(STHit, 8);
 };
 
 class STHitSortDirection

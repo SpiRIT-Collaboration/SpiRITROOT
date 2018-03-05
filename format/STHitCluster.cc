@@ -3,6 +3,9 @@
  *
  *  @author Genie Jhang ( geniejhang@majimak.com )
  *  @author JungWoo Lee
+ *
+ *  method IsClustered() is always true.
+ *  fIsClustered is stable flag for STHitCluster.
  */
 
 #include "STHitCluster.hh"
@@ -15,22 +18,7 @@ ClassImp(STHitCluster);
 
 STHitCluster::STHitCluster()
 {
-  fClusterID = -1;
-
-  fX = 0;
-  fY = 0;
-  fZ = 0;
-  fDx = 0;
-  fDy = 0;
-  fDz = 0;
-
-  fCovMatrix.ResizeTo(3, 3);
-  for (Int_t iElem = 0; iElem < 9; iElem++)
-    fCovMatrix(iElem/3, iElem%3) = 0;
-
-  fCharge = 0.;
-
-  fIsClustered = kFALSE;
+  Clear();
 }
 
 STHitCluster::STHitCluster(STHitCluster *cluster)
@@ -53,6 +41,41 @@ STHitCluster::STHitCluster(STHitCluster *cluster)
   fHitPtrArray = *(cluster -> GetHitPtrs());
 
   fCharge = cluster -> GetCharge();
+
+  fLength = cluster -> GetLength();
+
+  SetPOCA(cluster -> GetPOCA());
+}
+
+void STHitCluster::Clear(Option_t *)
+{
+  STHit::Clear();
+
+  fClusterID = -1;
+
+  fX = 0;
+  fY = 0;
+  fZ = 0;
+  fDx = 0;
+  fDy = 0;
+  fDz = 0;
+
+  fCovMatrix.ResizeTo(3, 3);
+  for (Int_t iElem = 0; iElem < 9; iElem++)
+    fCovMatrix(iElem/3, iElem%3) = 0;
+
+  fHitIDArray.clear();
+  fHitPtrArray.clear();
+
+  fLength = -999;
+
+  fPOCAX = -999;
+  fPOCAY = -999;
+  fPOCAZ = -999;
+
+  fS = 0;
+
+  fIsClustered = kFALSE;
 }
 
 void STHitCluster::SetCovMatrix(TMatrixD matrix) { fCovMatrix = matrix; } 
@@ -61,28 +84,44 @@ Bool_t STHitCluster::IsClustered() const { return kTRUE; }
 Int_t  STHitCluster::GetHitID()    const { return fClusterID; }
 
      TMatrixD   STHitCluster::GetCovMatrix() const  { return fCovMatrix; }
-        Int_t   STHitCluster::GetNumHits()          { return fHitIDArray.size(); }
+        Int_t   STHitCluster::GetNumHits() const    { return fHitIDArray.size(); }
 vector<Int_t>  *STHitCluster::GetHitIDs()           { return &fHitIDArray; }
 vector<STHit*> *STHitCluster::GetHitPtrs()          { return &fHitPtrArray; }
 
 void
 STHitCluster::AddHit(STHit *hit)
 {
+  Double_t cov_default[3] = {4*4,1*1,6*6};
+
   auto charge = hit -> GetCharge();
   auto chargeSum = fCharge + charge;
 
   for (int i = 0; i < 3; ++i)
     operator[](i) = (fCharge*operator[](i) + charge*(*hit)[i]) / chargeSum;
 
-  if (fCharge == 0) {
+  fS = (fCharge * fS + charge * hit -> GetS()) / chargeSum;
+
+  if (GetNumHits() == 0) {
     for (int i = 0; i < 3; ++i)
     for (int j = 0; j < 3; ++j)
-      fCovMatrix(i,i) = 0;
-  } else {
+      fCovMatrix(i,j) = 0;
+
+    for (int i = 0; i < 3; ++i)
+      fCovMatrix(i,i) = cov_default[i];
+  }
+  else if (GetNumHits() == 1) {
+    for (int i = 0; i < 3; ++i)
+    for (int j = 0; j < 3; ++j)
+      fCovMatrix(i,j) = charge*(operator[](i)-(*hit)[i])*(operator[](j)-(*hit)[j])/fCharge;
+  }
+  else {
     for (int i = 0; i < 3; ++i)
     for (int j = 0; j < 3; ++j)
       fCovMatrix(i,j) = fCharge*fCovMatrix(i,j)/chargeSum + charge*(operator[](i)-(*hit)[i])*(operator[](j)-(*hit)[j])/fCharge;
   }
+
+       if (fLayer != -1) fCovMatrix(2,2) = cov_default[2];
+  else if (fRow   != -1) fCovMatrix(0,0) = cov_default[0];
 
   fCharge = chargeSum;
 
@@ -145,3 +184,7 @@ void STHitCluster::SetPOCA(TVector3 p)
   fPOCAZ = p.Z();
 }
 TVector3 STHitCluster::GetPOCA() { return TVector3(fPOCAX, fPOCAY, fPOCAZ); }
+
+void STHitCluster::ApplyCovLowLimit()
+{
+}

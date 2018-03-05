@@ -25,13 +25,15 @@ class STHitCluster : public STHit
     STHitCluster(STHitCluster *cluster);
     virtual ~STHitCluster() {}
 
+    void Clear(Option_t * = "");
+
     void SetCovMatrix(TMatrixD matrix);  ///< Set covariance matrix
 
     Bool_t IsClustered() const;
      Int_t GetHitID() const;
 
          TMatrixD   GetCovMatrix() const; ///< Get covariance matrix
-            Int_t   GetNumHits();         ///< Get number of hits
+            Int_t   GetNumHits()  const;  ///< Get number of hits
     vector<Int_t>  *GetHitIDs();          ///< Get vector array hit IDs
     vector<STHit*> *GetHitPtrs();
 
@@ -47,6 +49,11 @@ class STHitCluster : public STHit
 
     void SetPOCA(TVector3 p);
     TVector3 GetPOCA();
+
+    bool IsLayerCluster() const { return (fRow == -1 && fLayer != -1) ? true : false; }
+    bool IsRowCluster()   const { return (fRow != -1 && fLayer == -1) ? true : false; }
+
+    void ApplyCovLowLimit();
 
   protected:
     TMatrixD fCovMatrix;                  ///< Cluster covariance matrix
@@ -72,7 +79,7 @@ class STHitCluster : public STHit
      */
     void CalculateCovMatrix(TVector3 hitPos, Double_t charge); 
 
-  ClassDef(STHitCluster, 7);
+  ClassDef(STHitCluster, 8);
 };
 
 #endif

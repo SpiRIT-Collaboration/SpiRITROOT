@@ -67,39 +67,28 @@ Double_t STHitClusterRich::GetZMin() { return fZMin; }
 
 void STHitClusterRich::AddHit(STHit *hit)
 {
-  TVector3 hitPos = hit -> GetPosition();
-  Double_t charge = hit -> GetCharge();
-
-  CalculatePosition(hitPos, charge);
+  STHitCluster::AddHit(hit);
 
   if (GetNumHits() > 0)
   {
-    CalculateCovMatrix(hitPos, charge);
+    if (hit->GetX() > fXMax) fXMax = hit->GetX();
+    if (hit->GetX() < fXMin) fXMin = hit->GetX();
 
-    if (hitPos.X() > fXMax) fXMax = hitPos.X();
-    if (hitPos.X() < fXMin) fXMin = hitPos.X();
+    if (hit->GetY() > fYMax) fYMax = hit->GetY();
+    if (hit->GetY() < fYMin) fYMin = hit->GetY();
 
-    if (hitPos.Y() > fYMax) fYMax = hitPos.Y();
-    if (hitPos.Y() < fYMin) fYMin = hitPos.Y();
-
-    if (hitPos.Z() > fZMax) fZMax = hitPos.Z();
-    if (hitPos.Z() < fZMin) fZMin = hitPos.Z();
+    if (hit->GetZ() > fZMax) fZMax = hit->GetZ();
+    if (hit->GetZ() < fZMin) fZMin = hit->GetZ();
   }
   else
   {
-    fXMax = hitPos.X();
-    fXMin = hitPos.X();
+    fXMax = hit->GetX();
+    fXMin = hit->GetX();
 
-    fYMax = hitPos.Y();
-    fYMin = hitPos.Y();
+    fYMax = hit->GetY();
+    fYMin = hit->GetY();
 
-    fZMax = hitPos.Z();
-    fZMin = hitPos.Z();
+    fZMax = hit->GetZ();
+    fZMin = hit->GetZ();
   }
-
-  fCharge += charge;
-
-  fHitIDArray.push_back(hit -> GetHitID());
-  hit -> SetClusterID(fClusterID);
-
 }

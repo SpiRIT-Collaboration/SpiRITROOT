@@ -199,15 +199,13 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
   for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
     auto track = (STHelixTrack *) fTrackArray -> At(iTrack);
     track -> DetermineParticleCharge(vertex);
+
     if (fSaturationOption == 1)
       De_Saturate(track);
-    if (fClusteringOption == 0)
-      HitClustering(track, 24);
-    else if (fClusteringOption == 1)
-      HitClustering(track, 12);
-    else if (fClusteringOption == 2)
-      HitClustering2(track);
+
     track -> FinalizeHits();
+    HitClustering(track);
+
     track -> FinalizeClusters();
   }
 }
@@ -509,356 +507,191 @@ STHelixTrackFinder::ConfirmHits(STHelixTrack *track, bool &tailToHead)
 }
 
 bool
-STHelixTrackFinder::HitClustering2(STHelixTrack *track)
+STHelixTrackFinder::HitClustering(STHelixTrack *helix)
 {
-  track -> SortHitsByTimeOrder();
+  auto hitArray = helix -> GetHitArray();
 
-  auto trackHits = track -> GetHitArray();
-  auto numHits = trackHits -> size();
+  TObjArray hits;
+  for (auto hit : *hitArray)
+    hits.Add(hit);
 
-  auto CheckRange = [](STHitCluster *cluster) {
-    auto x = cluster -> GetX();
-    auto y = cluster -> GetY();
-    auto z = cluster -> GetZ();
+  Int_t numClusters = fHitClusterArray -> GetEntries();
+  Int_t idxCluster = fHitClusterArray -> GetEntries();
 
-    if (x > 412 || x < -412 || y < -520 || y > 20 || z < 20 || z > 1324)
-      return false;
+  TVector3 q;
+  Double_t alpha;
 
-    Int_t layer = z / 12;
-    //    if (layer > 89 && layer < 100)
-    //      return false;
+  bool isRow = 0;
+  auto section = 0;
+  bool currentBuildIsRow = 1; // should be different from isRow so it can init as son as loop start.
+  auto currentBuildSection = -999; // should be different from section so it can init as son as loop start.
 
-    return true;
-  };
+  TObjArray buildingClusters[2];
+  Int_t buildingSection[2] = {-1,-1}; // 0: layer, 1: row
+  Int_t numBuildingClusters[2] = {0}; // 0: layer, 1: row
+  Int_t buildBoundary[2][2];
+  buildBoundary[0][0] =  999;
+  buildBoundary[0][1] = -999;
+  buildBoundary[1][0] =  999;
+  buildBoundary[1][1] = -999;
 
-  auto CheckBuildByLayer = [track](STHit *hit) {
-    TVector3 q;
-    Double_t alpha;
-    track -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
+  hits.Sort();
+  TIter itHits(&hits);
+  STHit *hit;
 
-    auto direction = track -> Direction(alpha);
-    Double_t angle = TMath::ATan2(TMath::Abs(direction.Z()), direction.X());
-    if (angle > TMath::ATan2(1,1) && angle < TMath::ATan2(1,-1))
-      return true;
-    else
-    return false;
-  };
+  vector<Int_t> sectionHistory;
 
-  auto SetClusterLength = [track](STHitCluster *cluster) {
-    auto row = cluster -> GetRow();
-    auto layer = cluster -> GetLayer();
-    auto alpha = track -> AlphaAtPosition(cluster -> GetPosition());
-    Double_t length;
-    TVector3 q0;
-    TVector3 q1;
-    if (layer == -1) {
-      Double_t x0 = (row)*8.-432.;
-      Double_t x1 = (row+1)*8.-432.;
-      length = 1;
-      track -> ExtrapolateToX(x0, alpha, q0);
-      track -> ExtrapolateToX(x1, alpha, q1);
-      length = TMath::Abs(track -> Map(q0).Z() - track -> Map(q1).Z());
-    } else {
-      Double_t z0 = (layer)*12.;
-      Double_t z1 = (layer+1)*12.;
-      track -> ExtrapolateToZ(z0, alpha, q0);
-      track -> ExtrapolateToZ(z1, alpha, q1);
-      length = TMath::Abs(track -> Map(q0).Z() - track -> Map(q1).Z());
-    }
-    cluster -> SetLength(length);
-  };
-
-  bool buildNewCluster = true;
-  auto curHit = trackHits -> at(0);
-  bool buildByLayer = CheckBuildByLayer(curHit);
-
-  STHitCluster *lastCluster = nullptr;
-  lastCluster = NewCluster(curHit);
-
-  Int_t rowMin = curHit -> GetRow();
-  Int_t rowMax = curHit -> GetRow();
-  Int_t layerMin = curHit -> GetLayer();
-  Int_t layerMax = curHit -> GetLayer();
-
-  if (buildByLayer) {
-    layerMin = layerMin = 0;
-    layerMin = layerMax = -1;
-    lastCluster -> SetRow(-1);
-    lastCluster -> SetLayer(curHit -> GetLayer());
-  } else {
-    rowMin = rowMin = 0;
-    rowMin = rowMax = -1;
-    lastCluster -> SetRow(curHit -> GetRow());
-    lastCluster -> SetLayer(-1);
-  }
-  SetClusterLength(lastCluster);
-
-  std::vector<STHitCluster *> buildingClusters;
-  buildingClusters.push_back(lastCluster);
-
-  for (auto iHit = 1; iHit < numHits; iHit++)
+  while ((hit = (STHit *) itHits.Next()))
   {
-    curHit = trackHits -> at(iHit);
+    helix -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
 
-    auto row = curHit -> GetRow();
-    auto layer = curHit -> GetLayer();
+    section = (Int_t)(alpha/(TMath::Pi()/4));
+    isRow = abs(section)%2;
 
-    if (!buildNewCluster)
+    if (section != currentBuildSection) // init
     {
-      if (buildByLayer) {
-        if (row < rowMin || row > rowMax) {
-          buildNewCluster = true;
-          layerMin = layer;
-          layerMax = layer;
+      for (auto section0 : sectionHistory)
+        if (section0 == section)
+          continue;
+
+      sectionHistory.push_back(section);
+
+      currentBuildIsRow = isRow;
+      currentBuildSection = section;
+      vector<Int_t> initList; // 1 for row, 0 for layer
+
+      if (currentBuildSection-section > 1) // if jumped section
+      {
+        if (buildingSection[1] > buildingSection[0]) {
+          initList.push_back(0);
+          initList.push_back(1);
+        } else {
+          initList.push_back(1);
+          initList.push_back(0);
         }
-      } else {
-        if (layer < layerMin || layer > layerMax) {
-          buildNewCluster = true;
-          rowMin = row;
-          rowMax = row;
-        }
+      }
+      else if (isRow) initList.push_back(1);
+      else            initList.push_back(0);
+
+      for (auto rl : initList) {
+        buildingClusters[rl].Clear();
+        numBuildingClusters[rl] = 0;
+        buildBoundary[abs(rl-1)][0] = 999;
+        buildBoundary[abs(rl-1)][1] = -999;
       }
 
-      if (buildNewCluster) {
-        buildingClusters.clear();
-        buildByLayer = !buildByLayer;
-      }
+      //TODO
+      continue;
     }
-
-    if (buildByLayer)
+    else // continue build with same option
     {
-      bool createNewCluster = true;
-      if (layer < layerMin || layer > layerMax) {
-        for (auto cluster : buildingClusters) {
-          if (layer == cluster -> GetLayer()) {
-            createNewCluster = false;
-            cluster -> AddHit(curHit);
+      if (isRow) {
+        auto row = hit -> GetRow();
+        auto layer = hit -> GetLayer();
+
+        //shoud check opposite boundary because next build will use shade area
+        if (layer < buildBoundary[0][0]) buildBoundary[0][0] = layer;
+        if (layer > buildBoundary[0][1]) buildBoundary[0][1] = layer;
+
+        // check before build
+        bool foundCluster = false;
+        for (auto iCluster = numBuildingClusters[0]-1; iCluster >= 0; --iCluster) {
+          auto cluster = (STHitCluster *) buildingClusters[0].At(iCluster);
+          if (cluster -> GetLayer() == layer) {
+            cluster -> SetClusterID(-1); // bad cluster
+            foundCluster = true;
+            break;
           }
         }
-      } else
-        createNewCluster = false;
+        if(foundCluster)
+          continue;
 
-      if (buildNewCluster) {
-        if (row < rowMin) rowMin = row;
-        if (row > rowMax) rowMax = row;
-      } else
-        createNewCluster = false;
+        // check this build
+        if (row >= buildBoundary[1][0] && row <= buildBoundary[1][1])
+          continue;
 
-      if (createNewCluster) {
-        if (buildByLayer !=  CheckBuildByLayer(curHit)) {
-          buildNewCluster = false;
-          lastCluster = nullptr;
-        }
-        else {
-          if (lastCluster != nullptr) {
-            track -> AddHitCluster(lastCluster);
-            lastCluster -> SetIsStable(true);
+        foundCluster = false;
+        for (auto iCluster = numBuildingClusters[1]-1; iCluster >= 0; --iCluster) {
+          auto cluster = (STHitCluster *) buildingClusters[1].At(iCluster);
+          if (cluster -> GetRow() == row) {
+            foundCluster = true;
+            cluster -> AddHit(hit);
+            break;
           }
-          lastCluster = NewCluster(curHit);
-          lastCluster -> SetRow(-1);
-          lastCluster -> SetLayer(layer);
-          SetClusterLength(lastCluster);
-          buildingClusters.push_back(lastCluster);
+        }
+        if (!foundCluster) {
+          auto cluster = new ((*fHitClusterArray)[numClusters++]) STHitCluster();
+          cluster -> SetClusterID(1);
+          cluster -> SetRow(row);
+          cluster -> SetLayer(-1);
+          cluster -> AddHit(hit);
+          buildingClusters[1].Add(cluster);
+          ++numBuildingClusters[1];
+        }
+      } ////////////////////////////////////////////////////// was for row build
+      else {
+        auto row = hit -> GetRow();
+        auto layer = hit -> GetLayer();
+
+        //shoud check opposite boundary because next build will use shade area
+        if (row < buildBoundary[1][0]) buildBoundary[1][0] = row;
+        if (row > buildBoundary[1][1]) buildBoundary[1][1] = row;
+
+        // check before build
+        bool foundCluster = false;
+        for (auto iCluster = numBuildingClusters[1]-1; iCluster >= 0; --iCluster) {
+          auto cluster = (STHitCluster *) buildingClusters[1].At(iCluster);
+          if (cluster -> GetRow() == row) {
+            cluster -> SetClusterID(-1); // bad cluster
+            foundCluster = true;
+            break;
+          }
+        }
+        if(foundCluster)
+          continue;
+
+        // check this build
+        if (layer >= buildBoundary[0][0] && layer <= buildBoundary[0][1])
+          continue;
+
+        foundCluster = false;
+        for (auto iCluster = numBuildingClusters[0]-1; iCluster >= 0; --iCluster) {
+          auto cluster = (STHitCluster *) buildingClusters[0].At(iCluster);
+          if (cluster -> GetLayer() == layer) {
+            foundCluster = true;
+            cluster -> AddHit(hit);
+            break;
+          }
+        }
+        if (!foundCluster) {
+          auto cluster = new ((*fHitClusterArray)[numClusters++]) STHitCluster();
+          cluster -> SetClusterID(1);
+          cluster -> SetRow(-1);
+          cluster -> SetLayer(layer);
+          cluster -> AddHit(hit);
+          buildingClusters[0].Add(cluster);
+          ++numBuildingClusters[0];
         }
       }
-    }
-    else
-    {
-      bool createNewCluster = true;
-      if (row < rowMin || row > rowMax) {
-        for (auto cluster : buildingClusters) {
-          if (row == cluster -> GetRow()) {
-            createNewCluster = false;
-            cluster -> AddHit(curHit);
-          }
-        }
-      } else
-        createNewCluster = false;
-
-      if (buildNewCluster) {
-        if (layer < layerMin) layerMin = layer;
-        if (layer > layerMax) layerMax = layer;
-      } else
-        createNewCluster = false;
-
-      if (createNewCluster) {
-        if (buildByLayer !=  CheckBuildByLayer(curHit)) {
-          buildNewCluster = false;
-          lastCluster = nullptr;
-        }
-        else {
-          if (lastCluster != nullptr) {
-            track -> AddHitCluster(lastCluster);
-            lastCluster -> SetIsStable(true);
-          }
-          lastCluster = NewCluster(curHit);
-          lastCluster -> SetRow(row);
-          lastCluster -> SetLayer(-1);
-          SetClusterLength(lastCluster);
-          buildingClusters.push_back(lastCluster);
-        }
-      }
-    }
+    } ////////////////////////////////////////////////////// was for layer build
   }
 
-  Int_t numCluster = fHitClusterArray -> GetEntries();
-  for (auto iCluster = 0; iCluster < numCluster; iCluster++)
-  {
+  for (auto iCluster = idxCluster; iCluster < numClusters; ++iCluster) {
     auto cluster = (STHitCluster *) fHitClusterArray -> At(iCluster);
 
-    if (cluster -> IsStable()) {
-      if (CheckRange(cluster))
-        cluster -> SetIsStable(true);
-      else
-        cluster -> SetIsStable(false);
-    }
-  }
-
-  if (track -> GetNumClusters() < 5) {
-    track -> SetIsBad();
-    return false;
-  }
-
-  if (fFitter -> FitCluster(track) == false) {
-    fFitter -> Fit(track);
-    track -> SetIsLine();
-  }
-
-  return true;
-}
-
-bool
-STHelixTrackFinder::HitClustering(STHelixTrack *track, Double_t cut)
-{
-  track -> SortHitsByTimeOrder();
-
-  auto trackHits = track -> GetHitArray();
-  auto numHits = trackHits -> size();
-
-  auto CheckMean = [](STHitCluster *cluster, STHit *hit) {
-    auto pHit = cluster -> GetPosition();
-    auto wHit = cluster -> GetCharge();
-    auto pCluster = cluster -> GetPosition();
-    auto wCluster = cluster -> GetCharge();
-    auto W = wHit + wCluster;
-
-    auto x = (wCluster * pCluster.X() + wHit * pHit.X()) / W;
-    auto y = (wCluster * pCluster.Y() + wHit * pHit.Y()) / W;
-    auto z = (wCluster * pCluster.Z() + wHit * pHit.Z()) / W;
-
-    return TVector3(x,y,z);
-  };
-
-  auto CheckRange = [](STHitCluster *cluster) {
-    auto x = cluster -> GetX();
-    auto y = cluster -> GetY();
-    auto z = cluster -> GetZ();
-
-    if (x > 412 || x < -412 || y < -520 || y > 20 || z < 20 || z > 1324)
-      return false;
-
-    Int_t layer = z / 12;
-    if (layer > 89 && layer < 100)
-      return false;
-
-    return true;
-  };
-
-  auto lengthCut = cut / TMath::Cos(track -> DipAngle());
-
-  TVector3 q, m;
-  bool isStableCluster = false;
-  bool isStableState = false;
-  auto addedLength = 0.;
-
-  auto rmsW = 2 * track -> GetRMSW();
-  auto rmsH = 2 * track -> GetRMSH();
-
-  auto curHit = trackHits -> at(0);
-  auto curCluster = NewCluster(curHit);
-
-  auto curLength = 0;
-  auto preLength = track -> ExtrapolateByMap(curHit->GetPosition(),q,m);
-
-  for (auto iHit = 1; iHit < numHits; iHit++)
-  {
-    curHit = trackHits -> at(iHit);
-    curLength = track -> ExtrapolateByMap(curHit -> GetPosition(), q, m);
-    auto dLength = std::abs(curLength - preLength);
-    preLength = curLength;
-
-    addedLength += .5*dLength;
-
-    bool endCluster = false; // add hit if false, end cluster if true.
-
-    if (dLength > 15.) {
-      isStableState = false;
-      isStableCluster = false;
-      endCluster = true;
-    }
-    else if (isStableState == false)
-    {
-      if (addedLength > rmsW) {
-        isStableState = true;
-        isStableCluster = false;
-        endCluster = true;
-      }
-      else {
-        isStableState = false;
-        endCluster = false;
-      }
-    }
-    else if (isStableState == true) {
-      if (addedLength < lengthCut) {
-        endCluster = false;
-      }
-      else {
-        auto p0 = track -> Map(curCluster -> GetPosition());
-        auto pc = track -> Map(CheckMean(curCluster, curHit));
-        auto w0 = p0.X();
-        auto wc = pc.X();
-        auto h0 = p0.Y();
-
-        if (abs(wc) < abs(w0)) {
-          endCluster = false;
-        }
-        else {
-          if (abs(w0) < rmsW && abs(h0) < rmsH && CheckRange(curCluster))
-            isStableCluster = true;
-          else
-            isStableCluster = false;
-          endCluster = true;
-        }
-      }
-    }
-
-    if (endCluster) {
-      curCluster -> SetIsStable(isStableCluster);
-      addedLength += .5*dLength;
-      curCluster -> SetLength(addedLength);
-      track -> AddHitCluster(curCluster);
-      curCluster = NewCluster(curHit);
-      addedLength = .5*dLength;
-    }
+    if (cluster -> GetClusterID() == -1)
+      fHitClusterArray -> Remove(cluster);
+    else if (cluster -> IsLayerCluster() && cluster -> GetDx() < 1.e-2)
+      fHitClusterArray -> Remove(cluster);
+    else if (cluster -> IsRowCluster() && cluster -> GetDz() < 1.e-2)
+      fHitClusterArray -> Remove(cluster);
     else {
-      curCluster -> AddHit(curHit);
-      addedLength += .5*dLength;
+      cluster -> SetClusterID(idxCluster++);
+      helix -> AddHitCluster(cluster);
     }
   }
 
-  curCluster -> SetIsStable(false);
-  curCluster -> SetLength(addedLength);
-  track -> AddHitCluster(curCluster);
-
-  if (track -> GetNumClusters() < 5) {
-    track -> SetIsBad();
-    return false;
-  }
-
-  if (fFitter -> FitCluster(track) == false) {
-    fFitter -> Fit(track);
-    track -> SetIsLine();
-  }
+  fHitClusterArray -> Compress();
 
   return true;
 }
@@ -1077,7 +910,6 @@ STHelixTrackFinder::FindVertex(TClonesArray *tracks, Int_t nIterations)
   return v;
 }
 
-void STHelixTrackFinder::SetClusteringOption(Int_t opt) { fClusteringOption = opt; }
 void STHelixTrackFinder::SetSaturationOption(Int_t opt)
 {
   fSaturationOption = opt;

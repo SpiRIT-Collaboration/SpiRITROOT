@@ -44,7 +44,6 @@ class STHelixTrackFinder
 
     TVector3 FindVertex(TClonesArray *tracks, Int_t nIterations = 1);
 
-    void SetClusteringOption(Int_t opt);
     void SetSaturationOption(Int_t opt);
 
     /**
@@ -153,8 +152,7 @@ class STHelixTrackFinder
     /**
      * Clusterize Hits
      */
-    bool HitClustering(STHelixTrack *track, Double_t cut);
-    bool HitClustering2(STHelixTrack *track);
+    bool HitClustering(STHelixTrack *track);
 
     /**
      * Create new cluster with given hit.
@@ -195,7 +193,6 @@ class STHelixTrackFinder
   vhit_t fGoodHits = nullptr;  ///< Selected good hits from current fCandHits
     vhit_t fBadHits  = nullptr;  ///< Selected bad  hits from current fCandHits
 
-  Int_t fClusteringOption = 0;
   Int_t fSaturationOption = 1;
   
     Double_t fDefaultScale = 2.5;
