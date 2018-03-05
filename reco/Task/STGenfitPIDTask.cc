@@ -155,10 +155,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       recoTrackCand -> SetMomentumTargetPlane(momTargetPlane);
       recoTrackCand -> SetPosTargetPlane(posTargetPlane);
 
-      if (fClusteringType == 2)
-        fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, recoTrackCand -> GetdEdxPointArray());
-      else
-        fGenfitTest -> GetdEdxPointsByLength(gfTrack, helixTrack, recoTrackCand -> GetdEdxPointArray());
+      fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, recoTrackCand -> GetdEdxPointArray());
 
       auto prob = fPIDTest -> GetProbability(pid, mom.Mag(), recoTrackCand -> GetdEdxWithCut(0,0.7));
       recoTrackCand -> SetPIDProbability(prob);

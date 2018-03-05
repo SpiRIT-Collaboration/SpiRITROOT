@@ -130,10 +130,21 @@ void STGenfitVATask::Exec(Option_t *opt)
     if (track -> GetVertexID() != chosenVID)
       continue;
 
+    auto cov = vertex -> GetCov();
+    cov(0,0) = abs(cov(0,0));
+    cov(1,1) = abs(cov(1,1));
+    cov(2,2) = abs(cov(2,2));
+    cov(0,1) = abs(cov(0,1));
+    cov(1,2) = abs(cov(1,2));
+    cov(2,0) = abs(cov(2,0));
+    cov(1,0) = cov(0,1);
+    cov(2,1) = cov(1,2);
+    cov(0,2) = cov(2,0);
+
     auto vertexCluster = new STHitCluster();
     vertexCluster -> SetIsStable(kTRUE);
-    vertexCluster -> SetHit(-4, vertex -> GetPos(), track -> GetdEdxWithCut(0,1));
-    vertexCluster -> SetCovMatrix(vertex -> GetCov());
+    vertexCluster -> SetHit(-4, vertex -> GetPos(), 30);
+    vertexCluster -> SetCovMatrix(cov);
 
     Int_t trackID = fCandListArray -> GetEntriesFast();
 
@@ -189,10 +200,7 @@ void STGenfitVATask::Exec(Option_t *opt)
       vaTrackCand -> SetMomentumTargetPlane(momTargetPlane);
       vaTrackCand -> SetPosTargetPlane(posTargetPlane);
 
-      if (fClusteringType == 2)
-        fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, vaTrackCand -> GetdEdxPointArray());
-      else
-        fGenfitTest -> GetdEdxPointsByLength(gfTrack, helixTrack, vaTrackCand -> GetdEdxPointArray());
+      fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, vaTrackCand -> GetdEdxPointArray());
 
       auto prob = fPIDTest -> GetProbability(pid, mom.Mag(), vaTrackCand -> GetdEdxWithCut(0,0.7));
       vaTrackCand -> SetPIDProbability(prob);
