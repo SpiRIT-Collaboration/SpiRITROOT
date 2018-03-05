@@ -46,6 +46,8 @@ STHit::STHit(STHit *hit)
 
   fChi2 = hit -> GetChi2();
   fNDF = hit -> GetNDF();
+
+  fS = hit -> GetS();
 }
 
 void STHit::Clear(Option_t *)
@@ -55,7 +57,7 @@ void STHit::Clear(Option_t *)
   fTrackID = -1;
   fClusterID = -1;
 
-  SetHit(-1, 0, 0, -1000, -1);
+  SetHit(-1, 0, 0, -1000, 0);
 
   fDx = 0.8;
   fDy = 0.22;
@@ -67,6 +69,8 @@ void STHit::Clear(Option_t *)
 
   fChi2 = -1;
   fNDF = 0;
+
+  fS = 0;
 }
 
 void STHit::SetHit(Int_t hitID, TVector3 vec, Double_t charge) 
@@ -145,3 +149,12 @@ Double_t STHit::GetChi2()      const   { return fChi2; }
 
 Int_t STHit::GetNumTrackCands()  { return fTrackCandArray.size(); }
 std::vector<Int_t> *STHit::GetTrackCandArray()  { return &fTrackCandArray; }
+
+Int_t STHit::Compare(const TObject *obj) const
+{
+  auto s = ((STHit *) obj) -> GetS();
+  if (fS - s < 0)
+    return -1;
+  else
+    return 1;
+}

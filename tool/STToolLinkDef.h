@@ -11,5 +11,6 @@
 #pragma link C++ class STHelixTrackFitter+;
 #pragma link C++ class STPadPlaneMap+;
 #pragma link C++ class STSamplePoint+;
+#pragma link C++ class STGeoLine+;
 
 #endif

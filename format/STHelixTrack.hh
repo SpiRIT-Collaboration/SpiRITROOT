@@ -50,6 +50,7 @@ class STHelixTrack : public TObject
     Double_t fAlphaTail;     ///< Last position alpha
 
     Bool_t fIsPositiveChargeParticle;
+    TVector3 fVertexPosition; //! < Temporary vertex position for sorting
 
     std::vector<STHit *> fMainHits; //!
     std::vector<STHit *> fCandHits; //!
@@ -399,7 +400,7 @@ class STHelixTrack : public TObject
     Double_t Continuity();
 
 
-  ClassDef(STHelixTrack, 4)
+  ClassDef(STHelixTrack, 5)
 };
 
 class STHitByDistanceTo

@@ -108,6 +108,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
     auto candList = (STRecoTrackCandList *) fCandListArray -> ConstructedAt(trackID);
     auto recoTrack = (STRecoTrack *) fRecoTrackArray -> ConstructedAt(trackID);
+    recoTrack -> SetHelixID(iHelix);
+    recoTrack -> SetHelixTrack(helixTrack);
 
     auto clusterArray = helixTrack -> GetClusterArray();
     for (auto cluster : *clusterArray) {
@@ -127,8 +129,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       Int_t pdg;
            if (pid == STPID::kPion)     pdg = 211; 
       else if (pid == STPID::kProton)   pdg = 2212; 
-      else if (pid == STPID::kDeuteron) pdg = 1000010020;
-      else if (pid == STPID::kTriton)   pdg = 1000010030;
+//      else if (pid == STPID::kDeuteron) pdg = 1000010020;
+//      else if (pid == STPID::kTriton)   pdg = 1000010030;
       //else if (pid == STPID::k3He)      pdg = 1000020030;
       //else if (pid == STPID::k4He)      pdg = 1000020040;
       else continue;
@@ -153,10 +155,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       recoTrackCand -> SetMomentumTargetPlane(momTargetPlane);
       recoTrackCand -> SetPosTargetPlane(posTargetPlane);
 
-      if (fClusteringType == 2)
-        fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, recoTrackCand -> GetdEdxPointArray());
-      else
-        fGenfitTest -> GetdEdxPointsByLength(gfTrack, helixTrack, recoTrackCand -> GetdEdxPointArray());
+      fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, recoTrackCand -> GetdEdxPointArray());
 
       auto prob = fPIDTest -> GetProbability(pid, mom.Mag(), recoTrackCand -> GetdEdxWithCut(0,0.7));
       recoTrackCand -> SetPIDProbability(prob);
@@ -177,7 +176,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     gfTrackArrayToVertex.push_back(bestRecoTrackCand -> GetGenfitTrack());
     recoTrackArrayToVertex.push_back(recoTrack);
 
-    helixTrack -> SetGenfitID(iHelix);
+    helixTrack -> SetGenfitID(trackID);
     helixTrack -> SetIsGenfitTrack();
     helixTrack -> SetGenfitMomentum(bestRecoTrackCand -> GetMomentum().Mag());
 
@@ -215,6 +214,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
   }
 
   Int_t numVertices = vertices.size();
+  LOG(INFO) << Space() << "vector verticies " << vertices.size() << FairLogger::endl;
 
   for (UInt_t iVert = 0; iVert < numVertices; iVert++) {
     genfit::GFRaveVertex* vertex = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
@@ -236,13 +236,20 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
           TVector3 momVertex;
           TVector3 pocaVertex;
-          Double_t charge;
-          fGenfitTest -> GetMomentumWithVertex(gfTrack, 10*vertex->getPos(), momVertex, pocaVertex, charge);
+          fGenfitTest -> GetMomentumWithVertex(gfTrack, 10*vertex->getPos(), momVertex, pocaVertex);
           if (momVertex.Z() < 0)
             momVertex = -momVertex;
           recoTrack -> SetMomentum(momVertex);
           recoTrack -> SetPOCAVertex(pocaVertex);
+
+          Double_t effCurvature1;
+          Double_t effCurvature2;
+          Double_t effCurvature3;
+          Double_t charge = fGenfitTest -> DetermineCharge(recoTrack, vertex -> getPos(), effCurvature1, effCurvature2, effCurvature3);
           recoTrack -> SetCharge(charge);
+          recoTrack -> SetEffCurvature1(effCurvature1);
+          recoTrack -> SetEffCurvature2(effCurvature2);
+          recoTrack -> SetEffCurvature3(effCurvature3);
         }
       }
     }

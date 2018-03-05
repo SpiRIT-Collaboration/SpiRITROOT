@@ -5,6 +5,7 @@
 #include "TVector3.h"
 #include "STPID.hh"
 #include "STdEdxPoint.hh"
+#include "STHelixTrack.hh"
 #include "Track.h"
 
 #include <vector>
@@ -22,6 +23,7 @@ class STRecoTrackCand : public TObject
     vector<STdEdxPoint> fdEdxPointArray; ///< Array of dEdxPoint
 
     genfit::Track *fGenfitTrack; //! < only used for task
+    STHelixTrack *fHelixTrack; //! < only used for task
 
   public:
     STRecoTrackCand();
@@ -53,7 +55,10 @@ class STRecoTrackCand : public TObject
     void SetGenfitTrack(genfit::Track *val) { fGenfitTrack = val; }
     genfit::Track *GetGenfitTrack() { return fGenfitTrack; }
 
-  ClassDef(STRecoTrackCand, 1)
+    void SetHelixTrack(STHelixTrack *val) { fHelixTrack = val; }
+    STHelixTrack *GetHelixTrack() { return fHelixTrack; }
+
+  ClassDef(STRecoTrackCand, 2)
 };
 
 #endif

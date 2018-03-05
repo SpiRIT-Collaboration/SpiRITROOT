@@ -168,7 +168,10 @@ void STHelixTrack::DeleteHits()
 
 void STHelixTrack::SortHits(bool increasing)
 {
-  if (increasing) {
+  if (TMath::Abs(YLengthInPeriod()) < 50) {
+    auto sorting = STHitByDistanceTo(fVertexPosition);
+    sort(fMainHits.begin(), fMainHits.end(), sorting);
+  } else if (increasing) {
     auto sorting = STHitSortByIncreasingLength(this);
     sort(fMainHits.begin(), fMainHits.end(), sorting);
   } else {
@@ -179,7 +182,10 @@ void STHelixTrack::SortHits(bool increasing)
 
 void STHelixTrack::SortClusters(bool increasing)
 {
-  if (increasing) {
+  if (TMath::Abs(YLengthInPeriod()) < 50) {
+    auto sorting = STHitByDistanceTo(fVertexPosition);
+    sort(fMainHits.begin(), fMainHits.end(), sorting);
+  } else if (increasing) {
     auto sorting = STHitSortByIncreasingLength(this);
     sort(fHitClusters.begin(), fHitClusters.end(), sorting);
   } else {
@@ -199,9 +205,26 @@ void STHelixTrack::AddHitCluster(STHitCluster *cluster)
 
 void STHelixTrack::FinalizeHits()
 {
-  for (auto hit : fMainHits) {
-    fMainHitIDs.push_back(hit->GetHitID());
-    hit -> SetTrackID(fTrackID);
+  if (TMath::Abs(YLengthInPeriod()) < 50) {
+    for (auto hit : fMainHits) {
+      fMainHitIDs.push_back(hit->GetHitID());
+      hit -> SetTrackID(fTrackID);
+      hit -> SetS((hit->GetPosition()-fVertexPosition).Mag());
+    }
+  }
+  else if (fIsPositiveChargeParticle) {
+    for (auto hit : fMainHits) {
+      fMainHitIDs.push_back(hit->GetHitID());
+      hit -> SetTrackID(fTrackID);
+      hit -> SetS(Map(hit->GetPosition()).Z());
+    }
+  }
+  else {
+    for (auto hit : fMainHits) {
+      fMainHitIDs.push_back(hit->GetHitID());
+      hit -> SetTrackID(fTrackID);
+      hit -> SetS(-Map(hit->GetPosition()).Z());
+    }
   }
 }
 
@@ -209,6 +232,7 @@ void STHelixTrack::FinalizeClusters()
 {
   for (auto cluster : fHitClusters) {
     cluster -> SetTrackID(fTrackID);
+    cluster -> ApplyCovLowLimit();
     if (cluster -> IsStable()) {
       fClusterIDs.push_back(cluster->GetClusterID());
       fdEdxArray.push_back(cluster->GetCharge()/cluster->GetLength());
@@ -252,6 +276,8 @@ void STHelixTrack::SetAlphaTail(Double_t alpha)  { fAlphaTail = alpha; }
 
 void STHelixTrack::DetermineParticleCharge(TVector3 vertex)
 {
+  fVertexPosition = vertex;
+
   Double_t lHead = ExtrapolateToAlpha(fAlphaHead);
   Double_t lTail = ExtrapolateToAlpha(fAlphaTail);
 

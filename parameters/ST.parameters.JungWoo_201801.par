@@ -1,0 +1,39 @@
+################################################################################
+# Parameters used throughout SPiRITROOT software
+# Format:
+# parameter_name:parameter_type(Int_t-integer, Double_t-double) parameter_value
+# STDigiPar
+# Description of parameters
+################################################################################ 
+[STDigiPar]
+PadPlaneX:Double_t              864.0             # mm
+PadPlaneZ:Double_t              1344.0            # mm
+PadSizeX:Double_t               8.0               # mm
+PadSizeZ:Double_t               12.0              # mm
+PadRows:Int_t                   108               # mm
+PadLayers:Int_t                 112               # mm
+AnodeWirePlaneY:Double_t        -4.05             # mm
+GroundWirePlaneY:Double_t       -8.1              # mm
+GatingWirePlaneY:Double_t       -14.0             # mm
+EField:Double_t                 0.0               # 
+FPNPedestalRMS:Double_t         10                # RMS threshold value for FPN pedestal
+NumTbs:Int_t                    270               # The number of time buckets in the actual data
+WindowNumTbs:Int_t              197               # The number of time buckets of the window
+WindowStartTb:Int_t             38                # First time bucket number of the window
+SamplingRate:Int_t              25                # MHz
+DriftLength:Double_t            496.0             # mm
+YDivider:Int_t                  496               # Full drift length will be divided by this number when finding cluster
+EIonize:Double_t                2.62e-05          # MeV
+DriftVelocity:Double_t          5.43              # cm/us or 1.E-3*cm/us
+CoefDiffusionLong:Double_t      0.034             # cm^{-1/2}
+CoefDiffusionTrans:Double_t     0.024             # cm^{-1/2}
+CoefAttachment:Double_t         0.2               # cm^{-1/2}
+Gain:Int_t                      1270              # multiplicity
+UAMapFile:Int_t                 3
+AGETMapFile:Int_t               2
+GainCalibrationDataFile:Int_t   9
+TrackingParFile:Int_t           6
+GCConstant:Double_t             8.065E-2
+GCLinear:Double_t               2.352E-3
+GCQuadratic:Double_t            -4.789E-8
+#########################################################################

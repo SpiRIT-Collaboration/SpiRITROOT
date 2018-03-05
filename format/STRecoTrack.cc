@@ -12,7 +12,9 @@ void STRecoTrack::Clear(Option_t *option)
   STRecoTrackCand::Clear();
 
   fCharge = -2;
+  fParentID = -1;
   fVertexID = -1;
+  fHelixID = -1;
   fPOCAVertex.SetXYZ(0,0,0);
   fPosKyotoL.SetXYZ(0,0,0);
   fPosKyotoR.SetXYZ(0,0,0);

@@ -58,6 +58,7 @@ Task/STPIDCorrelatorTask.cc
 Task/STRiemannToHelixTask.cc
 Task/STGenfitSinglePIDTask.cc
 Task/STGenfitPIDTask.cc
+Task/STGenfitVATask.cc
 
 PID/STPIDTest.cc
 

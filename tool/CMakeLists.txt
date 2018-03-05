@@ -30,6 +30,7 @@ STPadPlaneMap.cc
 ODRFitter.cc
 STHelixTrackFitter.cc
 STSamplePoint.cc
+STGeoLine.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
