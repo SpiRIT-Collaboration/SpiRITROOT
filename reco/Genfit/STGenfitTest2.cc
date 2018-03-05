@@ -159,6 +159,7 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
     fitState = gfTrack -> getFittedState();
   } catch (genfit::Exception &e) {}
 
+  /*
   for (auto cluster : *clusterArray) {
     if (cluster -> IsStable() == false)
       continue;
@@ -172,6 +173,7 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
         cluster -> SetIsStable(false);
     } catch (genfit::Exception &e) {}
   }
+  */
 
   return gfTrack;
 }
@@ -534,7 +536,7 @@ STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Doubl
       cluster -> SetLength(std::abs(l2));
       cluster -> SetPOCA(10*fitState.getPos());
     } catch (genfit::Exception &e) {
-      cluster -> SetIsStable(false);
+      //cluster -> SetIsStable(false); //TODO
       continue;
     }
 
@@ -542,7 +544,7 @@ STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Doubl
     Double_t dx = cluster -> GetLength();
 
     if (dx > 20) {
-      cluster -> SetIsStable(false);
+      //cluster -> SetIsStable(false); //TODO
       continue;
     }
 
@@ -777,7 +779,7 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
       cluster -> SetLength(std::abs(l2));
       cluster -> SetPOCA(10*fitState.getPos());
     } catch (genfit::Exception &e) {
-      cluster -> SetIsStable(false);
+      //cluster -> SetIsStable(false); //TODO
       continue;
     }
 
@@ -785,7 +787,7 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
     Double_t dx = cluster -> GetLength();
 
     if (dx > 20) {
-      cluster -> SetIsStable(false);
+      //cluster -> SetIsStable(false); //TODO
       continue;
     }
 
