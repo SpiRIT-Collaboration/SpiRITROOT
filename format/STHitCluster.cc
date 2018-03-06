@@ -129,8 +129,6 @@ STHitCluster::AddHit(STHit *hit)
   fDy = sqrt(fCovMatrix(1, 1));
   fDz = sqrt(fCovMatrix(2, 2));
 
-  fCharge += charge;
-
   fHitIDArray.push_back(hit -> GetHitID());
   fHitPtrArray.push_back(hit);
   hit -> SetClusterID(fClusterID);
