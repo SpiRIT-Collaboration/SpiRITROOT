@@ -255,6 +255,7 @@ genfit::Track* STGenfitTest2::FitTrackWithVertex(STHelixTrack *helixTrack, STHit
     fitState = gfTrack -> getFittedState();
   } catch (genfit::Exception &e) {}
 
+  /*
   for (auto cluster : *clusterArray) {
     if (cluster -> IsStable() == false)
       continue;
@@ -268,6 +269,7 @@ genfit::Track* STGenfitTest2::FitTrackWithVertex(STHelixTrack *helixTrack, STHit
         cluster -> SetIsStable(false);
     } catch (genfit::Exception &e) {}
   }
+  */
 
   return gfTrack;
 }
@@ -543,10 +545,12 @@ STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Doubl
     Double_t dE = cluster -> GetCharge();
     Double_t dx = cluster -> GetLength();
 
+    /*
     if (dx > 20) {
-      //cluster -> SetIsStable(false); //TODO
+      cluster -> SetIsStable(false); //TODO
       continue;
     }
+    */
 
     dedx.fdE = dE;
     dedx.fdx = dx;
@@ -789,10 +793,12 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
     Double_t dE = cluster -> GetCharge();
     Double_t dx = cluster -> GetLength();
 
+    /*
     if (dx > 20) {
-      //cluster -> SetIsStable(false); //TODO
+      cluster -> SetIsStable(false); //TODO
       continue;
     }
+    */
 
     dEdxPointArray -> push_back(STdEdxPoint(cluster -> GetClusterID(), dE, dx, -999));
   }
