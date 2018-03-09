@@ -222,28 +222,30 @@ STDecoderTask::Exec(Option_t *opt)
     if (fEventID<2)
       std::cout << "== [STDecoderTask] Setting up embed mode" << std::endl;
     fRawEventMC = Embedding(fEmbedFile,fEventID-1);
-    
-    Int_t numPads = fRawEvent -> GetNumPads();
-    Int_t numPadsMC = fRawEventMC -> GetNumPads();  
-    
-    for (Int_t iPad = 0; iPad < numPads; iPad++) {
-      STPad *pad = fRawEvent -> GetPad(iPad);
-      Double_t *adc = pad -> GetADC();
-      
-      for (Int_t iPadMC = 0; iPadMC < numPadsMC; iPadMC++){
-	STPad *padMC = fRawEventMC -> GetPad(iPadMC);
-	Double_t *adcMC = padMC -> GetADC();
+    if(fRawEventMC != NULL)
+      {
+	Int_t numPads = fRawEvent -> GetNumPads();
+	Int_t numPadsMC = fRawEventMC -> GetNumPads();  
 	
-	if ((padMC -> GetRow() == pad -> GetRow()) &&
-	    (padMC -> GetLayer() == pad -> GetLayer())){
-	  for (Int_t iTb = 0; iTb < fPar -> GetNumTbs(); iTb++){
-	    pad -> SetADC(iTb, adc[iTb]+adcMC[iTb]);
-	    //	  std::cout << " iTb: " << iTb << " ADC: " << adc[iTb] << " ADCmc: " << adcMC[iTb] << std::endl;
+	for (Int_t iPad = 0; iPad < numPads; iPad++) {
+	  STPad *pad = fRawEvent -> GetPad(iPad);
+	  Double_t *adc = pad -> GetADC();
+	  
+	  for (Int_t iPadMC = 0; iPadMC < numPadsMC; iPadMC++){
+	    STPad *padMC = fRawEventMC -> GetPad(iPadMC);
+	    Double_t *adcMC = padMC -> GetADC();
+	    
+	    if ((padMC -> GetRow() == pad -> GetRow()) &&
+		(padMC -> GetLayer() == pad -> GetLayer())){
+	      for (Int_t iTb = 0; iTb < fPar -> GetNumTbs(); iTb++){
+		pad -> SetADC(iTb, adc[iTb]+adcMC[iTb]);
+		//	  std::cout << " iTb: " << iTb << " ADC: " << adc[iTb] << " ADCmc: " << adcMC[iTb] << std::endl;
+	      }
+	    }
+	    
 	  }
 	}
-	
       }
-    }
   }
   else {
     if (fEventID<2)
@@ -263,14 +265,18 @@ STDecoderTask::Embedding(TString dataFile, Int_t eventId)
 {
   TChain *fChain = NULL;
   TClonesArray *fEventArray = nullptr;
+  STRawEvent * rawEvent = nullptr;
 
   fChain = new TChain("cbmsim");
   fChain -> AddFile(dataFile);
   fChain -> SetBranchAddress("STRawEvent", &fEventArray);
 
-  fChain -> GetEntry(eventId);
-  auto rawEvent = (STRawEvent *) fEventArray -> At(0);
-
+  if(eventId < fChain->GetEntries())
+    {
+      fChain -> GetEntry(eventId);
+      rawEvent = (STRawEvent *) fEventArray -> At(0);
+    }
+  
   return rawEvent;
 
 }
