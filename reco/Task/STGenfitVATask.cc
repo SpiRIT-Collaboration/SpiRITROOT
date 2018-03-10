@@ -183,7 +183,8 @@ void STGenfitVATask::Exec(Option_t *opt)
 
       auto vaTrackCand = candList -> GetRecoTrackCand(iPID);
 
-      genfit::Track *gfTrack = fGenfitTest -> FitTrackWithVertex(helixTrack, vertexCluster, pdg);
+      //genfit::Track *gfTrack = fGenfitTest -> FitTrackWithVertex(helixTrack, vertexCluster, pdg);
+      genfit::Track *gfTrack = fGenfitTest -> FitTrack(helixTrack, pdg);
       if (gfTrack == nullptr) {
         vaTrackCand -> SetPIDProbability(0);
         continue;
@@ -248,7 +249,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     Double_t effCurvature1;
     Double_t effCurvature2;
     Double_t effCurvature3;
-    Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vertex -> GetPos(), effCurvature1, effCurvature2, effCurvature3);
+    Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vertex -> GetPos(), effCurvature1, effCurvature2, effCurvature3, true);
     vaTrack -> SetCharge(charge);
     vaTrack -> SetEffCurvature1(effCurvature1);
     vaTrack -> SetEffCurvature2(effCurvature2);

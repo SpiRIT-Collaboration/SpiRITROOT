@@ -470,8 +470,7 @@ void STGenfitTest2::GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 posVe
   pocaVertex = 10*pocaVertex;
 }
 
-Int_t
-STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Double_t &effCurvature1, Double_t &effCurvature2, Double_t &effCurvature3)
+Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Double_t &effCurvature1, Double_t &effCurvature2, Double_t &effCurvature3, bool ignoreFirst)
 {
   effCurvature1 = 0.;
   effCurvature2 = 0.;
@@ -498,7 +497,11 @@ STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Doubl
   //////////////////////////////////////////////////////////////////////////////////
   // Set dedx points
   //////////////////////////////////////////////////////////////////////////////////
-  for (auto iCluster = 0; iCluster < numClusters; iCluster++)
+  auto iCluster0 = 0;
+  if (ignoreFirst)
+    iCluster0 = 1;
+
+  for (auto iCluster = iCluster0; iCluster < numClusters; iCluster++)
   {
     auto cluster = clusterArray -> at(iCluster);
     if (!cluster -> IsStable())
@@ -750,6 +753,7 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
   auto iCluster0 = 0;
   if (ignoreFirst)
     iCluster0 = 1;
+
   for (auto iCluster = iCluster0; iCluster < numClusters; iCluster++)
   {
     auto cluster = clusterArray -> at(iCluster);
