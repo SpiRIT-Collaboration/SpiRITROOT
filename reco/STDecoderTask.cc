@@ -53,8 +53,12 @@ STDecoderTask::STDecoderTask()
   
   fPar = NULL;
   fRawEventArray = new TClonesArray("STRawEvent");
+  fRawEmbedEventArray = new TClonesArray("STRawEvent");
+  fRawDataEventArray = new TClonesArray("STRawEvent");
+  fRawEventMC = NULL;
+  fRawEventData = new STRawEvent();
   fRawEvent = NULL;
-
+  
   fIsSeparatedData = kFALSE;
 
   fEventID = -1;
@@ -108,7 +112,9 @@ STDecoderTask::Init()
   }
 
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
-
+  ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, true);
+  ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, true);
+  
   fDecoder = new STCore();
   fDecoder -> SetUseSeparatedData(fIsSeparatedData);
   for (Int_t iFile = 0; iFile < fDataList[0].size(); iFile++)
@@ -210,10 +216,14 @@ STDecoderTask::Exec(Option_t *opt)
   STDebugLogger::Instance() -> TimerStart("DecoderTask");
 #endif
   fRawEventArray -> Delete();
-
+  fRawEmbedEventArray -> Delete();
+  fRawDataEventArray -> Delete();
+  
   if (fRawEvent == NULL)
-    fRawEvent = fDecoder -> GetRawEvent(fEventID++);
-
+    {
+      fRawEvent = fDecoder -> GetRawEvent(fEventID++);
+      *fRawEventData = *fRawEvent;
+    }
   if (fEmbedFile.EqualTo("") && fIsEmbedding){
     std::cout << cRED << "== [STDecoderTask] MC file for embedding not set!" << std::endl;
     exit(0);
@@ -253,8 +263,12 @@ STDecoderTask::Exec(Option_t *opt)
   }
   
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
+  new ((*fRawDataEventArray)[0]) STRawEvent(fRawEventData);
+  if(fRawEventMC != NULL)
+    new ((*fRawEmbedEventArray)[0]) STRawEvent(fRawEventMC);
 
   fRawEvent = NULL;
+  fRawEventMC = NULL;
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStop("DecoderTask");
 #endif

@@ -33,6 +33,7 @@ class STHit : public TObject
 
     void Clear(Option_t * = "");                             ///< Clear method for reuse object
 
+    void SetIsEmbed(Bool_t value);
     void SetIsClustered(Bool_t value = kTRUE);               ///< Clustered flag setter
     void SetHitID(Int_t hitID);                              ///< Hit ID setter
     virtual void SetClusterID(Int_t clusterID);              ///< Cluster stter
@@ -120,6 +121,7 @@ class STHit : public TObject
 
   protected:
       Bool_t fIsClustered; ///< Clustered flag
+      Bool_t fIsEmbed;     ///<True if embeded
        Int_t fHitID;       ///< Hit ID
        Int_t fClusterID;   ///< Cluster ID having this hit
        Int_t fTrackID;     ///< Track ID having this hit

@@ -129,10 +129,13 @@ class STDecoderTask : public FairTask {
     TString fEmbedFile;                 ///< MC file for embedding
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
-    TClonesArray *fRawEventArray;       ///< STRawEvent container
-    STRawEvent *fRawEvent;              ///< Current raw event for run
+    TClonesArray *fRawEventArray;       ///< STRawEvent container embeded + data
+    TClonesArray *fRawEmbedEventArray;  ///< STRawEvent container of embeded event
+    TClonesArray *fRawDataEventArray;   ///< STRawEvent container just data
+    STRawEvent *fRawEvent;              ///< Current raw event for data + MC
     STRawEvent *fRawEventMC;            ///< Current raw event for MC run  
-
+    STRawEvent *fRawEventData;          ///< Current raw event for just data
+  
     Bool_t fOldData;                    ///< Set to decode old data
     Bool_t fIsSeparatedData;            ///< Set to use separated data files
 

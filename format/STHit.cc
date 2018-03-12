@@ -91,6 +91,7 @@ void STHit::SetHit(Int_t hitID, Double_t x, Double_t y, Double_t z, Double_t cha
   fCharge = charge; 
 }
 
+void STHit::SetIsEmbed(Bool_t value)                            { fIsEmbed = value; }
 void STHit::SetIsClustered(Bool_t value)                        { fIsClustered = value; }
 void STHit::SetHitID(Int_t hitID)                               { fHitID = hitID; }
 void STHit::SetClusterID(Int_t clusterID)                       { fClusterID = clusterID; fIsClustered = kTRUE; }

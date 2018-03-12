@@ -34,13 +34,19 @@ class STPSAETask : public STRecoTask
 
     void SetPulserData(TString pulserData);
     void UseDefautPulserData(Int_t shapingTime);
-
+    void SetEmbedding(Bool_t value);
+    void SetEmbedFile(TString);
     void SetGainMatchingScale(Double_t val);
 
   private:
     TClonesArray *fRawEventArray = nullptr;
+    TClonesArray *fRawEmbedEventArray = nullptr;
+    TClonesArray *fRawDataEventArray = nullptr;
     TClonesArray *fHitArray = nullptr;
-
+    TClonesArray *fEmbedHitArray = nullptr;    ///< hit array for embedded hits
+    TClonesArray *fDataHitArray = nullptr;    ///< hit array for embedded hits
+  
+    TString fEmbedFile = "";                   ///< MC file for embedding
     STPSAFastFit *fPSA;
     
     Double_t fThreshold = 20;
@@ -53,6 +59,8 @@ class STPSAETask : public STRecoTask
     Int_t fNumHitsLowLimit = 1;
 
     Double_t fGainMatchingScale = 1;
+
+    Bool_t fIsEmbedding;
 
   ClassDef(STPSAETask, 1)
 };
