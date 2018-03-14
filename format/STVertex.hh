@@ -40,6 +40,7 @@ class STVertex : public TObject {
 
     virtual ~STVertex();
 
+    void SetPos(TVector3 pos)  { fPos = pos; }
     TVector3 GetPos()    const { return fPos; }
 
     TMatrixDSym GetCov() const { return fCov; }
@@ -53,8 +54,14 @@ class STVertex : public TObject {
     Int_t GetID()        const { return fID; }
     void Print(const Option_t * = "") const;
 
-    void SetIsCollisionVertex(bool val = true) { fCollisionVertex = val; }
-    bool IsCollisionVertex() { return fCollisionVertex; }
+    void SetIsCollisionVertex(Bool_t val = kTRUE) { fIsCollisionVertex = val; }
+    Bool_t IsCollisionVertex() { return fIsCollisionVertex; }
+
+    void SetIsTargetVertex(Bool_t val = kTRUE) { fIsTargetVertex = val; }
+    Bool_t IsTargetVertex() { return fIsTargetVertex; }
+
+    void SetIsGoodBDC(Bool_t val = kTRUE) { fIsGoodBDC = val; }
+    Bool_t IsGoodBDC() { return fIsGoodBDC; }
 
   private:
     TVector3 fPos;
@@ -63,11 +70,13 @@ class STVertex : public TObject {
     Double_t fChi2;
     Int_t fID;
 
-    bool fCollisionVertex = false;
+    Bool_t fIsCollisionVertex = false;
+    Bool_t fIsTargetVertex = false;
+    Bool_t fIsGoodBDC = false;
 
     std::vector<genfit::GFRaveTrackParameters *> fSmoothedTracks; //->
 
-  ClassDef(STVertex, 2)
+  ClassDef(STVertex, 3)
 };
 
 #endif
