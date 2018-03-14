@@ -66,17 +66,27 @@ STGenfitVATask::Init()
   fGenfitTest = new STGenfitTest2(fIsSamurai);
   fPIDTest = new STPIDTest();
 
-  if (!fBDCName.IsNull()) {
-    fFileBDC = new TFile(fBDCName);
-    fTreeBDC = (TTree *) fFileBDC -> Get("TBDC");
-    fTreeBDC -> SetBranchAddress("ProjX",&fXBDC);
-    fTreeBDC -> SetBranchAddress("ProjY",&fYBDC);
-    fTreeBDC -> SetBranchAddress("ProjZ",&fZBDC);
-    fTreeBDC -> SetBranchAddress("ProjdX",&fdXBDC);
-    fTreeBDC -> SetBranchAddress("ProjdY",&fdYBDC);
-    fTreeBDC -> SetBranchAddress("ProjdZ",&fdZBDC);
+  if (!fBeamFilename.IsNull()) {
+    fBDCVertexArray = new TClonesArray("STVertex");
+    fRootManager -> Register("BDCVertex", "SpiRIT", fBDCVertexArray, kTRUE);
 
-    fCovMatBDC = new TMatrixDSym(3);
+    fBeamFile = new TFile(fBeamFilename);
+    fBeamTree = (TTree *) fBeamFile -> Get("TBeam");
+    fBeamTree -> SetBranchAddress("z", &fZ);
+    fBeamTree -> SetBranchAddress("aoq", &fAoQ);
+    fBeamTree -> SetBranchAddress("beta37", &fBeta37);
+    fBDCTree = (TTree *) fBeamFile -> Get("TBDC");
+    fBDCTree -> SetBranchAddress("bdc1x", &fBDC1x);
+    fBDCTree -> SetBranchAddress("bdc1y", &fBDC1y);
+    fBDCTree -> SetBranchAddress("bdc2x", &fBDC2x);
+    fBDCTree -> SetBranchAddress("bdc2y", &fBDC2y);
+    fBDCTree -> SetBranchAddress("bdcax", &fBDCax);
+    fBDCTree -> SetBranchAddress("bdcby", &fBDCby);
+
+    fBeamEnergy = new STBeamEnergy();
+    fBeamEnergy -> setBeam(fRunNo);
+    fBDCProjection = new STBDCProjection(TString(gSystem -> Getenv("VMCWORKDIR")) + "/parameters/ReducedBMap.txt");
+    fBDCProjection -> setBeam(fRunNo);
   }
 
 
@@ -121,8 +131,50 @@ void STGenfitVATask::Exec(Option_t *opt)
     }
   }
 
+  Bool_t targetVertex = kTRUE;
   auto vertex = (STVertex *) fVertexArray -> At(chosenVID);
   vertex -> SetIsCollisionVertex();
+  if (vertex -> GetPos().Z() < -25 || vertex -> GetPos().Z() > 5)
+    targetVertex = kFALSE;
+  else
+    vertex -> SetIsTargetVertex();
+
+  auto vertexPos = vertex -> GetPos();
+  Bool_t goodBDC = kTRUE;
+  if (!fBeamFilename.IsNull()) {
+    auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
+
+    fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
+    fBDCTree -> GetEntry(fEventHeader -> GetEventID() - 1);
+    fBeamEnergy -> reset(fZ, fAoQ, fBeta37);
+    Double_t E1 = fBeamEnergy -> getCorrectedEnergy();
+
+    if (fZ > 0 && fZ < 75 && fAoQ > 1. && fAoQ < 3 && fBDC1x > -999 && fBDC1y > -999 && fBDC2x > -999 && fBDC2y > -999) {
+      Double_t ProjectedAtZ = -580.4 + vertex -> GetPos().Z();  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
+//      double ProjectedAtZ=-592.644;//////mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
+      fBDCProjection -> ProjectParticle(fBDC2x, fBDC2y, -2160., fBDCax, fBDCby, fZ, E1, ProjectedAtZ, fBeamEnergy -> getMass());//-580.4,-583.904
+
+      vertex -> SetIsGoodBDC();
+    } else
+      goodBDC = kFALSE;
+
+    if (!targetVertex && !goodBDC)
+      LOG(INFO) << Space() << "STGenfitVATask " << "Off-target event probable with bad BDC!" << FairLogger::endl;
+    else if (!targetVertex)
+      LOG(INFO) << Space() << "STGenfitVATask " << "Off-target event probable!" << FairLogger::endl;
+    else if (!goodBDC)
+      LOG(INFO) << Space() << "STGenfitVATask " << "Bad BDC!" << FairLogger::endl;
+    else {
+      vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, vertex -> GetPos().Z());
+
+      bdcVertex -> SetIsGoodBDC();
+      bdcVertex -> SetIsTargetVertex();
+      bdcVertex -> SetIsCollisionVertex();
+      bdcVertex -> SetPos(vertexPos);
+
+      LOG(INFO) << Space() << "STGenfitVATask " << "Target event probable with good BDC!" << FairLogger::endl;
+    }
+  }
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();
   for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
@@ -144,7 +196,7 @@ void STGenfitVATask::Exec(Option_t *opt)
 
     auto vertexCluster = new STHitCluster();
     vertexCluster -> SetIsStable(kTRUE);
-    vertexCluster -> SetHit(-4, vertex -> GetPos(), 30);
+    vertexCluster -> SetHit(-4, vertexPos, 30);
     vertexCluster -> SetCovMatrix(cov);
     vertexCluster -> SetDFromCovForGenfit(1,1,1,true);
 
@@ -258,63 +310,12 @@ void STGenfitVATask::Exec(Option_t *opt)
   }
 
   LOG(INFO) << Space() << "VATrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
-
-  if (!fBDCName.IsNull()) {
-    fTreeBDC -> GetEntry(fEventHeader -> GetEventID());
-    TVector3 posBDC(fXBDC-1.462,fYBDC-235.57,fZBDC+580.4);
-    (*fCovMatBDC)[0][0] = fdXBDC;
-    (*fCovMatBDC)[1][1] = fdYBDC;
-    (*fCovMatBDC)[2][2] = fdZBDC;
-
-//    fVertexFactory -> setBeamspot(posBDC, *fCovMatBDC);
-  }
-
-/*
-  vector<genfit::GFRaveVertex *> vertices;
-  try {
-    fVertexFactory -> findVertices(&vertices, gfTrackArrayToVertex, !fBDCName.IsNull());
-  } catch (...) {
-  }
-
-  Int_t numVertices2 = vertices.size();
-
-  for (UInt_t iVert = 0; iVert < numVertices2; iVert++) {
-    genfit::GFRaveVertex* vertex2 = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
-
-    Int_t numTracks2 = vertex2 -> getNTracks();
-    for (Int_t iTrack = 0; iTrack < numTracks2; iTrack++) {
-      genfit::GFRaveTrackParameters *par = vertex2 -> getParameters(iTrack);
-      const genfit::Track *track = par -> getTrack();
-
-      std::vector<genfit::Track *>::iterator iter = std::find(gfTrackArrayToVertex.begin(), gfTrackArrayToVertex.end(), track);
-
-      if (iter != gfTrackArrayToVertex.end()) {
-        Int_t index = std::distance(gfTrackArrayToVertex.begin(), iter);
-        auto vaTrack = vaTrackArrayToVertex.at(index);
-        genfit::Track *gfTrack = gfTrackArrayToVertex.at(index);
-
-        if (vaTrack -> GetVertexID() < 0) {
-          vaTrack -> SetVertexID(iVert);
-
-          TVector3 momVertex;
-          TVector3 pocaVertex;
-          Double_t charge;
-          fGenfitTest -> GetMomentumWithVertex(gfTrack, 10*vertex2->getPos(), momVertex, pocaVertex, charge);
-          if (momVertex.Z() < 0)
-            momVertex = -momVertex;
-          vaTrack -> SetMomentum(momVertex);
-          vaTrack -> SetPOCAVertex(pocaVertex);
-          vaTrack -> SetCharge(charge);
-        }
-      }
-    }
-
-    new ((*fVertexArray)[iVert]) STVertex(*vertex2);
-    delete vertex2;
-  }
-
-  LOG(INFO) << Space() << "VAVertex " << fVertexArray -> GetEntriesFast() << FairLogger::endl;
-  */
 }
 
-void STGenfitVATask::SetBDCFile(TString fileName) { fBDCName = fileName; }
+void STGenfitVATask::SetBeamFile(TString fileName) { fBeamFilename = fileName; }
+void STGenfitVATask::SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_t offsetY)
+{
+  fRunNo = runNo;
+  fOffsetX = offsetX;
+  fOffsetY = offsetY;
+}

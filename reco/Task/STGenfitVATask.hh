@@ -10,6 +10,8 @@
 #include "STRecoTrackCand.hh"
 #include "STRecoTrackCandList.hh"
 #include "STVertex.hh"
+#include "STBeamEnergy.hh"
+#include "STBDCProjection.hh"
 
 class STGenfitVATask : public STRecoTask
 {
@@ -27,7 +29,8 @@ class STGenfitVATask : public STRecoTask
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
 
-    void SetBDCFile(TString fileName);
+    void SetBeamFile(TString fileName);
+    void SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_t offsetY);
 
   private:
     TClonesArray *fHelixTrackArray = nullptr;
@@ -35,6 +38,7 @@ class STGenfitVATask : public STRecoTask
     TClonesArray *fVertexArray = nullptr;
     TClonesArray *fCandListArray = nullptr;
     TClonesArray *fVATrackArray = nullptr;
+    TClonesArray *fBDCVertexArray = nullptr;
 
     bool fIsListPersistence = false;
     bool fIsSamurai = true;
@@ -47,12 +51,17 @@ class STGenfitVATask : public STRecoTask
 
     Int_t fClusteringType = 2;
 
-    TString fBDCName = "";
-    TFile *fFileBDC;
-    TTree *fTreeBDC;
-    Double_t fXBDC, fYBDC, fZBDC;
-    Double_t fdXBDC, fdYBDC, fdZBDC;
-    TMatrixDSym *fCovMatBDC;
+    TString fBeamFilename = "";
+    TFile *fBeamFile;
+    TTree *fBeamTree;
+    Double_t fZ, fAoQ, fBeta37;
+    TTree *fBDCTree;
+    Double_t fBDC1x, fBDC1y, fBDC2x, fBDC2y, fBDCax, fBDCby;
+
+    Int_t fRunNo;
+    Double_t fOffsetX, fOffsetY;
+    STBeamEnergy *fBeamEnergy = nullptr;
+    STBDCProjection *fBDCProjection = nullptr;
 
   ClassDef(STGenfitVATask, 1)
 };

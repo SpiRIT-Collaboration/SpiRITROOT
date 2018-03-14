@@ -109,6 +109,9 @@ void run_reco_experiment
   genfitVA -> SetPersistence(true);
   //genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
+//  genfitVA -> SetBeamFile("");
+  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
+  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   
   run -> AddTask(decoder);
   run -> AddTask(preview);
