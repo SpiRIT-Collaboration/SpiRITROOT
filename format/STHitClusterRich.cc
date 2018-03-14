@@ -19,13 +19,13 @@ STHitClusterRich::STHitClusterRich()
 
   fCharge = 0.;
 
-  fXMax = 0;
-  fYMax = 0;
-  fZMax = 0;
+  fXMax = -9999;
+  fYMax = -9999;
+  fZMax = -9999;
 
-  fXMin = 0;
-  fYMin = 0;
-  fZMin = 0;
+  fXMin = 9999;
+  fYMin = 9999;
+  fZMin = 9999;
 }
 
 STHitClusterRich::STHitClusterRich(STHitClusterRich *cluster)

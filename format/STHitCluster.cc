@@ -134,6 +134,20 @@ STHitCluster::AddHit(STHit *hit)
   hit -> SetClusterID(fClusterID);
 }
 
+void STHitCluster::SetDFromCovForGenfit(Double_t maxx, Double_t maxy, Double_t maxz, bool setMin)
+{
+  if (setMin) {
+    SetDx(0.16);
+    SetDy(0.09);
+    SetDz(0.36);
+    return;
+  }
+
+  SetDx(0.16*(abs(fCovMatrix(0,0)/fCharge/maxx)+1));
+  SetDy(0.09*(abs(fCovMatrix(1,1)/fCharge/maxy)+1));
+  SetDz(0.36*(abs(fCovMatrix(2,2)/fCharge/maxz)+1));
+}
+
 void
 STHitCluster::CalculatePosition(TVector3 hitPos, Double_t charge)
 {

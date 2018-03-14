@@ -39,6 +39,8 @@ class STHitCluster : public STHit
 
     virtual void AddHit(STHit *hit);      ///< Add hit to cluster
 
+    void SetDFromCovForGenfit(Double_t maxx, Double_t maxy, Double_t maxz, bool setMin = false);
+
     virtual void SetClusterID(Int_t clusterID);
 
     void SetLength(Double_t length);

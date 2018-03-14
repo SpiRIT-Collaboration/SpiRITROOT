@@ -238,7 +238,24 @@ void STHelixTrack::FinalizeClusters()
       fdEdxArray.push_back(cluster->GetCharge()/cluster->GetLength());
     }
   }
+
+  auto maxx = 0.;
+  auto maxy = 0.;
+  auto maxz = 0.;
+
+  for (auto cluster : fHitClusters)
+  {
+    auto cov = cluster -> GetCovMatrix();
+    auto charge = cluster -> GetCharge();
+    auto cx = abs(cov(0,0)/charge); if (cx > maxx) maxx = cx;
+    auto cy = abs(cov(1,1)/charge); if (cy > maxy) maxy = cy;
+    auto cz = abs(cov(2,2)/charge); if (cz > maxz) maxz = cz;
+  }
+
+  for (auto cluster : fHitClusters)
+    cluster -> SetDFromCovForGenfit(maxx,maxy,maxz);
 }
+
 
 void STHelixTrack::SetTrackID(Int_t idx)    { fTrackID = idx; }
 void STHelixTrack::SetGenfitID(Int_t idx)   { fGenfitID = idx; }

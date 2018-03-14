@@ -47,9 +47,9 @@ STSpacepointMeasurement::STSpacepointMeasurement(const STHitCluster *detHit, con
 
   TMatrixDSym cov(3);
 
-  cov(0,0) = 0.2*0.2;
-  cov(1,1) = 0.1*0.1;
-  cov(2,2) = 0.2*0.2;
+  cov(0,0) = detHit -> GetDx();
+  cov(1,1) = detHit -> GetDy();
+  cov(2,2) = detHit -> GetDz();
 
   cov(0,1) = 0;
   cov(1,2) = 0;

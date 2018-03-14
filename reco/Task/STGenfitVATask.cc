@@ -146,6 +146,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     vertexCluster -> SetIsStable(kTRUE);
     vertexCluster -> SetHit(-4, vertex -> GetPos(), 30);
     vertexCluster -> SetCovMatrix(cov);
+    vertexCluster -> SetDFromCovForGenfit(1,1,1,true);
 
     Int_t trackID = fCandListArray -> GetEntriesFast();
 
