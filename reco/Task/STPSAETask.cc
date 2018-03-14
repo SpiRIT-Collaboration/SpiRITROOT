@@ -132,39 +132,94 @@ void STPSAETask::Exec(Option_t *opt)
     return;
   }
 
-  auto CorrelateEmbedHits = [](TClonesArray *hitAry, TClonesArray *embedHitAry){
-    Int_t num_embed = 0;
-    for (int iHit = 0; iHit < hitAry->GetEntries(); iHit++)
-      {
-	STHit *hit = (STHit *)hitAry->At(iHit);
-	for (int iEmb = 0; iEmb < embedHitAry->GetEntries(); iEmb++)
-	  {
-	    STHit *embedHit = (STHit *)embedHitAry->At(iEmb);    
-	    bool tb_corr = false;
-	    bool charge_corr = false;
-	    
-	    if(hit->GetLayer() == embedHit->GetLayer() && hit->GetRow() == embedHit->GetRow())
-	      {
-		double chg_f = (hit->GetCharge()-embedHit->GetCharge())/embedHit->GetCharge();//charge fraction
-		double tb_f = abs(hit->GetTb()-embedHit->GetTb());//charge fraction
-		if( chg_f < .05 && tb_f < 3)
-		  {
-		    hit->SetIsEmbed(true);
-		    num_embed++;
-		  }
-	      }
-	  }
-      }
+  //these vectors organize the hits by row and layer into this map structure
+  //to avoid looping over the three arrays in a dumb way. Used in CorrelateEmbedHits
+  //map index is row*112 + layer
 
-    return num_embed;
-  };
-    
+  vector<vector<STHit *>> m_data (108*112,vector<STHit *>(0));   //just data hits
+  vector<vector<STHit *>> m_embed(108*112,vector<STHit *>(0));   //just embeded hits
+  vector<vector<STHit *>> m_hit  (108*112,vector<STHit *>(0));   //just data + embed hits
+
+  for (int iHit = 0; iHit < fHitArray->GetEntries(); iHit++)
+    {
+      STHit *hit = (STHit *)fHitArray->At(iHit);
+      m_hit.at(hit->GetRow()*112 + hit->GetLayer()).push_back(hit);
+    }
+  for (int iEmb = 0; iEmb < fEmbedHitArray->GetEntries(); iEmb++)
+    {
+      STHit *embedHit = (STHit *)fEmbedHitArray->At(iEmb);
+      m_embed.at(embedHit->GetRow()*112 + embedHit->GetLayer()).push_back(embedHit);
+    }
+  for (int iData = 0; iData < fDataHitArray->GetEntries(); iData++)
+    {
+      STHit *dataHit = (STHit *)fDataHitArray->At(iData);
+      m_data.at(dataHit->GetRow()*112 + dataHit->GetLayer()).push_back(dataHit);
+    }
+  
+  int miss_hits = 0;
+  auto CorrelateEmbedHits = [&miss_hits](vector<vector<STHit *>> map_hit, vector<vector<STHit *>> map_data, vector<vector<STHit *>> map_embed)
+    {
+      
+      int num_embed = 0;
+      for (int iPad = 0; iPad < map_embed.size(); iPad++)
+	{
+	  if(map_embed.at(iPad).size()!=0)
+	    {
+	      miss_hits =  abs(map_hit.at(iPad).size() - map_embed.at(iPad).size() - map_data.at(iPad).size());
+	      //	    bool any_missing_hits = (map_hit.at(i).size() + map_embed.at(i).size() != map_data.at(i).size());
+	      
+	      //First we find the hits that match just data without embeded hits
+	      //Then we will correlate the remaining hits with the embeded hits
+	      for(int iHit = 0; iHit < map_hit.at(iPad).size(); iHit++)
+		{
+		  double hit_charge = map_hit.at(iPad).at(iHit)->GetCharge();
+		  double hit_tb     = map_hit.at(iPad).at(iHit)->GetTb();
+		  for(int iData = 0; iData < map_data.at(iPad).size(); iData++)
+		    {
+		      double data_charge = map_data.at(iPad).at(iData)->GetCharge();
+		      double data_tb     = map_data.at(iPad).at(iData)->GetTb();
+		      
+		      double chg_f = (hit_charge - data_charge)/data_charge;
+		      double tb_diff = hit_tb - data_tb;
+		      if( abs(chg_f) < .05 && abs(tb_diff) < 3) //condition for matching hit
+			map_hit.at(iPad).erase(map_hit.at(iPad).begin() + iHit);
+		    }
+		}
+	      miss_hits = (map_hit.at(iPad).size() - map_embed.at(iPad).size());
+	      //End of matching data hits
+	      for(int iHit = 0; iHit < map_hit.at(iPad).size(); iHit++)
+		{
+		  double hit_charge = map_hit.at(iPad).at(iHit)->GetCharge();
+		  double hit_tb     = map_hit.at(iPad).at(iHit)->GetTb();
+		  for(int iEmb = 0; iEmb< map_embed.at(iPad).size(); iEmb++)
+		    {
+		      double embed_charge = map_embed.at(iPad).at(iEmb)->GetCharge();
+		      double embed_tb     = map_embed.at(iPad).at(iEmb)->GetTb();
+		      
+		      double chg_f = (hit_charge - embed_charge)/embed_charge;
+		      double tb_diff = hit_tb - embed_tb;
+		      if( abs(tb_diff) < 3) //condition for matching hit
+			{
+			  map_hit.at(iPad).at(iHit)->SetIsEmbed(true);
+			  num_embed++;
+			}
+		    }
+		}
+	      //End of matching embeded hits
+	    }
+	}
+      //End of loop over pads in event
+      return num_embed;
+    };
+  
   Int_t num_embed = 0;
   if(rawEmbedEvent != NULL)
-    num_embed = CorrelateEmbedHits(fHitArray,fEmbedHitArray);
+    num_embed = CorrelateEmbedHits(m_hit,m_data,m_embed);
 
-  LOG(INFO) << Space() << "Embeded Hits " << fEmbedHitArray->GetEntries() << FairLogger::endl;
-  LOG(INFO) << Space() << "Correlated Hits " << num_embed << FairLogger::endl;
+  LOG(INFO) << Space() << "% Embed found " << (1.*num_embed)/(fEmbedHitArray->GetEntries()) << FairLogger::endl;
+  LOG(INFO) << Space() << "Missing hits" << miss_hits << FairLogger::endl;
+
+  //  LOG(INFO) << Space() << "Correlated Hits " << num_embed << FairLogger::endl;
   LOG(INFO) << Space() << "STHit "<< fHitArray -> GetEntriesFast() << FairLogger::endl;
 }
 

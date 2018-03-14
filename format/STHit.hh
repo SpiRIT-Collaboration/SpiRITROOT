@@ -65,6 +65,7 @@ class STHit : public TObject
 
        Int_t GetClusterID() const; ///< Cluster ID getter
        Int_t GetTrackID()   const; ///< Track ID getter
+    Bool_t GetIsEmbed()     const; ///<Get if it is embeded
     Double_t GetX()         const; ///< x position getter
     Double_t GetY()         const; ///< y position getter
     Double_t GetZ()         const; ///< z position getter

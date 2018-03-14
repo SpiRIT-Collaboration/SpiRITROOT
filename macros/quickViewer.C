@@ -26,7 +26,7 @@ Bool_t fUseGainCalibration = kFALSE;
 Int_t fFPNThreshold = 10;
 
 // Set the gating grid noise data. If left blank, it will use FPN pedestal.
-TString fGGNoiseData = "";
+TString fGGNoiseData = "/mnt/spirit/rawdata/misc/ggNoise/ggNoise_2853.root";
 
 //////////////////////////////////////////////////////////
 //                                                      //
@@ -118,7 +118,7 @@ void quickViewer() {
   if (fUseMetadata) {
     std::ifstream metalistFile(metaFile.Data());
     TString dataFileWithPath;
-    for (iCobo = 0; iCobo < 12; iCobo++) {
+    for (int iCobo = 0; iCobo < 12; iCobo++) {
       dataFileWithPath.ReadLine(metalistFile);
       dataFileWithPath = Form("%s/run_%04d/%s", supplementPath.Data(), runNo, dataFileWithPath.Data());
       fCore -> LoadMetaData(dataFileWithPath, iCobo);
