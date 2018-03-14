@@ -118,7 +118,7 @@ void quickViewer() {
   if (fUseMetadata) {
     std::ifstream metalistFile(metaFile.Data());
     TString dataFileWithPath;
-    for (int iCobo = 0; iCobo < 12; iCobo++) {
+    for (auto iCobo = 0; iCobo < 12; iCobo++) {
       dataFileWithPath.ReadLine(metalistFile);
       dataFileWithPath = Form("%s/run_%04d/%s", supplementPath.Data(), runNo, dataFileWithPath.Data());
       fCore -> LoadMetaData(dataFileWithPath, iCobo);
