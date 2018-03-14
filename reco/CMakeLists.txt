@@ -28,6 +28,7 @@ ${CMAKE_SOURCE_DIR}/reco/CurveTracking
 ${CMAKE_SOURCE_DIR}/reco/HelixTracking
 ${CMAKE_SOURCE_DIR}/reco/Task
 ${CMAKE_SOURCE_DIR}/reco/PID
+${CMAKE_SOURCE_DIR}/reco/BDCMagneticProjection
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -156,6 +157,9 @@ CurveTracking/STCorrCurveTHPerp.cc
 STCurveTrackingTask.cc
 
 HelixTracking/STHelixTrackFinder.cc
+
+BDCMagneticProjection/STBeamEnergy.cc
+BDCMagneticProjection/STBDCProjection.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
