@@ -107,6 +107,8 @@ void STGenfitVATask::Exec(Option_t *opt)
 {
   fCandListArray -> Clear("C");
   fVATrackArray -> Clear("C");
+  if (!fBeamFilename.IsNull())
+    fBDCVertexArray -> Clear("C");
 
   if (fEventHeader -> IsBadEvent())
     return;
@@ -142,8 +144,6 @@ void STGenfitVATask::Exec(Option_t *opt)
   auto vertexPos = vertex -> GetPos();
   Bool_t goodBDC = kTRUE;
   if (!fBeamFilename.IsNull()) {
-    fBDCVertexArray -> Clear("C");
-
     fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
     fBDCTree -> GetEntry(fEventHeader -> GetEventID() - 1);
     fBeamEnergy -> reset(fZ, fAoQ, fBeta37);
