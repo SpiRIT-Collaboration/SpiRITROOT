@@ -142,7 +142,7 @@ void STGenfitVATask::Exec(Option_t *opt)
   auto vertexPos = vertex -> GetPos();
   Bool_t goodBDC = kTRUE;
   if (!fBeamFilename.IsNull()) {
-    auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
+    fBDCVertexArray -> Clear("C");
 
     fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
     fBDCTree -> GetEntry(fEventHeader -> GetEventID() - 1);
@@ -167,6 +167,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     else {
       vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, vertex -> GetPos().Z());
 
+      auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
       bdcVertex -> SetIsGoodBDC();
       bdcVertex -> SetIsTargetVertex();
       bdcVertex -> SetIsCollisionVertex();
