@@ -55,6 +55,7 @@ class STElectronicsTask : public FairTask
     TClonesArray *fPPEventArray;  //!< [INPUT] Array of STRawEvent.
     STRawEvent* fPPEvent;         //!< [INPUT] Input event.
 
+    TClonesArray *fMCTrackArray;  //!< [INPUT/OUTPUT] Array of STMCTrack of embedded events
     TClonesArray *fRawEventArray; //!< [OUTPUT] Array of STRawEvent.
     STRawEvent* fRawEvent;        //!< [OUTPUT] Ouput event.
 

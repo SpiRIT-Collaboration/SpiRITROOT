@@ -14,6 +14,7 @@ using namespace std;
 class STRecoTrackCand : public TObject
 {
   protected:
+    Bool_t fIsEmbed; /// True if embeded clusters exist
     STPID::PID fPID; ///< STPID
     Double_t fPIDProbability; ///< PID probability
 
@@ -33,6 +34,7 @@ class STRecoTrackCand : public TObject
     virtual void Print(Option_t *option = "") const;
     virtual void Copy(TObject *obj) const;
 
+    void SetIsEmbed(Bool_t val) { fIsEmbed = val; }
     void SetPID(STPID::PID val) { fPID = val; }
     STPID::PID GetPID() { return fPID; }
 
@@ -55,8 +57,14 @@ class STRecoTrackCand : public TObject
     void SetGenfitTrack(genfit::Track *val) { fGenfitTrack = val; }
     genfit::Track *GetGenfitTrack() { return fGenfitTrack; }
 
-    void SetHelixTrack(STHelixTrack *val) { fHelixTrack = val; }
+  void SetHelixTrack(STHelixTrack *val)
+  {
+    fHelixTrack = val;
+    fIsEmbed = fHelixTrack -> IsEmbed();
+  }
     STHelixTrack *GetHelixTrack() { return fHelixTrack; }
+
+    Bool_t IsEmbed(){return fIsEmbed; }
 
   ClassDef(STRecoTrackCand, 2)
 };

@@ -52,6 +52,7 @@ STDecoderTask::STDecoderTask()
   fEmbedFile = "";
   
   fPar = NULL;
+  fEmbedTrackArray = new TClonesArray("STMCTrack");
   fRawEventArray = new TClonesArray("STRawEvent");
   fRawEmbedEventArray = new TClonesArray("STRawEvent");
   fRawDataEventArray = new TClonesArray("STRawEvent");
@@ -112,8 +113,9 @@ STDecoderTask::Init()
   }
 
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
-  ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, true);
-  ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, true);
+  ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
+  ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
+  ioMan -> Register("STMCTrack", "SPiRIT", fEmbedTrackArray, fIsPersistence);
   
   fDecoder = new STCore();
   fDecoder -> SetUseSeparatedData(fIsSeparatedData);
@@ -215,6 +217,7 @@ STDecoderTask::Exec(Option_t *opt)
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStart("DecoderTask");
 #endif
+  fEmbedTrackArray -> Delete();
   fRawEventArray -> Delete();
   fRawEmbedEventArray -> Delete();
   fRawDataEventArray -> Delete();
@@ -231,7 +234,9 @@ STDecoderTask::Exec(Option_t *opt)
   else if (!fEmbedFile.EqualTo("") && fIsEmbedding){
     if (fEventID<2)
       std::cout << "== [STDecoderTask] Setting up embed mode" << std::endl;
-    fRawEventMC = Embedding(fEmbedFile,fEventID-1);
+    fRawEventMC     = Embedding(fEmbedFile,fEventID-1);
+    GetEmbedTrack(fEmbedFile,fEventID-1);
+
     if(fRawEventMC != NULL)
       {
 	Int_t numPads = fRawEvent -> GetNumPads();
@@ -293,6 +298,25 @@ STDecoderTask::Embedding(TString dataFile, Int_t eventId)
   
   return rawEvent;
 
+}
+
+TClonesArray*
+STDecoderTask::GetEmbedTrack(TString dataFile, Int_t eventId)
+{
+  TChain *fChain = NULL;
+  TClonesArray MCTrackArray;// = nullptr;
+
+  fChain = new TChain("cbmsim");
+  fChain -> AddFile(dataFile);
+  fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
+
+  if(eventId < fChain->GetEntries())
+    {
+      fChain -> GetEntry(eventId);
+      //      new ((*fEmbedTrackArray)[eventId]) STMCTrack();
+    }
+  
+  //  return MCTrackArray;
 }
 
 Int_t

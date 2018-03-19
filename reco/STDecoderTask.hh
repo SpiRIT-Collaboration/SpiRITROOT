@@ -82,6 +82,8 @@ class STDecoderTask : public FairTask {
     void SetPersistence(Bool_t value = kTRUE);
     // If set, events are embedded from MC sample
     void SetEmbedding(Bool_t value = kTRUE);
+    //Copy STMCTrack from embedded file to STRecoTrack for comparison at the end
+    TClonesArray *GetEmbedTrack(TString datafile, Int_t eventId);
     // MC file for embedding
     void SetEmbedFile(TString filename);
   
@@ -129,6 +131,7 @@ class STDecoderTask : public FairTask {
     TString fEmbedFile;                 ///< MC file for embedding
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
+    TClonesArray *fEmbedTrackArray;     ///< STRecoTrack embed track exact info
     TClonesArray *fRawEventArray;       ///< STRawEvent container embeded + data
     TClonesArray *fRawEmbedEventArray;  ///< STRawEvent container of embeded event
     TClonesArray *fRawDataEventArray;   ///< STRawEvent container just data

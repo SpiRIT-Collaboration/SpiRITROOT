@@ -33,7 +33,7 @@ STHit::STHit(STHit *hit)
   fIsClustered = hit -> IsClustered();
   fClusterID = hit -> GetClusterID();
   fTrackID = hit -> GetTrackID();
-  fIsEmbed = hit -> GetIsEmbed();
+  fIsEmbed = hit -> IsEmbed();
   
   SetHit(hit -> GetHitID(), hit -> GetPosition(), hit -> GetCharge());
 
@@ -54,7 +54,7 @@ STHit::STHit(STHit *hit)
 void STHit::Clear(Option_t *)
 {
   fIsClustered = kFALSE;
-  fIsEmbed = kFALSE;
+  fIsEmbed = false;
   fHitID = -1;
   fTrackID = -1;
   fClusterID = -1;
@@ -132,7 +132,7 @@ void STHit::RemoveTrackCand(Int_t trackID)
    Int_t STHit::GetHitID()     const   { return fHitID; }
    Int_t STHit::GetClusterID() const   { return (fIsClustered ? fClusterID : -1); }
    Int_t STHit::GetTrackID()   const   { return fTrackID; }
-  Bool_t STHit::GetIsEmbed()   const   {return fIsEmbed; }
+  Bool_t STHit::IsEmbed()   const   {return fIsEmbed; }
 Double_t STHit::GetX()         const   { return fX; }
 Double_t STHit::GetY()         const   { return fY; }
 Double_t STHit::GetZ()         const   { return fZ; }

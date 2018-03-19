@@ -20,7 +20,7 @@ void STHelixTrack::Clear(Option_t *option)
 {
   fTrackID  = -999;
   fParentID = -999;
-
+  fIsEmbed = false;
   fFitStatus = kBad;
 
   fXHelixCenter = -999;
@@ -230,14 +230,18 @@ void STHelixTrack::FinalizeHits()
 
 void STHelixTrack::FinalizeClusters()
 {
-  for (auto cluster : fHitClusters) {
-    cluster -> SetTrackID(fTrackID);
-    cluster -> ApplyCovLowLimit();
-    if (cluster -> IsStable()) {
-      fClusterIDs.push_back(cluster->GetClusterID());
-      fdEdxArray.push_back(cluster->GetCharge()/cluster->GetLength());
+  for (auto cluster : fHitClusters)
+    {
+      cluster -> SetTrackID(fTrackID);
+      cluster -> ApplyCovLowLimit();
+      if (cluster -> IsStable())
+	{
+	  fClusterIDs.push_back(cluster->GetClusterID());
+	  fdEdxArray.push_back(cluster->GetCharge()/cluster->GetLength());
+	  if(cluster-> IsEmbed()==true)
+	    fIsEmbed = true;
+	}
     }
-  }
 }
 
 void STHelixTrack::SetTrackID(Int_t idx)    { fTrackID = idx; }
@@ -245,6 +249,7 @@ void STHelixTrack::SetGenfitID(Int_t idx)   { fGenfitID = idx; }
 void STHelixTrack::SetParentID(Int_t idx)   { fParentID = idx; }
 
 void STHelixTrack::SetFitStatus(STFitStatus value)  { fFitStatus = value; }
+void STHelixTrack::SetIsEmbed(bool val){   fIsEmbed = val; }
 void STHelixTrack::SetIsBad()          { fFitStatus = STHelixTrack::kBad; }
 void STHelixTrack::SetIsLine()         { fFitStatus = STHelixTrack::kLine; }
 void STHelixTrack::SetIsPlane()        { fFitStatus = STHelixTrack::kPlane; }
@@ -314,6 +319,7 @@ TString STHelixTrack::GetFitStatusString() const
   return fitStat;
 }
 
+bool STHelixTrack::IsEmbed() const        { return fIsEmbed;}
 bool STHelixTrack::IsBad() const          { return fFitStatus == kBad   ? true : false; }
 bool STHelixTrack::IsLine()  const        { return fFitStatus == kLine  ? true : false; }
 bool STHelixTrack::IsPlane() const        { return fFitStatus == kPlane ? true : false; }
