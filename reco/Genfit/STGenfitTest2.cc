@@ -519,6 +519,7 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
     if (layer == -1)
       buildByLayer = false;
 
+    TVector3 pointRef0 = .1*position;
     TVector3 pointRef1 = .1*position;
     TVector3 pointRef2 = .1*position;
     TVector3 normalRef(0,0,0);
@@ -532,13 +533,17 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
       pointRef2.SetX(.1*((row+1)*8.-432.));
     }
 
+    genfit::SharedPlanePtr referencePlane0 = genfit::SharedPlanePtr(new genfit::DetPlane(pointRef0, normalRef));
     genfit::SharedPlanePtr referencePlane1 = genfit::SharedPlanePtr(new genfit::DetPlane(pointRef1, normalRef));
     genfit::SharedPlanePtr referencePlane2 = genfit::SharedPlanePtr(new genfit::DetPlane(pointRef2, normalRef));
 
     try {
       trackRep -> extrapolateToPlane(fitState, referencePlane1);
+
       Double_t l2 = 10 * trackRep -> extrapolateToPlane(fitState, referencePlane2);
       cluster -> SetLength(std::abs(l2));
+
+      trackRep -> extrapolateToPlane(fitState, referencePlane0);
       cluster -> SetPOCA(10*fitState.getPos());
     } catch (genfit::Exception &e) {
       //cluster -> SetIsStable(false); //TODO
@@ -768,6 +773,8 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
     if (layer == -1)
       buildByLayer = false;
 
+
+    TVector3 pointRef0 = .1*position;
     TVector3 pointRef1 = .1*position;
     TVector3 pointRef2 = .1*position;
     TVector3 normalRef(0,0,0);
@@ -781,13 +788,17 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
       pointRef2.SetX(.1*((row+1)*8.-432.));
     }
 
+    genfit::SharedPlanePtr referencePlane0 = genfit::SharedPlanePtr(new genfit::DetPlane(pointRef0, normalRef));
     genfit::SharedPlanePtr referencePlane1 = genfit::SharedPlanePtr(new genfit::DetPlane(pointRef1, normalRef));
     genfit::SharedPlanePtr referencePlane2 = genfit::SharedPlanePtr(new genfit::DetPlane(pointRef2, normalRef));
 
     try {
       trackRep -> extrapolateToPlane(fitState, referencePlane1);
+
       Double_t l2 = 10 * trackRep -> extrapolateToPlane(fitState, referencePlane2);
       cluster -> SetLength(std::abs(l2));
+
+      trackRep -> extrapolateToPlane(fitState, referencePlane0);
       cluster -> SetPOCA(10*fitState.getPos());
     } catch (genfit::Exception &e) {
       //cluster -> SetIsStable(false); //TODO
