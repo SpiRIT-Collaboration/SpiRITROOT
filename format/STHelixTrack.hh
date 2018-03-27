@@ -184,6 +184,7 @@ class STHelixTrack : public TObject
     std::vector<STHit *> *GetCandHitArray();
 
     Int_t GetNumClusters() const;
+    Int_t GetNumEmbedClusters() const;
     Int_t GetNumStableClusters() const;
     STHitCluster *GetCluster(Int_t idx) const;
     std::vector<STHitCluster *> *GetClusterArray();

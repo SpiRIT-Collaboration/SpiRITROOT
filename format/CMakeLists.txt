@@ -7,6 +7,7 @@ ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/global
 ${CMAKE_SOURCE_DIR}/format
+${CMAKE_SOURCE_DIR}/stack
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -36,6 +37,7 @@ STDriftedElectron.cc
 STLinearTrack.cc
 STCurveTrack.cc
 STTrack.cc
+STEmbedTrack.cc
 STTrackCandidate.cc
 STEventHeader.cc
 STHelixTrack.cc

@@ -443,6 +443,18 @@ std::vector<STHit *> *STHelixTrack::GetHitArray() { return &fMainHits; }
 Int_t STHelixTrack::GetNumCandHits() const { return fCandHits.size(); }
 std::vector<STHit *> *STHelixTrack::GetCandHitArray() { return &fCandHits; }
 
+Int_t STHelixTrack::GetNumEmbedClusters() const
+{
+  Int_t num_embed = 0;
+  for (auto cluster : fHitClusters)
+    {
+      if(cluster->IsEmbed() == true);
+	 num_embed++;
+    }
+
+  return num_embed;
+}
+
 Int_t STHelixTrack::GetNumClusters() const { return fHitClusters.size(); }
 Int_t STHelixTrack::GetNumStableClusters() const
 {
