@@ -15,6 +15,7 @@ class STRecoTrackCand : public TObject
 {
   protected:
     Bool_t fIsEmbed; /// True if embeded clusters exist
+   Int_t num_embed_clusters;
     STPID::PID fPID; ///< STPID
     Double_t fPIDProbability; ///< PID probability
 
@@ -36,6 +37,8 @@ class STRecoTrackCand : public TObject
 
     void SetIsEmbed(Bool_t val) { fIsEmbed = val; }
     void SetPID(STPID::PID val) { fPID = val; }
+
+  Int_t GetNumEmbedClusters() {return num_embed_clusters; }
     STPID::PID GetPID() { return fPID; }
 
     void SetPIDProbability(Double_t val) { fPIDProbability = val; }
@@ -61,6 +64,7 @@ class STRecoTrackCand : public TObject
   {
     fHelixTrack = val;
     fIsEmbed = fHelixTrack -> IsEmbed();
+    num_embed_clusters = fHelixTrack -> GetNumEmbedClusters();
   }
     STHelixTrack *GetHelixTrack() { return fHelixTrack; }
 

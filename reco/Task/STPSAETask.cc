@@ -108,7 +108,7 @@ void STPSAETask::Exec(Option_t *opt)
   fHitArray -> Delete();
   fEmbedHitArray -> Delete();
   fDataHitArray -> Delete();
-  
+
   if (fEventHeader -> IsBadEvent())
     return;
 
@@ -119,12 +119,11 @@ void STPSAETask::Exec(Option_t *opt)
   STRawEvent *rawDataEvent = (STRawEvent *) fRawDataEventArray -> At(0);
   STRawEvent *rawEmbedEvent = (STRawEvent *) fRawEmbedEventArray -> At(0);
   
+
   fPSA -> Analyze(rawEvent, fHitArray);
   fPSA -> Analyze(rawDataEvent, fDataHitArray);
   if(rawEmbedEvent != NULL)
     fPSA -> Analyze(rawEmbedEvent, fEmbedHitArray);
-  
-  //DO SOMETHING HERE??????????? with embed or real data events???
   if (fHitArray -> GetEntriesFast() < fNumHitsLowLimit) {
     fEventHeader -> SetIsBadEvent();
     LOG(INFO) << Space() << "Found less than " << fNumHitsLowLimit << " hits. Bad event!" << FairLogger::endl;
@@ -155,7 +154,6 @@ void STPSAETask::Exec(Option_t *opt)
       STHit *dataHit = (STHit *)fDataHitArray->At(iData);
       m_data.at(dataHit->GetRow()*112 + dataHit->GetLayer()).push_back(dataHit);
     }
-  
   int miss_hits = 0;
   auto CorrelateEmbedHits = [&miss_hits](vector<vector<STHit *>> map_hit, vector<vector<STHit *>> map_data, vector<vector<STHit *>> map_embed)
     {
@@ -170,6 +168,9 @@ void STPSAETask::Exec(Option_t *opt)
 	      
 	      //First we find the hits that match just data without embeded hits
 	      //Then we will correlate the remaining hits with the embeded hits
+
+	      //in the case there is more data than hits maybe the array of hits after errase becomes zero but the hit charge and hit _tb is not reset 
+	      //consider loop over data ??
 	      for(int iHit = 0; iHit < map_hit.at(iPad).size(); iHit++)
 		{
 		  double hit_charge = map_hit.at(iPad).at(iHit)->GetCharge();
@@ -182,10 +183,18 @@ void STPSAETask::Exec(Option_t *opt)
 		      double chg_f = (hit_charge - data_charge)/data_charge;
 		      double tb_diff = hit_tb - data_tb;
 		      if( abs(chg_f) < .05 && abs(tb_diff) < 3) //condition for matching hit
-			map_hit.at(iPad).erase(map_hit.at(iPad).begin() + iHit);
+			{
+			  map_hit.at(iPad).erase(map_hit.at(iPad).begin() + iHit);
+			  //set to large values to not satisfy if condition above
+			  //hit is correlated with data hit time to move to next iHit index
+			  hit_charge = 999999;
+			  hit_tb     = 999999;
+			}
+		      
 		    }
 		}
 	      miss_hits = (map_hit.at(iPad).size() - map_embed.at(iPad).size());
+
 	      //End of matching data hits
 	      for(int iHit = 0; iHit < map_hit.at(iPad).size(); iHit++)
 		{
@@ -216,8 +225,8 @@ void STPSAETask::Exec(Option_t *opt)
   if(rawEmbedEvent != NULL)
     num_embed = CorrelateEmbedHits(m_hit,m_data,m_embed);
 
-  LOG(INFO) << Space() << "% Embed found " << (1.*num_embed)/(fEmbedHitArray->GetEntries()) << FairLogger::endl;
-  LOG(INFO) << Space() << "Missing hits" << miss_hits << FairLogger::endl;
+  LOG(INFO) << Space() << "% Embed hits found " << (1.*num_embed)/(fEmbedHitArray->GetEntries()) << FairLogger::endl;
+  //  LOG(INFO) << Space() << "Missing hits" << miss_hits << FairLogger::endl;
 
   //  LOG(INFO) << Space() << "Correlated Hits " << num_embed << FairLogger::endl;
   LOG(INFO) << Space() << "STHit "<< fHitArray -> GetEntriesFast() << FairLogger::endl;

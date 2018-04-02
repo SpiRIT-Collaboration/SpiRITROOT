@@ -55,7 +55,8 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
   auto numReco = fRecoTrackArray -> GetEntries();
   auto numMC   = fMCTrackArray -> GetEntries();
 
-  LOG(INFO) << Space() << "number of mc and reco  "<< numMC <<" "<<numReco<< FairLogger::endl;
+  
+  int num_corr = 0;// number of tracks correlated
   
   for (auto iMC = 0; iMC < numMC; iMC++)
     {
@@ -65,14 +66,14 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
       mom_mc *= 1000;
       int mostprob_idx = -1;                //most probable index of reco track array
       double min_mom = 999999;              //minimum momentum magnitude difference
-      //      STRecoTrack *mostProbTrack = nullptr; //most probable track to MC track
+
       for (auto iReco = 0; iReco < numReco; iReco++)
 	{
 	  auto recoTrack = (STRecoTrack *) fRecoTrackArray -> At(iReco);
-	  //	  if(recoTrack -> IsEmbed() == false)
-	  //	    continue;
-	  //	  if(recoTrack -> GetNumEmbedClusters() < 5)
-	  //	    continue;
+	  if(recoTrack -> IsEmbed() == false)
+	    continue;
+	  if(recoTrack -> GetNumEmbedClusters() < 5)
+	    continue;//less than 5 embed clusters are not significant tracks
 
 	  TVector3 mom_reco = recoTrack -> GetMomentum();
 	  mom_reco -= mom_mc;
@@ -94,15 +95,14 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
       else
 	{
 	  STEmbedTrack *embedTrack = new STEmbedTrack();
-	  //	  STEmbedTrack *embedTrack = (STEmbedTrack *) fEmbedTrackArray -> ConstructedAt(iMC);
-	  //	  STEmbedTrack *embedTrack = new ((*fEmbedTrackArray)[iMC]) STEmbedTrack();
 	  auto mostprobTrack = (STRecoTrack *) fRecoTrackArray -> At(mostprob_idx);
 	  embedTrack -> SetInitialTrack(MCTrack);	  
 	  embedTrack -> SetFinalTrack(mostprobTrack);	 
 	  new ((*fEmbedTrackArray)[iMC]) STEmbedTrack(embedTrack);
+	  num_corr++;
 	}
     }
-
+  LOG(INFO) << Space() << "STEmbedTrack "<< num_corr << FairLogger::endl;
 }
 
 Bool_t STEmbedCorrelatorTask::CheckMomCorr(STMCTrack *mctrack, STRecoTrack *recotrack)
