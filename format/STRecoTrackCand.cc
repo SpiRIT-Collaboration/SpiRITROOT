@@ -12,7 +12,7 @@ void STRecoTrackCand::Clear(Option_t *option)
 {
   //fPID = STPID::kNon;
   fPIDProbability = 0;
-
+  fIsEmbed = false;
   fMomentum.SetXYZ(0,0,0);
   fMomentumTargetPlane.SetXYZ(0,0,0);
   fPosTargetPlane.SetXYZ(0,0,0);

@@ -64,10 +64,12 @@ STElectronicsTask::Init()
   // Get a handle from the IO manager
   FairRootManager* ioman = FairRootManager::Instance();
 
+  fMCTrackArray = (TClonesArray*) ioman->GetObject("PrimaryTrack");
   fPPEventArray = (TClonesArray*) ioman->GetObject("PPEvent");
   fRawEventArray = new TClonesArray("STRawEvent"); 
   ioman->Register("STRawEvent", "ST", fRawEventArray, fIsPersistence);
-
+  ioman->Register("STMCTrack", "ST", fMCTrackArray, fIsPersistence);
+ 
   fNTBs = fPar -> GetNumTbs();
 
   TString workDir = gSystem -> Getenv("VMCWORKDIR");

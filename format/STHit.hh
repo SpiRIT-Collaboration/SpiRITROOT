@@ -60,12 +60,12 @@ class STHit : public TObject
     void AddTrackCand(Int_t trackID);
     void RemoveTrackCand(Int_t trackID);
 
+    Bool_t IsEmbed()     const; ///<Get if it is embeded
     virtual Bool_t IsClustered() const; ///< Clustered flag getter
     virtual  Int_t GetHitID()    const; ///< Hit ID getter
 
        Int_t GetClusterID() const; ///< Cluster ID getter
        Int_t GetTrackID()   const; ///< Track ID getter
-    Bool_t GetIsEmbed()     const; ///<Get if it is embeded
     Double_t GetX()         const; ///< x position getter
     Double_t GetY()         const; ///< y position getter
     Double_t GetZ()         const; ///< z position getter

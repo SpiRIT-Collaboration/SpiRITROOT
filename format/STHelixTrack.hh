@@ -25,6 +25,7 @@ class STHelixTrack : public TObject
 
     STFitStatus fFitStatus;  ///< One of kBad, kHelix and kLine.
 
+    Bool_t fIsEmbed;         ///If embedded cluster exists then helix is embedded
     Double_t fXHelixCenter;  ///< x-component of the helix center
     Double_t fZHelixCenter;  ///< z-component of the helix center
     Double_t fHelixRadius;   ///< Radius of the helix
@@ -86,6 +87,7 @@ class STHelixTrack : public TObject
     void SetParentID(Int_t idx);
 
     void SetFitStatus(STFitStatus value);
+    void SetIsEmbed(Bool_t val);
     void SetIsBad();
     void SetIsLine();
     void SetIsPlane();
@@ -116,6 +118,7 @@ class STHelixTrack : public TObject
 
     STFitStatus GetFitStatus() const;
     TString GetFitStatusString() const;
+    bool IsEmbed() const;
     bool IsBad() const;
     bool IsLine() const;
     bool IsPlane() const;
@@ -181,6 +184,7 @@ class STHelixTrack : public TObject
     std::vector<STHit *> *GetCandHitArray();
 
     Int_t GetNumClusters() const;
+    Int_t GetNumEmbedClusters() const;
     Int_t GetNumStableClusters() const;
     STHitCluster *GetCluster(Int_t idx) const;
     std::vector<STHitCluster *> *GetClusterArray();

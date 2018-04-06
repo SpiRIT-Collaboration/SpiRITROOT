@@ -29,6 +29,7 @@ class STHitCluster : public STHit
 
     void SetCovMatrix(TMatrixD matrix);  ///< Set covariance matrix
 
+    Bool_t IsEmbed() const;
     Bool_t IsClustered() const;
      Int_t GetHitID() const;
 
@@ -46,6 +47,7 @@ class STHitCluster : public STHit
     void SetLength(Double_t length);
     Double_t GetLength();
 
+    void SetIsEmbed(Bool_t);
     void SetIsStable(Bool_t isStable = true);
     Bool_t IsStable();
 
@@ -67,7 +69,7 @@ class STHitCluster : public STHit
     Double_t fPOCAX;
     Double_t fPOCAY;
     Double_t fPOCAZ;
-
+    Bool_t fIsEmbed;
     /**
      * Calculate weighted mean for cluster position. (Weight = charge) <br>
      * Weighted mean: \f$ \mu_{n+1} = \mu_n + \displaystyle\frac{a_{n+1} - \mu_n}{W_n+w_{n+1}},\quad(n\geq0). \f$

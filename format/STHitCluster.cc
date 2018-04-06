@@ -37,12 +37,11 @@ STHitCluster::STHitCluster(STHitCluster *cluster)
   fCovMatrix.ResizeTo(3, 3);
   fCovMatrix = cluster -> GetCovMatrix();
 
-  fHitIDArray = *(cluster -> GetHitIDs());
+  fHitIDArray  = *(cluster -> GetHitIDs());
   fHitPtrArray = *(cluster -> GetHitPtrs());
-
-  fCharge = cluster -> GetCharge();
-
-  fLength = cluster -> GetLength();
+  fIsEmbed = cluster -> IsEmbed();
+  fCharge  = cluster -> GetCharge();
+  fLength  = cluster -> GetLength();
 
   SetPOCA(cluster -> GetPOCA());
 }
@@ -75,6 +74,7 @@ void STHitCluster::Clear(Option_t *)
 
   fS = 0;
 
+  fIsEmbed     = false;
   fIsClustered = kFALSE;
 }
 
@@ -92,6 +92,8 @@ void
 STHitCluster::AddHit(STHit *hit)
 {
   Double_t cov_default[3] = {4*4,1*1,6*6};
+
+  fIsEmbed = hit -> IsEmbed(); //if hit is embeded then cluster is embeded
 
   auto charge = hit -> GetCharge();
   auto chargeSum = fCharge + charge;
@@ -183,12 +185,13 @@ void STHitCluster::SetClusterID(Int_t clusterID)
     hit -> SetClusterID(clusterID);
 }
 
-void STHitCluster::SetLength(Double_t length) { fLength = length; }
 Double_t STHitCluster::GetLength() { return fLength; }
-
-void STHitCluster::SetIsStable(Bool_t isStable) { fIsClustered = isStable; }
 Bool_t STHitCluster::IsStable() { return fIsClustered; }
+Bool_t STHitCluster::IsEmbed() const { return fIsEmbed; }
 
+void STHitCluster::SetIsEmbed(Bool_t val) { fIsEmbed = val; }
+void STHitCluster::SetIsStable(Bool_t isStable) { fIsClustered = isStable; }
+void STHitCluster::SetLength(Double_t length) { fLength = length; }
 void STHitCluster::SetPOCA(TVector3 p)
 {
   fPOCAX = p.X();

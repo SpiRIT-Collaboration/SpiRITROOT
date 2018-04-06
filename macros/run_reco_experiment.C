@@ -69,8 +69,8 @@ void run_reco_experiment
   decoder -> SetGGNoiseData(fGGData);
   decoder -> SetDataList(raw);
   decoder -> SetEventID(start);
-  decoder -> SetEmbedding(false);
-  decoder -> SetEmbedFile("");
+  decoder -> SetEmbedding(true);
+  decoder -> SetEmbedFile("./data/one_proton.digi.root");
   
   if (fUseMeta) {
     std::ifstream metalistFile(metaFile.Data());
@@ -113,13 +113,17 @@ void run_reco_experiment
   genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
   genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   
+  auto embedCorr = new STEmbedCorrelatorTask();
+  embedCorr -> SetPersistence(true);
+
   run -> AddTask(decoder);
   run -> AddTask(preview);
   run -> AddTask(psa);
   run -> AddTask(helix);
   run -> AddTask(genfitPID);
   run -> AddTask(genfitVA);
-
+  run -> AddTask(embedCorr);
+  
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
   recoHeader -> SetPar("version", version);

@@ -52,12 +52,15 @@ STDecoderTask::STDecoderTask()
   fEmbedFile = "";
   
   fPar = NULL;
+  fEmbedTrackArray = new TClonesArray("STMCTrack");
   fRawEventArray = new TClonesArray("STRawEvent");
   fRawEmbedEventArray = new TClonesArray("STRawEvent");
   fRawDataEventArray = new TClonesArray("STRawEvent");
   fRawEventMC = NULL;
   fRawEventData = new STRawEvent();
   fRawEvent = NULL;
+  fChain = NULL;
+  fEventArray = nullptr;
   
   fIsSeparatedData = kFALSE;
 
@@ -104,6 +107,17 @@ Long64_t STDecoderTask::GetEventID() { return fEventIDLast; }
 InitStatus
 STDecoderTask::Init()
 {
+
+  if (!fEmbedFile.EqualTo("") && fIsEmbedding)
+    {
+      LOG(INFO) <<"Embed is true and settingup branch adress " << FairLogger::endl;
+      fChain = new TChain("cbmsim");
+      fChain -> AddFile(fEmbedFile);
+      fChain -> SetBranchAddress("STRawEvent", &fEventArray);
+      fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
+    }
+
+
   FairRootManager *ioMan = FairRootManager::Instance();
   if (ioMan == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");
@@ -112,8 +126,9 @@ STDecoderTask::Init()
   }
 
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
-  ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, true);
-  ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, true);
+  ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
+  ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
+  ioMan -> Register("STMCTrack", "SPiRIT", fEmbedTrackArray, fIsPersistence);
   
   fDecoder = new STCore();
   fDecoder -> SetUseSeparatedData(fIsSeparatedData);
@@ -215,6 +230,7 @@ STDecoderTask::Exec(Option_t *opt)
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStart("DecoderTask");
 #endif
+  fEmbedTrackArray -> Delete();
   fRawEventArray -> Delete();
   fRawEmbedEventArray -> Delete();
   fRawDataEventArray -> Delete();
@@ -231,28 +247,35 @@ STDecoderTask::Exec(Option_t *opt)
   else if (!fEmbedFile.EqualTo("") && fIsEmbedding){
     if (fEventID<2)
       std::cout << "== [STDecoderTask] Setting up embed mode" << std::endl;
-    fRawEventMC = Embedding(fEmbedFile,fEventID-1);
+
+    if((fEventID-1) < fChain->GetEntries())
+    {
+      fChain -> GetEntry(fEventID-1);
+      fRawEventMC = (STRawEvent *) fEventArray -> At(0);
+    }
+
     if(fRawEventMC != NULL)
       {
 	Int_t numPads = fRawEvent -> GetNumPads();
 	Int_t numPadsMC = fRawEventMC -> GetNumPads();  
-	
+
 	for (Int_t iPad = 0; iPad < numPads; iPad++) {
 	  STPad *pad = fRawEvent -> GetPad(iPad);
 	  Double_t *adc = pad -> GetADC();
-	  
+
 	  for (Int_t iPadMC = 0; iPadMC < numPadsMC; iPadMC++){
 	    STPad *padMC = fRawEventMC -> GetPad(iPadMC);
 	    Double_t *adcMC = padMC -> GetADC();
-	    
+
 	    if ((padMC -> GetRow() == pad -> GetRow()) &&
-		(padMC -> GetLayer() == pad -> GetLayer())){
-	      for (Int_t iTb = 0; iTb < fPar -> GetNumTbs(); iTb++){
-		pad -> SetADC(iTb, adc[iTb]+adcMC[iTb]);
-		//	  std::cout << " iTb: " << iTb << " ADC: " << adc[iTb] << " ADCmc: " << adcMC[iTb] << std::endl;
+		(padMC -> GetLayer() == pad -> GetLayer()))
+	      {
+		for (Int_t iTb = 0; iTb < fPar -> GetNumTbs(); iTb++)
+		  {
+		    pad -> SetADC(iTb, adc[iTb]+adcMC[iTb]);
+
+		  }
 	      }
-	    }
-	    
 	  }
 	}
       }
@@ -272,8 +295,13 @@ STDecoderTask::Exec(Option_t *opt)
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStop("DecoderTask");
 #endif
+ 
+  //    LOG(INFO) <<"STDEcoder task finished " << FairLogger::endl;
+
+
 }
 
+/*
 STRawEvent*
 STDecoderTask::Embedding(TString dataFile, Int_t eventId)
 {
@@ -295,6 +323,25 @@ STDecoderTask::Embedding(TString dataFile, Int_t eventId)
 
 }
 
+TClonesArray*
+STDecoderTask::GetEmbedTrack(TString dataFile, Int_t eventId)
+{
+  TChain *fChain = NULL;
+  TClonesArray MCTrackArray;// = nullptr;
+
+  fChain = new TChain("cbmsim");
+  fChain -> AddFile(dataFile);
+  fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
+
+  if(eventId < fChain->GetEntries())
+    {
+      fChain -> GetEntry(eventId);
+      //      new ((*fEmbedTrackArray)[eventId]) STMCTrack();
+    }
+  
+  //  return MCTrackArray;
+}
+*/
 Int_t
 STDecoderTask::ReadEvent(Int_t eventID)
 {
