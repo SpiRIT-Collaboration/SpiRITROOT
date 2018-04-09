@@ -53,6 +53,7 @@ void STPSAETask::SetNumHitsLowLimit(Int_t limit) { fNumHitsLowLimit = limit; }
 
 InitStatus STPSAETask::Init()
 {
+  fIsEmbedding = true;
   if (STRecoTask::Init() == kERROR)
     return kERROR;
 
@@ -63,13 +64,16 @@ InitStatus STPSAETask::Init()
   }
   fRawEmbedEventArray = (TClonesArray *) fRootManager -> GetObject("STRawEmbedEvent");
   if (fRawEmbedEventArray == nullptr) {
-    LOG(ERROR) << "Cannot find STRawEmbedEvent array!" << FairLogger::endl;
-    return kERROR;
+    LOG(INFO) << "Cannot find STRawEmbedEvent array!" << FairLogger::endl;
+    LOG(INFO) << "Setting Embedding flag to false" << FairLogger::endl;
+    fIsEmbedding = false;
   }
   fRawDataEventArray = (TClonesArray *) fRootManager -> GetObject("STRawDataEvent");
   if (fRawDataEventArray == nullptr) {
-    LOG(ERROR) << "Cannot find STRawDataEvent array!" << FairLogger::endl;
-    return kERROR;
+    LOG(INFO) << "Cannot find STRawDataEvent array!" << FairLogger::endl;
+    LOG(INFO) << "Setting Embedding flag to false" << FairLogger::endl;
+    fIsEmbedding = false;
+    //    return kERROR;
   }
 
 
@@ -116,14 +120,8 @@ void STPSAETask::Exec(Option_t *opt)
   fPSA -> SetTbOffsets(tbOffsets);
 
   STRawEvent *rawEvent = (STRawEvent *) fRawEventArray -> At(0);
-  STRawEvent *rawDataEvent = (STRawEvent *) fRawDataEventArray -> At(0);
-  STRawEvent *rawEmbedEvent = (STRawEvent *) fRawEmbedEventArray -> At(0);
-  
-
   fPSA -> Analyze(rawEvent, fHitArray);
-  fPSA -> Analyze(rawDataEvent, fDataHitArray);
-  if(rawEmbedEvent != NULL)
-    fPSA -> Analyze(rawEmbedEvent, fEmbedHitArray);
+
   if (fHitArray -> GetEntriesFast() < fNumHitsLowLimit) {
     fEventHeader -> SetIsBadEvent();
     LOG(INFO) << Space() << "Found less than " << fNumHitsLowLimit << " hits. Bad event!" << FairLogger::endl;
@@ -131,10 +129,18 @@ void STPSAETask::Exec(Option_t *opt)
     return;
   }
 
+
+  if(fIsEmbedding == false)
+    return;
+  
+      STRawEvent *rawDataEvent = (STRawEvent *) fRawDataEventArray -> At(0);
+      STRawEvent *rawEmbedEvent = (STRawEvent *) fRawEmbedEventArray -> At(0);
+      fPSA -> Analyze(rawDataEvent, fDataHitArray);
+      fPSA -> Analyze(rawEmbedEvent, fEmbedHitArray);
+
   //these vectors organize the hits by row and layer into this map structure
   //to avoid looping over the three arrays in a dumb way. Used in CorrelateEmbedHits
   //map index is row*112 + layer
-
   vector<vector<STHit *>> m_data (108*112,vector<STHit *>(0));   //just data hits
   vector<vector<STHit *>> m_embed(108*112,vector<STHit *>(0));   //just embeded hits
   vector<vector<STHit *>> m_hit  (108*112,vector<STHit *>(0));   //just data + embed hits
@@ -230,6 +236,7 @@ void STPSAETask::Exec(Option_t *opt)
 
   //  LOG(INFO) << Space() << "Correlated Hits " << num_embed << FairLogger::endl;
   LOG(INFO) << Space() << "STHit "<< fHitArray -> GetEntriesFast() << FairLogger::endl;
+
 }
 
 void STPSAETask::SetGainMatchingScale(Double_t val) { fGainMatchingScale = val; }

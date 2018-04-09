@@ -34,8 +34,8 @@ void STEmbedTrack::Clear()
   iPID = STPID::kNon;
   fPID = STPID::kNon;
     
-  iMomentum.SetXYZ(-999,-999,-999);
-  fMomentum.SetXYZ(-999,-999,-999);
+  iMomentum.SetXYZ(-9999,-9999,-9999);
+  fMomentum.SetXYZ(-9999,-9999,-9999);
 
   iVertex.SetXYZ(-999,-999,-999);
   fVertex.SetXYZ(-999,-999,-999);

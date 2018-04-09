@@ -90,18 +90,25 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
 	    }
 	}
 
+
+      //Always create embedTrack if there is MC track input
+      //Failed correlation will give -999,-999,-999, momentum
+
+      STEmbedTrack *embedTrack = new STEmbedTrack();
+      embedTrack -> SetInitialTrack(MCTrack);	  
+
       if(mostprob_idx == -1)
 	LOG(INFO) << Space() << "No track correlation found" << FairLogger::endl;
       else
 	{
-	  STEmbedTrack *embedTrack = new STEmbedTrack();
 	  auto mostprobTrack = (STRecoTrack *) fRecoTrackArray -> At(mostprob_idx);
-	  embedTrack -> SetInitialTrack(MCTrack);	  
 	  embedTrack -> SetFinalTrack(mostprobTrack);	 
-	  new ((*fEmbedTrackArray)[iMC]) STEmbedTrack(embedTrack);
 	  num_corr++;
 	}
+
+      new ((*fEmbedTrackArray)[iMC]) STEmbedTrack(embedTrack);
     }
+
   LOG(INFO) << Space() << "STEmbedTrack "<< num_corr << FairLogger::endl;
 }
 
