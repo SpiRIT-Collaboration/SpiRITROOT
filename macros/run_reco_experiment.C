@@ -69,8 +69,8 @@ void run_reco_experiment
   decoder -> SetGGNoiseData(fGGData);
   decoder -> SetDataList(raw);
   decoder -> SetEventID(start);
-  decoder -> SetEmbedding(true);
-  decoder -> SetEmbedFile("./data/one_proton.digi.root");
+  decoder -> SetEmbedding(false);
+  decoder -> SetEmbedFile("./data/one_test.digi.root");
   
   if (fUseMeta) {
     std::ifstream metalistFile(metaFile.Data());
@@ -90,6 +90,7 @@ void run_reco_experiment
   psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
+  psa -> SetEmbedding(false);
   //psa -> SetLayerCut(-1, 90);
   psa -> SetPulserData("pulser_117ns.dat");
 

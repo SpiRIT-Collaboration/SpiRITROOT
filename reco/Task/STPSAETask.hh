@@ -60,7 +60,7 @@ class STPSAETask : public STRecoTask
 
     Double_t fGainMatchingScale = 1;
 
-    Bool_t fIsEmbedding;
+    Bool_t fIsEmbedding = true;
 
   ClassDef(STPSAETask, 1)
 };

@@ -107,17 +107,6 @@ Long64_t STDecoderTask::GetEventID() { return fEventIDLast; }
 InitStatus
 STDecoderTask::Init()
 {
-
-  if (!fEmbedFile.EqualTo("") && fIsEmbedding)
-    {
-      LOG(INFO) <<"Embed is true and settingup branch adress " << FairLogger::endl;
-      fChain = new TChain("cbmsim");
-      fChain -> AddFile(fEmbedFile);
-      fChain -> SetBranchAddress("STRawEvent", &fEventArray);
-      fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
-    }
-
-
   FairRootManager *ioMan = FairRootManager::Instance();
   if (ioMan == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");
@@ -125,10 +114,25 @@ STDecoderTask::Init()
     return kERROR;
   }
 
+  //Check if embedding is turned on
+  if (!fEmbedFile.EqualTo("") && fIsEmbedding)
+    {
+      LOG(INFO) <<"Embed is true and settingup branch adress " << FairLogger::endl;
+      fChain = new TChain("cbmsim");
+      fChain -> AddFile(fEmbedFile);
+      fChain -> SetBranchAddress("STRawEvent", &fEventArray);
+      fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
+
+      ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
+      ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
+      ioMan -> Register("STMCTrack", "SPiRIT", fEmbedTrackArray, fIsPersistence);
+    }
+
+
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
-  ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
-  ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
-  ioMan -> Register("STMCTrack", "SPiRIT", fEmbedTrackArray, fIsPersistence);
+  //  ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
+  //  ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
+  //  ioMan -> Register("STMCTrack", "SPiRIT", fEmbedTrackArray, fIsPersistence);
   
   fDecoder = new STCore();
   fDecoder -> SetUseSeparatedData(fIsSeparatedData);
