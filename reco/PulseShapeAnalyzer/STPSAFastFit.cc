@@ -54,6 +54,17 @@ STPSAFastFit::Init()
   fTbStartCut = 512 - fNDFTbs - 1;
 
   fThresholdOneTbStep = fThresholdTbStep * fThreshold;
+
+  memset(fGainMatchingDataScale, 1., sizeof(Double_t)*112);
+  if (!(fGainMatchingData.IsNull())) {
+    std::ifstream matchList(fGainMatchingData.Data());
+    Int_t layer = 0;
+    Double_t relativeGain = 0;
+    for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
+      matchList >> layer >> relativeGain;
+      fGainMatchingDataScale[layer] = relativeGain;
+    }
+  }
 }
 
 void
@@ -229,7 +240,7 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
 #ifdef DEBUG_WHERE
   LOG(INFO) << "Start" << FairLogger::endl;
 #endif
-  while (FindPeak(adc, tbCurrent, tbStart)) 
+  while (FindPeak(layer, adc, tbCurrent, tbStart)) 
   {
     if (tbStart > fTbStartCut - 1)
       break;
@@ -248,7 +259,7 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
       << FairLogger::endl;
 #endif
 
-    if (TestPulse(adc, tbHitPre, amplitudePre, tbHit, amplitude)) 
+    if (TestPulse(layer, adc, tbHitPre, amplitudePre, tbHit, amplitude)) 
     {
 #ifdef DEBUG_PEAKFINDING
       LOG(INFO) 
@@ -291,7 +302,8 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
 }
 
 Bool_t
-STPSAFastFit::FindPeak(Double_t *adc, 
+STPSAFastFit::FindPeak(   Int_t layer,
+                       Double_t *adc, 
                           Int_t &tbCurrent, 
                           Int_t &tbStart)
 {
@@ -306,9 +318,9 @@ STPSAFastFit::FindPeak(Double_t *adc,
     Double_t diff = adc[tbCurrent] - adc[tbCurrent - 1];
 
     // If adc difference of step is above threshold
-    if (diff > fThresholdOneTbStep) 
+    if (diff > fThresholdOneTbStep*fGainMatchingDataScale[layer]) 
     {
-      if (adc[tbCurrent] > fThreshold) countAscending++;
+      if (adc[tbCurrent] > fThreshold*fGainMatchingDataScale[layer]) countAscending++;
       else countAscendingBelow++;
     }
     else 
@@ -323,7 +335,7 @@ STPSAFastFit::FindPeak(Double_t *adc,
       }
 
       tbCurrent -= 1;
-      if (adc[tbCurrent] < fThreshold)
+      if (adc[tbCurrent] < fThreshold*fGainMatchingDataScale[layer])
         continue;
 
       // Peak is found!
@@ -617,7 +629,8 @@ STPSAFastFit::LSFitPulse(Double_t *buffer, Double_t tbStart, Int_t ndf, Double_t
 }
 
 Bool_t
-STPSAFastFit::TestPulse(Double_t *adc, 
+STPSAFastFit::TestPulse(   Int_t layer,
+                        Double_t *adc, 
                         Double_t tbHitPre,
                         Double_t amplitudePre, 
                         Double_t tbHit, 
@@ -631,12 +644,12 @@ STPSAFastFit::TestPulse(Double_t *adc,
   if (numTbsCorrection + Int_t(tbHit) >= 512)
     numTbsCorrection = 512 - Int_t(tbHit);
 
-  if (amplitude < fThreshold) 
+  if (amplitude < fThreshold*fGainMatchingDataScale[layer]) 
   {
 #ifdef DEBUG_PEAKFINDING
     LOG(INFO) 
       << "Amplitude smaller than threshold, "
-      << amplitude << " < " << fThreshold
+      << amplitude << " < " << fThreshold*fGainMatchingDataScale[layer]
       << FairLogger::endl;
 #endif
 
@@ -673,3 +686,4 @@ STPSAFastFit::TestPulse(Double_t *adc,
 }
 
 void STPSAFastFit::SetGainMatchingScale(Double_t val) { fGainMatchingScale = val; }
+void STPSAFastFit::SetGainMatchingData(TString filename) { fGainMatchingData = filename; }

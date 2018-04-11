@@ -46,7 +46,7 @@ class STPSAFastFit : public STPSA, public STPulse
      * Find the first peak from adc time-bucket starting from input tbCurrent
      * tbCurrent and tbStart becomes time-bucket of the peak and starting point
      */
-    Bool_t FindPeak(Double_t *adc, Int_t &tbCurrent, Int_t &tbStart);
+    Bool_t FindPeak(Int_t layer, Double_t *adc, Int_t &tbCurrent, Int_t &tbStart);
 
     /**
      * Perform least square fitting with the the pulse around tbStart ~ tbPeak.
@@ -73,10 +73,11 @@ class STPSAFastFit : public STPSA, public STPulse
      * Test pulse with previous pulse and currently found pulse.
      * Returns true is current pulse is distinguished to be real pulse
      */
-    Bool_t TestPulse(Double_t *adc, Double_t tbHitPre, Double_t amplitudePre, 
+    Bool_t TestPulse(Int_t layer, Double_t *adc, Double_t tbHitPre, Double_t amplitudePre, 
                      Double_t tbHit, Double_t amplitude);
 
     void SetGainMatchingScale(Double_t val);
+    void SetGainMatchingData(TString filename);
 
   private:
     TClonesArray **fThreadHitArray; ///< TClonesArray object for thread
@@ -134,6 +135,8 @@ class STPSAFastFit : public STPSA, public STPulse
     Double_t fBetaCut = 1.e-3; 
 
     Double_t fGainMatchingScale = 1;
+    TString fGainMatchingData = "";
+    Double_t fGainMatchingDataScale[112] = {0};
 
   ClassDef(STPSAFastFit, 2)
 };

@@ -37,6 +37,7 @@ class STPSAETask : public STRecoTask
     void SetEmbedding(Bool_t value);
     void SetEmbedFile(TString);
     void SetGainMatchingScale(Double_t val);
+    void SetGainMatchingData(TString filename);
 
   private:
     TClonesArray *fRawEventArray = nullptr;
@@ -59,6 +60,7 @@ class STPSAETask : public STRecoTask
     Int_t fNumHitsLowLimit = 1;
 
     Double_t fGainMatchingScale = 1;
+    TString fGainMatchingData = "";
 
     Bool_t fIsEmbedding = true;
 
