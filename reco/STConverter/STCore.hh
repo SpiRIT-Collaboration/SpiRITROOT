@@ -55,6 +55,7 @@ class STCore : public TObject {
     void SetGainReference(Double_t constant, Double_t linear, Double_t quadratic = 0.);
 
     Bool_t SetGainMatchingData(TString filename);
+    void SetDiscardTbsBelow(Int_t tb);
 
     Bool_t SetUAMap(TString filename);
     Bool_t SetAGETMap(TString filename);
@@ -100,6 +101,7 @@ class STCore : public TObject {
 
     STGainMatching *fGainMatchingPtr[12];
     Bool_t fIsGainMatchingData;
+    Int_t fDiscardTbsBelow;
 
     STRawEvent *fRawEventPtr;
     std::vector<STPad *> fPadArray;

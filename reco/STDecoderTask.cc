@@ -47,6 +47,8 @@ STDecoderTask::STDecoderTask()
   fGainQuadratic = 0;
   fGainMatchingData = "";
 
+  fDiscardTbsBelow = 0;
+
   fIsPersistence = kFALSE;
   fIsEmbedding = kFALSE;
   fEmbedFile = "";
@@ -82,6 +84,7 @@ void STDecoderTask::SetUseGainCalibration(Bool_t value)                         
 void STDecoderTask::SetGainCalibrationData(TString filename)                                  { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)  { fGainConstant = constant; fGainLinear = linear; fGainQuadratic = quadratic; }
 void STDecoderTask::SetGainMatchingData(TString filename)                                     { fGainMatchingData = filename; };
+void STDecoderTask::SetDiscardTbsBelow(Int_t tb)                                              { fDiscardTbsBelow = tb; }
 void STDecoderTask::SetUseSeparatedData(Bool_t value)                                         { fIsSeparatedData = value; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
 void STDecoderTask::SetEmbedding(Bool_t value)                                                { fIsEmbedding = value; }
@@ -204,10 +207,14 @@ STDecoderTask::Init()
     fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set!");
   }
 
+<<<<<<< HEAD
   if (fGainMatchingData.EqualTo(""))
     fLogger -> Info(MESSAGE_ORIGIN, "Relative gain maching is not done!");
   else
     fDecoder -> SetGainMatchingData(fGainMatchingData);
+=======
+  fDecoder -> SetDiscardTbsBelow(fDiscardTbsBelow);
+>>>>>>> origin/tbCut
 
   return kSUCCESS;
 }
