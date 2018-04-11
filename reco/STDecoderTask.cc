@@ -207,14 +207,12 @@ STDecoderTask::Init()
     fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set!");
   }
 
-<<<<<<< HEAD
   if (fGainMatchingData.EqualTo(""))
     fLogger -> Info(MESSAGE_ORIGIN, "Relative gain maching is not done!");
   else
     fDecoder -> SetGainMatchingData(fGainMatchingData);
-=======
+
   fDecoder -> SetDiscardTbsBelow(fDiscardTbsBelow);
->>>>>>> origin/tbCut
 
   return kSUCCESS;
 }
