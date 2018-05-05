@@ -136,7 +136,7 @@ void STGenfitVATask::Exec(Option_t *opt)
   Bool_t targetVertex = kTRUE;
   auto vertex = (STVertex *) fVertexArray -> At(chosenVID);
   vertex -> SetIsCollisionVertex();
-  if (vertex -> GetPos().Z() < -25 || vertex -> GetPos().Z() > 5)
+  if (vertex -> GetPos().Z() < fPeakZ - fSigmaMultiple*fSigma || vertex -> GetPos().Z() > fPeakZ + fSigmaMultiple*fSigma)
     targetVertex = kFALSE;
   else
     vertex -> SetIsTargetVertex();
@@ -150,7 +150,8 @@ void STGenfitVATask::Exec(Option_t *opt)
     Double_t E1 = fBeamEnergy -> getCorrectedEnergy();
 
     if (fZ > 0 && fZ < 75 && fAoQ > 1. && fAoQ < 3 && fBDC1x > -999 && fBDC1y > -999 && fBDC2x > -999 && fBDC2y > -999) {
-      Double_t ProjectedAtZ = -580.4 + vertex -> GetPos().Z();  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
+//      Double_t ProjectedAtZ = -580.4 + vertex -> GetPos().Z();  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
+      Double_t ProjectedAtZ = -580.4 + fPeakZ;  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
 //      double ProjectedAtZ=-592.644;//////mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
       fBDCProjection -> ProjectParticle(fBDC2x, fBDC2y, -2160., fBDCax, fBDCby, fZ, E1, ProjectedAtZ, fBeamEnergy -> getMass());//-580.4,-583.904
 
@@ -165,7 +166,8 @@ void STGenfitVATask::Exec(Option_t *opt)
     else if (!goodBDC)
       LOG(INFO) << Space() << "STGenfitVATask " << "Bad BDC!" << FairLogger::endl;
     else {
-      vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, vertex -> GetPos().Z());
+//      vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, vertex -> GetPos().Z());
+      vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, fPeakZ);
 
       auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
       bdcVertex -> SetIsGoodBDC();
@@ -319,4 +321,11 @@ void STGenfitVATask::SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_
   fRunNo = runNo;
   fOffsetX = offsetX;
   fOffsetY = offsetY;
+}
+
+void STGenfitVATask::SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple)
+{
+  fPeakZ = peakZ;
+  fSigma = sigma;
+  fSigmaMultiple = sigmaMultiple;
 }

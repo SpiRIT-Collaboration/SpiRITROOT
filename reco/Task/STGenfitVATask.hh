@@ -31,6 +31,7 @@ class STGenfitVATask : public STRecoTask
 
     void SetBeamFile(TString fileName);
     void SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_t offsetY);
+    void SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple);
 
   private:
     TClonesArray *fHelixTrackArray = nullptr;
@@ -62,6 +63,10 @@ class STGenfitVATask : public STRecoTask
     Double_t fOffsetX, fOffsetY;
     STBeamEnergy *fBeamEnergy = nullptr;
     STBDCProjection *fBDCProjection = nullptr;
+
+    Double_t fPeakZ = -11.9084;
+    Double_t fSigma = 1.69675;
+    Double_t fSigmaMultiple = 3;
 
   ClassDef(STGenfitVATask, 1)
 };
