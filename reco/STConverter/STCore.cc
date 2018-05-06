@@ -85,7 +85,6 @@ void STCore::Initialize()
     fGainMatchingPtr[iCobo] = nullptr;
 
   fIsGainMatchingData = kFALSE;
-  fDiscardTbsBelow = 0;
 
   fNumTbs = 512;
 
@@ -93,6 +92,9 @@ void STCore::Initialize()
   memset(fCurrentEventID, 0, sizeof(Int_t)*12);
 
   fIsSeparatedData = kFALSE;
+
+  fStartTb = 0;
+  fEndTb = fNumTbs;
 }
 
 Bool_t STCore::AddData(TString filename, Int_t coboIdx)
@@ -249,13 +251,12 @@ Bool_t STCore::SetGainMatchingData(TString filename)
   return fIsGainMatchingData;
 }
 
-void STCore::SetDiscardTbsBelow(Int_t tb)
+void STCore::SetTbRange(Int_t startTb, Int_t endTb)
 {
-  if (tb != 0)
-    std::cout << "== [STCore] ADC values in the range below the time bucket " << tb << " are not stored!" << std::endl;
+  std::cout << "== [STCore] ADC values in the time bucket range [" << startTb << "," << endTb << ") are stored!" << std::endl;
 
-  fDiscardTbsBelow = tb;
-
+  fStartTb = startTb;
+  fEndTb = endTb;
 }
 
 Bool_t STCore::SetUAMap(TString filename)
@@ -316,7 +317,7 @@ void STCore::ProcessCobo(Int_t coboIdx)
         if (fIsGainMatchingData)
           fGainMatchingPtr[coboIdx] -> CalibrateADC(layer, fNumTbs, adc);
 
-        for (Int_t iTb = fDiscardTbsBelow; iTb < fNumTbs; iTb++)
+        for (Int_t iTb = fStartTb; iTb < fEndTb; iTb++)
           pad -> SetADC(iTb, adc[iTb]);
 
         pad -> SetPedestalSubtracted(kTRUE);
@@ -467,7 +468,7 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
           if (fIsGainMatchingData)
             fGainMatchingPtr[0] -> CalibrateADC(layer, fNumTbs, adc);
 
-          for (Int_t iTb = fDiscardTbsBelow; iTb < fNumTbs; iTb++)
+          for (Int_t iTb = fStartTb; iTb < fEndTb; iTb++)
             pad -> SetADC(iTb, adc[iTb]);
 
           pad -> SetPedestalSubtracted(kTRUE);

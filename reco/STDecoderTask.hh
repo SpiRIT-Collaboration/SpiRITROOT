@@ -67,8 +67,8 @@ class STDecoderTask : public FairTask {
     void SetGainReference(Double_t constant, Double_t linear, Double_t quadratic = 0.);
     /// Setting gain matching data.
     void SetGainMatchingData(TString filename);
-    /// Setting tb cut for deleting GG noise remnant
-    void SetDiscardTbsBelow(Int_t tb);
+    /// Setting tb range for analysis
+    void SetTbRange(Int_t startTb, Int_t endTb);
     /// Setting to decode old data file
     void SetOldData(Bool_t oldData = kTRUE);
     /// Setting to use not merged data files
@@ -124,7 +124,8 @@ class STDecoderTask : public FairTask {
     Double_t fGainQuadratic;            ///< Gain calibration reference coefficient of quadratic term
     TString fGainMatchingData;          ///< Gain matching data
 
-    Int_t fDiscardTbsBelow;             ///< Time bucket number for storing cut
+    Int_t fStartTb;                     ///< Starting time bucket range
+    Int_t fEndTb;                       ///< Ending time bucket range
 
     Bool_t fExternalNumTbs;             ///< Flag for checking if the number of time buckets is set by the user.
     Int_t fNumTbs;                      ///< The number of time buckets

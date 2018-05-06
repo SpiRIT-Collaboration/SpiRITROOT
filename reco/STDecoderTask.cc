@@ -47,7 +47,8 @@ STDecoderTask::STDecoderTask()
   fGainQuadratic = 0;
   fGainMatchingData = "";
 
-  fDiscardTbsBelow = 0;
+  fStartTb = 0;
+  fEndTb = -1;
 
   fIsPersistence = kFALSE;
   fIsEmbedding = kFALSE;
@@ -84,7 +85,7 @@ void STDecoderTask::SetUseGainCalibration(Bool_t value)                         
 void STDecoderTask::SetGainCalibrationData(TString filename)                                  { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)  { fGainConstant = constant; fGainLinear = linear; fGainQuadratic = quadratic; }
 void STDecoderTask::SetGainMatchingData(TString filename)                                     { fGainMatchingData = filename; };
-void STDecoderTask::SetDiscardTbsBelow(Int_t tb)                                              { fDiscardTbsBelow = tb; }
+void STDecoderTask::SetTbRange(Int_t startTb, Int_t endTb)                                    { fStartTb = startTb; fEndTb = endTb; }
 void STDecoderTask::SetUseSeparatedData(Bool_t value)                                         { fIsSeparatedData = value; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
 void STDecoderTask::SetEmbedding(Bool_t value)                                                { fIsEmbedding = value; }
@@ -212,7 +213,9 @@ STDecoderTask::Init()
   else
     fDecoder -> SetGainMatchingData(fGainMatchingData);
 
-  fDecoder -> SetDiscardTbsBelow(fDiscardTbsBelow);
+  if (fEndTb == -1)
+    fEndTb = fPar -> GetNumTbs();
+  fDecoder -> SetTbRange(fStartTb, fEndTb);
 
   return kSUCCESS;
 }
