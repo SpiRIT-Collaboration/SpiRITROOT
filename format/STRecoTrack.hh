@@ -40,6 +40,7 @@ class STRecoTrack : public STRecoTrackCand
 
   public:
     STRecoTrack();
+    STRecoTrack(STRecoTrack* aTrack_tem); //Rensheng add
     virtual ~STRecoTrack() {}
 
     virtual void Clear(Option_t *option = "");

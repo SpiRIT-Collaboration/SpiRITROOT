@@ -37,13 +37,14 @@ class STVertex : public TObject {
   public:
     STVertex();
     STVertex(const genfit::GFRaveVertex &);
+    STVertex(STVertex* aVertex_tem); // ren sheng add for storing it in the TrackContainer.
 
     virtual ~STVertex();
 
     void SetPos(TVector3 pos)  { fPos = pos; }
     TVector3 GetPos()    const { return fPos; }
 
-    TMatrixDSym GetCov() const { return fCov; }
+    const TMatrixDSym &GetCov() const { return fCov; } 
 
     Double_t GetNDF()    const { return fNDF; }
     Double_t GetChi2()   const { return fChi2; }
