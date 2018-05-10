@@ -52,7 +52,7 @@ void geomSpiRIT_mk()
   FairGeoLoader *geoLoader = new FairGeoLoader("TGeo", "FairGeoLoader");
   FairGeoInterface *geoIF = geoLoader -> getGeoInterface();
  // geoIF -> setMediaFile(dirGeom + "media.geo");
-  geoIF -> setMediaFile(dirGeom + "media_mk.geo");
+  geoIF -> setMediaFile(dirGeom + "media.geo");
   geoIF -> readMedia();
 
   FairGeoMedia *media = geoIF -> getMedia();
