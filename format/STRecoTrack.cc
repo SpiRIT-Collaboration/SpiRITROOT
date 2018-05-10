@@ -7,8 +7,8 @@ STRecoTrack::STRecoTrack()
   Clear();
 }
 
-// this class can be created with another object.
-STRecoTrack::STRecoTrack(STRecoTrack* aTrack_tem)
+// this object can be created with another object.
+STRecoTrack::STRecoTrack(STRecoTrack*  aTrack_tem)
 {
 //the below is for the STRecoTrackCand
   fPID = aTrack_tem->GetPID();

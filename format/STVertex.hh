@@ -37,7 +37,7 @@ class STVertex : public TObject {
   public:
     STVertex();
     STVertex(const genfit::GFRaveVertex &);
-    STVertex(STVertex* aVertex_tem); // ren sheng add for storing it in the TrackContainer.
+    STVertex(STVertex* aVertex_tem); // ren sheng add for storing it in the TrackContainer. 
 
     virtual ~STVertex();
 

@@ -52,7 +52,7 @@ STVertex::STVertex(const genfit::GFRaveVertex &vertex):
   }
 }
 
-STVertex::STVertex(STVertex* aVertex_tem)
+STVertex::STVertex(STVertex* aVertex_tem) 
 {
   fPos = aVertex_tem->GetPos();
   fCov = aVertex_tem->GetCov();
