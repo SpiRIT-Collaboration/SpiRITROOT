@@ -7,7 +7,7 @@ using std::endl;
 
 // -----   Default constructor   -------------------------------------------
 STMCPoint::STMCPoint()
-  : FairMCPoint()
+  : FairMCPoint(), fPdg(0)
 {
 }
 // -------------------------------------------------------------------------
@@ -16,8 +16,8 @@ STMCPoint::STMCPoint()
 STMCPoint::STMCPoint(Int_t trackID, Int_t detID,
                                    TVector3 pos, TVector3 mom,
                                    Double_t tof, Double_t length,
-                                   Double_t eLoss)
-  : FairMCPoint(trackID, detID, pos, mom, tof, length, eLoss)
+                                   Double_t eLoss, Int_t pdg)
+  : FairMCPoint(trackID, detID, pos, mom, tof, length, eLoss), fPdg(pdg)
 {
 }
 // -------------------------------------------------------------------------

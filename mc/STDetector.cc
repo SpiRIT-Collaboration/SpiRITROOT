@@ -31,6 +31,7 @@ STDetector::STDetector()
     fTime(-1.),
     fLength(-1.),
     fELoss(-1),
+	 fPdg(0),
     fSTMCPointCollection(new TClonesArray("STMCPoint"))
 {
 }
@@ -44,6 +45,7 @@ STDetector::STDetector(const char* name, Bool_t active)
     fTime(-1.),
     fLength(-1.),
     fELoss(-1),
+	 fPdg(0),
     fSTMCPointCollection(new TClonesArray("STMCPoint"))
 {
 }
@@ -82,11 +84,12 @@ STDetector::ProcessHits(FairVolume* vol)
   fLength      = gMC->TrackLength();
   gMC->TrackPosition(fPos);
   gMC->TrackMomentum(fMom);
+  fPdg         = gMC->TrackPid();
 
   AddHit(fTrackID, fVolumeID, 
          TVector3(fPos.X(),  fPos.Y(),  fPos.Z()),
          TVector3(fMom.Px(), fMom.Py(), fMom.Pz()), 
-         fTime, fLength, fELoss);
+         fTime, fLength, fELoss, fPdg);
 
   stack->AddPoint(kSPiRIT);
   return kTRUE;
@@ -180,12 +183,12 @@ STMCPoint*
 STDetector::AddHit(Int_t trackID, Int_t detID,
                    TVector3 pos, TVector3 mom,
                    Double_t time, Double_t length,
-                   Double_t eLoss)
+                   Double_t eLoss, Int_t pdg)
 {
   TClonesArray& clref = *fSTMCPointCollection;
   Int_t size = clref.GetEntriesFast();
   return new(clref[size]) STMCPoint(trackID, detID, pos, mom,
-                                    time, length, eLoss);
+                                    time, length, eLoss, pdg);
 }
 
 Bool_t
