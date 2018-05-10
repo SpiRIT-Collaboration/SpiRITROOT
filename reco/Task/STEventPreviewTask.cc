@@ -4,6 +4,13 @@
 #include <fstream>
 #include "TMath.h"
 
+// FAIRROOT classes
+#include "FairRootManager.h"
+#include "FairRunOnline.h"
+#include "FairRun.h"
+#include "FairRunAna.h"
+#include "FairRuntimeDb.h"
+
 using namespace std;
 
 ClassImp(STEventPreviewTask)
@@ -52,6 +59,20 @@ InitStatus STEventPreviewTask::Init()
   return kSUCCESS;
 }
 
+void
+STEventPreviewTask::SetParContainers()
+{
+  FairRun *run = FairRun::Instance();
+  if (!run) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find analysis run!");
+
+  FairRuntimeDb *db = run -> GetRuntimeDb();
+  if (!db) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find runtime database!");
+
+  fPar = (STDigiPar *) db -> getContainer("STDigiPar");
+  if (!fPar) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find STDigiPar!");
+}
+
+
 void STEventPreviewTask::Exec(Option_t *opt)
 {
   fEventHeader -> Clear();
@@ -59,7 +80,7 @@ void STEventPreviewTask::Exec(Option_t *opt)
   STRawEvent *rawEvent = (STRawEvent *) fRawEventArray -> At(0);
   fEventHeader -> SetEventID(rawEvent -> GetEventID());
 
-  if (fIdentifyEvent)
+  //  if (fIdentifyEvent)
     LayerTest(rawEvent);
 
   for (auto iSkip = 0; iSkip < fNumSkipEvents; iSkip++)
@@ -91,24 +112,55 @@ void STEventPreviewTask::Exec(Option_t *opt)
 
 void STEventPreviewTask::LayerTest(STRawEvent *rawEvent)
 {
+  Int_t numTbs = fPar -> GetNumTbs();
+    
   Double_t charge[12] = {0};
-
+  Double_t mean[numTbs] ={0};
+		    
   Int_t numPads = rawEvent -> GetNumPads();
   for (Int_t iPad = 0; iPad < numPads; iPad++) 
   {
     STPad *pad = rawEvent -> GetPad(iPad);
-    if (!(pad -> GetRow() < 56 && pad -> GetRow() > 35))
-      continue;
-
+    Int_t row   = pad -> GetRow();
+    Int_t layer = pad -> GetLayer();
     Double_t *adc = pad -> GetADC();
-    for (Int_t iTb = 100; iTb < 130; iTb++)
-      charge[pad -> GetLayer()/28] += adc[iTb];
-  }
 
+    //Section determines if there is enough charge in an event to classify it as a collision event
+    //Added  by Jung Woo. not used currently as of 05/08/2018
+    if(row  < 56 && row  > 35)
+      {
+	for (Int_t iTb = 100; iTb < 130; iTb++)
+	  charge[pad -> GetLayer()/28] += adc[iTb];
+      }
+
+    //Checking for GG fast close
+    //First layer and outside rows have no tracks in them. if there is large negative signal in these
+    //outside pads it is due to the GG fast close 
+    if(layer == 0 && (row == 107 || row == 106 || row == 105 || row ==0 || row==1 || row==2))
+      {
+	for(int iADC = 0; iADC < numTbs; iADC++)
+	  mean[iADC] += adc[iADC]/6;
+      }
+  }
+  
+  /*
   if (charge[0] > charge[1] && charge[1] > charge[2] && charge[2] > charge[3])
     fEventHeader -> SetIsCollisionEvent();
   else
     fEventHeader -> SetIsBadEvent();
+  */
+
+  bool isfast = false; //true if event is fast Gating grid close
+  for(int iADC = numTbs; iADC > 0; iADC--)
+    {
+      //find last bin below -100 
+      if(mean[iADC] < -100 && isfast == false && iADC > 40)
+	isfast = true;
+    }
+
+  if(isfast == true)
+    fEventHeader -> SetIsBadEvent();
+
 }
 
 void STEventPreviewTask::CalculateTbOffsets(STRawEvent *rawEvent, Double_t *tbOffsets)

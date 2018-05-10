@@ -21,6 +21,8 @@ class STEventPreviewTask : public STRecoTask
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
 
+    virtual void SetParContainers();
+    /// Running the task. This will be called when Run() method invoked from FairRun.
     void IdentifyEvent(Bool_t val = true);
     void CalibrateTb(Bool_t val = true);
 
@@ -50,6 +52,8 @@ class STEventPreviewTask : public STRecoTask
     Int_t fNumSkipEvents = 0;
     std::vector<Int_t> fSkipEventArray;
 
+    STDigiPar *fPar = NULL;                    ///< Parameter read-out class pointer
+  
   ClassDef(STEventPreviewTask, 2)
 };
 
