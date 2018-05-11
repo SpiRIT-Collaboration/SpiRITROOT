@@ -90,6 +90,11 @@ STEveDrawTask::STEveDrawTask()
   fEveColor[kRecoTrack] = kRed;
   fRnrSelf [kRecoTrack] = kFALSE;
 
+  fEveStyle[kRecoVertex] = kFullCircle;
+  fEveSize [kRecoVertex] = 2;
+  fEveColor[kRecoVertex] = kViolet;
+  fRnrSelf [kRecoVertex] = kFALSE;
+
   fCTFitter = new STCurveTrackFitter();
   fGenfitTest = new STGenfitTest2(kFALSE);
 
@@ -138,6 +143,7 @@ STEveDrawTask::Init()
   fCurveTrackArray      = (TClonesArray*) ioMan -> GetObject("STCurveTrack");
   fRawEventArray        = (TClonesArray*) ioMan -> GetObject("STRawEvent");
   fRecoTrackArray       = (TClonesArray*) ioMan -> GetObject("STRecoTrack");
+  fRecoVertexArray      = (TClonesArray*) ioMan -> GetObject("STVertex");
 
   fHitArray             = (TClonesArray*) ioMan -> GetObject("STHit");
   fHitClusterArray      = (TClonesArray*) ioMan -> GetObject("STHitCluster");
@@ -209,6 +215,9 @@ STEveDrawTask::Exec(Option_t* option)
 
   if (fRecoTrackArray != NULL && (fSetObject[kRecoTrack]))
     DrawRecoTracks();
+
+  if (fRecoVertexArray != NULL && (fSetObject[kRecoVertex]))
+    DrawRecoVertex();
 
   gEve -> Redraw3D();
 
@@ -901,6 +910,54 @@ STEveDrawTask::DrawRecoTracks()
 }
 
 void 
+STEveDrawTask::DrawRecoVertex()
+{
+  fLogger -> Debug(MESSAGE_ORIGIN,"DrawRecoVertex()");
+
+  Int_t nVertices = 0;
+
+  if (fRecoVertexArray != nullptr)
+    nVertices = fRecoVertexArray -> GetEntries();
+  else
+    return;
+
+  if (fSetObject[kRecoVertex])
+  {
+    if (fPointSet[kRecoVertex] == NULL)
+    {
+      fPointSet[kRecoVertex] = new TEvePointSet("Vertex", nVertices);
+      gEve -> AddElement(fPointSet[kRecoVertex]);
+    }
+
+    fPointSet[kRecoVertex] -> SetOwnIds(kTRUE);
+    fPointSet[kRecoVertex] -> SetMarkerColor(fEveColor[kRecoVertex]);
+    fPointSet[kRecoVertex] -> SetMarkerSize(fEveSize[kRecoVertex]);
+    fPointSet[kRecoVertex] -> SetMarkerStyle(fEveStyle[kRecoVertex]);
+    fPointSet[kRecoVertex] -> SetMainTransparency(50);
+    fPointSet[kRecoVertex] -> SetRnrSelf(fRnrSelf[kRecoVertex]);
+  }
+
+  for (Int_t iVertex=0; iVertex<nVertices; iVertex++)
+  {
+    STVertex *vertex = (STVertex *) fRecoVertexArray -> At(iVertex);
+
+    TVector3 position = vertex -> GetPos();
+
+    Double_t y = position.Y()/10.;
+    y += fWindowYStart;
+
+    if (fSetObject[kRecoVertex])
+      fPointSet[kRecoVertex] -> SetNextPoint(position.X()/10., y, position.Z()/10.);
+  }
+
+  if (nVertices > 0)
+  {
+    if (fSetObject[kRecoVertex])
+      gEve -> ElementChanged(fPointSet[kRecoVertex]);
+  }
+}
+
+void
 STEveDrawTask::SetSelfRiemannSet(Int_t iRiemannSet, Bool_t offElse)
 {
   Int_t nRiemannSets = fRiemannSetArray.size();
@@ -1549,6 +1606,7 @@ STEveDrawTask::RnrEveObject(TString name, Int_t option)
   else if (name == "curve")        return RenderCurve(option);
   else if (name == "curvehit")     return RenderCurveHit(option);
   else if (name == "recotrack")    return RenderRecoTrack(option);
+  else if (name == "recovertex")   return RenderRecoVertex(option);
 
   return -1;
 }
@@ -1571,6 +1629,7 @@ STEveDrawTask::IsSet(TString name, Int_t option)
   else if (name == "curve")        return BoolToInt(fSetObject[kCurve]);
   else if (name == "curvehit")     return BoolToInt(fSetObject[kCurveHit]);
   else if (name == "recotrack")    return BoolToInt(fSetObject[kRecoTrack]);
+  else if (name == "recovertex")   return BoolToInt(fSetObject[kRecoVertex]);
 
   return -1;
 }
@@ -1824,6 +1883,21 @@ STEveDrawTask::RenderRecoTrack(Int_t option)
   }
 
   return BoolToInt(fRnrSelf[kRecoTrack]);
+}
+
+Int_t
+STEveDrawTask::RenderRecoVertex(Int_t option)
+{
+  if (option == 0)
+    return BoolToInt(fRnrSelf[kRecoVertex]);
+
+  if (fPointSet[kRecoVertex] == NULL)
+    return -1;
+
+  fRnrSelf[kRecoVertex] = !fRnrSelf[kRecoVertex];
+  fPointSet[kRecoVertex] -> SetRnrSelf(fRnrSelf[kRecoVertex]);
+
+  return BoolToInt(fRnrSelf[kRecoVertex]);
 }
 
 Int_t STEveDrawTask::BoolToInt(Bool_t val) 

@@ -46,6 +46,7 @@
 #include "STPulse.hh"
 #include "STGenfitTest.hh"
 #include "STGenfitTest2.hh"
+#include "STVertex.hh"
 
 // STL class headers
 #include <vector>
@@ -110,6 +111,7 @@ class STEveDrawTask : public STEveTask
     Int_t RenderCurve(Int_t option);
     Int_t RenderCurveHit(Int_t option);
     Int_t RenderRecoTrack(Int_t option);
+    Int_t RenderRecoVertex(Int_t option);
 
   private :
     void DrawPadPlane();
@@ -124,6 +126,7 @@ class STEveDrawTask : public STEveTask
     void DrawHelixTracks();
     void DrawCurveTracks();
     void DrawRecoTracks();
+    void DrawRecoVertex();
 
     Color_t GetColor(Int_t);
 
@@ -167,6 +170,7 @@ class STEveDrawTask : public STEveTask
     TClonesArray* fHelixTrackArray      = NULL;
     TClonesArray* fCurveTrackArray      = NULL;
     TClonesArray* fRecoTrackArray       = NULL;
+    TClonesArray* fRecoVertexArray      = NULL;
     TClonesArray* fRawEventArray        = NULL;
 
     TClonesArray* fHitArray             = nullptr;
@@ -216,6 +220,7 @@ class STEveDrawTask : public STEveTask
     vector<TEvePointSet*> fCurveHitSetArray;
     vector<TEveLine*>     fCurveTrackSetArray;
     vector<TEveLine*>     fRecoTrackSetArray;
+    vector<TEvePointSet*> fRecoVertexSetArray;
 
     STCurveTrackFitter* fCTFitter = NULL;
 

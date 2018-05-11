@@ -479,6 +479,18 @@ STEveManager::BuildMenu()
   }
   frameEventControl -> AddFrame(frameRecoButtons, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY | kLHintsExpandX, 1,1,1,1));
 
+  TGHorizontalFrame* frameRecoVertexButtons = new TGHorizontalFrame(frameEventControl);
+  {
+    fButtonOnOffRecoVertex = new TGCheckButton(frameRecoVertexButtons, "Reco-Vertex");
+    fButtonOnOffRecoVertex -> Connect("Clicked()", "STEveManager", this, "ClickOnOffRecoVertex()");
+    frameRecoVertexButtons -> AddFrame(fButtonOnOffRecoVertex, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 3,3,2,2));
+    if (fEveTask -> IsSetTask("recovertex") != 1)
+      fButtonOnOffRecoVertex  -> SetState(kButtonDisabled);
+    else if (fEveTask -> RnrEveObjectTask("RecoVertex", 0) == 1)
+      fButtonOnOffRecoVertex -> SetState(kButtonDown);
+  }
+  frameEventControl -> AddFrame(frameRecoVertexButtons, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY | kLHintsExpandX, 1,1,1,1));
+
   frameMain -> AddFrame(frameEventControl, new TGLayoutHints(kLHintsRight | kLHintsExpandX));
 
   /********************************************************************/
@@ -730,11 +742,12 @@ void STEveManager::ClickOnOffCluster()      { fEveTask -> RnrEveObjectTask("clus
 void STEveManager::ClickOnOffClusterBox()   { fEveTask -> RnrEveObjectTask("clusterbox");   gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffRiemannTrack() { fEveTask -> RnrEveObjectTask("riemanntrack"); gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffRiemannHit()   { fEveTask -> RnrEveObjectTask("riemannhit");   gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffHelix()        { fEveTask -> RnrEveObjectTask("helix");       gEve -> Redraw3D(); }
-void STEveManager::ClickOnOffHelixHit()     { fEveTask -> RnrEveObjectTask("helixhit");    gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffHelix()        { fEveTask -> RnrEveObjectTask("helix");        gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffHelixHit()     { fEveTask -> RnrEveObjectTask("helixhit");     gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffCurve()        { fEveTask -> RnrEveObjectTask("curve");        gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffCurveHit()     { fEveTask -> RnrEveObjectTask("curvehit");     gEve -> Redraw3D(); }
 void STEveManager::ClickOnOffRecoTrack()    { fEveTask -> RnrEveObjectTask("recoTrack");    gEve -> Redraw3D(); }
+void STEveManager::ClickOnOffRecoVertex()   { fEveTask -> RnrEveObjectTask("recoVertex");   gEve -> Redraw3D(); }
 
 Bool_t
 STEveManager::EveMode(TString mode)

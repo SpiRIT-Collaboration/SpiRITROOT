@@ -25,7 +25,8 @@ class STEveTask : public FairTask
       kCurve        = 9,
       kCurveHit     = 10,
       kHitBox       = 11,
-      kRecoTrack    = 12
+      kRecoTrack    = 12,
+      kRecoVertex   = 13
     };
 
     STEveObject GetEveObject(TString name);
@@ -46,7 +47,7 @@ class STEveTask : public FairTask
     virtual Int_t IsSet(TString name, Int_t option) { return -1; }
 
   protected:
-    static const Int_t fNumEveObject = 14;
+    static const Int_t fNumEveObject = 15;
 
 
   ClassDef(STEveTask, 2);

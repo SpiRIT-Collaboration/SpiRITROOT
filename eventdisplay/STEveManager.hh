@@ -121,6 +121,7 @@ class STEveManager : public TEveEventManager
     void ClickOnOffCurve();
     void ClickOnOffCurveHit();
     void ClickOnOffRecoTrack();
+    void ClickOnOffRecoVertex();
 
     void Exit();
 
@@ -153,6 +154,7 @@ class STEveManager : public TEveEventManager
     TGCheckButton *fButtonOnOffCurve;
     TGCheckButton *fButtonOnOffCurveHit;
     TGCheckButton *fButtonOnOffRecoTrack;
+    TGCheckButton *fButtonOnOffRecoVertex;
 
   private :
     FairLogger *fLogger;    //! < Logger
