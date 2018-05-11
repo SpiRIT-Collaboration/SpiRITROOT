@@ -1,6 +1,10 @@
 #include "STGFBField.hh"
 
+#include <iostream>
+
 ClassImp(STGFBField)
+
+STGFBField *STGFBField::fInstance = nullptr;
 
 STGFBField::STGFBField(const char* mapName, const char* fileType)
 {
@@ -9,8 +13,14 @@ STGFBField::STGFBField(const char* mapName, const char* fileType)
   fFieldMap -> Init();
 }
 
-STGFBField::~STGFBField()
+STGFBField *STGFBField::GetInstance(const char* mapName, const char* fileType)
 {
+  if (fInstance == nullptr)
+    fInstance = new STGFBField(mapName, fileType);
+  else
+    std::cout << "== [STGFBField] Existing pointer is returned" << std::endl;
+
+  return fInstance;
 }
 
 TVector3 STGFBField::get(const TVector3& pos) const

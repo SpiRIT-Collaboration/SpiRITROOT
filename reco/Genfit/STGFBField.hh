@@ -10,13 +10,16 @@ class STGFBField : public TObject, public genfit::AbsBField
 {
   public:
     STGFBField(const char* mapName, const char* fileType = "R");
-    virtual ~STGFBField();
+    virtual ~STGFBField() {};
+
+    static STGFBField *GetInstance(const char* mapName, const char* fileType = "R");
 
     TVector3 get(const TVector3& pos) const;
 
     STFieldMap *GetFieldMap() { return fFieldMap; }
 
   private:
+    static STGFBField *fInstance;
     STFieldMap *fFieldMap;
 
   ClassDef(STGFBField, 1)
