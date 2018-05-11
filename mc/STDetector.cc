@@ -198,6 +198,11 @@ STDetector::CheckIfSensitive(std::string name)
 
   if (nameStr.EqualTo("field_cage_in"))
     return kTRUE;
+  if (nameStr.BeginsWith("kyoto"))
+	  return kTRUE;
+  if (nameStr.BeginsWith("katanaVPla"))
+	  return kTRUE;
+
 
   return kFALSE;
 }
