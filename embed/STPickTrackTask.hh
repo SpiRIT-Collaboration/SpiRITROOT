@@ -84,6 +84,8 @@ private:
   bool IsStoreEachEvt;
   bool IsRawData_Recorded;
   bool IsPickTrackCutUsed;
+  
+  int TrackID;
 
 private:
   STEmbedTrackContainer* EmbedContainer;
@@ -92,6 +94,7 @@ private:
   TClonesArray* fRecoTrackArray = nullptr;
   TClonesArray* fHitClusterArray = nullptr;
   TClonesArray *fVertexArray = nullptr;
+  TClonesArray* fHitArray = nullptr;
   
   FairRootManager* fRootManager;
   STRawEvent* RawEvent_Dummy;

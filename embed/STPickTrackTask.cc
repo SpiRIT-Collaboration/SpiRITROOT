@@ -31,11 +31,12 @@ STPickTrackTask::STPickTrackTask()
   IsRawData_Recorded = 0;
   IsPickTrackCutUsed=0;
   aTrackCut = new STPickTrackCut();
+  
+  TrackID = -1;
 }
 
 STPickTrackTask::~STPickTrackTask()
-{
-}
+{}
 
 InitStatus STPickTrackTask::Init()
 {
@@ -61,6 +62,12 @@ InitStatus STPickTrackTask::Init()
   if (fHitClusterArray == nullptr)
   {
     LOG(ERROR) << "Cannot find STHitCluster array!" << FairLogger::endl;
+    return kERROR;
+  }
+  fHitArray = (TClonesArray *) fRootManager -> GetObject("STHit");
+  if (fHitArray == nullptr)
+  {
+    LOG(ERROR) << "Cannot find STHit array!" << FairLogger::endl;
     return kERROR;
   }
   fVertexArray = (TClonesArray *) fRootManager -> GetObject("STVertex");
@@ -96,11 +103,12 @@ void STPickTrackTask::Exec(Option_t *opt)
     for(int iTrack = 0;iTrack<RecoTrackNum;iTrack++)
     {
       STRecoTrack* aRecoTrack = (STRecoTrack*) fRecoTrackArray -> At(iTrack);
+      TrackID = iTrack;
       vector<Int_t>* fHitClusterIDArray = aRecoTrack->GetClusterIDArray();
       int ClusterNum = (*fHitClusterIDArray).size();
       if(ClusterNum<=MinClusterNum) { continue; }
       if(aTrackCut->IsTrackInVertex(aRecoTrack,aVertex)==0) { continue; }
-      if(aTrackCut->IsInPionMinusCut(aRecoTrack) || aTrackCut->IsInPionPlusCut(aRecoTrack)) 
+      if(aTrackCut->IsInPionMinusCut(aRecoTrack) || aTrackCut->IsInPionPlusCut(aRecoTrack)) // here I only record the pion.
       {
         if(IsRawData_Recorded==1) { PickHits_onPad(aRawEvent,aRecoTrack); }
         else { PickHits_onStandardPulse(aRawEvent,aRecoTrack); }
@@ -117,9 +125,10 @@ void STPickTrackTask::Exec(Option_t *opt)
     STRawEvent *aRawEvent = (STRawEvent *) fRawEventArray -> At(0);
     STRecoTrack *aRecoTrack = 0;
     STVertex *aVertex = 0;
-    if(RecoTrackNum==1) 
+    if(RecoTrackNum==1)
     {
       aRecoTrack = (STRecoTrack *) fRecoTrackArray -> At(0);
+      TrackID = 0;
       //this method will pickup the corresponding hits, and store these in the RawEvent_Dummy.
       if(IsRawData_Recorded==1) { PickHits_onPad(aRawEvent,aRecoTrack); }
       else { PickHits_onStandardPulse(aRawEvent,aRecoTrack); }
@@ -128,12 +137,13 @@ void STPickTrackTask::Exec(Option_t *opt)
     cout<<"--->You are recording every track and the related raw event data."<<endl;
     return;
   }
-
+  
   if( EvtTag=="cocktail")
   {
     if(RecoTrackNum!=1) { return; }
     STRawEvent *aRawEvent = (STRawEvent *) fRawEventArray -> At(0);
     STRecoTrack *aRecoTrack = (STRecoTrack *) fRecoTrackArray -> At(0);
+    TrackID = 0;
     STVertex* aVertex = 0;
     if((*(aRecoTrack->GetClusterIDArray())).size()<MinClusterNum) { return; }
     if(aRecoTrack->GetPIDProbability()<PIDProbability) { return; }
@@ -147,7 +157,7 @@ void STPickTrackTask::Exec(Option_t *opt)
     }
     return;
   }
-  
+  //Because the distinguish of PID is not fix in the SpiRITROOT, so the below is not working.
   if(EvtTag=="event")
   {
     //choose the track from one event, which has certain multiplicity;
@@ -158,6 +168,7 @@ void STPickTrackTask::Exec(Option_t *opt)
       {
         STRawEvent *aRawEvent = (STRawEvent *) fRawEventArray -> At(0);
         STRecoTrack *aRecoTrack = (STRecoTrack *) fRecoTrackArray -> At(iTrack);
+        TrackID = iTrack;
         // for the number of cluster
         if((*(aRecoTrack->GetClusterIDArray())).size()<MinClusterNum) { continue; }
         // for the pid probability
@@ -190,6 +201,7 @@ void STPickTrackTask::Exec(Option_t *opt)
       {
         STRawEvent *aRawEvent = (STRawEvent *) fRawEventArray -> At(0);
         STRecoTrack *aRecoTrack = (STRecoTrack *) fRecoTrackArray -> At(iTrack);
+        TrackID = iTrack;
         // for the number of cluster
         if((*(aRecoTrack->GetClusterIDArray())).size()<MinClusterNum) { continue; }
         // for the pid probability
@@ -198,8 +210,8 @@ void STPickTrackTask::Exec(Option_t *opt)
         int VertexID_tem = aRecoTrack->GetVertexID();
         if(VertexID_tem==-1) { continue; }
         STVertex* aVertex = (STVertex*) fVertexArray->At(VertexID_tem);
-//        cout<<"Vertex Pos: "<<aVertex->GetPos().X()<<" "<<aVertex->GetPos().Y()<<" "<<aVertex->GetPos().Z()<<endl;
-        if(aVertex->IsTargetVertex()!=true){ continue; }//this function looks not working, so I judge it by myself.)
+        if(aTrackCut->IsVertexInTarget(aVertex)==0) { continue; }
+        if(aTrackCut->IsTrackInVertex(aRecoTrack,aVertex)==0) { continue; }
         for(int j=0;j<ParticleNum;j++)
         {
           if(aRecoTrack->GetPID()!=ParticleID[j]) { continue; }
@@ -227,22 +239,31 @@ void STPickTrackTask::PickHits_onPad(STRawEvent* aRawEvent,STRecoTrack* aTrack)
   vector<Int_t>* fHitClusterIDArray = aTrack->GetClusterIDArray();
   int ClusterNum = (*fHitClusterIDArray).size();
 //  cout<<"ClusterNum: "<<ClusterNum<<endl;
-  int HitNumTotal = 0;
+//  int HitNumTotal = 0;
   for(int iCluster = 0;iCluster<ClusterNum;iCluster++)
   {
     STHitCluster* aCluster = (STHitCluster*) fHitClusterArray->At((*fHitClusterIDArray)[iCluster]);
-    int HitNum = aCluster->GetHitPtrs()->size();
+    vector<Int_t> *HitIDArray = aCluster->GetHitIDs();
+    int HitNum = (*HitIDArray).size();
+//    int HitNum = aCluster->GetHitPtrs()->size();
 //    cout<<"HitNum: "<<HitNum<<endl;
-    HitNumTotal += HitNum;
+//    HitNumTotal += HitNum;
+    
     for(int iHit = 0;iHit<HitNum;iHit++)
     {
-      STHit* aHit = (*aCluster->GetHitPtrs())[iHit];
+//      STHit* aHit = (*aCluster->GetHitPtrs())[iHit];
+      int HitID = (*HitIDArray)[iHit];
+      STHit* aHit = (STHit*) fHitArray->At(HitID);
       int RowNum = aHit->GetRow();
       int LayerNum = aHit->GetLayer();
       double fTb = aHit->GetTb();
       double fCharge = aHit->GetCharge();
 //      cout<<RowNum<<"  "<<LayerNum<<"  "<<fTb<<"  "<<fCharge<<endl;
-      RawEvent_Dummy->SetPad(aRawEvent->GetPad(RowNum, LayerNum));
+      if(TrackID == aHit->GetTrackID() || aHit->IsClustered()!=0) 
+      { RawEvent_Dummy->SetPad(aRawEvent->GetPad(RowNum, LayerNum)); }
+/*
+      else { cout<<"--->"<<TrackID <<"  "<< aHit->GetTrackID()<<endl; }
+*/
     }// for the hit in one cluster
   }// for the cluster in one track
   RawEvent_Dummy->SetIsGood(aRawEvent->IsGood());
@@ -258,17 +279,24 @@ void STPickTrackTask::PickHits_onStandardPulse(STRawEvent* aRawEvent,STRecoTrack
   vector<Int_t>* fHitClusterIDArray = aTrack->GetClusterIDArray();
   int ClusterNum = (*fHitClusterIDArray).size();
 //  cout<<"ClusterNum: "<<ClusterNum<<endl;
-  int HitNumTotal = 0;
+  int HitTotalNum = 0;
+  int HitTotalNum_TrackIDUnmatched = 0;
+//  int HitPtrsTotalNum = 0;
   for(int iCluster = 0;iCluster<ClusterNum;iCluster++)
   {
     int ClusterID = (*fHitClusterIDArray)[iCluster];
     STHitCluster* aCluster = (STHitCluster*) fHitClusterArray->At(ClusterID);
-    int HitNum = aCluster->GetHitPtrs()->size();
-//    cout<<"HitNum: "<<HitNum<<endl;
-    HitNumTotal += HitNum;
+    vector<Int_t> *HitIDArray = aCluster->GetHitIDs();
+    int HitNum = (*HitIDArray).size();
+//    int HitNum_Ptrs = aCluster->GetHitPtrs()->size();
+//    HitPtrsTotalNum = HitPtrsTotalNum + HitNum_Ptrs;
+//    cout<<"HitNum: "<<HitNum<<" HitNum_Ptrs: "<<HitNum_Ptrs<<endl;
+    HitTotalNum += HitNum;
     for(int iHit = 0;iHit<HitNum;iHit++)
     {
-      STHit* aHit = (*aCluster->GetHitPtrs())[iHit];
+//      STHit* aHit = (*aCluster->GetHitPtrs())[iHit];
+      int HitID = (*HitIDArray)[iHit];
+      STHit* aHit = (STHit*) fHitArray->At(HitID);
       int RowNum = aHit->GetRow();
       int LayerNum = aHit->GetLayer();
       double fTb = aHit->GetTb();
@@ -281,14 +309,25 @@ void STPickTrackTask::PickHits_onStandardPulse(STRawEvent* aRawEvent,STRecoTrack
       {
         aPad->SetADC(iADC,StandardPulseFunction->Eval(iADC));
       }
-      
-      RawEvent_Dummy->SetPad(aPad);
+      if(TrackID == aHit->GetTrackID()  || aHit->IsClustered()!=0)
+      {
+        RawEvent_Dummy->SetPad(aPad);
+      }
+/*
+      else
+      {
+        cout<<"--->"<<TrackID <<"  "<< aHit->GetTrackID()<<endl;
+        HitTotalNum_TrackIDUnmatched++;
+      }
+*/
       StandardPulseFunction->Delete();
     }// for the hit in one cluster
   }// for the cluster in one track
   RawEvent_Dummy->SetIsGood(aRawEvent->IsGood());
   RawEvent_Dummy->SetEventID(aRawEvent->GetEventID());
   int PadNum = RawEvent_Dummy->GetNumPads();
+  cout<<"HitTotalNum_TrackIDUnmatched: "<<HitTotalNum_TrackIDUnmatched<<" HitTotalNum: "<<HitTotalNum<<endl;
+//  cout<<"HitTotalNum_TrackIDUnmatched: "<<HitTotalNum_TrackIDUnmatched<<" HitPtrsTotalNum: "<<HitPtrsTotalNum<<" HitTotalNum: "<<HitTotalNum<<endl;
 //  cout<<"PadNum: "<<PadNum<<endl;
 }
 
