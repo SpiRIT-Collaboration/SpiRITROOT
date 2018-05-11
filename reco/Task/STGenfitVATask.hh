@@ -64,9 +64,9 @@ class STGenfitVATask : public STRecoTask
     STBeamEnergy *fBeamEnergy = nullptr;
     STBDCProjection *fBDCProjection = nullptr;
 
-    Double_t fPeakZ = -11.9084;
-    Double_t fSigma = 1.69675;
-    Double_t fSigmaMultiple = 3;
+    Double_t fPeakZ = -9999;
+    Double_t fSigma;
+    Double_t fSigmaMultiple;
 
   ClassDef(STGenfitVATask, 1)
 };
