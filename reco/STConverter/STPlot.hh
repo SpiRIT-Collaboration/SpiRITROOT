@@ -59,6 +59,9 @@ class STPlot : public TObject
     void SetADCHighCut(Double_t value);
 
     void SetMap(STMap *map);
+    
+    //getter
+    TH2D* Get_PadplaneHist() {return fPadplaneHist;}
 
   private:
     STCore *fCore;
