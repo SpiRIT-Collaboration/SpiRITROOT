@@ -20,6 +20,9 @@ class STAnalyzeG4StepTask : public FairTask
 		virtual void Exec(Option_t* opt);
 		virtual void SetParContainers();
 
+		void SetPersistence(Bool_t value = kTRUE);
+		void AssumeGausPRF(Bool_t val=kTRUE) { fAssumeGausPRF = val; }
+
 	private:
 		Bool_t 	fIsPersistence;
 		Int_t		fEventID;
