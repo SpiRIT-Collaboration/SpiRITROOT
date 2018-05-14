@@ -1,5 +1,5 @@
-#ifndef STAnalyzeG4StepTask
-#define STAnalyzeG4StepTask
+#ifndef STANALYZEG4STEPTASK
+#define STANALYZEG4STEPTASK
 
 #include "FairTask.h"
 
