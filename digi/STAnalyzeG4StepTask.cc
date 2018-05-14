@@ -4,7 +4,7 @@
 
 #include "FairRootManager.h"
 #include "FairRunAna.h"
-#include "FairRunTimeDb.h"
+#include "FairRuntimeDb.h"
 
 #include <cmath>
 #include <iostream>
@@ -23,7 +23,6 @@ STAnalyzeG4StepTask::STAnalyzeG4StepTask()
 		fIsPersistence(kFALSE),
 		fEventID(0)
 {
-	fIsPersistence = kFALSE;
 	fLogger->Debug(MESSAGE_ORIGIN,"Default Constructor of STAnalyzeG4StepTask");
 }
 
@@ -37,7 +36,7 @@ void STAnalyzeG4StepTask::SetParContainers()
 	fLogger->Debug(MESSAGE_ORIGIN,"SetParContainwes of STAnalyzeG4StepTask");
 	
 	FairRunAna* ana = FairRunAna::Instance();
-	FairRunTimeDb* rtdb = ana->GetRuntimeDb();
+	FairRuntimeDb* rtdb = ana->GetRuntimeDb();
 	fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
 }
 
@@ -45,7 +44,7 @@ InitStatus STAnalyzeG4StepTask::Init()
 {
 	fLogger->Debug(MESSAGE_ORIGIN,"Initialization of STAnalyzeG4StepTask");
 
-	FairRootManager* ionam = FairRootManager::Instance();
+	FairRootManager* ioman = FairRootManager::Instance();
 	fMCPointArray = (TClonesArray*) ioman->GetObject("STMCPoint");	// input mc points array
 
 	fRawEventArray = new TClonesArray("STRawEvent");		// pad response by drifted electrons
@@ -107,7 +106,9 @@ void STAnalyzeG4StepTask::Exec(Option_t* option)
 	if(!fRawEventArray)
 		fLogger->Fatal(MESSAGE_ORIGIN, "No RawEventArray!");
 	
-	fRawEventArray->SetEventID(fEventID);
+	fRawEvent->SetEventID(fEventID);
+	ReInitDummy();
+	fTAMCPointArray->Delete();
 
 	for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++){
 		auto mcpoint = (STMCPoint*) fMCPointArray->At(iPoint);
@@ -145,7 +146,7 @@ void STAnalyzeG4StepTask::Exec(Option_t* option)
 			Double_t dz = dr*TMath::Sin(angle); // displacement in y-direction
 			Double_t dt = gRandom->Gaus(0,sigmaL)/fVelDrift; // displacement in time
 
-			Int_t iWire = (Int_t)floor((fMCPoint->GetZ()*10+dz+fZSpacingWire/2)/fZSpacingWire);
+			Int_t iWire = (Int_t)floor((mcpoint->GetZ()*10+dz+fZSpacingWire/2)/fZSpacingWire);
 			if(iWire<fIFirstWire) iWire = fIFirstWire;
 			if(iWire>fILastWire)  iWire = fILastWire;
 			Int_t zWire = iWire*fZSpacingWire+fZOffsetWire;
