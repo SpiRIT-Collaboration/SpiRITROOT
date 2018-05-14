@@ -9,40 +9,40 @@
 
 class STMCPoint : public FairMCPoint
 {
-  public:
+	public:
 
-    /** Default constructor **/
-    STMCPoint();
-
-
-    /** Constructor with arguments
-     *@param trackID  Index of MCTrack
-     *@param detID    Detector ID
-     *@param pos      Ccoordinates at entrance to active volume [cm]
-     *@param mom      Momentum of track at entrance [GeV]
-     *@param tof      Time since event start [ns]
-     *@param length   Track length since creation [cm]
-     *@param eLoss    Energy deposit [GeV]
-     **/
-    STMCPoint(Int_t trackID, Int_t detID, TVector3 pos, TVector3 mom,
-                     Double_t tof, Double_t length, Double_t eLoss, Int_t pdg);
+		/** Default constructor **/
+		STMCPoint();
 
 
-    /** Destructor **/
-    virtual ~STMCPoint();
+		/** Constructor with arguments
+		 *@param trackID  Index of MCTrack
+		 *@param detID    Detector ID
+		 *@param pos      Ccoordinates at entrance to active volume [cm]
+		 *@param mom      Momentum of track at entrance [GeV]
+		 *@param tof      Time since event start [ns]
+		 *@param length   Track length since creation [cm]
+		 *@param eLoss    Energy deposit [GeV]
+		 **/
+		STMCPoint(Int_t trackID, Int_t detID, TVector3 pos, TVector3 mom,
+				Double_t tof, Double_t length, Double_t eLoss, Int_t pdg);
 
-    /** Output to screen **/
-    virtual void Print(const Option_t* opt) const;
 
-	 Int_t GetPDG()	{ return fPdg; }
+		/** Destructor **/
+		virtual ~STMCPoint();
 
-  private:
-  	 Int_t fPdg;
-    /** Copy constructor **/
-    STMCPoint(const STMCPoint& point);
-    STMCPoint operator=(const STMCPoint& point);
+		/** Output to screen **/
+		virtual void Print(const Option_t* opt) const;
 
-    ClassDef(STMCPoint,1)
+		Int_t GetPDG()	{ return fPdg; }
+
+	private:
+		Int_t fPdg;
+		/** Copy constructor **/
+		STMCPoint(const STMCPoint& point);
+		STMCPoint operator=(const STMCPoint& point);
+
+		ClassDef(STMCPoint,1)
 
 };
 
