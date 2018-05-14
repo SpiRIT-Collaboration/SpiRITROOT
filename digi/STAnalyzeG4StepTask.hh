@@ -22,7 +22,7 @@ class STAnalyzeG4StepTask : public FairTask
 
 		void SetPersistence(Bool_t value = kTRUE);
 		void AssumeGausPRF(Bool_t val=kTRUE) { fAssumeGausPRF = val; }
-
+		
 	private:
 		Bool_t 	fIsPersistence;
 		Int_t		fEventID;
@@ -90,7 +90,7 @@ class STAnalyzeG4StepTask : public FairTask
 		STAnalyzeG4StepTask(const STAnalyzeG4StepTask&);
 		STAnalyzeG4StepTask operator=(const STAnalyzeG4StepTask&);
 
-		ClassDef(STAnalyzeG4StepTask,1);
+	ClassDef(STAnalyzeG4StepTask,1);
 };
 
 #endif

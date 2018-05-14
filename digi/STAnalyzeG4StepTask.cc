@@ -1,6 +1,7 @@
 #include "STAnalyzeG4StepTask.hh"
 #include "STProcessManager.hh"
 #include "STMCPoint.hh"
+#include "STPad.hh"
 
 #include "FairRootManager.h"
 #include "FairRunAna.h"
@@ -300,6 +301,5 @@ STAnalyzeG4StepTask::InitPRF()
 }
 
 void STAnalyzeG4StepTask::SetPersistence(Bool_t value)  { fIsPersistence = value; }
-			
 
 ClassImp(STAnalyzeG4StepTask);
