@@ -35,7 +35,8 @@ void AddIons(FairRunSim *fRun, TString event);
 void run_mc
 (
   TString name  = "urqmd_short",
-  TString event = "urqmd_132sn124sn270amevb0012_10event.dat",
+  //TString event = "urqmd_132sn124sn270amevb0012_10event.dat",
+  TString event = "urqmd_132sn124sn270amevb0012_10event.root",
   Bool_t  useFieldMapFile = kFALSE
 )
 {
@@ -75,7 +76,7 @@ void run_mc
   fRun -> SetOutputFile(outputFile);
   fRun -> SetGenerateRunInfo(kFALSE);
   fRun -> SetMaterials("media.geo");
-  AddIons(fRun, event);
+//  AddIons(fRun, event);
 
 
   // -----------------------------------------------------------------
@@ -115,8 +116,10 @@ void run_mc
 
   // -----------------------------------------------------------------
   // Event generator
-  STEventGenGenerator* fEvent = new STEventGenGenerator(event);
-  fEvent -> SetPrimaryVertex(0, -21.33, -.89);
+  //STEventGenGenerator* fEvent = new STEventGenGenerator(event);
+  STTransportModelEventGenerator* fEvent = new STTransportModelEventGenerator(event);
+  fEvent -> RegisterHeavyIon();
+  fEvent -> SetPrimaryVertex(TVector3(0, -21.33, -.89));
 
   FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();
   fGenerator -> AddGenerator(fEvent);

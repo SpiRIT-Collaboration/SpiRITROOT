@@ -23,6 +23,8 @@ set(SRCS
 STEventGenGenerator.cc
 STSimpleEventGenerator.cc
 STPHITSEventGenerator.cc
+STTransportModelEventGenerator.cc
+UrQMDParticle.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
