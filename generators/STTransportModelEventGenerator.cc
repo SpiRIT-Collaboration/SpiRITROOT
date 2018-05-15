@@ -12,18 +12,18 @@ STTransportModelEventGenerator::STTransportModelEventGenerator()
 	fInputFile(NULL), fInputTree(NULL),
 	fB(-1.), fPartArray(NULL),
 	fCurrentEvent(0), fNEvents(0),
-	fVertex(TVector3()), fVertexXYSigma(TVector2()), fTargetThickness(0.),
-fBeamAngle(TVector2()), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
+	fVertex(TVector3()), fVertexXYSigma(TVector2()), fTargetThickness(),
+	fBeamAngle(TVector2()), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
 }
 
 STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
 	:  FairGenerator("STTransportModelEvent",fileName),
-		fInputFile(NULL), fInputTree(NULL),
-		fB(-1.), fPartArray(NULL),
-		fCurrentEvent(0), fNEvents(0),
-		fVertex(TVector3()), fVertexXYSigma(TVector2()), fTargetThickness(0.),
-fBeamAngle(TVector2()), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
+	fInputFile(NULL), fInputTree(NULL),
+	fB(-1.), fPartArray(NULL),
+	fCurrentEvent(0), fNEvents(0),
+	fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
+	fBeamAngle(TVector2(0.-0.06)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
 	TString treeName, partBranchName;
 	if(fileName.BeginsWith("phits"))       { fGen = TransportModel::PHITS;  treeName = "tree";      partBranchName = "fparts"; }
@@ -46,11 +46,11 @@ fBeamAngle(TVector2()), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 
 STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName, TString treeName)
 	:  FairGenerator("STTransportModelEvent",fileName),
-		fInputFile(NULL), fInputTree(NULL),
-		fB(-1.), fPartArray(NULL),
-		fCurrentEvent(0), fNEvents(0),
-		fVertex(TVector3()), fVertexXYSigma(TVector2()), fTargetThickness(0.),
-fBeamAngle(TVector2()), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
+	fInputFile(NULL), fInputTree(NULL),
+	fB(-1.), fPartArray(NULL),
+	fCurrentEvent(0), fNEvents(0),
+	fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
+	fBeamAngle(TVector2(0.-0.06)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
 	TString partBranchName;
 	if(fileName.BeginsWith("phits"))       { fGen = TransportModel::PHITS;   partBranchName = "fparts"; }
@@ -106,37 +106,35 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 	}
 
 	for(Int_t iPart=0; iPart<nPart; iPart++){
-		//auto part = fPartArray->At(iPart);
 		Int_t pdg;
 		TVector3 p;
 		TVector3 pos;
-		//TObject* part = nullptr;
 		switch(fGen){
 			case TransportModel::PHITS:
-			{
-				auto part = (PHITSParticle*)fPartArray->At(iPart);
-				pdg = kfToPDG(part->kf);
-				Double_t pMag = TMath::Sqrt(part->ke*(part->ke+2.*part->m))/1000.;
-				p = TVector3(part->mom[0],part->mom[1],part->mom[2]);
-				p.SetMag(pMag);
-				break;
-			}
+				{
+					auto part = (PHITSParticle*)fPartArray->At(iPart);
+					pdg = kfToPDG(part->kf);
+					Double_t pMag = TMath::Sqrt(part->ke*(part->ke+2.*part->m))/1000.;
+					p = TVector3(part->mom[0],part->mom[1],part->mom[2]);
+					p.SetMag(pMag);
+					break;
+				}
 			case TransportModel::AMD:
-			{
-				auto part = (AMDParticle*)fPartArray->At(iPart);
-				pdg = part->fPdg;
-				p = TVector3(part->fMomentum.Vect());
-				p.SetMag(p.Mag()/1000.);
-				break;
-			}
+				{
+					auto part = (AMDParticle*)fPartArray->At(iPart);
+					pdg = part->fPdg;
+					p = TVector3(part->fMomentum.Vect());
+					p.SetMag(p.Mag()/1000.);
+					break;
+				}
 			case TransportModel::UrQMD:
-			{
-				auto part = (UrQMDParticle*)fPartArray->At(iPart);
-				pdg = part->GetPdg();
-				p = TVector3(part->GetMomentum().Vect());
-				p.SetMag(p.Mag()/1000.);
-				break;
-			}
+				{
+					auto part = (UrQMDParticle*)fPartArray->At(iPart);
+					pdg = part->GetPdg();
+					p = TVector3(part->GetMomentum().Vect());
+					p.SetMag(p.Mag()/1000.);
+					break;
+				}
 			default:
 				break;
 		}
@@ -160,13 +158,13 @@ void STTransportModelEventGenerator::RegisterHeavyIon()
 {
 	if(!fInputFile)
 		return;
-	
+
 	TString symbol[50] = {"H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
-								"Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca",
-								"Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
-								"Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr",
-								"Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn"};
-	
+		"Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca",
+		"Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
+		"Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr",
+		"Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn"};
+
 	std::vector<Int_t> ions;
 	for(Int_t i=0; i<fNEvents; i++){
 		fInputTree->GetEntry(i);
