@@ -21,7 +21,7 @@ void run_digi(TString name = "protons_75_events")
 
   // -----------------------------------------------------------------
   // Set digitization tasks
-  STDriftTask* fDriftTask = new STDriftTask(); 
+/*  STDriftTask* fDriftTask = new STDriftTask(); 
   fDriftTask -> SetPersistence(true);
   fDriftTask -> SetParticleForCorrection("p");
   fDriftTask -> SetSplineInterpolation(false);
@@ -32,7 +32,13 @@ void run_digi(TString name = "protons_75_events")
   fPadResponseTask -> SetPersistence(true);
   fPadResponseTask -> AssumeGausPRF();
   fRun -> AddTask(fPadResponseTask);
-
+*/
+	
+  STAnalyzeG4StepTask* fAnaG4StepTask = new STAnalyzeG4StepTask();
+  fAnaG4StepTask -> SetPersistence(true);
+  fAnaG4StepTask -> AssumeGausPRF();
+  fRun -> AddTask(fAnaG4StepTask)
+  	
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
   fElectronicsTask -> SetPersistence(true);
   fElectronicsTask -> SetADCConstant(1);
