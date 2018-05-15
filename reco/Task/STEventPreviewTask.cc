@@ -112,10 +112,12 @@ void STEventPreviewTask::Exec(Option_t *opt)
 
 void STEventPreviewTask::LayerTest(STRawEvent *rawEvent)
 {
-  Int_t numTbs = fPar -> GetNumTbs();
+  const Int_t numTbs = fPar -> GetNumTbs();
     
   Double_t charge[12] = {0};
-  Double_t mean[numTbs] ={0};
+  Double_t mean[numTbs];
+  for (auto itb = 0; itb < numTbs; ++itb)
+    mean[itb] = 0;
 		    
   Int_t numPads = rawEvent -> GetNumPads();
   for (Int_t iPad = 0; iPad < numPads; iPad++) 
