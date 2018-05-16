@@ -37,7 +37,7 @@ void run_digi(TString name = "protons_75_events")
   STAnalyzeG4StepTask* fAnaG4StepTask = new STAnalyzeG4StepTask();
   fAnaG4StepTask -> SetPersistence(true);
   fAnaG4StepTask -> AssumeGausPRF();
-  fRun -> AddTask(fAnaG4StepTask)
+  fRun -> AddTask(fAnaG4StepTask);
   	
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
   fElectronicsTask -> SetPersistence(true);
