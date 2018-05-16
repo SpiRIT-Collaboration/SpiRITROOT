@@ -23,7 +23,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
 	fB(-1.), fPartArray(NULL),
 	fCurrentEvent(0), fNEvents(0),
 	fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
-	fBeamAngle(TVector2(0.-0.06)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
+	fBeamAngle(TVector2(0,-0.06)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
 	TString treeName, partBranchName;
 	if(fileName.BeginsWith("phits"))       { fGen = TransportModel::PHITS;  treeName = "tree";      partBranchName = "fparts"; }
@@ -50,7 +50,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName,
 	fB(-1.), fPartArray(NULL),
 	fCurrentEvent(0), fNEvents(0),
 	fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
-	fBeamAngle(TVector2(0.-0.06)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
+	fBeamAngle(TVector2(0,-0.06)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
 	TString partBranchName;
 	if(fileName.BeginsWith("phits"))       { fGen = TransportModel::PHITS;   partBranchName = "fparts"; }
