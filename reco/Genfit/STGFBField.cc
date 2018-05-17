@@ -9,7 +9,7 @@ STGFBField *STGFBField::fInstance = nullptr;
 STGFBField::STGFBField(const char* mapName, const char* fileType)
 {
   fFieldMap = new STFieldMap(mapName, fileType);
-  fFieldMap -> SetPosition(0,-20.43,33);
+  fFieldMap -> SetPosition(0,-20.43,58);
   fFieldMap -> Init();
 }
 
