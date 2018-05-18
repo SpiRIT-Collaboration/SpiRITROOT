@@ -10,7 +10,7 @@ void run_reco_experiment
  Double_t fPSAThreshold = 30,
  TString fParameterFile = "ST.parameters.PhysicsRuns_201707.par",
  TString fPathToData = "",
- Bool_t fUseMeta = kTRUE,
+ Bool_t fUseMeta = kFALSE,
  TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement"
 )
 {
@@ -69,8 +69,10 @@ void run_reco_experiment
   decoder -> SetGGNoiseData(fGGData);
   decoder -> SetDataList(raw);
   decoder -> SetEventID(start);
+  decoder -> SetTbRange(30, 257);
   decoder -> SetEmbedding(false);
-  decoder -> SetEmbedFile("./data/one_test.digi.root");
+  decoder -> SetEmbedFile("");
+//  decoder -> SetEmbedFile("./data/one_test.digi.root");
   
   if (fUseMeta) {
     std::ifstream metalistFile(metaFile.Data());
@@ -99,6 +101,7 @@ void run_reco_experiment
   helix -> SetClusterPersistence(false);
   helix -> SetClusteringOption(2);
   helix -> SetSaturationOption(1); 
+  helix -> SetClusterCutLRTB(427, -427, -64, -522);
   
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
@@ -110,9 +113,9 @@ void run_reco_experiment
   genfitVA -> SetPersistence(true);
   //genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
-//  genfitVA -> SetBeamFile("");
-  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
-  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
+  genfitVA -> SetBeamFile("");
+//  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
+//  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
