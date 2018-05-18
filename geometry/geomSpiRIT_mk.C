@@ -1112,7 +1112,7 @@ void geomSpiRIT_mk()
   //top -> SetTransparency(95);
   //gGeoManager -> SetTopVisible(true);
 
-  top -> Draw("ogl");
+//  top -> Draw("ogl");
   
   TString geoFileName    = dirGeom + "geomSpiRIT.root";
   TString geoManFileName = dirGeom + "geomSpiRIT.man.root";

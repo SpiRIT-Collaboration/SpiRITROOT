@@ -29,6 +29,8 @@
 #include "TMath.h"                      // for Sqrt
 #include "TVector3.h"                   // for TVector3
 
+#include <map>
+
 class TParticle;
 
 class STMCTrack : public TObject
@@ -86,10 +88,23 @@ class STMCTrack : public TObject
     Int_t GetNPoints(DetectorId detId)  const;
 
 
+    /** Accessors to atomic information if the track is nucleus. **/
+    Int_t GetZ() const;
+    Int_t GetN() const;
+    Int_t GetA() const { return GetZ()+GetN(); }
+
+    Int_t GetNPointsFromMap(Int_t detID);
+    Double_t GetEdepFromMap(Int_t detID);
+    Double_t GetLengthFromMap(Int_t detID);
+
+
     /**  Modifiers  **/
     void SetMotherId(Int_t id) { fMotherId = id; }
     void SetNPoints(Int_t iDet, Int_t np);
 
+    void SetPointMap(Int_t detID, Int_t np) { fNPointsMap[detID] = np; }
+    void SetEdepMap(Int_t detID, Double_t edep) { fEdepMap[detID] = edep; }
+    void SetLengthMap(Int_t detID, Double_t length) { fLengthMap[detID] = length; }
 
 
   private:
@@ -123,8 +138,12 @@ class STMCTrack : public TObject
      **/
     Int_t fNPoints;
 
+    std::map<Int_t, Int_t>    fNPointsMap;  // array of pair< detectorID, # of steps >
+    std::map<Int_t, Double_t> fEdepMap;     // array of pair< detectorID, sum of dE >
+    std::map<Int_t, Double_t> fLengthMap;   // array of pair< detectorID, sum of length >
 
-    ClassDef(STMCTrack,2);
+
+    ClassDef(STMCTrack,3);
 
 };
 

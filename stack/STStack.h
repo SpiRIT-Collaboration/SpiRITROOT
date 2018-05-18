@@ -194,6 +194,8 @@ class STStack : public FairGenericStack
      **/
     void AddPoint(DetectorId iDet, Int_t iTrack);
 
+    void AddPoint(Int_t detID, Double_t edep, Double_t length);
+
 
     /** Accessors **/
     TParticle* GetParticle(Int_t trackId) const;
@@ -248,6 +250,12 @@ class STStack : public FairGenericStack
     Int_t      fMinPoints;
     Double32_t fEnergyCut;
     Bool_t     fStoreMothers;
+
+    
+    std::map<std::pair<Int_t, Int_t>, Int_t>	fNPointsMap;     //! <<trackID, detectorID>, nPoints>
+    std::map<std::pair<Int_t, Int_t>, Double_t> fEdepMap;     //!   <<trackID, detectorID>, total dE>
+    std::map<std::pair<Int_t, Int_t>, Double_t> fLengthMap;     //! <<trackID, detectorID>, total len>
+	
 
 
     /** Mark tracks for output using selection criteria  **/

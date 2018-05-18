@@ -48,6 +48,9 @@ STStack::STStack(Int_t size)
     fMinPoints(1),
     fEnergyCut(0.),
     fStoreMothers(kTRUE),
+    fNPointsMap(),
+    fEdepMap(),
+    fLengthMap(),
     fLogger(FairLogger::GetLogger())
 {
 }
@@ -255,9 +258,25 @@ void STStack::FillTrackArray()
         pair<Int_t, Int_t> a(iPart, iDet);
         track->SetNPoints(iDet, fPointsMap[a]);
       }
+      
+
+
       fNTracks++;
     } else { fIndexMap[iPart] = -2; }
 
+  }
+
+  for(Int_t iPart=0; iPart<fPrimaryTracks->GetEntries(); iPart++){
+     STMCTrack* track = (STMCTrack*)fPrimaryTracks->At(iPart);
+     for(auto itr = fNPointsMap.begin(); itr!=fNPointsMap.end(); ++itr){
+	pair<Int_t, Int_t> key = itr->first;  // map of trackID and detectorID
+	if(key.first==iPart){
+	   track->SetPointMap(key.second,itr->second);
+	   track->SetEdepMap(key.second,fEdepMap[key]);
+	   track->SetLengthMap(key.second,fLengthMap[key]);
+	   //std::cout<<key.second<<" "<<fLengthMap[key]<<std::endl;
+	}
+     }
   }
 
   // --> Map index for primary mothers
@@ -343,6 +362,9 @@ void STStack::Reset()
   fTracks->Clear();
   fPrimaryTracks->Clear();
   fPointsMap.clear();
+  fNPointsMap.clear();
+  fEdepMap.clear();
+  fLengthMap.clear();
 }
 // -------------------------------------------------------------------------
 
@@ -401,6 +423,15 @@ void STStack::AddPoint(DetectorId detId, Int_t iTrack)
 }
 // -------------------------------------------------------------------------
 
+
+
+void STStack::AddPoint(Int_t detID, Double_t edep, Double_t length)
+{
+   if(fCurrentTrack>=fNPrimaries) return;
+   pair<Int_t, Int_t> a(fCurrentTrack, detID);
+   if( fNPointsMap.find(a) == fNPointsMap.end() ) { fNPointsMap[a] = 1; fEdepMap[a] = edep; fLengthMap[a] = length; }
+   else { fNPointsMap[a]++; fEdepMap[a] += edep; fLengthMap[a] += length; }
+}
 
 
 

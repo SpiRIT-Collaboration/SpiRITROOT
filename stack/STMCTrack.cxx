@@ -23,7 +23,10 @@ STMCTrack::STMCTrack()
     fStartY(0.),
     fStartZ(0.),
     fStartT(0.),
-    fNPoints(0)
+    fNPoints(0),
+    fNPointsMap(),
+    fEdepMap(),
+    fLengthMap()
 {
 }
 // -------------------------------------------------------------------------
@@ -44,7 +47,10 @@ STMCTrack::STMCTrack(Int_t pdgCode, Int_t motherId, Double_t px,
     fStartY(y),
     fStartZ(z),
     fStartT(t),
-    fNPoints(nPoints)
+    fNPoints(nPoints),
+    fNPointsMap(),
+    fEdepMap(),
+    fLengthMap()
 {
 }
 // -------------------------------------------------------------------------
@@ -63,7 +69,10 @@ STMCTrack::STMCTrack(const STMCTrack& track)
     fStartY(track.fStartY),
     fStartZ(track.fStartZ),
     fStartT(track.fStartT),
-    fNPoints(track.fNPoints)
+    fNPoints(track.fNPoints),
+    fNPointsMap(track.fNPointsMap),
+    fEdepMap(track.fEdepMap),
+    fLengthMap(track.fLengthMap)
 {
 }
 // -------------------------------------------------------------------------
@@ -82,7 +91,10 @@ STMCTrack::STMCTrack(TParticle* part)
     fStartY(part->Vy()),
     fStartZ(part->Vz()),
     fStartT(part->T()*1e09),
-    fNPoints(0)
+    fNPoints(0),
+    fNPointsMap(),
+    fEdepMap(),
+    fLengthMap()
 {
 }
 // -------------------------------------------------------------------------
@@ -116,6 +128,11 @@ Double_t STMCTrack::GetMass() const
   if ( TDatabasePDG::Instance() ) {
     TParticlePDG* particle = TDatabasePDG::Instance()->GetParticle(fPdgCode);
     if ( particle ) { return particle->Mass(); }
+    else if( GetZ()==1 && GetN()==1 ) { return 1.875613; }
+    else if( GetZ()==1 && GetN()==2 ) { return 2.808921; }
+    else if( GetZ()==2 && GetN()==1 ) { return 2.808391; }
+    else if( GetZ()==2 && GetN()==2 ) { return 3.727379; }
+    else if( GetA()>4 ) { return 0.931494*(double)GetA(); }
     else { return 0.; }
   }
   return 0.;
@@ -151,6 +168,39 @@ Int_t STMCTrack::GetNPoints(DetectorId detId) const
   }
 }
 // -------------------------------------------------------------------------
+
+
+Int_t STMCTrack::GetZ() const
+{
+   if( fPdgCode==2212 ) return 1;
+   else if( fPdgCode>3000 ) return (fPdgCode%10000000)/10000;
+   else return 0;
+}
+
+Int_t STMCTrack::GetN() const
+{
+   if( fPdgCode==2112 ) return 1;
+   else if( fPdgCode>3000 ) return (fPdgCode%10000)/10 - GetZ();
+   else return 0;
+}
+
+Int_t STMCTrack::GetNPointsFromMap(Int_t detID)
+{
+   if( fNPointsMap.find(detID) != end(fNPointsMap) ) return fNPointsMap[detID];
+   else return 0;
+}
+
+Double_t STMCTrack::GetEdepFromMap(Int_t detID)
+{
+   if( fEdepMap.find(detID) != end(fEdepMap) ) return fEdepMap[detID];
+   else return 0.;
+}
+
+Double_t STMCTrack::GetLengthFromMap(Int_t detID)
+{
+   if( fLengthMap.find(detID) != end(fLengthMap) ) return fLengthMap[detID];
+   else return 0.;
+}
 
 
 
