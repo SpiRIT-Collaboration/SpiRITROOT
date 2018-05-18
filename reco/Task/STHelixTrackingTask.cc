@@ -32,6 +32,13 @@ void STHelixTrackingTask::SetClusteringOption(Int_t opt)
   cout << "STHelixTrackingTask::SetClusteringOption() is not used any more." << endl;
 }
 void STHelixTrackingTask::SetSaturationOption(Int_t opt) { fSaturationOption = opt; }
+void STHelixTrackingTask::SetClusterCutLRTB(Double_t left, Double_t right, Double_t top, Double_t bottom)
+{
+  fCCLeft = left;
+  fCCRight = right;
+  fCCTop = top;
+  fCCBottom = bottom;
+}
 STHelixTrackFinder *STHelixTrackingTask::GetTrackFinder() { return fTrackFinder; }
 
 InitStatus STHelixTrackingTask::Init()
@@ -53,6 +60,7 @@ InitStatus STHelixTrackingTask::Init()
 
   fTrackFinder = new STHelixTrackFinder();
   fTrackFinder -> SetSaturationOption(fSaturationOption);
+  fTrackFinder -> SetClusterCutLRTB(fCCLeft, fCCRight, fCCTop, fCCBottom);
 
   if (fRecoHeader != nullptr) {
     fRecoHeader -> SetPar("helix_numTracksLowLimit", fNumTracksLowLimit);
