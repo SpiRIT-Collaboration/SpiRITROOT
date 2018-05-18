@@ -679,11 +679,16 @@ STHelixTrackFinder::HitClustering(STHelixTrack *helix)
   for (auto iCluster = idxCluster; iCluster < numClusters; ++iCluster) {
     auto cluster = (STHitCluster *) fHitClusterArray -> At(iCluster);
 
+    auto x = cluster -> GetPosition().X();
+    auto y = cluster -> GetPosition().Y();
+
     if (cluster -> GetClusterID() == -1)
       fHitClusterArray -> Remove(cluster);
     else if (cluster -> IsLayerCluster() && cluster -> GetDx() < 1.e-2)
       fHitClusterArray -> Remove(cluster);
     else if (cluster -> IsRowCluster() && cluster -> GetDz() < 1.e-2)
+      fHitClusterArray -> Remove(cluster);
+    else if (x >= fCCLeft || x <= fCCRight || y >= fCCTop || y <= fCCBottom)
       fHitClusterArray -> Remove(cluster);
     else {
       cluster -> SetClusterID(idxCluster++);
@@ -925,6 +930,13 @@ void STHelixTrackFinder::SetTrackHeightCutLimits(Double_t lowLimit, Double_t hig
 {
   fTrackHCutLL = lowLimit;
   fTrackHCutHL = highLimit;
+}
+void STHelixTrackFinder::SetClusterCutLRTB(Double_t left, Double_t right, Double_t top, Double_t bottom)
+{
+  fCCLeft = left;
+  fCCRight = right;
+  fCCTop = top;
+  fCCBottom = bottom;
 }
 /*
 double STHelixTrackFinder::PRF(double x, double par[])

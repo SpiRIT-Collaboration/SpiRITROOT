@@ -79,6 +79,13 @@ class STHelixTrackFinder
     */
     void SetTrackHeightCutLimits(Double_t lowLimit, Double_t highLimit);
 
+    /**
+     * Clusters at the four sides are flattened because of the partial charge at each side.
+     * Those clusters drag tracks toward them making their momenta deviated from the true values.
+     * Those clusters are disabled after they are found by the algorithm.
+    */
+    void SetClusterCutLRTB(Double_t left, Double_t right, Double_t top, Double_t bottom);
+
 
   private:
     /** 
@@ -201,8 +208,12 @@ class STHelixTrackFinder
     Double_t fTrackHCutLL = 2.;  //< Track height cut low limit
     Double_t fTrackHCutHL = 4.;  //< Track height cut high limit
 
+    Double_t fCCLeft = 0;   //< Cluster cut left
+    Double_t fCCRight = 0;  //< Cluster cut right
+    Double_t fCCTop = 0;    //< Cluster cut top
+    Double_t fCCBottom = 0; //< Cluster cut bottom
 
-  ClassDef(STHelixTrackFinder, 2)
+  ClassDef(STHelixTrackFinder, 3)
 };
 
 #endif
