@@ -16,6 +16,7 @@ STMCTrack::STMCTrack()
   : TObject(),
     fPdgCode(0),
     fMotherId(-1),
+    fTrackId(-1),
     fPx(0.),
     fPy(0.),
     fPz(0.),
@@ -34,12 +35,13 @@ STMCTrack::STMCTrack()
 
 
 // -----   Standard constructor   ------------------------------------------
-STMCTrack::STMCTrack(Int_t pdgCode, Int_t motherId, Double_t px,
+STMCTrack::STMCTrack(Int_t pdgCode, Int_t motherId, Int_t trackId, Double_t px,
                          Double_t py, Double_t pz, Double_t x, Double_t y,
                          Double_t z, Double_t t, Int_t nPoints = 0)
   : TObject(),
     fPdgCode(pdgCode),
     fMotherId(motherId),
+    fTrackId(trackId),
     fPx(px),
     fPy(py),
     fPz(pz),
@@ -62,6 +64,7 @@ STMCTrack::STMCTrack(const STMCTrack& track)
   : TObject(track),
     fPdgCode(track.fPdgCode),
     fMotherId(track.fMotherId),
+    fTrackId(track.fTrackId),
     fPx(track.fPx),
     fPy(track.fPy),
     fPz(track.fPz),
@@ -84,6 +87,7 @@ STMCTrack::STMCTrack(TParticle* part)
   : TObject(),
     fPdgCode(part->GetPdgCode()),
     fMotherId(part->GetMother(0)),
+    fTrackId(-1),
     fPx(part->Px()),
     fPy(part->Py()),
     fPz(part->Pz()),

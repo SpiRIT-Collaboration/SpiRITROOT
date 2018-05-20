@@ -44,8 +44,9 @@ class STMCTrack : public TObject
 
 
     /**  Standard constructor  **/
-    STMCTrack(Int_t pdgCode, Int_t motherID, Double_t px, Double_t py,
-                Double_t pz, Double_t x, Double_t y, Double_t z,
+    STMCTrack(Int_t pdgCode, Int_t motherID, Int_t trackID,
+                Double_t px, Double_t py, Double_t pz,
+		Double_t x, Double_t y, Double_t z,
                 Double_t t, Int_t nPoints);
 
     /**  Copy constructor  **/
@@ -67,6 +68,7 @@ class STMCTrack : public TObject
     /**  Accessors  **/
     Int_t    GetPdgCode()  const { return fPdgCode; }
     Int_t    GetMotherId() const { return fMotherId; }
+    Int_t    GetTrackId()  const { return fTrackId; }
     Double_t GetPx()       const { return fPx; }
     Double_t GetPy()       const { return fPy; }
     Double_t GetPz()       const { return fPz; }
@@ -102,6 +104,8 @@ class STMCTrack : public TObject
     void SetMotherId(Int_t id) { fMotherId = id; }
     void SetNPoints(Int_t iDet, Int_t np);
 
+    void SetTrackId(Int_t id) { fTrackId = id; }
+
     void SetPointMap(Int_t detID, Int_t np) { fNPointsMap[detID] = np; }
     void SetEdepMap(Int_t detID, Double_t edep) { fEdepMap[detID] = edep; }
     void SetLengthMap(Int_t detID, Double_t length) { fLengthMap[detID] = length; }
@@ -114,6 +118,9 @@ class STMCTrack : public TObject
 
     /**  Index of mother track. -1 for primary particles.  **/
     Int_t  fMotherId;
+    
+    /**  Track index in VMC. **/
+    Int_t  fTrackId;
 
     /** Momentum components at start vertex [GeV]  **/
     Double32_t fPx, fPy, fPz;

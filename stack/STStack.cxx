@@ -268,6 +268,7 @@ void STStack::FillTrackArray()
 
   for(Int_t iPart=0; iPart<fPrimaryTracks->GetEntries(); iPart++){
      STMCTrack* track = (STMCTrack*)fPrimaryTracks->At(iPart);
+     track->SetTrackId(iPart);
      for(auto itr = fNPointsMap.begin(); itr!=fNPointsMap.end(); ++itr){
 	pair<Int_t, Int_t> key = itr->first;  // map of trackID and detectorID
 	if(key.first==iPart){
