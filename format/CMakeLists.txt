@@ -8,6 +8,7 @@ ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/global
 ${CMAKE_SOURCE_DIR}/format
+${CMAKE_SOURCE_DIR}/stack
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -48,6 +49,9 @@ STdEdxPoint.cc
 STRecoTrack.cc
 STRecoTrackCand.cc
 STRecoTrackCandList.cc
+STMCEventHeader.cc
+STMCScintillatorHit.cc
+STMCTriggerResponse.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

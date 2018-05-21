@@ -52,6 +52,9 @@ void run_reco_mc
   auto preview = new STEventPreviewTask();
   preview -> SetPersistence(true);
 
+  auto mcevent = new STMCEventTask();
+  mcevent -> SetPersistence(true);
+
   auto psa = new STPSAETask();
   psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
@@ -67,15 +70,16 @@ void run_reco_mc
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
   genfitPID -> SetBDCFile("");
-//  genfitPID -> SetConstantField();
+  genfitPID -> SetConstantField();
   genfitPID -> SetListPersistence(true);
 
   auto genfitVA = new STGenfitVATask();
   genfitVA -> SetPersistence(true);
-  //genfitVA -> SetConstantField();
+  genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
 
   run -> AddTask(preview);
+  run -> AddTask(mcevent);
   run -> AddTask(psa);
   run -> AddTask(helix);
   run -> AddTask(genfitPID);

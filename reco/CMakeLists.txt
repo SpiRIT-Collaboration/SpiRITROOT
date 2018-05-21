@@ -60,6 +60,7 @@ Task/STRiemannToHelixTask.cc
 Task/STGenfitSinglePIDTask.cc
 Task/STGenfitPIDTask.cc
 Task/STGenfitVATask.cc
+Task/STMCEventTask.cc
 
 PID/STPIDTest.cc
 
