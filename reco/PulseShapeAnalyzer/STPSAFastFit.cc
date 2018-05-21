@@ -54,6 +54,9 @@ STPSAFastFit::Init()
   fTbStartCut = 512 - fNDFTbs - 1;
 
   fThresholdOneTbStep = fThresholdTbStep * fThreshold;
+
+  for (auto iLayer = 0; iLayer < 112; iLayer++)
+    fGainMatchingDataScale[iLayer] = 1;
 }
 
 void
@@ -683,7 +686,6 @@ void STPSAFastFit::SetGainMatchingData(TString filename)
 {
   fGainMatchingData = filename;
   cout<<"== [STPSAFastFit] Low anode gain file set!"<<endl;  
-  memset(fGainMatchingDataScale, 1., sizeof(Double_t)*112);
   if (!(fGainMatchingData.IsNull())) {
     std::ifstream matchList(fGainMatchingData.Data());
     Int_t layer = 0;
