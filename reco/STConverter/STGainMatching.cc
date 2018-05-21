@@ -60,7 +60,8 @@ Bool_t STGainMatching::CalibrateADC(Int_t layer, Int_t numTbs, Double_t *adc) {
 
 void STGainMatching::ClassInit() {
   fDatafile = "";
-  memset(fRelativeGain, 1.0, sizeof(Double_t)*112);
+  for (Int_t iLayer = 0; iLayer < 112; iLayer++)
+    fRelativeGain[iLayer] = 1;
 }
 
 void STGainMatching::SetDatafile(TString datafile) {
