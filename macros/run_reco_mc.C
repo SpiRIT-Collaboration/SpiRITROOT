@@ -74,12 +74,12 @@ void run_reco_mc
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
   genfitPID -> SetBDCFile("");
-  genfitPID -> SetConstantField();
+//  genfitPID -> SetConstantField();
   genfitPID -> SetListPersistence(true);
 
   auto genfitVA = new STGenfitVATask();
   genfitVA -> SetPersistence(true);
-  genfitVA -> SetConstantField();
+//  genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
 
   run -> AddTask(preview);
