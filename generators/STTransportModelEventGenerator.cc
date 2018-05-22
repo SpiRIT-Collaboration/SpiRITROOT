@@ -15,7 +15,6 @@
    fVertex(TVector3()), fVertexXYSigma(TVector2()), fTargetThickness(),
    fBeamAngle(TVector2()), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
-   gRamdom->SetSeed(0);
 }
 
 STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
@@ -43,7 +42,6 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
    fInputTree -> SetBranchAddress(partBranchName,&fPartArray);
 
    fNEvents = fInputTree->GetEntries();
-   gRamdom->SetSeed(0);
 }
 
 STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName, TString treeName)
@@ -71,7 +69,6 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName,
    fInputTree -> SetBranchAddress(partBranchName,&fPartArray);
 
    fNEvents = fInputTree->GetEntries();
-   gRamdom->SetSeed(0);
 }
 
 STTransportModelEventGenerator::~STTransportModelEventGenerator()
