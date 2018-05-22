@@ -26,7 +26,9 @@ using namespace std;
 
 STElectronicsTask::STElectronicsTask()
    :FairTask("STElectronicsTask"),
+   fIsPersistence(kFALSE),
    fEventID(0),
+   fUseSaturationTemplate(kTRUE),
    fPulserFileName("pulser_117ns.dat"),
    fSaturatedPulseFileName("saturatedPulse.dat"),
    fADCConstant(0.2),
@@ -39,7 +41,6 @@ STElectronicsTask::STElectronicsTask()
    fSignalPolarity(1),
    fKillAfterSaturation(kTRUE)
 {
-   fIsPersistence = kFALSE;
 
    fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STElectronicsTask");
 }
@@ -137,36 +138,43 @@ STElectronicsTask::Exec(Option_t* option)
       }
 
       // handling the saturation.
-      if(fKillAfterSaturation){
+      if(fUseSaturationTemplate){
+	 if(fKillAfterSaturation){
 
-	 Int_t satTB=-1;
-	 if(adcO[0]>satThreshold&&adcO[1]>satThreshold)
-	    satTB=0;
+	    Int_t satTB=-1;
+	    if(adcO[0]>satThreshold&&adcO[1]>satThreshold)
+	       satTB=0;
 
-	 Int_t currentADC, previousADC, nextADC;
-	 for(Int_t iTB=1; iTB<fNTBs-1; iTB++){
-	    currentADC=adcO[iTB];
-	    previousADC=adcO[iTB-1];
-	    nextADC=adcO[iTB+1];
+	    Int_t currentADC, previousADC, nextADC;
+	    for(Int_t iTB=1; iTB<fNTBs-1; iTB++){
+	       currentADC=adcO[iTB];
+	       previousADC=adcO[iTB-1];
+	       nextADC=adcO[iTB+1];
 
-	    if(previousADC<=satThreshold && currentADC>satThreshold && nextADC>satThreshold){
-	       satTB=iTB;
-	       break;		// search first saturation point.
+	       if(previousADC<=satThreshold && currentADC>satThreshold && nextADC>satThreshold){
+		  satTB=iTB;
+		  break;		// search first saturation point.
+	       }
+	    }
+
+	    if(satTB!=-1){	// found saturation.
+	       Int_t tempIndex=51;	// saturation moment of the template.
+	       while( satTB<fNTBs && tempIndex<fNBinSaturatedPulse )
+		  adcO[satTB++] = fSaturatedPulse[tempIndex++];
+	       while(satTB<fNTBs)
+		  adcO[satTB++] = fSaturatedPulse[tempIndex];
+	    }
+	    else{	// there are no adc which exceed the threshold continuously (at least one Tb excess.).
+	       for(Int_t iTB=0; iTB<fNTBs; iTB++)
+		  if(adcO[iTB]>satThreshold)
+		     adcO[iTB]=satThreshold;
 	    }
 	 }
-
-	 if(satTB!=-1){	// found saturation.
-	    Int_t tempIndex=51;	// saturation moment of the template.
-	    while( satTB<fNTBs && tempIndex<fNBinSaturatedPulse )
-	       adcO[satTB++] = fSaturatedPulse[tempIndex++];
-	    while(satTB<fNTBs)
-	       adcO[satTB++] = fSaturatedPulse[tempIndex];
-	 }
-	 else{	// there are no adc which exceed the threshold continuously (at least one Tb excess.).
-	    for(Int_t iTB=0; iTB<fNTBs; iTB++)
-	       if(adcO[iTB]>satThreshold)
-		  adcO[iTB]=satThreshold;
-	 }
+      }
+      else{
+	 for(Int_t iTB=0; iTB<fNTBs; iTB++)
+	    if(adcO[iTB]>satThreshold)
+	       adcO[iTB]=satThreshold;
       }
 
 
@@ -205,9 +213,9 @@ void STElectronicsTask::SetPedestalSigma(Double_t val)     {      fPedestalSigma
 void STElectronicsTask::SetPedestalSubtraction(Bool_t val) { fPedestalSubtracted = val; }
 void STElectronicsTask::SetSignalPolarity(Bool_t val)      {     fSignalPolarity = val; }
 
-void STElectronicsTask::SetUseSaturationTemplate(Bool_t val)	{  fUseSaturationTemplate = val;}
-void STElectronicsTask::SetPulserData(TString val)					{         fPulserFileName = val; }
-void STElectronicsTask::SetSaturatedPulseData(TString val)		{ fSaturatedPulseFileName = val; }
-void STElectronicsTask::SetIsKillAfterSaturation(Bool_t val)	{    fKillAfterSaturation = val; }
+void STElectronicsTask::SetUseSaturationTemplate(Bool_t val) {  fUseSaturationTemplate = val; }
+void STElectronicsTask::SetPulserData(TString val)           {         fPulserFileName = val; }
+void STElectronicsTask::SetSaturatedPulseData(TString val)   { fSaturatedPulseFileName = val; }
+void STElectronicsTask::SetIsKillAfterSaturation(Bool_t val) {    fKillAfterSaturation = val; }
 
 ClassImp(STElectronicsTask)

@@ -84,7 +84,7 @@ class STElectronicsTask : public FairTask
       Double_t fPedestalSigma;      //!< Defualt background sigma of ADC [ADC-Ch]
       Bool_t   fPedestalSubtracted; //!< Pedestal subtracted flag.
       Bool_t   fSignalPolarity;     //!< Polartity of signal (1: positive, 0: negative)
-      Bool_t	fKillAfterSaturation;//!< Kill after saturation ?
+      Bool_t   fKillAfterSaturation;//!< Kill after saturation ?
 
       STElectronicsTask(const STElectronicsTask&);
       STElectronicsTask operator=(const STElectronicsTask&);
