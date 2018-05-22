@@ -85,6 +85,7 @@ void STMCEventTask::SetParContainers()
 void STMCEventTask::Exec(Option_t* opt)
 {
    fMCEventHeader->Clear();
+   fScintillatorHitArray->Clear();
 
    fMCEventHeader->SetB(fFairMCEventHeader->GetB());
    TVector3 pv(fFairMCEventHeader->GetX(),fFairMCEventHeader->GetY(),fFairMCEventHeader->GetZ());
@@ -186,7 +187,7 @@ void STMCEventTask::Exec(Option_t* opt)
    }
    
    Bool_t isTrigger = kFALSE;
-   if(multwCT>=4&&maxEdepKatana>=150)
+   if(multwCT>=4&&maxEdepKatana<=150)
       isTrigger = kTRUE;
 
    fMCTriggerResponse->SetIsTrigger(isTrigger);
