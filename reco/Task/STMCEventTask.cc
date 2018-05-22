@@ -74,6 +74,7 @@ InitStatus STMCEventTask::Init()
 
    probFile.close();
 
+   gRandom->SetSeed(0);
 
    return kSUCCESS;
 }
