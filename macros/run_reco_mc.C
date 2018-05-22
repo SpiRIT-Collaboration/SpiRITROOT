@@ -22,6 +22,8 @@ void run_reco_mc
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
   if (fPathToData.IsNull())
     fPathToData = spiritroot+"macros/data/";
+  if (fPathToOutput.IsNull())
+    fPathToOutput = spiritroot+"macros/data/";
   TString version; {
     TString name = spiritroot + "VERSION";
     std::ifstream vfile(name);
@@ -54,6 +56,8 @@ void run_reco_mc
 
   auto mcevent = new STMCEventTask();
   mcevent -> SetPersistence(true);
+  mcevent -> SetCollisionSystem(132,50,124,50);
+  mcevent -> SetBeamEnergy(270.);
 
   auto psa = new STPSAETask();
   psa -> SetPersistence(false);

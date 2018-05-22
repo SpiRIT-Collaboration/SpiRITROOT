@@ -42,7 +42,7 @@ Double_t STMCEventHeader::GetLorentzTransformFactor()
    Double_t amu   = 931.;
    Double_t beamM = amu*fBeamA;
    Double_t beamE = (amu+fBeamE)*fBeamA;
-   Double_t beamP = beamE*beamE - beamM*beamM;
+   Double_t beamP = TMath::Sqrt( beamE*beamE - beamM*beamM );
    Double_t targetM = amu*fTargetA;
    TLorentzVector v(0.,0.,beamP,beamE+targetM);
    return v.BoostVector().Z();

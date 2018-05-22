@@ -25,7 +25,8 @@ class STMCScintillatorHit : public TObject
       Double_t GetTotalEdep() { return fTotalEdep; }
       Int_t GetMaxZ()         { return fMaxZ; }
 
-      void AddStep(STMCPoint* point);
+      void AddStep(STMCPoint *point);
+      void AddStep(Double_t edep, STMCPoint *point);
 
    private:
       Int_t     fDetectorID;
