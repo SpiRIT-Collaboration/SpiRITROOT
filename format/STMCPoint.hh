@@ -16,7 +16,7 @@ class STMCPoint : public FairMCPoint
 
       /** Copy constructor **/
       STMCPoint(const STMCPoint& point);
-      STMCPoint operator=(const STMCPoint& point);
+      STMCPoint& operator=(const STMCPoint& point);
 
       /** Constructor with arguments
        *@param trackID  Index of MCTrack
