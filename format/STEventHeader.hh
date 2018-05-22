@@ -22,6 +22,7 @@ class STEventHeader : public TNamed
     Bool_t IsOffTargetEvent();
     Bool_t IsBeamEvent();
     Bool_t IsCosmicEvent();
+    Bool_t IsGGCloseEvent();
     Bool_t IsBadEvent();
 
 
@@ -32,6 +33,7 @@ class STEventHeader : public TNamed
     void SetIsOffTargetEvent();
     void SetIsBeamEvent();
     void SetIsCosmicEvent();
+    void SetIsGGCloseEvent();
     void SetIsBadEvent();
 
     void SetTbOffsets(Double_t *tbOffsets);

@@ -43,7 +43,7 @@ Bool_t STEventHeader::IsOffTargetEvent()    { return fStatus == 3 ? true : false
 Bool_t STEventHeader::IsBeamEvent()         { return fStatus == 4 ? true : false; }
 Bool_t STEventHeader::IsCosmicEvent()       { return fStatus == 5 ? true : false; }
 Bool_t STEventHeader::IsBadEvent()          { return fStatus == 6 ? true : false; }
-
+Bool_t STEventHeader::IsGGCloseEvent()      { return fStatus == 7 ? true : false; }
 
 void STEventHeader::SetStatus(Int_t val)       { fStatus = val; }
 void STEventHeader::SetIsEmptyEvent()          { fStatus = 0; }
@@ -53,6 +53,7 @@ void STEventHeader::SetIsOffTargetEvent()      { fStatus = 3; }
 void STEventHeader::SetIsBeamEvent()           { fStatus = 4; }
 void STEventHeader::SetIsCosmicEvent()         { fStatus = 5; }
 void STEventHeader::SetIsBadEvent()            { fStatus = 6; }
+void STEventHeader::SetIsGGCloseEvent()        { fStatus = 7; }
 
 void STEventHeader::SetTbOffsets(Double_t *tbOffsets)
 {

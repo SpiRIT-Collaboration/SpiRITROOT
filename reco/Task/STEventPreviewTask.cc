@@ -94,6 +94,7 @@ void STEventPreviewTask::Exec(Option_t *opt)
   else if (fEventHeader -> IsOffTargetEvent())    status = "Off Target Event";
   else if (fEventHeader -> IsBeamEvent())         status = "Beam Event";
   else if (fEventHeader -> IsCosmicEvent())       status = "Cosmic Event";
+  else if (fEventHeader -> IsGGCloseEvent())      status = "GG Fast Close Event";
   else if (fEventHeader -> IsBadEvent())          status = "Bad Event";
 
   LOG(INFO) << "Event " << fEventHeader -> GetEventID() << " : " << status << FairLogger::endl;
@@ -161,7 +162,7 @@ void STEventPreviewTask::LayerTest(STRawEvent *rawEvent)
     }
 
   if(isfast == true)
-    fEventHeader -> SetIsBadEvent();
+    fEventHeader -> SetIsGGCloseEvent();
 
 }
 
