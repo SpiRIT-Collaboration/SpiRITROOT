@@ -23,7 +23,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
    fB(-1.), fPartArray(NULL),
    fCurrentEvent(0), fNEvents(0),
    fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
-   fBeamAngle(TVector2(0,-0.06)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
+   fBeamAngle(TVector2(-0.06,0.)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
    TString treeName, partBranchName;
    if(fileName.BeginsWith("phits"))       { fGen = TransportModel::PHITS;  treeName = "tree";      partBranchName = "fparts"; }
@@ -50,7 +50,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName,
    fB(-1.), fPartArray(NULL),
    fCurrentEvent(0), fNEvents(0),
    fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
-   fBeamAngle(TVector2(0,-0.06)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
+   fBeamAngle(TVector2(-0.06,0.)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
    TString partBranchName;
    if(fileName.BeginsWith("phits"))       { fGen = TransportModel::PHITS;   partBranchName = "fparts"; }
@@ -85,11 +85,31 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
    eventVertex.SetY(gRandom->Gaus(fVertex.Y(),fVertexXYSigma.Y()));
    eventVertex.SetZ(fVertex.Z()+gRandom->Uniform(-fTargetThickness,fTargetThickness));
 
-   TVector3 eventRotation(0,0,0);
-   eventRotation.SetX(gRandom->Gaus(fBeamAngle.X(),fBeamAngleABSigma.X()));
-   eventRotation.SetY(gRandom->Gaus(fBeamAngle.Y(),fBeamAngleABSigma.Y()));
+   /** Event rotation **/
+   // ex.) TVector3::RotateX() -> clockwise rotation in the direction of positive X-axis.
+   // Generated event will be rotated w.r.t reaction plane at first.
+   // To adapt the beam angle to the event, rotate ta w.r.t. Y axis at first.
+   // Next, w.r.t the rotated X axis(X' axis), rotate tb'(like tb in rotated frame).
+   
+   // reaction plane.
+   Double_t phiRP = 0.;
    if(fIsRandomRP)
-      eventRotation.SetZ(gRandom->Uniform(-1,1)*TMath::Pi());
+      phiRP = gRandom->Uniform(-1,1)*TMath::Pi();
+
+   // exchange ta, tb -> rotation angles
+   Double_t beamAngleA = gRandom->Gaus(fBeamAngle.X(),fBeamAngleABSigma.X());
+   Double_t beamAngleB = gRandom->Gaus(fBeamAngle.Y(),fBeamAngleABSigma.Y());
+   Double_t tanBeamA  = TMath::Tan(beamAngleA);
+   Double_t tanBeamB  = TMath::Tan(beamAngleB);
+
+   TRotation rotatedFrame;             // set rotation operator for ta.
+   rotatedFrame.RotateY(beamAngleA);   // rotate by angle-A of beam with respect to Y axis
+   TVector3 axisX(1,0,0);              // define local X axis
+   axisX.Transform(rotatedFrame);      // X' axis in rotated frame.
+   Double_t thetaInRotatedFrame = -1.*TMath::ACos(TMath::Sqrt( (1.+tanBeamA*tanBeamA)/(tanBeamA*tanBeamA+tanBeamB*tanBeamB+1) ));  // tb' (be careful about the sign!!)
+   TRotation rotateInRotatedFrame;
+   rotateInRotatedFrame.Rotate(thetaInRotatedFrame,axisX); // rotate by angle-B' of beam with respect to X' axis.
+
 
    fInputTree -> GetEntry(fCurrentEvent);
    Int_t nPart = fPartArray->GetEntries();
@@ -98,9 +118,9 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
       event->SetEventID(fCurrentEvent);
       event->MarkSet(kTRUE);
       event->SetVertex(eventVertex);
-      event->SetRotX(eventRotation.X());
-      event->SetRotY(eventRotation.Y());
-      event->SetRotZ(eventRotation.Z());
+      event->SetRotX(beamAngleA);
+      event->SetRotY(beamAngleB);
+      event->SetRotZ(phiRP);
       event->SetB(fB);
       event->SetNPrim(nPart);
    }
@@ -139,13 +159,14 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 	    break;
       }
 
-      p.RotateX(eventRotation.X());
-      p.RotateY(eventRotation.Y());
-      p.RotateZ(eventRotation.Z());
-      pos.RotateX(eventRotation.X());
-      pos.RotateY(eventRotation.Y());
-      pos.RotateZ(eventRotation.Z());
-      pos += eventVertex;
+      p.SetPhi(p.Phi()+phiRP);  // random reaction plane orientation.
+      p.RotateY(beamAngleA);    // rotate w.r.t Y axis
+      p.Transform(rotateInRotatedFrame);
+
+      pos.SetPhi(pos.Phi()+phiRP);
+      pos.RotateY(beamAngleA);
+      pos.Transform(rotateInRotatedFrame);
+      pos += eventVertex;   // caution!! set the event to vertex position "after" the rotation operations!!
 
       primGen -> AddTrack(pdg, p.X(), p.Y(), p.Z(), pos.X(), pos.Y(), pos.Z());
    }

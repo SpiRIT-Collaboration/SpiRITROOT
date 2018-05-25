@@ -45,6 +45,12 @@ class STMCEventHeader : public TNamed
      STMCTrack* GetPrimaryTrack(Int_t id) { return (STMCTrack*)fPrimaryTrackArray->At(id); }
 
 
+     /** rotated information **/
+     TRotation GetRotationInRotatedFrame();
+     TClonesArray* GetPrimaryTracksWithRotation();
+     STMCTrack* GetPrimaryTracksWithRotation(Int_t id);
+
+
    private:
      Int_t    fBeamA;
      Int_t    fBeamZ;

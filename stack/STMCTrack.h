@@ -104,10 +104,11 @@ class STMCTrack : public TObject
     void SetMotherId(Int_t id) { fMotherId = id; }
     void SetNPoints(Int_t iDet, Int_t np);
 
-    void SetTrackId(Int_t id) { fTrackId = id; }
+    void SetTrackId(Int_t id)      { fTrackId = id; }
+    void SetMomentum(TVector3 mom) { fPx = mom.X(); fPy = mom.Y(); fPz = mom.Z(); }
 
-    void SetPointMap(Int_t detID, Int_t np) { fNPointsMap[detID] = np; }
-    void SetEdepMap(Int_t detID, Double_t edep) { fEdepMap[detID] = edep; }
+    void SetPointMap(Int_t detID, Int_t np)         { fNPointsMap[detID] = np; }
+    void SetEdepMap(Int_t detID, Double_t edep)     { fEdepMap[detID] = edep; }
     void SetLengthMap(Int_t detID, Double_t length) { fLengthMap[detID] = length; }
 
 
