@@ -48,7 +48,7 @@ class STMCEventHeader : public TNamed
      /** rotated information **/
      TRotation GetRotationInRotatedFrame();
      TClonesArray* GetPrimaryTracksWithRotation();
-     STMCTrack* GetPrimaryTracksWithRotation(Int_t id);
+     STMCTrack* GetPrimaryTrackWithRotation(Int_t id);
 
 
    private:
