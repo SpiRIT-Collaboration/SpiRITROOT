@@ -84,8 +84,12 @@ void run_reco_experiment
     }
   }
 
+//  map<Int_t, vector<Int_t> *> events;
+//  readEventList("eventList-Sn132.txt", events);
+
   auto preview = new STEventPreviewTask();
   preview -> SetSkippingEvents(fSkipEventArray);
+//  preview -> SetSelectingEvents(*events[fRunNo]);
   preview -> SetPersistence(true);
 
   auto psa = new STPSAETask();
@@ -125,8 +129,8 @@ void run_reco_experiment
   run -> AddTask(psa);
   run -> AddTask(helix);
   run -> AddTask(genfitPID);
-  run -> AddTask(genfitVA);
-  run -> AddTask(embedCorr);
+//  run -> AddTask(genfitVA);
+//  run -> AddTask(embedCorr);
   
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
@@ -150,4 +154,35 @@ void run_reco_experiment
   cout << "Output : " << out << endl;
 
   gApplication -> Terminate();
+}
+
+void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events) {
+  vector<Int_t> *temp = new vector<Int_t>;
+
+  ifstream eventList(eventListFile.Data());
+  Int_t numEvents = 0;
+  Int_t oldRunid = 0;
+  Int_t runid, eventid;
+
+  while (1) {
+    eventList >> runid >> eventid;
+
+    if (eventList.eof()) {
+      events.insert(make_pair(oldRunid, temp));
+
+      break;
+    }
+    
+    if (oldRunid == 0)
+      oldRunid = runid;
+
+    if (oldRunid != runid) {
+      events.insert(make_pair(oldRunid, temp));
+
+      oldRunid = runid;
+      temp = new vector<Int_t>;
+    }
+
+    temp -> push_back(eventid);
+  }
 }
