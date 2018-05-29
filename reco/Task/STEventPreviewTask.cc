@@ -87,6 +87,15 @@ void STEventPreviewTask::Exec(Option_t *opt)
     if (rawEvent -> GetEventID() == fSkipEventArray[iSkip])
       fEventHeader -> SetIsBadEvent();
 
+//  for (auto iSelect = 0; iSelected < fNumSelectedEvents; iSelected++)
+  if (fNumSelectedEvents > 0) {
+    if (fSelectedIndex < fNumSelectedEvents)
+      if (rawEvent -> GetEventID() != fSelectedEventArray[fSelectedIndex])
+        fEventHeader -> SetIsBadEvent();
+      else fSelectedIndex++;
+    else fEventHeader -> SetIsBadEvent();
+  }
+
   TString status = "Unidentified Event";
        if (fEventHeader -> IsEmptyEvent())        status = "Empty Event";
   else if (fEventHeader -> IsCollisionEvent())    status = "Collision Event";
@@ -98,7 +107,6 @@ void STEventPreviewTask::Exec(Option_t *opt)
   else if (fEventHeader -> IsBadEvent())          status = "Bad Event";
 
   LOG(INFO) << "Event " << fEventHeader -> GetEventID() << " : " << status << FairLogger::endl;
-
 
   if (fCalibrateTb) {
     Double_t tbRef0;
@@ -269,4 +277,9 @@ Double_t STEventPreviewTask::GetBuffer(Int_t cobo, Int_t tb) { return fBuffer[co
 void STEventPreviewTask::SetSkippingEvents(std::vector<Int_t> array) {
   fNumSkipEvents = array.size();
   fSkipEventArray = array;
+}
+
+void STEventPreviewTask::SetSelectingEvents(std::vector<Int_t> array) {
+  fNumSelectedEvents = array.size();
+  fSelectedEventArray = array;
 }
