@@ -5,7 +5,7 @@ void run_reco_mc
   Int_t fRunNo = 0,
   Int_t fNumEventsInRun = 10,
   Int_t fSplitNo = 0,
-  Int_t fNumEventsInSplit = 500,
+  Int_t fNumEventsInSplit = 2010,
   Double_t fPSAThreshold = 30,
   TString fParameterFile = "ST.parameters.Commissioning_201604.par",
   TString fPathToData = ""
@@ -66,20 +66,20 @@ void run_reco_mc
   psa -> SetPulserData("pulser_117ns.dat");
 
   auto helix = new STHelixTrackingTask();
-  helix -> SetPersistence(false);
-  helix -> SetClusterPersistence(false);
+  helix -> SetPersistence(true);
+  helix -> SetClusterPersistence(true);
   helix -> SetClusteringOption(2);
   helix -> SetSaturationOption(1);
 
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
   genfitPID -> SetBDCFile("");
-//  genfitPID -> SetConstantField();
+  //genfitPID -> SetConstantField(); //@@
   genfitPID -> SetListPersistence(true);
 
   auto genfitVA = new STGenfitVATask();
   genfitVA -> SetPersistence(true);
-//  genfitVA -> SetConstantField();
+  //genfitVA -> SetConstantField(); //@@
   genfitVA -> SetListPersistence(true);
 
   run -> AddTask(preview);

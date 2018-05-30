@@ -34,10 +34,12 @@ void AddIons(FairRunSim *fRun, TString event);
 
 void run_mc
 (
-  TString name  = "urqmd_short",
-  //TString event = "urqmd_132sn124sn270amevb0012_10event.dat",
-  TString event = "urqmd_132sn124sn270amevb0012_10event.root",
-  Bool_t  useFieldMapFile = kFALSE
+ //TString name  = "urqmd_short",
+ //TString event = "urqmd_132sn124sn270amevb0012_10event.dat",
+ //  TString event = "urqmd_132sn124sn270amevb0012_10event.root",
+ TString name,
+ UInt_t  numevent,
+ Bool_t  useFieldMapFile = kTRUE
 )
 {
   //////////////////////////////////////////////////////////
@@ -45,8 +47,8 @@ void run_mc
   //   In general, the below parts need not be touched.   //
   //                                                      //
   //////////////////////////////////////////////////////////
-
-
+  
+  
   // -----------------------------------------------------------------
   // Set enveiroment
   TString workDir   = gSystem -> Getenv("VMCWORKDIR");
@@ -103,8 +105,8 @@ void run_mc
   // Field
   if (useFieldMapFile) {
     STFieldMap *fField = new STFieldMap("samurai_field_map","A");
+    //    fField -> SetPosition(0., -20.43, 58.);
     fField -> SetPosition(0., -20.43, 33.);
-    //fField -> SetPosition(0., -20.43, 58.);
     fRun -> SetField(fField);
   }
   else {
@@ -112,15 +114,17 @@ void run_mc
     fField -> SetField(0., 5., 0.);
     fField -> SetFieldRegion(-150, 150, -150, 150, -150, 150);
     fRun -> SetField(fField);
+    
+    cout << " const filed" << endl;
   }
 
 
   // -----------------------------------------------------------------
   // Event generator
-  //STEventGenGenerator* fEvent = new STEventGenGenerator(event);
-  STTransportModelEventGenerator* fEvent = new STTransportModelEventGenerator(event);
-  fEvent -> RegisterHeavyIon();
-  fEvent -> SetPrimaryVertex(TVector3(0, -21.33, -.89));
+  STSimpleEventGenerator* fEvent = new STSimpleEventGenerator();
+  fEvent -> SetPrimaryVertex(0, -21.33, -.89);
+  fEvent -> SetAngleStep(2212, numevent, 0.5, 0., 85., 180., 180.); // (pid, #evt, p, theta_begin, theta_end, phi_begin, phi_end[deg])
+  // fEvent -> SetAngleStep(2212, numevent, 0.5, 40., 40., 180., 180.); // (pid, #evt, p, theta_begin, theta_end, phi_begin, phi_end[deg])
 
   FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();
   fGenerator -> AddGenerator(fEvent);
