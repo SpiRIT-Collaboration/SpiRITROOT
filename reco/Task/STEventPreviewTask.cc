@@ -87,13 +87,17 @@ void STEventPreviewTask::Exec(Option_t *opt)
     if (rawEvent -> GetEventID() == fSkipEventArray[iSkip])
       fEventHeader -> SetIsBadEvent();
 
-//  for (auto iSelect = 0; iSelected < fNumSelectedEvents; iSelected++)
   if (fNumSelectedEvents > 0) {
-    if (fSelectedIndex < fNumSelectedEvents)
-      if (rawEvent -> GetEventID() != fSelectedEventArray[fSelectedIndex])
-        fEventHeader -> SetIsBadEvent();
-      else fSelectedIndex++;
-    else fEventHeader -> SetIsBadEvent();
+    Bool_t isPicked = kFALSE;
+    for (auto iSelected = fSelectedIndex; iSelected < fNumSelectedEvents; iSelected++)
+      if (rawEvent -> GetEventID() == fSelectedEventArray[iSelected]) {
+        isPicked = kTRUE;
+        fSelectedIndex = iSelected + 1;
+        break;
+      } 
+
+    if (!isPicked)
+      fEventHeader -> SetIsBadEvent();
   }
 
   TString status = "Unidentified Event";
