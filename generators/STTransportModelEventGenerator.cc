@@ -83,7 +83,7 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
    TVector3 eventVertex(0,0,0);  // gaus dist. in target XY, uniform in target Z
    eventVertex.SetX(gRandom->Gaus(fVertex.X(),fVertexXYSigma.X()));
    eventVertex.SetY(gRandom->Gaus(fVertex.Y(),fVertexXYSigma.Y()));
-   eventVertex.SetZ(fVertex.Z()+gRandom->Uniform(-fTargetThickness,fTargetThickness));
+   eventVertex.SetZ(fVertex.Z()+gRandom->Uniform(-fTargetThickness*0.5,fTargetThicknes*0.5));
 
    /** Event rotation **/
    // ex.) TVector3::RotateX() -> clockwise rotation in the direction of positive X-axis.
