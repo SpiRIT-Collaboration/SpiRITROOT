@@ -48,9 +48,13 @@ public:
   void Initial_PIDCut();
   bool IsInPionPlusCut(STRecoTrack* aTrack);
   bool IsInPionMinusCut(STRecoTrack* aTrack);
+  bool IsInElectronCut(STRecoTrack* aTrack);
+  bool IsInPositronCut(STRecoTrack* aTrack);
   bool IsTrackInVertex(STRecoTrack* aTrack,STVertex* aVertex);
   bool IsClusterNumEnough(STRecoTrack* aTrack);
   bool IsVertexInTarget(STVertex* aVertex);
+  //for the background
+  bool IsBetween_Pion_Proton(STRecoTrack* aTrack);
   
   private:
   bool IsVertexLimited;
@@ -77,6 +81,19 @@ public:
   double PionMinus_PIDCut_Value[100][2];
   int PionMinus_PIDCut_PointNum;
   TCutG* PionMinus_PIDCut;
+  
+  double Electron_PIDCut_Value[100][2];
+  int Electron_PIDCut_PointNum;
+  TCutG* Electron_PIDCut;
+  
+  double Positron_PIDCut_Value[100][2];
+  int Positron_PIDCut_PointNum;
+  TCutG* Positron_PIDCut;
+  
+  // the below is for the judge of background.
+  double BetweenCut_Pion_Proton_Value[100][2];
+  int BetweenCut_Pion_Proton_PointNum;
+  TCutG* BetweenCut_Pion_Proton;
   
   ClassDef(STPickTrackCut, 1);
 };
