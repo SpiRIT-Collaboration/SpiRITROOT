@@ -4,6 +4,7 @@
 #include "STRecoTask.hh"
 #include "STRawEvent.hh"
 #include "STPSAFastFit.hh"
+#include "STPSA_RiseEdge.hh"
 
 class STPSAETask : public STRecoTask 
 {
@@ -37,6 +38,7 @@ class STPSAETask : public STRecoTask
     void SetEmbedding(Bool_t value);
     void SetEmbedFile(TString);
     void SetGainMatchingScale(Double_t val);
+    void Set_PSA_PeakFinding_Opt(int Opt);
 
   private:
     TClonesArray *fRawEventArray = nullptr;
@@ -48,6 +50,7 @@ class STPSAETask : public STRecoTask
   
     TString fEmbedFile = "";                   ///< MC file for embedding
     STPSAFastFit *fPSA;
+    int PSA_PeakFinding_Opt;
     
     Double_t fThreshold = 20;
     Int_t fLayerLowCut  = -1;
