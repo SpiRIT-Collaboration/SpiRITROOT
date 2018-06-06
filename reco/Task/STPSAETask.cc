@@ -46,14 +46,12 @@ void STPSAETask::SetLayerCut(Int_t lowCut, Int_t highCut)
 void STPSAETask::SetPulserData(TString pulserData) { fPulserDataName = pulserData; }
 void STPSAETask::SetEmbedFile(TString filename){ fEmbedFile = filename; }
 void STPSAETask::SetEmbedding(Bool_t value){ fIsEmbedding = value; }
-
 void STPSAETask::UseDefautPulserData(Int_t shapingTime) { fShapingTime = shapingTime; }
-
 void STPSAETask::SetNumHitsLowLimit(Int_t limit) { fNumHitsLowLimit = limit; }
+void STPSAETask::Set_PSA_PeakFinding_Opt(int Opt) { PSA_PeakFinding_Opt = Opt; }
 
 InitStatus STPSAETask::Init()
 {
-
   if (STRecoTask::Init() == kERROR)
     return kERROR;
 
@@ -88,8 +86,8 @@ InitStatus STPSAETask::Init()
   fPSA -> SetThreshold(fThreshold);
   fPSA -> SetLayerCut(fLayerLowCut, fLayerHighCut);
   fPSA -> SetGainMatchingScale(fGainMatchingScale);
-
   fShapingTime = fPSA -> GetShapingTime();
+  fPSA ->Set_PSA_PeakFinding_Opt(PSA_PeakFinding_Opt);
 
   if (fRecoHeader != nullptr) {
     fRecoHeader -> SetPar("psa_threshold",       fThreshold);
@@ -101,6 +99,7 @@ InitStatus STPSAETask::Init()
     fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
   }
 
+//  PSA_RiseEdge_analyzer = new STPSA_RiseEdge();
   return kSUCCESS;
 }
 
@@ -112,14 +111,17 @@ void STPSAETask::Exec(Option_t *opt)
 
   if (fEventHeader -> IsBadEvent())
     return;
-
+  
   Double_t *tbOffsets = fEventHeader -> GetTbOffsets();
   fPSA -> SetTbOffsets(tbOffsets);
-
+  
   STRawEvent *rawEvent = (STRawEvent *) fRawEventArray -> At(0);
   fPSA -> Analyze(rawEvent, fHitArray);
-
-  if (fHitArray -> GetEntriesFast() < fNumHitsLowLimit) {
+  
+//  PSA_RiseEdge_analyzer->Analyze(rawEvent, fHitArray);
+  
+  if (fHitArray -> GetEntriesFast() < fNumHitsLowLimit) 
+  {
     fEventHeader -> SetIsBadEvent();
     LOG(INFO) << Space() << "Found less than " << fNumHitsLowLimit << " hits. Bad event!" << FairLogger::endl;
     fHitArray -> Delete();
@@ -231,7 +233,7 @@ void STPSAETask::Exec(Option_t *opt)
       //  LOG(INFO) << Space() << "Correlated Hits " << num_embed << FairLogger::endl;
     }
   LOG(INFO) << Space() << "STHit "<< fHitArray -> GetEntriesFast() << FairLogger::endl;
-  
+
 }
 
 void STPSAETask::SetGainMatchingScale(Double_t val) { fGainMatchingScale = val; }

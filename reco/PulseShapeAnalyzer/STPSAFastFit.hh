@@ -31,6 +31,7 @@ class STPSAFastFit : public STPSA, public STPulse
     void Analyze(STRawEvent *rawEvent, STEvent *event);
     void Analyze(STRawEvent *rawEvent, TClonesArray *hitArray);
     void PadAnalyzer(TClonesArray *hitArray);
+    void Set_PSA_PeakFinding_Opt(int Opt);
 
     /** 
      * Find hits from the pad, pass hits to hitArray
@@ -41,7 +42,7 @@ class STPSAFastFit : public STPSA, public STPulse
      *  3. LSFitPulse()
      */
     void FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum);
-
+    int FitHits(int PeakNum,int*PeakStartTbIndex,int* PeakTbIndex,double* adcPad,TClonesArray* hitArray);
     /**
      * Find the first peak from adc time-bucket starting from input tbCurrent
      * tbCurrent and tbStart becomes time-bucket of the peak and starting point
@@ -134,6 +135,9 @@ class STPSAFastFit : public STPSA, public STPulse
     Double_t fBetaCut = 1.e-3; 
 
     Double_t fGainMatchingScale = 1;
+    
+    //the below is for setting the different PSA method.
+    int PSA_PeakFinding_Opt;
 
   ClassDef(STPSAFastFit, 2)
 };
