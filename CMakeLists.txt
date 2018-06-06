@@ -206,6 +206,8 @@ add_subdirectory(reco)
 add_subdirectory(field)
 add_subdirectory(util)
 add_subdirectory(generators)
+add_subdirectory(embed)
+add_subdirectory(ana)
 
 WRITE_CONFIG_FILE(config.sh)
  
