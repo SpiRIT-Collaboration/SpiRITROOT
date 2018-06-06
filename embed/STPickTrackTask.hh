@@ -63,6 +63,7 @@ public:
   void SetIsStoreEachEvent(bool IsStoreEachEvt_tem) { IsStoreEachEvt = IsStoreEachEvt_tem; }
   void SetIsRawData_Recorded(bool IsRawData_Recorded_tem) { IsRawData_Recorded = IsRawData_Recorded_tem; }
   void SetIsPickTrackCutUsed( bool TagTem ) { IsPickTrackCutUsed = TagTem; }
+  void SetTrackCut_VertexDistance(double Distance_tem) { aTrackCut->Set_Track_DistanceToVertex(Distance_tem); }
   
   // Main methods
   virtual InitStatus Init();

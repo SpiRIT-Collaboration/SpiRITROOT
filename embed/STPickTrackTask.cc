@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------
 // Description:
-//      Pick Track task class
+//      Pick Track task class.
 //
 // Author List:
 //      Rensheng     Soochow Univ.
@@ -132,8 +132,12 @@ void STPickTrackTask::Exec(Option_t *opt)
       //this method will pickup the corresponding hits, and store these in the RawEvent_Dummy.
       if(IsRawData_Recorded==1) { PickHits_onPad(aRawEvent,aRecoTrack); }
       else { PickHits_onStandardPulse(aRawEvent,aRecoTrack); }
+      EmbedContainer->AddTrack(RawEvent_Dummy,aRecoTrack,aVertex);
     }
-    EmbedContainer->AddTrack(RawEvent_Dummy,aRecoTrack,aVertex);
+    else
+    {
+      EmbedContainer->AddTrack(aRawEvent,aRecoTrack,aVertex);
+    }
     cout<<"--->You are recording every track and the related raw event data."<<endl;
     return;
   }
@@ -276,6 +280,31 @@ void STPickTrackTask::PickHits_onStandardPulse(STRawEvent* aRawEvent,STRecoTrack
 {
 // This function will only record the standard pulse on the pad. So it suppose that we have get rid of all the non-related pulses.
   RawEvent_Dummy->Clear();
+//the below is for get the track with all the hits that are related to the track.
+  int HitNum = fHitArray->GetEntries();
+  for(int iHit=0;iHit<HitNum;iHit++)
+  {
+    STHit* aHit = (STHit*) fHitArray->At(iHit);
+    if(TrackID == aHit->GetTrackID())
+    {
+      int RowNum = aHit->GetRow();
+      int LayerNum = aHit->GetLayer();
+      double fTb = aHit->GetTb();
+      double fCharge = aHit->GetCharge();
+      StandardPulseFunction = aPulse->GetPulseFunction(aHit);
+      StandardPulseFunction->SetParameters(fCharge,fTb-0.5);
+      StandardPulseFunction->SetNpx(5000);
+      STPad* aPad = aRawEvent->GetPad(RowNum, LayerNum);
+      //her I use the StandardPulseFunction to produce the pulse signal.
+      for(int iADC = 0;iADC<512;iADC++)
+      {
+        aPad->SetADC(iADC,StandardPulseFunction->Eval(iADC));
+      }
+      RawEvent_Dummy->SetPad(aPad);
+      StandardPulseFunction->Delete();
+    }
+  }
+/*  
   vector<Int_t>* fHitClusterIDArray = aTrack->GetClusterIDArray();
   int ClusterNum = (*fHitClusterIDArray).size();
 //  cout<<"ClusterNum: "<<ClusterNum<<endl;
@@ -303,6 +332,8 @@ void STPickTrackTask::PickHits_onStandardPulse(STRawEvent* aRawEvent,STRecoTrack
       double fCharge = aHit->GetCharge();
 //      cout<<RowNum<<"  "<<LayerNum<<"  "<<fTb<<"  "<<fCharge<<endl;
       StandardPulseFunction = aPulse->GetPulseFunction(aHit);
+      StandardPulseFunction->SetParameters(fCharge,fTb-0.5);
+      StandardPulseFunction->SetNpx(5000);
       STPad* aPad = aRawEvent->GetPad(RowNum, LayerNum);
       //her I use the StandardPulseFunction to produce the pulse signal.
       for(int iADC = 0;iADC<512;iADC++)
@@ -313,22 +344,21 @@ void STPickTrackTask::PickHits_onStandardPulse(STRawEvent* aRawEvent,STRecoTrack
       {
         RawEvent_Dummy->SetPad(aPad);
       }
-/*
-      else
-      {
-        cout<<"--->"<<TrackID <<"  "<< aHit->GetTrackID()<<endl;
-        HitTotalNum_TrackIDUnmatched++;
-      }
-*/
+//      else
+//      {
+//        cout<<"--->"<<TrackID <<"  "<< aHit->GetTrackID()<<endl;
+//        HitTotalNum_TrackIDUnmatched++;
+//      }
       StandardPulseFunction->Delete();
     }// for the hit in one cluster
   }// for the cluster in one track
+*/
   RawEvent_Dummy->SetIsGood(aRawEvent->IsGood());
   RawEvent_Dummy->SetEventID(aRawEvent->GetEventID());
-  int PadNum = RawEvent_Dummy->GetNumPads();
-  cout<<"HitTotalNum_TrackIDUnmatched: "<<HitTotalNum_TrackIDUnmatched<<" HitTotalNum: "<<HitTotalNum<<endl;
+//  int PadNum = RawEvent_Dummy->GetNumPads();
 //  cout<<"HitTotalNum_TrackIDUnmatched: "<<HitTotalNum_TrackIDUnmatched<<" HitPtrsTotalNum: "<<HitPtrsTotalNum<<" HitTotalNum: "<<HitTotalNum<<endl;
 //  cout<<"PadNum: "<<PadNum<<endl;
+
 }
 
 
