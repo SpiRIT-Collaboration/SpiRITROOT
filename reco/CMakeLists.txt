@@ -102,6 +102,7 @@ PulseShapeAnalyzer/STPSADF.cc
 PulseShapeAnalyzer/STPSAFast.cc
 PulseShapeAnalyzer/STPSAFastFit.cc
 PulseShapeAnalyzer/STPulse.cc
+PulseShapeAnalyzer/STPSA_RiseEdge.cc
 
 HitClustering/STClusterizer.cc
 HitClustering/STClusterizerScan.cc
