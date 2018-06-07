@@ -57,6 +57,21 @@ STPSAFastFit::Init()
 
   for (auto iLayer = 0; iLayer < 112; iLayer++)
     fGainMatchingDataScale[iLayer] = 1;
+  
+  PSA_PeakFinding_Opt = 1;
+  cout<<"---> the defalut opt of Peak finding is the JungWoo's original code. If you want to use the version with high efficiency, set: run_reco_experiment::STPSAWTask::Set_PSA_PeakFinding_Opt(2). <---"<<endl;
+}
+
+void STPSAFastFit::Set_PSA_PeakFinding_Opt(int Opt)
+{
+  PSA_PeakFinding_Opt = Opt;
+  if(Opt==1) { cout<<"JungWoo's original peak finding method!"<<endl; }
+  else if(Opt==2) { cout<<"High efficiency of peak finding, especial for small pulse!"<<endl; }
+  else
+  {
+    cout<<"PSA_PeakFinding_Opt: "<<Opt<< "is not defined, the default value Opt=1 will be used!"<<endl;
+    PSA_PeakFinding_Opt = 1;
+  }
 }
 
 void
@@ -309,38 +324,41 @@ STPSAFastFit::FindPeak(   Int_t layer,
   Int_t countAscending      = 0;
   Int_t countAscendingBelow = 0;
 
-  for (; tbCurrent < fWindowEndTb; tbCurrent++)
+//the original PSA method.
+  if(PSA_PeakFinding_Opt==1)
   {
-    Double_t diff = adc[tbCurrent] - adc[tbCurrent - 1];
+    for (; tbCurrent < fWindowEndTb; tbCurrent++)
+    {
+      Double_t diff = adc[tbCurrent] - adc[tbCurrent - 1];
 
-    // If adc difference of step is above threshold
-    if (diff > fThresholdOneTbStep*fGainMatchingDataScale[layer]) 
-    {
-      if (adc[tbCurrent] > fThreshold*fGainMatchingDataScale[layer]) countAscending++;
-      else countAscendingBelow++;
-    }
-    else 
-    {
-      // If acended step is below 5, 
-      // or negative pulse is bigger than the found pulse, continue
-      if (countAscending < fNumAscending || ((countAscendingBelow >= countAscending) && (-adc[tbCurrent - 1 - countAscending - countAscendingBelow] > adc[tbCurrent - 1]))) 
+      // If adc difference of step is above threshold
+      if (diff > fThresholdOneTbStep) 
       {
-        countAscending = 0;
-        countAscendingBelow = 0;
-        continue;
+        if (adc[tbCurrent] > fThreshold) countAscending++;
+        else countAscendingBelow++;
       }
+      else 
+      {
+        // If acended step is below 5, 
+        // or negative pulse is bigger than the found pulse, continue
+        if (countAscending < fNumAscending || ((countAscendingBelow >= countAscending) && (-adc[tbCurrent - 1 - countAscending - countAscendingBelow] > adc[tbCurrent - 1]))) 
+        {
+          countAscending = 0;
+          countAscendingBelow = 0;
+          continue;
+        }
 
-      tbCurrent -= 1;
-      if (adc[tbCurrent] < fThreshold*fGainMatchingDataScale[layer])
+        tbCurrent -= 1;
+        if (adc[tbCurrent] < fThreshold)
         continue;
 
-      // Peak is found!
-      tbStart = tbCurrent - countAscending;
-      while (adc[tbStart] < adc[tbCurrent] * 0.05)
+        // Peak is found!
+        tbStart = tbCurrent - countAscending;
+        while (adc[tbStart] < adc[tbCurrent] * 0.05)
         tbStart++;
 
 #ifdef DEBUG_PEAKFINDING
-      LOG(INFO) 
+        LOG(INFO) 
         << "Found peak " << tbCurrent 
         << ", starting from " << tbStart
         << ", ascended " << countAscending
@@ -353,10 +371,68 @@ STPSAFastFit::FindPeak(   Int_t layer,
     LOG(INFO) << " Peak is found!" << FairLogger::endl;
 #endif
 
-      return kTRUE;
+       return kTRUE;
+      }
     }
-  }
+  }//the original PSA method.
 
+//the high efficiency PSA method.
+  if(PSA_PeakFinding_Opt==2)
+  {
+    //the below use the V2.0 of Peak finding
+    for (; tbCurrent < fWindowEndTb; tbCurrent++)
+    {
+      Double_t diff = adc[tbCurrent] - adc[tbCurrent - 1];
+      // If adc difference of step is above threshold
+      if (diff > fThresholdOneTbStep)
+      {
+        if (adc[tbCurrent] > 0) countAscending++;
+        else countAscendingBelow++;
+      }
+      else
+      {
+        // If acended step is below 3, 
+        // or negative pulse is bigger than the found pulse, continue
+        if (countAscendingBelow+countAscending < 3
+        || (-adc[tbCurrent - 1 - countAscending - countAscendingBelow] > adc[tbCurrent - 1]) //get rid of the signal of dipolar pulse.
+        || (adc[tbCurrent]<-adc[tbCurrent+1] || adc[tbCurrent]<-adc[tbCurrent+2] || adc[tbCurrent]<-adc[tbCurrent+3] || adc[tbCurrent]<-adc[tbCurrent+4])) //get rid of the signals, with sharp falling tail.
+        {
+          countAscending = 0;
+          countAscendingBelow = 0;
+          continue;
+        }
+      
+        tbCurrent -= 1;
+        if (adc[tbCurrent] < fThreshold || adc[tbCurrent]-adc[tbCurrent-countAscending - countAscendingBelow]<fThreshold) // the largest pulse should be large then 30, the absolute pulse height should be larger than 30.
+        {
+          countAscending = 0;
+          countAscendingBelow = 0;
+          continue;
+        }
+      
+        // Peak is found!
+        tbStart = tbCurrent - countAscending;
+        while (adc[tbStart] < adc[tbCurrent] * 0.05)
+        tbStart++;
+
+#ifdef DEBUG_PEAKFINDING
+        LOG(INFO) 
+        << "Found peak " << tbCurrent 
+        << ", starting from " << tbStart
+        << ", ascended " << countAscending
+        << ", ascended-below " << countAscendingBelow
+        << ", peak " << adc[tbCurrent]
+        << ", below-peak " << adc[tbCurrent - countAscendingBelow] 
+        << FairLogger::endl;
+#endif
+#ifdef DEBUG_WHERE
+    LOG(INFO) << " Peak is found!" << FairLogger::endl;
+#endif
+
+        return kTRUE;
+       }
+    }
+}//the high efficiency of low pulse.
   return kFALSE;
 }
 
