@@ -58,19 +58,21 @@ STPSAFastFit::Init()
   for (auto iLayer = 0; iLayer < 112; iLayer++)
     fGainMatchingDataScale[iLayer] = 1;
   
-  PSA_PeakFinding_Opt = 1;
-  cout<<"---> the defalut opt of Peak finding is the JungWoo's original code. If you want to use the version with high efficiency, set: run_reco_experiment::STPSAWTask::Set_PSA_PeakFinding_Opt(2). <---"<<endl;
+  fPSAPeakFindingOption = 0;
+  cout << "== [STPSAFastFit] The defalut option for Peak finding is the JungWoo's original method." << endl;
+  cout << "                   If you want to use the high efficiency version by Rensheng, call run_reco_experiment::STPSAETask::SetPSAPeakFindingOption(1)." << endl;
 }
 
-void STPSAFastFit::Set_PSA_PeakFinding_Opt(int Opt)
+void STPSAFastFit::SetPSAPeakFindingOption(Int_t opt)
 {
-  PSA_PeakFinding_Opt = Opt;
-  if(Opt==1) { cout<<"JungWoo's original peak finding method!"<<endl; }
-  else if(Opt==2) { cout<<"High efficiency of peak finding, especial for small pulse!"<<endl; }
-  else
-  {
-    cout<<"PSA_PeakFinding_Opt: "<<Opt<< "is not defined, the default value Opt=1 will be used!"<<endl;
-    PSA_PeakFinding_Opt = 1;
+  fPSAPeakFindingOption = opt;
+
+       if (fPSAPeakFindingOption == 0) { cout << "== [STPSAFastFit] JungWoo's original peak finding method!" << endl; }
+  else if (fPSAPeakFindingOption == 1) { cout << "== [STPSAFastFit] High efficiency peak finding, especial for small pulses!" << endl; }
+  else {
+    cout << "== [STPSAFastFit] PSAPeakFindingOption: " << fPSAPeakFindingOption << " is not defined, the default value, 1=JungWoo's method, will be used!" << endl;
+
+    fPSAPeakFindingOption = 0;
   }
 }
 
@@ -325,7 +327,7 @@ STPSAFastFit::FindPeak(   Int_t layer,
   Int_t countAscendingBelow = 0;
 
 //the original PSA method.
-  if(PSA_PeakFinding_Opt==1)
+  if (fPSAPeakFindingOption == 0)
   {
     for (; tbCurrent < fWindowEndTb; tbCurrent++)
     {
@@ -374,11 +376,8 @@ STPSAFastFit::FindPeak(   Int_t layer,
        return kTRUE;
       }
     }
-  }//the original PSA method.
-
-//the high efficiency PSA method.
-  if(PSA_PeakFinding_Opt==2)
-  {
+  } //the original PSA method.
+  else if (fPSAPeakFindingOption == 1) { //the high efficiency PSA method.
     //the below use the V2.0 of Peak finding
     for (; tbCurrent < fWindowEndTb; tbCurrent++)
     {
@@ -432,7 +431,8 @@ STPSAFastFit::FindPeak(   Int_t layer,
         return kTRUE;
        }
     }
-}//the high efficiency of low pulse.
+  } //the high efficiency of low pulse.
+
   return kFALSE;
 }
 

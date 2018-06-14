@@ -38,7 +38,8 @@ class STPSAETask : public STRecoTask
     void SetEmbedFile(TString);
     void SetGainMatchingScale(Double_t val);
     void SetGainMatchingData(TString filename);
-    void Set_PSA_PeakFinding_Opt(int Opt);
+    void SetPSAPeakFindingOption(Int_t opt);
+
   private:
     TClonesArray *fRawEventArray = nullptr;
     TClonesArray *fRawEmbedEventArray = nullptr;
@@ -49,7 +50,7 @@ class STPSAETask : public STRecoTask
   
     TString fEmbedFile = "";                   ///< MC file for embedding
     STPSAFastFit *fPSA;
-    int PSA_PeakFinding_Opt;
+    Int_t fPSAPeakFindingOption;
     
     Double_t fThreshold = 20;
     Int_t fLayerLowCut  = -1;
