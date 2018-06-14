@@ -545,8 +545,8 @@ STHelixTrackFinder::HitClustering(STHelixTrack *helix)
   {
     helix -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
 
-    section = (Int_t)(alpha/(TMath::Pi()/4));
-    isRow = abs(section)%2;
+    section = (Int_t)((TMath::Abs(alpha) + TMath::Pi()/4)/(TMath::Pi()/2));
+    isRow = section%2;
 
     if (section != currentBuildSection) // init
     {
