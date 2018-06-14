@@ -3,14 +3,16 @@ ClassImp(ST_ClusterNum_DB);
 
 ST_ClusterNum_DB::ST_ClusterNum_DB()
 {
+  IsDebug = 0;
+  
   MomentumNum_Plus = 0;
   MomentumNum_Minus = 0;
   ThetaBin_Unit = 90.0/THETANUM;
   PhiBin_Unit = 360/PHINUM;
   
+  // the below is the default value of momentum range.
   Momentum_Range_Plus[0] = 50;
   Momentum_Range_Plus[1] = 3000;
-  
   Momentum_Range_Minus[0] = 50;
   Momentum_Range_Minus[1] = 1000;
   
@@ -75,7 +77,7 @@ void ST_ClusterNum_DB::ReadDB(string FileName_Tem)
     double ThetaPhi_DB_Tem[THETANUM][PHINUM] = {{0}};
     
     sprintf(NameTem,"t1_DB_ClusterNum_Charge%d_Momentum%.2f",1,MomentumValue_Plus[iMomentum]);
-    cout<<"Read TTree: "<<NameTem<<endl;
+    if(IsDebug==1) { cout<<"Read TTree: "<<NameTem<<endl; }
     TTree* t1_DB_Tem = (TTree*) f1_DB_ClusterNum->Get(NameTem);
     
     t1_DB_Tem->SetBranchAddress("Charge",&Charge_DB_Tem);
@@ -108,7 +110,7 @@ void ST_ClusterNum_DB::ReadDB(string FileName_Tem)
     double ThetaPhi_DB_Tem[THETANUM][PHINUM] = {{0}};
     
     sprintf(NameTem,"t1_DB_ClusterNum_Charge%d_Momentum%.2f",-1,MomentumValue_Minus[iMomentum]);
-    cout<<"Read TTree: "<<NameTem<<endl;
+    if(IsDebug==1) { cout<<"Read TTree: "<<NameTem<<endl; }
     TTree* t1_DB_Tem = (TTree*) f1_DB_ClusterNum->Get(NameTem);
     
     t1_DB_Tem->SetBranchAddress("Charge",&Charge_DB_Tem);
@@ -136,19 +138,34 @@ void ST_ClusterNum_DB::ReadDB(string FileName_Tem)
 
 double ST_ClusterNum_DB::GetClusterNum(int Charge_Tem, double Theta_Tem, double Phi_Tem, double Momentum_Tem)
 {
-  if(Charge_Tem>0 && (Momentum_Tem>Momentum_Range_Plus[1] || Momentum_Tem<Momentum_Range_Plus[0])) 
-  { cout<<"The range of positive particel :["<<Momentum_Range_Plus[0]<<" , "<<Momentum_Range_Plus[1]<<")."<<endl; return 0; }
-  if(Charge_Tem<0 && (Momentum_Tem>Momentum_Range_Minus[1] || Momentum_Tem<Momentum_Range_Minus[0])) 
-  { cout<<"The range of negative particel :["<<Momentum_Range_Minus[0]<<" , "<<Momentum_Range_Minus[1]<<")."<<endl; return 0; }
+  if(Charge_Tem>0 && (Momentum_Tem/Charge_Tem>Momentum_Range_Plus[1] || Momentum_Tem/Charge_Tem<Momentum_Range_Plus[0])) 
+  {
+    if(IsDebug==1) { cout<<"Current momentum: "<<Momentum_Tem<<" Charge: "<<Charge_Tem<<", the range of positive particel :["<<Momentum_Range_Plus[0]<<" , "<<Momentum_Range_Plus[1]<<")."<<endl; }
+    return 0; 
+  }
+  if(Charge_Tem<0 && (Momentum_Tem/fabs(Charge_Tem)>Momentum_Range_Minus[1] || Momentum_Tem/fabs(Charge_Tem)<Momentum_Range_Minus[0])) 
+  { 
+    if(IsDebug==1) { cout<<"Current momentum: "<<Momentum_Tem<<" Charge: "<<Charge_Tem<<", the range of negative particel :["<<Momentum_Range_Minus[0]<<" , "<<Momentum_Range_Minus[1]<<")."<<endl; }
+    return 0; 
+  }
   
-  if(Theta_Tem>90 || Theta_Tem<0) { cout<<"Theta = "<<Theta_Tem<<", which is already out of the range in the DB! => (0,90) is the range in the DB."<<endl; return 0;}
-  if(Phi_Tem>180 || Phi_Tem<-180) { cout<<"Phi = "<<Phi_Tem<< ", which is already out of the range in the DB! => (-180,180) is the range in the DB."<<endl; return 0;}
+  if(Theta_Tem>90 || Theta_Tem<0) 
+  { 
+    if(IsDebug==1) { cout<<"Theta = "<<Theta_Tem<<", which is already out of the range in the DB! => (0,90) is the range in the DB."<<endl; }
+    return 0;
+  }
+  if(Phi_Tem>180 || Phi_Tem<-180) 
+  { 
+    if(IsDebug==1) { cout<<"Phi = "<<Phi_Tem<< ", which is already out of the range in the DB! => (-180,180) is the range in the DB."<<endl; }
+    return 0;
+  }
+  Momentum_Tem = fabs(Momentum_Tem/Charge_Tem);
   
   int ThetaIndex = (int) (Theta_Tem/ThetaBin_Unit);
   int PhiIndex = (int) ((Phi_Tem+180)/PhiBin_Unit);
 //  cout<<"ThetaIndex: "<<ThetaIndex<<"  PhiIndex:  "<<PhiIndex<<endl;
   
-  if(Charge_Tem==1)
+  if(Charge_Tem>0)
   {
     for(int i=0;i<MomentumNum_Plus;i++)
     {
@@ -164,7 +181,7 @@ double ST_ClusterNum_DB::GetClusterNum(int Charge_Tem, double Theta_Tem, double 
     cout<<Momentum_Tem<<" MeV/c is not in the range of DB"<<endl; 
     return 0;
   }
-  else if(Charge_Tem==-1)
+  else if(Charge_Tem<0)
   {
     for(int i=0;i<MomentumNum_Minus;i++)
     {
@@ -182,7 +199,7 @@ double ST_ClusterNum_DB::GetClusterNum(int Charge_Tem, double Theta_Tem, double 
   }
   else
   {
-    cout<<"Charge "<<Charge_Tem<<" Not Existed!"<<endl; return 0;
+     if(IsDebug==1) { cout<<"Charge "<<Charge_Tem<<" Not Existed!"<<endl; return 0; }
   }
 }
 // most of time we want to input the momentum vector
@@ -190,9 +207,17 @@ double ST_ClusterNum_DB::GetClusterNum(int Charge_Tem, TVector3 Momentum_Tem)
 {
   double Momentum_Mag = Momentum_Tem.Mag();
   double Theta_Tem = Momentum_Tem.Theta()*180.0/Pi();
-  if(Theta_Tem>90) { cout<<"Theta > 90"<<endl; return 0; }
+  if(Theta_Tem>90)
+  {
+    if(IsDebug==1)
+    {
+      cout<<"Theta > 90"<<endl;
+      cout<<Momentum_Tem.X()<<"  "<<Momentum_Tem.Y()<<"  "<<Momentum_Tem.Z()<<endl;
+    }
+    return 0; 
+  }
   double Phi_Tem = Momentum_Tem.Phi()*180.0/Pi(); //here the Phi_tem belong to (-180,180)
-//  cout<<Momentum_Mag<<"  "<<Theta_Tem<<"  "<<Phi_Tem<<endl;
+//  if(IsDebug==1)  { cout<<Momentum_Mag<<"  "<<Theta_Tem<<"  "<<Phi_Tem<<endl; }
   return GetClusterNum(Charge_Tem, Theta_Tem, Phi_Tem, Momentum_Mag);
 }
 

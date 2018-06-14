@@ -46,7 +46,10 @@ public:
   void Draw_withMomentum_Dis(double Theta_Tem,double Phi_Tem,int Charge_Tem,int MomentumNum_Tem,double* MomentumValue_Tem);
   TGraph* Draw_withMomentum_Dis(double Theta_Tem,double Phi_Tem,int Charge_Tem,int DrawOpt);
   
+  void Set_IsDebug(bool IsTem) { IsDebug = IsTem; }
+  
 private:
+  bool IsDebug;
   TFile* f1_DB_ClusterNum;
   
   int MomentumNum_Plus;
