@@ -60,7 +60,7 @@ STPSAFastFit::Init()
   
   fPSAPeakFindingOption = 0;
   cout << "== [STPSAFastFit] The defalut option for Peak finding is the JungWoo's original method." << endl;
-  cout << "                   If you want to use the high efficiency version by Rensheng, call run_reco_experiment::STPSAETask::SetPSAPeakFindingOption(1)." << endl;
+  cout << "                  If you want to use the high efficiency version by Rensheng, call run_reco_experiment::STPSAETask::SetPSAPeakFindingOption(1)." << endl;
 }
 
 void STPSAFastFit::SetPSAPeakFindingOption(Int_t opt)
@@ -761,8 +761,8 @@ void STPSAFastFit::SetGainMatchingScale(Double_t val) { fGainMatchingScale = val
 void STPSAFastFit::SetGainMatchingData(TString filename)
 {
   fGainMatchingData = filename;
-  cout<<"== [STPSAFastFit] Low anode gain file set!"<<endl;  
   if (!(fGainMatchingData.IsNull())) {
+    cout<< "== [STPSAFastFit] Low anode gain file set!" <<endl;  
     std::ifstream matchList(fGainMatchingData.Data());
     Int_t layer = 0;
     Double_t relativeGain = 0;
