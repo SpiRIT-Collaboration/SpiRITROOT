@@ -31,6 +31,7 @@ class STPSAFastFit : public STPSA, public STPulse
     void Analyze(STRawEvent *rawEvent, STEvent *event);
     void Analyze(STRawEvent *rawEvent, TClonesArray *hitArray);
     void PadAnalyzer(TClonesArray *hitArray);
+    void SetPSAPeakFindingOption(Int_t opt);
 
     /** 
      * Find hits from the pad, pass hits to hitArray
@@ -137,6 +138,9 @@ class STPSAFastFit : public STPSA, public STPulse
     Double_t fGainMatchingScale = 1;
     TString fGainMatchingData = "";
     Double_t fGainMatchingDataScale[112] = {0};
+    
+    // the below is for setting the different PSA method.
+    Int_t fPSAPeakFindingOption;
 
   ClassDef(STPSAFastFit, 2)
 };

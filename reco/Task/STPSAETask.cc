@@ -50,6 +50,7 @@ void STPSAETask::SetEmbedding(Bool_t value){ fIsEmbedding = value; }
 void STPSAETask::UseDefautPulserData(Int_t shapingTime) { fShapingTime = shapingTime; }
 
 void STPSAETask::SetNumHitsLowLimit(Int_t limit) { fNumHitsLowLimit = limit; }
+void STPSAETask::SetPSAPeakFindingOption(Int_t opt) { fPSAPeakFindingOption = opt; }
 
 InitStatus STPSAETask::Init()
 {
@@ -91,7 +92,8 @@ InitStatus STPSAETask::Init()
   fPSA -> SetGainMatchingData(fGainMatchingData);
 
   fShapingTime = fPSA -> GetShapingTime();
-
+  fPSA -> SetPSAPeakFindingOption(fPSAPeakFindingOption);
+  
   if (fRecoHeader != nullptr) {
     fRecoHeader -> SetPar("psa_threshold",       fThreshold);
     fRecoHeader -> SetPar("psa_layerLowCut",     fLayerLowCut);
