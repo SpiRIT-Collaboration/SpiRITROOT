@@ -334,9 +334,9 @@ STPSAFastFit::FindPeak(   Int_t layer,
       Double_t diff = adc[tbCurrent] - adc[tbCurrent - 1];
 
       // If adc difference of step is above threshold
-      if (diff > fThresholdOneTbStep) 
+      if (diff > fThresholdOneTbStep*fGainMatchingDataScale[layer]) 
       {
-        if (adc[tbCurrent] > fThreshold) countAscending++;
+        if (adc[tbCurrent] > fThreshold*fGainMatchingDataScale[layer]) countAscending++;
         else countAscendingBelow++;
       }
       else 
@@ -351,7 +351,7 @@ STPSAFastFit::FindPeak(   Int_t layer,
         }
 
         tbCurrent -= 1;
-        if (adc[tbCurrent] < fThreshold)
+        if (adc[tbCurrent] < fThreshold*fGainMatchingDataScale[layer])
         continue;
 
         // Peak is found!
@@ -383,7 +383,7 @@ STPSAFastFit::FindPeak(   Int_t layer,
     {
       Double_t diff = adc[tbCurrent] - adc[tbCurrent - 1];
       // If adc difference of step is above threshold
-      if (diff > fThresholdOneTbStep)
+      if (diff > fThresholdOneTbStep*fGainMatchingDataScale[layer])
       {
         if (adc[tbCurrent] > 0) countAscending++;
         else countAscendingBelow++;
@@ -402,7 +402,7 @@ STPSAFastFit::FindPeak(   Int_t layer,
         }
       
         tbCurrent -= 1;
-        if (adc[tbCurrent] < fThreshold || adc[tbCurrent]-adc[tbCurrent-countAscending - countAscendingBelow]<fThreshold) // the largest pulse should be large then 30, the absolute pulse height should be larger than 30.
+        if (adc[tbCurrent] < fThreshold*fGainMatchingDataScale[layer] || adc[tbCurrent]-adc[tbCurrent-countAscending - countAscendingBelow]<fThreshold*fGainMatchingDataScale[layer]) // the largest pulse should be large then 30, the absolute pulse height should be larger than 30.
         {
           countAscending = 0;
           countAscendingBelow = 0;
