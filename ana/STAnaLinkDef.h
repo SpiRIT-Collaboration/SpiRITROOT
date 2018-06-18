@@ -6,5 +6,6 @@
 
 // Add the class names you created
 #pragma link C++ class ST_ClusterNum_DB+;
+#pragma link C++ class ST_TrackCut+;
 
 #endif
