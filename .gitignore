@@ -1,6 +1,7 @@
 *.swp
 *.o
 *.root
+!parameters/kyotoCrosstalk.root
 *.log
 gphysi.dat
 core_dump*

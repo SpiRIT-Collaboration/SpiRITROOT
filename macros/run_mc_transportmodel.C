@@ -28,8 +28,8 @@
 void run_mc_transportmodel
 (
  TString name    = "urqmd_short",
- Int_t  nEvents  = -1,
- Bool_t useFieldMapFile = kTRUE
+ Int_t  nEvents  = 3,
+ Bool_t useFieldMapFile = kFALSE
  )
 {
   //////////////////////////////////////////////////////////
@@ -112,7 +112,7 @@ void run_mc_transportmodel
   // Event generator
   STTransportModelEventGenerator* fEvent = new STTransportModelEventGenerator(inputFile);
   fEvent -> RegisterHeavyIon();
-  fEvent -> SetPrimaryVertex(0, -21.33, -.89);
+  fEvent -> SetPrimaryVertex(TVector3(0, -21.33, -.89));
 
   FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();
   fGenerator -> AddGenerator(fEvent);

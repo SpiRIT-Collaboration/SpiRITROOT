@@ -5,6 +5,7 @@
 #include "FairMCEventHeader.h"
 
 #include "TGraph.h"
+#include "TH1F.h"
 #include "TClonesArray.h"
 #include "TString.h"
 
@@ -45,9 +46,13 @@ class STMCEventTask : public FairTask
      // kyoto cross talk
      TString fCTFileName;
      Int_t   fNProbBin;
-     TGraph* fProbGraph;
+     TGraph* fGraphProb[64][2];
+     TH1F* fHistProb[64][2];
 
      Double_t pbuf[2][50]; // temporary
+
+     Int_t GetChannelFromBar(Int_t);
+     void GetPossibleVictim(Int_t, Int_t*);
 
    ClassDef(STMCEventTask,1);
 };

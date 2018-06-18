@@ -18,8 +18,7 @@ STMCEventTask::STMCEventTask()
   fScintillatorHitArray(NULL),
   fBeamA(132), fBeamZ(50), fBeamE(270.),
   fTargetA(124), fTargetZ(50),
-  fNProbBin(0),
-  fProbGraph(nullptr)
+  fNProbBin(0)
 {}
 
 STMCEventTask::~STMCEventTask()
@@ -47,13 +46,16 @@ InitStatus STMCEventTask::Init()
    fMCEventHeader -> SetTargetZ(fTargetZ);
 
 
-   TString probFileName = TString(gSystem->Getenv("VMCWORKDIR")) + "/parameters/" + fCTFileName;
-   std::ifstream probFile;
+   TString probFileDir = TString(gSystem->Getenv("VMCWORKDIR")) + "/parameters/";
+   TString probFileName = probFileDir + fCTFileName;
+   auto inProbFile = new TFile(probFileDir+"kyotoCrosstalk.root","read");
+   for(Int_t i=0; i<64; i++)
+      for(Int_t j=0; j<2; j++){
+	 fGraphProb[i][j] = (TGraph*)inProbFile->Get(Form("graphProb%d_%d",i,j));
+	 fHistProb[i][j] = fGraphProb[i][j]->GetHistogram();
+      }
+   
   /* 
-   while(!probFile.eof())
-      probFile <<  <<  ;
-
-   }*/
    // temporary
    std::ifstream inFile;
    Int_t bbuf[2][50]; // bin number buffer
@@ -71,8 +73,7 @@ InitStatus STMCEventTask::Init()
 	 j++;
       }
    }
-
-   probFile.close();
+*/
 
    gRandom->SetSeed(0);
 
@@ -144,7 +145,27 @@ void STMCEventTask::Exec(Option_t* opt)
       if(detID>=24&&detID<=83&&dE>=0.5){
 	    
 	 mult++;
-         
+
+	 Int_t EasirocChannel = GetChannelFromBar(detID);
+         kyotoIDArray.push_back(EasirocChannel);
+	 Int_t CTChannelCand[2]={};
+	 GetPossibleVictim(EasirocChannel,CTChannelCand);
+	 Double_t CTProb[2]={};
+	 Double_t SaturationPoint[2];
+	 for(Int_t iCT=0; iCT<2; iCT++){
+	    Int_t saturateBin = fHistProb[EasirocChannel][iCT]->FindLastBinAbove(0.,1);
+	    SaturationPoint[iCT] = fHistProb[EasirocChannel][iCT]->GetBinCenter(saturateBin);
+	    if( dE<=SaturationPoint[iCT] )
+	       if( fGraphProb[EasirocChannel][iCT]->Eval(dE) > gRandom->Uniform(0,1) )
+		  kyotoCTArray.push_back(CTChannelCand[iCT]);
+	    if( dE>SaturationPoint[iCT] )
+	       if( fHistProb[EasirocChannel][iCT]->Integral(saturateBin-10,saturateBin)/10. > gRandom->Uniform(0,1) )
+		  kyotoCTArray.push_back(CTChannelCand[iCT]);
+	 }
+      
+
+
+	 /*
 	 Int_t barID = detID-24;
 	 if(barID%2==0){
 	    barID=barID/2;
@@ -173,6 +194,7 @@ void STMCEventTask::Exec(Option_t* opt)
 		  kyotoCTArray.push_back(barID+1);
 	    }
 	 }
+	 */
       }
    }
 
@@ -182,7 +204,7 @@ void STMCEventTask::Exec(Option_t* opt)
    for(Int_t iCT=0; iCT<kyotoCTArray.size(); iCT++){
       auto itr = std::find(kyotoIDArray.begin(), kyotoIDArray.end(), kyotoCTArray.at(iCT));
       size_t index = std::distance( kyotoIDArray.begin(), itr);
-      if( index==kyotoIDArray.size() )
+      if( index==kyotoIDArray.size() ) // there are no hit in current index -> register as a crosstalk
 	 multwCT++;
    }
    
@@ -200,6 +222,95 @@ void STMCEventTask::Exec(Option_t* opt)
 
 }
 
+Int_t STMCEventTask::GetChannelFromBar(Int_t detID)
+{
+   // id assignment in geomSpiRIT
+   // 
+   // DS 59 57  ...  3 1 US
+   //    =============== : beam right
+   //                      <- beam direction
+   //    =============== : beam left
+   //    58 56  ...  2 0
+   //
+   //
+   // channel assignment in EASIROC
+   //
+   // 32 34 ... 60 33 35 ... 61
+   // ========================= : beam right
+   //
+   // ========================= : beam left
+   // 0  2  ... 28 1  3  ... 29
+   //
+   // (30,31,62,63 are unused.)
+   //
+
+   Int_t barID = detID-24;
+   if(barID<0||barID>59) return -1; // this may kill the excution.
+   if(barID%2==0){
+      barID /= 2;
+      barID = 29-barID;
+      if(barID>=0&&barID<=14) barID *= 2;
+      else if(barID>=15&&barID<=29){
+	 barID = barID-15;
+	 barID = 2*barID+1;
+      }
+   }
+   else if(barID%2!=0){
+      barID = (barID-1)/2;
+      barID = 29-barID;
+      if(barID>=0&&barID<=14) barID = barID*2+32;
+      else if(barID>=15&&barID<=29){
+	 barID = barID-15;
+	 barID = 2*barID+33;
+      }
+   }
+
+   return barID;
+
+}
+
+void STMCEventTask::GetPossibleVictim(Int_t source, Int_t *victim)
+
+{
+   if( source==0 || source==1 || source==32 || source==33 )
+      victim[0] = source+2;
+   else if( source==30 || source==31 || source==62 || source==63 )
+      victim[0] =source-2;
+   else if( (source>=2&&source<=7) || (source>=12&&source<=21) || 
+            (source>=26&&source<=29) || (source>=34&&source<=39) || 
+	    (source>=44&&source<=53) || (source>=58&&source<=61) ){
+      victim[0] = source-2;
+      victim[1] = source+2;
+   }
+   else if( source==8 || source==9 || source==40 || source==41 ){
+      victim[0] = source-2;
+      victim[1] = source+16;
+   }
+   else if( source==10 || source==11 || source==42 || source==43 ){
+      victim[0] = source+2;
+      victim[1] = source+12;
+   }
+   else if(source==22){
+      victim[0] = 11;
+      victim[1] = 20;
+   }
+   else if(source==23){
+      victim[0] = 10;
+      victim[1] = 21;
+   }
+   else if( source==24 || source==25 || source==56 || source==57 ){
+      victim[0] = source-16;
+      victim[1] = source+2;
+   }
+   else if( source==54 || source==55 ){
+      victim[0] = source-12;
+      victim[1] = source-2;
+   }
+
+}
+
+
 void STMCEventTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
+
 
 ClassImp(STMCEventTask);
