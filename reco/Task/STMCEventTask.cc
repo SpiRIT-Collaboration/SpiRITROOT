@@ -3,6 +3,7 @@
 #include "TSystem.h"
 #include <fstream>
 #include <string>
+#include <vector>
 #include "TRandom.h"
 #include "STMCPoint.hh"
 #include "STMCScintillatorHit.hh"
@@ -17,8 +18,7 @@ STMCEventTask::STMCEventTask()
   fMCTriggerResponse(NULL),
   fScintillatorHitArray(NULL),
   fBeamA(132), fBeamZ(50), fBeamE(270.),
-  fTargetA(124), fTargetZ(50),
-  fNProbBin(0)
+  fTargetA(124), fTargetZ(50)
 {}
 
 STMCEventTask::~STMCEventTask()
@@ -45,35 +45,24 @@ InitStatus STMCEventTask::Init()
    fMCEventHeader -> SetTargetA(fTargetA);
    fMCEventHeader -> SetTargetZ(fTargetZ);
 
-
    TString probFileDir = TString(gSystem->Getenv("VMCWORKDIR")) + "/parameters/";
    TString probFileName = probFileDir + fCTFileName;
-   auto inProbFile = new TFile(probFileDir+"kyotoCrosstalk.root","read");
+   fInProbFile = new TFile(probFileDir+"kyotoCrosstalk.root","update");
    for(Int_t i=0; i<64; i++)
       for(Int_t j=0; j<2; j++){
-	 fGraphProb[i][j] = (TGraph*)inProbFile->Get(Form("graphProb%d_%d",i,j));
-	 fHistProb[i][j] = fGraphProb[i][j]->GetHistogram();
+         fGraphProb[i][j] = (TGraph*)fInProbFile->Get(Form("graphProb%d_%d",i,j));
+         fHistProb[i][j] = new TH1F(Form("fHistProb%d_%d",i,j),"",fGraphProb[i][j]->GetMaxSize(),0,fGraphProb[i][j]->GetN());
+         for(Int_t k=0; k<fGraphProb[i][j]->GetN(); k++){
+            Double_t x,y;
+            fGraphProb[i][j]->GetPoint(k,x,y);
+            fHistProb[i][j]->Fill(x,y);
+         }
       }
    
-  /* 
-   // temporary
-   std::ifstream inFile;
-   Int_t bbuf[2][50]; // bin number buffer
-   //Double_t pbuf[2][50]; // prob. buffer
-   Double_t abuf[2][50]; // ADC buffer
-   TString fpath = TString(gSystem->Getenv("VMCWORKDIR"))+"/input/";
-   //TString fpath = "/cache/scr/spirit/kaneko/ana/kyoto/";
-   for(Int_t i=0; i<2; i++){
-      inFile.open( Form(fpath+"probabilitylist%d.txt",i),std::ios::in);
-      std::string line;
-      Int_t j=0;
-      while(std::getline(inFile,line)){
-	 sscanf(line.data(),"%d %lf %lf", &bbuf[i][j], &pbuf[i][j], &abuf[i][j]);
-	 //std::cout << pbuf[i][j] << std::endl;
-	 j++;
-      }
-   }
-*/
+   fkB = 0.07943; // mm/MeV
+   fC  = 1e-5;
+   fTopOfBar = -50.;  
+   fAttLength = 2417.;  
 
    gRandom->SetSeed(0);
 
@@ -115,11 +104,13 @@ void STMCEventTask::Exec(Option_t* opt)
       }
       else paddle = (STMCScintillatorHit*) fScintillatorHitArray->At(index);
 
-      Double_t de = mcPoint->GetEnergyLoss()*1000.;  // GeV -> MeV
-      if(detID>=24&&detID<=83)	// attenuation in kyoto.
-	 de *= TMath::Exp(-(-5.-mcPoint->GetY())/241.7);
+      Double_t dE = mcPoint->GetEnergyLoss()*1000.;  // GeV -> MeV
+      if(detID>=24&&detID<=83){  // kyoto bar energy deposit	
+        dE *= 1./(1.+fkB*dE+fC*dE*dE);                                   // birk's quenching formula
+	     dE *= TMath::Exp(-(fTopOfBar-mcPoint->GetY()*10.)/fAttLength);   // light attenuation
+      }
 
-      paddle->AddStep(de, mcPoint);
+      paddle->AddStep(dE, mcPoint);
 
    }
 
@@ -153,7 +144,7 @@ void STMCEventTask::Exec(Option_t* opt)
 	 Double_t CTProb[2]={};
 	 Double_t SaturationPoint[2];
 	 for(Int_t iCT=0; iCT<2; iCT++){
-	    Int_t saturateBin = fHistProb[EasirocChannel][iCT]->FindLastBinAbove(0.,1);
+	    Int_t saturateBin = fHistProb[EasirocChannel][iCT]->FindLastBinAbove(0.5);
 	    SaturationPoint[iCT] = fHistProb[EasirocChannel][iCT]->GetBinCenter(saturateBin);
 	    if( dE<=SaturationPoint[iCT] )
 	       if( fGraphProb[EasirocChannel][iCT]->Eval(dE) > gRandom->Uniform(0,1) )
@@ -163,46 +154,14 @@ void STMCEventTask::Exec(Option_t* opt)
 		  kyotoCTArray.push_back(CTChannelCand[iCT]);
 	 }
       
-
-
-	 /*
-	 Int_t barID = detID-24;
-	 if(barID%2==0){
-	    barID=barID/2;
-	    barID=29-barID;
-	    if(barID>=15) barID++;
-	 }else{
-	    barID = (barID-1)/2 +30;
-	    barID=59+30-barID;
-	    barID+=2;
-	    if(barID>=47)barID++;
-	 }
-	 kyotoIDArray.push_back(barID);
-
-         // temporary thing
-	 // make crosstalk
-	 for(Int_t ib=0; ib<50; ib++){
-	    if(ib<=dE&&ib+1>dE){
-	       if(gRandom->Uniform(0,1)<pbuf[0][ib]&&(barID!=0&&barID!=16&&barID!=32&&barID!=48))
-		  kyotoCTArray.push_back(barID-1);
-	       if(gRandom->Uniform(0,1)<pbuf[1][ib])
-		  kyotoCTArray.push_back(barID+1);
-	    }else if(dE>50){ // high dE: (saturation) -> use constant probability
-	       if(gRandom->Uniform(0,1)<0.65&&(barID!=0&&barID!=32&&barID!=16&&barID!=48))
-		  kyotoCTArray.push_back(barID-1);
-	       if(gRandom->Uniform(0,1)<0.7)
-		  kyotoCTArray.push_back(barID+1);
-	    }
-	 }
-	 */
       }
    }
 
    multwCT = mult;
    std::sort(kyotoCTArray.begin(),kyotoCTArray.end());
    kyotoCTArray.erase( std::unique(kyotoCTArray.begin(), kyotoCTArray.end()), kyotoCTArray.end());
-   for(Int_t iCT=0; iCT<kyotoCTArray.size(); iCT++){
-      auto itr = std::find(kyotoIDArray.begin(), kyotoIDArray.end(), kyotoCTArray.at(iCT));
+   for(auto CTChannel: kyotoCTArray){
+      auto itr = std::find(kyotoIDArray.begin(), kyotoIDArray.end(), CTChannel);
       size_t index = std::distance( kyotoIDArray.begin(), itr);
       if( index==kyotoIDArray.size() ) // there are no hit in current index -> register as a crosstalk
 	 multwCT++;

@@ -22,6 +22,7 @@ class STMCEventTask : public FairTask
      virtual void Exec(Option_t* opt);
      virtual void SetParContainers();
      void SetPersistence(Bool_t value = kTRUE);
+
      void SetCollisionSystem(Int_t ba, Int_t bz, Int_t ta, Int_t tz)
           { fBeamA = ba; fBeamZ = bz; fTargetA = ta; fTargetZ = tz; }
      void SetBeamEnergy(Double_t be) { fBeamE = be; }
@@ -43,13 +44,15 @@ class STMCEventTask : public FairTask
      Int_t fTargetA;
      Int_t fTargetZ;
 
-     // kyoto cross talk
+     // kyoto array 
+     Double_t fkB;   // birk's coefficient
+     Double_t fTopOfBar;   // Y position of bar
+     Double_t fAttLength;  // attenuation length
      TString fCTFileName;
-     Int_t   fNProbBin;
+     TFile*  fInProbFile;
      TGraph* fGraphProb[64][2];
      TH1F* fHistProb[64][2];
 
-     Double_t pbuf[2][50]; // temporary
 
      Int_t GetChannelFromBar(Int_t);
      void GetPossibleVictim(Int_t, Int_t*);
