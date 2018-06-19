@@ -21,10 +21,10 @@ void run_transportmodel_reco_mc
   }
   TString par = spiritroot+"parameters/"+fParameterFile;
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root";
-  TString in1 = fPathToData+fName+".digi.root";
-  TString in2 = fPathToData+fName+".mc.root";
+  TString in1 = fPathToInput+fName+".digi.root";
+  TString in2 = fPathToInput+fName+".mc.root";
   TString out = fPathToOutput+fName+".reco."+version+".root";
-  TString log = fPathToData+"mc"+sRunNo+"_s"+sSplitNo+"."+version+".log";
+  TString log = fPathToOutput+fName+"."+version+".log";
 
   FairLogger *logger = FairLogger::GetLogger();
   logger -> SetLogToScreen(true);
@@ -87,7 +87,7 @@ void run_transportmodel_reco_mc
   helix -> GetTrackFinder() -> SetDefaultCutScale(2.5);
   helix -> GetTrackFinder() -> SetTrackWidthCutLimits(4, 10);
   helix -> GetTrackFinder() -> SetTrackHeightCutLimits(2, 4);
-  run -> Run(0, fNumEventsInSplit);
+  run -> Run(0, 0);
   //run -> Run(0, 2);
 
   cout << "Log    : " << log << endl;

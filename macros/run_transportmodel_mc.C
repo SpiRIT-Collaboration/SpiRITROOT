@@ -25,7 +25,7 @@
  *                       kTRUE  to use field map file 'samurai_field_map.dat'.
  */
 
-void run_mc_transportmodel
+void run_transportmodel_mc
 (
  TString name    = "urqmd_short",
  Int_t  nEvents  = 3,

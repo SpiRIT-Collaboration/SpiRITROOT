@@ -46,6 +46,7 @@ class STMCEventTask : public FairTask
 
      // kyoto array 
      Double_t fkB;   // birk's coefficient
+     Double_t fC;    // second order coeff.
      Double_t fTopOfBar;   // Y position of bar
      Double_t fAttLength;  // attenuation length
      TString fCTFileName;
