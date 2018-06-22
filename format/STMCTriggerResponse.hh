@@ -12,18 +12,18 @@ class STMCTriggerResponse : public TNamed
 
       /** modifier **/
       void SetIsTrigger(Bool_t flag)      { fIsTrigger = flag; }
-      void SetMult(Int_t mul)             { fMult = mul; }
-      void SetMultWCT(Int_t mul)          { fMultWCT = mul; }
-      void SetVetoMaxEdep(Double_t edep)  { fVetoMaxEdep = edep; }
-      void SetVetoMaxZ(Int_t z)           { fVetoMaxZ = z; }
+      void SetKyotoMult(Int_t mul)             { fMult = mul; }
+      void SetKyotoMultWCT(Int_t mul)          { fMultWCT = mul; }
+      void SetKatanaVetoMaxEdep(Double_t edep)  { fVetoMaxEdep = edep; }
+      void SetKatanaVetoMaxZ(Int_t z)           { fVetoMaxZ = z; }
       void SetScintillatorHitArray(TClonesArray*);
 
       /** accessor **/
       Bool_t GetIsTrigger()     { return fIsTrigger; }
-      Int_t GetMultiplicity()   { return fMult; }
-      Int_t GetMultWCT()        { return fMultWCT; }
-      Double_t GetVetoMaxEdep() { return fVetoMaxEdep; }
-      Int_t GetVetoMaxZ()       { return fVetoMaxZ; }
+      Int_t GetKyotoMult()      { return fMult; }
+      Int_t GetKyotoMultWCT()   { return fMultWCT; }
+      Double_t GetKatanaVetoMaxEdep() { return fVetoMaxEdep; }
+      Int_t GetKatanaVetoMaxZ()       { return fVetoMaxZ; }
       TClonesArray* GetScintillatorHitArray() { return fScintillatorHitArray; }
 
    private:

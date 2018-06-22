@@ -4,6 +4,7 @@
 #include "TNamed.h"
 #include "TVector3.h"
 #include "TVector2.h"
+#include "TLorentzVector.h"
 #include "TClonesArray.h"
 #include "STMCTrack.h"
 
@@ -16,12 +17,9 @@ class STMCEventHeader : public TNamed
      virtual void Clear(Option_t* opt= "");
 
      /** modifier **/
-     void SetBeamA(Int_t ba)   { fBeamA = ba; }
-     void SetBeamZ(Int_t bz)   { fBeamZ = bz; }
-     void SetBeamE(Int_t be)   { fBeamE = be; }
-     void SetTargetA(Int_t ta) { fTargetA = ta; }
-     void SetTargetZ(Int_t tz) { fTargetZ = tz; }
-     void SetB(Double_t b)     { fB = b; }
+     void SetBeamVector(TLorentzVector v)   { fBeamVector = v; }
+     void SetTargetVector(TLorentzVector v) { fTargetVector = v; }
+     void SetB(Double_t b)              { fB = b; }
      void SetPrimaryVertex(TVector3 pv) { fPrimaryVertex = pv; }
      void SetBeamAngle(TVector2 ang)    { fBeamAngle = ang; }
      void SetReactionPlane(Double_t rp) { fReactionPlane = rp; }
@@ -29,11 +27,7 @@ class STMCEventHeader : public TNamed
      void SetPrimaryTracks(TClonesArray*);
 
      /** accessor **/
-     Int_t GetBeamA()   { return fBeamA; }
-     Int_t GetBeamZ()   { return fBeamZ; }
-     Double_t GetBeamE(){ return fBeamE; }
-     Int_t GetTargetA() { return fTargetA; }
-     Int_t GetTargetZ() { return fTargetZ; }
+     Double_t GetBeamE(){ return (fBeamVector.E()-fBeamVector.M())/(fBeamVector.M()/931.494); }
      Double_t GetLorentzTransformFactor();
 
      Double_t GetB()             { return fB; }
@@ -45,18 +39,15 @@ class STMCEventHeader : public TNamed
      STMCTrack* GetPrimaryTrack(Int_t id) { return (STMCTrack*)fPrimaryTrackArray->At(id); }
 
 
-     /** rotated information **/
+     /** rotation information **/
      TRotation GetRotationInRotatedFrame();
      TClonesArray* GetPrimaryTracksWithRotation();
      STMCTrack* GetPrimaryTrackWithRotation(Int_t id);
 
 
    private:
-     Int_t    fBeamA;
-     Int_t    fBeamZ;
-     Double_t fBeamE;
-     Int_t    fTargetA;
-     Int_t    fTargetZ;
+     TLorentzVector fBeamVector;
+     TLorentzVector fTargetVector;
 
      Double_t fB;
      TVector3 fPrimaryVertex;
@@ -67,5 +58,6 @@ class STMCEventHeader : public TNamed
 
    ClassDef(STMCEventHeader,1);
 };
+
 
 #endif

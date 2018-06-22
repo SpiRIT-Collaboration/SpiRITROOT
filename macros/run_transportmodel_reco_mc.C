@@ -14,7 +14,7 @@ void run_transportmodel_reco_mc
   if (fPathToOutput.IsNull())
     fPathToOutput = spiritroot+"macros/data/";
   TString version; {
-    TString name = spiritroot + "VERSION";
+    TString name = spiritroot + "VERSION.compiled";
     std::ifstream vfile(name);
     vfile >> version;
     vfile.close();
@@ -44,8 +44,6 @@ void run_transportmodel_reco_mc
 
   auto mcevent = new STMCEventTask();
   mcevent -> SetPersistence(true);
-  mcevent -> SetCollisionSystem(132,50,124,50);
-  mcevent -> SetBeamEnergy(270.);
 
   auto psa = new STPSAETask();
   psa -> SetPersistence(false);
@@ -88,7 +86,6 @@ void run_transportmodel_reco_mc
   helix -> GetTrackFinder() -> SetTrackWidthCutLimits(4, 10);
   helix -> GetTrackFinder() -> SetTrackHeightCutLimits(2, 4);
   run -> Run(0, 0);
-  //run -> Run(0, 2);
 
   cout << "Log    : " << log << endl;
   cout << "Input1 : " << in1 << endl;

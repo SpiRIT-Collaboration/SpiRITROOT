@@ -1,6 +1,7 @@
 #include "STTransportModelEventGenerator.hh"
 #include "FairLogger.h"
 #include "FairRunSim.h"
+#include "FairRootManager.h"
 #include "FairMCEventHeader.h"
 #include "FairIon.h"
 #include "TSystem.h"
@@ -10,7 +11,10 @@
    STTransportModelEventGenerator::STTransportModelEventGenerator()
 :  FairGenerator(),
    fInputFile(NULL), fInputTree(NULL),
-   fB(-1.), fPartArray(NULL),
+   fB(-1.), 
+   fBeamVector(NULL), fTargetVector(NULL), 
+   fFillBeamVector(NULL), fFillTargetVector(NULL), 
+   fPartArray(NULL),
    fCurrentEvent(0), fNEvents(0),
    fVertex(TVector3()), fVertexXYSigma(TVector2()), fTargetThickness(),
    fBeamAngle(TVector2()), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
@@ -20,7 +24,9 @@
 STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
    :  FairGenerator("STTransportModelEvent",fileName),
    fInputFile(NULL), fInputTree(NULL),
-   fB(-1.), fPartArray(NULL),
+   fB(-1.), fBeamVector(NULL), fTargetVector(NULL), 
+   fFillBeamVector(NULL), fFillTargetVector(NULL), 
+   fPartArray(NULL),
    fCurrentEvent(0), fNEvents(0),
    fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
    fBeamAngle(TVector2(-0.06,0.)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
@@ -39,36 +45,17 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
    LOG(INFO)<<"-I Opening file: "<<fileName<<FairLogger::endl;
 
    fInputTree -> SetBranchAddress("b",&fB);
+   fInputTree -> SetBranchAddress("beamVector",&fBeamVector);
+   fInputTree -> SetBranchAddress("targetVector",&fTargetVector);
    fInputTree -> SetBranchAddress(partBranchName,&fPartArray);
 
    fNEvents = fInputTree->GetEntries();
-}
 
-STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName, TString treeName)
-   :  FairGenerator("STTransportModelEvent",fileName),
-   fInputFile(NULL), fInputTree(NULL),
-   fB(-1.), fPartArray(NULL),
-   fCurrentEvent(0), fNEvents(0),
-   fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
-   fBeamAngle(TVector2(-0.06,0.)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
-{
-   TString partBranchName;
-   if(fileName.BeginsWith("phits"))       { fGen = TransportModel::PHITS;   partBranchName = "fparts"; }
-   else if(fileName.BeginsWith("amd"))    { fGen = TransportModel::AMD;     partBranchName = "AMDParticle"; }
-   else if(fileName.BeginsWith("urqmd"))  { fGen = TransportModel::UrQMD;   partBranchName = "partArray"; }
-   else
-      LOG(FATAL)<<"STTransportModelEventGenerator cannot accept event files without specifying generator names."<<FairLogger::endl;
 
-   TString inputDir = gSystem->Getenv("VMCWORKDIR");
-   fInputFile = new TFile(inputDir+"/input/"+fileName);
-   fInputTree = (TTree*)fInputFile->Get(treeName);
-
-   LOG(INFO)<<"-I Opening file: "<<fileName<<FairLogger::endl;
-
-   fInputTree -> SetBranchAddress("b",&fB);
-   fInputTree -> SetBranchAddress(partBranchName,&fPartArray);
-
-   fNEvents = fInputTree->GetEntries();
+   fFillBeamVector   = new TClonesArray("TLorentzVector");
+   fFillTargetVector = new TClonesArray("TLorentzVector");
+   FairRootManager::Instance()->Register("BeamVector", "Generator", fFillBeamVector, kTRUE);
+   FairRootManager::Instance()->Register("TargetVector", "Generator", fFillTargetVector, kTRUE);
 }
 
 STTransportModelEventGenerator::~STTransportModelEventGenerator()
@@ -125,38 +112,46 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
       event->SetNPrim(nPart);
    }
 
+
+
+
+   fFillBeamVector->Clear();
+   fFillTargetVector->Clear();
+   new((*fFillBeamVector)[0]) TLorentzVector(*fBeamVector);
+   new((*fFillTargetVector)[0]) TLorentzVector(*fTargetVector);
+
    for(Int_t iPart=0; iPart<nPart; iPart++){
       Int_t pdg;
       TVector3 p;
       TVector3 pos;
       switch(fGen){
-	 case TransportModel::PHITS:
-	    {
-	       auto part = (PHITSParticle*)fPartArray->At(iPart);
-	       pdg = kfToPDG(part->kf);
-	       Double_t pMag = TMath::Sqrt(part->ke*(part->ke+2.*part->m))/1000.;
-	       p = TVector3(part->mom[0],part->mom[1],part->mom[2]);
-	       p.SetMag(pMag);
-	       break;
-	    }
-	 case TransportModel::AMD:
-	    {
-	       auto part = (AMDParticle*)fPartArray->At(iPart);
-	       pdg = part->fPdg;
-	       p = TVector3(part->fMomentum.Vect());
-	       p.SetMag(p.Mag()/1000.);
-	       break;
-	    }
-	 case TransportModel::UrQMD:
-	    {
-	       auto part = (UrQMDParticle*)fPartArray->At(iPart);
-	       pdg = part->GetPdg();
-	       p = TVector3(part->GetMomentum().Vect());
-	       p.SetMag(p.Mag()/1000.);
-	       break;
-	    }
-	 default:
-	    break;
+         case TransportModel::PHITS:
+            {
+               auto part = (PHITSParticle*)fPartArray->At(iPart);
+               pdg = kfToPDG(part->kf);
+               Double_t pMag = TMath::Sqrt(part->ke*(part->ke+2.*part->m))/1000.;
+               p = TVector3(part->mom[0],part->mom[1],part->mom[2]);
+               p.SetMag(pMag);
+               break;
+            }
+         case TransportModel::AMD:
+            {
+               auto part = (AMDParticle*)fPartArray->At(iPart);
+               pdg = part->fPdg;
+               p = TVector3(part->fMomentum.Vect());
+               p.SetMag(p.Mag()/1000.);
+               break;
+            }
+         case TransportModel::UrQMD:
+            {
+               auto part = (UrQMDParticle*)fPartArray->At(iPart);
+               pdg = part->GetPdg();
+               p = TVector3(part->GetMomentum().Vect());
+               p.SetMag(p.Mag()/1000.);
+               break;
+            }
+         default:
+            break;
       }
 
       p.SetPhi(p.Phi()+phiRP);  // random reaction plane orientation.
@@ -190,31 +185,31 @@ void STTransportModelEventGenerator::RegisterHeavyIon()
    for(Int_t i=0; i<fNEvents; i++){
       fInputTree->GetEntry(i);
       for(Int_t iPart=0; iPart<fPartArray->GetEntries(); iPart++){
-	 Int_t pdg;
-	 switch(fGen){
-	    case TransportModel::PHITS:
-	       {
-		  auto part = (PHITSParticle*)fPartArray->At(iPart);
-		  pdg = kfToPDG(part->kf);
-		  break;
-	       }
-	    case TransportModel::AMD:
-	       {
-		  auto part = (AMDParticle*)fPartArray->At(iPart);
-		  pdg = part->fPdg;
-		  break;
-	       }
-	    case TransportModel::UrQMD:
-	       {
-		  auto part = (UrQMDParticle*)fPartArray->At(iPart);
-		  pdg = part->GetPdg();
-		  break;
-	       }
-	    default:
-	       break;
-	 }
-	 if(pdg>3000)
-	    ions.push_back(pdg);
+         Int_t pdg;
+         switch(fGen){
+            case TransportModel::PHITS:
+               {
+                  auto part = (PHITSParticle*)fPartArray->At(iPart);
+                  pdg = kfToPDG(part->kf);
+                  break;
+               }
+            case TransportModel::AMD:
+               {
+                  auto part = (AMDParticle*)fPartArray->At(iPart);
+                  pdg = part->fPdg;
+                  break;
+               }
+            case TransportModel::UrQMD:
+               {
+                  auto part = (UrQMDParticle*)fPartArray->At(iPart);
+                  pdg = part->GetPdg();
+                  break;
+               }
+            default:
+               break;
+         }
+         if(pdg>3000)
+            ions.push_back(pdg);
       }
    }
    std::sort(ions.begin(),ions.end());

@@ -22,6 +22,7 @@ class STAnalyzeG4StepTask : public FairTask
 
       void SetPersistence(Bool_t value = kTRUE);
       void AssumeGausPRF(Bool_t val=kTRUE) { fAssumeGausPRF = val; }
+      void SetGainMatchingData(Bool_t f) { fIsSetMatchingData = kTRUE; }
 
    private:
       Bool_t 	fIsPersistence;
@@ -86,6 +87,8 @@ class STAnalyzeG4StepTask : public FairTask
       Int_t		fNRows;
       Int_t		fNLayers;
 
+      Bool_t   fIsSetGainMatchingData;
+      Double_t fGainMatchingDataScale[112]={};
 
       STAnalyzeG4StepTask(const STAnalyzeG4StepTask&);
       STAnalyzeG4StepTask operator=(const STAnalyzeG4StepTask&);

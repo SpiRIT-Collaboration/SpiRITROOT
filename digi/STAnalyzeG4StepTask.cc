@@ -21,7 +21,8 @@ using namespace std;
 STAnalyzeG4StepTask::STAnalyzeG4StepTask()
    :	FairTask("STAnalyzeG4StepTask"),
    fIsPersistence(kFALSE),
-   fEventID(0)
+   fEventID(0),
+   fIsSetGainMatchingData(kFALSE)
 {
    fLogger->Debug(MESSAGE_ORIGIN,"Default Constructor of STAnalyzeG4StepTask");
 }
@@ -72,6 +73,17 @@ InitStatus STAnalyzeG4StepTask::Init()
    fCoefT    = fPar->GetCoefDiffusionTrans()*sqrt(10.); // [cm^(-1/2)] to [mm^(-1/2)]
    fCoefL    = fPar->GetCoefDiffusionLong()*sqrt(10.);  // [cm^(-1/2)] to [mm^(-1/2)]
    fGain     = fPar->GetGain();
+   
+   if(fIsSetGainMatchingData){
+      TString fileName = gSystem->Getenv("VMCWORKDIR") + "/parameters/RelativeGain.list";
+      std::ifstream matchList(fileName.Data());
+      Int_t layer = 0;
+      Double_t relativeGain = 0;
+      for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
+         matchList >> layer >> relativeGain;
+         fGainMatchingDataScale[layer] = relativeGain;
+      }
+   }
 
    // STPadResponseTask part
    fTBTime    = fPar -> GetTBTime();
@@ -175,6 +187,8 @@ void STAnalyzeG4StepTask::Exec(Option_t* option)
 	       Double_t x1 = jRow*fPadSizeRow - fXPadPlane/2;     // pad x-range lower edge
 	       Double_t x2 = (jRow+1)*fPadSizeRow - fXPadPlane/2; // pad x-range higth edge
 	       Double_t content;
+          if(fIsSetGainMatchingData)
+             gain = (Double_t)gain/fGainMatchingDataScale[fNLayers+jLayer];
 	       if(!fAssumeGausPRF){
 		  content = gain*fFillRatio[type][iLayer]
 		     *(fPRIRow->Eval(x2-xEl)-fPRIRow->Eval(x1-xEl));
@@ -299,6 +313,9 @@ STAnalyzeG4StepTask::InitPRF()
    fPRIRow -> Fit(fitPRI,"Q");
    fPRIPar0 = fitPRI -> GetParameter(0);
 }
+
+
+
 
 void STAnalyzeG4StepTask::SetPersistence(Bool_t value)  { fIsPersistence = value; }
 

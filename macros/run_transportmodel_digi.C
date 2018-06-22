@@ -12,7 +12,7 @@
  *   @ name : Name of simulation. Should be same with MC simulation.
  */
 
-void run_transportmodel_digi(TString name = "protons_75_events")
+void run_transportmodel_digi(TString name = "urqmd_short")
 {
   // -----------------------------------------------------------------
   // FairRun
@@ -25,6 +25,7 @@ void run_transportmodel_digi(TString name = "protons_75_events")
   STAnalyzeG4StepTask* fAnaG4StepTask = new STAnalyzeG4StepTask();
   fAnaG4StepTask -> SetPersistence(true);
   fAnaG4StepTask -> AssumeGausPRF();
+  fAnaG4StepTask -> SetGainMatchingData(false);
   fRun -> AddTask(fAnaG4StepTask);
   	
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 

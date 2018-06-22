@@ -3,8 +3,8 @@
 
 STMCEventHeader::STMCEventHeader()
 : TNamed("STMCEventHeader","Event Header for MC"),
-  fBeamA(0), fBeamZ(0), fBeamE(0.),
-  fTargetA(0), fTargetZ(0)
+  fBeamVector(TLorentzVector()),
+  fTargetVector(TLorentzVector())
 {
    Clear();
    fPrimaryTrackArray = new TClonesArray("STMCTrack");
@@ -39,12 +39,7 @@ void STMCEventHeader::SetPrimaryTracks(TClonesArray* input)
 
 Double_t STMCEventHeader::GetLorentzTransformFactor()
 {
-   Double_t amu   = 931.;
-   Double_t beamM = amu*fBeamA;
-   Double_t beamE = (amu+fBeamE)*fBeamA;
-   Double_t beamP = TMath::Sqrt( beamE*beamE - beamM*beamM );
-   Double_t targetM = amu*fTargetA;
-   TLorentzVector v(0.,0.,beamP,beamE+targetM);
+   TLorentzVector v(fBeamVector.Vect()+fTargetVector.Vect(),fBeamVector.E()+fTargetVector.E());
    return v.BoostVector().Z();
 }
 
@@ -114,4 +109,3 @@ STMCTrack* STMCEventHeader::GetPrimaryTrackWithRotation(Int_t id)
 
 
 ClassImp(STMCEventHeader);
-

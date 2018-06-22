@@ -23,9 +23,6 @@ class STMCEventTask : public FairTask
      virtual void SetParContainers();
      void SetPersistence(Bool_t value = kTRUE);
 
-     void SetCollisionSystem(Int_t ba, Int_t bz, Int_t ta, Int_t tz)
-          { fBeamA = ba; fBeamZ = bz; fTargetA = ta; fTargetZ = tz; }
-     void SetBeamEnergy(Double_t be) { fBeamE = be; }
      void SetCrosstalkFile(TString file) { fCTFileName = file; }
 
    private:
@@ -37,12 +34,10 @@ class STMCEventTask : public FairTask
      STMCEventHeader*     fMCEventHeader;
      STMCTriggerResponse* fMCTriggerResponse;
      TClonesArray*        fScintillatorHitArray;
-
-     Int_t fBeamA;
-     Int_t fBeamZ;
-     Double_t fBeamE;
-     Int_t fTargetA;
-     Int_t fTargetZ;
+     
+     Bool_t               fIsSetSystem;
+     TClonesArray*        fBeamVectorArray;
+     TClonesArray*        fTargetVectorArray;
 
      // kyoto array 
      Double_t fkB;   // birk's coefficient
@@ -50,9 +45,9 @@ class STMCEventTask : public FairTask
      Double_t fTopOfBar;   // Y position of bar
      Double_t fAttLength;  // attenuation length
      TString fCTFileName;
-     TFile*  fInProbFile;
      TGraph* fGraphProb[64][2];
      TH1F* fHistProb[64][2];
+     void ReadCrosstalkFile();
 
 
      Int_t GetChannelFromBar(Int_t);
@@ -60,5 +55,3 @@ class STMCEventTask : public FairTask
 
    ClassDef(STMCEventTask,1);
 };
-
-#endif

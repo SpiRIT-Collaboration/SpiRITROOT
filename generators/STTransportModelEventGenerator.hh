@@ -9,6 +9,7 @@
 #include "TClonesArray.h"
 #include "TVector3.h"
 #include "TVector2.h"
+#include "TLorentzVector.h"
 #include "TString.h"
 
 
@@ -17,19 +18,18 @@ class STTransportModelEventGenerator : public FairGenerator
    public:
       STTransportModelEventGenerator();
       STTransportModelEventGenerator(TString fileName);
-      STTransportModelEventGenerator(TString fileName, TString treeName);
       /* copy constructor */
       STTransportModelEventGenerator(const STTransportModelEventGenerator&);
       STTransportModelEventGenerator& operator=(const STTransportModelEventGenerator&);
       /* destructor */
       virtual ~STTransportModelEventGenerator();
 
-      void SetPrimaryVertex(TVector3 vtx)	{ fVertex = vtx; }
-      void SetVertexXYSigma(TVector2 sig)	{ fVertexXYSigma = sig; }
-      void SetTargetThickness(Double_t t)	{ fTargetThickness = t; }
-      void SetBeamAngle(TVector2 angle)		{ fBeamAngle = angle; }
-      void SetBeamAngleSigma(TVector2 sig)	{ fBeamAngleABSigma = sig; }
-      void SetRandomRP(Bool_t flag)		{ fIsRandomRP = flag; }
+      void SetPrimaryVertex(TVector3 vtx)       { fVertex = vtx; }
+      void SetVertexXYSigma(TVector2 sig)       { fVertexXYSigma = sig; }
+      void SetTargetThickness(Double_t t)       { fTargetThickness = t; }
+      void SetBeamAngle(TVector2 angle)         { fBeamAngle = angle; }
+      void SetBeamAngleSigma(TVector2 sig)      { fBeamAngleABSigma = sig; }
+      void SetRandomRP(Bool_t flag)             { fIsRandomRP = flag; }
 
       virtual Bool_t ReadEvent(FairPrimaryGenerator* primGen);
       Long64_t GetNEvents() { return fNEvents; }
@@ -37,32 +37,35 @@ class STTransportModelEventGenerator : public FairGenerator
 
       enum TransportModel
       {
-	 UrQMD,
-	 AMD,
-	 PHITS,
+         UrQMD,
+         AMD,
+         PHITS,
       };
 
    private:
-      TransportModel	fGen;			// model type
-      TFile*		fInputFile;		// input root file
-      TTree*		fInputTree;		// input TTree
-      Double_t		fB;			// impact parameter
-      TClonesArray*	fPartArray;		// particle array
-      Int_t		fCurrentEvent;		// current event ID
-      Int_t		fNEvents;		// # of events
-      TVector3		fVertex;		// user set vertex position
-      TVector2		fVertexXYSigma;		// vertex position fluctuation in XY (gauss dist.)
-      Double_t		fTargetThickness;	// vertex position fluctuation in Z  (uniform dist.)
-      TVector2		fBeamAngle;		// beam angle
-      TVector2		fBeamAngleABSigma;	// beam angle fluctuation in AB (gaus dist.)
-      Bool_t		fIsRandomRP;		// flag for random reaction plane input
+      TransportModel    fGen;                   // model type
+      TFile*            fInputFile;             // input root file
+      TTree*            fInputTree;             // input TTree
+      Double_t          fB;                     // impact parameter
+      TLorentzVector*   fBeamVector;            // beam 4d vector of input
+      TLorentzVector*   fTargetVector;          // target 4d vector
+      TClonesArray*     fFillBeamVector;        // beam 4d vector of input
+      TClonesArray*     fFillTargetVector;      // target 4d vector
+      TClonesArray*     fPartArray;             // particle array
+      Int_t             fCurrentEvent;          // current event ID
+      Int_t             fNEvents;               // # of events
+      TVector3          fVertex;                // user set vertex position
+      TVector2          fVertexXYSigma;         // vertex position fluctuation in XY (gauss dist.)
+      Double_t          fTargetThickness;       // vertex position fluctuation in Z  (uniform dist.)
+      TVector2          fBeamAngle;             // beam angle
+      TVector2          fBeamAngleABSigma;      // beam angle fluctuation in AB (gaus dist.)
+      Bool_t            fIsRandomRP;            // flag for random reaction plane input
 
       Int_t kfToPDG(Long64_t kfCode);  // for PHITS data.
 
       ClassDef(STTransportModelEventGenerator,1);
 
 };
-
 
 #include "TObject.h"
 #include "TLorentzVector.h"

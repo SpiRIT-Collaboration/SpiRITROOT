@@ -3,6 +3,7 @@
 #include "TSystem.h"
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <vector>
 #include "TRandom.h"
 #include "STMCPoint.hh"
@@ -17,47 +18,37 @@ STMCEventTask::STMCEventTask()
   fMCEventHeader(NULL),
   fMCTriggerResponse(NULL),
   fScintillatorHitArray(NULL),
-  fBeamA(132), fBeamZ(50), fBeamE(270.),
-  fTargetA(124), fTargetZ(50)
-{}
+  fBeamVectorArray(NULL),
+  fTargetVectorArray(NULL)
+{
+}
 
 STMCEventTask::~STMCEventTask()
 {}
 
 InitStatus STMCEventTask::Init()
 {
-
+        
    FairRootManager* ioman = FairRootManager::Instance();
    fPrimaryTrackArray = (TClonesArray*) ioman->GetObject("PrimaryTrack");
    fFairMCEventHeader = (FairMCEventHeader*) ioman->GetObject("MCEventHeader.");
    fTAMCPointArray    = (TClonesArray*) ioman->GetObject("TAMCPoint");
+   if( ioman->GetBranchId("BeamVector")!=-1 && ioman->GetBranchId("TargetVector")!=-1 ){
+      fIsSetSystem=kTRUE;
+      fBeamVectorArray = (TClonesArray*) ioman->GetObject("BeamVector");
+      fTargetVectorArray = (TClonesArray*) ioman->GetObject("TargetVector");
+   }
 
    fMCEventHeader = new STMCEventHeader();
    fMCTriggerResponse = new STMCTriggerResponse();
    ioman -> Register("STMCEventHeader","ST",fMCEventHeader,fIsPersistence);
    ioman -> Register("STMCTriggerResponse","ST",fMCTriggerResponse,fIsPersistence);
 
+
    fScintillatorHitArray = new TClonesArray("STMCScintillatorHit");
 
-   fMCEventHeader -> SetBeamA(fBeamA);
-   fMCEventHeader -> SetBeamZ(fBeamZ);
-   fMCEventHeader -> SetBeamE(fBeamE);
-   fMCEventHeader -> SetTargetA(fTargetA);
-   fMCEventHeader -> SetTargetZ(fTargetZ);
 
-   TString probFileDir = TString(gSystem->Getenv("VMCWORKDIR")) + "/parameters/";
-   TString probFileName = probFileDir + fCTFileName;
-   fInProbFile = new TFile(probFileDir+"kyotoCrosstalk.root","update");
-   for(Int_t i=0; i<64; i++)
-      for(Int_t j=0; j<2; j++){
-         fGraphProb[i][j] = (TGraph*)fInProbFile->Get(Form("graphProb%d_%d",i,j));
-         fHistProb[i][j] = new TH1F(Form("fHistProb%d_%d",i,j),"",fGraphProb[i][j]->GetMaxSize(),0,fGraphProb[i][j]->GetN());
-         for(Int_t k=0; k<fGraphProb[i][j]->GetN(); k++){
-            Double_t x,y;
-            fGraphProb[i][j]->GetPoint(k,x,y);
-            fHistProb[i][j]->Fill(x,y);
-         }
-      }
+   ReadCrosstalkFile();
    
    fkB = 0.07943; // mm/MeV
    fC  = 1e-5;
@@ -72,6 +63,36 @@ InitStatus STMCEventTask::Init()
 void STMCEventTask::SetParContainers()
 {}
 
+void STMCEventTask::ReadCrosstalkFile()
+{
+   TString probFileDir = TString(gSystem->Getenv("VMCWORKDIR")) + "/parameters/";
+   std::ifstream probFile(probFileDir+"kyotoCrosstalk.dat");
+   std::string line, data;
+   Char_t delimiter = ',';
+   std::vector<Double_t> binArray, probArray;
+   std::getline(probFile,line); // header
+   for(Int_t i=0; i<64; i++)
+      for(Int_t j=0; j<2; j++){
+         binArray.clear();
+         probArray.clear();
+         std::getline(probFile,line);
+         std::istringstream binStream(line);
+         while(std::getline(binStream,data,delimiter))
+            binArray.push_back(std::stod(data));
+         std::getline(probFile,line);
+         std::istringstream probStream(line);
+         while(std::getline(probStream,data,delimiter))
+            probArray.push_back(std::stod(data));
+         fGraphProb[i][j] = new TGraph(binArray.size());
+         fHistProb[i][j] = new TH1F(Form("fHistProb%d_%d",i,j),"",binArray.size()-1,0.5*(binArray.at(0)+binArray.at(1)),0.5*(binArray.at(binArray.size()-1)+binArray.back()));
+         for(Int_t k=0; k<fGraphProb[i][j]->GetN(); k++){
+            fGraphProb[i][j]->SetPoint(k,binArray.at(k),probArray.at(k));
+            fHistProb[i][j]->Fill(binArray.at(k),probArray.at(k));
+         }
+      }
+
+}
+
 void STMCEventTask::Exec(Option_t* opt)
 {
    fMCEventHeader->Clear();
@@ -79,12 +100,17 @@ void STMCEventTask::Exec(Option_t* opt)
 
    fMCEventHeader->SetB(fFairMCEventHeader->GetB());
    TVector3 pv(fFairMCEventHeader->GetX(),fFairMCEventHeader->GetY(),fFairMCEventHeader->GetZ());
-   pv.SetMag(pv.Mag()*10.);	// cm -> mm unit.
+   pv.SetMag(pv.Mag()*10.);     // cm -> mm unit.
    fMCEventHeader->SetPrimaryVertex(pv);
    fMCEventHeader->SetBeamAngle(TVector2(fFairMCEventHeader->GetRotX(),fFairMCEventHeader->GetRotY()));
    fMCEventHeader->SetReactionPlane(fFairMCEventHeader->GetRotZ());
    fMCEventHeader->SetPrimaryTracks(fPrimaryTrackArray);
-
+   if(fIsSetSystem){
+      auto beam = (TLorentzVector*)fBeamVectorArray->At(0);
+      fMCEventHeader->SetBeamVector(*beam);
+      auto target = (TLorentzVector*)fTargetVectorArray->At(0);
+    fMCEventHeader->SetTargetVector(*target);
+   }
    std::vector<Int_t> detIDArray;  //
    for(Int_t iPoint=0; iPoint<fTAMCPointArray->GetEntries(); iPoint++){
       auto mcPoint = (STMCPoint*)fTAMCPointArray->At(iPoint);
@@ -96,18 +122,18 @@ void STMCEventTask::Exec(Option_t* opt)
       STMCScintillatorHit* paddle = nullptr;
       
       if(index==detIDArray.size()){ // new detector ID
-	 Int_t nArray = fScintillatorHitArray->GetEntries();
-	 new((*fScintillatorHitArray)[nArray]) STMCScintillatorHit();
-	 paddle = (STMCScintillatorHit*)fScintillatorHitArray->At(nArray);
-	 paddle->SetDetectorID(detID);
-	 detIDArray.push_back(detID);
+         Int_t nArray = fScintillatorHitArray->GetEntries();
+         new((*fScintillatorHitArray)[nArray]) STMCScintillatorHit();
+         paddle = (STMCScintillatorHit*)fScintillatorHitArray->At(nArray);
+         paddle->SetDetectorID(detID);
+         detIDArray.push_back(detID);
       }
       else paddle = (STMCScintillatorHit*) fScintillatorHitArray->At(index);
 
       Double_t dE = mcPoint->GetEnergyLoss()*1000.;  // GeV -> MeV
-      if(detID>=24&&detID<=83){  // kyoto bar energy deposit	
+      if(detID>=24&&detID<=83){  // kyoto bar energy deposit    
         dE *= 1./(1.+fkB*dE+fC*dE*dE);                                   // birk's quenching formula
-	     dE *= TMath::Exp(-(fTopOfBar-mcPoint->GetY()*10.)/fAttLength);   // light attenuation
+             dE *= TMath::Exp(-(fTopOfBar-mcPoint->GetY()*10.)/fAttLength);   // light attenuation
       }
 
       paddle->AddStep(dE, mcPoint);
@@ -127,32 +153,32 @@ void STMCEventTask::Exec(Option_t* opt)
       Int_t maxZ  = paddle->GetMaxZ();
 
       if(detID>=84&&detID<=86){
-	 if(maxEdepKatana<=dE){
-	    maxEdepKatana = dE;
-	    maxZKatana = maxZ;
-	 }
+         if(maxEdepKatana<=dE){
+            maxEdepKatana = dE;
+            maxZKatana = maxZ;
+         }
       }
 
-      if(detID>=24&&detID<=83&&dE>=0.5){
-	    
-	 mult++;
+      if(detID>=24&&detID<=83&&dE>=1){
+            
+         mult++;
 
-	 Int_t EasirocChannel = GetChannelFromBar(detID);
+      Int_t EasirocChannel = GetChannelFromBar(detID);
          kyotoIDArray.push_back(EasirocChannel);
-	 Int_t CTChannelCand[2]={};
-	 GetPossibleVictim(EasirocChannel,CTChannelCand);
-	 Double_t CTProb[2]={};
-	 Double_t SaturationPoint[2];
-	 for(Int_t iCT=0; iCT<2; iCT++){
-	    Int_t saturateBin = fHistProb[EasirocChannel][iCT]->FindLastBinAbove(0.5);
-	    SaturationPoint[iCT] = fHistProb[EasirocChannel][iCT]->GetBinCenter(saturateBin);
-	    if( dE<=SaturationPoint[iCT] )
-	       if( fGraphProb[EasirocChannel][iCT]->Eval(dE) > gRandom->Uniform(0,1) )
-		  kyotoCTArray.push_back(CTChannelCand[iCT]);
-	    if( dE>SaturationPoint[iCT] )
-	       if( fHistProb[EasirocChannel][iCT]->Integral(saturateBin-10,saturateBin)/10. > gRandom->Uniform(0,1) )
-		  kyotoCTArray.push_back(CTChannelCand[iCT]);
-	 }
+         Int_t CTChannelCand[2]={};
+         GetPossibleVictim(EasirocChannel,CTChannelCand);
+         Double_t CTProb[2]={};
+         Double_t SaturationPoint[2];
+         for(Int_t iCT=0; iCT<2; iCT++){
+            Int_t saturateBin = fHistProb[EasirocChannel][iCT]->FindLastBinAbove(0.5);
+            SaturationPoint[iCT] = fHistProb[EasirocChannel][iCT]->GetBinCenter(saturateBin);
+            if( dE<=SaturationPoint[iCT] )
+               if( fGraphProb[EasirocChannel][iCT]->Eval(dE) > gRandom->Uniform(0,1) )
+                  kyotoCTArray.push_back(CTChannelCand[iCT]);
+            if( dE>SaturationPoint[iCT] )
+               if( fHistProb[EasirocChannel][iCT]->Integral(saturateBin-10,saturateBin)/10. > gRandom->Uniform(0,1) )
+                  kyotoCTArray.push_back(CTChannelCand[iCT]);
+         }
       
       }
    }
@@ -164,7 +190,7 @@ void STMCEventTask::Exec(Option_t* opt)
       auto itr = std::find(kyotoIDArray.begin(), kyotoIDArray.end(), CTChannel);
       size_t index = std::distance( kyotoIDArray.begin(), itr);
       if( index==kyotoIDArray.size() ) // there are no hit in current index -> register as a crosstalk
-	 multwCT++;
+         multwCT++;
    }
    
    Bool_t isTrigger = kFALSE;
@@ -172,10 +198,10 @@ void STMCEventTask::Exec(Option_t* opt)
       isTrigger = kTRUE;
 
    fMCTriggerResponse->SetIsTrigger(isTrigger);
-   fMCTriggerResponse->SetMult(mult);
-   fMCTriggerResponse->SetMultWCT(multwCT);
-   fMCTriggerResponse->SetVetoMaxEdep(maxEdepKatana);
-   fMCTriggerResponse->SetVetoMaxZ(maxZKatana);
+   fMCTriggerResponse->SetKyotoMult(mult);
+   fMCTriggerResponse->SetKyotoMultWCT(multwCT);
+   fMCTriggerResponse->SetKatanaVetoMaxEdep(maxEdepKatana);
+   fMCTriggerResponse->SetKatanaVetoMaxZ(maxZKatana);
    fMCTriggerResponse->SetScintillatorHitArray(fScintillatorHitArray);
 
 
@@ -210,8 +236,8 @@ Int_t STMCEventTask::GetChannelFromBar(Int_t detID)
       barID = 29-barID;
       if(barID>=0&&barID<=14) barID *= 2;
       else if(barID>=15&&barID<=29){
-	 barID = barID-15;
-	 barID = 2*barID+1;
+         barID = barID-15;
+         barID = 2*barID+1;
       }
    }
    else if(barID%2!=0){
@@ -219,8 +245,8 @@ Int_t STMCEventTask::GetChannelFromBar(Int_t detID)
       barID = 29-barID;
       if(barID>=0&&barID<=14) barID = barID*2+32;
       else if(barID>=15&&barID<=29){
-	 barID = barID-15;
-	 barID = 2*barID+33;
+         barID = barID-15;
+         barID = 2*barID+33;
       }
    }
 
@@ -237,9 +263,9 @@ void STMCEventTask::GetPossibleVictim(Int_t source, Int_t *victim)
       victim[0] =source-2;
    else if( (source>=2&&source<=7) || (source>=12&&source<=21) || 
             (source>=26&&source<=29) || (source>=34&&source<=39) || 
-	    (source>=44&&source<=53) || (source>=58&&source<=61) ){
+            (source>=44&&source<=53) || (source>=58&&source<=61) ){
       victim[0] = source-2;
-      victim[1] = source+2;
+     victim[1] = source+2;
    }
    else if( source==8 || source==9 || source==40 || source==41 ){
       victim[0] = source-2;

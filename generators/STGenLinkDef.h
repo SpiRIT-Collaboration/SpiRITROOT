@@ -10,6 +10,7 @@
 #pragma link C++ class STPHITSEventGenerator+;
 #pragma link C++ class Particle+;
 
+#pragma link C++ class STSingleTrackGenerator+;
 #pragma link C++ class STTransportModelEventGenerator+;
 #pragma link C++ class UrQMDParticle+;
 #pragma link C++ class PHITSParticle+;
