@@ -8,7 +8,7 @@ ST_ClusterNum_DB::ST_ClusterNum_DB()
   MomentumNum_Plus = 0;
   MomentumNum_Minus = 0;
   ThetaBin_Unit = 90.0/THETANUM;
-  PhiBin_Unit = 360/PHINUM;
+  PhiBin_Unit = 360.0/PHINUM;
   
   // the below is the default value of momentum range.
   Momentum_Range_Plus[0] = 50;
@@ -68,7 +68,7 @@ void ST_ClusterNum_DB::ReadDB(string FileName_Tem)
 {
   f1_DB_ClusterNum = new TFile(FileName_Tem.c_str(),"Update");
   char NameTem[200];
-  
+  cout<<"--> Reading File: "<<FileName_Tem<<" ..."<<endl;
   cout<<"--->Download DB for positive charge!"<<endl;
   for(int iMomentum=0;iMomentum<MomentumNum_Plus;iMomentum++)
   {
@@ -143,6 +143,7 @@ double ST_ClusterNum_DB::GetClusterNum(int Charge_Tem, double Theta_Tem, double 
     if(IsDebug==1) { cout<<"Current momentum: "<<Momentum_Tem<<" Charge: "<<Charge_Tem<<", the range of positive particel :["<<Momentum_Range_Plus[0]<<" , "<<Momentum_Range_Plus[1]<<")."<<endl; }
     return 0; 
   }
+  
   if(Charge_Tem<0 && (Momentum_Tem/fabs(Charge_Tem)>Momentum_Range_Minus[1] || Momentum_Tem/fabs(Charge_Tem)<Momentum_Range_Minus[0])) 
   { 
     if(IsDebug==1) { cout<<"Current momentum: "<<Momentum_Tem<<" Charge: "<<Charge_Tem<<", the range of negative particel :["<<Momentum_Range_Minus[0]<<" , "<<Momentum_Range_Minus[1]<<")."<<endl; }
@@ -154,11 +155,13 @@ double ST_ClusterNum_DB::GetClusterNum(int Charge_Tem, double Theta_Tem, double 
     if(IsDebug==1) { cout<<"Theta = "<<Theta_Tem<<", which is already out of the range in the DB! => (0,90) is the range in the DB."<<endl; }
     return 0;
   }
+  
   if(Phi_Tem>180 || Phi_Tem<-180) 
   { 
     if(IsDebug==1) { cout<<"Phi = "<<Phi_Tem<< ", which is already out of the range in the DB! => (-180,180) is the range in the DB."<<endl; }
     return 0;
   }
+  
   Momentum_Tem = fabs(Momentum_Tem/Charge_Tem);
   
   int ThetaIndex = (int) (Theta_Tem/ThetaBin_Unit);
@@ -199,7 +202,7 @@ double ST_ClusterNum_DB::GetClusterNum(int Charge_Tem, double Theta_Tem, double 
   }
   else
   {
-     if(IsDebug==1) { cout<<"Charge "<<Charge_Tem<<" Not Existed!"<<endl; return 0; }
+     if(IsDebug==1) { cout<<"Charge "<<Charge_Tem<<" Not Existed in the DB!"<<endl; return 0; }
   }
 }
 // most of time we want to input the momentum vector

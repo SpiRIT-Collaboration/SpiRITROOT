@@ -21,7 +21,7 @@
 using namespace std;
 using namespace TMath;
 
-#define	THETANUM	45
+#define	THETANUM	90
 #define PHINUM		180
 #define MaxMomentumNum_Plus	100
 #define MaxMomentumNum_Minus	100
