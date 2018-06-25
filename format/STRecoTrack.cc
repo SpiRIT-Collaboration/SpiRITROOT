@@ -21,4 +21,20 @@ void STRecoTrack::Clear(Option_t *option)
   fPosKatana.SetXYZ(0,0,0);
   fPosNeuland.SetXYZ(0,0,0);
   fClusterIDArray.clear();
+
+  fNumClusters = 0;
+  fNumClusters90 = 0;
+
+  fHelixChi2R = 0;
+  fHelixChi2X = 0;
+  fHelixChi2Y = 0;
+  fHelixChi2Z = 0;
+
+  fTrackLength = 0;
+  fNDF = 0;
+  fChi2 = 0;
+  fChi2R = 0;
+  fChi2X = 0;
+  fChi2Y = 0;
+  fChi2Z = 0;
 }
