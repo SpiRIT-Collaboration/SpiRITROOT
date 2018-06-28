@@ -93,6 +93,7 @@ class STHelixTrackFinder
     */
     void SetCylinderCut(TVector3 center, Double_t radius, Double_t zLength, Double_t margin);
     void SetSphereCut(TVector3 center, Double_t radius, Double_t margin);
+    void SetEllipsoidCut(TVector3 center, TVector3 radii, Double_t margin);
 
   private:
     /** 
@@ -224,6 +225,7 @@ class STHelixTrackFinder
     Double_t fCRadius = -1;       //< Radius of cylinder
     Double_t fZLength = -1;       //< Length of cylinder
     Double_t fSRadius = -1;       //< Radius of sphere
+    TVector3 fERadii = TVector3(-1, -1, -1);  //< Radii of ellipsoid
     Double_t fCutMargin = -1;     //< Cut margin for cluster cut
 
   ClassDef(STHelixTrackFinder, 3)
