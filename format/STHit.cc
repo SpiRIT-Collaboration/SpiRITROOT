@@ -41,6 +41,8 @@ STHit::STHit(STHit *hit)
   fDy = hit -> GetDy();
   fDz = hit -> GetDz();
 
+  fCharge = hit -> GetCharge();
+
   fRow = hit -> GetRow();
   fLayer = hit -> GetLayer();
   fTb = hit -> GetTb();
@@ -61,9 +63,14 @@ void STHit::Clear(Option_t *)
 
   SetHit(-1, 0, 0, -1000, 0);
 
+  fX = 0;
+  fY = 0;
+  fZ = 0;
   fDx = 0.8;
   fDy = 0.22;
   fDz = 1.2;
+
+  fCharge = 0;
 
   fRow = -1;
   fLayer = -1;

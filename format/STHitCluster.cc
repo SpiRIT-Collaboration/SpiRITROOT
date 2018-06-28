@@ -59,6 +59,8 @@ void STHitCluster::Clear(Option_t *)
   fDy = 0;
   fDz = 0;
 
+  fCharge = 0;
+
   fCovMatrix.ResizeTo(3, 3);
   for (Int_t iElem = 0; iElem < 9; iElem++)
     fCovMatrix(iElem/3, iElem%3) = 0;
