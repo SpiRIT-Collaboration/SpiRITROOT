@@ -49,6 +49,9 @@ void STHelixTrackingTask::SetCylinderCut(TVector3 center, Double_t radius, Doubl
   if (fSRadius != -1) {
     cout << "== [STHelixTrackingTask] SetSphereCut() was called before somewhere. SphereCut will be ignored." << endl;
     fSRadius = -1;
+  } else if (fERadii != TVector3(-1, -1, -1)) {
+    cout << "== [STHelixTrackFinder] SetEllipsoidCut() was called before somewhere. EllipsoidCut will be ignored." << endl;
+    fERadii = TVector3(-1, -1, -1);
   }
 }
 
@@ -61,7 +64,25 @@ void STHelixTrackingTask::SetSphereCut(TVector3 center, Double_t radius, Double_
     cout << "== [STHelixTrackingTask] SetCylinderCut() was called before somewhere. CylinderCut will be ignored." << endl;
     fCRadius = -1;
     fZLength = -1;
+  } else if (fERadii != TVector3(-1, -1, -1)) {
+    cout << "== [STHelixTrackFinder] SetEllipsoidCut() was called before somewhere. EllipsoidCut will be ignored." << endl;
+    fERadii = TVector3(-1, -1, -1);
   }
+}
+
+void STHelixTrackingTask::SetEllipsoidCut(TVector3 center, TVector3 radii, Double_t margin) {
+  fCutCenter = center;
+  fERadii = radii;
+  fCutMargin = margin;
+
+  if (fSRadius != -1) {
+    cout << "== [STHelixTrackingTask] SetSphereCut() was called before somewhere. SphereCut will be ignored." << endl;
+    fSRadius = -1;
+  } else if (fCRadius != -1 && fZLength != -1) {
+    cout << "== [STHelixTrackingTask] SetCylinderCut() was called before somewhere. CylinderCut will be ignored." << endl;
+    fCRadius = -1;
+    fZLength = -1;
+  } 
 }
 
 STHelixTrackFinder *STHelixTrackingTask::GetTrackFinder() { return fTrackFinder; }
@@ -90,6 +111,8 @@ InitStatus STHelixTrackingTask::Init()
     fTrackFinder -> SetCylinderCut(fCutCenter, fCRadius, fZLength, fCutMargin);
   else if (fSRadius != -1)
     fTrackFinder -> SetSphereCut(fCutCenter, fSRadius, fCutMargin);
+  else if (fERadii != TVector3(-1, -1, -1))
+    fTrackFinder -> SetEllipsoidCut(fCutCenter, fERadii, fCutMargin);
 
   if (fRecoHeader != nullptr) {
     fRecoHeader -> SetPar("helix_numTracksLowLimit", fNumTracksLowLimit);
