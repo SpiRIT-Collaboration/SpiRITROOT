@@ -168,6 +168,7 @@ class STHelixTrackFinder
      * Clusterize Hits
      */
     bool HitClustering(STHelixTrack *track);
+    bool HitClusteringMar4(STHelixTrack *helix);
 
     /**
      * Create new cluster with given hit.

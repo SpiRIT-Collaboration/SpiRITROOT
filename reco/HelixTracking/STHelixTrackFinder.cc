@@ -225,7 +225,8 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
       De_Saturate(track);
 
     track -> FinalizeHits();
-    HitClustering(track);
+//    HitClustering(track);
+    HitClusteringMar4(track);
 
     track -> FinalizeClusters();
   }
@@ -731,6 +732,214 @@ STHelixTrackFinder::HitClustering(STHelixTrack *helix)
   }
 
   fHitClusterArray -> Compress();
+
+  return true;
+}
+
+bool
+STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
+{
+  helix -> SortHitsByTimeOrder();
+
+  auto helixHits = helix -> GetHitArray();
+  auto numHits = helixHits -> size();
+
+  auto CheckBuildByLayer = [helix](STHit *hit) {
+    TVector3 q;
+    Double_t alpha;
+    helix -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
+
+    auto direction = helix -> Direction(alpha);
+    Double_t angle = TMath::ATan2(TMath::Abs(direction.Z()), direction.X());
+    if (angle > TMath::ATan2(1,1) && angle < TMath::ATan2(1,-1))
+      return true;
+    else
+    return false;
+  };
+
+  auto SetClusterLength = [helix](STHitCluster *cluster) {
+    auto row = cluster -> GetRow();
+    auto layer = cluster -> GetLayer();
+    auto alpha = helix -> AlphaAtPosition(cluster -> GetPosition());
+    Double_t length;
+    TVector3 q0;
+    TVector3 q1;
+    if (layer == -1) {
+      Double_t x0 = (row)*8.-432.;
+      Double_t x1 = (row+1)*8.-432.;
+      length = 1;
+      helix -> ExtrapolateToX(x0, alpha, q0);
+      helix -> ExtrapolateToX(x1, alpha, q1);
+      length = TMath::Abs(helix -> Map(q0).Z() - helix -> Map(q1).Z());
+    } else {
+      Double_t z0 = (layer)*12.;
+      Double_t z1 = (layer+1)*12.;
+      helix -> ExtrapolateToZ(z0, alpha, q0);
+      helix -> ExtrapolateToZ(z1, alpha, q1);
+      length = TMath::Abs(helix -> Map(q0).Z() - helix -> Map(q1).Z());
+    }
+    cluster -> SetLength(length);
+  };
+
+  bool buildNewCluster = true;
+  auto curHit = helixHits -> at(0);
+  bool buildByLayer = CheckBuildByLayer(curHit);
+
+  STHitCluster *lastCluster = nullptr;
+  lastCluster = NewCluster(curHit);
+
+  Int_t rowMin = curHit -> GetRow();
+  Int_t rowMax = curHit -> GetRow();
+  Int_t layerMin = curHit -> GetLayer();
+  Int_t layerMax = curHit -> GetLayer();
+
+  if (buildByLayer) {
+    layerMin = layerMin = 0;
+    layerMin = layerMax = -1;
+    lastCluster -> SetRow(-1);
+    lastCluster -> SetLayer(curHit -> GetLayer());
+  } else {
+    rowMin = rowMin = 0;
+    rowMin = rowMax = -1;
+    lastCluster -> SetRow(curHit -> GetRow());
+    lastCluster -> SetLayer(-1);
+  }
+  SetClusterLength(lastCluster);
+
+  std::vector<STHitCluster *> buildingClusters;
+  buildingClusters.push_back(lastCluster);
+
+  for (auto iHit = 1; iHit < numHits; iHit++)
+  {
+    curHit = helixHits -> at(iHit);
+
+    auto row = curHit -> GetRow();
+    auto layer = curHit -> GetLayer();
+
+    if (!buildNewCluster)
+    {
+      if (buildByLayer) {
+        if (row < rowMin || row > rowMax) {
+          buildNewCluster = true;
+          layerMin = layer;
+          layerMax = layer;
+        }
+      } else {
+        if (layer < layerMin || layer > layerMax) {
+          buildNewCluster = true;
+          rowMin = row;
+          rowMax = row;
+        }
+      }
+
+      if (buildNewCluster) {
+        buildingClusters.clear();
+        buildByLayer = !buildByLayer;
+      }
+    }
+
+    if (buildByLayer)
+    {
+      bool createNewCluster = true;
+      if (layer < layerMin || layer > layerMax) {
+        for (auto cluster : buildingClusters) {
+          if (layer == cluster -> GetLayer()) {
+            createNewCluster = false;
+            cluster -> AddHit(curHit);
+          }
+        }
+      } else
+        createNewCluster = false;
+
+      if (buildNewCluster) {
+        if (row < rowMin) rowMin = row;
+        if (row > rowMax) rowMax = row;
+      } else
+        createNewCluster = false;
+
+      if (createNewCluster) {
+        if (buildByLayer !=  CheckBuildByLayer(curHit)) {
+          buildNewCluster = false;
+          lastCluster = nullptr;
+        }
+        else {
+          if (lastCluster != nullptr) {
+            helix -> AddHitCluster(lastCluster);
+            lastCluster -> SetIsStable(true);
+          }
+          lastCluster = NewCluster(curHit);
+          lastCluster -> SetRow(-1);
+          lastCluster -> SetLayer(layer);
+          SetClusterLength(lastCluster);
+          buildingClusters.push_back(lastCluster);
+        }
+      }
+    }
+    else
+    {
+      bool createNewCluster = true;
+      if (row < rowMin || row > rowMax) {
+        for (auto cluster : buildingClusters) {
+          if (row == cluster -> GetRow()) {
+            createNewCluster = false;
+            cluster -> AddHit(curHit);
+          }
+        }
+      } else
+        createNewCluster = false;
+
+      if (buildNewCluster) {
+        if (layer < layerMin) layerMin = layer;
+        if (layer > layerMax) layerMax = layer;
+      } else
+        createNewCluster = false;
+
+      if (createNewCluster) {
+        if (buildByLayer !=  CheckBuildByLayer(curHit)) {
+          buildNewCluster = false;
+          lastCluster = nullptr;
+        }
+        else {
+          if (lastCluster != nullptr) {
+            helix -> AddHitCluster(lastCluster);
+            lastCluster -> SetIsStable(true);
+          }
+          lastCluster = NewCluster(curHit);
+          lastCluster -> SetRow(row);
+          lastCluster -> SetLayer(-1);
+          SetClusterLength(lastCluster);
+          buildingClusters.push_back(lastCluster);
+        }
+      }
+    }
+  }
+
+  Int_t numCluster = fHitClusterArray -> GetEntries();
+  for (auto iCluster = 0; iCluster < numCluster; iCluster++)
+  {
+    auto cluster = (STHitCluster *) fHitClusterArray -> At(iCluster);
+
+    if (cluster -> IsStable()) {
+      auto x = cluster -> GetPosition().X();
+      auto y = cluster -> GetPosition().Y();
+      auto z = cluster -> GetPosition().Z();
+
+      if (x >= fCCLeft || x <= fCCRight || y >= fCCTop || y <= fCCBottom)
+        cluster -> SetIsStable(false);
+      else if (z < 20)
+        cluster -> SetIsStable(false);
+    }
+  }
+
+  if (helix -> GetNumClusters() < 5) {
+    helix -> SetIsBad();
+    return false;
+  }
+
+  if (fFitter -> FitCluster(helix) == false) {
+    fFitter -> Fit(helix);
+    helix -> SetIsLine();
+  }
 
   return true;
 }
