@@ -920,13 +920,25 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
     auto cluster = (STHitCluster *) fHitClusterArray -> At(iCluster);
 
     if (cluster -> IsStable()) {
-      auto x = cluster -> GetPosition().X();
-      auto y = cluster -> GetPosition().Y();
-      auto z = cluster -> GetPosition().Z();
+      auto clusterPos = cluster -> GetPosition();
+      auto x = clusterPos.X();
+      auto y = clusterPos.Y();
+      auto z = clusterPos.Z();
 
-      if (x >= fCCLeft || x <= fCCRight || y >= fCCTop || y <= fCCBottom)
+      auto rVec = clusterPos - fCutCenter;
+      auto rPerp = rVec.Perp();
+      auto rMag = rVec.Mag();
+      rVec = TVector3(rVec.X()/(fERadii.X() + fCutMargin), rVec.Y()/(fERadii.Y() + fCutMargin), rVec.Z()/(fERadii.Z() + fCutMargin));
+
+      if (z < 20)
         cluster -> SetIsStable(false);
-      else if (z < 20)
+      else if (x >= fCCLeft || x <= fCCRight || y >= fCCTop || y <= fCCBottom)
+        cluster -> SetIsStable(false);
+      else if (fZLength != -1 && fCRadius != -1 && z <= fZLength + fCutMargin && rPerp <= fCRadius + fCutMargin)
+        cluster -> SetIsStable(false);
+      else if (fSRadius != -1 && rMag <= fSRadius + fCutMargin)
+        cluster -> SetIsStable(false);
+      else if (fERadii != TVector3(-1, -1, -1) && rVec.Mag() <= 1)
         cluster -> SetIsStable(false);
     }
   }
