@@ -59,6 +59,10 @@ class STGenfitTest2
     /// If extrapolation success, return true and set 'position(mm)'. If it fails, return false.
     bool ExtrapolateTo(TVector3 to, TVector3 &position);
 
+    /// Passed track is extrapolated to 'to(mm)'.
+    /// If extrapolation success, return true and set 'position(mm)'. If it fails, return false.
+    bool ExtrapolateTo(genfit::Track *gfTrack, TVector3 to, TVector3 &position);
+
     Int_t DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Double_t &effCurvature1, Double_t &effCurvature2, Double_t &effCurvature3, bool ignoreFirst = false);
 
   private:
