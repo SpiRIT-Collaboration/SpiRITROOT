@@ -22,7 +22,11 @@ class STHelixTrackingTask : public STRecoTask
     void SetNumTracksLowLimit(Int_t limit);
     void SetClusteringOption(Int_t opt);
     void SetSaturationOption(Int_t opt);
+
     void SetClusterCutLRTB(Double_t left, Double_t right, Double_t top, Double_t bottom);
+    void SetCylinderCut(TVector3 center, Double_t radius, Double_t zLength, Double_t margin);
+    void SetSphereCut(TVector3 center, Double_t radius, Double_t margin);
+    void SetEllipsoidCut(TVector3 center, TVector3 radii, Double_t margin);
   
     STHelixTrackFinder *GetTrackFinder();
 
@@ -43,6 +47,13 @@ class STHelixTrackingTask : public STRecoTask
     Double_t fCCRight = -1000;
     Double_t fCCTop = 1000;
     Double_t fCCBottom = -1000;
+
+    TVector3 fCutCenter = TVector3(-9999, -9999, -9999);
+    Double_t fCRadius = -1;
+    Double_t fZLength = -1;
+    Double_t fSRadius = -1;
+    TVector3 fERadii = TVector3(-1, -1, -1);
+    Double_t fCutMargin = -1;
 
   ClassDef(STHelixTrackingTask, 2)
 };

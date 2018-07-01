@@ -136,8 +136,29 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
   fBadHits -> clear();
 
   Int_t numTotalHits = hitArray -> GetEntries();
-  for (Int_t iHit = 0; iHit < numTotalHits; iHit++)
+  for (Int_t iHit = 0; iHit < numTotalHits; iHit++) {
+    auto hit = (STHit *) hitArray -> At(iHit);
+    if (fCRadius != -1 && fZLength != -1) {
+      auto hitPos = hit -> GetPosition();
+      auto r = (fCutCenter - hitPos).Perp();
+      auto z = hitPos.Z();
+      if (r <= fCRadius && z <= fZLength)
+        continue;
+    } else if (fSRadius != -1) {
+      auto hitPos = hit -> GetPosition();
+      auto r = (fCutCenter - hitPos).Mag();
+      if (r <= fCRadius)
+        continue;
+    } else if (fERadii != TVector3(-1, -1, -1)) {
+      auto hitPos = hit -> GetPosition();
+      auto rVec = (fCutCenter - hitPos);
+      rVec = TVector3(rVec.X()/fERadii.X(), rVec.Y()/fERadii.Y(), rVec.Z()/fERadii.Z());
+      if (rVec.Mag() <= 1)
+        continue;
+    }
+
     fEventMap -> AddHit((STHit *) hitArray -> At(iHit));
+  }
 
   while(1)
   {
@@ -679,8 +700,15 @@ STHelixTrackFinder::HitClustering(STHelixTrack *helix)
   for (auto iCluster = idxCluster; iCluster < numClusters; ++iCluster) {
     auto cluster = (STHitCluster *) fHitClusterArray -> At(iCluster);
 
-    auto x = cluster -> GetPosition().X();
-    auto y = cluster -> GetPosition().Y();
+    auto clusterPos = cluster -> GetPosition();
+    auto x = clusterPos.X();
+    auto y = clusterPos.Y();
+    auto z = clusterPos.Z();
+
+    auto rVec = clusterPos - fCutCenter;
+    auto rPerp = rVec.Perp();
+    auto rMag = rVec.Mag();
+    rVec = TVector3(rVec.X()/(fERadii.X() + fCutMargin), rVec.Y()/(fERadii.Y() + fCutMargin), rVec.Z()/(fERadii.Z() + fCutMargin));
 
     if (cluster -> GetClusterID() == -1)
       fHitClusterArray -> Remove(cluster);
@@ -689,6 +717,12 @@ STHelixTrackFinder::HitClustering(STHelixTrack *helix)
     else if (cluster -> IsRowCluster() && cluster -> GetDz() < 1.e-2)
       fHitClusterArray -> Remove(cluster);
     else if (x >= fCCLeft || x <= fCCRight || y >= fCCTop || y <= fCCBottom)
+      fHitClusterArray -> Remove(cluster);
+    else if (fZLength != -1 && fCRadius != -1 && z <= fZLength + fCutMargin && rPerp <= fCRadius + fCutMargin)
+      fHitClusterArray -> Remove(cluster);
+    else if (fSRadius != -1 && rMag <= fSRadius + fCutMargin)
+      fHitClusterArray -> Remove(cluster);
+    else if (fERadii != TVector3(-1, -1, -1) && rVec.Mag() <= 1)
       fHitClusterArray -> Remove(cluster);
     else {
       cluster -> SetClusterID(idxCluster++);
@@ -938,6 +972,52 @@ void STHelixTrackFinder::SetClusterCutLRTB(Double_t left, Double_t right, Double
   fCCTop = top;
   fCCBottom = bottom;
 }
+
+void STHelixTrackFinder::SetCylinderCut(TVector3 center, Double_t radius, Double_t zLength, Double_t margin) {
+  fCutCenter = center;
+  fCRadius = radius;
+  fZLength = zLength;
+  fCutMargin = margin;
+
+  if (fSRadius != -1) {
+    cout << "== [STHelixTrackFinder] SetSphereCut() was called before somewhere. SphereCut will be ignored." << endl;
+    fSRadius = -1;
+  } else if (fERadii != TVector3(-1, -1, -1)) {
+    cout << "== [STHelixTrackFinder] SetEllipsoidCut() was called before somewhere. EllipsoidCut will be ignored." << endl;
+    fERadii = TVector3(-1, -1, -1);
+  }
+}
+
+void STHelixTrackFinder::SetSphereCut(TVector3 center, Double_t radius, Double_t margin) {
+  fCutCenter = center;
+  fSRadius = radius;
+  fCutMargin = margin;
+
+  if (fCRadius != -1 && fZLength != -1) {
+    cout << "== [STHelixTrackFinder] SetCylinderCut() was called before somewhere. CylinderCut will be ignored." << endl;
+    fCRadius = -1;
+    fZLength = -1;
+  } else if (fERadii != TVector3(-1, -1, -1)) {
+    cout << "== [STHelixTrackFinder] SetEllipsoidCut() was called before somewhere. EllipsoidCut will be ignored." << endl;
+    fERadii = TVector3(-1, -1, -1);
+  }
+}
+
+void STHelixTrackFinder::SetEllipsoidCut(TVector3 center, TVector3 radii, Double_t margin) {
+  fCutCenter = center;
+  fERadii = radii;
+  fCutMargin = margin;
+
+  if (fSRadius != -1) {
+    cout << "== [STHelixTrackFinder] SetSphereCut() was called before somewhere. SphereCut will be ignored." << endl;
+    fSRadius = -1;
+  } else if (fCRadius != -1 && fZLength != -1) {
+    cout << "== [STHelixTrackFinder] SetCylinderCut() was called before somewhere. CylinderCut will be ignored." << endl;
+    fCRadius = -1;
+    fZLength = -1;
+  } 
+}
+
 /*
 double STHelixTrackFinder::PRF(double x, double par[])
 {
