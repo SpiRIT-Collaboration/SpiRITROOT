@@ -7,34 +7,34 @@
 
 class STMCScintillatorHit : public TObject
 {
-   public:
-      STMCScintillatorHit();
-      virtual ~STMCScintillatorHit();
+  public:
+    STMCScintillatorHit();
+    virtual ~STMCScintillatorHit();
 
-      STMCScintillatorHit(const STMCScintillatorHit&);
-
-
-      /** modifier **/
-      void SetDetectorID(Int_t id)   { fDetectorID = id; }
-      void SetTotalEdep(Double_t de) { fTotalEdep = de; }
-      void SetMaxZ(Int_t z)          { fMaxZ = z; }
+    STMCScintillatorHit(const STMCScintillatorHit&);
 
 
-      /** accessor **/
-      Int_t GetDetectorID()   { return fDetectorID; }
-      Double_t GetTotalEdep() { return fTotalEdep; }
-      Int_t GetMaxZ()         { return fMaxZ; }
+    /** modifier **/
+    void SetDetectorID(Int_t id)   { fDetectorID = id; }
+    void SetTotalEdep(Double_t de) { fTotalEdep = de; }
+    void SetMaxZ(Int_t z)          { fMaxZ = z; }
 
-      void AddStep(STMCPoint *point);
-      void AddStep(Double_t edep, STMCPoint *point);
 
-   private:
-      Int_t     fDetectorID;
-      Double_t  fTotalEdep;
-      Int_t     fMaxZ;
-      std::vector<STMCPoint> fMCPointArray;
+    /** accessor **/
+    Int_t GetDetectorID()   { return fDetectorID; }
+    Double_t GetTotalEdep() { return fTotalEdep; }
+    Int_t GetMaxZ()         { return fMaxZ; }
 
-      ClassDef(STMCScintillatorHit,1);
+    void AddStep(STMCPoint *point);
+    void AddStep(Double_t edep, STMCPoint *point);
+
+  private:
+    Int_t     fDetectorID;
+    Double_t  fTotalEdep;
+    Int_t     fMaxZ;
+    std::vector<STMCPoint> fMCPointArray;
+
+    ClassDef(STMCScintillatorHit,1);
 
 };
 

@@ -3,7 +3,7 @@
 #include "TDatabasePDG.h"
 
 STMCScintillatorHit::STMCScintillatorHit()
-: TObject(),
+:TObject(),
   fDetectorID(-1),
   fTotalEdep(0.),
   fMaxZ(-1)
@@ -16,7 +16,7 @@ STMCScintillatorHit::~STMCScintillatorHit()
 }
 
 STMCScintillatorHit::STMCScintillatorHit(const STMCScintillatorHit& hit)
-: TObject(hit),
+:TObject(hit),
   fDetectorID(hit.fDetectorID),
   fTotalEdep(hit.fTotalEdep),
   fMaxZ(hit.fMaxZ),
@@ -26,39 +26,39 @@ STMCScintillatorHit::STMCScintillatorHit(const STMCScintillatorHit& hit)
 
 void STMCScintillatorHit::AddStep(STMCPoint *point)
 {
-   if(point->GetEnergyLoss()<=0.) return;
+  if(point->GetEnergyLoss()<=0.) return;
 
-   fTotalEdep += point->GetEnergyLoss();
-   fMCPointArray.push_back(*point);
+  fTotalEdep += point->GetEnergyLoss();
+  fMCPointArray.push_back(*point);
 
-   Int_t pdg = point->GetPDG();
-   Int_t z;
-   if(pdg==2212) z = 1;
-   else if(pdg>10000) z = (pdg%10000)/10;
-   else if(TDatabasePDG::Instance()->GetParticle(pdg)) z = TDatabasePDG::Instance()->GetParticle(pdg)->Charge()/3.;  // |e|/3 unit. 
-   else z = 0;
-   z = z>=GetMaxZ() ? z : GetMaxZ();
-   SetMaxZ(z);
+  Int_t pdg = point->GetPDG();
+  Int_t z;
+  if(pdg==2212) z = 1;
+  else if(pdg>10000) z = (pdg%10000)/10;
+  else if(TDatabasePDG::Instance()->GetParticle(pdg)) z = TDatabasePDG::Instance()->GetParticle(pdg)->Charge()/3.;  // |e|/3 unit. 
+  else z = 0;
+  z = z>=GetMaxZ() ? z : GetMaxZ();
+  SetMaxZ(z);
 
 }
 
 void STMCScintillatorHit::AddStep(Double_t edep, STMCPoint *point)
 {
-   if(point->GetEnergyLoss()<=0.) return;
+  if(point->GetEnergyLoss()<=0.) return;
 
-   fTotalEdep += edep;
+  fTotalEdep += edep;
 
-   fMCPointArray.push_back(*point);
+  fMCPointArray.push_back(*point);
 
 
-   Int_t pdg = point->GetPDG();
-   Int_t z;
-   if(pdg==2212) z = 1;
-   else if(pdg>10000) z = (pdg%10000)/10;
-   else if(TDatabasePDG::Instance()->GetParticle(pdg)) z = TDatabasePDG::Instance()->GetParticle(pdg)->Charge()/3.;  // |e|/3 unit. 
-   else z = 0;
-   z = z>=GetMaxZ() ? z : GetMaxZ();
-   SetMaxZ(z);
+  Int_t pdg = point->GetPDG();
+  Int_t z;
+  if(pdg==2212) z = 1;
+  else if(pdg>10000) z = (pdg%10000)/10;
+  else if(TDatabasePDG::Instance()->GetParticle(pdg)) z = TDatabasePDG::Instance()->GetParticle(pdg)->Charge()/3.;  // |e|/3 unit. 
+  else z = 0;
+  z = z>=GetMaxZ() ? z : GetMaxZ();
+  SetMaxZ(z);
 
 }
 

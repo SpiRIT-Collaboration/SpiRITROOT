@@ -25,20 +25,20 @@
 using namespace std;
 
 STElectronicsTask::STElectronicsTask()
-   :FairTask("STElectronicsTask"),
-   fIsPersistence(kFALSE),
-   fEventID(0),
-   fUseSaturationTemplate(kTRUE),
-   fSaturatedPulseFileName("saturatedPulse.dat"),
-   fADCConstant(0.2),
-   fADCDynamicRange(120.e-15),
-   fADCMax(4095),
-   fADCMaxUseable(4095),
-   fPedestalMean(300),
-   fPedestalSigma(4),
-   fPedestalSubtracted(kTRUE),
-   fSignalPolarity(1),
-	fKillAfterSaturation(kTRUE)
+:FairTask("STElectronicsTask"),
+  fIsPersistence(kFALSE),
+  fEventID(0),
+  fUseSaturationTemplate(kTRUE),
+  fSaturatedPulseFileName("saturatedPulse.dat"),
+  fADCConstant(0.2),
+  fADCDynamicRange(120.e-15),
+  fADCMax(4095),
+  fADCMaxUseable(4095),
+  fPedestalMean(300),
+  fPedestalSigma(4),
+  fPedestalSubtracted(kTRUE),
+  fSignalPolarity(1),
+  fKillAfterSaturation(kTRUE)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STElectronicsTask");
 }
@@ -78,14 +78,14 @@ STElectronicsTask::Init()
 
   Double_t coulombToEV = 6.241e18; 
   Double_t pulserConstant = fADCConstant*(fADCMaxUseable-fPedestalMean)/(fADCDynamicRange*coulombToEV);
-  for(Int_t i=0; i<200; i++) 
-	 fPulser[fNBinPulser++] = pulserConstant * stpulse -> Pulse(i, 1, 0);
+  for(Int_t i=0; i<200; i++)
+    fPulser[fNBinPulser++] = pulserConstant * stpulse -> Pulse(i, 1, 0);
 
   fNBinSaturatedPulse=0;
   STPulse *satpulse = new STPulse(fSaturatedPulseFileName);
   Int_t ADCdynamicrange = fPedestalSubtracted ? fADCMaxUseable-fPedestalMean : fADCMaxUseable;
   for(Int_t i=0; i<256; i++)
-	 fSaturatedPulse[fNBinSaturatedPulse++] = satpulse -> Pulse(i, ADCdynamicrange, 0);
+    fSaturatedPulse[fNBinSaturatedPulse++] = satpulse -> Pulse(i, ADCdynamicrange, 0);
 
   fRawEvent = new ((*fRawEventArray)[0]) STRawEvent();
 
@@ -98,7 +98,7 @@ STElectronicsTask::Exec(Option_t* option)
   fLogger->Debug(MESSAGE_ORIGIN,"Exec of STElectronicsTask");
 
   if(!fRawEventArray) 
-	 fLogger->Fatal(MESSAGE_ORIGIN,"No RawEventArray!");
+    fLogger->Fatal(MESSAGE_ORIGIN,"No RawEventArray!");
 
   fPPEvent  = (STRawEvent*) fPPEventArray -> At(0);
 
@@ -113,92 +113,92 @@ STElectronicsTask::Exec(Option_t* option)
   Double_t adcO[512];
 
   for(Int_t iPad=0; iPad<nPads; iPad++) {
-	 padI = fPPEvent -> GetPad(iPad);
-	 adcI = padI -> GetADC();
-	 for(Int_t iTB=0; iTB<fNTBs; iTB++) adcO[iTB]=0;
-	 for(Int_t iTB=0; iTB<fNTBs; iTB++) {
-		Double_t val = adcI[iTB];
-		Int_t jTB=iTB;
-		Int_t kTB=0;
-		while(jTB<fNTBs && kTB<fNBinPulser)
-		  adcO[jTB++] += val*fPulser[kTB++];
+    padI = fPPEvent -> GetPad(iPad);
+    adcI = padI -> GetADC();
+    for(Int_t iTB=0; iTB<fNTBs; iTB++) adcO[iTB]=0;
+    for(Int_t iTB=0; iTB<fNTBs; iTB++) {
+      Double_t val = adcI[iTB];
+      Int_t jTB=iTB;
+      Int_t kTB=0;
+      while(jTB<fNTBs && kTB<fNBinPulser)
+	adcO[jTB++] += val*fPulser[kTB++];
 
-	 }
-
-
-	 Double_t satThreshold;
-	 if(fPedestalSubtracted)
-		satThreshold = fADCMaxUseable-fPedestalMean;
-	 else{
-		satThreshold = fADCMaxUseable;
-		for(Int_t iTB=0; iTB<fNTBs; iTB++)
-		  adcO[iTB]+=fPedestalMean;
-	 }
-
-	 // handling the saturation.
-	 if(fUseSaturationTemplate){
-		if(fKillAfterSaturation){
-
-		  Int_t satTB=-1;
-		  if(adcO[0]>satThreshold&&adcO[1]>satThreshold)
-			 satTB=0;
-
-		  Int_t currentADC, previousADC, nextADC;
-		  for(Int_t iTB=1; iTB<fNTBs-1; iTB++){
-			 currentADC=adcO[iTB];
-			 previousADC=adcO[iTB-1];
-			 nextADC=adcO[iTB+1];
-
-			 if(previousADC<=satThreshold && currentADC>satThreshold && nextADC>satThreshold){
-				satTB=iTB;
-				break;		// search first saturation point.
-			 }
-		  }
-
-		  if(satTB!=-1){	// found saturation.
-			 Int_t tempIndex=51;	// saturation moment of the template.
-			 while( satTB<fNTBs && tempIndex<fNBinSaturatedPulse )
-				adcO[satTB++] = fSaturatedPulse[tempIndex++];
-			 while(satTB<fNTBs)
-				adcO[satTB++] = fSaturatedPulse[tempIndex];
-		  }
-		  else{	// there are no adc which exceed the threshold continuously (at least one Tb excess.).
-			 for(Int_t iTB=0; iTB<fNTBs; iTB++)
-				if(adcO[iTB]>satThreshold)
-				  adcO[iTB]=satThreshold;
-		  }
-		}
-	 }
-	 else{
-		for(Int_t iTB=0; iTB<fNTBs; iTB++)
-		  if(adcO[iTB]>satThreshold)
-			 adcO[iTB]=satThreshold;
-	 }
+    }
 
 
-	 // Polarity 
-	 if(fSignalPolarity==0) {
-		for(Int_t iTB=0; iTB<fNTBs; iTB++){
-		  adcO[iTB] = fADCMaxUseable - adcO[iTB];
-		}
-	 }
+    Double_t satThreshold;
+    if(fPedestalSubtracted)
+      satThreshold = fADCMaxUseable-fPedestalMean;
+    else{
+      satThreshold = fADCMaxUseable;
+      for(Int_t iTB=0; iTB<fNTBs; iTB++)
+	adcO[iTB]+=fPedestalMean;
+    }
 
-	 // Set ADC
-	 Int_t row   = padI -> GetRow();
-	 Int_t layer = padI -> GetLayer();
-	 STPad *padO = new STPad(row, layer);
-	 padO -> SetPedestalSubtracted();
-	 for(Int_t iTB=0; iTB<fNTBs; iTB++){
-		adcO[iTB] += gRandom -> Gaus(0,fPedestalSigma);
-		padO -> SetADC(iTB,adcO[iTB]);
-	 }
-	 fRawEvent -> SetPad(padO);
-	 delete padO;
+    // handling the saturation.
+    if(fUseSaturationTemplate){
+      if(fKillAfterSaturation){
+
+	Int_t satTB=-1;
+	if(adcO[0]>satThreshold&&adcO[1]>satThreshold)
+	  satTB=0;
+
+	Int_t currentADC, previousADC, nextADC;
+	for(Int_t iTB=1; iTB<fNTBs-1; iTB++){
+	  currentADC=adcO[iTB];
+	  previousADC=adcO[iTB-1];
+	  nextADC=adcO[iTB+1];
+
+	  if(previousADC<=satThreshold && currentADC>satThreshold && nextADC>satThreshold){
+	    satTB=iTB;
+	    break;		// search first saturation point.
+	  }
+	}
+
+	if(satTB!=-1){	// found saturation.
+	  Int_t tempIndex=51;	// saturation moment of the template.
+	  while( satTB<fNTBs && tempIndex<fNBinSaturatedPulse )
+	    adcO[satTB++] = fSaturatedPulse[tempIndex++];
+	  while(satTB<fNTBs)
+	    adcO[satTB++] = fSaturatedPulse[tempIndex];
+	}
+	else{	// there are no adc which exceed the threshold continuously (at least one Tb excess.).
+	  for(Int_t iTB=0; iTB<fNTBs; iTB++)
+	    if(adcO[iTB]>satThreshold)
+	      adcO[iTB]=satThreshold;
+	}
+      }
+    }
+    else{
+      for(Int_t iTB=0; iTB<fNTBs; iTB++)
+	if(adcO[iTB]>satThreshold)
+	  adcO[iTB]=satThreshold;
+    }
+
+
+    // Polarity 
+    if(fSignalPolarity==0) {
+      for(Int_t iTB=0; iTB<fNTBs; iTB++){
+	adcO[iTB] = fADCMaxUseable - adcO[iTB];
+      }
+    }
+
+    // Set ADC
+    Int_t row   = padI -> GetRow();
+    Int_t layer = padI -> GetLayer();
+    STPad *padO = new STPad(row, layer);
+    padO -> SetPedestalSubtracted();
+    for(Int_t iTB=0; iTB<fNTBs; iTB++){
+      adcO[iTB] += gRandom -> Gaus(0,fPedestalSigma);
+      padO -> SetADC(iTB,adcO[iTB]);
+    }
+    fRawEvent -> SetPad(padO);
+    delete padO;
   }
 
   fLogger->Info(MESSAGE_ORIGIN, 
-		Form("Event #%d : Raw Event created.",
-		  fEventID++));
+      Form("Event #%d : Raw Event created.",
+	fEventID++));
 
   return;
 }

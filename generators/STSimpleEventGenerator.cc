@@ -13,7 +13,7 @@ using namespace std;
 ClassImp(STSimpleEventGenerator);
 
 STSimpleEventGenerator::STSimpleEventGenerator()
-: FairGenerator(),
+:FairGenerator(),
   fPDG(0),
   fV3Vertex(TVector3(0,0,0)),
   fPDirection(TVector3(0,0,0)),
@@ -26,7 +26,7 @@ STSimpleEventGenerator::STSimpleEventGenerator()
 }
 
 STSimpleEventGenerator:: STSimpleEventGenerator(Int_t pdg, Int_t numP, Double_t *listP, Int_t mult, Double_t x0, Double_t y0, Double_t z0, Double_t vx, Double_t vy, Double_t vz)
-: FairGenerator("STSimpleEventGenerator"),
+:FairGenerator("STSimpleEventGenerator"),
   fPDG(pdg),
   fV3Vertex(TVector3(x0,y0,z0)),
   fCurrentEvent(0),
@@ -57,13 +57,13 @@ Bool_t STSimpleEventGenerator::SetAngleStep(Int_t  pdg, UInt_t numEvt, Double_t 
   phi_begin   = phi_begin  * TMath::Pi()/180.;
   phi_end     = phi_end    * TMath::Pi()/180.;
 
-  
+
 
   Double_t d_theta = (theta_end - theta_begin)/(Double_t)numEvt;
   Double_t d_phi   = (phi_end   - phi_begin)  /(Double_t)numEvt;
 
   for( UInt_t ip = 0; ip < numEvt; ip++ ){
-    
+
     Double_t theta = ip * d_theta + theta_begin;
     Double_t phi   = ip * d_phi   + phi_begin;
 
@@ -74,7 +74,7 @@ Bool_t STSimpleEventGenerator::SetAngleStep(Int_t  pdg, UInt_t numEvt, Double_t 
     fMomentum.push_back(vp);
 
   } 
-  
+
   fNEvents = numEvt;
 
   fEventMode = 2;
@@ -89,22 +89,22 @@ STSimpleEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
   TVector3 p;
 
   switch( fEventMode ) {
-  case 1:
-    p.SetMag(fPList[fCurrentEvent++/fMultiplicity]);
-    p = fPDirection;
+    case 1:
+      p.SetMag(fPList[fCurrentEvent++/fMultiplicity]);
+      p = fPDirection;
 
-    break;
+      break;
 
-  case 2:
+    case 2:
 
-    p = fMomentum.at(fCurrentEvent);
-    fCurrentEvent++;
+      p = fMomentum.at(fCurrentEvent);
+      fCurrentEvent++;
 
-    break;
+      break;
 
-  default:
+    default:
 
-    return kFALSE;
+      return kFALSE;
   }
 
   primGen->AddTrack(fPDG,p.X(),p.Y(),p.Z(),fV3Vertex.X(),fV3Vertex.Y(),fV3Vertex.Z());

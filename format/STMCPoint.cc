@@ -17,7 +17,7 @@ STMCPoint::STMCPoint(Int_t trackID, Int_t detID,
       TVector3 pos, TVector3 mom,
       Double_t tof, Double_t length,
       Double_t eLoss, Int_t pdg)
-: FairMCPoint(trackID, detID, pos, mom, tof, length, eLoss), fPdg(pdg)
+  : FairMCPoint(trackID, detID, pos, mom, tof, length, eLoss), fPdg(pdg)
 {
 }
 // -------------------------------------------------------------------------
@@ -25,7 +25,7 @@ STMCPoint::STMCPoint(Int_t trackID, Int_t detID,
 
 // -----   Copy constructor   ------------------------------------------
 STMCPoint::STMCPoint(const STMCPoint& point)
-:  FairMCPoint(point.fTrackID, point.fDetectorID,
+  : FairMCPoint(point.fTrackID, point.fDetectorID,
     TVector3(point.fX, point.fY, point.fZ), TVector3(point.fPx, point.fPy, point.fPz),
     point.fTime, point.fLength, point.fELoss, point.fEventId),
     fPdg(point.fPdg)
