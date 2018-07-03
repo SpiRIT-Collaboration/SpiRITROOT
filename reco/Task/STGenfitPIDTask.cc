@@ -189,7 +189,6 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     recoTrack -> SetPosKatana(katana);
     recoTrack -> SetPosNeuland(neuland);
 
-    recoTrack -> SetNumClusters(helixTrack -> GetNumClusters());
     auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
     recoTrack -> SetChi2(fitStatus -> getChi2());
     recoTrack -> SetNDF(fitStatus -> getNdf());
@@ -199,11 +198,15 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       recoTrack -> SetTrackLength(-9999);
     }
 
-    Double_t numClusters90 = 0;
+    Int_t numClusters = 0, numClusters90 = 0;
     Double_t helixChi2R = 0, helixChi2X = 0, helixChi2Y = 0, helixChi2Z = 0;
     Double_t genfitChi2R = 0, genfitChi2X = 0, genfitChi2Y = 0, genfitChi2Z = 0;
     for (auto cluster : *helixTrack -> GetClusterArray()) {
+      if (!cluster -> IsStable())
+        continue;
+
       auto pos = cluster -> GetPosition();
+      numClusters++;
       if (pos.Z() < 1080)
         numClusters90++;
 
@@ -225,6 +228,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
       if (!fGenfitTest -> ExtrapolateTo(bestGenfitTrack, pos, point))
         continue;
+
       genfitChi2R += (point - pos).Mag2();
       genfitChi2X += (point.X() - pos.X())*(point.X() - pos.X());
       genfitChi2Y += (point.Y() - pos.Y())*(point.Y() - pos.Y());
@@ -238,6 +242,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       genfitChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
       */
     }
+    recoTrack -> SetNumClusters(numClusters);
     recoTrack -> SetNumClusters90(numClusters90);
     recoTrack -> SetHelixChi2R(helixChi2R);
     recoTrack -> SetHelixChi2X(helixChi2X);
