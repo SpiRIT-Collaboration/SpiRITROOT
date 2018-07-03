@@ -55,3 +55,5 @@ class STMCEventTask : public FairTask
 
     ClassDef(STMCEventTask,1);
 };
+
+#endif

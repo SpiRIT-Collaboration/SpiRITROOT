@@ -22,7 +22,7 @@ class STAnalyzeG4StepTask : public FairTask
 
       void SetPersistence(Bool_t value = kTRUE);
       void AssumeGausPRF(Bool_t val=kTRUE) { fAssumeGausPRF = val; }
-      void SetGainMatchingData(Bool_t f) { fIsSetMatchingData = kTRUE; }
+      void SetGainMatchingData(Bool_t f) { fIsSetGainMatchingData = kTRUE; }
 
    private:
       Bool_t 	fIsPersistence;
