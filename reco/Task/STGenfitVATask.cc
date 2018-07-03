@@ -277,7 +277,8 @@ void STGenfitVATask::Exec(Option_t *opt)
 
     candList -> SetBestPID(bestPID);
     auto bestRecoTrackCand = candList -> GetRecoTrackCand(candList -> GetBestPID());
-    gfTrackArrayToVertex.push_back(bestRecoTrackCand -> GetGenfitTrack());
+    auto bestGenfitTrack = bestRecoTrackCand -> GetGenfitTrack();
+    gfTrackArrayToVertex.push_back(bestGenfitTrack);
     vaTrackArrayToVertex.push_back(vaTrack);
 
     helixTrack -> SetGenfitID(iTrack);
@@ -292,7 +293,53 @@ void STGenfitVATask::Exec(Option_t *opt)
     vaTrack -> SetPosKatana(katana);
     vaTrack -> SetPosNeuland(neuland);
 
-    vaTrack -> SetVertexID(chosenVID);
+    auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
+    vaTrack -> SetChi2(fitStatus -> getChi2());
+    vaTrack -> SetNDF(fitStatus -> getNdf());
+    try {
+      vaTrack -> SetTrackLength(bestGenfitTrack -> getTrackLen());
+    } catch (...) {
+      vaTrack -> SetTrackLength(-9999);
+    }
+
+    Int_t numClusters = 0, numClusters90 = 0;
+    Double_t helixChi2R = 0, helixChi2X = 0, helixChi2Y = 0, helixChi2Z = 0;
+    Double_t genfitChi2R = 0, genfitChi2X = 0, genfitChi2Y = 0, genfitChi2Z = 0;
+    for (auto cluster : *helixTrack -> GetClusterArray()) {
+      if (!cluster -> IsStable())
+        continue;
+
+      auto pos = cluster -> GetPosition();
+      numClusters++;
+      if (pos.Z() < 1080)
+        numClusters90++;
+
+      TVector3 dVec, point;
+      Double_t dValue, alpha;
+      helixTrack -> ExtrapolateToPointAlpha(pos, point, alpha);
+      helixChi2R += (point - pos).Mag2();
+      helixChi2X += (point.X() - pos.X())*(point.X() - pos.X());
+      helixChi2Y += (point.Y() - pos.Y())*(point.Y() - pos.Y());
+      helixChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
+
+      if (!fGenfitTest -> ExtrapolateTo(bestGenfitTrack, pos, point))
+        continue;
+
+      genfitChi2R += (point - pos).Mag2();
+      genfitChi2X += (point.X() - pos.X())*(point.X() - pos.X());
+      genfitChi2Y += (point.Y() - pos.Y())*(point.Y() - pos.Y());
+      genfitChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
+    }
+    vaTrack -> SetNumClusters(numClusters);
+    vaTrack -> SetNumClusters90(numClusters90);
+    vaTrack -> SetHelixChi2R(helixChi2R);
+    vaTrack -> SetHelixChi2X(helixChi2X);
+    vaTrack -> SetHelixChi2Y(helixChi2Y);
+    vaTrack -> SetHelixChi2Z(helixChi2Z);
+    vaTrack -> SetChi2R(genfitChi2R);
+    vaTrack -> SetChi2X(genfitChi2X);
+    vaTrack -> SetChi2Y(genfitChi2Y);
+    vaTrack -> SetChi2Z(genfitChi2Z);
 
     genfit::Track *gfTrack = bestRecoTrackCand -> GetGenfitTrack();
     TVector3 momVertex;
