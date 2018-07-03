@@ -34,6 +34,7 @@ set(SRCS
 STDriftTask.cc
 STPadResponseTask.cc
 STElectronicsTask.cc
+STAnalyzeG4StepTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

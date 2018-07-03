@@ -30,25 +30,28 @@ using std::pair;
 // -----   Default constructor   -------------------------------------------
 STStack::STStack(Int_t size)
   : FairGenericStack(),
-    fStack(),
-    fParticles(new TClonesArray("TParticle", size)),
-    fTracks(new TClonesArray("STMCTrack", size)),
-    fPrimaryTracks(new TClonesArray("STMCTrack", 100)),
-    fStoreMap(),
-    fStoreIter(),
-    fIndexMap(),
-    fIndexIter(),
-    fPointsMap(),
-    fCurrentTrack(-1),
-    fNPrimaries(0),
-    fNParticles(0),
-    fNTracks(0),
-    fIndex(0),
-    fStoreSecondaries(kTRUE),
-    fMinPoints(1),
-    fEnergyCut(0.),
-    fStoreMothers(kTRUE),
-    fLogger(FairLogger::GetLogger())
+  fStack(),
+  fParticles(new TClonesArray("TParticle", size)),
+  fTracks(new TClonesArray("STMCTrack", size)),
+  fPrimaryTracks(new TClonesArray("STMCTrack", 100)),
+  fStoreMap(),
+  fStoreIter(),
+  fIndexMap(),
+  fIndexIter(),
+  fPointsMap(),
+  fCurrentTrack(-1),
+  fNPrimaries(0),
+  fNParticles(0),
+  fNTracks(0),
+  fIndex(0),
+  fStoreSecondaries(kTRUE),
+  fMinPoints(1),
+  fEnergyCut(0.),
+  fStoreMothers(kTRUE),
+  fNPointsMap(),
+  fEdepMap(),
+  fLengthMap(),
+  fLogger(FairLogger::GetLogger())
 {
 }
 
@@ -75,19 +78,19 @@ STStack::~STStack()
 // -------------------------------------------------------------------------
 
 void STStack::PushTrack(Int_t toBeDone, Int_t parentId, Int_t pdgCode,
-                          Double_t px, Double_t py, Double_t pz,
-                          Double_t e, Double_t vx, Double_t vy, Double_t vz,
-                          Double_t time, Double_t polx, Double_t poly,
-                          Double_t polz, TMCProcess proc, Int_t& ntr,
-                          Double_t weight, Int_t is)
+    Double_t px, Double_t py, Double_t pz,
+    Double_t e, Double_t vx, Double_t vy, Double_t vz,
+    Double_t time, Double_t polx, Double_t poly,
+    Double_t polz, TMCProcess proc, Int_t& ntr,
+    Double_t weight, Int_t is)
 {
 
   PushTrack( toBeDone, parentId, pdgCode,
-             px,  py,  pz,
-             e,  vx,  vy,  vz,
-             time,  polx,  poly,
-             polz, proc, ntr,
-             weight, is, -1);
+      px,  py,  pz,
+      e,  vx,  vy,  vz,
+      time,  polx,  poly,
+      polz, proc, ntr,
+      weight, is, -1);
 }
 
 
@@ -97,11 +100,11 @@ void STStack::PushTrack(Int_t toBeDone, Int_t parentId, Int_t pdgCode,
 
 // -----   Virtual public method PushTrack   -------------------------------
 void STStack::PushTrack(Int_t toBeDone, Int_t parentId, Int_t pdgCode,
-                          Double_t px, Double_t py, Double_t pz,
-                          Double_t e, Double_t vx, Double_t vy, Double_t vz,
-                          Double_t time, Double_t polx, Double_t poly,
-                          Double_t polz, TMCProcess proc, Int_t& ntr,
-                          Double_t weight, Int_t is, Int_t secondparentID)
+    Double_t px, Double_t py, Double_t pz,
+    Double_t e, Double_t vx, Double_t vy, Double_t vz,
+    Double_t time, Double_t polx, Double_t poly,
+    Double_t polz, TMCProcess proc, Int_t& ntr,
+    Double_t weight, Int_t is, Int_t secondparentID)
 {
 
   // --> Get TParticle array
@@ -114,9 +117,9 @@ void STStack::PushTrack(Int_t toBeDone, Int_t parentId, Int_t pdgCode,
   Int_t daughter2Id = -1;
   TParticle* particle =
     new(partArray[fNParticles++]) TParticle(pdgCode, trackId, parentId,
-        nPoints, daughter1Id,
-        daughter2Id, px, py, pz, e,
-        vx, vy, vz, time);
+	nPoints, daughter1Id,
+	daughter2Id, px, py, pz, e,
+	vx, vy, vz, time);
   particle->SetPolarisation(polx, poly, polz);
   particle->SetWeight(weight);
   particle->SetUniqueID(proc);
@@ -242,22 +245,39 @@ void STStack::FillTrackArray()
     if (fStoreIter == fStoreMap.end() ) {
       fLogger->Fatal(MESSAGE_ORIGIN, "STStack: Particle %i not found in storage map! ", iPart);
       Fatal("STStack::FillTrackArray",
-            "Particle not found in storage map.");
+	  "Particle not found in storage map.");
     }
     Bool_t store = (*fStoreIter).second;
 
     if (store) {
       STMCTrack* track =
-        new( (*fTracks)[fNTracks]) STMCTrack(GetParticle(iPart));
+	new( (*fTracks)[fNTracks]) STMCTrack(GetParticle(iPart));
       fIndexMap[iPart] = fNTracks; 
       // --> Set the number of points in the detectors for this track
       for (Int_t iDet=kREF; iDet<kSTOPHERE; iDet++) {
-        pair<Int_t, Int_t> a(iPart, iDet);
-        track->SetNPoints(iDet, fPointsMap[a]);
+	pair<Int_t, Int_t> a(iPart, iDet);
+	track->SetNPoints(iDet, fPointsMap[a]);
       }
+
+
+
       fNTracks++;
     } else { fIndexMap[iPart] = -2; }
 
+  }
+
+  for(Int_t iPart=0; iPart<fPrimaryTracks->GetEntries(); iPart++){
+    STMCTrack* track = (STMCTrack*)fPrimaryTracks->At(iPart);
+    track->SetTrackId(iPart);
+    for(auto itr = fNPointsMap.begin(); itr!=fNPointsMap.end(); ++itr){
+      pair<Int_t, Int_t> key = itr->first;  // map of trackID and detectorID
+      if(key.first==iPart){
+	track->SetPointMap(key.second,itr->second);
+	track->SetEdepMap(key.second,fEdepMap[key]);
+	track->SetLengthMap(key.second,fLengthMap[key]);
+	//std::cout<<key.second<<" "<<fLengthMap[key]<<std::endl;
+      }
+    }
   }
 
   // --> Map index for primary mothers
@@ -312,16 +332,16 @@ void STStack::UpdateTrackIndex(TRefArray* detList)
 
       // --> Update track index for all MCPoints in the collection
       for (Int_t iPoint=0; iPoint<nPoints; iPoint++) {
-        FairMCPoint* point = (FairMCPoint*)hitArray->At(iPoint);
-        Int_t iTrack = point->GetTrackID();
+	FairMCPoint* point = (FairMCPoint*)hitArray->At(iPoint);
+	Int_t iTrack = point->GetTrackID();
 
-        fIndexIter = fIndexMap.find(iTrack);
-        if (fIndexIter == fIndexMap.end()) {
-          fLogger->Fatal(MESSAGE_ORIGIN, "STStack: Particle index %i not found in index map! ", iTrack);
-          Fatal("STStack::UpdateTrackIndex", "Particle index not found in map");
-        }
-        point->SetTrackID((*fIndexIter).second);
-        point->SetLink(FairLink("MCTrack", (*fIndexIter).second));
+	fIndexIter = fIndexMap.find(iTrack);
+	if (fIndexIter == fIndexMap.end()) {
+	  fLogger->Fatal(MESSAGE_ORIGIN, "STStack: Particle index %i not found in index map! ", iTrack);
+	  Fatal("STStack::UpdateTrackIndex", "Particle index not found in map");
+	}
+	point->SetTrackID((*fIndexIter).second);
+	point->SetLink(FairLink("MCTrack", (*fIndexIter).second));
       }
 
     }   // Collections of this detector
@@ -343,6 +363,9 @@ void STStack::Reset()
   fTracks->Clear();
   fPrimaryTracks->Clear();
   fPointsMap.clear();
+  fNPointsMap.clear();
+  fEdepMap.clear();
+  fLengthMap.clear();
 }
 // -------------------------------------------------------------------------
 
@@ -362,11 +385,11 @@ void STStack::Register()
 void STStack::Print(Int_t iVerbose) const
 {
   cout << "-I- STStack: Number of primaries        = "
-       << fNPrimaries << endl;
+    << fNPrimaries << endl;
   cout << "              Total number of particles  = "
-       << fNParticles << endl;
+    << fNParticles << endl;
   cout << "              Number of tracks in output = "
-       << fNTracks << endl;
+    << fNTracks << endl;
   if (iVerbose) {
     for (Int_t iTrack=0; iTrack<fNTracks; iTrack++) {
       ((STMCTrack*) fTracks->At(iTrack))->Print(iTrack);
@@ -381,7 +404,7 @@ void STStack::Print(Int_t iVerbose) const
 void STStack::AddPoint(DetectorId detId)
 {
   Int_t iDet = detId;
-// cout << "Add point for Detektor" << iDet << endl;
+  // cout << "Add point for Detektor" << iDet << endl;
   pair<Int_t, Int_t> a(fCurrentTrack, iDet);
   if ( fPointsMap.find(a) == fPointsMap.end() ) { fPointsMap[a] = 1; }
   else { fPointsMap[a]++; }
@@ -401,6 +424,15 @@ void STStack::AddPoint(DetectorId detId, Int_t iTrack)
 }
 // -------------------------------------------------------------------------
 
+
+
+void STStack::AddPoint(Int_t detID, Double_t edep, Double_t length)
+{
+  if(fCurrentTrack>=fNPrimaries) return;
+  pair<Int_t, Int_t> a(fCurrentTrack, detID);
+  if( fNPointsMap.find(a) == fNPointsMap.end() ) { fNPointsMap[a] = 1; fEdepMap[a] = edep; fLengthMap[a] = length; }
+  else { fNPointsMap[a]++; fEdepMap[a] += edep; fLengthMap[a] += length; }
+}
 
 
 
@@ -448,7 +480,7 @@ void STStack::SelectTracks()
     thisPart->Momentum(p);
     Double_t energy = p.E();
     Double_t mass   = p.M();
-//    Double_t mass   = thisPart->GetMass();
+    //    Double_t mass   = thisPart->GetMass();
     Double_t eKin = energy - mass;
 
     // --> Calculate number of points
@@ -456,7 +488,7 @@ void STStack::SelectTracks()
     for (Int_t iDet=kREF; iDet<kSTOPHERE; iDet++) {
       pair<Int_t, Int_t> a(i, iDet);
       if ( fPointsMap.find(a) != fPointsMap.end() ) {
-        nPoints += fPointsMap[a];
+	nPoints += fPointsMap[a];
       }
     }
 
@@ -478,11 +510,11 @@ void STStack::SelectTracks()
   if (fStoreMothers) {
     for (Int_t i=0; i<fNParticles; i++) {
       if (fStoreMap[i]) {
-        Int_t iMother = GetParticle(i)->GetMother(0);
-        while(iMother >= 0) {
-          fStoreMap[iMother] = kTRUE;
-          iMother = GetParticle(iMother)->GetMother(0);
-        }
+	Int_t iMother = GetParticle(i)->GetMother(0);
+	while(iMother >= 0) {
+	  fStoreMap[iMother] = kTRUE;
+	  iMother = GetParticle(iMother)->GetMother(0);
+	}
       }
     }
   }

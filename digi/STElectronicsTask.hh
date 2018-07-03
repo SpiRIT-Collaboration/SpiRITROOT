@@ -47,6 +47,11 @@ class STElectronicsTask : public FairTask
     void SetPedestalSubtraction(Bool_t val); //!< Set pedestal subtraction. Default is kTRUE.
     void SetSignalPolarity(Bool_t val);      //!< Set signal polarity. Default is 1(positive).
 
+    void SetUseSaturationTemplate(Bool_t);
+    void SetSaturatedPulseData(TString);	
+    void SetIsKillAfterSaturation(Bool_t);
+
+
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
 
@@ -63,8 +68,12 @@ class STElectronicsTask : public FairTask
 
     Int_t fNTBs;       //!< Number of time buckets.
     Int_t fNBinPulser; //!< Number of bin for pulser data.
+    Int_t fNBinSaturatedPulse; //!< Number of bin for saturated pulser data.
 
-    Double_t fPulser[100]; //!< Pulser shape data.
+    Bool_t	fUseSaturationTemplate;
+    TString	fSaturatedPulseFileName;
+    Double_t	fPulser[256]; //!< Pulser shape data.
+    Double_t	fSaturatedPulse[256];
 
     Double_t fADCConstant;
     Double_t fADCDynamicRange;    //!< Dynamic range of ADC [Coulomb]
@@ -74,6 +83,7 @@ class STElectronicsTask : public FairTask
     Double_t fPedestalSigma;      //!< Defualt background sigma of ADC [ADC-Ch]
     Bool_t   fPedestalSubtracted; //!< Pedestal subtracted flag.
     Bool_t   fSignalPolarity;     //!< Polartity of signal (1: positive, 0: negative)
+    Bool_t   fKillAfterSaturation;//!< Kill after saturation ?
 
     STElectronicsTask(const STElectronicsTask&);
     STElectronicsTask operator=(const STElectronicsTask&);

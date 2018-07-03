@@ -48,6 +48,9 @@ class STSimpleEventGenerator : public FairGenerator
     /** Get number of events written in EventGen file **/
     Int_t GetNEvents() { return fNEvents; };
 
+    Bool_t SetAngleStep(Int_t pgd, UInt_t numEvt, Double_t p, Double_t theta_begin, Double_t theta_end, Double_t phi_begin, Double_t phi_end);
+
+
   private :
     Int_t     fPDG;            ///< Particle number
     TVector3  fV3Vertex;       ///< Position of primary vertex
@@ -58,11 +61,14 @@ class STSimpleEventGenerator : public FairGenerator
 
     Double_t *fPList;      ///< Momentum list
 
+    std::vector<TVector3> fMomentum; 
 
-  STSimpleEventGenerator(const STSimpleEventGenerator&);
-  STSimpleEventGenerator& operator=(const STSimpleEventGenerator&);
+    UInt_t     fEventMode;
 
-  ClassDef(STSimpleEventGenerator,1);
+    STSimpleEventGenerator(const STSimpleEventGenerator&);
+    STSimpleEventGenerator& operator=(const STSimpleEventGenerator&);
+
+    ClassDef(STSimpleEventGenerator,1);
 };
 
 #endif

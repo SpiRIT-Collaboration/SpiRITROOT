@@ -14,6 +14,9 @@ class STMCPoint : public FairMCPoint
     /** Default constructor **/
     STMCPoint();
 
+    /** Copy constructor **/
+    STMCPoint(const STMCPoint& point);
+    STMCPoint& operator=(const STMCPoint& point);
 
     /** Constructor with arguments
      *@param trackID  Index of MCTrack
@@ -25,9 +28,7 @@ class STMCPoint : public FairMCPoint
      *@param eLoss    Energy deposit [GeV]
      **/
     STMCPoint(Int_t trackID, Int_t detID, TVector3 pos, TVector3 mom,
-                     Double_t tof, Double_t length, Double_t eLoss);
-
-
+	Double_t tof, Double_t length, Double_t eLoss, Int_t pdg);
 
 
     /** Destructor **/
@@ -36,10 +37,10 @@ class STMCPoint : public FairMCPoint
     /** Output to screen **/
     virtual void Print(const Option_t* opt) const;
 
+    Int_t GetPDG()	{ return fPdg; }
+
   private:
-    /** Copy constructor **/
-    STMCPoint(const STMCPoint& point);
-    STMCPoint operator=(const STMCPoint& point);
+    Int_t fPdg;
 
     ClassDef(STMCPoint,1)
 

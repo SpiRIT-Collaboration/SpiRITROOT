@@ -34,9 +34,9 @@ void AddIons(FairRunSim *fRun, TString event);
 
 void run_mc
 (
-  TString name  = "urqmd_short",
-  TString event = "urqmd_132sn124sn270amevb0012_10event.dat",
-  Bool_t  useFieldMapFile = kFALSE
+ TString name  = "urqmd_short",
+ Int_t   nEvent = -1,
+ Bool_t  useFieldMapFile = kTRUE
 )
 {
   //////////////////////////////////////////////////////////
@@ -44,8 +44,8 @@ void run_mc
   //   In general, the below parts need not be touched.   //
   //                                                      //
   //////////////////////////////////////////////////////////
-
-
+  
+  
   // -----------------------------------------------------------------
   // Set enveiroment
   TString workDir   = gSystem -> Getenv("VMCWORKDIR");
@@ -75,7 +75,7 @@ void run_mc
   fRun -> SetOutputFile(outputFile);
   fRun -> SetGenerateRunInfo(kFALSE);
   fRun -> SetMaterials("media.geo");
-  AddIons(fRun, event);
+//  AddIons(fRun, event);
 
 
   // -----------------------------------------------------------------
@@ -101,8 +101,8 @@ void run_mc
   // -----------------------------------------------------------------
   // Field
   if (useFieldMapFile) {
-    STFieldMap *fField = new STFieldMap("SamuraiMap_0.5T","A");
-    fField -> SetPosition(0., -20.43, 58.);
+    STFieldMap *fField = new STFieldMap("samurai_field_map","A");
+    fField -> SetPosition(0., -20.43, 33.);
     fRun -> SetField(fField);
   }
   else {
@@ -115,8 +115,21 @@ void run_mc
 
   // -----------------------------------------------------------------
   // Event generator
-  STEventGenGenerator* fEvent = new STEventGenGenerator(event);
-  fEvent -> SetPrimaryVertex(0, -21.33, -.89);
+//  STSimpleEventGenerator* fEvent = new STSimpleEventGenerator();
+//  fEvent -> SetPrimaryVertex(0, -21.33, -.89);
+//  fEvent -> SetAngleStep(2212, numevent, 0.5, 0., 85., 180., 180.); // (pid, #evt, p, theta_begin, theta_end, phi_begin, phi_end[deg])
+
+   /*
+   TString inputFile = name + ".root";
+   auto fEvent = new STTransportmodelEventGenerator(inputFile);
+   fEvent->RegisterHeavyIon();
+   fEvent->SetPrimaryVertex(TVector3(0.,-21.33,-.89));
+   */
+
+  auto fEvent = new STSingleTrackGenerator();
+  fEvent->SetCocktailEvent(300.);
+  fEvent->SetRandomDirection(true);
+  //fEvent->SetParticleList({2212, 211, -211, 1000010020, 1000010030});
 
   FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();
   fGenerator -> AddGenerator(fEvent);
@@ -146,7 +159,7 @@ void run_mc
 
   // -----------------------------------------------------------------
   // Run
-  fRun -> Run(fEvent -> GetNEvents());
+  fRun -> Run( nEvent==-1 ? fEvent->GetNEvents() : nEvents );
 
 
   // -----------------------------------------------------------------

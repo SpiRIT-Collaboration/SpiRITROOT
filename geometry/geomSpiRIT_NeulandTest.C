@@ -180,7 +180,8 @@ void geomSpiRIT_mk()
   //  Top (World)
   // ----------------------------------------------------
 
-  auto boxTop = new TGeoBBox(dxTop/2,dyTop/2,dzTop/2,offsetTop);
+  //auto boxTop = new TGeoBBox(dxTop/2,dyTop/2,dzTop/2,offsetTop);
+  auto boxTop = new TGeoBBox(1000/2,300/2,2000/2,offsetTop);
   TGeoVolume *top;
   if (boxTop -> IsRunTimeShape()) {
     top = gGeoManager -> MakeVolumeMulti("top", vacuum);
@@ -189,7 +190,7 @@ void geomSpiRIT_mk()
     top = new TGeoVolume("top", boxTop, vacuum);
   }
   gGeoManager -> SetTopVolume(top);
-  gGeoManager -> SetTopVolume(top);
+  //gGeoManager -> SetTopVolume(top);
 
   // ----------------------------------------------------
   //  TPC
@@ -925,6 +926,77 @@ void geomSpiRIT_mk()
 
   TGeoCompositeShape * outerAirComposite = new TGeoCompositeShape("outerAirComposite","outerAirBox-tpcEncBox-kyotoBox:transKyotoBoxL-kyotoBox:transKyotoBoxR-katanaVPlaL:transKatanaVPlaL-katanaVPlaM:transKatanaVPlaM-katanaVPlaR:transKatanaVPlaR");
   TGeoVolume * outerAir = new TGeoVolume("outerAir",outerAirComposite);
+  
+  
+  // ----------------------------------------------------
+  // NeuLAND demonstrator
+  //
+  // ----------------------------------------------------
+  
+  auto boxNeuland = new TGeoBBox(252./2,252./2,100./2);
+  TGeoVolume *neuland;
+  if (boxNeuland -> IsRunTimeShape()) {
+    neuland = gGeoManager -> MakeVolumeMulti("neuland", vacuum);
+    neuland -> SetShape(boxNeuland);
+  } else {
+    neuland = new TGeoVolume("neuland", boxNeuland, vacuum);
+  }
+  
+  Double_t offxNeuland = 200.;	// temporary
+  Double_t offyNeuland = 0.;	// temporary
+  Double_t offzNeuland = 600.;	// temporary
+
+  TGeoRotation*   rotatNeuland = new TGeoRotation("rotatNeuland",90,30,90); //
+  TGeoCombiTrans* combiNeuland = new TGeoCombiTrans("combiNeuland",offxNeuland,offyNeuland,offzNeuland,rotatNeuland);
+  combiNeuland->RegisterYourself();
+
+
+  Double_t dxNeuland = 4.7;
+  Double_t dyNeuland = 250.;
+  Double_t dzNeuland = 4.7;
+  Double_t dxNeulandVeto = 32.;
+  Double_t dyNeulandVeto = 190.;
+  Double_t dzNeulandVeto = 1.;
+
+  TGeoVolume * neulandBox[400];
+  TGeoVolume * neulandVetoBox[8];
+  for(Int_t i=0; i<400; i++)
+  	neulandBox[i] = gGeoManager -> MakeBox(Form("neulandBox%d",i),polyvinyltoluene,dxNeuland/2.,dyNeuland/2.,dzNeuland/2.);
+  for(Int_t i=0; i<8; i++)
+     neulandVetoBox[i] = gGeoManager -> MakeBox(Form("neulandVetoBox%d",i),polyvinyltoluene,dxNeulandVeto/2.,dyNeulandVeto/2.,dzNeulandVeto/2.);
+
+  Double_t offyNeulandLocal = -124.2;	// neuland bottom plastic position
+  Double_t offxNeulandLocal = -122.185;
+  Double_t offyNeulandNextBar   = 5.0;
+  Double_t offxNeulandNextBar   = 5.0;
+  Double_t offzNeulandNextLayer = 5.056;  // distance between layers
+  
+  TGeoCombiTrans * combiNeulandBar[400];
+  TGeoRotation * rotateNeulandY = new TGeoRotation("rotateNeulandY",0,0,90);
+  for(Int_t i=0; i<4; i++)
+     for(Int_t j=0; j<50; j++){
+	combiNeulandBar[i*100+j] = new TGeoCombiTrans(Form("combiNeulandBar%d",i*100+j),0,offyNeulandLocal+offyNeulandNextBar*j,offzNeulandNextLayer*i*2,rotateNeulandY);
+	combiNeulandBar[i*100+50+j] = new TGeoCombiTrans(Form("combiNeulandBar%d",i*100+50+j),offxNeulandLocal+offxNeulandNextBar*j,0,offzNeulandNextLayer*(2*i+1),nullptr);
+
+     }
+  for(Int_t i=0; i<400; i++)
+     combiNeulandBar[i]->RegisterYourself();
+  
+  Double_t offxVetoLocal = -109.975;
+  Double_t offxVetoNextBarLocal = 31.528;
+  Double_t offzVetoLocal[2] = {-36.358,-34.058};
+  TGeoCombiTrans * combiNeulandVeto[8];
+  TGeoRotation * rotateNeulandVeto = new TGeoRotation("rotateNeulandVeto",0,0,0);
+  for(Int_t i=0; i<8; i++)
+     combiNeulandVeto[i] = new TGeoCombiTrans(Form("combiNeulandVeto%d",i),offxVetoLocal+offxVetoNextBarLocal*i,0,offzVetoLocal[i%2],rotateNeulandVeto);
+  for(Int_t i=0; i<8; i++)
+     combiNeulandVeto[i]->RegisterYourself();
+
+  for(Int_t i=0; i<400; i++)
+	neuland -> AddNode(neulandBox[i],i+1,combiNeulandBar[i]);
+  for(Int_t i=0; i<8; i++)
+	neuland -> AddNode(neulandVetoBox[i],i+1,combiNeulandVeto[i]);
+  
    
   // ----------------------------------------------------
   //  Set Medium
@@ -967,6 +1039,8 @@ void geomSpiRIT_mk()
   // ----------------------------------------------------
 
   top -> AddNode(tpc,1,combiTpc);
+  
+  top -> AddNode(neuland,1,combiNeuland);
  
   // ----------------------------------------------------
   //  AddNode to TPC
@@ -1019,6 +1093,7 @@ void geomSpiRIT_mk()
   tpc -> AddNode(katanaVPlaR,3,transKatanaVPlaR); 
 
   tpc -> AddNode(outerAir,1);  
+
 
 
   // ----------------------------------------------------
@@ -1100,6 +1175,8 @@ void geomSpiRIT_mk()
 
   outerAir          -> SetLineColor(10);
 
+  for(Int_t i=0; i<400; i++) neulandBox[i] -> SetLineColor(kMagenta);
+  for(Int_t i=0; i<8; i++) neulandVetoBox[i] -> SetLineColor(kBlue);
   // ----------------------------------------------------
   //  End of Building Geometry
   // ----------------------------------------------------
@@ -1112,7 +1189,7 @@ void geomSpiRIT_mk()
   //top -> SetTransparency(95);
   //gGeoManager -> SetTopVisible(true);
 
-//  top -> Draw("ogl");
+  top -> Draw("ogl");
   
   TString geoFileName    = dirGeom + "geomSpiRIT.root";
   TString geoManFileName = dirGeom + "geomSpiRIT.man.root";

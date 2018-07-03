@@ -7,5 +7,6 @@
 #pragma link C++ class STDriftTask+;
 #pragma link C++ class STPadResponseTask+;
 #pragma link C++ class STElectronicsTask+;
+#pragma link C++ class STAnalyzeG4StepTask+;
 
 #endif

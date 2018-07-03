@@ -1,0 +1,142 @@
+#include "STSingleTrackGenerator.hh"
+#include "FairRunSim.h"
+#include "FairLogger.h"
+#include "TMath.h"
+#include "TDatabasePDG.h"
+#include "TParticlePDG.h"
+#include "TRandom.h"
+
+ClassImp(STSingleTrackGenerator);
+
+STSingleTrackGenerator::STSingleTrackGenerator()
+: FairGenerator("STSingleTrackGenerator"),
+  fNEvents(500),
+  fPrimaryVertex(TVector3(0.,-21.33,-0.89)), 
+  fRandomDirection(kFALSE), 
+  fIsCocktail(kFALSE), fBrho(0.),
+  fIsDiscreteTheta(kFALSE), fIsDiscretePhi(kFALSE),
+  fNStepTheta(0), fNStepPhi(0)
+{
+  fPdgList.clear();
+  fMomentum.SetXYZ(0., 0., .5);
+  fThetaRange[0] = 0.;
+  fThetaRange[1] = TMath::Pi()/2.;
+  fPhiRange[0] = -TMath::Pi();
+  fPhiRange[1] = TMath::Pi();
+
+  RegisterHeavyIon();
+
+}
+
+STSingleTrackGenerator::~STSingleTrackGenerator()
+{}
+
+
+void STSingleTrackGenerator::SetParticleList(Int_t* pdgs)
+{
+  if(sizeof(pdgs)/sizeof(Int_t)==0)return;
+
+  for(Int_t i=0; i<sizeof(pdgs)/sizeof(Int_t); i++)
+    fPdgList.push_back(pdgs[i]);
+
+  fPdgList.erase( std::unique(fPdgList.begin(), fPdgList.end()), fPdgList.end() );   // erase dupulicated index.
+
+}
+
+
+void STSingleTrackGenerator::SetCocktailEvent(Double_t setting=100.)
+{
+
+  if(setting==300.) fBrho = 5.4127*0.98; // BigRIPS value
+  else if(setting==100.) fBrho = 3.0026*0.98;  // BigRIPS value
+  else{
+    LOG(ERROR) << "unknown cocktail event?? please set 100 or 300 as argument." << FairLogger::endl;
+    return;
+  }
+
+  fIsCocktail = kTRUE;
+
+  SetParticleList({2212,1000010020,1000010030,1000020030,1000020040,1000030060,1000030070,1000040070});
+}
+
+Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
+{
+
+  if(fPdgList.size()<=0){
+    LOG(INFO)<<"No initial track pdg is set !! -> only Proton is produced in this run."<<FairLogger::endl;
+    fPdgList.push_back(2212);
+  }
+
+
+  Int_t pdg;  // pdg code of the particle for this event
+  TVector3 momentum=fMomentum, vertex=fPrimaryVertex;
+
+  auto index = (Int_t)gRandom->Uniform(0,fPdgList.size());
+  pdg = fPdgList.at(index);
+
+  if(fRandomDirection){
+    Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
+    Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
+    momentum.SetMagThetaPhi(momentum.Mag(), randTheta, randPhi);
+  }
+
+  if(fIsDiscreteTheta){
+    auto tIndex = (Int_t)gRandom->Uniform(0,fNStepTheta);
+    momentum.SetTheta(tIndex*(fThetaRange[1]-fThetaRange[0])/(Double_t)fNStepTheta);
+  }
+  if(fIsDiscretePhi){
+    auto pIndex = (Int_t)gRandom->Uniform(0,fNStepPhi);
+    momentum.SetPhi(pIndex*(fPhiRange[1]-fPhiRange[0])/(Double_t)fNStepPhi);
+  }
+
+
+  if(fIsCocktail||fBrho!=0.)
+    momentum.SetMag(0.3*fBrho*GetQ(pdg));
+
+
+  primGen->AddTrack(pdg,momentum.X(),momentum.Y(),momentum.Z(),vertex.X(),vertex.Y(),vertex.Z());
+  return kTRUE;
+}
+
+void STSingleTrackGenerator::RegisterHeavyIon()
+{
+
+  TString symbol[50] = {"H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
+    "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca",
+    "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
+    "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr",
+    "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn"};
+
+  for(Int_t iH=2; iH<4; iH++)  // register d, t
+    FairRunSim::Instance()->AddNewIon(new FairIon(Form("%d",iH)+symbol[0],1,iH,1));
+  for(Int_t iHe=3; iHe<5; iHe++)       // register 3he, alpha
+    FairRunSim::Instance()->AddNewIon(new FairIon(Form("%d",iHe)+symbol[1],2,iHe,2));
+  for(Int_t iLi=6; iLi<8; iLi++)       // register 6Li, 7Li
+    FairRunSim::Instance()->AddNewIon(new FairIon(Form("%d",iLi)+symbol[2],3,iLi,3));
+  for(Int_t iBe=7; iBe<8; iBe++)       // register 7Be
+    FairRunSim::Instance()->AddNewIon(new FairIon(Form("%d",iBe)+symbol[3],4,iBe,4));
+
+}
+
+Int_t STSingleTrackGenerator::GetQ(Int_t pdg)
+{
+  TParticlePDG* part = TDatabasePDG::Instance()->GetParticle(pdg);
+  if(part)
+    return TMath::Abs(part->Charge()*3);
+  else if( (pdg%10000000)/10000<=120 && (pdg%10000000)/10000>-2 )
+    return (pdg%10000000)/10000;
+  else
+    return 0;
+}
+
+Int_t STSingleTrackGenerator::GetA(Int_t pdg)
+{
+  if(pdg==2212||pdg==2112)
+    return 1;
+  else if( (pdg%10000)/10<300 && (pdg%10000)/10>1 )
+    return (pdg%10000)/10;
+  else
+    return 0;
+
+}
+

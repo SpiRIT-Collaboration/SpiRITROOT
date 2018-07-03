@@ -58,7 +58,7 @@ class STDetector: public FairDetector
     STMCPoint* AddHit(Int_t trackID, Int_t detID,
                              TVector3 pos, TVector3 mom,
                              Double_t time, Double_t length,
-                             Double_t eLoss);
+                             Double_t eLoss, Int_t pdg);
 
     /** Check the volume is sensitive or not **/
     virtual bool CheckIfSensitive(std::string name);
@@ -93,6 +93,7 @@ class STDetector: public FairDetector
     Double32_t     fTime;              //!<  time
     Double32_t     fLength;            //!<  length
     Double32_t     fELoss;             //!<  energy loss
+	 Int_t 			 fPdg;					//!<  particle data group code
 
     /** Container for data points */
     TClonesArray*  fSTMCPointCollection;

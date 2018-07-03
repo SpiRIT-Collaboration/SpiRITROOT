@@ -30,6 +30,10 @@
 #pragma link C++ class STRecoTrackCand+;
 #pragma link C++ class STRecoTrackCandList+;
 
+#pragma link C++ class STMCEventHeader+;
+#pragma link C++ class STMCScintillatorHit+;
+#pragma link C++ class STMCTriggerResponse+;
+
 #pragma link C++ class STSlimPad+;
 #pragma link C++ class std::vector<Short_t>+;
 #pragma link C++ class std::vector<Float_t>+;

@@ -22,7 +22,10 @@ set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
 STEventGenGenerator.cc
 STSimpleEventGenerator.cc
+STSingleTrackGenerator.cc
 STPHITSEventGenerator.cc
+STTransportModelEventGenerator.cc
+UrQMDParticle.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

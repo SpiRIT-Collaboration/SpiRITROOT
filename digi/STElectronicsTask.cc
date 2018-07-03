@@ -26,18 +26,20 @@ using namespace std;
 
 STElectronicsTask::STElectronicsTask()
 :FairTask("STElectronicsTask"),
- fEventID(0),
- fADCConstant(0.2),
- fADCDynamicRange(120.e-15),
- fADCMax(4095),
- fADCMaxUseable(4095),
- fPedestalMean(400),
- fPedestalSigma(4),
- fPedestalSubtracted(kTRUE),
- fSignalPolarity(1)
+  fIsPersistence(kFALSE),
+  fEventID(0),
+  fUseSaturationTemplate(kTRUE),
+  fSaturatedPulseFileName("saturatedPulse.dat"),
+  fADCConstant(0.2),
+  fADCDynamicRange(120.e-15),
+  fADCMax(4095),
+  fADCMaxUseable(4095),
+  fPedestalMean(300),
+  fPedestalSigma(4),
+  fPedestalSubtracted(kTRUE),
+  fSignalPolarity(1),
+  fKillAfterSaturation(kTRUE)
 {
-  fIsPersistence = kFALSE;
-
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STElectronicsTask");
 }
 
@@ -72,17 +74,20 @@ STElectronicsTask::Init()
  
   fNTBs = fPar -> GetNumTbs();
 
-  TString workDir = gSystem -> Getenv("VMCWORKDIR");
-  TString pulserFileName = workDir + "/parameters/Pulser.dat";
 
   fNBinPulser = 0;
   STPulse *stpulse = new STPulse();
-  ifstream pulserFile(pulserFileName.Data());
 
   Double_t coulombToEV = 6.241e18; 
   Double_t pulserConstant = fADCConstant*(fADCMaxUseable-fPedestalMean)/(fADCDynamicRange*coulombToEV);
-  for(Int_t i=0; i<100; i++) 
+  for(Int_t i=0; i<200; i++)
     fPulser[fNBinPulser++] = pulserConstant * stpulse -> Pulse(i, 1, 0);
+
+  fNBinSaturatedPulse=0;
+  STPulse *satpulse = new STPulse(fSaturatedPulseFileName);
+  Int_t ADCdynamicrange = fPedestalSubtracted ? fADCMaxUseable-fPedestalMean : fADCMaxUseable;
+  for(Int_t i=0; i<256; i++)
+    fSaturatedPulse[fNBinSaturatedPulse++] = satpulse -> Pulse(i, ADCdynamicrange, 0);
 
   fRawEvent = new ((*fRawEventArray)[0]) STRawEvent();
 
@@ -117,41 +122,85 @@ STElectronicsTask::Exec(Option_t* option)
       Double_t val = adcI[iTB];
       Int_t jTB=iTB;
       Int_t kTB=0;
-      while(jTB<fNTBs && kTB<fNBinPulser) 
-        adcO[jTB++] += val*fPulser[kTB++];
+      while(jTB<fNTBs && kTB<fNBinPulser)
+	adcO[jTB++] += val*fPulser[kTB++];
+
     }
+
+
+    Double_t satThreshold;
+    if(fPedestalSubtracted)
+      satThreshold = fADCMaxUseable-fPedestalMean;
+    else{
+      satThreshold = fADCMaxUseable;
+      for(Int_t iTB=0; iTB<fNTBs; iTB++)
+	adcO[iTB]+=fPedestalMean;
+    }
+
+    // handling the saturation.
+    if(fUseSaturationTemplate){
+      if(fKillAfterSaturation){
+
+	Int_t satTB=-1;
+	if(adcO[0]>satThreshold&&adcO[1]>satThreshold)
+	  satTB=0;
+
+	Int_t currentADC, previousADC, nextADC;
+	for(Int_t iTB=1; iTB<fNTBs-1; iTB++){
+	  currentADC=adcO[iTB];
+	  previousADC=adcO[iTB-1];
+	  nextADC=adcO[iTB+1];
+
+	  if(previousADC<=satThreshold && currentADC>satThreshold && nextADC>satThreshold){
+	    satTB=iTB;
+	    break;		// search first saturation point.
+	  }
+	}
+
+	if(satTB!=-1){	// found saturation.
+	  Int_t tempIndex=51;	// saturation moment of the template.
+	  while( satTB<fNTBs && tempIndex<fNBinSaturatedPulse )
+	    adcO[satTB++] = fSaturatedPulse[tempIndex++];
+	  while(satTB<fNTBs)
+	    adcO[satTB++] = fSaturatedPulse[tempIndex];
+	}
+	else{	// there are no adc which exceed the threshold continuously (at least one Tb excess.).
+	  for(Int_t iTB=0; iTB<fNTBs; iTB++)
+	    if(adcO[iTB]>satThreshold)
+	      adcO[iTB]=satThreshold;
+	}
+      }
+    }
+    else{
+      for(Int_t iTB=0; iTB<fNTBs; iTB++)
+	if(adcO[iTB]>satThreshold)
+	  adcO[iTB]=satThreshold;
+    }
+
+
+    // Polarity 
+    if(fSignalPolarity==0) {
+      for(Int_t iTB=0; iTB<fNTBs; iTB++){
+	adcO[iTB] = fADCMaxUseable - adcO[iTB];
+      }
+    }
+
+    // Set ADC
     Int_t row   = padI -> GetRow();
     Int_t layer = padI -> GetLayer();
     STPad *padO = new STPad(row, layer);
     padO -> SetPedestalSubtracted();
-    // AGET chip protection from ZAP board
-    if(fPedestalSubtracted) {
-      for(Int_t iTB=0; iTB<fNTBs; iTB++){
-        if(adcO[iTB]>(fADCMaxUseable-fPedestalMean)) adcO[iTB] = fADCMaxUseable;
-      }
-    }
-    else {
-      for(Int_t iTB=0; iTB<fNTBs; iTB++) {
-        adcO[iTB] += gRandom -> Gaus(fPedestalMean,fPedestalSigma);
-        if(adcO[iTB]>fADCMaxUseable) adcO[iTB] = fADCMaxUseable;
-      }
-    }
-    // Polarity 
-    if(fSignalPolarity==0) {
-      for(Int_t iTB=0; iTB<fNTBs; iTB++){
-        adcO[iTB] = fADCMaxUseable - adcO[iTB];
-      }
-    }
-    // Set ADC
-    for(Int_t iTB=0; iTB<fNTBs; iTB++)
+    for(Int_t iTB=0; iTB<fNTBs; iTB++){
+      adcO[iTB] += gRandom -> Gaus(0,fPedestalSigma);
       padO -> SetADC(iTB,adcO[iTB]);
+    }
     fRawEvent -> SetPad(padO);
     delete padO;
   }
 
   fLogger->Info(MESSAGE_ORIGIN, 
-                Form("Event #%d : Raw Event created.",
-                     fEventID++));
+      Form("Event #%d : Raw Event created.",
+	fEventID++));
 
   return;
 }
@@ -164,5 +213,8 @@ void STElectronicsTask::SetPedestalSigma(Double_t val)     {      fPedestalSigma
 void STElectronicsTask::SetPedestalSubtraction(Bool_t val) { fPedestalSubtracted = val; }
 void STElectronicsTask::SetSignalPolarity(Bool_t val)      {     fSignalPolarity = val; }
 
+void STElectronicsTask::SetUseSaturationTemplate(Bool_t val) {  fUseSaturationTemplate = val; }
+void STElectronicsTask::SetSaturatedPulseData(TString val)   { fSaturatedPulseFileName = val; }
+void STElectronicsTask::SetIsKillAfterSaturation(Bool_t val) {    fKillAfterSaturation = val; }
 
 ClassImp(STElectronicsTask)

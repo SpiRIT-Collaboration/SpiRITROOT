@@ -29,6 +29,8 @@
 #include "TMath.h"                      // for Sqrt
 #include "TVector3.h"                   // for TVector3
 
+#include <map>
+
 class TParticle;
 
 class STMCTrack : public TObject
@@ -42,8 +44,9 @@ class STMCTrack : public TObject
 
 
     /**  Standard constructor  **/
-    STMCTrack(Int_t pdgCode, Int_t motherID, Double_t px, Double_t py,
-                Double_t pz, Double_t x, Double_t y, Double_t z,
+    STMCTrack(Int_t pdgCode, Int_t motherID, Int_t trackID,
+                Double_t px, Double_t py, Double_t pz,
+		Double_t x, Double_t y, Double_t z,
                 Double_t t, Int_t nPoints);
 
     /**  Copy constructor  **/
@@ -65,6 +68,7 @@ class STMCTrack : public TObject
     /**  Accessors  **/
     Int_t    GetPdgCode()  const { return fPdgCode; }
     Int_t    GetMotherId() const { return fMotherId; }
+    Int_t    GetTrackId()  const { return fTrackId; }
     Double_t GetPx()       const { return fPx; }
     Double_t GetPy()       const { return fPy; }
     Double_t GetPz()       const { return fPz; }
@@ -86,10 +90,26 @@ class STMCTrack : public TObject
     Int_t GetNPoints(DetectorId detId)  const;
 
 
+    /** Accessors to atomic information if the track is nucleus. **/
+    Int_t GetZ() const;
+    Int_t GetN() const;
+    Int_t GetA() const { return GetZ()+GetN(); }
+
+    Int_t GetNPointsFromMap(Int_t detID);
+    Double_t GetEdepFromMap(Int_t detID);
+    Double_t GetLengthFromMap(Int_t detID);
+
+
     /**  Modifiers  **/
     void SetMotherId(Int_t id) { fMotherId = id; }
     void SetNPoints(Int_t iDet, Int_t np);
 
+    void SetTrackId(Int_t id)      { fTrackId = id; }
+    void SetMomentum(TVector3 mom) { fPx = mom.X(); fPy = mom.Y(); fPz = mom.Z(); }
+
+    void SetPointMap(Int_t detID, Int_t np)         { fNPointsMap[detID] = np; }
+    void SetEdepMap(Int_t detID, Double_t edep)     { fEdepMap[detID] = edep; }
+    void SetLengthMap(Int_t detID, Double_t length) { fLengthMap[detID] = length; }
 
 
   private:
@@ -99,6 +119,9 @@ class STMCTrack : public TObject
 
     /**  Index of mother track. -1 for primary particles.  **/
     Int_t  fMotherId;
+    
+    /**  Track index in VMC. **/
+    Int_t  fTrackId;
 
     /** Momentum components at start vertex [GeV]  **/
     Double32_t fPx, fPy, fPz;
@@ -123,8 +146,12 @@ class STMCTrack : public TObject
      **/
     Int_t fNPoints;
 
+    std::map<Int_t, Int_t>    fNPointsMap;  // array of pair< detectorID, # of steps >
+    std::map<Int_t, Double_t> fEdepMap;     // array of pair< detectorID, sum of dE >
+    std::map<Int_t, Double_t> fLengthMap;   // array of pair< detectorID, sum of length >
 
-    ClassDef(STMCTrack,2);
+
+    ClassDef(STMCTrack,3);
 
 };
 
