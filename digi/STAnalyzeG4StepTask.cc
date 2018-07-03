@@ -75,7 +75,7 @@ InitStatus STAnalyzeG4StepTask::Init()
    fGain     = fPar->GetGain();
    
    if(fIsSetGainMatchingData){
-      TString fileName = gSystem->Getenv("VMCWORKDIR") + "/parameters/RelativeGain.list";
+      TString fileName = TString(gSystem->Getenv("VMCWORKDIR")) + "/parameters/RelativeGain.list";
       std::ifstream matchList(fileName.Data());
       Int_t layer = 0;
       Double_t relativeGain = 0;
