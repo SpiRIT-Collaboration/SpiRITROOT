@@ -40,7 +40,7 @@
  * and more TODO inside the code
 */
 
-void geomSpiRIT_mk()
+void geomSpiRIT_wNeuland()
 {
   TString dir = gSystem -> Getenv("VMCWORKDIR");
   TString dirGeom = dir + "/geometry/";
@@ -942,11 +942,14 @@ void geomSpiRIT_mk()
     neuland = new TGeoVolume("neuland", boxNeuland, vacuum);
   }
   
-  Double_t offxNeuland = 200.;	// temporary
-  Double_t offyNeuland = 0.;	// temporary
-  Double_t offzNeuland = 600.;	// temporary
+  Double_t distTargetZ = 8.9;
+  Double_t distNeuland = 856.105 + 28.0 + 50.56/2.; //[cm]
+  Double_t anglNeuland = 29.579;
+  Double_t offxNeuland = distNeuland * sin( anglNeuland*TMath::DegToRad() ); 
+  Double_t offyNeuland = 0.;   
+  Double_t offzNeuland = distNeuland * cos( anglNeuland*TMath::DegToRad() ) - distTargetZ;
 
-  TGeoRotation*   rotatNeuland = new TGeoRotation("rotatNeuland",90,30,90); //
+  TGeoRotation*   rotatNeuland = new TGeoRotation("rotatNeuland",90, anglNeuland, 90); //
   TGeoCombiTrans* combiNeuland = new TGeoCombiTrans("combiNeuland",offxNeuland,offyNeuland,offzNeuland,rotatNeuland);
   combiNeuland->RegisterYourself();
 
@@ -1191,8 +1194,8 @@ void geomSpiRIT_mk()
 
   top -> Draw("ogl");
   
-  TString geoFileName    = dirGeom + "geomSpiRIT.root";
-  TString geoManFileName = dirGeom + "geomSpiRIT.man.root";
+  TString geoFileName    = dirGeom + "geomSpiRIT_nl.root";
+  TString geoManFileName = dirGeom + "geomSpiRIT_nl.man.root";
 
   TFile *geoFile = new TFile(geoFileName,"recreate"); 
   top -> Write(); 
