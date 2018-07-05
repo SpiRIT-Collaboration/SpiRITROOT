@@ -42,6 +42,8 @@ void STPad::Clear()
 
  fRow = -1;
  fLayer = -1;
+ tb_sat = -1;
+ fIsSaturated = false;
 }
 
 // setters

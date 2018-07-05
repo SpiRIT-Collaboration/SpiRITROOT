@@ -28,10 +28,13 @@ class STPad : public TObject
     // setters
     void SetLayer(Int_t val);
     void SetRow(Int_t val);
-
+    void SetSaturatedTb(Int_t val){tb_sat = val;};
+  
+  
     void SetRawADC(Int_t *val);
     void SetRawADC(Int_t idx, Int_t val);
-    
+
+    void SetIsSaturated(Bool_t val){fIsSaturated = val;};    
     void SetPedestalSubtracted(Bool_t val = kTRUE);
     void SetGainCalibrated(Bool_t val = kTRUE);
     void SetADC(Double_t *val);
@@ -42,7 +45,9 @@ class STPad : public TObject
     // getters
     Int_t GetLayer();
     Int_t GetRow();
-
+    Int_t GetSaturatedTb(){ return tb_sat;};
+  
+    Bool_t IsSaturated(){return fIsSaturated;};
     Bool_t IsPedestalSubtracted();
     Bool_t IsGainCalibrated();
 
@@ -55,10 +60,12 @@ class STPad : public TObject
   private:
     Int_t fLayer;
     Int_t fRow;  
-
+    Int_t tb_sat = 9999; //tB of saturation
+  
     Int_t fRawAdc[512];
     Int_t fMaxAdcIdx;
 
+    Bool_t fIsSaturated = false;
     Bool_t fIsPedestalSubtracted;
     Bool_t fIsGainCalibrated;
     Double_t fAdc[512];
