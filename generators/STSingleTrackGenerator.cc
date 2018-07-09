@@ -122,7 +122,7 @@ Int_t STSingleTrackGenerator::GetQ(Int_t pdg)
 {
   TParticlePDG* part = TDatabasePDG::Instance()->GetParticle(pdg);
   if(part)
-    return TMath::Abs(part->Charge()*3);
+    return TMath::Abs(part->Charge()*1./3.);
   else if( (pdg%10000000)/10000<=120 && (pdg%10000000)/10000>-2 )
     return (pdg%10000000)/10000;
   else

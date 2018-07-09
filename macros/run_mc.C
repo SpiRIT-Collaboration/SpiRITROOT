@@ -159,7 +159,7 @@ void run_mc
 
   // -----------------------------------------------------------------
   // Run
-  fRun -> Run( nEvent==-1 ? fEvent->GetNEvents() : nEvents );
+  fRun -> Run( nEvent==-1 ? fEvent->GetNEvents() : nEvent );
 
 
   // -----------------------------------------------------------------

@@ -18,6 +18,7 @@ STMCEventTask::STMCEventTask()
   fMCEventHeader(NULL),
   fMCTriggerResponse(NULL),
   fScintillatorHitArray(NULL),
+  fIsSetSystem(kFALSE),
   fBeamVectorArray(NULL),
   fTargetVectorArray(NULL)
 {

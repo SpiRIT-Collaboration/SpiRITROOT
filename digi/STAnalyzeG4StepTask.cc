@@ -140,7 +140,7 @@ void STAnalyzeG4StepTask::Exec(Option_t* option)
       Double_t eLoss = mcpoint->GetEnergyLoss()*1.E9;
       if(eLoss<=0.) continue;
 
-      Double_t lDrift = fYAnodeWirePlane-mcpoint->GetY()*10.;
+      Double_t lDrift = -10.*mcpoint->GetY();
       if(lDrift<0.||lDrift>1000.) continue;
       Double_t tDrift = lDrift/fVelDrift;
       Double_t sigmaL = fCoefL*TMath::Sqrt(lDrift);
@@ -178,6 +178,7 @@ void STAnalyzeG4StepTask::Exec(Option_t* option)
 	    if(jLayer<0 || jLayer>=fNLayers) continue;
 
 	    for(Int_t iRow=0; iRow<5; iRow++)  { 
+	       Double_t relGain = (Double_t)gain;
 	       Int_t jRow = row+iRow-2;
 	       if(jRow<0 || jRow>=fNRows) continue;
 
@@ -187,14 +188,14 @@ void STAnalyzeG4StepTask::Exec(Option_t* option)
 	       Double_t x1 = jRow*fPadSizeRow - fXPadPlane/2;     // pad x-range lower edge
 	       Double_t x2 = (jRow+1)*fPadSizeRow - fXPadPlane/2; // pad x-range higth edge
 	       Double_t content;
-          if(fIsSetGainMatchingData)
-             gain = (Double_t)gain/fGainMatchingDataScale[fNLayers+jLayer];
+               if(fIsSetGainMatchingData)
+                 relGain /= fGainMatchingDataScale[jLayer];
 	       if(!fAssumeGausPRF){
-		  content = gain*fFillRatio[type][iLayer]
+		  content = relGain*fFillRatio[type][iLayer]
 		     *(fPRIRow->Eval(x2-xEl)-fPRIRow->Eval(x1-xEl));
 	       }
 	       else{
-		  content = gain*fFillRatio[type][iLayer]
+		  content = relGain*fFillRatio[type][iLayer]
 		     *( (0.5*TMath::Erf((x2-xEl)/fPRIPar0)) 
 			   -(0.5*TMath::Erf((x1-xEl)/fPRIPar0)) );
 	       }
