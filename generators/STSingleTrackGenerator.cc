@@ -1,6 +1,7 @@
 #include "STSingleTrackGenerator.hh"
 #include "FairRunSim.h"
 #include "FairLogger.h"
+#include "FairMCEventHeader.hh"
 #include "TMath.h"
 #include "TDatabasePDG.h"
 #include "TParticlePDG.h"
@@ -11,7 +12,8 @@ ClassImp(STSingleTrackGenerator);
 STSingleTrackGenerator::STSingleTrackGenerator()
 : FairGenerator("STSingleTrackGenerator"),
   fNEvents(500),
-  fPrimaryVertex(TVector3(0.,-21.33,-0.89)), 
+  fPrimaryVertex(TVector3(0.,-21.33,-0.89)),
+  fRandomMomentum(kFALSE),
   fRandomDirection(kFALSE), 
   fIsCocktail(kFALSE), fBrho(0.),
   fIsDiscreteTheta(kFALSE), fIsDiscretePhi(kFALSE),
@@ -19,6 +21,8 @@ STSingleTrackGenerator::STSingleTrackGenerator()
 {
   fPdgList.clear();
   fMomentum.SetXYZ(0., 0., .5);
+  fMomentumRange[0] = 0.;
+  fMomentumRange[1] = 0.;
   fThetaRange[0] = 0.;
   fThetaRange[1] = TMath::Pi()/2.;
   fPhiRange[0] = -TMath::Pi();
@@ -47,8 +51,8 @@ void STSingleTrackGenerator::SetParticleList(Int_t* pdgs)
 void STSingleTrackGenerator::SetCocktailEvent(Double_t setting=100.)
 {
 
-  if(setting==300.) fBrho = 5.4127*0.98; // BigRIPS value
-  else if(setting==100.) fBrho = 3.0026*0.98;  // BigRIPS value
+  if(setting==300.) fBrho = 5.4127*0.98; // BigRIPS F7 magnet value * 98%
+  else if(setting==100.) fBrho = 3.0026*0.98;  // BigRIPS value * 98%
   else{
     LOG(ERROR) << "unknown cocktail event?? please set 100 or 300 as argument." << FairLogger::endl;
     return;
@@ -74,6 +78,11 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
   auto index = (Int_t)gRandom->Uniform(0,fPdgList.size());
   pdg = fPdgList.at(index);
 
+  if(fRandomMomentum){
+    Double_t mom = gRandom->Uniform(fMomentumRange[0], fMomentumRange[1]);
+    momentum.SetMag(mom);
+  }
+
   if(fRandomDirection){
     Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
     Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
@@ -93,6 +102,11 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
   if(fIsCocktail||fBrho!=0.)
     momentum.SetMag(0.3*fBrho*GetQ(pdg));
 
+  auto event = (FairMCEventHeader*)primGen->GetEvent();
+  if( event && !(event->IsSet()) ){
+    event->MarkSet(kTRUE);
+    event->SetVertex(vertex);
+  }
 
   primGen->AddTrack(pdg,momentum.X(),momentum.Y(),momentum.Z(),vertex.X(),vertex.Y(),vertex.Z());
   return kTRUE;

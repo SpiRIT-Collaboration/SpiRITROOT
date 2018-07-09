@@ -47,6 +47,10 @@ class STSingleTrackGenerator : public FairGenerator
     void SetDirection(TVector3 d)  { fMomentum.SetMagThetaPhi(fMomentum.Mag(),d.Theta(),d.Phi()); }
     void SetThetaPhi(Double_t t, Double_t p)  { fMomentum.SetMagThetaPhi(fMomentum.Mag(),t,p); }
 
+    // set random momentum flag
+    void SetRandomMomentum(Bool_t f, Double_t m0, Double_t m1)
+    { fRandomMomentum = f; fMomentumRange[0] = m0; fMomentumRange[1] = m1; }
+
     // set random direction flag
     void SetRandomDirection(Bool_t f) { fRandomDirection = f; }
     // use with random direction. change the range of angles
@@ -73,6 +77,9 @@ class STSingleTrackGenerator : public FairGenerator
     std::vector<Int_t> fPdgList;   // particle pdg list
     TVector3 fPrimaryVertex;
     TVector3 fMomentum;
+
+    Bool_t fRandomMomentum;
+    Double_t fMomentumRange[2];
 
     Bool_t   fRandomDirection; // uniform distribution within -180<phi<180 deg, 0<theta<90 deg.
     Double_t fThetaRange[2];
