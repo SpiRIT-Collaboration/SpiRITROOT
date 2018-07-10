@@ -34,6 +34,8 @@ class STGenfitTest2
     STGenfitTest2(bool loadSamurai);
     ~STGenfitTest2();
 
+    void SetTargetPlane(Double_t x, Double_t y, Double_t z); // in cm
+
     void SetMinIterations(Int_t value);
     void SetMaxIterations(Int_t value);
 
@@ -75,7 +77,9 @@ class STGenfitTest2
     genfit::MeasurementProducer<STHitCluster, genfit::STSpacepointMeasurement> *fMeasurementProducer;
     genfit::MeasurementFactory<genfit::AbsMeasurement> *fMeasurementFactory;
 
+    genfit::DetPlane *fTargetDetPlane = nullptr;
     genfit::SharedPlanePtr fTargetPlane;
+
     genfit::SharedPlanePtr fKyotoLPlane;
     genfit::SharedPlanePtr fKyotoRPlane;
     genfit::SharedPlanePtr fKatanaPlane;
