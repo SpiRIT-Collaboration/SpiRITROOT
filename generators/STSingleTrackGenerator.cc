@@ -1,7 +1,7 @@
 #include "STSingleTrackGenerator.hh"
 #include "FairRunSim.h"
 #include "FairLogger.h"
-#include "FairMCEventHeader.hh"
+#include "FairMCEventHeader.h"
 #include "TMath.h"
 #include "TDatabasePDG.h"
 #include "TParticlePDG.h"
