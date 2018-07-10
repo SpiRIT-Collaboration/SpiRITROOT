@@ -56,6 +56,7 @@ class STRecoTrack : public STRecoTrackCand
 
   public:
     STRecoTrack();
+    STRecoTrack(STRecoTrack *recoTrack);
     virtual ~STRecoTrack() {}
 
     virtual void Clear(Option_t *option = "");
