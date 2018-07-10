@@ -34,6 +34,7 @@ class STHit : public TObject
     void Clear(Option_t * = "");                             ///< Clear method for reuse object
 
     void SetIsEmbed(Bool_t value);
+    void SetIsSaturated(Bool_t value);
     void SetIsClustered(Bool_t value = kTRUE);               ///< Clustered flag setter
     void SetHitID(Int_t hitID);                              ///< Hit ID setter
     virtual void SetClusterID(Int_t clusterID);              ///< Cluster stter
@@ -53,7 +54,8 @@ class STHit : public TObject
     void SetRow(Int_t row);                                  ///< Row number setter
     void SetLayer(Int_t layer);                              ///< Layer number setter
     void SetTb(Double_t tb);                                 ///< Time bucket number setter
-
+    void SetSaturatedTb(Double_t tb);                                 ///< Time bucket number setter
+  
     void SetChi2(Double_t chi2);                             ///< Chi-square setter
     void SetNDF(Int_t ndf);                                  ///< NDF setter
 
@@ -61,6 +63,7 @@ class STHit : public TObject
     void RemoveTrackCand(Int_t trackID);
 
     Bool_t IsEmbed()     const; ///<Get if it is embeded
+    Bool_t IsSaturated() const; ///< True if pad is saturated 
     virtual Bool_t IsClustered() const; ///< Clustered flag getter
     virtual  Int_t GetHitID()    const; ///< Hit ID getter
 
@@ -79,7 +82,8 @@ class STHit : public TObject
        Int_t GetRow()       const; ///< Row number getter
        Int_t GetLayer()     const; ///< Layer number sgtter
     Double_t GetTb()        const; ///< Time bucket number getter
-
+    Double_t GetSaturatedTb()  const; ///< Time bucket position in saturated pad
+  
     Double_t GetChi2()      const; ///< Chi-square getter
        Int_t GetNDF()       const; ///< NDF getter
 
@@ -123,6 +127,7 @@ class STHit : public TObject
   protected:
       Bool_t fIsClustered; ///< Clustered flag
       Bool_t fIsEmbed;     ///<True if embeded
+      Bool_t fIsSaturated; ///<True if pad was saturated 
        Int_t fHitID;       ///< Hit ID
        Int_t fClusterID;   ///< Cluster ID having this hit
        Int_t fTrackID;     ///< Track ID having this hit
@@ -137,7 +142,8 @@ class STHit : public TObject
        Int_t fRow;         ///< Row number of the pad having maximum peak
        Int_t fLayer;       ///< Layer number of the pad having maximum peak
     Double_t fTb;          ///< Time bucket number of hit position
-
+    Double_t fSatTb;       ///< Time bucket number pad saturated position
+  
     Double_t fChi2;        ///< Chi-square of hit time fit
        Int_t fNDF;         ///< NDF of hit time fit
 

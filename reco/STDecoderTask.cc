@@ -278,6 +278,9 @@ STDecoderTask::Exec(Option_t *opt)
 	  for (Int_t iPad = 0; iPad < numPads; iPad++) {
 	    STPad *pad = fRawEvent -> GetPad(iPad);
 	    Double_t *adc = pad -> GetADC();
+	    Int_t maxTb = fPar -> GetNumTbs();
+	    if(pad -> IsSaturated())
+	      maxTb = pad -> GetSaturatedTb();// only embed MC up to just before saturation point
 	    
 	    for (Int_t iPadMC = 0; iPadMC < numPadsMC; iPadMC++){
 	      STPad *padMC = fRawEventMC -> GetPad(iPadMC);
@@ -286,7 +289,7 @@ STDecoderTask::Exec(Option_t *opt)
 	      if ((padMC -> GetRow() == pad -> GetRow()) &&
 		  (padMC -> GetLayer() == pad -> GetLayer()))
 		{
-		  for (Int_t iTb = 0; iTb < fPar -> GetNumTbs(); iTb++)
+		  for (Int_t iTb = 0; iTb < maxTb; iTb++)
 		    {
 		      pad -> SetADC(iTb, adc[iTb]+adcMC[iTb]);
 		      
@@ -324,7 +327,7 @@ STDecoderTask::CheckSaturation(STRawEvent *event)
   //Returns Time bucket (tb) position of begining of final saturating pulse
   //From this tb position we should not embed any hits also the pad is flagged saturated 
   int tb_pos_ofsat = 9999;
-
+  int tb_offset    = 30;   //offset from minimum of bill's method to begining of saturated pulse 
   //Setting A from Bill's presentation
   //gives undershoot for saturated pules
   //exponential tail for nomal pules die off
@@ -419,7 +422,7 @@ STDecoderTask::CheckSaturation(STRawEvent *event)
       if(time_over_thresh > 8 &&  value_min < thresh && max_value > 500 )
 	{
 	  pad -> SetIsSaturated(true);
-	  pad -> SetSaturatedTb(max_tb);
+	  pad -> SetSaturatedTb(max_tb - tb_offset);
 	}
 
     }

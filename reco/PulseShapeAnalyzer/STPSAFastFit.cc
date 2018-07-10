@@ -222,10 +222,12 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
   memcpy(&adc, adcSource, sizeof(Double_t)*fNumTbs);
 
   // Pad information
-  Int_t row   = pad -> GetRow();
-  Int_t layer = pad -> GetLayer();
+  Int_t row     = pad -> GetRow();
+  Int_t layer   = pad -> GetLayer();
+  Int_t tb_sat  = pad -> GetSaturatedTb();
   Double_t xPos = (row   + 0.5) * fPadSizeX - fPadPlaneX/2.;
   Double_t zPos = (layer + 0.5) * fPadSizeZ;
+  Bool_t is_sat = pad -> IsSaturated();
 
   // Found peak information
   Int_t tbCurrent = fWindowStartTb;
@@ -291,6 +293,8 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
       hit -> SetTb(tbHit);
       hit -> SetChi2(squareSum);
       hit -> SetNDF(ndf);
+      hit -> SetIsSaturated(is_sat);
+      hit -> SetSaturatedTb(tb_sat);
       hitNum++;
 
 #ifdef DEBUG_PEAKFINDING
