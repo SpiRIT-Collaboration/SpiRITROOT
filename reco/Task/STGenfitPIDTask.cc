@@ -52,6 +52,7 @@ STGenfitPIDTask::Init()
   fRootManager -> Register("STRecoTrack", "SpiRIT", fRecoTrackArray, fIsPersistence);
 
   fGenfitTest = new STGenfitTest2(fIsSamurai);
+  fGenfitTest -> SetTargetPlane(fTargetX*0.1, fTargetY*0.1, fTargetZ*0.1); // Target plane position unit mm -> cm
   fPIDTest = new STPIDTest();
 
   fVertexArray = new TClonesArray("STVertex");
@@ -327,3 +328,10 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 }
 
 void STGenfitPIDTask::SetBDCFile(TString fileName) { fBDCName = fileName; }
+
+void STGenfitPIDTask::SetTargetPlane(Double_t x, Double_t y, Double_t z)
+{
+  fTargetX = x;
+  fTargetY = y;
+  fTargetZ = z;
+}
