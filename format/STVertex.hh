@@ -36,6 +36,7 @@
 class STVertex : public TObject {
   public:
     STVertex();
+    STVertex(STVertex *vertex);
     STVertex(const genfit::GFRaveVertex &);
 
     virtual ~STVertex();
@@ -49,6 +50,7 @@ class STVertex : public TObject {
     Double_t GetChi2()   const { return fChi2; }
 
     UInt_t GetNTracks()  const { return fSmoothedTracks.size(); }
+    std::vector<genfit::GFRaveTrackParameters *> *GetSmoothedTrackArray() { return &fSmoothedTracks; }
     genfit::GFRaveTrackParameters *GetParameters(UInt_t idx) const { return fSmoothedTracks[idx]; }
 
     Int_t GetID()        const { return fID; }
@@ -76,7 +78,7 @@ class STVertex : public TObject {
 
     std::vector<genfit::GFRaveTrackParameters *> fSmoothedTracks; //->
 
-  ClassDef(STVertex, 3)
+  ClassDef(STVertex, 4)
 };
 
 #endif
