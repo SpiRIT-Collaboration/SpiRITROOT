@@ -31,10 +31,13 @@ class STHitCluster : public STHit
 
     Bool_t IsEmbed() const;
     Bool_t IsClustered() const;
+    Bool_t IsMissingCharge() const;
      Int_t GetHitID() const;
 
-         TMatrixD   GetCovMatrix() const; ///< Get covariance matrix
-            Int_t   GetNumHits()  const;  ///< Get number of hits
+    TMatrixD   GetCovMatrix() const;          ///< Get covariance matrix
+    Int_t   GetNumHits()  const;              ///< Get number of hits
+    Int_t   GetNumSatNeighbors()  const;     ///< Get # of saturated pads neighbored hits in cluster
+    Double_t   GetFracSatNeighbors()  const; ///< Get fract of saturated pads neighbored hits in cluster
     vector<Int_t>  *GetHitIDs();          ///< Get vector array hit IDs
     vector<STHit*> *GetHitPtrs();
 
@@ -44,6 +47,9 @@ class STHitCluster : public STHit
 
     virtual void SetClusterID(Int_t clusterID);
 
+    void SetIsMissingCharge(Bool_t val); //True if a hit neighbors a dead pad therefore missing charge
+    void SetFractSatNeighbors(Double_t frac);  //fraction of hits which have neighboring dead pads
+    void SetNumSatNeighbors(Int_t num);        //# of hits which have neighboring dead pads
     void SetLength(Double_t length);
     Double_t GetLength();
 
@@ -64,12 +70,15 @@ class STHitCluster : public STHit
     vector<Int_t>  fHitIDArray;           ///< Vector array of hit IDs
     vector<STHit*> fHitPtrArray;          //! <
 
+    Int_t fnumSatNeigh;                  // number of hits neighboring saturated pads
     Double_t fLength;
 
     Double_t fPOCAX;
     Double_t fPOCAY;
     Double_t fPOCAZ;
+    Double_t fFractionSat;              //Fraction of hits in cluster with next to dead pad
     Bool_t fIsEmbed;
+    Bool_t fIsMissingCharge;            //Missing charge comes from hits neighboring dead pads
     /**
      * Calculate weighted mean for cluster position. (Weight = charge) <br>
      * Weighted mean: \f$ \mu_{n+1} = \mu_n + \displaystyle\frac{a_{n+1} - \mu_n}{W_n+w_{n+1}},\quad(n\geq0). \f$

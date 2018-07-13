@@ -40,9 +40,10 @@ void STPad::Clear()
  memset(fRawAdc, 0, sizeof(fRawAdc));
  memset(fAdc, 0, sizeof(fAdc));
 
- fRow = -1;
- fLayer = -1;
- tb_sat = -1;
+ fRow       = -1;
+ fLayer     = -1;
+ fTb_sat    = 99999; 
+ fTb_sat_MC = 99999; 
  fIsSaturated = false;
 }
 
@@ -77,8 +78,13 @@ STPad &STPad::operator= (STPad right)
  Int_t  STPad::GetRow()               { return fRow; }
  Int_t *STPad::GetRawADC()            { return fRawAdc; }
  Int_t  STPad::GetRawADC(Int_t idx)   { return fRawAdc[idx]; }
+Double_t STPad::GetSaturatedTb()  {return fTb_sat;};
+Double_t STPad::GetSaturatedTbMC(){return fTb_sat_MC;};
+
 Bool_t  STPad::IsPedestalSubtracted() { return fIsPedestalSubtracted; }
 Bool_t  STPad::IsGainCalibrated()     { return fIsGainCalibrated; }
+void    STPad::SetSaturatedTb(Int_t val)  {fTb_sat = val;};
+void    STPad::SetSaturatedTbMC(Int_t val){fTb_sat_MC = val;};
 
 Double_t *STPad::GetADC()
 {

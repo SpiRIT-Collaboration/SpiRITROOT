@@ -34,7 +34,8 @@ STHit::STHit(STHit *hit)
   fClusterID = hit -> GetClusterID();
   fTrackID = hit -> GetTrackID();
   fIsEmbed = hit -> IsEmbed();
-  
+  fIsSaturated = hit -> IsSaturated();  
+
   SetHit(hit -> GetHitID(), hit -> GetPosition(), hit -> GetCharge());
 
   fDx = hit -> GetDx();
@@ -46,7 +47,8 @@ STHit::STHit(STHit *hit)
   fRow = hit -> GetRow();
   fLayer = hit -> GetLayer();
   fTb = hit -> GetTb();
-
+  fSatTb = hit -> GetSaturatedTb();
+    
   fChi2 = hit -> GetChi2();
   fNDF = hit -> GetNDF();
 
@@ -61,7 +63,7 @@ void STHit::Clear(Option_t *)
   fTrackID     = -1;
   fClusterID   = -1;
   fIsSaturated = false;
-  fSatTb       = -1;
+  fSatTb       = 9999;
 
   SetHit(-1, 0, 0, -1000, 0);
 
