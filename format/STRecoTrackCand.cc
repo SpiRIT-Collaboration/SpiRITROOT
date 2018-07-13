@@ -41,12 +41,14 @@ void STRecoTrackCand::Copy(TObject *obj) const
   }
 }
 
-Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut)
+Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut, Double_t fract_shadow)
 {
   vector<Double_t> dEdxArray;
   for (auto point : fdEdxPointArray)
-    dEdxArray.push_back(point.fdE/point.fdx);
-
+    {
+      if( (1.*point.fNumShadowHits/point.fNumHits) <= fract_shadow)
+	dEdxArray.push_back(point.fdE/point.fdx);
+    }
   sort(dEdxArray.begin(), dEdxArray.end());
 
   auto numUsedPoints = dEdxArray.size();

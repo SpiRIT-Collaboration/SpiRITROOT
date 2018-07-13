@@ -725,7 +725,7 @@ STHelixTrackFinder::HitClustering(STHelixTrack *helix)
   }
 
   fHitClusterArray -> Compress();
-  
+
   //Store hitIDs of hits in helix in a mapped array for quick searching
   //We will pass to neighbor checking funciton to make sure neighbors are not hits in helix track
   auto hit_IDary = helix -> GetHitIDArray();

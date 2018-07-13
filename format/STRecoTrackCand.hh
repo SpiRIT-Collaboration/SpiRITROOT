@@ -55,7 +55,9 @@ class STRecoTrackCand : public TObject
 
     void AdddEdxPoint(STdEdxPoint dedxPoint) { fdEdxPointArray.push_back(dedxPoint); }
     vector<STdEdxPoint> *GetdEdxPointArray() { return &fdEdxPointArray; }
-    Double_t GetdEdxWithCut(Double_t lowCut, Double_t highCut);
+    //fract_shadow = 1. includes all clusters when calculating dE/dx
+    //clusters with value < fract_shadow are included in dE/dx calculation 
+    Double_t GetdEdxWithCut(Double_t lowCut, Double_t highCut, Double_t fract_shadow = 1.);
 
     void SetGenfitTrack(genfit::Track *val) { fGenfitTrack = val; }
     genfit::Track *GetGenfitTrack() { return fGenfitTrack; }

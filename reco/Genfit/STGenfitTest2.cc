@@ -552,8 +552,12 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
       continue;
     }
 
-    Double_t dE = cluster -> GetCharge();
-    Double_t dx = cluster -> GetLength();
+    Double_t dE       = cluster -> GetCharge();
+    Double_t dx       = cluster -> GetLength();
+    Int_t nHits       = cluster -> GetNumHits();
+    Int_t nShadowHits = cluster -> GetNumSatNeighbors();      
+    Bool_t isRow      = cluster -> IsRowCluster();      
+
 
     /*
     if (dx > 20) {
@@ -565,6 +569,9 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
     dedx.fdE = dE;
     dedx.fdx = dx;
     dedx.fLength = 88;
+    dedx.fNumHits = nHits;
+    dedx.fNumShadowHits = nShadowHits;
+    dedx.fisRow = isRow;
     dedxArrayTemp.push_back(dedx);
   }
 
@@ -727,9 +734,12 @@ STGenfitTest2::GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helix
 
     if (preCluster -> IsStable())
     {
-      Double_t dE = preCluster -> GetCharge();
-      Double_t dx = preCluster -> GetLength();
-      dEdxPointArray -> push_back(STdEdxPoint(-1, dE, dx, -999));
+      Double_t dE       = preCluster -> GetCharge();
+      Double_t dx       = preCluster -> GetLength();
+      Int_t nHits       = preCluster -> GetNumHits();
+      Int_t nShadowHits = preCluster -> GetNumSatNeighbors();      
+      Bool_t isRow      = preCluster -> IsRowCluster();      
+      dEdxPointArray -> push_back(STdEdxPoint(-1, dE, dx, -999,nHits,nShadowHits,isRow));
     }
 
     preCluster = curCluster;
@@ -807,8 +817,11 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
       continue;
     }
 
-    Double_t dE = cluster -> GetCharge();
-    Double_t dx = cluster -> GetLength();
+    Double_t dE       = cluster -> GetCharge();
+    Double_t dx       = cluster -> GetLength();
+    Int_t nHits       = cluster -> GetNumHits();
+    Int_t nShadowHits = cluster -> GetNumSatNeighbors();      
+    Bool_t isRow      = cluster -> IsRowCluster();      
 
     /*
     if (dx > 20) {
@@ -817,7 +830,7 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
     }
     */
 
-    dEdxPointArray -> push_back(STdEdxPoint(cluster -> GetClusterID(), dE, dx, -999));
+      dEdxPointArray -> push_back(STdEdxPoint(cluster -> GetClusterID(), dE, dx, -999, nHits,nShadowHits,isRow));
   }
 
   return true;

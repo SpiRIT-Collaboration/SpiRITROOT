@@ -252,7 +252,7 @@ STDecoderTask::Exec(Option_t *opt)
       fRawEvent = fDecoder -> GetRawEvent(fEventID++);
       *fRawEventData = *fRawEvent;
     }
-    CheckSaturation(fRawEvent);
+  CheckSaturation(fRawEvent);
     
   if (fEmbedFile.EqualTo("") && fIsEmbedding)
     {
@@ -327,7 +327,7 @@ STDecoderTask::CheckSaturation(STRawEvent *event)
   //Returns Time bucket (tb) position of begining of final saturating pulse
   //From this tb position we should not embed any hits also the pad is flagged saturated 
   int tb_pos_ofsat = 9999;
-  int tb_offset    = 0;   //offset from minimum of bill's method to begining of saturated pulse 
+  int tb_offset    = 30;   //offset from minimum of bill's method to begining of saturated pulse 
   //Setting A from Bill's presentation
   //gives undershoot for saturated pules
   //exponential tail for nomal pules die off
