@@ -1,5 +1,6 @@
 #include "STPadPlaneMap.hh"
 #include <iostream>
+
 using namespace std;
 
 void STPadHitContainer::Clear()
@@ -257,6 +258,52 @@ void STPadPlaneMap::GetNeighborHits(STHit *hit, hits_t *array)
     neighbor -> GetHits(array);
 }
 
+Bool_t STPadPlaneMap::IsNeighborSaturated(STHit *hit, Bool_t isRow, std::vector<bool> helix_hits)
+{
+  Int_t row = hit -> GetRow();
+  Int_t layer = hit -> GetLayer();
+	    
+  Bool_t isSaturated = false;
+  hits_t *array = new hits_t();
+  auto pad = fPadMap[hit->GetRow()][hit->GetLayer()];
+  auto neighbors = pad -> GetNeighbors();
+  for (auto neighbor : *neighbors)
+    neighbor -> GetHits(array);
+
+  for(int iHit = 0; iHit < array -> size(); iHit++)
+    {
+      auto neigh_hit = array -> at(iHit);
+      //      if neighbor hit is in same helix as hit we are checking it cannot be shaddowed
+      //      if( neigh_hit->GetHitID() < helix_hits.size() ) 
+      //	if( helix_hits.at(neigh_hit->GetHitID()) ) 
+      //	  continue;
+
+      //isRow = 1 is row clustering 0 is layer
+      if(isRow)       
+	{
+	  if(row == array -> at(iHit) -> GetRow())
+	    {
+	      int tb_neigh = neigh_hit -> GetSaturatedTb();
+	      if(neigh_hit-> IsSaturated() && hit -> GetTb() > tb_neigh )
+		isSaturated = true;
+	    }
+	}
+      else  
+	{
+	  if(layer == array -> at(iHit) -> GetLayer())
+	    {
+	      int tb_neigh = array -> at(iHit) -> GetSaturatedTb();
+	      if(array -> at(iHit) -> IsSaturated() && hit -> GetTb() > tb_neigh)
+		isSaturated = true;
+	    }
+	}
+    }
+
+  delete array;
+  
+  return isSaturated;
+}
+
 void STPadPlaneMap::GetRowHits(Int_t row, hits_t *array)
 {
   if (row < 0 || row >= 108)
@@ -264,7 +311,7 @@ void STPadPlaneMap::GetRowHits(Int_t row, hits_t *array)
 
   for (Int_t layer = 0; layer < 112; layer++) 
     fPadMap[row][layer] -> GetHits(array);
-}
+ }
 
 void STPadPlaneMap::GetLayerHits(Int_t layer, hits_t *array)
 {

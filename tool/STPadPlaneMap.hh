@@ -54,7 +54,8 @@ class STPadPlaneMap
     void GetNeighborHits(STHit *hit, hits_t *array);
     void GetRowHits(Int_t row, hits_t *array);
     void GetLayerHits(Int_t layer, hits_t *array);
-
+    Bool_t IsNeighborSaturated(STHit *hit, Bool_t isRow,std::vector<bool> helix_hits);
+  
     Int_t CalculateRow(Double_t x);
     Int_t CalculateLayer(Double_t z);
     Double_t CalculateX(Int_t row);

@@ -117,33 +117,37 @@ MyFitFunction* MyFitFunction::Instance()
 
 STHelixTrackFinder::STHelixTrackFinder()
 {
-  fFitter = new STHelixTrackFitter();
+  fFitter   = new STHelixTrackFitter();
   fEventMap = new STPadPlaneMap();
+  fHitMap   = new STPadPlaneMap();
 
   fCandHits = new std::vector<STHit*>;
   fGoodHits = new std::vector<STHit*>;
-  fBadHits = new std::vector<STHit*>;
+  fBadHits  = new std::vector<STHit*>;
 }
 
 void 
 STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray, TClonesArray *hitClusterArray)
 {
-  fTrackArray = trackArray;
+  fTrackArray      = trackArray;
   fHitClusterArray = hitClusterArray;
   fEventMap -> Clear();
   fCandHits -> clear();
   fGoodHits -> clear();
-  fBadHits -> clear();
+  fBadHits  -> clear();
+  fHitMap   -> Clear();
 
   Int_t numTotalHits = hitArray -> GetEntries();
   for (Int_t iHit = 0; iHit < numTotalHits; iHit++)
-    fEventMap -> AddHit((STHit *) hitArray -> At(iHit));
-
+    {
+      fEventMap -> AddHit((STHit *) hitArray -> At(iHit));
+      fHitMap -> AddHit((STHit *) hitArray -> At(iHit));
+    }
   while(1)
   {
     fCandHits -> clear();
     fGoodHits -> clear();
-    fBadHits -> clear();
+    fBadHits  -> clear();
 
     STHelixTrack *track = NewTrack();
     if (track == nullptr)
@@ -510,7 +514,7 @@ bool
 STHelixTrackFinder::HitClustering(STHelixTrack *helix)
 {
   auto hitArray = helix -> GetHitArray();
-
+  
   TObjArray hits;
   for (auto hit : *hitArray)
     hits.Add(hit);
@@ -545,8 +549,32 @@ STHelixTrackFinder::HitClustering(STHelixTrack *helix)
   {
     helix -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
 
-    section = (Int_t)((TMath::Abs(alpha) + TMath::Pi()/4)/(TMath::Pi()/2));
-    isRow = section%2;
+    double alpha_a = abs(alpha);
+    double pi = TMath::Pi();
+    double beta = 45 * TMath::DegToRad(); //enter angle for which a track switches layer to row clust
+
+    //There are four quadrants or sections starting from section 0 its layer clustering
+    //section 1 row, section 2 layer, section 3 row
+    if( alpha_a > beta && alpha_a <= (pi-beta))
+      {
+	isRow = 1;
+	section = 1;
+      }
+    else if( alpha_a > (pi-beta) && alpha_a <= (pi+beta))
+      {
+	isRow = 0;
+	section = 2;
+      }
+    else if(alpha_a > (pi+beta) && alpha_a <= (2*pi - beta))
+      {
+	isRow = 1;
+	section = 3;
+      }
+    else
+      {
+	isRow = 0;
+	section = 0;
+      }
 
     if (section != currentBuildSection) // init
     {
@@ -697,6 +725,37 @@ STHelixTrackFinder::HitClustering(STHelixTrack *helix)
   }
 
   fHitClusterArray -> Compress();
+  
+  //Store hitIDs of hits in helix in a mapped array for quick searching
+  //We will pass to neighbor checking funciton to make sure neighbors are not hits in helix track
+  auto hit_IDary = helix -> GetHitIDArray();
+  std::vector<bool> helix_hits(*max_element(hit_IDary->begin(), hit_IDary->end())+1,false);
+      for( auto hitID : *hit_IDary)
+	  helix_hits.at(hitID)=true;
+
+  //Here we count how many hits in the cluster are neighbors to dead pads by saturation
+  auto helix_cl_ary = helix -> GetClusterArray();
+   for (auto iCluster = 0; iCluster < helix_cl_ary -> size(); ++iCluster) 
+    {
+      auto cluster = (STHitCluster *) helix_cl_ary -> at(iCluster);
+      auto hit_ary = cluster -> GetHitPtrs();
+      bool by_row = cluster -> IsRowCluster();
+      int sat_hits = 0;
+      for( auto cl_hit : *hit_ary)
+	{
+	  if( cl_hit -> IsSaturated() )//the saturated hits cannot shadow themselves 
+	    continue;
+	  if( fHitMap -> IsNeighborSaturated(cl_hit,by_row,helix_hits) ) //has a saturated neighbor 
+	    sat_hits++;
+	}
+      cluster -> SetNumSatNeighbors(sat_hits);
+      if(sat_hits != 0)
+	{
+	  cluster -> SetIsMissingCharge(true); //missing charge due to saturated neighbor killed pad 
+	  cluster -> SetFractSatNeighbors(sat_hits/hit_ary->size());
+	}
+
+    }
 
   return true;
 }
@@ -938,72 +997,7 @@ void STHelixTrackFinder::SetClusterCutLRTB(Double_t left, Double_t right, Double
   fCCTop = top;
   fCCBottom = bottom;
 }
-/*
-double STHelixTrackFinder::PRF(double x, double par[])
-{
-  double h_w = 4; //half width
-  double x1 = x-h_w;
-  double x2 = x+h_w;
-  
-  double sigma = 3.4;
-  double x1_p = x1/(sqrt(2)*sigma);
-  double x2_p = x2/(sqrt(2)*sigma);
-  
-  return .5*(TMath::Erf(x2_p)-TMath::Erf(x1_p));
-  
-};
 
-std::vector<double> STHelixTrackFinder:: getmean(double par[])
-{
-  vector<double> output;
-  double mean=0;
-  double chg =0;
-  //Here we loop over non-saturated hits
-  int num_elem = hits_pos_ary.size();
-  for(int i=0;i<num_elem;++i){
-    mean += hits_pos_ary.at(i)*hits_chg_ary.at(i);
-    chg += hits_chg_ary.at(i);
-  }
-  
-  //Here we loop over saturated hits
-  num_elem = s_hits_pos_ary.size();
-  for(int i=0;i<num_elem;++i){
-    mean += s_hits_pos_ary.at(i)*par[i];
-    chg += par[i];
-  }
-  mean  = mean/chg;
-  output.push_back(mean);
-  output.push_back(chg);
-  
-  return output;
-  
-};
-
-void STHelixTrackFinder::fcn(int& npar, double* deriv, double& f, double *par, int flag)
-{
-  double chisq =0;
-  vector<double> stat_array = getmean(par);
-  double mean      = stat_array.at(0);
-  double total_chg = stat_array.at(1);
-  
-  int num_elem = hits_pos_ary.size();
-  for (int i=0; i<num_elem; i++)
-    {
-      double v  = total_chg*PRF(hits_pos_ary.at(i)-mean,par);
-      if ( v != 0.0 )
-	{
-	  double n = hits_chg_ary.at(i);
-	  chisq += pow(n-v,2)/v;
-	}
-      else
-	{
-	  cout << "WARNING -- pdf is negative!!!" << endl;
-	}
-    }
-  
-  f = chisq;        
-};                  
-*/
 std::vector<double> STHelixTrackFinder::minimize(const int npar)
 {
   // Initialize minuit, set initial values etc. of parameters.
@@ -1242,5 +1236,5 @@ void STHelixTrackFinder::De_Saturate(STHelixTrack *track)
 	    track -> AddHit(newHit);
 	    }
       }//layer loop  
-  }
+}
 
