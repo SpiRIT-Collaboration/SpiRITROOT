@@ -63,7 +63,7 @@ void run_mc
 
   // -----------------------------------------------------------------
   // MC initialization
-  gRandom -> SetSeed(time(0));
+  gRandom -> SetSeed(0);
   gSystem -> Setenv("GEOMPATH",   geomDir.Data());
   gSystem -> Setenv("CONFIG_DIR", g4ConfDir.Data());
 
@@ -127,8 +127,8 @@ void run_mc
    */
 
   auto fEvent = new STSingleTrackGenerator();
-  fEvent->SetCocktailEvent(300.);
-  fEvent->SetRandomDirection(true);
+  //fEvent->SetCocktailEvent(300.);
+  //fEvent->SetUniformRandomDirection(true);
   //fEvent->SetParticleList({2212, 211, -211, 1000010020, 1000010030});
 
   FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();

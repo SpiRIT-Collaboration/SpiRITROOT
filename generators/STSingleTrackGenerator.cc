@@ -14,7 +14,8 @@ STSingleTrackGenerator::STSingleTrackGenerator()
   fNEvents(500),
   fPrimaryVertex(TVector3(0.,-21.33,-0.89)),
   fRandomMomentum(kFALSE),
-  fRandomDirection(kFALSE), 
+  fUniRandomDirection(kFALSE), 
+  fSpheRandomDirection(kFALSE), 
   fIsCocktail(kFALSE), fBrho(0.),
   fIsDiscreteTheta(kFALSE), fIsDiscretePhi(kFALSE),
   fNStepTheta(0), fNStepPhi(0)
@@ -83,10 +84,22 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     momentum.SetMag(mom);
   }
 
-  if(fRandomDirection){
+  if(fUniRandomDirection){
     Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
     Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
     momentum.SetMagThetaPhi(momentum.Mag(), randTheta, randPhi);
+  }
+  
+  if(fSpheRandomDirection){
+    Double_t px=0., py=0., pz=0., theta=-999., phi=0.;
+    Double_t mom = momentum.Mag();
+    while(theta<fThetaRange[0]||theta>fThetaRange[1]||phi<fPhiRange[0]||phi>fPhiRange[1]){
+      gRandom->Sphere(px,py,pz,mom);
+      TVector3 tempP(px,py,pz);
+      theta = tempP.Theta();
+      phi = tempP.Phi();
+    }
+    momentum.SetXYZ(px,py,pz);
   }
 
   if(fIsDiscreteTheta){

@@ -18,6 +18,7 @@ void run_transportmodel_digi(TString name = "urqmd_short")
   // FairRun
   FairRunAna* fRun = new FairRunAna();
 
+  gRandom -> SetSeed(0);
 
   // -----------------------------------------------------------------
   // Set digitization tasks

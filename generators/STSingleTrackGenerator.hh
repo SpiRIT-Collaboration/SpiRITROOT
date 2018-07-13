@@ -52,7 +52,8 @@ class STSingleTrackGenerator : public FairGenerator
     { fRandomMomentum = f; fMomentumRange[0] = m0; fMomentumRange[1] = m1; }
 
     // set random direction flag
-    void SetRandomDirection(Bool_t f) { fRandomDirection = f; }
+    void SetUniformRandomDirection(Bool_t f) { fUniRandomDirection = f; }
+    void SetSphericalRandomDirection(Bool_t f) { fSpheRandomDirection = f; }
     // use with random direction. change the range of angles
     void SetThetaPhiLimit(Double_t t0, Double_t t1, Double_t p0, Double_t p1)
     { fThetaRange[0] = t0; fThetaRange[1] = t1; fPhiRange[0] = p0; fPhiRange[1] = p1; }
@@ -81,7 +82,8 @@ class STSingleTrackGenerator : public FairGenerator
     Bool_t fRandomMomentum;
     Double_t fMomentumRange[2];
 
-    Bool_t   fRandomDirection; // uniform distribution within -180<phi<180 deg, 0<theta<90 deg.
+    Bool_t   fUniRandomDirection; // uniform distribution within -180<phi<180 deg, 0<theta<90 deg.
+    Bool_t   fSpheRandomDirection; // spherical distribution within -180<phi<180 deg, 0<theta<90 deg.
     Double_t fThetaRange[2];
     Double_t fPhiRange[2];
 
