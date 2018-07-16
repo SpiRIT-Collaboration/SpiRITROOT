@@ -90,6 +90,9 @@ InitStatus STPSAETask::Init()
   fPSA -> SetLayerCut(fLayerLowCut, fLayerHighCut);
   fPSA -> SetGainMatchingScale(fGainMatchingScale);
   fPSA -> SetGainMatchingData(fGainMatchingData);
+  if (fYOffsetFileName)
+    fPSA -> SetYOffsets(fYOffsetFileName);
+
 
   fShapingTime = fPSA -> GetShapingTime();
   fPSA -> SetPSAPeakFindingOption(fPSAPeakFindingOption);
@@ -239,3 +242,4 @@ void STPSAETask::Exec(Option_t *opt)
 
 void STPSAETask::SetGainMatchingScale(Double_t val) { fGainMatchingScale = val; }
 void STPSAETask::SetGainMatchingData(TString filename) { fGainMatchingData = filename; }
+void STPSAETask::SetYOffsets(TString fileName) { fYOffsetFileName = fileName; }

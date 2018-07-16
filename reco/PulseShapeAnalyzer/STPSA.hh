@@ -48,6 +48,7 @@ class STPSA
     void SetWindowStartTb(Int_t value);
 
     void SetTbOffsets(Double_t *tbOffsets);
+    void SetYOffsets(TString fileName);
 
   protected:
     FairLogger *fLogger;      ///< logger pointer
@@ -76,6 +77,7 @@ class STPSA
     Int_t fLayerHighCut;
 
     Double_t fTbOffsets[12];
+    Double_t fYOffsets[112][108];
 
     Double_t CalculateX(Double_t row);      ///< Calculate x position in mm. This returns the center position of given pad row.
     Double_t CalculateY(Double_t peakIdx);  ///< Calculate y position in mm using the peak index.
