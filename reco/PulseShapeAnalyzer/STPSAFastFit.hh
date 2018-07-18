@@ -106,7 +106,7 @@ class STPSAFastFit : public STPSA, public STPulse
      *
      * Note that adc distribution will be used agian to find the next peak.
      */
-    Int_t fNumTbsCorrection = 50;
+    Int_t fNumTbsCorrection = 512;
 
     /**
      * Proportional parameter for the time-bucket step when fitting tbStart.

@@ -167,9 +167,11 @@ STPSAFastFit::Analyze(STRawEvent *rawEvent, TClonesArray *hitArray)
       hit -> SetHitID(hitNum++);
 
       fPadMap -> GetMapData(hit->GetRow(), hit->GetLayer(), uaIdx, coboIdx, asadIdx, agetIdx, chIdx);
+      layer = hit -> GetLayer();
+      row = hit -> GetRow();
 
       auto tbHit = hit -> GetTb() - fTbOffsets[coboIdx];
-      auto yHit = tbHit * fTbToYConv;
+      auto yHit = tbHit * fTbToYConv + fYOffsets[layer][row];
 
       hit -> SetTb(tbHit);
       hit -> SetY(yHit);

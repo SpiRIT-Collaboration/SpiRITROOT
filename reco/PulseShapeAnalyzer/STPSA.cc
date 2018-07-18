@@ -25,6 +25,11 @@ using std::max_element;
 using std::min_element;
 using std::distance;
 
+#include <fstream>
+#include <iostream>
+
+using namespace std;
+
 ClassImp(STPSA)
 
 STPSA::STPSA()
@@ -107,6 +112,10 @@ STPSA::STPSA()
 
   for (auto coboIdx = 0; coboIdx < 12; ++coboIdx)
     fTbOffsets[coboIdx] = 0.;
+
+  for (auto layer = 0; layer < 112; ++layer)
+    for (auto row = 0; row < 108; ++row)
+      fYOffsets[layer][row] = 0.;
 }
 
 STPSA::~STPSA()
@@ -172,4 +181,17 @@ void STPSA::SetWindowStartTb(Int_t value) { fWindowStartTb = value; }
 void STPSA::SetTbOffsets(Double_t *tbOffsets) {
   for (auto coboIdx = 0; coboIdx < 12; ++coboIdx)
     fTbOffsets[coboIdx] = tbOffsets[coboIdx];
+}
+
+void STPSA::SetYOffsets(TString fileName)
+{
+  Int_t layer, row, n;
+  Double_t amp, off, err;
+  ifstream calfile(fileName);
+  while (calfile >> layer >> row >> n >> amp >> off >> err) {
+    if (abs(off) > 4 || err > 2 || n < 20)
+      off = 0;
+    fYOffsets[layer][row] = off;
+    cout << layer << " " << row << " " << off << endl;
+  }
 }

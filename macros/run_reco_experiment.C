@@ -64,10 +64,8 @@ void run_reco_experiment
   decoder -> SetPersistence(false);
   if (fGCData.IsNull())
     decoder -> SetUseGainCalibration(false);
-  else {
+  else
     decoder -> SetUseGainCalibration(true);
-    //decoder -> SetGainCalibrationData(fGCData); // automatically added from param.
-  }
   decoder -> SetGGNoiseData(fGGData);
   decoder -> SetDataList(raw);
   decoder -> SetEventID(start);
@@ -86,28 +84,40 @@ void run_reco_experiment
     }
   }
 
-//  map<Int_t, vector<Int_t> *> events;
-//  readEventList("eventList-Sn132.txt", events);
-
   auto preview = new STEventPreviewTask();
   preview -> SetSkippingEvents(fSkipEventArray);
-//  preview -> SetSelectingEvents(*events[fRunNo]);
   preview -> SetPersistence(true);
+  // Method to select events to reconstruct
+  // Format of the input file:
+  //        runid eventid
+  //        runid eventid
+  //        runid eventid
+  //        runid eventid
+//  map<Int_t, vector<Int_t> *> events;
+//  readEventList("eventList-Sn132.txt", events);
+//  preview -> SetSelectingEvents(*events[fRunNo]);
 
   auto psa = new STPSAETask();
   psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
   psa -> SetEmbedding(false);
-  //psa -> SetLayerCut(-1, 90);
-  psa -> SetPulserData("pulser_117ns.dat");
+  // Pulse having long tail
+  psa -> SetPulserData("pulser_117ns_50tb.dat");
+  // Rensheng's peak finding method (1).
+  psa -> SetPSAPeakFindingOption(1);
 
   auto helix = new STHelixTrackingTask();
   helix -> SetPersistence(false);
   helix -> SetClusterPersistence(false);
-  helix -> SetClusteringOption(2);
   helix -> SetSaturationOption(1); 
-  helix -> SetClusterCutLRTB(427, -427, -64, -522);
+  // Left, right, top and bottom sides cut
+  helix -> SetClusterCutLRTB(420, -420, -64, -522);
+  // High density region cut
+//  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(120, 100, 220), 5); // current use
+//  helix -> SetCylinderCut(TVector3(0, -226.06, -11.9084), 100, 100, 5);
+//  helix -> SetSphereCut(TVector3(0, -226.06, -11.9084), 100, 5);
+//  helix -> SetEllipsoidCut(TVector3(0, -206.34, -11.9084), TVector3(120, 55, 240), 5);
   
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);

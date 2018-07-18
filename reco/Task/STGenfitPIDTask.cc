@@ -52,6 +52,7 @@ STGenfitPIDTask::Init()
   fRootManager -> Register("STRecoTrack", "SpiRIT", fRecoTrackArray, fIsPersistence);
 
   fGenfitTest = new STGenfitTest2(fIsSamurai);
+  fGenfitTest -> SetTargetPlane(fTargetX*0.1, fTargetY*0.1, fTargetZ*0.1); // Target plane position unit mm -> cm
   fPIDTest = new STPIDTest();
 
   fVertexArray = new TClonesArray("STVertex");
@@ -173,7 +174,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
     candList -> SetBestPID(bestPID);
     auto bestRecoTrackCand = candList -> GetRecoTrackCand(candList -> GetBestPID());
-    gfTrackArrayToVertex.push_back(bestRecoTrackCand -> GetGenfitTrack());
+    auto bestGenfitTrack = bestRecoTrackCand -> GetGenfitTrack();
+    gfTrackArrayToVertex.push_back(bestGenfitTrack);
     recoTrackArrayToVertex.push_back(recoTrack);
 
     helixTrack -> SetGenfitID(trackID);
@@ -187,6 +189,70 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     recoTrack -> SetPosKyotoR(kyotoR);
     recoTrack -> SetPosKatana(katana);
     recoTrack -> SetPosNeuland(neuland);
+
+    auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
+    recoTrack -> SetChi2(fitStatus -> getChi2());
+    recoTrack -> SetNDF(fitStatus -> getNdf());
+    try {
+      recoTrack -> SetTrackLength(bestGenfitTrack -> getTrackLen());
+    } catch (...) {
+      recoTrack -> SetTrackLength(-9999);
+    }
+
+    Int_t numClusters = 0, numClusters90 = 0;
+    Double_t helixChi2R = 0, helixChi2X = 0, helixChi2Y = 0, helixChi2Z = 0;
+    Double_t genfitChi2R = 0, genfitChi2X = 0, genfitChi2Y = 0, genfitChi2Z = 0;
+    for (auto cluster : *helixTrack -> GetClusterArray()) {
+      if (!cluster -> IsStable())
+        continue;
+
+      auto pos = cluster -> GetPosition();
+      numClusters++;
+      if (pos.Z() < 1080)
+        numClusters90++;
+
+      TVector3 dVec, point;
+      Double_t dValue, alpha;
+      helixTrack -> ExtrapolateToPointAlpha(pos, point, alpha);
+      helixChi2R += (point - pos).Mag2();
+      helixChi2X += (point.X() - pos.X())*(point.X() - pos.X());
+      helixChi2Y += (point.Y() - pos.Y())*(point.Y() - pos.Y());
+      helixChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
+      /*
+      helixTrack -> ExtrapolateToX(pos.X(), point, alpha, dVec, dValue);
+      helixChi2X += (point.X() - pos.X())*(point.X() - posX());
+      helixTrack -> ExtrapolateToY(pos.Y(), point, alpha, dVec, dValue);
+      helixChi2Y += (point.Y() - pos.Y())*(point.Y() - posY());
+      helixTrack -> ExtrapolateToZ(pos.Z(), point, alpha, dVec, dValue);
+      helixChi2Z += (point.Z() - pos.Z())*(point.Z() - posZ());
+      */
+
+      if (!fGenfitTest -> ExtrapolateTo(bestGenfitTrack, pos, point))
+        continue;
+
+      genfitChi2R += (point - pos).Mag2();
+      genfitChi2X += (point.X() - pos.X())*(point.X() - pos.X());
+      genfitChi2Y += (point.Y() - pos.Y())*(point.Y() - pos.Y());
+      genfitChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
+      /*
+      fGenfitTest -> GetPosOnPlane(bestRecoTrackCand -> GetGenfitTrack(), pos, 1, point);
+      genfitChi2X += (point.X() - pos.X())*(point.X() - pos.X());
+      fGenfitTest -> GetPosOnPlane(bestRecoTrackCand -> GetGenfitTrack(), pos, 2, point);
+      genfitChi2Y += (point.Y() - pos.Y())*(point.Y() - pos.Y());
+      fGenfitTest -> GetPosOnPlane(bestRecoTrackCand -> GetGenfitTrack(), pos, 3, point);
+      genfitChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
+      */
+    }
+    recoTrack -> SetNumClusters(numClusters);
+    recoTrack -> SetNumClusters90(numClusters90);
+    recoTrack -> SetHelixChi2R(helixChi2R);
+    recoTrack -> SetHelixChi2X(helixChi2X);
+    recoTrack -> SetHelixChi2Y(helixChi2Y);
+    recoTrack -> SetHelixChi2Z(helixChi2Z);
+    recoTrack -> SetChi2R(genfitChi2R);
+    recoTrack -> SetChi2X(genfitChi2X);
+    recoTrack -> SetChi2Y(genfitChi2Y);
+    recoTrack -> SetChi2Z(genfitChi2Z);
   }
 
   LOG(INFO) << Space() << "STRecoTrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
@@ -262,3 +328,10 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 }
 
 void STGenfitPIDTask::SetBDCFile(TString fileName) { fBDCName = fileName; }
+
+void STGenfitPIDTask::SetTargetPlane(Double_t x, Double_t y, Double_t z)
+{
+  fTargetX = x;
+  fTargetY = y;
+  fTargetZ = z;
+}

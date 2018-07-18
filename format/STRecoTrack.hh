@@ -38,8 +38,25 @@ class STRecoTrack : public STRecoTrackCand
     Double_t fEffCurvature2;
     Double_t fEffCurvature3;
 
+    Int_t fNumClusters;   ///< The number of clusters from helix tracking
+    Int_t fNumClusters90; ///< The number of clusters from helix tracking up to the layer 90
+
+    Double_t fHelixChi2R;    ///< Chi2 value with the helix track with respect to the perpendicular direction to the track
+    Double_t fHelixChi2X;    ///< Chi2 value with the helix track with respect to the wire direction
+    Double_t fHelixChi2Y;    ///< Chi2 value with the helix track with respect to the drift direction
+    Double_t fHelixChi2Z;    ///< Chi2 value with the helix track with respect to the beam direction
+
+    Double_t  fTrackLength;   ///< Track length from GenFit
+    Int_t fNDF;               ///< The number of degrees of freedom from GenFit
+    Double_t fChi2;           ///< Chi2 value from GenFit
+    Double_t fChi2R;          ///< Chi2 value from GenFit with respect to the perpendicular direction to the track
+    Double_t fChi2X;          ///< Chi2 value with GenFit track with respect to the wire direction 
+    Double_t fChi2Y;          ///< Chi2 value with GenFit track with respect to the drift direction
+    Double_t fChi2Z;          ///< Chi2 value with GenFit track with respect to the beam direction
+
   public:
     STRecoTrack();
+    STRecoTrack(STRecoTrack *recoTrack);
     virtual ~STRecoTrack() {}
 
     virtual void Clear(Option_t *option = "");
@@ -81,7 +98,46 @@ class STRecoTrack : public STRecoTrackCand
     Double_t GetEffCurvature2() { return fEffCurvature2; }
     Double_t GetEffCurvature3() { return fEffCurvature3; }
 
-  ClassDef(STRecoTrack, 4);
+    void SetNumClusters(Int_t val) { fNumClusters = val; }
+    Int_t GetNumClusters() { return fNumClusters; }
+
+    void SetNumClusters90(Int_t val) { fNumClusters90 = val; }
+    Int_t GetNumClusters90() { return fNumClusters90; }
+
+    void SetHelixChi2R(Double_t val) { fHelixChi2R = val; }
+    Double_t GetHelixChi2R() { return fHelixChi2R; }
+
+    void SetHelixChi2X(Double_t val) { fHelixChi2X = val; }
+    Double_t GetHelixChi2X() { return fHelixChi2X; }
+
+    void SetHelixChi2Y(Double_t val) { fHelixChi2Y = val; }
+    Double_t GetHelixChi2Y() { return fHelixChi2Y; }
+
+    void SetHelixChi2Z(Double_t val) { fHelixChi2Z = val; }
+    Double_t GetHelixChi2Z() { return fHelixChi2Z; }
+
+    void SetTrackLength(Double_t val) { fTrackLength = val; }
+    Double_t GetTrackLength() { return fTrackLength; }
+
+    void SetNDF(Int_t val) { fNDF = val; }
+    Int_t GetNDF() { return fNDF; }
+
+    void SetChi2(Double_t val) { fChi2 = val; }
+    Double_t GetChi2() { return fChi2; }
+
+    void SetChi2R(Double_t val) { fChi2R = val; }
+    Double_t GetChi2R() { return fChi2R; }
+
+    void SetChi2X(Double_t val) { fChi2X = val; }
+    Double_t GetChi2X() { return fChi2X; }
+
+    void SetChi2Y(Double_t val) { fChi2Y = val; }
+    Double_t GetChi2Y() { return fChi2Y; }
+
+    void SetChi2Z(Double_t val) { fChi2Z = val; }
+    Double_t GetChi2Z() { return fChi2Z; }
+
+  ClassDef(STRecoTrack, 5);
 };
 
 #endif

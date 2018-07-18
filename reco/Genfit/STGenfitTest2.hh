@@ -34,6 +34,8 @@ class STGenfitTest2
     STGenfitTest2(bool loadSamurai);
     ~STGenfitTest2();
 
+    void SetTargetPlane(Double_t x, Double_t y, Double_t z); // in cm
+
     void SetMinIterations(Int_t value);
     void SetMaxIterations(Int_t value);
 
@@ -59,6 +61,10 @@ class STGenfitTest2
     /// If extrapolation success, return true and set 'position(mm)'. If it fails, return false.
     bool ExtrapolateTo(TVector3 to, TVector3 &position);
 
+    /// Passed track is extrapolated to 'to(mm)'.
+    /// If extrapolation success, return true and set 'position(mm)'. If it fails, return false.
+    bool ExtrapolateTo(genfit::Track *gfTrack, TVector3 to, TVector3 &position);
+
     Int_t DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Double_t &effCurvature1, Double_t &effCurvature2, Double_t &effCurvature3, bool ignoreFirst = false);
 
   private:
@@ -71,7 +77,9 @@ class STGenfitTest2
     genfit::MeasurementProducer<STHitCluster, genfit::STSpacepointMeasurement> *fMeasurementProducer;
     genfit::MeasurementFactory<genfit::AbsMeasurement> *fMeasurementFactory;
 
+    genfit::DetPlane *fTargetDetPlane = nullptr;
     genfit::SharedPlanePtr fTargetPlane;
+
     genfit::SharedPlanePtr fKyotoLPlane;
     genfit::SharedPlanePtr fKyotoRPlane;
     genfit::SharedPlanePtr fKatanaPlane;

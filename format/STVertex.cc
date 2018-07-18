@@ -36,6 +36,22 @@ STVertex::STVertex()
 {
 }
 
+STVertex::STVertex(STVertex *vertex)
+{
+  fPos = vertex -> GetPos();
+  fCov = vertex -> GetCov();
+  fNDF = vertex -> GetNDF();
+  fChi2 = vertex -> GetChi2();
+
+  fIsCollisionVertex = vertex -> IsCollisionVertex();
+  fIsTargetVertex = vertex -> IsTargetVertex();
+  fIsGoodBDC = vertex -> IsGoodBDC();
+
+  auto smoothedTracks = vertex -> GetSmoothedTrackArray();
+  for (auto smoothedTrack : *smoothedTracks)
+    fSmoothedTracks.push_back(smoothedTrack);
+}
+
 STVertex::STVertex(const genfit::GFRaveVertex &vertex):
   fNDF(vertex.getNdf()),
   fChi2(vertex.getChi2()),

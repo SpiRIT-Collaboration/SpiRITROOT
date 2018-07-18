@@ -29,6 +29,8 @@ class STGenfitPIDTask : public STRecoTask
 
     void SetBDCFile(TString fileName);
 
+    void SetTargetPlane(Double_t x, Double_t y, Double_t z);
+
   private:
     TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fCandListArray = nullptr;
@@ -52,6 +54,12 @@ class STGenfitPIDTask : public STRecoTask
     Double_t fXBDC, fYBDC, fZBDC;
     Double_t fdXBDC, fdYBDC, fdZBDC;
     TMatrixDSym *fCovMatBDC;
+
+    // Target plane position in mm.
+    // Default position is set from the dimension measurement.
+    Double_t fTargetX = 0;
+    Double_t fTargetY = -213.3;
+    Double_t fTargetZ = -8.9;
 
   ClassDef(STGenfitPIDTask, 1)
 };
