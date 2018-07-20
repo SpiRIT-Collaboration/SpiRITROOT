@@ -200,6 +200,11 @@ class STHelixTrackFinder
      */
     Double_t TangentOfMaxDipAngle(STHit *hit);
 
+    /**
+     * Check if the cluster is created with continuous hits.
+     */
+    void CheckIsContinuousHits(STHitCluster *cluster);
+
   TClonesArray *fTrackArray = nullptr;       ///< STHelixTrack array
   TClonesArray *fHitClusterArray = nullptr;  ///< STHitCluster array
   STPadPlaneMap *fEventMap = nullptr;        ///< hit map to pad plane

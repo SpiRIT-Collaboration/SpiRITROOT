@@ -940,6 +940,8 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
         cluster -> SetIsStable(false);
       else if (fERadii != TVector3(-1, -1, -1) && rVec.Mag() <= 1)
         cluster -> SetIsStable(false);
+      else
+        CheckIsContinuousHits(cluster);
     }
   }
 
@@ -1545,3 +1547,31 @@ void STHelixTrackFinder::De_Saturate(STHelixTrack *track)
       }//layer loop  
   }
 
+void
+STHelixTrackFinder::CheckIsContinuousHits(STHitCluster *cluster)
+{
+  auto hits = cluster -> GetHitPtrs();
+
+  if (hits -> size() < 2) {
+    cluster -> SetIsContinuousHits();
+    return;
+  }
+
+  auto isRow = cluster -> IsRowCluster();
+
+  vector<Int_t> numbers;
+  if (isRow)
+    for (auto hit : *hits)
+      numbers.push_back(hit -> GetRow());
+  else
+    for (auto hit : *hits)
+      numbers.push_back(hit -> GetLayer());
+
+  sort(numbers.begin(), numbers.end());
+  for (auto i = 0; i < numbers.size() - 1; i++) {
+    if (!(numbers[i] + 1 == numbers[i + 1])) {
+      cluster -> SetIsContinuousHits(kFALSE);
+      return;
+    }
+  }
+}
