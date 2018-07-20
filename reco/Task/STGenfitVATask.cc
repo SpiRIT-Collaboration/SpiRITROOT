@@ -281,13 +281,15 @@ void STGenfitVATask::Exec(Option_t *opt)
     gfTrackArrayToVertex.push_back(bestGenfitTrack);
     vaTrackArrayToVertex.push_back(vaTrack);
 
-    helixTrack -> SetGenfitID(iTrack);
-    helixTrack -> SetIsGenfitTrack();
-    helixTrack -> SetGenfitMomentum(bestRecoTrackCand -> GetMomentum().Mag());
+//    helixTrack -> SetGenfitID(iTrack);
+//    helixTrack -> SetIsGenfitTrack();
+//    helixTrack -> SetGenfitMomentum(bestRecoTrackCand -> GetMomentum().Mag());
 
     TVector3 kyotoL, kyotoR, katana, neuland;
     fGenfitTest -> GetPosOnPlanes(bestRecoTrackCand -> GetGenfitTrack(), kyotoL, kyotoR, katana, neuland);
     bestRecoTrackCand -> Copy(vaTrack);
+    vaTrack -> SetHelixID(helixTrack -> GetTrackID());
+    vaTrack -> SetRecoID(helixTrack -> GetGenfitID());
     vaTrack -> SetPosKyotoL(kyotoL);
     vaTrack -> SetPosKyotoR(kyotoR);
     vaTrack -> SetPosKatana(katana);
