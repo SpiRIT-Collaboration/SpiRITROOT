@@ -58,6 +58,8 @@ STRecoTrack::STRecoTrack(STRecoTrack *recoTrack)
   fChi2X = recoTrack -> GetChi2X();
   fChi2Y = recoTrack -> GetChi2Y();
   fChi2Z = recoTrack -> GetChi2Z();
+
+  fRecoID = recoTrack -> GetRecoID();
 }
 
 void STRecoTrack::Clear(Option_t *option)
@@ -90,4 +92,6 @@ void STRecoTrack::Clear(Option_t *option)
   fChi2X = 0;
   fChi2Y = 0;
   fChi2Z = 0;
+
+  fRecoID = -1;
 }

@@ -53,6 +53,7 @@ class STRecoTrack : public STRecoTrackCand
     Double_t fChi2X;          ///< Chi2 value with GenFit track with respect to the wire direction 
     Double_t fChi2Y;          ///< Chi2 value with GenFit track with respect to the drift direction
     Double_t fChi2Z;          ///< Chi2 value with GenFit track with respect to the beam direction
+    Int_t fRecoID;            ///< ID of STRecoTrack for vertex-added refit track. So, STRecoTrack always have -1.
 
   public:
     STRecoTrack();
@@ -137,7 +138,10 @@ class STRecoTrack : public STRecoTrackCand
     void SetChi2Z(Double_t val) { fChi2Z = val; }
     Double_t GetChi2Z() { return fChi2Z; }
 
-  ClassDef(STRecoTrack, 5);
+    void SetRecoID(Int_t val) { fRecoID = val; }
+    Int_t GetRecoID() { return fRecoID; }
+
+  ClassDef(STRecoTrack, 6);
 };
 
 #endif
