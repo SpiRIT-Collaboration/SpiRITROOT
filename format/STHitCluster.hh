@@ -57,6 +57,9 @@ class STHitCluster : public STHit
     bool IsLayerCluster() const { return (fRow == -1 && fLayer != -1) ? true : false; }
     bool IsRowCluster()   const { return (fRow != -1 && fLayer == -1) ? true : false; }
 
+    void SetIsContinuousHits(Bool_t value = kTRUE) { fIsContinuousHits = value; };
+    Bool_t IsContinuousHits() const { return fIsContinuousHits; }
+
     void ApplyCovLowLimit();
 
   protected:
@@ -83,7 +86,9 @@ class STHitCluster : public STHit
      */
     void CalculateCovMatrix(TVector3 hitPos, Double_t charge); 
 
-  ClassDef(STHitCluster, 8);
+    Bool_t fIsContinuousHits;
+
+  ClassDef(STHitCluster, 9);
 };
 
 #endif

@@ -44,6 +44,8 @@ STHitCluster::STHitCluster(STHitCluster *cluster)
   fLength  = cluster -> GetLength();
 
   SetPOCA(cluster -> GetPOCA());
+
+  fIsContinuousHits = cluster -> IsContinuousHits();
 }
 
 void STHitCluster::Clear(Option_t *)
@@ -78,6 +80,7 @@ void STHitCluster::Clear(Option_t *)
 
   fIsEmbed     = false;
   fIsClustered = kFALSE;
+  fIsContinuousHits = kFALSE;
 }
 
 void STHitCluster::SetCovMatrix(TMatrixD matrix) { fCovMatrix = matrix; } 
