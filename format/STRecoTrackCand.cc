@@ -66,3 +66,15 @@ Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut, Doub
 
   return dEdx;
 }
+
+Int_t STRecoTrackCand::GetClustNum(Double_t fract_shadow)
+{
+  vector<Double_t> dEdxArray;
+  for (auto point : fdEdxPointArray)
+    {
+      if( (1.*point.fNumShadowHits/point.fNumHits) <= fract_shadow)
+	dEdxArray.push_back(point.fdE/point.fdx);
+    }
+
+  return dEdxArray.size();
+}

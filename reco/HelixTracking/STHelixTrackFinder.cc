@@ -743,8 +743,8 @@ STHelixTrackFinder::HitClustering(STHelixTrack *helix)
       int sat_hits = 0;
       for( auto cl_hit : *hit_ary)
 	{
-	  if( cl_hit -> IsSaturated() )//the saturated hits cannot shadow themselves 
-	    continue;
+	  //	  if( cl_hit -> IsSaturated() )//the saturated hits cannot shadow themselves 
+	  //	    continue;
 	  if( fHitMap -> IsNeighborSaturated(cl_hit,by_row,helix_hits) ) //has a saturated neighbor 
 	    sat_hits++;
 	}

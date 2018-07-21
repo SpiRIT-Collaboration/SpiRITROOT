@@ -269,14 +269,14 @@ Bool_t STPadPlaneMap::IsNeighborSaturated(STHit *hit, Bool_t isRow, std::vector<
   auto neighbors = pad -> GetNeighbors();
   for (auto neighbor : *neighbors)
     neighbor -> GetHits(array);
-
+  //  cout<<"size of array "<<array->size()<<endl;
   for(int iHit = 0; iHit < array -> size(); iHit++)
     {
       auto neigh_hit = array -> at(iHit);
       //      if neighbor hit is in same helix as hit we are checking it cannot be shaddowed
-      //      if( neigh_hit->GetHitID() < helix_hits.size() ) 
-      //	if( helix_hits.at(neigh_hit->GetHitID()) ) 
-      //	  continue;
+      if( neigh_hit->GetHitID() < helix_hits.size() ) 
+      	if( helix_hits.at(neigh_hit->GetHitID()) ) 
+      	  continue;
 
       //isRow = 1 is row clustering 0 is layer
       if(isRow)       
@@ -293,8 +293,8 @@ Bool_t STPadPlaneMap::IsNeighborSaturated(STHit *hit, Bool_t isRow, std::vector<
 	  if(layer == array -> at(iHit) -> GetLayer())
 	    {
 	      int tb_neigh = array -> at(iHit) -> GetSaturatedTb();
-	      if(array -> at(iHit) -> IsSaturated() && hit -> GetTb() > tb_neigh)
-		isSaturated = true;
+	      if(neigh_hit -> IsSaturated() && hit -> GetTb() > tb_neigh)
+		  isSaturated = true;
 	    }
 	}
     }
