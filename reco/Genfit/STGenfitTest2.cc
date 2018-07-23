@@ -63,8 +63,7 @@ STGenfitTest2::STGenfitTest2(bool loadSamurai)
 
   TVector3 posTarget(0, -21.33, -0.89);
   TVector3 normalTarget(0, 0, 1);
-  fTargetDetPlane = new genfit::DetPlane(posTarget, normalTarget);
-  fTargetPlane = genfit::SharedPlanePtr(fTargetDetPlane);
+  fTargetPlane = genfit::SharedPlanePtr(new genfit::DetPlane(posTarget, normalTarget));
 
   TVector3 posKyotoL(75.8, -21.33, 84.5);
   TVector3 normalKyotoL(-1, 0, 0);
@@ -85,15 +84,9 @@ STGenfitTest2::STGenfitTest2(bool loadSamurai)
 
 void STGenfitTest2::SetTargetPlane(Double_t x, Double_t y, Double_t z)
 {
-  if (fTargetDetPlane) {
-    delete fTargetDetPlane;
-    fTargetDetPlane = nullptr;
-  }
-
   TVector3 posTarget(x, y, z);
   TVector3 normalTarget(0, 0, 1);
-  fTargetDetPlane = new genfit::DetPlane(posTarget, normalTarget);
-  fTargetPlane = genfit::SharedPlanePtr(fTargetDetPlane);
+  fTargetPlane = genfit::SharedPlanePtr(new genfit::DetPlane(posTarget, normalTarget));
 }
 
 void STGenfitTest2::SetMinIterations(Int_t value) { fKalmanFitter -> setMinIterations(value); }
