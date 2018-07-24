@@ -317,9 +317,33 @@ void STCore::ProcessCobo(Int_t coboIdx)
         if (fIsGainMatchingData)
           fGainMatchingPtr[coboIdx] -> CalibrateADC(layer, fNumTbs, adc);
 
-        for (Int_t iTb = fStartTb; iTb < fEndTb; iTb++)
-          pad -> SetADC(iTb, adc[iTb]);
+	//mean and std devitation for finding dead pads. dead from saturation of beam
+	double mean  = 0.;
+	double stdev = 0.;
+	double max_adc = 99999.;
+        for (Int_t iTb = 0; iTb < fEndTb; iTb++)
+	  {
+	    if(iTb >= 1)
+	      {
+		mean = ((iTb-1.)/iTb)*mean + (1./iTb)*rawadc[iTb];
+		if(max_adc > rawadc[iTb])//data is negative bias in rawadc i.e. max is minimum in raw
+		  max_adc = rawadc[iTb];
+	      }
+	    if(iTb > 1)
+	      stdev = ((iTb - 1.)/iTb)*stdev + (1./(iTb-1))*pow(rawadc[iTb]-mean,2);
+	    
+	    if( iTb >= fStartTb && iTb < fEndTb)
+	      pad -> SetADC(iTb, adc[iTb]);
+	  }
 
+	max_adc = mean - max_adc;//pedestal is mean value
+	if(sqrt(stdev) < 50 && max_adc < 50)//condition of dead pad
+	  {
+	    pad -> SetSaturatedTb(0);
+	    pad -> SetSaturatedTbMC(0);
+	    pad -> SetIsSaturated(true);
+	  }
+	
         pad -> SetPedestalSubtracted(kTRUE);
       }
     }
