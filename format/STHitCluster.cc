@@ -155,6 +155,7 @@ void STHitCluster::ApplyModifiedHitInfo()
 
   Double_t cov_default[3] = {4*4,1*1,6*6};
 
+  int hit_idx = 0;
   for (auto hit : fHitPtrArray)
   {
     auto charge = hit -> GetCharge();
@@ -165,7 +166,7 @@ void STHitCluster::ApplyModifiedHitInfo()
 
     fS = (fCharge * fS + charge * hit -> GetS()) / chargeSum;
 
-    if (GetNumHits() == 0) {
+    if (hit_idx == 0) {
       for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
           fCovMatrix(i,j) = 0;
@@ -173,7 +174,7 @@ void STHitCluster::ApplyModifiedHitInfo()
       for (int i = 0; i < 3; ++i)
         fCovMatrix(i,i) = cov_default[i];
     }
-    else if (GetNumHits() == 1) {
+    else if (hit_idx == 1) {
       for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
           fCovMatrix(i,j) = charge*(operator[](i)-(*hit)[i])*(operator[](j)-(*hit)[j])/fCharge;
@@ -192,6 +193,7 @@ void STHitCluster::ApplyModifiedHitInfo()
     fDx = sqrt(fCovMatrix(0, 0));
     fDy = sqrt(fCovMatrix(1, 1));
     fDz = sqrt(fCovMatrix(2, 2));
+    hit_idx++;
   }
 }
 
