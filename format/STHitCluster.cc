@@ -138,6 +138,63 @@ STHitCluster::AddHit(STHit *hit)
   hit -> SetClusterID(fClusterID);
 }
 
+void STHitCluster::ApplyModifiedHitInfo()
+{
+  fX = 0;
+  fY = 0;
+  fZ = 0;
+  fDx = 0;
+  fDy = 0;
+  fDz = 0;
+  fCharge = 0;
+  fS = 0;
+
+  fCovMatrix.ResizeTo(3, 3);
+  for (Int_t iElem = 0; iElem < 9; iElem++)
+    fCovMatrix(iElem/3, iElem%3) = 0;
+
+  Double_t cov_default[3] = {4*4,1*1,6*6};
+
+  for (auto hit : fHitPtrArray)
+  {
+    auto charge = hit -> GetCharge();
+    auto chargeSum = fCharge + charge;
+
+    for (int i = 0; i < 3; ++i)
+      operator[](i) = (fCharge*operator[](i) + charge*(*hit)[i]) / chargeSum;
+
+    fS = (fCharge * fS + charge * hit -> GetS()) / chargeSum;
+
+    if (GetNumHits() == 0) {
+      for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+          fCovMatrix(i,j) = 0;
+
+      for (int i = 0; i < 3; ++i)
+        fCovMatrix(i,i) = cov_default[i];
+    }
+    else if (GetNumHits() == 1) {
+      for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+          fCovMatrix(i,j) = charge*(operator[](i)-(*hit)[i])*(operator[](j)-(*hit)[j])/fCharge;
+    }
+    else {
+      for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+          fCovMatrix(i,j) = fCharge*fCovMatrix(i,j)/chargeSum + charge*(operator[](i)-(*hit)[i])*(operator[](j)-(*hit)[j])/fCharge;
+    }
+
+         if (fLayer != -1) fCovMatrix(2,2) = cov_default[2];
+    else if (fRow   != -1) fCovMatrix(0,0) = cov_default[0];
+
+    fCharge = chargeSum;
+
+    fDx = sqrt(fCovMatrix(0, 0));
+    fDy = sqrt(fCovMatrix(1, 1));
+    fDz = sqrt(fCovMatrix(2, 2));
+  }
+}
+
 void STHitCluster::SetDFromCovForGenfit(Double_t maxx, Double_t maxy, Double_t maxz, bool setMin)
 {
 //  if (setMin) {

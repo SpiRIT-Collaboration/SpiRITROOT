@@ -39,6 +39,7 @@ class STHitCluster : public STHit
     vector<STHit*> *GetHitPtrs();
 
     virtual void AddHit(STHit *hit);      ///< Add hit to cluster
+    void ApplyModifiedHitInfo();          ///< Apply changes that was made to hit position and charge
 
     void SetDFromCovForGenfit(Double_t maxx, Double_t maxy, Double_t maxz, bool setMin = false);
 
