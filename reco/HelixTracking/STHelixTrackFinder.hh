@@ -12,28 +12,6 @@
 
 typedef std::vector<STHit*>* vhit_t;
 
-//class MyFitFunction;
-class MyFitFunction
-{
-  static MyFitFunction* _instance;
-  MyFitFunction() {}
-  MyFitFunction(const MyFitFunction& o) {}
-  MyFitFunction& operator=(const MyFitFunction& o) { return *this; }
-
-public:
-  static MyFitFunction* Instance();
-  Double_t Function(Int_t&, Double_t*, Double_t&,Double_t *, Int_t);
-  double PRF(double x, double par[]);
-  std::vector<double> getmean(double par[]);
-  void SetAryPointers(std::vector<double> *a, std::vector<double> *a_chg, std::vector<double> *b, std::vector<double> *b_chg);
-
-private:
-  std::vector<double> *hits_pos_ary;
-  std::vector<double> *hits_chg_ary;
-  std::vector<double> *s_hits_pos_ary;
-  std::vector<double> *s_hits_chg_ary;
-};
-
 class STHelixTrackFinder
 {
   public:
@@ -43,8 +21,6 @@ class STHelixTrackFinder
     void BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray, TClonesArray *hitClusterArray);
 
     TVector3 FindVertex(TClonesArray *tracks, Int_t nIterations = 1);
-
-    void SetSaturationOption(Int_t opt);
 
     /**
      * Scale = alpha x fDefaultScale; where alpha is 1 for survived
@@ -164,12 +140,6 @@ class STHelixTrackFinder
      */
     bool AutoBuildByInterpolation(STHelixTrack *, bool &, Double_t &, Double_t rScale = 1);
 
-  /**
-   *Extrapolate the saturated hits in a track
-   */
-  std::vector<double> minimize(const int npar);
-  void De_Saturate(STHelixTrack *track);
-
     /**
      * Clusterize Hits
      */
@@ -226,8 +196,6 @@ class STHelixTrackFinder
   vhit_t fGoodHits = nullptr;  ///< Selected good hits from current fCandHits
     vhit_t fBadHits  = nullptr;  ///< Selected bad  hits from current fCandHits
 
-  Int_t fSaturationOption = 1;
-  
     Double_t fDefaultScale = 2.5;
     Double_t fTrackWCutLL = 4.;  //< Track width cut low limit
     Double_t fTrackWCutHL = 10.; //< Track width cut high limit

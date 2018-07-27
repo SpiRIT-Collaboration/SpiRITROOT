@@ -21,8 +21,6 @@ class STHelixTrackingTask : public STRecoTask
 
     void SetNumTracksLowLimit(Int_t limit);
     void SetClusteringOption(Int_t opt);
-    void SetSaturationOption(Int_t opt);
-
     void SetClusterCutLRTB(Double_t left, Double_t right, Double_t top, Double_t bottom);
     void SetCylinderCut(TVector3 center, Double_t radius, Double_t zLength, Double_t margin);
     void SetSphereCut(TVector3 center, Double_t radius, Double_t margin);
@@ -43,7 +41,6 @@ class STHelixTrackingTask : public STRecoTask
 
     Int_t fNumTracksLowLimit = 1;
     Int_t fClusteringOption = 2;
-    Int_t fSaturationOption = 1;
 
     Double_t fCCLeft = 1000;
     Double_t fCCRight = -1000;

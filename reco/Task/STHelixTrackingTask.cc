@@ -31,7 +31,7 @@ void STHelixTrackingTask::SetClusteringOption(Int_t opt)
 {
   cout << "STHelixTrackingTask::SetClusteringOption() is not used any more." << endl;
 }
-void STHelixTrackingTask::SetSaturationOption(Int_t opt) { fSaturationOption = opt; }
+
 void STHelixTrackingTask::SetClusterCutLRTB(Double_t left, Double_t right, Double_t top, Double_t bottom)
 {
   fCCLeft = left;
@@ -110,7 +110,7 @@ InitStatus STHelixTrackingTask::Init()
   fRootManager -> Register("STHitCluster", "SpiRIT", fHitClusterArray, fIsClusterPersistence);
 
   fTrackFinder = new STHelixTrackFinder();
-  fTrackFinder -> SetSaturationOption(fSaturationOption);
+
   fTrackFinder -> SetClusterCutLRTB(fCCLeft, fCCRight, fCCTop, fCCBottom);
   fTrackFinder -> SetClusteringAngleAndMargin(fClusteringAngle, fClusteringMargin);
   if (fCRadius != -1 && fZLength != -1)

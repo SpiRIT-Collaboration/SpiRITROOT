@@ -15,6 +15,7 @@ ${CMAKE_SOURCE_DIR}/tool
 ${CMAKE_SOURCE_DIR}/util
 ${CMAKE_SOURCE_DIR}/field
 ${CMAKE_SOURCE_DIR}/reco
+${CMAKE_SOURCE_DIR}/reco/Corrections
 ${CMAKE_SOURCE_DIR}/reco/GETDecoder
 ${CMAKE_SOURCE_DIR}/reco/STConverter
 ${CMAKE_SOURCE_DIR}/reco/PulseShapeAnalyzer
@@ -62,7 +63,10 @@ Task/STGenfitSinglePIDTask.cc
 Task/STGenfitPIDTask.cc
 Task/STGenfitVATask.cc
 Task/STEmbedCorrelatorTask.cc
+Task/STCorrectionTask.cc
 Task/STMCEventTask.cc
+
+Corrections/STCorrection.cc
 
 PID/STPIDTest.cc
 
