@@ -7,7 +7,7 @@
 class STdEdxPoint : public TObject {
   public:
     STdEdxPoint();
-    STdEdxPoint(Int_t id, Double_t de, Double_t dx, Double_t length);
+    STdEdxPoint(Int_t id, Double_t de, Double_t dx, Double_t length, Bool_t isContinuousHits, Int_t clusterSize);
     virtual ~STdEdxPoint() {};
 
     virtual void Print(Option_t *option = "") const;
@@ -18,7 +18,10 @@ class STdEdxPoint : public TObject {
     Double_t fLength;   ///< Length from vertex to this point (mm)
     TVector3 fPosition; ///<
 
-  ClassDef(STdEdxPoint, 2)
+    Bool_t fIsContinuousHits; ///< Hit distribution of the cluster is continuous?
+    Int_t fClusterSize;       ///< # of hits used to the cluster
+
+  ClassDef(STdEdxPoint, 3)
 };
 
 class STdEdxPointSortByLength {
