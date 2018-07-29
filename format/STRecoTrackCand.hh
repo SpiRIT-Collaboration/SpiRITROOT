@@ -55,7 +55,7 @@ class STRecoTrackCand : public TObject
 
     void AdddEdxPoint(STdEdxPoint dedxPoint) { fdEdxPointArray.push_back(dedxPoint); }
     vector<STdEdxPoint> *GetdEdxPointArray() { return &fdEdxPointArray; }
-    Double_t GetdEdxWithCut(Double_t lowCut, Double_t highCut);
+    Double_t GetdEdxWithCut(Double_t lowCut, Double_t highCut, Bool_t isContinuousHits = kFALSE, Int_t clusterSize = 0);
 
     void SetGenfitTrack(genfit::Track *val) { fGenfitTrack = val; }
     genfit::Track *GetGenfitTrack() { return fGenfitTrack; }

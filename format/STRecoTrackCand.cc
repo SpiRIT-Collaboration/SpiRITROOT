@@ -41,13 +41,11 @@ void STRecoTrackCand::Copy(TObject *obj) const
   }
 }
 
-Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut)
+Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut, Bool_t isContinuousHits, Int_t clusterSize)
 {
-  vector<Double_t> dEdxArray;
-  for (auto point : fdEdxPointArray)
-    dEdxArray.push_back(point.fdE/point.fdx);
+  vector<STdEdxPoint> dEdxArray = fdEdxPointArray;
 
-  sort(dEdxArray.begin(), dEdxArray.end());
+  sort(dEdxArray.begin(), dEdxArray.end(), [](STdEdxPoint a, STdEdxPoint b) -> Bool_t { return (a.fdE/a.fdx < b.fdE/b.fdx); });
 
   auto numUsedPoints = dEdxArray.size();
   Int_t idxLow = Int_t(numUsedPoints * lowCut);
@@ -58,8 +56,14 @@ Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut)
     return -1;
 
   Double_t dEdx = 0;
-  for (Int_t idEdx = idxLow; idEdx < idxHigh; idEdx++)
-    dEdx += dEdxArray[idEdx];
+  for (Int_t idEdx = idxLow; idEdx < idxHigh; idEdx++) {
+    if (!(isContinuousHits & dEdxArray[idEdx].fIsContinuousHits) || dEdxArray[idEdx].fClusterSize <= clusterSize) {
+      numUsedPoints--;
+      continue;
+    }
+
+    dEdx += dEdxArray[idEdx].fdE/dEdxArray[idEdx].fdx;
+  }
   dEdx = dEdx/numUsedPoints;
 
   return dEdx;
