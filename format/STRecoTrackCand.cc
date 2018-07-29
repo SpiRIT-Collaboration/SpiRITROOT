@@ -57,7 +57,7 @@ Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut, Bool
 
   Double_t dEdx = 0;
   for (Int_t idEdx = idxLow; idEdx < idxHigh; idEdx++) {
-    if (!(isContinuousHits & dEdxArray[idEdx].fIsContinuousHits) || dEdxArray[idEdx].fClusterSize <= clusterSize) {
+    if ((isContinuousHits & !dEdxArray[idEdx].fIsContinuousHits) || dEdxArray[idEdx].fClusterSize <= clusterSize) {
       numUsedPoints--;
       continue;
     }
