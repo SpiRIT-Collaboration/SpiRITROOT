@@ -584,6 +584,8 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
 
     Double_t dE = cluster -> GetCharge();
     Double_t dx = cluster -> GetLength();
+    auto isContinuousHits = cluster -> IsContinuousHits();
+    auto clusterSize = cluster -> GetNumHits();
 
     /*
     if (dx > 20) {
@@ -595,6 +597,8 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
     dedx.fdE = dE;
     dedx.fdx = dx;
     dedx.fLength = 88;
+    dedx.fIsContinuousHits = isContinuousHits;
+    dedx.fClusterSize = clusterSize;
     dedxArrayTemp.push_back(dedx);
   }
 
@@ -759,7 +763,9 @@ STGenfitTest2::GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helix
     {
       Double_t dE = preCluster -> GetCharge();
       Double_t dx = preCluster -> GetLength();
-      dEdxPointArray -> push_back(STdEdxPoint(-1, dE, dx, -999));
+      auto isContinuousHits = preCluster -> IsContinuousHits();
+      auto clusterSize = preCluster -> GetNumHits();
+      dEdxPointArray -> push_back(STdEdxPoint(-1, dE, dx, -999, isContinuousHits, clusterSize));
     }
 
     preCluster = curCluster;
@@ -847,7 +853,9 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
     }
     */
 
-    dEdxPointArray -> push_back(STdEdxPoint(cluster -> GetClusterID(), dE, dx, -999));
+    auto isContinuousHits = cluster -> IsContinuousHits();
+    auto clusterSize = cluster -> GetNumHits();
+    dEdxPointArray -> push_back(STdEdxPoint(cluster -> GetClusterID(), dE, dx, -999, isContinuousHits, clusterSize));
   }
 
   return true;
