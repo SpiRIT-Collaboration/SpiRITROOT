@@ -749,12 +749,10 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
     Double_t alpha;
     helix -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
 
-    auto direction = helix -> Direction(alpha);
-    Double_t angle = TMath::ATan2(TMath::Abs(direction.Z()), direction.X());
-    if (angle > TMath::ATan2(1,1) && angle < TMath::ATan2(1,-1))
-      return true;
-    else
-    return false;
+    auto directionChangeAngle = 35.*TMath::DegToRad();
+    auto isLayer = (TMath::Abs(std::fmod(TMath::Abs(alpha), TMath::Pi()) - TMath::Pi()/2) > TMath::Pi()/2 - directionChangeAngle);
+
+    return isLayer;
   };
 
   auto SetClusterLength = [helix](STHitCluster *cluster) {
@@ -1362,13 +1360,10 @@ void STHelixTrackFinder::De_Saturate(STHelixTrack *track)
     Double_t alpha;
     track -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
     
-    auto direction = track -> Direction(alpha);
-    //angle defined from x axis not z
-    Double_t angle = TMath::ATan2(TMath::Abs(direction.Z()), direction.X());
-    if (angle > TMath::ATan2(1,1) && angle < TMath::ATan2(1,-1))
-      return true;
-    else
-      return false;
+    auto directionChangeAngle = 35.*TMath::DegToRad();
+    auto isLayer = (TMath::Abs(std::fmod(TMath::Abs(alpha), TMath::Pi()) - TMath::Pi()/2) > TMath::Pi()/2 - directionChangeAngle);
+
+    return isLayer;
     };
   
   
