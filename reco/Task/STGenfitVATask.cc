@@ -340,8 +340,8 @@ void STGenfitVATask::Exec(Option_t *opt)
       genfitChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
     }
     vaTrack -> SetNumRowClusters(numRowClusters);
-    vaTrack -> SetNumLayerClusters90(numLayerClusters90);
-    vaTrack -> SetNumRowClusters(numRowClusters);
+    vaTrack -> SetNumLayerClusters(numLayerClusters);
+    vaTrack -> SetNumRowClusters90(numRowClusters90);
     vaTrack -> SetNumLayerClusters90(numLayerClusters90);
     vaTrack -> SetHelixChi2R(helixChi2R);
     vaTrack -> SetHelixChi2X(helixChi2X);
