@@ -38,8 +38,10 @@ class STRecoTrack : public STRecoTrackCand
     Double_t fEffCurvature2;
     Double_t fEffCurvature3;
 
-    Int_t fNumClusters;   ///< The number of clusters from helix tracking
-    Int_t fNumClusters90; ///< The number of clusters from helix tracking up to the layer 90
+    Int_t fNumRowClusters;   ///< The number of clusters from helix tracking
+    Int_t fNumLayerClusters;   ///< The number of clusters from helix tracking
+    Int_t fNumRowClusters90; ///< The number of clusters from helix tracking up to the layer 90
+    Int_t fNumLayerClusters90; ///< The number of clusters from helix tracking up to the layer 90
 
     Double_t fHelixChi2R;    ///< Chi2 value with the helix track with respect to the perpendicular direction to the track
     Double_t fHelixChi2X;    ///< Chi2 value with the helix track with respect to the wire direction
@@ -99,11 +101,17 @@ class STRecoTrack : public STRecoTrackCand
     Double_t GetEffCurvature2() { return fEffCurvature2; }
     Double_t GetEffCurvature3() { return fEffCurvature3; }
 
-    void SetNumClusters(Int_t val) { fNumClusters = val; }
-    Int_t GetNumClusters() { return fNumClusters; }
+    void SetNumRowClusters(Int_t val) { fNumRowClusters = val; }
+    Int_t GetNumRowClusters() { return fNumRowClusters; }
 
-    void SetNumClusters90(Int_t val) { fNumClusters90 = val; }
-    Int_t GetNumClusters90() { return fNumClusters90; }
+    void SetNumLayerClusters(Int_t val) { fNumLayerClusters = val; }
+    Int_t GetNumLayerClusters() { return fNumLayerClusters; }
+
+    void SetNumRowClusters90(Int_t val) { fNumRowClusters90 = val; }
+    Int_t GetNumRowClusters90() { return fNumRowClusters90; }
+
+    void SetNumLayerClusters90(Int_t val) { fNumLayerClusters90 = val; }
+    Int_t GetNumLayerClusters90() { return fNumLayerClusters90; }
 
     void SetHelixChi2R(Double_t val) { fHelixChi2R = val; }
     Double_t GetHelixChi2R() { return fHelixChi2R; }
@@ -141,7 +149,7 @@ class STRecoTrack : public STRecoTrackCand
     void SetRecoID(Int_t val) { fRecoID = val; }
     Int_t GetRecoID() { return fRecoID; }
 
-  ClassDef(STRecoTrack, 6);
+  ClassDef(STRecoTrack, 7);
 };
 
 #endif
