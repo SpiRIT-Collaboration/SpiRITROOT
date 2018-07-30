@@ -304,7 +304,8 @@ void STGenfitVATask::Exec(Option_t *opt)
       vaTrack -> SetTrackLength(-9999);
     }
 
-    Int_t numClusters = 0, numClusters90 = 0;
+    Int_t numRowClusters = 0, numRowClusters90 = 0;
+    Int_t numLayerClusters = 0, numLayerClusters90 = 0;
     Double_t helixChi2R = 0, helixChi2X = 0, helixChi2Y = 0, helixChi2Z = 0;
     Double_t genfitChi2R = 0, genfitChi2X = 0, genfitChi2Y = 0, genfitChi2Z = 0;
     for (auto cluster : *helixTrack -> GetClusterArray()) {
@@ -312,9 +313,15 @@ void STGenfitVATask::Exec(Option_t *opt)
         continue;
 
       auto pos = cluster -> GetPosition();
-      numClusters++;
-      if (pos.Z() < 1080)
-        numClusters90++;
+      if (cluster -> IsRowCluster()) {
+        numRowClusters++;
+        if (pos.Z() < 1080)
+          numRowClusters90++;
+      } else if (cluster -> IsLayerCluster()) {
+        numLayerClusters++;
+        if (pos.Z() < 1080)
+          numLayerClusters90++;
+      }
 
       TVector3 dVec, point;
       Double_t dValue, alpha;
@@ -332,8 +339,10 @@ void STGenfitVATask::Exec(Option_t *opt)
       genfitChi2Y += (point.Y() - pos.Y())*(point.Y() - pos.Y());
       genfitChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
     }
-    vaTrack -> SetNumClusters(numClusters);
-    vaTrack -> SetNumClusters90(numClusters90);
+    vaTrack -> SetNumRowClusters(numRowClusters);
+    vaTrack -> SetNumLayerClusters90(numLayerClusters90);
+    vaTrack -> SetNumRowClusters(numRowClusters);
+    vaTrack -> SetNumLayerClusters90(numLayerClusters90);
     vaTrack -> SetHelixChi2R(helixChi2R);
     vaTrack -> SetHelixChi2X(helixChi2X);
     vaTrack -> SetHelixChi2Y(helixChi2Y);
