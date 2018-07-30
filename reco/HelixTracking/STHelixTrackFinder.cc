@@ -750,7 +750,7 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
     helix -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
 
     auto directionChangeAngle = 35.*TMath::DegToRad();
-    auto isLayer = (TMath::Abs(std::fmod(TMath::Abs(alpha), TMath::Pi()) - TMath::Pi()/2) > directionChangeAngle);
+    auto isLayer = (TMath::Abs(std::fmod(TMath::Abs(alpha), TMath::Pi()) - TMath::Pi()/2) > TMath::Pi()/2 - directionChangeAngle);
 
     return isLayer;
   };
@@ -1361,7 +1361,7 @@ void STHelixTrackFinder::De_Saturate(STHelixTrack *track)
     track -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
     
     auto directionChangeAngle = 35.*TMath::DegToRad();
-    auto isLayer = (TMath::Abs(std::fmod(TMath::Abs(alpha), TMath::Pi()) - TMath::Pi()/2) > directionChangeAngle);
+    auto isLayer = (TMath::Abs(std::fmod(TMath::Abs(alpha), TMath::Pi()) - TMath::Pi()/2) > TMath::Pi()/2 - directionChangeAngle);
 
     return isLayer;
     };
