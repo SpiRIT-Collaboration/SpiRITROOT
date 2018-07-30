@@ -251,8 +251,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       */
     }
     recoTrack -> SetNumRowClusters(numRowClusters);
-    recoTrack -> SetNumLayerClusters90(numLayerClusters90);
-    recoTrack -> SetNumRowClusters(numRowClusters);
+    recoTrack -> SetNumLayerClusters(numLayerClusters);
+    recoTrack -> SetNumRowClusters90(numRowClusters90);
     recoTrack -> SetNumLayerClusters90(numLayerClusters90);
     recoTrack -> SetHelixChi2R(helixChi2R);
     recoTrack -> SetHelixChi2X(helixChi2X);
