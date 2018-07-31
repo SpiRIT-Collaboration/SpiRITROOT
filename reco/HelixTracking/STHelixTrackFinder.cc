@@ -1557,10 +1557,10 @@ STHelixTrackFinder::CheckIsContinuousHits(STHitCluster *cluster)
   vector<Int_t> numbers;
   if (isRow)
     for (auto hit : *hits)
-      numbers.push_back(hit -> GetRow());
+      numbers.push_back(hit -> GetLayer());
   else
     for (auto hit : *hits)
-      numbers.push_back(hit -> GetLayer());
+      numbers.push_back(hit -> GetRow());
 
   sort(numbers.begin(), numbers.end());
   for (auto i = 0; i < numbers.size() - 1; i++) {
