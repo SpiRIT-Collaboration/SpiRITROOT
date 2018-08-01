@@ -138,8 +138,8 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
 
   Double_t dip = helixTrack -> DipAngle();
   Double_t momSeedMag = helixTrack -> Momentum();
-  TVector3 momSeed(0., 0., momSeedMag/1000.); // MeV -> GeV
-  momSeed.SetTheta(TMath::Pi()/2. - dip); // Need to be fixed
+  TVector3 momSeed(0., 0., momSeedMag);
+  momSeed.SetTheta(TMath::Pi()/2. - dip);
 
   trackCand.setCovSeed(covSeed);
   trackCand.setPosMomSeed(posSeed, momSeed, helixTrack -> Charge());
@@ -234,8 +234,8 @@ genfit::Track* STGenfitTest2::FitTrackWithVertex(STHelixTrack *helixTrack, STHit
 
   Double_t dip = helixTrack -> DipAngle();
   Double_t momSeedMag = helixTrack -> Momentum();
-  TVector3 momSeed(0., 0., momSeedMag/1000.); // MeV -> GeV
-  momSeed.SetTheta(TMath::Pi()/2. - dip); // Need to be fixed
+  TVector3 momSeed(0., 0., momSeedMag);
+  momSeed.SetTheta(TMath::Pi()/2. - dip);
 
   trackCand.setCovSeed(covSeed);
   trackCand.setPosMomSeed(posSeed, momSeed, helixTrack -> Charge());
