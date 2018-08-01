@@ -1547,11 +1547,6 @@ STHelixTrackFinder::CheckIsContinuousHits(STHitCluster *cluster)
 {
   auto hits = cluster -> GetHitPtrs();
 
-  if (hits -> size() < 2) {
-    cluster -> SetIsContinuousHits();
-    return;
-  }
-
   auto isRow = cluster -> IsRowCluster();
 
   vector<Int_t> numbers;
@@ -1563,10 +1558,16 @@ STHelixTrackFinder::CheckIsContinuousHits(STHitCluster *cluster)
       numbers.push_back(hit -> GetRow());
 
   sort(numbers.begin(), numbers.end());
-  for (auto i = 0; i < numbers.size() - 1; i++) {
-    if (!(numbers[i] + 1 == numbers[i + 1])) {
-      cluster -> SetIsContinuousHits(kFALSE);
-      return;
-    }
+  numbers.erase(unique(numbers.begin(), numbers.end()), numbers.end());
+
+  if (numbers.size() < 2) {
+    cluster -> SetIsContinuousHits();
+    return;
   }
+
+  for (auto i = 0; i < numbers.size() - 1; i++)
+    if (!(numbers[i] + 1 == numbers[i + 1]))
+      return;
+
+  cluster -> SetIsContinuousHits();
 }
