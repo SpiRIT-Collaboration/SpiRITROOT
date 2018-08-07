@@ -41,8 +41,9 @@ void STRecoTrackCand::Copy(TObject *obj) const
   }
 }
 
-Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut, Bool_t isContinuousHits, Int_t clusterSize, Int_t numDiv, Int_t refDiv, Double_t cutMin, Double_t cutMax)
+Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut, Double_t fract_shadow, Bool_t isContinuousHits, Int_t clusterSize, Int_t numDiv, Int_t refDiv, Double_t cutMin, Double_t cutMax)
 {
+  vector<STdEdxPoint> tempdEdxArray;
   vector<STdEdxPoint> dEdxArray;
 
   if (numDiv > 0 && refDiv > -1) {
@@ -62,16 +63,21 @@ Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut, Bool
       auto logRatio = TMath::Log2(meanValues[iDiv]/meanValues[refDiv]);
       if (cutMin < logRatio && logRatio < cutMax) {
         for (auto iIndex = divPoint[iDiv]; iIndex < divPoint[iDiv + 1]; iIndex++)
-          dEdxArray.push_back(fdEdxPointArray[iIndex]);
+          tempdEdxArray.push_back(fdEdxPointArray[iIndex]);
       }
     }
 
     delete [] divPoint;
     delete [] meanValues;
   } else
-    dEdxArray = fdEdxPointArray;
+    tempdEdxArray = fdEdxPointArray;
+
+  for (auto point : tempdEdxArray)
+    if( (1.*point.fNumShadowHits/point.fNumHits) <= fract_shadow)
+      dEdxArray.push_back(point);
 
   sort(dEdxArray.begin(), dEdxArray.end(), [](STdEdxPoint a, STdEdxPoint b) -> Bool_t { return (a.fdE/a.fdx < b.fdE/b.fdx); });
+
 
   auto numUsedPoints = dEdxArray.size();
   Int_t idxLow = Int_t(numUsedPoints * lowCut);
@@ -93,4 +99,16 @@ Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut, Bool
   dEdx = dEdx/numUsedPoints;
 
   return dEdx;
+}
+
+Int_t STRecoTrackCand::GetClustNum(Double_t fract_shadow)
+{
+  vector<Double_t> dEdxArray;
+  for (auto point : fdEdxPointArray)
+    {
+      if( (1.*point.fNumShadowHits/point.fNumHits) <= fract_shadow)
+	dEdxArray.push_back(point.fdE/point.fdx);
+    }
+
+  return dEdxArray.size();
 }

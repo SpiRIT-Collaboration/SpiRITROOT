@@ -55,7 +55,10 @@ class STRecoTrackCand : public TObject
 
     void AdddEdxPoint(STdEdxPoint dedxPoint) { fdEdxPointArray.push_back(dedxPoint); }
     vector<STdEdxPoint> *GetdEdxPointArray() { return &fdEdxPointArray; }
+
     /*
+     *
+     *       fract_shadow: 1. includes all clusters when calculating dE/dx clusters with value < fract_shadow are included in dE/dx calculation 
      *    isContinuousHit: If true, dE/dx values are calculated only with the clusters having continuos hit distribution.
      *                     For example, the cluster created by layer and having hit distribution with row values 14, 15, 16, 17 is used
      *                     while the cluster with row values 14, 15, 17 is not used in the calculation of dE/dx.
@@ -70,9 +73,11 @@ class STRecoTrackCand : public TObject
      *                     then the clusters in [0,5) are used to calculate dE/dx value.
      */
     Double_t GetdEdxWithCut(Double_t lowCut, Double_t highCut,
+                            Double_t fract_shadow = 1.,
                             Bool_t isContinuousHits = kFALSE,
                             Int_t clusterSize = 0,
                             Int_t numDiv = -1, Int_t refDiv = -1,Double_t cutMin = -0.5, Double_t cutMax = 0.5);
+    Int_t GetClustNum(Double_t fract_shadow = 1.);
 
     void SetGenfitTrack(genfit::Track *val) { fGenfitTrack = val; }
     genfit::Track *GetGenfitTrack() { return fGenfitTrack; }

@@ -47,6 +47,8 @@ class STDecoderTask : public FairTask {
     /// Destructor
     ~STDecoderTask();
 
+    /// Check if a pad is saturated
+    void CheckSaturation(STRawEvent *event);
     /// Setting the number of time buckets used when taking data
     void SetNumTbs(Int_t numTbs);
     /// Adding raw data file to the list

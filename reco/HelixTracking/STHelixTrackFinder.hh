@@ -218,7 +218,8 @@ class STHelixTrackFinder
 
   TClonesArray *fTrackArray = nullptr;       ///< STHelixTrack array
   TClonesArray *fHitClusterArray = nullptr;  ///< STHitCluster array
-  STPadPlaneMap *fEventMap = nullptr;        ///< hit map to pad plane
+  STPadPlaneMap *fEventMap = nullptr;        ///< hit map to pad plane used in clustering
+  STPadPlaneMap *fHitMap   = nullptr;        ///< hit map used for finding saturated hits
   STHelixTrackFitter *fFitter = nullptr;     ///< Helix track fitter
   
   vhit_t fCandHits = nullptr;  ///< Candidate hits comming from fEventMap
