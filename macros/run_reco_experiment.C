@@ -73,6 +73,8 @@ void run_reco_experiment
   decoder -> SetEmbedding(false);
   decoder -> SetEmbedFile("");
 //  decoder -> SetEmbedFile("./data/one_test.digi.root");
+  // Low gain calibration. Don't forget you need to uncomment PSA part, too.
+  //decoder -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
   
   if (fUseMeta) {
     std::ifstream metalistFile(metaFile.Data());
@@ -106,6 +108,8 @@ void run_reco_experiment
   psa -> SetPulserData("pulser_117ns_50tb.dat");
   // Rensheng's peak finding method (1).
   psa -> SetPSAPeakFindingOption(1);
+  // Low gain calibration. Don't forget you need to uncomment decoder part, too.
+  //psa -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
 
   auto helix = new STHelixTrackingTask();
   helix -> SetPersistence(false);
@@ -118,6 +122,8 @@ void run_reco_experiment
 //  helix -> SetCylinderCut(TVector3(0, -226.06, -11.9084), 100, 100, 5);
 //  helix -> SetSphereCut(TVector3(0, -226.06, -11.9084), 100, 5);
 //  helix -> SetEllipsoidCut(TVector3(0, -206.34, -11.9084), TVector3(120, 55, 240), 5);
+  // Changing clustering direction angle and margin. Default: 45 deg with 0 deg margin
+  //helix -> SetClusteringAngleAndMargin(35., 3.);
   
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
@@ -132,6 +138,8 @@ void run_reco_experiment
   genfitVA -> SetBeamFile("");
 //  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
 //  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
+  // Uncomment if you want to recalculate the vertex using refit tracks.
+  //genfitVA -> SetUseRave(true);
   
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
