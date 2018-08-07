@@ -63,8 +63,14 @@ STGenfitVATask::Init()
   fCandListArray = new TClonesArray("STRecoTrackCandList");
   fRootManager -> Register("VACandList", "SpiRIT", fCandListArray, fIsListPersistence);
 
+  fVAVertexArray = new TClonesArray("STVertex");
+  fRootManager -> Register("VAVertex", "SpiRIT", fVAVertexArray, fIsPersistence);
+
   fGenfitTest = new STGenfitTest2(fIsSamurai);
   fPIDTest = new STPIDTest();
+
+  if (fUseRave)
+    fVertexFactory = ((STGenfitPIDTask *) FairRunAna::Instance() -> GetTask("GENFIT Task")) -> GetVertexFactoryInstance();
 
   if (!fBeamFilename.IsNull()) {
     fBDCVertexArray = new TClonesArray("STVertex");
@@ -89,12 +95,6 @@ STGenfitVATask::Init()
     fBDCProjection -> setBeam(fRunNo);
   }
 
-
-//  fVertexFactory = new genfit::GFRaveVertexFactory(/* verbosity */ 2, /* useVacuumPropagator */ false);
-  //fVertexFactory -> setMethod("kalman-smoothing:1");
-//  fGFRaveVertexMethod = "avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5";
-//  fVertexFactory -> setMethod(fGFRaveVertexMethod.Data());
-
   if (fRecoHeader != nullptr) {
     fRecoHeader -> SetPar("genfitva_loadSamuraiMap", fIsSamurai);
     fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
@@ -107,6 +107,7 @@ void STGenfitVATask::Exec(Option_t *opt)
 {
   fCandListArray -> Clear("C");
   fVATrackArray -> Clear("C");
+  fVAVertexArray -> Clear("C");
   if (!fBeamFilename.IsNull())
     fBDCVertexArray -> Clear("C");
 
@@ -281,13 +282,15 @@ void STGenfitVATask::Exec(Option_t *opt)
     gfTrackArrayToVertex.push_back(bestGenfitTrack);
     vaTrackArrayToVertex.push_back(vaTrack);
 
-    helixTrack -> SetGenfitID(iTrack);
-    helixTrack -> SetIsGenfitTrack();
-    helixTrack -> SetGenfitMomentum(bestRecoTrackCand -> GetMomentum().Mag());
+//    helixTrack -> SetGenfitID(iTrack);
+//    helixTrack -> SetIsGenfitTrack();
+//    helixTrack -> SetGenfitMomentum(bestRecoTrackCand -> GetMomentum().Mag());
 
     TVector3 kyotoL, kyotoR, katana, neuland;
     fGenfitTest -> GetPosOnPlanes(bestRecoTrackCand -> GetGenfitTrack(), kyotoL, kyotoR, katana, neuland);
     bestRecoTrackCand -> Copy(vaTrack);
+    vaTrack -> SetHelixID(helixTrack -> GetTrackID());
+    vaTrack -> SetRecoID(helixTrack -> GetGenfitID());
     vaTrack -> SetPosKyotoL(kyotoL);
     vaTrack -> SetPosKyotoR(kyotoR);
     vaTrack -> SetPosKatana(katana);
@@ -302,7 +305,8 @@ void STGenfitVATask::Exec(Option_t *opt)
       vaTrack -> SetTrackLength(-9999);
     }
 
-    Int_t numClusters = 0, numClusters90 = 0;
+    Int_t numRowClusters = 0, numRowClusters90 = 0;
+    Int_t numLayerClusters = 0, numLayerClusters90 = 0;
     Double_t helixChi2R = 0, helixChi2X = 0, helixChi2Y = 0, helixChi2Z = 0;
     Double_t genfitChi2R = 0, genfitChi2X = 0, genfitChi2Y = 0, genfitChi2Z = 0;
     for (auto cluster : *helixTrack -> GetClusterArray()) {
@@ -310,9 +314,15 @@ void STGenfitVATask::Exec(Option_t *opt)
         continue;
 
       auto pos = cluster -> GetPosition();
-      numClusters++;
-      if (pos.Z() < 1080)
-        numClusters90++;
+      if (cluster -> IsRowCluster()) {
+        numRowClusters++;
+        if (pos.Z() < 1080)
+          numRowClusters90++;
+      } else if (cluster -> IsLayerCluster()) {
+        numLayerClusters++;
+        if (pos.Z() < 1080)
+          numLayerClusters90++;
+      }
 
       TVector3 dVec, point;
       Double_t dValue, alpha;
@@ -330,8 +340,10 @@ void STGenfitVATask::Exec(Option_t *opt)
       genfitChi2Y += (point.Y() - pos.Y())*(point.Y() - pos.Y());
       genfitChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
     }
-    vaTrack -> SetNumClusters(numClusters);
-    vaTrack -> SetNumClusters90(numClusters90);
+    vaTrack -> SetNumRowClusters(numRowClusters);
+    vaTrack -> SetNumLayerClusters(numLayerClusters);
+    vaTrack -> SetNumRowClusters90(numRowClusters90);
+    vaTrack -> SetNumLayerClusters90(numLayerClusters90);
     vaTrack -> SetHelixChi2R(helixChi2R);
     vaTrack -> SetHelixChi2X(helixChi2X);
     vaTrack -> SetHelixChi2Y(helixChi2Y);
@@ -341,26 +353,89 @@ void STGenfitVATask::Exec(Option_t *opt)
     vaTrack -> SetChi2Y(genfitChi2Y);
     vaTrack -> SetChi2Z(genfitChi2Z);
 
-    genfit::Track *gfTrack = bestRecoTrackCand -> GetGenfitTrack();
-    TVector3 momVertex;
-    TVector3 pocaVertex;
-    fGenfitTest -> GetMomentumWithVertex(gfTrack, vertex -> GetPos(), momVertex, pocaVertex);
-    if (momVertex.Z() < 0)
-      momVertex = -momVertex;
-    vaTrack -> SetMomentum(momVertex);
-    vaTrack -> SetPOCAVertex(pocaVertex);
+    if (!fUseRave) {
+      genfit::Track *gfTrack = bestRecoTrackCand -> GetGenfitTrack();
+      TVector3 momVertex;
+      TVector3 pocaVertex;
+      fGenfitTest -> GetMomentumWithVertex(gfTrack, vertex -> GetPos(), momVertex, pocaVertex);
+      if (momVertex.Z() < 0)
+        momVertex = -momVertex;
+      vaTrack -> SetMomentum(momVertex);
+      vaTrack -> SetPOCAVertex(pocaVertex);
 
-    Double_t effCurvature1;
-    Double_t effCurvature2;
-    Double_t effCurvature3;
-    Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vertex -> GetPos(), effCurvature1, effCurvature2, effCurvature3, true);
-    vaTrack -> SetCharge(charge);
-    vaTrack -> SetEffCurvature1(effCurvature1);
-    vaTrack -> SetEffCurvature2(effCurvature2);
-    vaTrack -> SetEffCurvature3(effCurvature3);
+      Double_t effCurvature1;
+      Double_t effCurvature2;
+      Double_t effCurvature3;
+      Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vertex -> GetPos(), effCurvature1, effCurvature2, effCurvature3, true);
+      vaTrack -> SetCharge(charge);
+      vaTrack -> SetEffCurvature1(effCurvature1);
+      vaTrack -> SetEffCurvature2(effCurvature2);
+      vaTrack -> SetEffCurvature3(effCurvature3);
+    }
   }
 
-  LOG(INFO) << Space() << "VATrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
+  LOG(INFO) << Space() << "VATrack " << fVATrackArray -> GetEntriesFast() << FairLogger::endl;
+
+  if (fUseRave) {
+    if (gfTrackArrayToVertex.size() < 2) {
+      for (auto vaTrack : vaTrackArrayToVertex)
+        vaTrack -> SetCharge(1);
+      return;
+    }
+
+    vector<genfit::GFRaveVertex *> vertices;
+    try {
+      fVertexFactory -> findVertices(&vertices, gfTrackArrayToVertex);
+    } catch (...) {
+    }
+
+    Int_t vaNumVertices = vertices.size();
+    LOG(INFO) << Space() << "vector verticies " << vertices.size() << FairLogger::endl;
+
+    for (UInt_t iVert = 0; iVert < vaNumVertices; iVert++) {
+      genfit::GFRaveVertex* vaVertex = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
+
+      auto vaNumTracks = vaVertex -> getNTracks();
+      for (Int_t iTrack = 0; iTrack < vaNumTracks; iTrack++) {
+        genfit::GFRaveTrackParameters *par = vaVertex -> getParameters(iTrack);
+        const genfit::Track *track = par -> getTrack();
+
+        std::vector<genfit::Track *>::iterator iter = std::find(gfTrackArrayToVertex.begin(), gfTrackArrayToVertex.end(), track);
+
+        if (iter != gfTrackArrayToVertex.end()) {
+          Int_t index = std::distance(gfTrackArrayToVertex.begin(), iter);
+          auto vaTrack = vaTrackArrayToVertex.at(index);
+          genfit::Track *gfTrack = gfTrackArrayToVertex.at(index);
+
+          if (vaTrack -> GetVertexID() < 0) {
+            vaTrack -> SetVertexID(iVert);
+
+            TVector3 momVertex;
+            TVector3 pocaVertex;
+            fGenfitTest -> GetMomentumWithVertex(gfTrack, 10*vaVertex->getPos(), momVertex, pocaVertex);
+            if (momVertex.Z() < 0)
+              momVertex = -momVertex;
+            vaTrack -> SetMomentum(momVertex);
+            vaTrack -> SetPOCAVertex(pocaVertex);
+
+            Double_t effCurvature1;
+            Double_t effCurvature2;
+            Double_t effCurvature3;
+            Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vaVertex -> getPos(), effCurvature1, effCurvature2, effCurvature3);
+            vaTrack -> SetCharge(charge);
+            vaTrack -> SetEffCurvature1(effCurvature1);
+            vaTrack -> SetEffCurvature2(effCurvature2);
+            vaTrack -> SetEffCurvature3(effCurvature3);
+          }
+        }
+      }
+
+      new ((*fVAVertexArray)[iVert]) STVertex(*vaVertex);
+      delete vaVertex;
+    }
+
+    LOG(INFO) << Space() << "VAVertex " << fVAVertexArray -> GetEntriesFast() << FairLogger::endl;
+  }
 }
 
 void STGenfitVATask::SetBeamFile(TString fileName) { fBeamFilename = fileName; }
@@ -376,4 +451,9 @@ void STGenfitVATask::SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigm
   fPeakZ = peakZ;
   fSigma = sigma;
   fSigmaMultiple = sigmaMultiple;
+}
+
+void STGenfitVATask::SetUseRave(Bool_t val)
+{
+  fUseRave = val;
 }

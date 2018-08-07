@@ -72,7 +72,6 @@ STGenfitPIDTask::Init()
   }
 
   fVertexFactory = new genfit::GFRaveVertexFactory(/* verbosity */ 2, /* useVacuumPropagator */ false);
-  //fVertexFactory -> setMethod("kalman-smoothing:1");
   fGFRaveVertexMethod = "avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5";
   fVertexFactory -> setMethod(fGFRaveVertexMethod.Data());
 
@@ -199,7 +198,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       recoTrack -> SetTrackLength(-9999);
     }
 
-    Int_t numClusters = 0, numClusters90 = 0;
+    Int_t numRowClusters = 0, numRowClusters90 = 0;
+    Int_t numLayerClusters = 0, numLayerClusters90 = 0;
     Double_t helixChi2R = 0, helixChi2X = 0, helixChi2Y = 0, helixChi2Z = 0;
     Double_t genfitChi2R = 0, genfitChi2X = 0, genfitChi2Y = 0, genfitChi2Z = 0;
     for (auto cluster : *helixTrack -> GetClusterArray()) {
@@ -207,9 +207,15 @@ void STGenfitPIDTask::Exec(Option_t *opt)
         continue;
 
       auto pos = cluster -> GetPosition();
-      numClusters++;
-      if (pos.Z() < 1080)
-        numClusters90++;
+      if (cluster -> IsRowCluster()) {
+        numRowClusters++;
+        if (pos.Z() < 1080)
+          numRowClusters90++;
+      } else if (cluster -> IsLayerCluster()) {
+        numLayerClusters++;
+        if (pos.Z() < 1080)
+          numLayerClusters90++;
+      }
 
       TVector3 dVec, point;
       Double_t dValue, alpha;
@@ -243,8 +249,10 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       genfitChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
       */
     }
-    recoTrack -> SetNumClusters(numClusters);
-    recoTrack -> SetNumClusters90(numClusters90);
+    recoTrack -> SetNumRowClusters(numRowClusters);
+    recoTrack -> SetNumLayerClusters(numLayerClusters);
+    recoTrack -> SetNumRowClusters90(numRowClusters90);
+    recoTrack -> SetNumLayerClusters90(numLayerClusters90);
     recoTrack -> SetHelixChi2R(helixChi2R);
     recoTrack -> SetHelixChi2X(helixChi2X);
     recoTrack -> SetHelixChi2Y(helixChi2Y);
@@ -334,4 +342,9 @@ void STGenfitPIDTask::SetTargetPlane(Double_t x, Double_t y, Double_t z)
   fTargetX = x;
   fTargetY = y;
   fTargetZ = z;
+}
+
+genfit::GFRaveVertexFactory *STGenfitPIDTask::GetVertexFactoryInstance()
+{
+  return fVertexFactory;
 }

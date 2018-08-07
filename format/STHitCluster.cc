@@ -26,7 +26,8 @@ STHitCluster::STHitCluster(STHitCluster *cluster)
   fIsClustered = cluster -> IsClustered();
   fClusterID = cluster -> GetClusterID();
   fTrackID = cluster -> GetTrackID();
-
+  fIsMissingCharge =  cluster -> IsMissingCharge();
+  
   fX = cluster -> GetX();
   fY = cluster -> GetY();
   fZ = cluster -> GetZ();
@@ -44,6 +45,8 @@ STHitCluster::STHitCluster(STHitCluster *cluster)
   fLength  = cluster -> GetLength();
 
   SetPOCA(cluster -> GetPOCA());
+
+  fIsContinuousHits = cluster -> IsContinuousHits();
 }
 
 void STHitCluster::Clear(Option_t *)
@@ -76,8 +79,11 @@ void STHitCluster::Clear(Option_t *)
 
   fS = 0;
 
-  fIsEmbed     = false;
-  fIsClustered = kFALSE;
+  fIsEmbed         = false;
+  fIsClustered     = kFALSE;
+  fIsMissingCharge = false;
+
+  fIsContinuousHits = kFALSE;
 }
 
 void STHitCluster::SetCovMatrix(TMatrixD matrix) { fCovMatrix = matrix; } 
@@ -85,8 +91,10 @@ void STHitCluster::SetCovMatrix(TMatrixD matrix) { fCovMatrix = matrix; }
 Bool_t STHitCluster::IsClustered() const { return kTRUE; }
 Int_t  STHitCluster::GetHitID()    const { return fClusterID; }
 
-     TMatrixD   STHitCluster::GetCovMatrix() const  { return fCovMatrix; }
-        Int_t   STHitCluster::GetNumHits() const    { return fHitIDArray.size(); }
+TMatrixD   STHitCluster::GetCovMatrix()        const  { return fCovMatrix; }
+Int_t   STHitCluster::GetNumHits()             const { return fHitIDArray.size(); }
+Int_t   STHitCluster::GetNumSatNeighbors()     const{ return fnumSatNeigh; }
+Double_t   STHitCluster::GetFracSatNeighbors() const{ return fFractionSat; }
 vector<Int_t>  *STHitCluster::GetHitIDs()           { return &fHitIDArray; }
 vector<STHit*> *STHitCluster::GetHitPtrs()          { return &fHitPtrArray; }
 
@@ -249,9 +257,13 @@ void STHitCluster::SetClusterID(Int_t clusterID)
 Double_t STHitCluster::GetLength() { return fLength; }
 Bool_t STHitCluster::IsStable() { return fIsClustered; }
 Bool_t STHitCluster::IsEmbed() const { return fIsEmbed; }
+Bool_t STHitCluster::IsMissingCharge() const { return fIsMissingCharge; }
 
 void STHitCluster::SetIsEmbed(Bool_t val) { fIsEmbed = val; }
-void STHitCluster::SetIsStable(Bool_t isStable) { fIsClustered = isStable; }
+void STHitCluster::SetIsMissingCharge(Bool_t val) { fIsMissingCharge = val; } //missing charge from dead pad by saturation
+void STHitCluster::SetIsStable(Bool_t isStable)   { fIsClustered = isStable; }
+void STHitCluster::SetNumSatNeighbors(Int_t num)     { fnumSatNeigh = num; }
+void STHitCluster::SetFractSatNeighbors(Double_t num) { fFractionSat = num; }
 void STHitCluster::SetLength(Double_t length) { fLength = length; }
 void STHitCluster::SetPOCA(TVector3 p)
 {

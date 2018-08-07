@@ -95,6 +95,12 @@ class STHelixTrackFinder
     void SetSphereCut(TVector3 center, Double_t radius, Double_t margin);
     void SetEllipsoidCut(TVector3 center, TVector3 radii, Double_t margin);
 
+    /**
+     * Clustering direction changing angle. If margin is 0, then the direction changed at the "angle" value.
+     * If margin is not 0, then the direction in unchanged until the angle is reached at "angle + margin".
+     */
+    void SetClusteringAngleAndMargin(Double_t angle, Double_t margin);
+
   private:
     /** 
      * Create new track with free hit from event map
@@ -200,9 +206,20 @@ class STHelixTrackFinder
      */
     Double_t TangentOfMaxDipAngle(STHit *hit);
 
+    /**
+     * Check if the cluster is created with continuous hits.
+     */
+    void CheckIsContinuousHits(STHitCluster *cluster);
+
+    /**
+     * Using the alpha angle, determine the clustering direction to be by layer or row.
+     */
+    Bool_t CheckBuildByLayer(STHelixTrack *helix, STHit *hit, STHit *prevHit = nullptr);
+
   TClonesArray *fTrackArray = nullptr;       ///< STHelixTrack array
   TClonesArray *fHitClusterArray = nullptr;  ///< STHitCluster array
-  STPadPlaneMap *fEventMap = nullptr;        ///< hit map to pad plane
+  STPadPlaneMap *fEventMap = nullptr;        ///< hit map to pad plane used in clustering
+  STPadPlaneMap *fHitMap   = nullptr;        ///< hit map used for finding saturated hits
   STHelixTrackFitter *fFitter = nullptr;     ///< Helix track fitter
   
   vhit_t fCandHits = nullptr;  ///< Candidate hits comming from fEventMap
@@ -228,6 +245,9 @@ class STHelixTrackFinder
     Double_t fSRadius = -1;       //< Radius of sphere
     TVector3 fERadii = TVector3(-1, -1, -1);  //< Radii of ellipsoid
     Double_t fCutMargin = -1;     //< Cut margin for cluster cut
+
+    Double_t fClusteringAngle = 45.; //< [Deg]. Clustering direction changing angle from row to layer, and vice versa;
+    Double_t fClusteringMargin = 0.; //< [Deg]. Margin of clustering direction changing angle.
 
   ClassDef(STHelixTrackFinder, 3)
 };

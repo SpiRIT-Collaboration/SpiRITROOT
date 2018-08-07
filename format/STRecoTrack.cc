@@ -43,8 +43,10 @@ STRecoTrack::STRecoTrack(STRecoTrack *recoTrack)
   for (auto cid : *clusterIDArray)
     AddClusterID(cid);
 
-  fNumClusters = recoTrack -> GetNumClusters();
-  fNumClusters90 = recoTrack -> GetNumClusters90();
+  fNumRowClusters = recoTrack -> GetNumRowClusters();
+  fNumLayerClusters = recoTrack -> GetNumLayerClusters();
+  fNumRowClusters90 = recoTrack -> GetNumRowClusters90();
+  fNumLayerClusters90 = recoTrack -> GetNumLayerClusters90();
 
   fHelixChi2R = recoTrack -> GetHelixChi2R();
   fHelixChi2X = recoTrack -> GetHelixChi2X();
@@ -58,6 +60,8 @@ STRecoTrack::STRecoTrack(STRecoTrack *recoTrack)
   fChi2X = recoTrack -> GetChi2X();
   fChi2Y = recoTrack -> GetChi2Y();
   fChi2Z = recoTrack -> GetChi2Z();
+
+  fRecoID = recoTrack -> GetRecoID();
 }
 
 void STRecoTrack::Clear(Option_t *option)
@@ -75,8 +79,10 @@ void STRecoTrack::Clear(Option_t *option)
   fPosNeuland.SetXYZ(0,0,0);
   fClusterIDArray.clear();
 
-  fNumClusters = 0;
-  fNumClusters90 = 0;
+  fNumRowClusters = 0;
+  fNumLayerClusters = 0;
+  fNumRowClusters90 = 0;
+  fNumLayerClusters90 = 0;
 
   fHelixChi2R = 0;
   fHelixChi2X = 0;
@@ -90,4 +96,6 @@ void STRecoTrack::Clear(Option_t *option)
   fChi2X = 0;
   fChi2Y = 0;
   fChi2Z = 0;
+
+  fRecoID = -1;
 }

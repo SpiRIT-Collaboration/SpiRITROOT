@@ -138,8 +138,8 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
 
   Double_t dip = helixTrack -> DipAngle();
   Double_t momSeedMag = helixTrack -> Momentum();
-  TVector3 momSeed(0., 0., momSeedMag);
-  momSeed.SetTheta(TMath::Pi()/2. - dip);
+  TVector3 momSeed(0., 0., momSeedMag); // MeV -> GeV
+  momSeed.SetTheta(TMath::Pi()/2. - dip); // Need to be fixed
 
   trackCand.setCovSeed(covSeed);
   trackCand.setPosMomSeed(posSeed, momSeed, helixTrack -> Charge());
@@ -234,8 +234,8 @@ genfit::Track* STGenfitTest2::FitTrackWithVertex(STHelixTrack *helixTrack, STHit
 
   Double_t dip = helixTrack -> DipAngle();
   Double_t momSeedMag = helixTrack -> Momentum();
-  TVector3 momSeed(0., 0., momSeedMag);
-  momSeed.SetTheta(TMath::Pi()/2. - dip);
+  TVector3 momSeed(0., 0., momSeedMag); // MeV -> GeV
+  momSeed.SetTheta(TMath::Pi()/2. - dip); // Need to be fixed
 
   trackCand.setCovSeed(covSeed);
   trackCand.setPosMomSeed(posSeed, momSeed, helixTrack -> Charge());
@@ -582,8 +582,14 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
       continue;
     }
 
-    Double_t dE = cluster -> GetCharge();
-    Double_t dx = cluster -> GetLength();
+    Double_t dE       = cluster -> GetCharge();
+    Double_t dx       = cluster -> GetLength();
+    Int_t nHits       = cluster -> GetNumHits();
+    Int_t nShadowHits = cluster -> GetNumSatNeighbors();      
+    Bool_t isRow      = cluster -> IsRowCluster();      
+
+    auto isContinuousHits = cluster -> IsContinuousHits();
+    auto clusterSize = cluster -> GetNumHits();
 
     /*
     if (dx > 20) {
@@ -595,6 +601,11 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
     dedx.fdE = dE;
     dedx.fdx = dx;
     dedx.fLength = 88;
+    dedx.fNumHits = nHits;
+    dedx.fNumShadowHits = nShadowHits;
+    dedx.fisRow = isRow;
+    dedx.fIsContinuousHits = isContinuousHits;
+    dedx.fClusterSize = clusterSize;
     dedxArrayTemp.push_back(dedx);
   }
 
@@ -757,9 +768,16 @@ STGenfitTest2::GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helix
 
     if (preCluster -> IsStable())
     {
-      Double_t dE = preCluster -> GetCharge();
-      Double_t dx = preCluster -> GetLength();
-      dEdxPointArray -> push_back(STdEdxPoint(-1, dE, dx, -999));
+      Double_t dE       = preCluster -> GetCharge();
+      Double_t dx       = preCluster -> GetLength();
+      Int_t nHits       = preCluster -> GetNumHits();
+      Int_t nShadowHits = preCluster -> GetNumSatNeighbors();      
+      Bool_t isRow      = preCluster -> IsRowCluster();      
+
+      auto isContinuousHits = preCluster -> IsContinuousHits();
+      auto clusterSize = preCluster -> GetNumHits();
+
+      dEdxPointArray -> push_back(STdEdxPoint(-1, dE, dx, -999, nHits, nShadowHits, isRow, isContinuousHits, clusterSize));
     }
 
     preCluster = curCluster;
@@ -837,8 +855,11 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
       continue;
     }
 
-    Double_t dE = cluster -> GetCharge();
-    Double_t dx = cluster -> GetLength();
+    Double_t dE       = cluster -> GetCharge();
+    Double_t dx       = cluster -> GetLength();
+    Int_t nHits       = cluster -> GetNumHits();
+    Int_t nShadowHits = cluster -> GetNumSatNeighbors();      
+    Bool_t isRow      = cluster -> IsRowCluster();      
 
     /*
     if (dx > 20) {
@@ -847,7 +868,9 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
     }
     */
 
-    dEdxPointArray -> push_back(STdEdxPoint(cluster -> GetClusterID(), dE, dx, -999));
+    auto isContinuousHits = cluster -> IsContinuousHits();
+    auto clusterSize = cluster -> GetNumHits();
+    dEdxPointArray -> push_back(STdEdxPoint(cluster -> GetClusterID(), dE, dx, -999, nHits, nShadowHits, isRow, isContinuousHits, clusterSize));
   }
 
   return true;

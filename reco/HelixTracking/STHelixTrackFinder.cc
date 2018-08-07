@@ -117,23 +117,25 @@ MyFitFunction* MyFitFunction::Instance()
 
 STHelixTrackFinder::STHelixTrackFinder()
 {
-  fFitter = new STHelixTrackFitter();
+  fFitter   = new STHelixTrackFitter();
   fEventMap = new STPadPlaneMap();
+  fHitMap   = new STPadPlaneMap();
 
   fCandHits = new std::vector<STHit*>;
   fGoodHits = new std::vector<STHit*>;
-  fBadHits = new std::vector<STHit*>;
+  fBadHits  = new std::vector<STHit*>;
 }
 
 void 
 STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray, TClonesArray *hitClusterArray)
 {
-  fTrackArray = trackArray;
+  fTrackArray      = trackArray;
   fHitClusterArray = hitClusterArray;
   fEventMap -> Clear();
   fCandHits -> clear();
   fGoodHits -> clear();
-  fBadHits -> clear();
+  fBadHits  -> clear();
+  fHitMap   -> Clear();
 
   Int_t numTotalHits = hitArray -> GetEntries();
   for (Int_t iHit = 0; iHit < numTotalHits; iHit++) {
@@ -158,13 +160,14 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
     }
 
     fEventMap -> AddHit((STHit *) hitArray -> At(iHit));
+    fHitMap -> AddHit((STHit *) hitArray -> At(iHit));
   }
 
   while(1)
   {
     fCandHits -> clear();
     fGoodHits -> clear();
-    fBadHits -> clear();
+    fBadHits  -> clear();
 
     STHelixTrack *track = NewTrack();
     if (track == nullptr)
@@ -532,7 +535,7 @@ bool
 STHelixTrackFinder::HitClustering(STHelixTrack *helix)
 {
   auto hitArray = helix -> GetHitArray();
-
+  
   TObjArray hits;
   for (auto hit : *hitArray)
     hits.Add(hit);
@@ -567,8 +570,32 @@ STHelixTrackFinder::HitClustering(STHelixTrack *helix)
   {
     helix -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
 
-    section = (Int_t)((TMath::Abs(alpha) + TMath::Pi()/4)/(TMath::Pi()/2));
-    isRow = section%2;
+    double alpha_a = abs(alpha);
+    double pi = TMath::Pi();
+    double beta = 45 * TMath::DegToRad(); //enter angle for which a track switches layer to row clust
+
+    //There are four quadrants or sections starting from section 0 its layer clustering
+    //section 1 row, section 2 layer, section 3 row
+    if( alpha_a > beta && alpha_a <= (pi-beta))
+      {
+	isRow = 1;
+	section = 1;
+      }
+    else if( alpha_a > (pi-beta) && alpha_a <= (pi+beta))
+      {
+	isRow = 0;
+	section = 2;
+      }
+    else if(alpha_a > (pi+beta) && alpha_a <= (2*pi - beta))
+      {
+	isRow = 1;
+	section = 3;
+      }
+    else
+      {
+	isRow = 0;
+	section = 0;
+      }
 
     if (section != currentBuildSection) // init
     {
@@ -733,6 +760,37 @@ STHelixTrackFinder::HitClustering(STHelixTrack *helix)
 
   fHitClusterArray -> Compress();
 
+  //Store hitIDs of hits in helix in a mapped array for quick searching
+  //We will pass to neighbor checking funciton to make sure neighbors are not hits in helix track
+  auto hit_IDary = helix -> GetHitIDArray();
+  std::vector<bool> helix_hits(*max_element(hit_IDary->begin(), hit_IDary->end())+1,false);
+      for( auto hitID : *hit_IDary)
+	  helix_hits.at(hitID)=true;
+
+  //Here we count how many hits in the cluster are neighbors to dead pads by saturation
+  auto helix_cl_ary = helix -> GetClusterArray();
+   for (auto iCluster = 0; iCluster < helix_cl_ary -> size(); ++iCluster) 
+    {
+      auto cluster = (STHitCluster *) helix_cl_ary -> at(iCluster);
+      auto hit_ary = cluster -> GetHitPtrs();
+      bool by_row = cluster -> IsRowCluster();
+      int sat_hits = 0;
+      for( auto cl_hit : *hit_ary)
+	{
+	  //	  if( cl_hit -> IsSaturated() )//the saturated hits cannot shadow themselves 
+	  //	    continue;
+	  if( fHitMap -> IsNeighborSaturated(cl_hit,by_row,helix_hits) ) //has a saturated neighbor 
+	    sat_hits++;
+	}
+      cluster -> SetNumSatNeighbors(sat_hits);
+      if(sat_hits != 0)
+	{
+	  cluster -> SetIsMissingCharge(true); //missing charge due to saturated neighbor killed pad 
+	  cluster -> SetFractSatNeighbors(sat_hits/hit_ary->size());
+	}
+
+    }
+
   return true;
 }
 
@@ -743,19 +801,6 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
 
   auto helixHits = helix -> GetHitArray();
   auto numHits = helixHits -> size();
-
-  auto CheckBuildByLayer = [helix](STHit *hit) {
-    TVector3 q;
-    Double_t alpha;
-    helix -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
-
-    auto direction = helix -> Direction(alpha);
-    Double_t angle = TMath::ATan2(TMath::Abs(direction.Z()), direction.X());
-    if (angle > TMath::ATan2(1,1) && angle < TMath::ATan2(1,-1))
-      return true;
-    else
-    return false;
-  };
 
   auto SetClusterLength = [helix](STHitCluster *cluster) {
     auto row = cluster -> GetRow();
@@ -783,7 +828,7 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
 
   bool buildNewCluster = true;
   auto curHit = helixHits -> at(0);
-  bool buildByLayer = CheckBuildByLayer(curHit);
+  bool buildByLayer = CheckBuildByLayer(helix, curHit, nullptr);
 
   STHitCluster *lastCluster = nullptr;
   lastCluster = NewCluster(curHit);
@@ -858,7 +903,7 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
         createNewCluster = false;
 
       if (createNewCluster) {
-        if (buildByLayer !=  CheckBuildByLayer(curHit)) {
+        if (buildByLayer !=  CheckBuildByLayer(helix, curHit, (fClusteringMargin > 0 ? helixHits -> at(iHit - 1) : nullptr))) {
           buildNewCluster = false;
           lastCluster = nullptr;
         }
@@ -895,7 +940,7 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
         createNewCluster = false;
 
       if (createNewCluster) {
-        if (buildByLayer !=  CheckBuildByLayer(curHit)) {
+        if (buildByLayer !=  CheckBuildByLayer(helix, curHit, (fClusteringMargin > 0 ? helixHits -> at(iHit - 1) : nullptr))) {
           buildNewCluster = false;
           lastCluster = nullptr;
         }
@@ -940,6 +985,8 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
         cluster -> SetIsStable(false);
       else if (fERadii != TVector3(-1, -1, -1) && rVec.Mag() <= 1)
         cluster -> SetIsStable(false);
+      else
+        CheckIsContinuousHits(cluster);
     }
   }
 
@@ -1239,136 +1286,11 @@ void STHelixTrackFinder::SetEllipsoidCut(TVector3 center, TVector3 radii, Double
   } 
 }
 
-/*
-double STHelixTrackFinder::PRF(double x, double par[])
-{
-  double h_w = 4; //half width
-  double x1 = x-h_w;
-  double x2 = x+h_w;
-  
-  double sigma = 3.4;
-  double x1_p = x1/(sqrt(2)*sigma);
-  double x2_p = x2/(sqrt(2)*sigma);
-  
-  return .5*(TMath::Erf(x2_p)-TMath::Erf(x1_p));
-  
-};
-
-std::vector<double> STHelixTrackFinder:: getmean(double par[])
-{
-  vector<double> output;
-  double mean=0;
-  double chg =0;
-  //Here we loop over non-saturated hits
-  int num_elem = hits_pos_ary.size();
-  for(int i=0;i<num_elem;++i){
-    mean += hits_pos_ary.at(i)*hits_chg_ary.at(i);
-    chg += hits_chg_ary.at(i);
-  }
-  
-  //Here we loop over saturated hits
-  num_elem = s_hits_pos_ary.size();
-  for(int i=0;i<num_elem;++i){
-    mean += s_hits_pos_ary.at(i)*par[i];
-    chg += par[i];
-  }
-  mean  = mean/chg;
-  output.push_back(mean);
-  output.push_back(chg);
-  
-  return output;
-  
-};
-
-void STHelixTrackFinder::fcn(int& npar, double* deriv, double& f, double *par, int flag)
-{
-  double chisq =0;
-  vector<double> stat_array = getmean(par);
-  double mean      = stat_array.at(0);
-  double total_chg = stat_array.at(1);
-  
-  int num_elem = hits_pos_ary.size();
-  for (int i=0; i<num_elem; i++)
-    {
-      double v  = total_chg*PRF(hits_pos_ary.at(i)-mean,par);
-      if ( v != 0.0 )
-	{
-	  double n = hits_chg_ary.at(i);
-	  chisq += pow(n-v,2)/v;
-	}
-      else
-	{
-	  cout << "WARNING -- pdf is negative!!!" << endl;
-	}
-    }
-  
-  f = chisq;        
-};                  
-*/
-std::vector<double> STHelixTrackFinder::minimize(const int npar)
-{
-  // Initialize minuit, set initial values etc. of parameters.
-  vector<double> f_par;
-  TMinuit minuit(npar);
-  minuit.SetPrintLevel(-1);
-  minuit.SetFCN(myFitFunction);
-  
-  double par[npar];               // the start values
-  double stepSize[npar];          // step sizes
-  double minVal[npar];            // minimum bound on parameter
-  double maxVal[npar];            // maximum bound on parameter
-  string parName[npar];
-  
-  for( int i =0;i < npar; ++i)
-    {
-      par[i] = 4000.;            // a guess at the true value.
-      stepSize[i] = 1.;       // take e.g. 0.1 of start value
-      minVal[i] = 3500;   // if min and max values = 0, parameter is unbounded.  Only set bounds if you really think it's right!
-      maxVal[i] = 100000;
-      parName[i] = "miss charge";
-    }
-  
-  for (int i=0; i<npar; i++)
-    {
-      minuit.DefineParameter(i, parName[i].c_str(),
-			     par[i], stepSize[i], minVal[i], maxVal[i]);
-    }
-  
-  // Do the minimization!
-  
-  minuit.Migrad();       // Minuit's best minimization algorithm
-  double outpar[npar], err[npar];
-  for (int i=0; i<npar; i++){
-    minuit.GetParameter(i,outpar[i],err[i]);
-    f_par.push_back(outpar[i]);
-  }
-  //       cout << endl << endl << endl;
-  //       cout << "*********************************" << endl;
-  //       cout << "   "<<parName[0]<<": " << outpar[0] << " +/- " << err[0] << endl;
-  
-  return f_par;
-};
-
 void STHelixTrackFinder::De_Saturate(STHelixTrack *track)
 {
   track -> SortHitsByTimeOrder();
   auto trackHits = track -> GetHitArray();
   auto numHits = trackHits -> size();
-  
-  auto CheckBuildByLayer = [track](STHit *hit) {
-    TVector3 q;
-    Double_t alpha;
-    track -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
-    
-    auto direction = track -> Direction(alpha);
-    //angle defined from x axis not z
-    Double_t angle = TMath::ATan2(TMath::Abs(direction.Z()), direction.X());
-    if (angle > TMath::ATan2(1,1) && angle < TMath::ATan2(1,-1))
-      return true;
-    else
-      return false;
-    };
-  
   
   std::vector<containHits> byLayer; 
   std::vector<containHits> byRow;  
@@ -1377,7 +1299,7 @@ void STHelixTrackFinder::De_Saturate(STHelixTrack *track)
     {
       auto curHit = (STHit*)trackHits -> at(iHit);
 	
-      bool buildByLayer = CheckBuildByLayer(curHit);//false is by layer
+      bool buildByLayer = CheckBuildByLayer(track, curHit, (iHit > 0 & fClusteringMargin > 0 ? trackHits -> at(iHit - 1) : nullptr));//false is by layer
       
       auto row = curHit -> GetRow();
       auto layer = curHit -> GetLayer();
@@ -1545,3 +1467,72 @@ void STHelixTrackFinder::De_Saturate(STHelixTrack *track)
       }//layer loop  
   }
 
+void
+STHelixTrackFinder::CheckIsContinuousHits(STHitCluster *cluster)
+{
+  auto hits = cluster -> GetHitPtrs();
+
+  auto isRow = cluster -> IsRowCluster();
+
+  vector<Int_t> numbers;
+  if (isRow)
+    for (auto hit : *hits)
+      numbers.push_back(hit -> GetLayer());
+  else
+    for (auto hit : *hits)
+      numbers.push_back(hit -> GetRow());
+
+  sort(numbers.begin(), numbers.end());
+  numbers.erase(unique(numbers.begin(), numbers.end()), numbers.end());
+
+  if (numbers.size() < 2) {
+    cluster -> SetIsContinuousHits();
+    return;
+  }
+
+  for (auto i = 0; i < numbers.size() - 1; i++)
+    if (!(numbers[i] + 1 == numbers[i + 1]))
+      return;
+
+  cluster -> SetIsContinuousHits();
+}
+
+void
+STHelixTrackFinder::SetClusteringAngleAndMargin(Double_t angle, Double_t margin)
+{
+  cout << "== [STHelixTrackFinder] Clustering angle changes at " << angle << " deg with margin " << margin << " deg." << endl;
+
+  fClusteringAngle = angle;
+  fClusteringMargin = margin;
+}
+
+Bool_t
+STHelixTrackFinder::CheckBuildByLayer(STHelixTrack *helix, STHit *hit, STHit *prevHit)
+{
+  TVector3 q;
+  Double_t alpha;
+  helix -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
+
+  auto directionChangeAngle = fClusteringAngle*TMath::DegToRad();
+  auto normAlpha = TMath::Abs(std::fmod(TMath::Abs(alpha), TMath::Pi()) - TMath::Pi()/2.);
+  auto isLayer = (normAlpha > TMath::Pi()/2. - directionChangeAngle);
+
+  Double_t prevAlpha;
+  if (prevHit != nullptr) {
+    helix -> ExtrapolateToPointAlpha(prevHit -> GetPosition(), q, prevAlpha);
+
+    auto prevNormAlpha = TMath::Abs(std::fmod(TMath::Abs(prevAlpha), TMath::Pi()) - TMath::Pi()/2.);
+    auto isLayerPrev = (prevNormAlpha > TMath::Pi()/2. - directionChangeAngle);
+
+    if (isLayerPrev == isLayer)
+      return isLayer;
+
+    auto margin = fClusteringMargin*TMath::DegToRad();
+    auto diffNormAlpha = TMath::Abs(normAlpha - TMath::Pi()/2. + directionChangeAngle);
+
+    if (diffNormAlpha < margin)
+      return isLayerPrev;
+  }
+
+  return isLayer;
+}
