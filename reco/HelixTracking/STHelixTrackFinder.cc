@@ -744,17 +744,6 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
   auto helixHits = helix -> GetHitArray();
   auto numHits = helixHits -> size();
 
-  auto CheckBuildByLayer = [helix](STHit *hit) {
-    TVector3 q;
-    Double_t alpha;
-    helix -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
-
-    auto directionChangeAngle = 35.*TMath::DegToRad();
-    auto isLayer = (TMath::Abs(std::fmod(TMath::Abs(alpha), TMath::Pi()) - TMath::Pi()/2) > TMath::Pi()/2 - directionChangeAngle);
-
-    return isLayer;
-  };
-
   auto SetClusterLength = [helix](STHitCluster *cluster) {
     auto row = cluster -> GetRow();
     auto layer = cluster -> GetLayer();
@@ -781,7 +770,7 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
 
   bool buildNewCluster = true;
   auto curHit = helixHits -> at(0);
-  bool buildByLayer = CheckBuildByLayer(curHit);
+  bool buildByLayer = CheckBuildByLayer(helix, curHit, nullptr);
 
   STHitCluster *lastCluster = nullptr;
   lastCluster = NewCluster(curHit);
@@ -856,7 +845,7 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
         createNewCluster = false;
 
       if (createNewCluster) {
-        if (buildByLayer !=  CheckBuildByLayer(curHit)) {
+        if (buildByLayer !=  CheckBuildByLayer(helix, curHit, (fClusteringMargin > 0 ? helixHits -> at(iHit - 1) : nullptr))) {
           buildNewCluster = false;
           lastCluster = nullptr;
         }
@@ -893,7 +882,7 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
         createNewCluster = false;
 
       if (createNewCluster) {
-        if (buildByLayer !=  CheckBuildByLayer(curHit)) {
+        if (buildByLayer !=  CheckBuildByLayer(helix, curHit, (fClusteringMargin > 0 ? helixHits -> at(iHit - 1) : nullptr))) {
           buildNewCluster = false;
           lastCluster = nullptr;
         }
@@ -1355,18 +1344,6 @@ void STHelixTrackFinder::De_Saturate(STHelixTrack *track)
   auto trackHits = track -> GetHitArray();
   auto numHits = trackHits -> size();
   
-  auto CheckBuildByLayer = [track](STHit *hit) {
-    TVector3 q;
-    Double_t alpha;
-    track -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
-    
-    auto directionChangeAngle = 35.*TMath::DegToRad();
-    auto isLayer = (TMath::Abs(std::fmod(TMath::Abs(alpha), TMath::Pi()) - TMath::Pi()/2) > TMath::Pi()/2 - directionChangeAngle);
-
-    return isLayer;
-    };
-  
-  
   std::vector<containHits> byLayer; 
   std::vector<containHits> byRow;  
   
@@ -1374,7 +1351,7 @@ void STHelixTrackFinder::De_Saturate(STHelixTrack *track)
     {
       auto curHit = (STHit*)trackHits -> at(iHit);
 	
-      bool buildByLayer = CheckBuildByLayer(curHit);//false is by layer
+      bool buildByLayer = CheckBuildByLayer(track, curHit, (iHit > 0 & fClusteringMargin > 0 ? trackHits -> at(iHit - 1) : nullptr));//false is by layer
       
       auto row = curHit -> GetRow();
       auto layer = curHit -> GetLayer();
@@ -1570,4 +1547,44 @@ STHelixTrackFinder::CheckIsContinuousHits(STHitCluster *cluster)
       return;
 
   cluster -> SetIsContinuousHits();
+}
+
+void
+STHelixTrackFinder::SetClusteringAngleAndMargin(Double_t angle, Double_t margin)
+{
+  cout << "== [STHelixTrackFinder] Clustering angle changes at " << angle << " deg with margin " << margin << " deg." << endl;
+
+  fClusteringAngle = angle;
+  fClusteringMargin = margin;
+}
+
+Bool_t
+STHelixTrackFinder::CheckBuildByLayer(STHelixTrack *helix, STHit *hit, STHit *prevHit)
+{
+  TVector3 q;
+  Double_t alpha;
+  helix -> ExtrapolateToPointAlpha(hit -> GetPosition(), q, alpha);
+
+  auto directionChangeAngle = fClusteringAngle*TMath::DegToRad();
+  auto normAlpha = TMath::Abs(std::fmod(TMath::Abs(alpha), TMath::Pi()) - TMath::Pi()/2.);
+  auto isLayer = (normAlpha > TMath::Pi()/2. - directionChangeAngle);
+
+  Double_t prevAlpha;
+  if (prevHit != nullptr) {
+    helix -> ExtrapolateToPointAlpha(prevHit -> GetPosition(), q, prevAlpha);
+
+    auto prevNormAlpha = TMath::Abs(std::fmod(TMath::Abs(prevAlpha), TMath::Pi()) - TMath::Pi()/2.);
+    auto isLayerPrev = (prevNormAlpha > TMath::Pi()/2. - directionChangeAngle);
+
+    if (isLayerPrev == isLayer)
+      return isLayer;
+
+    auto margin = fClusteringMargin*TMath::DegToRad();
+    auto diffNormAlpha = TMath::Abs(normAlpha - TMath::Pi()/2. + directionChangeAngle);
+
+    if (diffNormAlpha < margin)
+      return isLayerPrev;
+  }
+
+  return isLayer;
 }
