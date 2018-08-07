@@ -55,7 +55,24 @@ class STRecoTrackCand : public TObject
 
     void AdddEdxPoint(STdEdxPoint dedxPoint) { fdEdxPointArray.push_back(dedxPoint); }
     vector<STdEdxPoint> *GetdEdxPointArray() { return &fdEdxPointArray; }
-    Double_t GetdEdxWithCut(Double_t lowCut, Double_t highCut, Bool_t isContinuousHits = kFALSE, Int_t clusterSize = 0);
+    /*
+     *    isContinuousHit: If true, dE/dx values are calculated only with the clusters having continuos hit distribution.
+     *                     For example, the cluster created by layer and having hit distribution with row values 14, 15, 16, 17 is used
+     *                     while the cluster with row values 14, 15, 17 is not used in the calculation of dE/dx.
+     *        clusterSize: If 0, all clusters which haven't cut out by the other cuts are used in dE/dx calculation.
+     *                     If non 0, clusters having hits more than that number are used in the calculation.
+     *                     For example, with the value 2, clusters having 2 and less than 2 are not used in the calculation.
+     *     numDiv, refDiv: The number of clusters is divided by numDiv and pick refDiv division as a reference value.
+     *                     For example, with 20 clusters, numDiv=4 and refDiv=3, clusters are divided into [0,5), [5,10), [10,15) and [15,20)
+     *                     and mean value of the third piece, [10,15), is used as a reference value, M([10,15)).
+     *     cutMin, cutMax: These values are TMath::Log2(ratio).
+     *                     For example with the same condition as above, if cutMin < TMath::Log2(M[0,5)/M[10,15)) < cutMax,
+     *                     then the clusters in [0,5) are used to calculate dE/dx value.
+     */
+    Double_t GetdEdxWithCut(Double_t lowCut, Double_t highCut,
+                            Bool_t isContinuousHits = kFALSE,
+                            Int_t clusterSize = 0,
+                            Int_t numDiv = -1, Int_t refDiv = -1,Double_t cutMin = -0.5, Double_t cutMax = 0.5);
 
     void SetGenfitTrack(genfit::Track *val) { fGenfitTrack = val; }
     genfit::Track *GetGenfitTrack() { return fGenfitTrack; }
@@ -70,7 +87,7 @@ class STRecoTrackCand : public TObject
 
     Bool_t IsEmbed(){return fIsEmbed; }
 
-  ClassDef(STRecoTrackCand, 2)
+  ClassDef(STRecoTrackCand, 3)
 };
 
 #endif

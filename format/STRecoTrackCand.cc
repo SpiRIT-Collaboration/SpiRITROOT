@@ -41,9 +41,35 @@ void STRecoTrackCand::Copy(TObject *obj) const
   }
 }
 
-Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut, Bool_t isContinuousHits, Int_t clusterSize)
+Double_t STRecoTrackCand::GetdEdxWithCut(Double_t lowCut, Double_t highCut, Bool_t isContinuousHits, Int_t clusterSize, Int_t numDiv, Int_t refDiv, Double_t cutMin, Double_t cutMax)
 {
-  vector<STdEdxPoint> dEdxArray = fdEdxPointArray;
+  vector<STdEdxPoint> dEdxArray;
+
+  if (numDiv > 0 && refDiv > -1) {
+    auto divPoint = new Int_t[numDiv + 1];
+    for (auto iDiv = 0; iDiv < numDiv + 1; iDiv++)
+      divPoint[iDiv] = fdEdxPointArray.size()*(iDiv/Double_t(numDiv));
+
+    auto meanValues = new Double_t[numDiv];
+    for (auto iDiv = 0; iDiv < numDiv; iDiv++) {
+      vector<Double_t> dedxs;
+      for (auto iIndex = divPoint[iDiv]; iIndex < divPoint[iDiv + 1]; iIndex++)
+        dedxs.push_back(fdEdxPointArray[iIndex].fdE/fdEdxPointArray[iIndex].fdx);
+      meanValues[iDiv] = TMath::Mean(dedxs.begin(), dedxs.end());
+    }
+
+    for (auto iDiv = 0; iDiv < numDiv; iDiv++) {
+      auto logRatio = TMath::Log2(meanValues[iDiv]/meanValues[refDiv]);
+      if (cutMin < logRatio && logRatio < cutMax) {
+        for (auto iIndex = divPoint[iDiv]; iIndex < divPoint[iDiv + 1]; iIndex++)
+          dEdxArray.push_back(fdEdxPointArray[iIndex]);
+      }
+    }
+
+    delete [] divPoint;
+    delete [] meanValues;
+  } else
+    dEdxArray = fdEdxPointArray;
 
   sort(dEdxArray.begin(), dEdxArray.end(), [](STdEdxPoint a, STdEdxPoint b) -> Bool_t { return (a.fdE/a.fdx < b.fdE/b.fdx); });
 
