@@ -2,7 +2,9 @@
 #define STGENFITVATASK_HH
 
 #include "TMatrixTSym.h"
+#include "FairRunAna.h"
 #include "STRecoTask.hh"
+#include "STGenfitPIDTask.hh"
 #include "STHelixTrack.hh"
 #include "STGenfitTest2.hh"
 #include "STPIDTest.hh"
@@ -33,6 +35,8 @@ class STGenfitVATask : public STRecoTask
     void SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_t offsetY);
     void SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple);
 
+    void SetUseRave(Bool_t val = kTRUE);
+
   private:
     TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fRecoTrackArray = nullptr;
@@ -40,12 +44,13 @@ class STGenfitVATask : public STRecoTask
     TClonesArray *fCandListArray = nullptr;
     TClonesArray *fVATrackArray = nullptr;
     TClonesArray *fBDCVertexArray = nullptr;
+    TClonesArray *fVAVertexArray = nullptr;
 
     bool fIsListPersistence = false;
     bool fIsSamurai = true;
 
-    TString fGFRaveVertexMethod;
-    genfit::GFRaveVertexFactory *fVertexFactory;
+    Bool_t fUseRave = kFALSE;
+    genfit::GFRaveVertexFactory *fVertexFactory = nullptr;
 
     STGenfitTest2 *fGenfitTest;
     STPIDTest *fPIDTest;
