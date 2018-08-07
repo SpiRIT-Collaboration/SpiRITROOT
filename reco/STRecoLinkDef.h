@@ -98,6 +98,8 @@
 #pragma link C++ class STGenfitVATask+;
 #pragma link C++ class STEmbedCorrelatorTask+;
 
+#pragma link C++ class STHitSeparationTask+;
+
 #pragma link C++ class STSource+;
 
 #pragma link C++ class STHelixTrackFinder+;

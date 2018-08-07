@@ -185,6 +185,8 @@ void STPSA::SetTbOffsets(Double_t *tbOffsets) {
 
 void STPSA::SetYOffsets(TString fileName)
 {
+  cout << "Using y-offset calibration file >>> " << fileName << endl;
+
   Int_t layer, row, n;
   Double_t amp, off, err;
   ifstream calfile(fileName);
@@ -192,6 +194,5 @@ void STPSA::SetYOffsets(TString fileName)
     if (abs(off) > 4 || err > 2 || n < 20)
       off = 0;
     fYOffsets[layer][row] = off;
-    cout << layer << " " << row << " " << off << endl;
   }
 }

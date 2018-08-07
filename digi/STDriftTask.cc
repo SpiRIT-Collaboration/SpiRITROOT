@@ -141,8 +141,8 @@ STDriftTask::Exec(Option_t* option)
   
   fMCTrack = (STMCTrack*) fMCTrackArray->At(0);
   auto p = fMCTrack->GetP()*1000;
-  if(fVerbose)
-    std::cout<<"[STDriftTask] momentum value: " << p << " MeV/c" << std::endl;
+  //if(fVerbose)
+  //  std::cout<<"[STDriftTask] momentum value: " << p << " MeV/c" << std::endl;
   if (fSpline)
     if (p<fPmin || p>fPmax) return;
 
@@ -151,13 +151,13 @@ STDriftTask::Exec(Option_t* option)
     Double_t eLoss;
     if(fSpline){
       eLoss = (fMCPoint->GetEnergyLoss())*1.E9*fInterpolator->Eval(p); // [GeV] to [eV]        
-      std::cout<<"[STDriftTask] energy loss GEANT4: " << (fMCPoint->GetEnergyLoss())*1.E9 << " eV" << std::endl;
-      std::cout<<"[STDriftTask] energy loss Bichsel (with spline interpolation): " << eLoss << " eV" << std::endl;      
+      //std::cout<<"[STDriftTask] energy loss GEANT4: " << (fMCPoint->GetEnergyLoss())*1.E9 << " eV" << std::endl;
+      //std::cout<<"[STDriftTask] energy loss Bichsel (with spline interpolation): " << eLoss << " eV" << std::endl;      
     }
     else{
       eLoss = (fMCPoint->GetEnergyLoss())*1.E9*BichselCorrection(fSpecies,p); // [GeV] to [eV]        
-      std::cout<<"[STDriftTask] energy loss GEANT4: " << (fMCPoint->GetEnergyLoss())*1.E9 << " eV" << std::endl;
-      std::cout<<"[STDriftTask] energy loss Bichsel (with analytical fitting): " << eLoss << " eV" << std::endl;            
+      //std::cout<<"[STDriftTask] energy loss GEANT4: " << (fMCPoint->GetEnergyLoss())*1.E9 << " eV" << std::endl;
+      //std::cout<<"[STDriftTask] energy loss Bichsel (with analytical fitting): " << eLoss << " eV" << std::endl;            
     }
     
     Double_t lDrift = fYAnodeWirePlane-(fMCPoint->GetY())*10; // drift length [mm]

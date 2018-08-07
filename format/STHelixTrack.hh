@@ -53,6 +53,8 @@ class STHelixTrack : public TObject
     Bool_t fIsPositiveChargeParticle;
     TVector3 fVertexPosition; //! < Temporary vertex position for sorting
 
+    std::vector<STHit *> fPadHits; //!
+
     std::vector<STHit *> fMainHits; //!
     std::vector<STHit *> fCandHits; //!
     std::vector<STHitCluster *> fHitClusters; //!
@@ -176,9 +178,15 @@ class STHelixTrack : public TObject
 
 
 
+    Int_t GetNumPadHits() const;
+    STHit *GetPadHit(Int_t idx) const;
+    std::vector<STHit *> *GetPadHitArray();
+    Bool_t AddPadHit(STHit *padHit);
+
     Int_t GetNumHits() const;
     STHit *GetHit(Int_t idx) const;
     std::vector<STHit *> *GetHitArray();
+    STHit *FindHit(Int_t row, Int_t layer);
 
     Int_t GetNumCandHits() const;
     std::vector<STHit *> *GetCandHitArray();

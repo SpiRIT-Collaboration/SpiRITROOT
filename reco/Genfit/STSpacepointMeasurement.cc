@@ -56,9 +56,36 @@ STSpacepointMeasurement::STSpacepointMeasurement(const STHitCluster *detHit, con
   cov(2,0) = 0;
 
   // Forced covariance matrix to be constant. Need to study later.
-  cov(0,0) = 0.04;
-  cov(1,1) = 0.01;
-  cov(2,2) = 0.04;
+  //cov(0,0) = 0.04;
+  //cov(1,1) = 0.01;
+  //cov(2,2) = 0.04;
+
+  Int_t numHits = detHit->GetNumHits();
+  if (numHits==1) {
+    cov(0,0) = 0.0534596;
+    cov(1,1) = 0.0123382;
+    cov(2,2) = 0.0377285;
+  }
+  else if (numHits==2) {
+    cov(0,0) = 0.00404067;
+    cov(1,1) = 0.00797651;
+    cov(2,2) = 0.00610719;
+  }
+  else if (numHits==3) {
+    cov(0,0) = 0.00451682;
+    cov(1,1) = 0.00711838;
+    cov(2,2) = 0.00562478;
+  }
+  else if (numHits==4) {
+    cov(0,0) =  0.0135947;
+    cov(1,1) = 0.00836006;
+    cov(2,2) =  0.0244394;
+  }
+  else {
+    cov(0,0) = 0.0725457;
+    cov(1,1) = 0.0227812;
+    cov(2,2) =  0.375878;
+  }
 
   rawHitCov_ = cov;
   detId_ = hit -> getDetId();

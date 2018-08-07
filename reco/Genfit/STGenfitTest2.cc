@@ -145,8 +145,8 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
 
   Double_t dip = helixTrack -> DipAngle();
   Double_t momSeedMag = helixTrack -> Momentum();
-  TVector3 momSeed(0., 0., momSeedMag);
-  momSeed.SetTheta(TMath::Pi()/2. - dip);
+  TVector3 momSeed(0., 0., momSeedMag/1000.);
+  momSeed.RotateX(-dip);
 
   trackCand.setCovSeed(covSeed);
   trackCand.setPosMomSeed(posSeed, momSeed, helixTrack -> Charge());
@@ -532,6 +532,63 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
   auto dedxArray = recoTrack -> GetdEdxPointArray();
   dedxArray -> clear();
   vector<STdEdxPoint> dedxArrayTemp;
+
+  Double_t step = .8;
+  auto charge_mean = 0.;
+  auto count_mean = 0;
+  for (auto i = 0; i < 120; ++i)
+  {
+    TVector3 pos;
+    try {
+      trackRep -> extrapolateBy(fitState, step);
+      pos = 10*fitState.getPos();
+    } catch (genfit::Exception &e) {
+      continue;
+    }
+
+    auto x = pos.X();
+    auto y = pos.Y();
+    auto z = pos.Z();
+
+    if (x < -432 || x > 432 || z < -20 || z > 1344 || y > -100 || y < -500)
+      break;
+
+    if (x < -416 || x > 416 || z < 200 || z > 1320)
+      continue;
+
+    Int_t row = (x+432)/8;
+    Int_t layer = z/12;
+
+    auto padHit = (STHit *) fPadHitArray -> ConstructedAt(fPadHitArray->GetEntries());
+
+    padHit -> SetRow(row);
+    padHit -> SetLayer(layer);
+    auto good = helixTrack -> AddPadHit(padHit); // must set row and layer before AddPadHit to check existance
+    if (!good)
+      continue;
+
+    padHit -> SetPosition(x,y,z);
+    auto foundHit = helixTrack -> FindHit(row, layer);
+    if (foundHit != nullptr) {
+      padHit -> SetHitID(foundHit->GetHitID());
+      padHit -> SetCharge(foundHit->GetCharge());
+      charge_mean += foundHit->GetCharge();
+      ++count_mean;
+    }
+    else {
+      padHit -> SetHitID(-1);
+      padHit -> SetCharge(-1);
+    }
+  }
+
+  charge_mean = charge_mean/count_mean;
+  auto padHitArray = helixTrack -> GetPadHitArray();
+  auto ndf = padHitArray -> size();
+  for (auto padHit : *padHitArray) {
+    if (padHit -> GetCharge() < 0)
+      padHit -> SetCharge(charge_mean);
+    padHit -> SetNDF(ndf);
+  }
 
   //////////////////////////////////////////////////////////////////////////////////
   // Set dedx points

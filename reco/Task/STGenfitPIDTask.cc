@@ -58,6 +58,10 @@ STGenfitPIDTask::Init()
   fVertexArray = new TClonesArray("STVertex");
   fRootManager -> Register("STVertex", "SpiRIT", fVertexArray, fIsPersistence);
 
+  fPadHitArray = new TClonesArray("STHit");
+  fRootManager -> Register("STPadHit", "SpiRIT", fPadHitArray, false);
+  fGenfitTest -> SetPadHitArray(fPadHitArray);
+
   if (!fBDCName.IsNull()) {
     fFileBDC = new TFile(fBDCName);
     fTreeBDC = (TTree *) fFileBDC -> Get("TBDC");
@@ -89,6 +93,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
   fCandListArray -> Clear("C");
   fRecoTrackArray -> Clear("C");
   fVertexArray -> Delete();
+  fPadHitArray -> Clear("C");
 
   if (fEventHeader -> IsBadEvent())
     return;
@@ -207,9 +212,14 @@ void STGenfitPIDTask::Exec(Option_t *opt)
         continue;
 
       auto pos = cluster -> GetPosition();
-      numClusters++;
-      if (pos.Z() < 1080)
+      if(cluster -> IsLayerCluster())
+        numClusters++;
+      else
         numClusters90++;
+
+      //numClusters++;
+      //if (pos.Z() < 1080)
+      //  numClusters90++;
 
       TVector3 dVec, point;
       Double_t dValue, alpha;
@@ -282,8 +292,12 @@ void STGenfitPIDTask::Exec(Option_t *opt)
   Int_t numVertices = vertices.size();
   LOG(INFO) << Space() << "vector verticies " << vertices.size() << FairLogger::endl;
 
+  TVector3 vpos;
+
   for (UInt_t iVert = 0; iVert < numVertices; iVert++) {
     genfit::GFRaveVertex* vertex = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
+    if (iVert == 0)
+      vpos = vertex->getPos();
 
     Int_t numTracks = vertex -> getNTracks();
     for (Int_t iTrack = 0; iTrack < numTracks; iTrack++) {
@@ -324,6 +338,81 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     delete vertex;
   }
 
+  if (numVertices > 0)
+  {
+    auto vx = 10*vpos.X();
+    auto vy = 10*vpos.Y();
+    auto vz = 10*vpos.Z();
+
+    if ((vz>-20&&vz<0 && vx>-20&&vx<20 && vy<-206.06&&vy>-246.06))
+    {
+      auto numTracks = fRecoTrackArray -> GetEntries();
+      for (auto iTrack = 0; iTrack < numTracks; iTrack++)
+      {
+        auto recoTrack = (STRecoTrack *) fRecoTrackArray -> At(iTrack);
+        if (recoTrack -> GetVertexID() < 0)
+          continue;
+
+        auto dedxArray = recoTrack -> GetdEdxPointArray();
+        if (dedxArray -> size() < 10)
+          continue;
+
+        auto helix = (STHelixTrack *) fHelixTrackArray -> At(recoTrack -> GetHelixID());
+
+        if (fYOffsetCalibrationFile != nullptr)
+        {
+          auto hitArray = helix -> GetHitArray();
+          for (auto hit : *hitArray)
+          {
+            auto p = hit -> GetPosition();
+            TVector3 q, m;
+            helix -> ExtrapolateByMap(p, q, m);
+
+            fHitDY = q.Y() - p.Y();
+            fHitDW = m.X();
+            fHitRow = hit -> GetRow();
+            fHitLayer = hit -> GetLayer();
+            fHitTree -> Fill();
+          }
+        }
+
+        if (fClusterCovFile != nullptr)
+        {
+          auto mom = recoTrack -> GetMomentum();
+          auto lambda = TMath::ATan2(mom.Y(),TMath::Sqrt(mom.X()*mom.X()+mom.Z()*mom.Z()));
+          auto alpha = TMath::ATan2(TMath::Abs(mom.X()),TMath::Abs(mom.Z()));
+
+          fClusterTLTL = TMath::Tan(lambda)*TMath::Tan(lambda);
+          fClusterTATA = TMath::Tan(alpha)*TMath::Tan(alpha);
+
+          auto clusterArray = helix -> GetClusterArray();
+          for (auto cluster : *clusterArray)
+          {
+            auto x = cluster -> GetX();
+            auto z = cluster -> GetZ();
+
+            if (x > -32. && x < -16.) continue; // beam spot cut
+            if (x < -400. || x > 400.) continue; // side cut
+            if (z < 336. && x > -200. && x < 200.) continue; //close to target cut
+            if (z > 960) continue; // 4th section cut including low gain region
+
+            auto poca = cluster -> GetPOCA();
+            auto pos  = cluster -> GetPosition();
+            auto dist = pos - poca;
+
+            fClusterL = -4.05 - pos.Y();
+            fClusterDX = dist.X();
+            fClusterDY = dist.Y();
+            fClusterDZ = dist.Z();
+            fClusterIsLayer = cluster -> IsLayerCluster();
+            fClusterSize = cluster -> GetNumHits();
+            fClusterTree -> Fill();
+          }
+        }
+      }
+    }
+  }
+
   LOG(INFO) << Space() << "STVertex " << fVertexArray -> GetEntriesFast() << FairLogger::endl;
 }
 
@@ -334,4 +423,40 @@ void STGenfitPIDTask::SetTargetPlane(Double_t x, Double_t y, Double_t z)
   fTargetX = x;
   fTargetY = y;
   fTargetZ = z;
+}
+
+void STGenfitPIDTask::MakeYOffsetCalibrationFile(TString fileName)
+{
+  fYOffsetCalibrationFile = new TFile(fileName,"recreate");
+  fHitTree = new TTree("hit","");
+  fHitTree -> Branch("dy", &fHitDY);
+  fHitTree -> Branch("dw", &fHitDW);
+  fHitTree -> Branch("row", &fHitRow);
+  fHitTree -> Branch("layer", &fHitLayer);
+}
+
+void STGenfitPIDTask::MakeClusterCovFile(TString fileName)
+{
+  fClusterCovFile = new TFile(fileName,"recreate");
+  fClusterTree = new TTree("cluster","");
+  fClusterTree -> Branch("dx", &fClusterDX);
+  fClusterTree -> Branch("dy", &fClusterDY);
+  fClusterTree -> Branch("dz", &fClusterDZ);
+  fClusterTree -> Branch("n", &fClusterSize);
+  fClusterTree -> Branch("isLayer", &fClusterIsLayer);
+  fClusterTree -> Branch("tltl", &fClusterTLTL);
+  fClusterTree -> Branch("tata", &fClusterTATA);
+  fClusterTree -> Branch("l", &fClusterL);
+}
+
+void STGenfitPIDTask::WriteYOffsetCalibrationFile()
+{
+  fYOffsetCalibrationFile -> cd();
+  fHitTree -> Write();
+}
+
+void STGenfitPIDTask::WriteClusterCovFile()
+{
+  fClusterCovFile -> cd();
+  fClusterTree -> Write();
 }

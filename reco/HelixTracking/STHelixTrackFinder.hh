@@ -169,6 +169,7 @@ class STHelixTrackFinder
      */
     bool HitClustering(STHelixTrack *track);
     bool HitClusteringMar4(STHelixTrack *helix);
+    void Remove45degCluster(STHelixTrack *helix);
 
     /**
      * Create new cluster with given hit.

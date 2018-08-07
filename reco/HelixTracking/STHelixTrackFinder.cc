@@ -227,6 +227,7 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
     track -> FinalizeHits();
 //    HitClustering(track);
     HitClusteringMar4(track);
+    //Remove45degCluster(track);
 
     track -> FinalizeClusters();
   }
@@ -954,6 +955,58 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
   }
 
   return true;
+}
+
+void STHelixTrackFinder::Remove45degCluster(STHelixTrack *helix)
+{
+  auto clusterArray = helix -> GetClusterArray();
+  Int_t nClusters = clusterArray -> size();
+
+  if (nClusters < 5)
+    return;
+
+  {
+    STHitCluster *firstCluster = clusterArray -> at(0);
+    auto firstClusterIsLayerCluster = firstCluster -> IsLayerCluster();
+    Int_t countCluster_withSameIsLayer_ofFirstCluster = 1;
+
+    std::vector<STHitCluster *> clusterArrayToRemove;
+    clusterArrayToRemove.push_back(firstCluster);
+    for (auto iCluster = 1; iCluster < nClusters; ++iCluster) {
+      auto cluster = clusterArray -> at(iCluster);
+
+      if (cluster -> IsLayerCluster() == firstClusterIsLayerCluster) {
+        ++countCluster_withSameIsLayer_ofFirstCluster;
+        clusterArrayToRemove.push_back(cluster);
+      } else
+        break;
+    }
+
+    if (countCluster_withSameIsLayer_ofFirstCluster <= 3)
+      for (auto cluster : clusterArrayToRemove)
+        cluster -> SetIsStable(kFALSE);
+  }
+  {
+    STHitCluster *lastCluster = clusterArray -> back();
+    auto lastClusterIsLayerCluster = lastCluster -> IsLayerCluster();
+    Int_t countCluster_withSameIsLayer_ofLastCluster = 1;
+
+    std::vector<STHitCluster *> clusterArrayToRemove;
+    clusterArrayToRemove.push_back(lastCluster);
+    for (auto iCluster = nClusters-2; iCluster >= 0; --iCluster) {
+      auto cluster = clusterArray -> at(iCluster);
+
+      if (cluster -> IsLayerCluster() == lastClusterIsLayerCluster) {
+        ++countCluster_withSameIsLayer_ofLastCluster;
+        clusterArrayToRemove.push_back(cluster);
+      } else
+        break;
+    }
+
+    if (countCluster_withSameIsLayer_ofLastCluster <= 3)
+      for (auto cluster : clusterArrayToRemove)
+        cluster -> SetIsStable(kFALSE);
+  }
 }
 
 Int_t

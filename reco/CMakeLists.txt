@@ -62,6 +62,7 @@ Task/STGenfitSinglePIDTask.cc
 Task/STGenfitPIDTask.cc
 Task/STGenfitVATask.cc
 Task/STEmbedCorrelatorTask.cc
+Task/STHitSeparationTask.cc
 
 PID/STPIDTest.cc
 

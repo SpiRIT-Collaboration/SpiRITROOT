@@ -67,11 +67,14 @@ class STGenfitTest2
 
     Int_t DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Double_t &effCurvature1, Double_t &effCurvature2, Double_t &effCurvature3, bool ignoreFirst = false);
 
+    void SetPadHitArray(TClonesArray *padHitArray) { fPadHitArray = padHitArray; }
+
   private:
     Int_t fTPCDetID;
 
     TClonesArray *fHitClusterArray;
     TClonesArray *fGenfitTrackArray;
+    TClonesArray *fPadHitArray;
 
     genfit::AbsKalmanFitter *fKalmanFitter;
     genfit::MeasurementProducer<STHitCluster, genfit::STSpacepointMeasurement> *fMeasurementProducer;
