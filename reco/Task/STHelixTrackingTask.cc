@@ -85,6 +85,11 @@ void STHelixTrackingTask::SetEllipsoidCut(TVector3 center, TVector3 radii, Doubl
   } 
 }
 
+void STHelixTrackingTask::SetClusteringAngleAndMargin(Double_t angle, Double_t margin) {
+  fClusteringAngle = angle;
+  fClusteringMargin = margin;
+}
+
 STHelixTrackFinder *STHelixTrackingTask::GetTrackFinder() { return fTrackFinder; }
 
 InitStatus STHelixTrackingTask::Init()
@@ -107,6 +112,7 @@ InitStatus STHelixTrackingTask::Init()
   fTrackFinder = new STHelixTrackFinder();
   fTrackFinder -> SetSaturationOption(fSaturationOption);
   fTrackFinder -> SetClusterCutLRTB(fCCLeft, fCCRight, fCCTop, fCCBottom);
+  fTrackFinder -> SetClusteringAngleAndMargin(fClusteringAngle, fClusteringMargin);
   if (fCRadius != -1 && fZLength != -1)
     fTrackFinder -> SetCylinderCut(fCutCenter, fCRadius, fZLength, fCutMargin);
   else if (fSRadius != -1)

@@ -27,6 +27,8 @@ class STHelixTrackingTask : public STRecoTask
     void SetCylinderCut(TVector3 center, Double_t radius, Double_t zLength, Double_t margin);
     void SetSphereCut(TVector3 center, Double_t radius, Double_t margin);
     void SetEllipsoidCut(TVector3 center, TVector3 radii, Double_t margin);
+
+    void SetClusteringAngleAndMargin(Double_t angle, Double_t margin);
   
     STHelixTrackFinder *GetTrackFinder();
 
@@ -54,6 +56,9 @@ class STHelixTrackingTask : public STRecoTask
     Double_t fSRadius = -1;
     TVector3 fERadii = TVector3(-1, -1, -1);
     Double_t fCutMargin = -1;
+
+    Double_t fClusteringAngle = 45.;
+    Double_t fClusteringMargin = 0.;
 
   ClassDef(STHelixTrackingTask, 2)
 };
