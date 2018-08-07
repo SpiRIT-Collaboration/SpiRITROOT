@@ -31,6 +31,8 @@ class STGenfitPIDTask : public STRecoTask
 
     void SetTargetPlane(Double_t x, Double_t y, Double_t z);
 
+    genfit::GFRaveVertexFactory *GetVertexFactoryInstance();
+
   private:
     TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fCandListArray = nullptr;

@@ -72,7 +72,6 @@ STGenfitPIDTask::Init()
   }
 
   fVertexFactory = new genfit::GFRaveVertexFactory(/* verbosity */ 2, /* useVacuumPropagator */ false);
-  //fVertexFactory -> setMethod("kalman-smoothing:1");
   fGFRaveVertexMethod = "avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5";
   fVertexFactory -> setMethod(fGFRaveVertexMethod.Data());
 
@@ -343,4 +342,9 @@ void STGenfitPIDTask::SetTargetPlane(Double_t x, Double_t y, Double_t z)
   fTargetX = x;
   fTargetY = y;
   fTargetZ = z;
+}
+
+genfit::GFRaveVertexFactory *STGenfitPIDTask::GetVertexFactoryInstance()
+{
+  return fVertexFactory;
 }
