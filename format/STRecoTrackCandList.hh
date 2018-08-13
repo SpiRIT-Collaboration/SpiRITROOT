@@ -7,9 +7,10 @@
 #include <vector>
 using namespace std;
 
-class STRecoTrackCandList : public TObjArray
+class STRecoTrackCandList : public TObject
 {
   private:
+    vector<STRecoTrackCand> fCandArray;
     vector<Int_t> fHitIDArray;
     STPID::PID fBestPID;
 
@@ -28,7 +29,7 @@ class STRecoTrackCandList : public TObjArray
     void SetBestPID(STPID::PID val) { fBestPID = val; }
     STPID::PID GetBestPID() { return fBestPID; }
 
-  ClassDef(STRecoTrackCandList, 1)
+  ClassDef(STRecoTrackCandList, 2)
 };
 
 #endif
