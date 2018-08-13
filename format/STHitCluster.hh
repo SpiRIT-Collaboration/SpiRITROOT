@@ -69,6 +69,12 @@ class STHitCluster : public STHit
 
     void ApplyCovLowLimit();
 
+    void SetChi(Double_t chi) { fChi = chi; } 
+    Double_t GetChi() { return fChi; }
+
+    void SetLambda(Double_t dip) { fLambda = dip; }
+    Double_t GetLambda() { return fLambda; }
+
   protected:
     TMatrixD fCovMatrix;                  ///< Cluster covariance matrix
     vector<Int_t>  fHitIDArray;           ///< Vector array of hit IDs
@@ -83,6 +89,11 @@ class STHitCluster : public STHit
     Double_t fFractionSat;              //Fraction of hits in cluster with next to dead pad
     Bool_t fIsEmbed;
     Bool_t fIsMissingCharge;            //Missing charge comes from hits neighboring dead pads
+
+    Double_t fChi; // polar angle in pad plane from z-axis
+    Double_t fLambda; // dip angle measured from pad plane
+
+
     /**
      * Calculate weighted mean for cluster position. (Weight = charge) <br>
      * Weighted mean: \f$ \mu_{n+1} = \mu_n + \displaystyle\frac{a_{n+1} - \mu_n}{W_n+w_{n+1}},\quad(n\geq0). \f$
@@ -98,7 +109,7 @@ class STHitCluster : public STHit
 
     Bool_t fIsContinuousHits;
 
-  ClassDef(STHitCluster, 9);
+  ClassDef(STHitCluster, 10);
 };
 
 #endif

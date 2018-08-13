@@ -241,6 +241,11 @@ void STHelixTrack::FinalizeClusters()
       if(cluster-> IsEmbed()==true)
 	      fIsEmbed = true;
     }
+
+    TVector3 dir = Direction(AlphaAtPosition(cluster->GetPosition()));
+    auto chi = TMath::Tan2(abs(dir.X()),abs(dir.Z()));
+    cluster -> SetChi(chi);
+    cluster -> SetLambda(DipAngle());
   }
 
   auto maxx = 0.;
@@ -547,23 +552,24 @@ TVector3 STHelixTrack::PositionByAlpha(Double_t alpha) const {
 
 TVector3 STHelixTrack::Direction(Double_t alpha) const
 {
-  Double_t alphaTemp = alpha;
-  Double_t ylength = YLengthInPeriod()/4.;
+  Double_t alphaPointer = alpha;
 
   Double_t alphaMid = (fAlphaHead + fAlphaTail) * 0.5;
-  if (alpha > alphaMid) 
-    alphaTemp += TMath::Pi()/2.;
-  else {
-    alphaTemp -= TMath::Pi()/2.;
-    ylength *= -1;
-  }
 
-  TVector3 center(fXHelixCenter, 0, fZHelixCenter);
-  TVector3 direction = PositionByAlpha(alphaTemp) - center;
+  if (fAlphaHead > fAlphaTail)
+    alphaPointer =+ TMath::Pi()/2.;
+  else
+    alphaPointer =- TMath::Pi()/2.;
 
+  TVector3 posCenter(fXHelixCenter, 0, fZHelixCenter);
+  TVector3 direction = PositionByAlpha(alphaPointer) - posCenter;
+  auto directionY = direction.Y();
   direction.SetY(0);
-  direction.SetMag(0.5*TMath::Pi()*fHelixRadius);
-  direction.SetY(ylength);
+  direction.SetMag(2*TMath::Pi()*fHelixRadius);
+
+  if (directionY > 0) direction.SetY(+abs(YLengthInPeriod()));
+  else                direction.SetY(-abs(YLengthInPeriod()));
+
   direction = direction.Unit();
 
   return direction;
