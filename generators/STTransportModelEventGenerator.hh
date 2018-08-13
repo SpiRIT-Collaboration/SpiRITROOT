@@ -18,7 +18,7 @@ class STTransportModelEventGenerator : public FairGenerator
   public:
     STTransportModelEventGenerator();
     STTransportModelEventGenerator(TString fileName);
-    STTransportModelEventGenerator(TSTring filePath, TString fileName);
+    STTransportModelEventGenerator(TString filePath, TString fileName);
     /* copy constructor */
     STTransportModelEventGenerator(const STTransportModelEventGenerator&);
     STTransportModelEventGenerator& operator=(const STTransportModelEventGenerator&);
@@ -46,6 +46,7 @@ class STTransportModelEventGenerator : public FairGenerator
   private:
     TransportModel    fGen;                   // model type
     TString           fInputPath;             // input path
+    TString           fInputName;             // input file name
     TFile*            fInputFile;             // input root file
     TTree*            fInputTree;             // input TTree
     Double_t          fB;                     // impact parameter

@@ -215,7 +215,7 @@ STElectronicsTask::Exec(Option_t* option)
 
 void STElectronicsTask::SetPersistence(Bool_t value)       {    fIsPersistence = value; }
 void STElectronicsTask::SetADCConstant(Double_t val)       {       fADCConstant  = val; }
-void STElectronicsTask::SetPUlseData(TString val)          {     fPulseFileName  = val; }
+void STElectronicsTask::SetPulseData(TString val)          {     fPulseFileName  = val; }
 void STElectronicsTask::SetDynamicRange(Double_t val)      {    fADCDynamicRange = val; }
 void STElectronicsTask::SetPedestalMean(Double_t val)      {       fPedestalMean = val; }
 void STElectronicsTask::SetPedestalSigma(Double_t val)     {      fPedestalSigma = val; }

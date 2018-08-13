@@ -10,7 +10,7 @@
 
 STTransportModelEventGenerator::STTransportModelEventGenerator()
 :FairGenerator(),
-  fInputPath(), fInputFile(NULL), fInputTree(NULL),
+  fInputPath(), fInputName(), fInputFile(NULL), fInputTree(NULL),
   fB(-1.), 
   fBeamVector(NULL), fTargetVector(NULL), 
   fFillBeamVector(NULL), fFillTargetVector(NULL), 
@@ -23,7 +23,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator()
 
 STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
 :FairGenerator("STTransportModelEvent",fileName),
-  fInputPath(), fInputFile(NULL), fInputTree(NULL),
+  fInputPath(), fInputName(fileName), fInputFile(NULL), fInputTree(NULL),
   fB(-1.), fBeamVector(NULL), fTargetVector(NULL), 
   fFillBeamVector(NULL), fFillTargetVector(NULL), 
   fPartArray(NULL),
@@ -41,7 +41,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
 
 STTransportModelEventGenerator::STTransportModelEventGenerator(TString filePath, TString fileName)
 :FairGenerator("STTransportModelEvent",fileName),
-  fInputPath(filePath), fInputFile(NULL), fInputTree(NULL),
+  fInputPath(filePath), fInputName(fileName), fInputFile(NULL), fInputTree(NULL),
   fB(-1.), fBeamVector(NULL), fTargetVector(NULL), 
   fFillBeamVector(NULL), fFillTargetVector(NULL), 
   fPartArray(NULL),
@@ -62,19 +62,19 @@ STTransportModelEventGenerator::~STTransportModelEventGenerator()
 
 void STTransportModelEventGenerator::RegisterFileIO()
 {
-  if(!fInputFile.IsOpen())
+  if(!fInputFile->IsOpen())
     return;
   
   TString treeName, partBranchName;
-  if(fileName.BeginsWith("phits"))       { fGen = TransportModel::PHITS;  treeName = "tree";      partBranchName = "fparts"; }
-  else if(fileName.BeginsWith("amd"))    { fGen = TransportModel::AMD;    treeName = "amdTree";   partBranchName = "AMDParticle"; }
-  else if(fileName.BeginsWith("urqmd"))  { fGen = TransportModel::UrQMD;  treeName = "urqmdTree"; partBranchName = "partArray"; }
+  if(fInputName.BeginsWith("phits"))       { fGen = TransportModel::PHITS;  treeName = "tree";      partBranchName = "fparts"; }
+  else if(fInputName.BeginsWith("amd"))    { fGen = TransportModel::AMD;    treeName = "amdTree";   partBranchName = "AMDParticle"; }
+  else if(fInputName.BeginsWith("urqmd"))  { fGen = TransportModel::UrQMD;  treeName = "urqmdTree"; partBranchName = "partArray"; }
   else
     LOG(FATAL)<<"STTransportModelEventGenerator cannot accept event files without specifying generator names."<<FairLogger::endl;
   
   fInputTree = (TTree*)fInputFile->Get(treeName);
 
-  LOG(INFO)<<"-I Opening file: "<<fileName<<FairLogger::endl;
+  LOG(INFO)<<"-I Opening file: "<<fInputName<<FairLogger::endl;
 
   fInputTree -> SetBranchAddress("b",&fB);
   Bool_t isColSysFound = kFALSE;
