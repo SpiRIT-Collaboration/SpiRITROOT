@@ -28,6 +28,7 @@ STElectronicsTask::STElectronicsTask()
 :FairTask("STElectronicsTask"),
   fIsPersistence(kFALSE),
   fEventID(0),
+  fPulseFileName(""),
   fUseSaturationTemplate(kTRUE),
   fSaturatedPulseFileName("saturatedPulse.dat"),
   fADCConstant(0.2),
@@ -38,7 +39,9 @@ STElectronicsTask::STElectronicsTask()
   fPedestalSigma(4),
   fPedestalSubtracted(kTRUE),
   fSignalPolarity(1),
-  fKillAfterSaturation(kTRUE)
+  fKillAfterSaturation(kTRUE),
+  fStartTb(0),
+  fEndTb(-1)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STElectronicsTask");
 }
@@ -73,10 +76,15 @@ STElectronicsTask::Init()
   ioman->Register("STMCTrack", "ST", fMCTrackArray, fIsPersistence);
  
   fNTBs = fPar -> GetNumTbs();
-
+  if(fEndTb == -1)
+    fEndTb = fNTBs;
 
   fNBinPulser = 0;
-  STPulse *stpulse = new STPulse();
+  STPulse *stpulse;
+  if(fPulseFileName.IsNull())
+    stpulse = new STPulse();
+  else
+    stpulse = new STPulse(fPulseFileName);
 
   Double_t coulombToEV = 6.241e18; 
   Double_t pulserConstant = fADCConstant*(fADCMaxUseable-fPedestalMean)/(fADCDynamicRange*coulombToEV);
@@ -190,7 +198,7 @@ STElectronicsTask::Exec(Option_t* option)
     Int_t layer = padI -> GetLayer();
     STPad *padO = new STPad(row, layer);
     padO -> SetPedestalSubtracted();
-    for(Int_t iTB=0; iTB<fNTBs; iTB++){
+    for(Int_t iTB=fStartTb; iTB<fEndTb; iTB++){
       adcO[iTB] += gRandom -> Gaus(0,fPedestalSigma);
       padO -> SetADC(iTB,adcO[iTB]);
     }
@@ -207,6 +215,7 @@ STElectronicsTask::Exec(Option_t* option)
 
 void STElectronicsTask::SetPersistence(Bool_t value)       {    fIsPersistence = value; }
 void STElectronicsTask::SetADCConstant(Double_t val)       {       fADCConstant  = val; }
+void STElectronicsTask::SetPUlseData(TString val)          {     fPulseFileName  = val; }
 void STElectronicsTask::SetDynamicRange(Double_t val)      {    fADCDynamicRange = val; }
 void STElectronicsTask::SetPedestalMean(Double_t val)      {       fPedestalMean = val; }
 void STElectronicsTask::SetPedestalSigma(Double_t val)     {      fPedestalSigma = val; }
@@ -216,5 +225,6 @@ void STElectronicsTask::SetSignalPolarity(Bool_t val)      {     fSignalPolarity
 void STElectronicsTask::SetUseSaturationTemplate(Bool_t val) {  fUseSaturationTemplate = val; }
 void STElectronicsTask::SetSaturatedPulseData(TString val)   { fSaturatedPulseFileName = val; }
 void STElectronicsTask::SetIsKillAfterSaturation(Bool_t val) {    fKillAfterSaturation = val; }
+void STElectronicsTask::SetTbRange(Int_t s, Int_t e)         {    fStartTb = s; fEndTb = e;   }
 
 ClassImp(STElectronicsTask)

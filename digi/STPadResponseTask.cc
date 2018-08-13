@@ -71,6 +71,8 @@ STPadResponseTask::Init()
   fNRows   = fXPadPlane/fPadSizeRow; // 108
   fNLayers = fZPadPlane/fPadSizeLayer; // 112
 
+  fTbOffset = fPar->GetAnodeWirePlaneY()/(fPar->GetDriftVelocity()/100.);
+
   InitDummy();
   InitPRF();
 
@@ -100,6 +102,7 @@ STPadResponseTask::Exec(Option_t* option)
     Double_t tEl = fElectron->GetHitTime() 
                   +fElectron->GetDriftTime()
                   +fElectron->GetDiffusedTime();
+                  +fTbOffset; 
     Int_t iWire  = fElectron->GetIWire();
     Int_t gain   = fElectron->GetGain();
 

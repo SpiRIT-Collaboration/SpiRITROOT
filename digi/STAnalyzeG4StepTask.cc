@@ -21,6 +21,7 @@ using namespace std;
 STAnalyzeG4StepTask::STAnalyzeG4StepTask()
    :	FairTask("STAnalyzeG4StepTask"),
    fIsPersistence(kFALSE),
+   fIsTAPersistence(kFALSE),
    fEventID(0),
    fIsSetGainMatchingData(kFALSE)
 {
@@ -51,7 +52,7 @@ InitStatus STAnalyzeG4StepTask::Init()
    fRawEventArray = new TClonesArray("STRawEvent");		// pad response by drifted electrons
    fTAMCPointArray = new TClonesArray("STMCPoint");		// mc step in trigger array
    ioman->Register("PPEvent","ST",fRawEventArray,fIsPersistence);
-   ioman->Register("TAMCPoint","ST",fTAMCPointArray,fIsPersistence);
+   ioman->Register("TAMCPoint","ST",fTAMCPointArray,fIsTAPersistence);
 
    fRawEvent = new ((*fRawEventArray)[0]) STRawEvent();
 
@@ -97,6 +98,8 @@ InitStatus STAnalyzeG4StepTask::Init()
    fNRows   = fXPadPlane/fPadSizeRow; // 108
    fNLayers = fZPadPlane/fPadSizeLayer; // 112
 
+   fTbOffset = fYAnodeWirePlane/fVelDrift;
+
    InitDummy();
    InitPRF();
 
@@ -140,7 +143,7 @@ void STAnalyzeG4StepTask::Exec(Option_t* option)
       Double_t eLoss = mcpoint->GetEnergyLoss()*1.E9;
       if(eLoss<=0.) continue;
 
-      Double_t lDrift = -10.*mcpoint->GetY();
+      Double_t lDrift = fYAnodeWirePlane -10.*mcpoint->GetY();
       if(lDrift<0.||lDrift>1000.) continue;
       Double_t tDrift = lDrift/fVelDrift;
       Double_t sigmaL = fCoefL*TMath::Sqrt(lDrift);
@@ -164,7 +167,7 @@ void STAnalyzeG4StepTask::Exec(Option_t* option)
 	 Int_t zWire = iWire*fZSpacingWire+fZOffsetWire;
 
 	 Double_t xEl = mcpoint->GetX()*10. + dx;
-	 Double_t tEl = mcpoint->GetTime() + tDrift + dt;
+	 Double_t tEl = mcpoint->GetTime() + tDrift + dt + fTbOffset;
 
 	 Int_t row   = (xEl+fXPadPlane/2)/fPadSizeRow;
 	 Int_t layer = iWire/3;
@@ -319,6 +322,7 @@ STAnalyzeG4StepTask::InitPRF()
 
 
 void STAnalyzeG4StepTask::SetPersistence(Bool_t value)  { fIsPersistence = value; }
+void STAnalyzeG4StepTask::SetTAPersistence(Bool_t value){ fIsTAPersistence = value; }
 
 
 ClassImp(STAnalyzeG4StepTask);

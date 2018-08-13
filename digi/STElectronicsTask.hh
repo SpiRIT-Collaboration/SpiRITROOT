@@ -37,6 +37,7 @@ class STElectronicsTask : public FairTask
     void SetPersistence(Bool_t value = kTRUE);
 
     void SetADCConstant(Double_t val);
+    void SetPulseData(TString val);
     /**
      * Set dynamic range of ADC. Unit in [Coulomb].
      * Default value is 120 fC.
@@ -50,7 +51,7 @@ class STElectronicsTask : public FairTask
     void SetUseSaturationTemplate(Bool_t);
     void SetSaturatedPulseData(TString);	
     void SetIsKillAfterSaturation(Bool_t);
-
+    void SetTbRange(Int_t s, Int_t e);
 
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
@@ -66,9 +67,10 @@ class STElectronicsTask : public FairTask
 
     STDigiPar* fPar; //!< Base parameter container.
 
-    Int_t fNTBs;       //!< Number of time buckets.
-    Int_t fNBinPulser; //!< Number of bin for pulser data.
-    Int_t fNBinSaturatedPulse; //!< Number of bin for saturated pulser data.
+    Int_t   fNTBs;       //!< Number of time buckets.
+    TString fPulseFileName;
+    Int_t   fNBinPulser; //!< Number of bin for pulser data.
+    Int_t   fNBinSaturatedPulse; //!< Number of bin for saturated pulser data.
 
     Bool_t	fUseSaturationTemplate;
     TString	fSaturatedPulseFileName;
@@ -84,6 +86,9 @@ class STElectronicsTask : public FairTask
     Bool_t   fPedestalSubtracted; //!< Pedestal subtracted flag.
     Bool_t   fSignalPolarity;     //!< Polartity of signal (1: positive, 0: negative)
     Bool_t   fKillAfterSaturation;//!< Kill after saturation ?
+
+    Int_t    fStartTb;
+    Int_t    fEndTb;
 
     STElectronicsTask(const STElectronicsTask&);
     STElectronicsTask operator=(const STElectronicsTask&);

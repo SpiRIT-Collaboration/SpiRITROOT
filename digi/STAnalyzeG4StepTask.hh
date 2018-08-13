@@ -21,12 +21,14 @@ class STAnalyzeG4StepTask : public FairTask
       virtual void SetParContainers();
 
       void SetPersistence(Bool_t value = kTRUE);
+      void SetTAPersistence(Bool_t value = kTRUE);
       void AssumeGausPRF(Bool_t val=kTRUE) { fAssumeGausPRF = val; }
       void SetGainMatchingData(Bool_t f) { fIsSetGainMatchingData = kTRUE; }
 
    private:
       Bool_t 	fIsPersistence;
-      Int_t		fEventID;
+      Bool_t 	fIsTAPersistence;
+      Int_t	fEventID;
 
       TClonesArray* fMCPointArray;		// input TClonesArray
 
@@ -44,8 +46,8 @@ class STAnalyzeG4StepTask : public FairTask
       // pad response function
       void InitPRF();
       Double_t PRFunction(Double_t *x, Double_t *par);
-      TF1*		fPRRow;
-      TF1*		fPRLayer;
+      TF1*	fPRRow;
+      TF1*	fPRLayer;
       TGraph*	fPRIRow;
       Bool_t	fAssumeGausPRF;
       Double_t fPRIPar0;
@@ -78,14 +80,16 @@ class STAnalyzeG4StepTask : public FairTask
       Double_t fGain;     //!< Gain.
 
       // parameters for electron's pad response.
-      Int_t		fTBTime;
-      Int_t 	fNTbs;
+      Int_t    fTBTime;
+      Int_t    fNTbs;
       Double_t fXPadPlane;
       Double_t fZPadPlane;
       Double_t fPadSizeLayer;
       Double_t fPadSizeRow;
-      Int_t		fNRows;
-      Int_t		fNLayers;
+      Int_t    fNRows;
+      Int_t    fNLayers;
+
+      Double_t fTbOffset;
 
       Bool_t   fIsSetGainMatchingData;
       Double_t fGainMatchingDataScale[112]={};

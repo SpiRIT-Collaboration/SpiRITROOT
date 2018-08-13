@@ -161,8 +161,7 @@ STDriftTask::Exec(Option_t* option)
     }
     
     Double_t lDrift = fYAnodeWirePlane-(fMCPoint->GetY())*10; // drift length [mm]
-    Double_t lTotal = -(fMCPoint->GetY())*10; // drift length [mm]
-    Double_t tDrift = lTotal/fVelDrift; // drift time [ns]
+    Double_t tDrift = lDrift/fVelDrift; // drift time [ns]
     Double_t sigmaL = fCoefL*sqrt(lDrift); // sigma in longitudinal direction
     Double_t sigmaT = fCoefT*sqrt(lDrift); // sigma in transversal direction
 

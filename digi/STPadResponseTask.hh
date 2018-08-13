@@ -97,6 +97,8 @@ class STPadResponseTask : public FairTask
     Int_t    fNRows;        //!< Number of row.
     Int_t    fNLayers;      //!< Number of layer.
 
+    Double_t fTbOffset;     //!< offset for adjusting time bucket for exp.
+
     /**
      * fFillRatio[type][ipad]\n
      * Fill ratio of pads depending on fill type. Three pads contain 99.3% of
