@@ -243,7 +243,7 @@ void STHelixTrack::FinalizeClusters()
     }
 
     TVector3 dir = Direction(AlphaAtPosition(cluster->GetPosition()));
-    auto chi = TMath::Tan2(abs(dir.X()),abs(dir.Z()));
+    auto chi = TMath::ATan2(abs(dir.X()),abs(dir.Z()));
     cluster -> SetChi(chi);
     cluster -> SetLambda(DipAngle());
   }
