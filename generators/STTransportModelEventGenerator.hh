@@ -18,6 +18,7 @@ class STTransportModelEventGenerator : public FairGenerator
   public:
     STTransportModelEventGenerator();
     STTransportModelEventGenerator(TString fileName);
+    STTransportModelEventGenerator(TSTring filePath, TString fileName);
     /* copy constructor */
     STTransportModelEventGenerator(const STTransportModelEventGenerator&);
     STTransportModelEventGenerator& operator=(const STTransportModelEventGenerator&);
@@ -44,6 +45,7 @@ class STTransportModelEventGenerator : public FairGenerator
 
   private:
     TransportModel    fGen;                   // model type
+    TString           fInputPath;             // input path
     TFile*            fInputFile;             // input root file
     TTree*            fInputTree;             // input TTree
     Double_t          fB;                     // impact parameter
@@ -62,6 +64,7 @@ class STTransportModelEventGenerator : public FairGenerator
     Bool_t            fIsRandomRP;            // flag for random reaction plane input
 
     Int_t kfToPDG(Long64_t kfCode);  // for PHITS data.
+    void  RegisterFileIO();
 
     ClassDef(STTransportModelEventGenerator,1);
 

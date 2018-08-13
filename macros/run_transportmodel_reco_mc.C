@@ -4,7 +4,7 @@ void run_transportmodel_reco_mc
   TString fPathToOutput = "",
   TString fPathToInput = "",
   Double_t fPSAThreshold = 30,
-  TString fParameterFile = "ST.parameters.Commissioning_201604.par"
+  TString fParameterFile = "ST.parameters.PhysicsRuns_201707.par"
 )
 {
 
@@ -48,15 +48,17 @@ void run_transportmodel_reco_mc
   auto psa = new STPSAETask();
   psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
-  psa -> SetLayerCut(-1, 90);
-  psa -> SetPulserData("pulser_117ns.dat");
+  psa -> SetLayerCut(-1, 112);
+  psa -> SetPulserData("pulser_117ns_50tb.dat");
+  psa -> SetPSAPeakFindingOption(1);
 
   auto helix = new STHelixTrackingTask();
   helix -> SetPersistence(false);
   helix -> SetClusterPersistence(false);
   helix -> SetClusteringOption(2);
   helix -> SetSaturationOption(1);
-
+  helix -> SetClusterCutLRTB(420,-420,-64,-522);
+  
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
   genfitPID -> SetBDCFile("");
@@ -73,7 +75,7 @@ void run_transportmodel_reco_mc
   run -> AddTask(psa);
   run -> AddTask(helix);
   run -> AddTask(genfitPID);
-  run -> AddTask(genfitVA);
+  //run -> AddTask(genfitVA);
 
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");

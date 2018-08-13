@@ -10,7 +10,7 @@
 
 STTransportModelEventGenerator::STTransportModelEventGenerator()
 :FairGenerator(),
-  fInputFile(NULL), fInputTree(NULL),
+  fInputPath(), fInputFile(NULL), fInputTree(NULL),
   fB(-1.), 
   fBeamVector(NULL), fTargetVector(NULL), 
   fFillBeamVector(NULL), fFillTargetVector(NULL), 
@@ -23,7 +23,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator()
 
 STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
 :FairGenerator("STTransportModelEvent",fileName),
-  fInputFile(NULL), fInputTree(NULL),
+  fInputPath(), fInputFile(NULL), fInputTree(NULL),
   fB(-1.), fBeamVector(NULL), fTargetVector(NULL), 
   fFillBeamVector(NULL), fFillTargetVector(NULL), 
   fPartArray(NULL),
@@ -31,36 +31,69 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
   fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
   fBeamAngle(TVector2(-0.06,0.)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
+
+  TString inputDir = gSystem->Getenv("VMCWORKDIR");
+  fInputFile = new TFile(inputDir+"/input/"+fileName);
+
+  RegisterFileIO();
+
+}
+
+STTransportModelEventGenerator::STTransportModelEventGenerator(TString filePath, TString fileName)
+:FairGenerator("STTransportModelEvent",fileName),
+  fInputPath(filePath), fInputFile(NULL), fInputTree(NULL),
+  fB(-1.), fBeamVector(NULL), fTargetVector(NULL), 
+  fFillBeamVector(NULL), fFillTargetVector(NULL), 
+  fPartArray(NULL),
+  fCurrentEvent(0), fNEvents(0),
+  fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
+  fBeamAngle(TVector2(-0.06,0.)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
+{
+
+  fInputFile = new TFile(fInputPath+fileName);
+  
+  RegisterFileIO();
+
+}
+
+STTransportModelEventGenerator::~STTransportModelEventGenerator()
+{
+}
+
+void STTransportModelEventGenerator::RegisterFileIO()
+{
+  if(!fInputFile.IsOpen())
+    return;
+  
   TString treeName, partBranchName;
   if(fileName.BeginsWith("phits"))       { fGen = TransportModel::PHITS;  treeName = "tree";      partBranchName = "fparts"; }
   else if(fileName.BeginsWith("amd"))    { fGen = TransportModel::AMD;    treeName = "amdTree";   partBranchName = "AMDParticle"; }
   else if(fileName.BeginsWith("urqmd"))  { fGen = TransportModel::UrQMD;  treeName = "urqmdTree"; partBranchName = "partArray"; }
   else
     LOG(FATAL)<<"STTransportModelEventGenerator cannot accept event files without specifying generator names."<<FairLogger::endl;
-
-  TString inputDir = gSystem->Getenv("VMCWORKDIR");
-  fInputFile = new TFile(inputDir+"/input/"+fileName);
+  
   fInputTree = (TTree*)fInputFile->Get(treeName);
 
   LOG(INFO)<<"-I Opening file: "<<fileName<<FairLogger::endl;
 
   fInputTree -> SetBranchAddress("b",&fB);
-  fInputTree -> SetBranchAddress("beamVector",&fBeamVector);
-  fInputTree -> SetBranchAddress("targetVector",&fTargetVector);
+  Bool_t isColSysFound = kFALSE;
+  if(fInputTree->FindBranch("beamVector")&&fInputTree->FindBranch("targetVector")){
+    isColSysFound = kTRUE;
+    fInputTree -> SetBranchAddress("beamVector",&fBeamVector);
+    fInputTree -> SetBranchAddress("targetVector",&fTargetVector);
+  }
   fInputTree -> SetBranchAddress(partBranchName,&fPartArray);
 
   fNEvents = fInputTree->GetEntries();
 
-
   fFillBeamVector   = new TClonesArray("TLorentzVector");
   fFillTargetVector = new TClonesArray("TLorentzVector");
-  FairRootManager::Instance()->Register("BeamVector", "Generator", fFillBeamVector, kTRUE);
-  FairRootManager::Instance()->Register("TargetVector", "Generator", fFillTargetVector, kTRUE);
+  FairRootManager::Instance()->Register("BeamVector",   "Generator", fFillBeamVector,   isColSysFound);
+  FairRootManager::Instance()->Register("TargetVector", "Generator", fFillTargetVector, isColSysFound);
+
 }
 
-STTransportModelEventGenerator::~STTransportModelEventGenerator()
-{
-}
 
 Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 {
@@ -111,8 +144,6 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     event->SetB(fB);
     event->SetNPrim(nPart);
   }
-
-
 
 
   fFillBeamVector->Clear();

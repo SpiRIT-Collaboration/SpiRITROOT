@@ -36,6 +36,8 @@ void run_mc
 (
  TString name  = "urqmd_short",
  Int_t   nEvent = -1,
+ TString inputDir = "",
+ TString outputDir = "",
  Bool_t  useFieldMapFile = kTRUE
 )
 {
@@ -47,18 +49,20 @@ void run_mc
   
   
   // -----------------------------------------------------------------
-  // Set enveiroment
+  // Set environment
   TString workDir   = gSystem -> Getenv("VMCWORKDIR");
-  TString dataDir   = workDir + "/macros/data/";
   TString geomDir   = workDir + "/geometry";
   TString g4ConfDir = workDir + "/gconfig";
+  TString dataDir   = workDir + "/macros/data/";
 
+  if(outputDir.IsNull())
+    outputDir = dataDir;
 
   // -----------------------------------------------------------------
   // Set file names
-  TString outputFile = dataDir + name + ".mc.root"; 
-  TString outParFile = dataDir + name + ".params.root";
-  TString loggerFile = dataDir + "log_" + name + ".mc.txt";
+  TString outputFile = outputDir + name + ".mc.root"; 
+  TString outParFile = outputDir + name + ".params.root";
+  TString loggerFile = outputDir + "log_" + name + ".mc.txt";
 
 
   // -----------------------------------------------------------------
@@ -119,12 +123,16 @@ void run_mc
 //  fEvent -> SetPrimaryVertex(0, -21.33, -.89);
 //  fEvent -> SetAngleStep(2212, numevent, 0.5, 0., 85., 180., 180.); // (pid, #evt, p, theta_begin, theta_end, phi_begin, phi_end[deg])
 
-   /*
-   TString inputFile = name + ".root";
-   auto fEvent = new STTransportmodelEventGenerator(inputFile);
-   fEvent->RegisterHeavyIon();
-   fEvent->SetPrimaryVertex(TVector3(0.,-21.33,-.89));
-   */
+  /* 
+  TString inputFile = name + ".root";
+  STTransportModelEventGenerator* fEvent;
+  if(inputDir.IsNull())
+    fEvent = new STTransportModelEventGenerator(inputDir, inputFile);
+  else
+    fEvent = new STTransportModelEventGenerator(inputFile);
+  fEvent->RegisterHeavyIon();
+  fEvent->SetPrimaryVertex(TVector3(0.,-21.33,-.89));
+*/
 
   auto fEvent = new STSingleTrackGenerator();
   //fEvent->SetCocktailEvent(300.);

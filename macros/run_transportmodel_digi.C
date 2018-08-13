@@ -12,7 +12,12 @@
  *   @ name : Name of simulation. Should be same with MC simulation.
  */
 
-void run_transportmodel_digi(TString name = "urqmd_short")
+void run_transportmodel_digi
+(
+ TString name = "urqmd_short",
+ TString inputDir = "",
+ TString outputDir = ""
+)
 {
   // -----------------------------------------------------------------
   // FairRun
@@ -24,7 +29,8 @@ void run_transportmodel_digi(TString name = "urqmd_short")
   // Set digitization tasks
 	
   STAnalyzeG4StepTask* fAnaG4StepTask = new STAnalyzeG4StepTask();
-  fAnaG4StepTask -> SetPersistence(true);
+  fAnaG4StepTask -> SetPersistence(false);
+  fAnaG4StepTask -> SetTAPersistence(true);
   fAnaG4StepTask -> AssumeGausPRF();
   fAnaG4StepTask -> SetGainMatchingData(false);
   fRun -> AddTask(fAnaG4StepTask);
@@ -32,7 +38,9 @@ void run_transportmodel_digi(TString name = "urqmd_short")
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
   fElectronicsTask -> SetPersistence(true);
   fElectronicsTask -> SetADCConstant(1);
+  fElectronicsTask -> SetPulseData("pulser_117ns_50tb.dat");
   fElectronicsTask -> SetUseSaturationTemplate(true);
+//  fElectronicsTask -> SetTbRange(30,257);
   fRun -> AddTask(fElectronicsTask);
 
 
@@ -48,13 +56,17 @@ void run_transportmodel_digi(TString name = "urqmd_short")
   TString workDir   = gSystem -> Getenv("VMCWORKDIR");
   TString dataDir   = workDir + "/macros/data/";
 
+  if(inputDir.IsNull())
+    inputDir = dataDir;
+  if(outputDir.IsNull())
+    outputDir = dataDir;
 
   // -----------------------------------------------------------------
   // Set file names
-  TString inputFile   = dataDir + name + ".mc.root"; 
-  TString outputFile  = dataDir + name + ".digi.root"; 
-  TString mcParFile   = dataDir + name + ".params.root";
-  TString loggerFile  = dataDir + "log_" + name + ".digi.txt";
+  TString inputFile   = inputDir  + name + ".mc.root"; 
+  TString mcParFile   = inputDir  + name + ".params.root";
+  TString outputFile  = outputDir + name + ".digi.root"; 
+  TString loggerFile  = outputDir + "log_" + name + ".digi.txt";
   TString digiParFile = workDir + "/parameters/ST.parameters.par";
 
 
