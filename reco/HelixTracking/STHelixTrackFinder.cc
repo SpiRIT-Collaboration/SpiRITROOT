@@ -228,8 +228,8 @@ STHelixTrackFinder::BuildTracks(TClonesArray *hitArray, TClonesArray *trackArray
       De_Saturate(track);
 
     track -> FinalizeHits();
-//    HitClustering(track);
-    HitClusteringMar4(track);
+    //    HitClustering(track);
+       HitClusteringMar4(track);
 
     track -> FinalizeClusters();
   }
@@ -999,6 +999,37 @@ STHelixTrackFinder::HitClusteringMar4(STHelixTrack *helix)
     fFitter -> Fit(helix);
     helix -> SetIsLine();
   }
+
+  //Store hitIDs of hits in helix in a mapped array for quick searching
+  //We will pass to neighbor checking funciton to make sure neighbors are not hits in helix track
+  auto hit_IDary = helix -> GetHitIDArray();
+  std::vector<bool> helix_hits(*max_element(hit_IDary->begin(), hit_IDary->end())+1,false);
+      for( auto hitID : *hit_IDary)
+	  helix_hits.at(hitID)=true;
+
+  //Here we count how many hits in the cluster are neighbors to dead pads by saturation
+  auto helix_cl_ary = helix -> GetClusterArray();
+   for (auto iCluster = 0; iCluster < helix_cl_ary -> size(); ++iCluster) 
+    {
+      auto cluster = (STHitCluster *) helix_cl_ary -> at(iCluster);
+      auto hit_ary = cluster -> GetHitPtrs();
+      bool by_row = cluster -> IsRowCluster();
+      int sat_hits = 0;
+      for( auto cl_hit : *hit_ary)
+	{
+	  //	  if( cl_hit -> IsSaturated() )//the saturated hits cannot shadow themselves 
+	  //	    continue;
+	  if( fHitMap -> IsNeighborSaturated(cl_hit,by_row,helix_hits) ) //has a saturated neighbor 
+	    sat_hits++;
+	}
+      cluster -> SetNumSatNeighbors(sat_hits);
+      if(sat_hits != 0)
+	{
+	  cluster -> SetIsMissingCharge(true); //missing charge due to saturated neighbor killed pad 
+	  cluster -> SetFractSatNeighbors(sat_hits/hit_ary->size());
+	}
+
+    }
 
   return true;
 }
