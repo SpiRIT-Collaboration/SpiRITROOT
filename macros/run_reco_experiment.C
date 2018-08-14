@@ -60,7 +60,7 @@ void run_reco_experiment
   run -> GetRuntimeDb() -> setSecondInput(parReader);
 
   STDecoderTask *decoder = new STDecoderTask();
-  decoder -> SetUseSeparatedData(false);
+  decoder -> SetUseSeparatedData(true);
   decoder -> SetPersistence(false);
   if (fGCData.IsNull())
     decoder -> SetUseGainCalibration(false);
