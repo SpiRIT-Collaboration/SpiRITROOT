@@ -3,16 +3,16 @@ void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
 void run_reco_experiment
 (
  Int_t fRunNo = 2894,
- Int_t fNumEventsInRun = 100,
+ Int_t fNumEventsInRun = 10,
  Int_t fSplitNo = 0,
- Int_t fNumEventsInSplit = 100,
+ Int_t fNumEventsInSplit = 10,
  TString fGCData = "",
  TString fGGData = "",
  std::vector<Int_t> fSkipEventArray = {},
  Double_t fPSAThreshold = 30,
  TString fParameterFile = "ST.parameters.PhysicsRuns_201707.par",
  TString fPathToData = "",
- Bool_t fUseMeta = kFALSE,
+ Bool_t fUseMeta = kTRUE,
  TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement"
 )
 {
@@ -60,7 +60,7 @@ void run_reco_experiment
   run -> GetRuntimeDb() -> setSecondInput(parReader);
 
   STDecoderTask *decoder = new STDecoderTask();
-  decoder -> SetUseSeparatedData(true);
+  decoder -> SetUseSeparatedData(false);
   decoder -> SetPersistence(false);
   if (fGCData.IsNull())
     decoder -> SetUseGainCalibration(false);
@@ -72,6 +72,7 @@ void run_reco_experiment
   decoder -> SetTbRange(30, 257);
   decoder -> SetEmbedding(false);
   decoder -> SetEmbedFile("");
+//  decoder -> SetGainMatchingData("../parameters/RelativeGain.list");
 //  decoder -> SetEmbedFile("./data/one_test.digi.root");
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
   //decoder -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
@@ -104,6 +105,7 @@ void run_reco_experiment
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
   psa -> SetEmbedding(false);
+  psa -> SetGainMatchingData("../parameters/RelativeGain.list");
   // Pulse having long tail
   psa -> SetPulserData("pulser_117ns_50tb.dat");
   // Rensheng's peak finding method (1).
@@ -114,7 +116,6 @@ void run_reco_experiment
   auto helix = new STHelixTrackingTask();
   helix -> SetPersistence(false);
   helix -> SetClusterPersistence(false);
-  helix -> SetSaturationOption(1); 
   // Left, right, top and bottom sides cut
   helix -> SetClusterCutLRTB(420, -420, -64, -522);
   // High density region cut
@@ -124,6 +125,8 @@ void run_reco_experiment
 //  helix -> SetEllipsoidCut(TVector3(0, -206.34, -11.9084), TVector3(120, 55, 240), 5);
   // Changing clustering direction angle and margin. Default: 45 deg with 0 deg margin
   //helix -> SetClusteringAngleAndMargin(35., 3.);
+  
+  auto correct = new STCorrectionTask(); //Correct for saturation
   
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
@@ -148,6 +151,7 @@ void run_reco_experiment
   run -> AddTask(preview);
   run -> AddTask(psa);
   run -> AddTask(helix);
+  run -> AddTask(correct);
   run -> AddTask(genfitPID);
 //  run -> AddTask(genfitVA);
 //  run -> AddTask(embedCorr);

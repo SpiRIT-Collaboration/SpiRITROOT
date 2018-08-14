@@ -22,12 +22,9 @@ InitStatus STCorrectionTask::Init()
 {
   if(STRecoTask::Init()==kERROR)
     return kERROR;
-  //  cout<<"[STCorrectionTask] in task "<<endl;
-  //  fCorrection = STCorrection();
-  fCorrection = new STCorrection();
-  
-  fClusterArray = (TClonesArray*) fRootManager -> GetObject("STHitCluster");
-  if (fClusterArray == nullptr) {
+
+  fHitClusterArray = (TClonesArray*) fRootManager -> GetObject("STHitCluster");
+  if (fHitClusterArray == nullptr) {
     LOG(ERROR) << "Cannot find Cluster array!" << FairLogger::endl;
     return kERROR;
   }
@@ -38,16 +35,19 @@ InitStatus STCorrectionTask::Init()
     return kERROR;
   }
 
+  fCorrection = new STCorrection();
+
   return kSUCCESS;
 }
 
 void STCorrectionTask::Exec(Option_t *opt)
 {
-
-  //  fCorrection -> Test(fClusterArray,fHitArray);  
   if(fDesaturate)
-    fCorrection -> Desaturate(fClusterArray);  
-  //  LOG(INFO) << Space() << "STEmbedTrack "<< num_corr << FairLogger::endl;
+    {
+      fCorrection -> Desaturate(fHitClusterArray);  
+      LOG(INFO) << Space() << "STCorrection  Clusters Desaturated" << FairLogger::endl;
+    }
+
 }
 
 void STCorrectionTask::SetDesaturation(Bool_t opt )

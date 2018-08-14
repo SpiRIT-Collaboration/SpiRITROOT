@@ -1,3 +1,4 @@
+
 #ifndef STCORRECTION_HH
 #define STCORRECTION_HH
 
@@ -18,7 +19,7 @@ public:
   void SetDesaturation(Bool_t opt);  
 private:
   STCorrection *fCorrection     = nullptr;
-  TClonesArray *fClusterArray   = nullptr;
+  TClonesArray *fHitClusterArray   = nullptr;
   TClonesArray *fHitArray       = nullptr;
   Bool_t fDesaturate            = true;  //defualt is to desaturate
 
