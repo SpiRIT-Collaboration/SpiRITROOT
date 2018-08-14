@@ -1156,50 +1156,6 @@ void STHelixTrackFinder::SetClusterCutLRTB(Double_t left, Double_t right, Double
   fCCBottom = bottom;
 }
 
-std::vector<double> STHelixTrackFinder::minimize(const int npar)
-{
-  // Initialize minuit, set initial values etc. of parameters.
-  vector<double> f_par;
-  TMinuit minuit(npar);
-  minuit.SetPrintLevel(-1);
-  minuit.SetFCN(myFitFunction);
-  
-  double par[npar];               // the start values
-  double stepSize[npar];          // step sizes
-  double minVal[npar];            // minimum bound on parameter
-  double maxVal[npar];            // maximum bound on parameter
-  string parName[npar];
-  
-  for( int i =0;i < npar; ++i)
-    {
-      par[i] = 4000.;            // a guess at the true value.
-      stepSize[i] = 1.;       // take e.g. 0.1 of start value
-      minVal[i] = 3500;   // if min and max values = 0, parameter is unbounded.  Only set bounds if you really think it's right!
-      maxVal[i] = 100000;
-      parName[i] = "miss charge";
-    }
-  
-  for (int i=0; i<npar; i++)
-    {
-      minuit.DefineParameter(i, parName[i].c_str(),
-			     par[i], stepSize[i], minVal[i], maxVal[i]);
-    }
-  
-  // Do the minimization!
-  
-  minuit.Migrad();       // Minuit's best minimization algorithm
-  double outpar[npar], err[npar];
-  for (int i=0; i<npar; i++){
-    minuit.GetParameter(i,outpar[i],err[i]);
-    f_par.push_back(outpar[i]);
-  }
-  //       cout << endl << endl << endl;
-  //       cout << "*********************************" << endl;
-  //       cout << "   "<<parName[0]<<": " << outpar[0] << " +/- " << err[0] << endl;
-  
-  return f_par;
-};
-
 void STHelixTrackFinder::SetCylinderCut(TVector3 center, Double_t radius, Double_t zLength, Double_t margin) {
   fCutCenter = center;
   fCRadius = radius;
