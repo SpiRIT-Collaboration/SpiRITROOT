@@ -65,10 +65,13 @@ class STDigiPar : public FairParGenericSet
 
     /// returns the time duration of a time bucket in given sampling time in ns.
        Int_t GetTBTime();
+    Bool_t IsEmbed();
+    void SetIsEmbed(Bool_t val);
 
   private :
     FairLogger *fLogger;
     Bool_t fInitialized;
+    Bool_t fIsEmbed;
 
     Double_t fPadPlaneX;
     Double_t fPadPlaneZ;

@@ -119,9 +119,16 @@ STDecoderTask::Init()
   }
 
   //Check if embedding is turned on
-  if (!fEmbedFile.EqualTo("") && fIsEmbedding)
+  if (!fEmbedFile.EqualTo(""))
     {
-      LOG(INFO) <<"Embed is true and settingup branch adress " << FairLogger::endl;
+      std::ifstream infile(fEmbedFile.Data());
+      if(!infile.good())
+	{
+	  std::cout << "== [STDecoderTask] Embed file does not Exist!" << std::endl;
+	  return kERROR;
+	}
+
+      std::cout << "== [STDecoderTask] Setting up embed mode" << std::endl;
       fChain = new TChain("cbmsim");
       fChain -> AddFile(fEmbedFile);
       fChain -> SetBranchAddress("STRawEvent", &fEventArray);
@@ -130,13 +137,17 @@ STDecoderTask::Init()
       ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
       ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
       ioMan -> Register("STMCTrack", "SPiRIT", fEmbedTrackArray, fIsPersistence);
+      fPar -> SetIsEmbed(kTRUE);
+      fIsEmbedding = kTRUE;
+    }
+  else
+    {
+      fPar -> SetIsEmbed(kFALSE);
+      fIsEmbedding = kFALSE;
+      std::cout << "== [STDecoderTask] Embedding mode DISABLED" << std::endl; 
     }
 
-
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
-  //  ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
-  //  ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
-  //  ioMan -> Register("STMCTrack", "SPiRIT", fEmbedTrackArray, fIsPersistence);
   
   fDecoder = new STCore();
   fDecoder -> SetUseSeparatedData(fIsSeparatedData);
@@ -249,24 +260,18 @@ STDecoderTask::Exec(Option_t *opt)
   
   if (fRawEvent == NULL)
     {
-      fRawEvent = fDecoder -> GetRawEvent(fEventID++);
+      fRawEvent = fDecoder -> GetRawEvent(fEventID);
       *fRawEventData = *fRawEvent;
     }
+
   CheckSaturation(fRawEvent);
     
-  if (fEmbedFile.EqualTo("") && fIsEmbedding)
+  if (fIsEmbedding)
     {
-      std::cout << cRED << "== [STDecoderTask] MC file for embedding not set!" << std::endl;
-      exit(0);
-    }
-  else if (!fEmbedFile.EqualTo("") && fIsEmbedding)
-    {
-      if (fEventID<2)
-	std::cout << "== [STDecoderTask] Setting up embed mode" << std::endl;
-      
-      if((fEventID-1) < fChain->GetEntries())
+      if( (fEventID % fChain->GetEntries()) < fChain->GetEntries())
 	{
-	  fChain -> GetEntry(fEventID-1);
+	  int fMCEventID = fEventID % fChain -> GetEntries();
+	  fChain -> GetEntry(fMCEventID);
 	  fRawEventMC = (STRawEvent *) fEventArray -> At(0);
 	}
 
@@ -299,10 +304,6 @@ STDecoderTask::Exec(Option_t *opt)
 	  }
 	}
     }
-  else {
-    if (fEventID<2)
-      std::cout << "== [STDecoderTask] Embedding mode DISABLED" << std::endl; 
-  }
   
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
   new ((*fRawDataEventArray)[0]) STRawEvent(fRawEventData);
@@ -311,13 +312,11 @@ STDecoderTask::Exec(Option_t *opt)
 
   fRawEvent = NULL;
   fRawEventMC = NULL;
+  fEventID++;
+
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStop("DecoderTask");
 #endif
- 
-  //    LOG(INFO) <<"STDEcoder task finished " << FairLogger::endl;
-
-
 }
 
 void

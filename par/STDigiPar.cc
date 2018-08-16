@@ -49,7 +49,9 @@ TString  STDigiPar::GetGainCalibrationDataFileName() { return fGainCalibrationDa
 Double_t STDigiPar::GetGCConstant()                  { return fGCConstant; }
 Double_t STDigiPar::GetGCLinear()                    { return fGCLinear; }
 Double_t STDigiPar::GetGCQuadratic()                 { return fGCQuadratic; }
+Bool_t   STDigiPar::IsEmbed()                        { return fIsEmbed; }
 
+void     STDigiPar::SetIsEmbed(Bool_t val)               { fIsEmbed = val; }
 
 Bool_t 
 STDigiPar::getParams(FairParamList *paramList)

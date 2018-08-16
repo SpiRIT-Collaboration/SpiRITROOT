@@ -26,6 +26,8 @@ class STPSAETask : public STRecoTask
 
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
+    virtual void SetParContainers();
+  /// Running the task. This will be called when Run() method invoked from FairRun.
 
     void SetThreshold(Double_t threshold);
     void SetLayerCut(Int_t lowCut, Int_t highCut);
@@ -67,7 +69,8 @@ class STPSAETask : public STRecoTask
     Double_t fGainMatchingScale = 1;
     TString fGainMatchingData = "";
 
-    Bool_t fIsEmbedding = true;
+    Bool_t fIsEmbedding = false;
+    STDigiPar *fPar = NULL;
 
   ClassDef(STPSAETask, 1)
 };

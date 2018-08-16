@@ -54,6 +54,7 @@ void STPSAETask::SetPSAPeakFindingOption(Int_t opt) { fPSAPeakFindingOption = op
 
 InitStatus STPSAETask::Init()
 {
+  fIsEmbedding = fPar -> IsEmbed();  
 
   if (STRecoTask::Init() == kERROR)
     return kERROR;
@@ -63,18 +64,21 @@ InitStatus STPSAETask::Init()
     LOG(ERROR) << "Cannot find STRawEvent array!" << FairLogger::endl;
     return kERROR;
   }
-  fRawEmbedEventArray = (TClonesArray *) fRootManager -> GetObject("STRawEmbedEvent");
-  if (fRawEmbedEventArray == nullptr) {
-    LOG(INFO) << "Cannot find STRawEmbedEvent array! Embedding disabled" << FairLogger::endl;
-    fIsEmbedding = false;
-  }
-  fRawDataEventArray = (TClonesArray *) fRootManager -> GetObject("STRawDataEvent");
-  if (fRawDataEventArray == nullptr) {
-    LOG(INFO) << "Cannot find STRawDataEvent array! Embedding disabled" << FairLogger::endl;
-    fIsEmbedding = false;
-  }
 
-
+  if(fIsEmbedding)
+    {
+      std::cout<<"== [STPSATask] Embedding mode Enabled"<<std::endl;
+      fRawEmbedEventArray = (TClonesArray *) fRootManager -> GetObject("STRawEmbedEvent");
+      fRawDataEventArray = (TClonesArray *) fRootManager -> GetObject("STRawDataEvent");
+      if (fRawDataEventArray == nullptr && fRawEmbedEventArray == nullptr) 
+	{
+	  LOG(INFO) << "Cannot find STRawDataEvent array or STRawEmbedEvent! when should be enabled. Embedding now set to disabled" << FairLogger::endl;
+	  fIsEmbedding = false;
+	}
+    }
+  else
+    std::cout<<"== [STPSATask] Embedding mode DISABLED"<<std::endl;
+  
   fHitArray = new TClonesArray("STHit", 1000);
   fRootManager -> Register("STHit", "SpiRIT", fHitArray, fIsPersistence);
   fEmbedHitArray = new TClonesArray("STHit", 1000);
@@ -110,6 +114,20 @@ InitStatus STPSAETask::Init()
   return kSUCCESS;
 }
 
+
+void
+STPSAETask::SetParContainers()
+{
+  FairRun *run = FairRun::Instance();
+  if (!run) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find analysis run!");
+
+  FairRuntimeDb *db = run -> GetRuntimeDb();
+  if (!db) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find runtime database!");
+
+  fPar = (STDigiPar *) db -> getContainer("STDigiPar");
+  if (!fPar) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find STDigiPar!");
+}
+
 void STPSAETask::Exec(Option_t *opt)
 {
   fHitArray -> Delete();
@@ -133,7 +151,7 @@ void STPSAETask::Exec(Option_t *opt)
   }
 
   
-  if(fIsEmbedding == true)
+  if(fIsEmbedding == kTRUE && fRawDataEventArray->GetEntries() != 0 && fRawEmbedEventArray->GetEntries() != 0 )
     {
       STRawEvent *rawDataEvent = (STRawEvent *) fRawDataEventArray -> At(0);
       STRawEvent *rawEmbedEvent = (STRawEvent *) fRawEmbedEventArray -> At(0);
