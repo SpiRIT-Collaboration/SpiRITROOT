@@ -1,6 +1,7 @@
 #ifndef STCONFIGRUN_HH
 #define STCONFIGRUN_HH
 
+#ifndef STREADONLY
 #include "TObject.h"
 #include "TString.h"
 
@@ -21,5 +22,6 @@ class STConfigRun : public TObject {
 
     ClassDef(STConfigRun, 1)
 };
+#endif
 
 #endif

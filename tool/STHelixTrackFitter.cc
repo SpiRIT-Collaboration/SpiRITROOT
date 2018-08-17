@@ -1,6 +1,8 @@
 #include "STHelixTrackFitter.hh"
 
+#ifndef STREADONLY
 #include "STDebugLogger.hh"
+#endif
 #include <iostream>
 using namespace std;
 

@@ -2,6 +2,7 @@
 #include "STMCPoint.hh"
 #include "TDatabasePDG.h"
 
+#ifndef STREADONLY
 STMCScintillatorHit::STMCScintillatorHit()
 :TObject(),
   fDetectorID(-1),
@@ -63,3 +64,4 @@ void STMCScintillatorHit::AddStep(Double_t edep, STMCPoint *point)
 }
 
 ClassImp(STMCScintillatorHit);
+#endif

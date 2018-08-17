@@ -69,7 +69,9 @@ void STRiemannHit::InitVariables(Double_t r, Double_t phi, Double_t riemannScale
   fAngleOnHelix = 0;
   fRiemannScale = riemannScale;
 
+#ifndef STREADONLY
   fLogger = FairLogger::GetLogger();
+#endif
 }
 
 // Simple getter and setter methods -----------------------------------------------------------
@@ -87,7 +89,9 @@ Double_t
 STRiemannHit::GetZ() const
 {
   if(fHit == NULL){
+#ifndef STREADONLY
     fLogger -> Warning(MESSAGE_ORIGIN, "No hit available!");
+#endif
 
     return 0;
   }

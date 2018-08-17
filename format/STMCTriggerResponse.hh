@@ -1,6 +1,7 @@
 #ifndef STMCTRIGGERRESPONSE
 #define STMCTRIGGERRESPONSE
 
+#ifndef STREADONLY
 #include "TNamed.h"
 #include "TClonesArray.h"
 
@@ -36,5 +37,6 @@ class STMCTriggerResponse : public TNamed
 
     ClassDef(STMCTriggerResponse,1);
 };
+#endif
 
 #endif

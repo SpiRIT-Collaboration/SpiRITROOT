@@ -18,7 +18,9 @@
 
 #include "STHit.hh"
 #include "STHitCluster.hh"
+#ifndef STREADONLY
 #include "GFRaveVertexFactory.h"
+#endif
 //#include "STTrack.hh"
 
 
@@ -37,8 +39,10 @@ class STEvent : public TNamed {
   void SetHitArray(vector<STHit> *hitArray);
   void AddCluster(STHitCluster *cluster);
   void SetClusterArray(vector<STHitCluster> *clusterArray);
+#ifndef STREADONLY
   void AddVertex(genfit::GFRaveVertex* vertex);
   void SetVertexArray(vector<genfit::GFRaveVertex> * vertexArray);
+#endif
   //    void AddTrack(STTrack *track);
   //    void SetTrackArray(vector<STTrack> &trackArray);
   
@@ -62,9 +66,11 @@ class STEvent : public TNamed {
   vector<STHitCluster> *GetClusterArray();
   
   Int_t GetNumVertex();
+#ifndef STREADONLY
   genfit::GFRaveVertex *GetVertex(Int_t vertexNo);
   void RemoveVertex(Int_t vertexNo);
   vector<genfit::GFRaveVertex> *GetVertexArray();
+#endif
 
   //    Int_t GetNumTracks();
   //    STTrack *GetTrack(Int_t trackNo);
@@ -88,7 +94,9 @@ private:
   
   vector<STHit> fHitArray;
   vector<STHitCluster> fClusterArray;
+#ifndef STREADONLY
   vector<genfit::GFRaveVertex> fVertexArray;
+#endif
   //    vector<STTrack> fTrackArray;
 
   ClassDef(STEvent, 2);

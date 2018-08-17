@@ -1,7 +1,9 @@
 #ifndef STRUNHEADER
 #define STRUNHEADER
 
+#ifndef STREADONLY
 #include "FairFileHeader.h"
+#endif
 
 #include "TList.h"
 #include "TNamed.h"

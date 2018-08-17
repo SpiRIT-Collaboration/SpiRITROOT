@@ -1,6 +1,7 @@
 #ifndef STMCSCINTILLATORHIT
 #define STMCSCINTILLATORHIT
 
+#ifndef STREADONLY
 #include "TObject.h"
 #include "STMCPoint.hh"
 #include <vector>
@@ -37,5 +38,6 @@ class STMCScintillatorHit : public TObject
     ClassDef(STMCScintillatorHit,1);
 
 };
+#endif
 
 #endif

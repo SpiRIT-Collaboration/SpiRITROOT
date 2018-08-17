@@ -18,7 +18,9 @@
 #include "STRiemannHit.hh"
 
 // FairRoot classes
+#ifndef STREADONLY
 #include "FairLogger.h"
+#endif
 
 // ROOT classes
 #include "TObject.h"
@@ -119,7 +121,9 @@ class STRiemannTrack : public TObject
     Double_t CalcRMS(TVector3 n1, Double_t c1) const;
 
     // Private Data Members ------------
+#ifndef STREADONLY
     FairLogger *fLogger;        //! < FairLogger singleton
+#endif
 
     TVector3 fN;          ///< normal vector of plane (pointing towards origin!)
     Double_t fC;          ///< distance of plane to origin

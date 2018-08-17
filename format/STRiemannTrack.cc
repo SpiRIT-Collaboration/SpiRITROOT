@@ -114,7 +114,9 @@ Bool_t
 STRiemannTrack::CheckScale(STRiemannHit *hit) const
 {
   if (!(hit -> GetRiemannScale() == this -> GetRiemannScale())) {
+#ifndef STREADONLY
     fLogger -> Warning(MESSAGE_ORIGIN, Form("Riemann scale not matching! Hit: %f, Track: %f", hit -> GetRiemannScale(), this -> GetRiemannScale()));
+#endif
 
     return kFALSE;
   }

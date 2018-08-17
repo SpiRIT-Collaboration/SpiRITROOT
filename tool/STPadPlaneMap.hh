@@ -64,7 +64,7 @@ class STPadPlaneMap
     STPadHitContainer *GetPad(Int_t row, Int_t layer);
 
   private:
-    STPadHitContainer *fPadMap[108][112];
+    STPadHitContainer *fPadMap[108][112]; //!
 
     bool fEndOfMap = false;
     Int_t fNextRow = 107;

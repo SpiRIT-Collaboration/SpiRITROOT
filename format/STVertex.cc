@@ -27,7 +27,9 @@
  */
 
 #include "STVertex.hh"
+#ifndef STREADONLY 
 #include <Exception.h>
+#endif
 
 #include <iostream>
 
@@ -36,6 +38,7 @@ STVertex::STVertex()
 {
 }
 
+#ifndef STREADONLY 
 STVertex::STVertex(STVertex *vertex)
 {
   fPos = vertex -> GetPos();
@@ -67,11 +70,14 @@ STVertex::STVertex(const genfit::GFRaveVertex &vertex):
     fSmoothedTracks.push_back(new genfit::GFRaveTrackParameters(*(vertex.getParameters(i))));
   }
 }
+#endif
 
 STVertex::~STVertex() {
+#ifndef STREADONLY
   UInt_t nPar = fSmoothedTracks.size();
   for (UInt_t i = 0; i < nPar; i++)
     delete fSmoothedTracks[i];
+#endif
 }
 
 void STVertex::Print(const Option_t *) const {
@@ -80,7 +86,9 @@ void STVertex::Print(const Option_t *) const {
   std::cout << "Covariance: "; GetCov().Print();
   std::cout << "Ndf: " << GetNDF() << ", Chi2: " << GetChi2() << ", ID: " << GetID() << "\n";
   std::cout << "Number of tracks: " << GetNTracks() << "\n";
+#ifndef STREADONLY
   for (UInt_t i = 0; i < GetNTracks(); i++) {
     std::cout << " track " << i << ":\n"; GetParameters(i) -> Print();
   }
+#endif
 }

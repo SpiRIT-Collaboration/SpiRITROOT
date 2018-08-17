@@ -1,3 +1,4 @@
+#ifndef STREADONLY
 #include "STCompiled.h"
 #include "STConfigRun.hh"
 #include "TSystem.h"
@@ -86,3 +87,4 @@ TString STConfigRun::GeometryFileName(TString name)
 
   return name;
 }
+#endif

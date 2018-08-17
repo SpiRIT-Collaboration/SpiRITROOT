@@ -25,7 +25,9 @@ STRecoTrack::STRecoTrack(STRecoTrack *recoTrack)
   for (auto dedxPoint : *dedxPointArray)
     AdddEdxPoint(dedxPoint);
 
+#ifndef STREADONLY
   fGenfitTrack = recoTrack -> GetGenfitTrack();
+#endif
   fHelixTrack = recoTrack -> GetHelixTrack();
 
   // STRecoTrack class members

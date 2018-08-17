@@ -1,6 +1,7 @@
 #include "STMCTriggerResponse.hh"
 #include "STMCScintillatorHit.hh"
 
+#ifndef STREADONLY
 STMCTriggerResponse::STMCTriggerResponse()
 : TNamed(),
   fIsTrigger(kFALSE),
@@ -25,3 +26,4 @@ void STMCTriggerResponse::SetScintillatorHitArray(TClonesArray* hitArray)
 }
 
 ClassImp(STMCTriggerResponse);
+#endif

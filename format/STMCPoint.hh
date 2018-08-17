@@ -2,6 +2,7 @@
 #define _STMCPOINT_H_ 1
 
 
+#ifndef STREADONLY
 #include "FairMCPoint.h"
 
 #include "TObject.h"
@@ -45,5 +46,6 @@ class STMCPoint : public FairMCPoint
     ClassDef(STMCPoint,1)
 
 };
+#endif
 
 #endif

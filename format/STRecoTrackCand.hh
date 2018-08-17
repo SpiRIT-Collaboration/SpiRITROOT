@@ -6,7 +6,9 @@
 #include "STPID.hh"
 #include "STdEdxPoint.hh"
 #include "STHelixTrack.hh"
+#ifndef STREADONLY
 #include "Track.h"
+#endif
 
 #include <vector>
 using namespace std;
@@ -24,7 +26,9 @@ class STRecoTrackCand : public TObject
     TVector3 fPosTargetPlane; ///< position at target plane
     vector<STdEdxPoint> fdEdxPointArray; ///< Array of dEdxPoint
 
+#ifndef STREADONLY
     genfit::Track *fGenfitTrack; //! < only used for task
+#endif
     STHelixTrack *fHelixTrack; //! < only used for task
 
   public:
@@ -55,6 +59,7 @@ class STRecoTrackCand : public TObject
 
     void AdddEdxPoint(STdEdxPoint dedxPoint) { fdEdxPointArray.push_back(dedxPoint); }
     vector<STdEdxPoint> *GetdEdxPointArray() { return &fdEdxPointArray; }
+    Double_t GetdEdxWithCut(Double_t lowCut, Double_t highCut);
 
     /*
      *
@@ -79,8 +84,10 @@ class STRecoTrackCand : public TObject
                             Int_t numDiv = -1, Int_t refDiv = -1,Double_t cutMin = -0.5, Double_t cutMax = 0.5);
     Int_t GetClustNum(Double_t fract_shadow = 1.);
 
+#ifndef STREADONLY
     void SetGenfitTrack(genfit::Track *val) { fGenfitTrack = val; }
     genfit::Track *GetGenfitTrack() { return fGenfitTrack; }
+#endif
 
   void SetHelixTrack(STHelixTrack *val)
   {

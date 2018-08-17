@@ -20,7 +20,9 @@
 #include "TVector3.h"
 
 // FairRoot classes
+#ifndef STREADONLY
 #include "FairLogger.h"
+#endif
 
 class STRiemannHit : public TObject
 {
@@ -50,7 +52,9 @@ class STRiemannHit : public TObject
     Double_t fAngleOnHelix; ///< Angle on helix
     Double_t fRiemannScale; ///< Scaling in xy plane: 8.7 for prototype, 24.6 for panda. What about our case?
 
+#ifndef STREADONLY
     FairLogger *fLogger;    //! <
+#endif
 
   ClassDef(STRiemannHit, 2);
 };

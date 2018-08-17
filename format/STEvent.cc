@@ -43,7 +43,9 @@ STEvent::STEvent(STEvent *object)
   
   fIsGood = object -> IsGood();
   
+#ifndef STREADONLY
   fVertexArray = *(object -> GetVertexArray());
+#endif
 
 }
 
@@ -64,7 +66,9 @@ Bool_t STEvent::IsChanged()                  { return fIsChanged; }
 Bool_t STEvent::IsGood()                     { return fIsGood; }
 
 Int_t STEvent::GetNumClusters()              { return fClusterArray.size(); }
+#ifndef STREADONLY
 Int_t STEvent::GetNumVertex()                { return fVertexArray.size(); }
+#endif
 
 // setters
 void STEvent::SetEventID(Int_t evtid)                             { fEventID = evtid; } 
@@ -72,8 +76,10 @@ void STEvent::AddHit(STHit *hit)                                  { fHitArray.pu
 void STEvent::SetHitArray(vector<STHit> *hitArray)                { fHitArray = *hitArray; } 
 void STEvent::AddCluster(STHitCluster *cluster)                   { fClusterArray.push_back(*cluster); } 
 void STEvent::SetClusterArray(vector<STHitCluster> *clusterArray) { fClusterArray = *clusterArray; }
+#ifndef STREADONLY
 void STEvent::AddVertex(genfit::GFRaveVertex* vertex)             { fVertexArray.push_back(*vertex); } 
 void STEvent::SetVertexArray(vector<genfit::GFRaveVertex> *vertexArray) { fVertexArray = *vertexArray; }
+#endif
 
 // getters
 Int_t STEvent::GetEventID() { return fEventID; }
@@ -120,6 +126,7 @@ vector<STHitCluster> *STEvent::GetClusterArray()
 
 // vertex stuff
 
+#ifndef STREADONLY
 genfit::GFRaveVertex *STEvent::GetVertex(Int_t vertexNo)
 {
   if (!(vertexNo < GetNumVertex()))
@@ -141,3 +148,4 @@ vector<genfit::GFRaveVertex> *STEvent::GetVertexArray()
   return &fVertexArray;
 }
 
+#endif

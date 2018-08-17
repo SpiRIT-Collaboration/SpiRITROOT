@@ -5,7 +5,9 @@
 // -------------------------------------------------------------------------
 #include "STMCTrack.h"
 
+#ifndef STREADONLY 
 #include "FairLogger.h"                 // for FairLogger, etc
+#endif
 
 #include "TDatabasePDG.h"               // for TDatabasePDG
 #include "TParticle.h"                  // for TParticle
@@ -114,6 +116,7 @@ STMCTrack::~STMCTrack() { }
 // -----   Public method Print   -------------------------------------------
 void STMCTrack::Print(Int_t trackId) const
 {
+#ifndef STREADONLY 
   LOG(DEBUG) << "Track " << trackId << ", mother : " << fMotherId << ", Type "
     << fPdgCode << ", momentum (" << fPx << ", " << fPy << ", "
     << fPz << ") GeV" << FairLogger::endl;
@@ -121,6 +124,7 @@ void STMCTrack::Print(Int_t trackId) const
     << ", TutDet " << GetNPoints(kTutDet)
     << ", Rutherford " << GetNPoints(kSPiRIT)
     << FairLogger::endl;
+#endif
 }
 // -------------------------------------------------------------------------
 
@@ -166,8 +170,10 @@ Int_t STMCTrack::GetNPoints(DetectorId detId) const
   else if ( detId == kTutDet  ) { return ( (fNPoints & ( 7 <<  1) ) >>  1); }
   else if ( detId == kSPiRIT ) { return ( (fNPoints & (31 <<  4) ) >>  4); }
   else {
+#ifndef STREADONLY 
     LOG(ERROR) << "Unknown detector ID "
       << detId << FairLogger::endl;
+#endif
     return 0;
   }
 }
@@ -230,8 +236,10 @@ void STMCTrack::SetNPoints(Int_t iDet, Int_t nPoints)
     fNPoints = ( fNPoints & ( ~ ( 31 <<  4 ) ) )  |  ( nPoints <<  4 );
   }
 
+#ifndef STREADONLY 
   else LOG(ERROR) << "Unknown detector ID "
     << iDet << FairLogger::endl;
+#endif
 
 }
 // -------------------------------------------------------------------------

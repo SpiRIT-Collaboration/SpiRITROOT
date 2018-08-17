@@ -1,5 +1,7 @@
 #include "STMCPoint.hh"
 
+#ifndef STREADONLY
+
 #include <iostream>
 using std::cout;
 using std::endl;
@@ -73,4 +75,4 @@ void STMCPoint::Print(const Option_t* opt) const
 // -------------------------------------------------------------------------
 
 ClassImp(STMCPoint)
-
+#endif
