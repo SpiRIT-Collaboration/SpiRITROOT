@@ -3,9 +3,9 @@ void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
 void run_reco_experiment
 (
  Int_t fRunNo = 2894,
- Int_t fNumEventsInRun = 10,
+ Int_t fNumEventsInRun = 2,
  Int_t fSplitNo = 0,
- Int_t fNumEventsInSplit = 10,
+ Int_t fNumEventsInSplit = 2,
  TString fGCData = "",
  TString fGGData = "",
  std::vector<Int_t> fSkipEventArray = {},
@@ -70,8 +70,8 @@ void run_reco_experiment
   decoder -> SetDataList(raw);
   decoder -> SetEventID(start);
   decoder -> SetTbRange(30, 257);
-  decoder -> SetEmbedding(false);
-  decoder -> SetEmbedFile("");
+  //  decoder -> SetEmbedding(false);
+  //  decoder -> SetEmbedFile("./data/one_proton.digi.root");
 //  decoder -> SetGainMatchingData("../parameters/RelativeGain.list");
 //  decoder -> SetEmbedFile("./data/one_test.digi.root");
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
@@ -104,7 +104,7 @@ void run_reco_experiment
   psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
-  psa -> SetEmbedding(false);
+  //  psa -> SetEmbedding(false);
   psa -> SetGainMatchingData("../parameters/RelativeGain.list");
   // Pulse having long tail
   psa -> SetPulserData("pulser_117ns_50tb.dat");
@@ -127,7 +127,8 @@ void run_reco_experiment
   //helix -> SetClusteringAngleAndMargin(35., 3.);
   
   auto correct = new STCorrectionTask(); //Correct for saturation
-  
+  correct  -> SetPRFCutFile("../parameters/prf_cuts.root");
+
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
   genfitPID -> SetBDCFile("");  
@@ -146,7 +147,7 @@ void run_reco_experiment
   
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
-
+    
   run -> AddTask(decoder);
   run -> AddTask(preview);
   run -> AddTask(psa);
@@ -154,7 +155,7 @@ void run_reco_experiment
   run -> AddTask(correct);
   run -> AddTask(genfitPID);
 //  run -> AddTask(genfitVA);
-//  run -> AddTask(embedCorr);
+  run -> AddTask(embedCorr);
   
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
