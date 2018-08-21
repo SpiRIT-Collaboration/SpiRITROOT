@@ -37,7 +37,8 @@ void run_mc
  TString name  = "urqmd_short",
  Int_t   nEvent = -1,
  TString inputDir = "",
- TString outputDir = "",
+ TString outputDir = "data/",
+ TString parName = "Generator.config.par",
  Bool_t  useFieldMapFile = kTRUE
 )
 {
@@ -54,6 +55,7 @@ void run_mc
   TString geomDir   = workDir + "/geometry";
   TString g4ConfDir = workDir + "/gconfig";
   TString dataDir   = workDir + "/macros/data/";
+  TString parDir    = workDir + "/parameters/";
 
   if(outputDir.IsNull())
     outputDir = dataDir;
@@ -135,6 +137,7 @@ void run_mc
 */
 
   auto fEvent = new STSingleTrackGenerator();
+  fEvent->ReadConfig((parDir + parName).Data());
   //fEvent->SetCocktailEvent(300.);
   //fEvent->SetUniformRandomDirection(true);
   //fEvent->SetParticleList({2212, 211, -211, 1000010020, 1000010030});

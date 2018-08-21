@@ -7,6 +7,41 @@
 #include "TParticlePDG.h"
 #include "TRandom.h"
 
+void VertexReader::OpenFile(const std::string& t_filename)
+{
+	file_.open(t_filename.c_str());
+	if(!file_.is_open())
+		LOG(FATAL) << "Vertex file " << t_filename << " cannot be opened!" << FairLogger::endl;
+	else
+		LOG(INFO) << "Loadiing vertex file " << t_filename << FairLogger::endl;
+	// get rid of the header
+	for(int i = 0; i < 2; ++i) std::getline(file_, line_);
+}
+
+void VertexReader::Next() 
+{
+	if(!std::getline(file_, line_))
+		line_ = "";
+} 
+
+void VertexReader::LoopOver() 
+{ 
+	file_.clear(); 
+	file_.seekg(0, std::ios::beg); 
+	/* get rid of header*/ 
+	for(int i = 0; i < 2; ++i) std::getline(file_, line_); 
+}
+
+TVector3 VertexReader::GetVertex()
+{
+	std::stringstream ss(line_);
+	double x, y, z;
+	if(!(ss >> x >> y >> z))
+		LOG(FATAL) << "Vertex file cannot be read properly this line: " << line_ << FairLogger::endl;
+
+	return TVector3(x, y, z);
+}
+
 ClassImp(STSingleTrackGenerator);
 
 STSingleTrackGenerator::STSingleTrackGenerator()
@@ -35,6 +70,30 @@ STSingleTrackGenerator::STSingleTrackGenerator()
 
 STSingleTrackGenerator::~STSingleTrackGenerator()
 {}
+
+void STSingleTrackGenerator::ReadConfig(const std::string& t_config)
+{
+	TrackParser parser(t_config);
+	std::vector<std::string> keys{	"NEvent",
+					"Momentum",
+					"VertexFile",
+					"Particle",
+					"Theta",
+					"Phi"	};
+
+	if(!parser.AllKeysExist(keys))
+	{
+		LOG(FATAL) << "Some keys are missing from the config file " << t_config << FairLogger::endl;
+		return;
+	}
+
+	SetNEvents(parser.Get<int>("NEvent"));
+	SetMomentum(parser.GetVector3("Momentum"));
+	SetVertexFile(parser.Get<std::string>("VertexFile"));
+	SetParticleList(std::vector<int>{parser.Get<int>("Particle")});
+	SetThetaPhi(parser.Get<double>("Theta")*180./M_PI, parser.Get<double>("Phi")*180./M_PI);
+	
+}
 
 
 void STSingleTrackGenerator::SetParticleList(Int_t* pdgs)
@@ -75,6 +134,13 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 
   Int_t pdg;  // pdg code of the particle for this event
   TVector3 momentum=fMomentum, vertex=fPrimaryVertex;
+  if(fVertexReader.IsOpen())
+  {
+      fVertexReader.Next();
+      if(fVertexReader.IsEnd())
+          fVertexReader.LoopOver();
+      vertex = fVertexReader.GetVertex();
+  }
 
   auto index = (Int_t)gRandom->Uniform(0,fPdgList.size());
   pdg = fPdgList.at(index);

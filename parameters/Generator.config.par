@@ -1,0 +1,7 @@
+# this is a comment
+NEvent		100
+Momentum	0.0	0.0	0.5 # in GeV/Z
+VertexFile	/mnt/spirit/analysis/user/tsangc/SpiRITROOT/parameters/VertexLocation.txt
+Particle	211 # 211 for pion for some reasons
+Theta		0
+Phi		0
