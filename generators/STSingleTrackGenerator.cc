@@ -35,8 +35,9 @@ void VertexReader::LoopOver()
 TVector3 VertexReader::GetVertex()
 {
 	std::stringstream ss(line_);
+	int temp;
 	double x, y, z;
-	if(!(ss >> x >> y >> z))
+	if(!(ss >> temp >> temp >> x >> y >> z))
 		LOG(FATAL) << "Vertex file cannot be read properly this line: " << line_ << FairLogger::endl;
 
 	return TVector3(x, y, z);

@@ -38,8 +38,8 @@ void run_mc
  Int_t   nEvent = -1,
  TString inputDir = "",
  TString outputDir = "data/",
- TString parName = "Generator.config.par",
- Bool_t  useFieldMapFile = kTRUE
+ Bool_t  useFieldMapFile = kTRUE,
+ TString parName = "Generator.config.par"
 )
 {
   //////////////////////////////////////////////////////////

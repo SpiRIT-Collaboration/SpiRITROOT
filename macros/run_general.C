@@ -118,7 +118,7 @@ void run_general(const std::string& t_config_list, int t_start_from = 1, int t_n
 		TString command = TString::Format("sbatch ./submit_general.sh \"%s\" %d %f %d %f %f %d \"%s\"", output_name.Data(), info.nevent, info.momentum, info.particle, info.phi, info.theta, job_order + num_jobs_in_queue, t_config_list.c_str());
 
 		std::cout << " With command " << command << "\n";
-		//system(command.Data());
+		system(command.Data());
 		std::cout << "Job submitted!\n";
 	}
 

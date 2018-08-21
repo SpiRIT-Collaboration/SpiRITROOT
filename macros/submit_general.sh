@@ -12,7 +12,11 @@ NEXTJOB=$7
 CONFIGLIST=$8
 
 # Create input config file
-SUBMITFILE=$(mktemp)
+FILENAME=temp_${NEXTJOB}
+SUBMITFILE=${VMCWORKDIR}/parameters/${FILENAME}
+
+echo ${SUBMITFILE}
+
 cat > $SUBMITFILE << EOF
 NEvent          ${NEVENT}
 Momentum        0.0     0.0     ${MOMENTUM} # in GeV/Z
@@ -23,8 +27,8 @@ Phi             ${PHI}
 EOF
 
 cd /mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros
-root run_mc.C\(\"$INPUT\",-1, \"\", \"data/\", kTRUE, \"$SUBMITFILE\"\) -b -q -l > log\/${INPUT}_mc.log
-rm -f $SUBMITFILE
+root run_mc.C\(\"$INPUT\",-1,\"\",\"data/\",kTRUE,\"$FILENAME\"\) -b -q -l > log\/${INPUT}_mc.log
+#rm -f $SUBMITFILE
 
 root run_digi.C\(\"$INPUT\"\) -b -q -l > log\/${INPUT}_digi.log
-root run_general.C\($NEXTJOB,1,\"$CONFIGLIST\"\) -q -l > log\/${INPUT}_run.log 
+root run_general.C\(\"$CONFIGLIST\"\,$NEXTJOB,1) -q -l > log\/${INPUT}_run.log 
