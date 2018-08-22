@@ -6,6 +6,8 @@
 #include "STHitCluster.hh"
 #include "TClonesArray.h"
 #include "TMinuit.h"
+#include "TFile.h"
+#include "TCutG.h"
 #include <vector>
 
 typedef std::vector<STHit*>* vhit_t;
@@ -42,9 +44,13 @@ class STCorrection
   ~STCorrection() {}
   //  void SetSaturationOption(Int_t opt);
   void Desaturate(TClonesArray *clusters);
-
+  void CheckClusterPRF(TClonesArray *clusters,TClonesArray *helix, TClonesArray *hit);
+  void LoadPRFCut(TString filename);
+  
   private:
 
+  TCutG *prf_row   = nullptr;
+  TCutG *prf_layer = nullptr;
   std::vector<double> minimize(const int npar);
     
   //  TClonesArray *fTrackArray = nullptr;       ///< STHelixTrack array

@@ -17,12 +17,15 @@ public:
   virtual InitStatus Init();
   virtual void Exec(Option_t *opt);
   void SetDesaturation(Bool_t opt);  
+  void SetPRFCutFile(TString filename);  
 private:
-  STCorrection *fCorrection     = nullptr;
+  STCorrection *fCorrection        = nullptr;
   TClonesArray *fHitClusterArray   = nullptr;
-  TClonesArray *fHitArray       = nullptr;
+  TClonesArray *fHitArray          = nullptr;
+  TClonesArray *fHelixArray        = nullptr;
   Bool_t fDesaturate            = true;  //defualt is to desaturate
-
+  Bool_t fPRFCheck              = true; //check clusters behave by prf
+  TString fPRFcut_file = "";
   ClassDef(STCorrectionTask, 1)
 };
 

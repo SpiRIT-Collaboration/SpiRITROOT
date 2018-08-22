@@ -293,3 +293,72 @@ void STCorrection::Desaturate(TClonesArray *clusterArray)
   return;
 }
 
+void STCorrection::LoadPRFCut(TString filename)
+{
+  TFile f(filename);
+  prf_layer = (TCutG*)f.Get("prf_layer");
+  prf_row   = (TCutG*)f.Get("prf_row");
+  
+  return;
+}
+
+void STCorrection::CheckClusterPRF(TClonesArray *clusterArray, TClonesArray *helixArray, TClonesArray *hitArray)
+{
+
+
+  for(auto iHelix = 0; iHelix < helixArray -> GetEntries(); iHelix++)
+    {
+      auto helix = (STHelixTrack *) helixArray ->At(iHelix);
+      auto cl_id = helix-> GetClusterIDArray();
+      for( auto iCluster = 0; iCluster < cl_id->size(); iCluster++)
+	{
+	  auto cluster = (STHitCluster *)clusterArray -> At(cl_id->at(iCluster));
+	  auto hit_ary = cluster -> GetHitIDs();
+	  vector<double> lambda,fract;
+	  bool byRow = cluster -> IsRowCluster();
+
+	  for(auto idx : *hit_ary)
+	    {
+	      TVector3 pointOnHelix;
+	      Double_t alpha;
+	      auto hit = (STHit *) hitArray -> At(idx);
+	      auto hit_vector = hit -> GetPosition();
+	      helix -> ExtrapolateToPointAlpha(hit->GetPosition(), pointOnHelix, alpha);
+	      pointOnHelix = pointOnHelix - hit_vector;
+
+	      if(byRow)
+		{
+		  lambda.push_back(pointOnHelix.Z());
+		  fract.push_back(hit->GetCharge()/cluster ->GetCharge());
+		}
+	      else
+		{
+		  lambda.push_back(pointOnHelix.X());
+		  fract.push_back(hit->GetCharge()/cluster ->GetCharge());
+		}
+	    }
+
+	  int num_in = 0;// number of hits inside prf cuts
+	  for(int i = 0; i< lambda.size(); i++)
+	    {
+	      if(byRow)
+		{
+		  if(prf_row -> IsInside(lambda.at(i),fract.at(i)))
+		    num_in++;
+		}
+	      else
+		{
+		  if(prf_layer -> IsInside(lambda.at(i),fract.at(i)))
+		    num_in++;
+		}
+	    }
+
+	  if((1.*num_in)/hit_ary->size() < .5)
+	    {
+	      cluster -> SetIsStable(false);
+	    }
+	}
+    }
+
+  return;
+}
