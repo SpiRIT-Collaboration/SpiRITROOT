@@ -112,11 +112,57 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     recoTrack -> SetHelixTrack(helixTrack);
 
     auto clusterArray = helixTrack -> GetClusterArray();
+    vector<STHitCluster *> stableClusters;
     for (auto cluster : *clusterArray) {
-      if (cluster -> IsStable()) {
-        candList -> AddHitID(cluster -> GetClusterID());
-        recoTrack -> AddClusterID(cluster -> GetClusterID());
+      if (cluster -> IsStable())
+        stableClusters.push_back(cluster);
+    }
+
+    auto cleanClusters = [](vector<STHitCluster *> *anArray, Double_t dMax) -> Bool_t {
+      if (anArray -> size() == 1)
+        return kTRUE;
+
+      auto numClusters = anArray -> size(); 
+
+      for (auto iCluster = 0; iCluster < numClusters - 1; iCluster++) {
+        auto firstCluster = anArray -> at(iCluster);
+        auto secondCluster = anArray -> at(iCluster + 1);
+
+        auto dCluster = (secondCluster -> GetPosition() - firstCluster -> GetPosition()).Mag();
+        if (dCluster > dMax) {
+          auto former = iCluster + 1;
+          auto latter = numClusters - iCluster - 1;
+
+//          cout << "former:" << former << " latter:" << latter << " dCluster:" << dCluster << " dMax:" << dMax << endl;
+
+          if (former > latter) {
+            while (latter) {
+              anArray -> back() -> SetIsStable(kFALSE);
+              anArray -> pop_back();
+              latter--;
+            }
+
+            return kFALSE;
+          } else if (former <= latter) {
+            while (former) {
+              anArray -> front() -> SetIsStable(kFALSE);
+              anArray -> erase(anArray -> begin());
+              former--;
+            }
+
+            return kFALSE;
+          }
+        }
       }
+
+      return kTRUE;
+    };
+
+    while (!cleanClusters(&stableClusters, fMaxDCluster)) {}
+
+    for (auto cluster : stableClusters) {
+      candList -> AddHitID(cluster -> GetClusterID());
+      recoTrack -> AddClusterID(cluster -> GetClusterID());
     }
 
     STPID::PID bestPID = STPID::kNon;
