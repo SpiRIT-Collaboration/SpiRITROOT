@@ -133,6 +133,8 @@ void run_reco_experiment
   genfitPID -> SetBDCFile("");  
   //genfitPID -> SetConstantField();
   genfitPID -> SetListPersistence(true);
+  // Removing shorter length tracklet by distance of adjacent clusters.
+  //genfitPID -> SetMaxDCluster(60);
 
   auto genfitVA = new STGenfitVATask();
   genfitVA -> SetPersistence(true);

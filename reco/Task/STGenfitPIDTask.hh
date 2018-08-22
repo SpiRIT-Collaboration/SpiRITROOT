@@ -31,6 +31,8 @@ class STGenfitPIDTask : public STRecoTask
 
     void SetTargetPlane(Double_t x, Double_t y, Double_t z);
 
+    void SetMaxDCluster(Double_t val) { fMaxDCluster = val; }
+
     genfit::GFRaveVertexFactory *GetVertexFactoryInstance();
 
   private:
@@ -62,6 +64,8 @@ class STGenfitPIDTask : public STRecoTask
     Double_t fTargetX = 0;
     Double_t fTargetY = -213.3;
     Double_t fTargetZ = -8.9;
+
+    Double_t fMaxDCluster = 9999;
 
   ClassDef(STGenfitPIDTask, 1)
 };
