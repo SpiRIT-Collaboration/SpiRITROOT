@@ -13,7 +13,7 @@ void run_reco_experiment
  TString fParameterFile = "ST.parameters.PhysicsRuns_201707.par",
  TString fPathToData = "",
  Bool_t fUseMeta = kTRUE,
- TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement"
+ TString fSupplePath = "/data/Q18393/rawdataSupplement"
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -75,7 +75,7 @@ void run_reco_experiment
 //  decoder -> SetGainMatchingData("../parameters/RelativeGain.list");
 //  decoder -> SetEmbedFile("./data/one_test.digi.root");
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
-  //decoder -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
+  decoder -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
   
   if (fUseMeta) {
     std::ifstream metalistFile(metaFile.Data());
@@ -105,13 +105,13 @@ void run_reco_experiment
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
   psa -> SetEmbedding(false);
-  psa -> SetGainMatchingData("../parameters/RelativeGain.list");
   // Pulse having long tail
   psa -> SetPulserData("pulser_117ns_50tb.dat");
   // Rensheng's peak finding method (1).
   psa -> SetPSAPeakFindingOption(1);
   // Low gain calibration. Don't forget you need to uncomment decoder part, too.
-  //psa -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
+  psa -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
+  psa -> SetYOffsets(spiritroot + "parameters/yOffsetCalibration.dat");
 
   auto helix = new STHelixTrackingTask();
   helix -> SetPersistence(false);
@@ -119,7 +119,7 @@ void run_reco_experiment
   // Left, right, top and bottom sides cut
   helix -> SetClusterCutLRTB(420, -420, -64, -522);
   // High density region cut
-//  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(120, 100, 220), 5); // current use
+  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(120, 100, 220), 5); // current use
 //  helix -> SetCylinderCut(TVector3(0, -226.06, -11.9084), 100, 100, 5);
 //  helix -> SetSphereCut(TVector3(0, -226.06, -11.9084), 100, 5);
 //  helix -> SetEllipsoidCut(TVector3(0, -206.34, -11.9084), TVector3(120, 55, 240), 5);
@@ -142,10 +142,10 @@ void run_reco_experiment
   //genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
   genfitVA -> SetBeamFile("");
-//  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
-//  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
+  genfitVA -> SetBeamFile(Form("/data/Q18393/BeamAnalysis/Sn132.raw/beam_run%d.ridf.root", fRunNo));
+  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   // Uncomment if you want to recalculate the vertex using refit tracks.
-  //genfitVA -> SetUseRave(true);
+  genfitVA -> SetUseRave(true);
   
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
@@ -156,7 +156,7 @@ void run_reco_experiment
   run -> AddTask(helix);
   run -> AddTask(correct);
   run -> AddTask(genfitPID);
-//  run -> AddTask(genfitVA);
+  run -> AddTask(genfitVA);
 //  run -> AddTask(embedCorr);
   
   auto outFile = FairRootManager::Instance() -> GetOutFile();

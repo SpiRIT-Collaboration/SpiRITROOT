@@ -119,7 +119,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     }
 
     auto cleanClusters = [](vector<STHitCluster *> *anArray, Double_t dMax) -> Bool_t {
-      if (anArray -> size() == 1)
+      if (anArray -> size() <= 1)
         return kTRUE;
 
       auto numClusters = anArray -> size(); 
@@ -203,7 +203,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
       fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, recoTrackCand -> GetdEdxPointArray());
 
-      auto prob = fPIDTest -> GetProbability(pid, mom.Mag(), recoTrackCand -> GetdEdxWithCut(0,0.7));
+      auto prob = 1.; // fPIDTest -> GetProbability(pid, mom.Mag(), recoTrackCand -> GetdEdxWithCut(0,0.7));
       recoTrackCand -> SetPIDProbability(prob);
 
       if (bestProb < prob) {

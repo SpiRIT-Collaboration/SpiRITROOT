@@ -262,7 +262,7 @@ void STGenfitVATask::Exec(Option_t *opt)
 
       fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, vaTrackCand -> GetdEdxPointArray(), true);
 
-      auto prob = fPIDTest -> GetProbability(pid, mom.Mag(), vaTrackCand -> GetdEdxWithCut(0,0.7));
+      auto prob = 1.; // fPIDTest -> GetProbability(pid, mom.Mag(), vaTrackCand -> GetdEdxWithCut(0,0.7));
       vaTrackCand -> SetPIDProbability(prob);
 
       if (bestProb < prob) {
