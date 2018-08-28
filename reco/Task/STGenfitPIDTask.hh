@@ -36,10 +36,12 @@ class STGenfitPIDTask : public STRecoTask
     genfit::GFRaveVertexFactory *GetVertexFactoryInstance();
 
   private:
+    TClonesArray *fHitClusterArray = nullptr;
     TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fCandListArray = nullptr;
     TClonesArray *fRecoTrackArray = nullptr;
     TClonesArray *fVertexArray = nullptr;
+    TClonesArray *fBDCTrackArray = nullptr;
 
     bool fIsListPersistence = false;
     bool fIsSamurai = true;
@@ -55,8 +57,14 @@ class STGenfitPIDTask : public STRecoTask
     TString fBDCName = "";
     TFile *fFileBDC;
     TTree *fTreeBDC;
-    Double_t fXBDC, fYBDC, fZBDC;
-    Double_t fdXBDC, fdYBDC, fdZBDC;
+    Double_t fXBDC1, fYBDC1;
+    Double_t fXBDC2, fYBDC2;
+    Double_t fXBDC3, fYBDC3;
+    Double_t fPBDC;
+
+    TTree *fTreeBeam;
+    Int_t fABeam;
+
     TMatrixDSym *fCovMatBDC;
 
     // Target plane position in mm.

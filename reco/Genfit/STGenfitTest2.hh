@@ -40,6 +40,7 @@ class STGenfitTest2
     void SetMaxIterations(Int_t value);
 
     void Init();
+    genfit::Track* FitBDC(STHelixTrack *helixTrack, Int_t pdg = 2212);
     genfit::Track* FitTrack(STHelixTrack *helixTrack, Int_t pdg = 2212);
     genfit::Track* FitTrackWithVertex(STHelixTrack *helixTrack, STHitCluster *vertex, Int_t pdg = 2212);
 
