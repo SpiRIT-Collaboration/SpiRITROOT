@@ -19,8 +19,12 @@ const std::map<std::string, int> pname2id{ // tables for particle name to pdg_ta
 {"7Li", 1000030070},
 };
 
+
 std::vector<double> linspace(double t_min, double t_max, int t_num)
 {
+    /****************************************************************
+    * returns a uniformly spaced vector with given number of points *
+    *****************************************************************/
     std::vector<double> linspace(t_num, t_min);
     if(t_num == 1) return linspace;
 
@@ -39,10 +43,16 @@ std::vector<int> SplitVertexFiles(const TString& t_vertex_file="VertexLocation_r
     returns the list of run that is contained in the file
     */
     TString workDir   = gSystem -> Getenv("VMCWORKDIR");
-      TString parDir    = workDir + "/parameters/";
+    TString parDir    = workDir + "/parameters/";
+    TString splitDir  = parDir + "VertexSplit/";
+
+    // create split direcotory if non-existant
+    system(("mkdir -p " + splitDir).Data());
+
+    // open Justin's vertex file
     std::ifstream vertex((parDir + t_vertex_file).Data());
     if(!vertex.is_open())
-        std::cerr << "Cannot find vertex file " << vertex << " for splitting\n";
+        std::cerr << "Cannot find vertex file " << parDir + t_vertex_file << " for splitting\n";
 
     // get rid of header
     std::string header, line;
@@ -62,7 +72,7 @@ std::vector<int> SplitVertexFiles(const TString& t_vertex_file="VertexLocation_r
             run_list.push_back(run_num);
             if(new_vertex.is_open()) new_vertex.close();
 
-            new_vertex.open(TString::Format("%s/VertexSplit/Vertex_Run_%04d", parDir.Data(), run_num).Data());
+            new_vertex.open(TString::Format("%s/Vertex_Run_%04d", splitDir.Data(), run_num).Data());
             new_vertex << header << "\n";
         }
         new_vertex << line << "\n";
@@ -92,14 +102,15 @@ void run_pion_pixel()
     std::vector<RunInfo> info_list;
 
     int index = 0;
+    auto num_list = SplitVertexFiles();
     for(const auto& momentum : linspace(momentum_min, momentum_max, momentum_num))
         for(const auto& phi : linspace(phi_min, phi_max, phi_num_pixel))
             for(const auto& theta : linspace(theta_min, theta_max, theta_num_pixel))
             {
-                for(const auto& num : SplitVertexFiles())
+                for(const auto& num : num_list)
                 {
                     RunInfo info;
-                    info.filename = std::string(TString::Format("PionPixel/PionPixel_Run_%04d_ID_%04d_Momentum_%3.2f", num, index, momentum).Data());
+                    info.filename = std::string(TString::Format("PionPixel/Run_%04d/PionPixel_ID_%04d_Momentum_%3.2f", num, index, momentum).Data());
                     info.momentum = momentum/1.e3;
                     info.vertexfile = std::string(TString::Format("%s/VertexSplit/Vertex_Run_%04d", parDir.Data(), num).Data());
                     info.particle = pname2id.at("pi+");

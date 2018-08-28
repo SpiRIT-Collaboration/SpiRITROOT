@@ -29,6 +29,16 @@
  *   @ event : kTRUE to use constant field, with 0.5T. 
  *             kFALSE to use field map file 'SamuraiMap_0.5T.dat'.
  */
+#include <sys/stat.h>
+#include <sys/types.h>
+
+/*************************************************************
+* Functions needed to create directory if it is non-existance*
+* Only call recursive_mkdir. There's no need to call rek_mkdir   *
+**************************************************************/
+void rek_mkdir(char* path);
+void recursive_mkdir(const char* t_path);
+//************End of Directory creation function****************
 
 void AddIons(FairRunSim *fRun, TString event);
 
@@ -65,6 +75,12 @@ void run_mc
   TString outputFile = outputDir + name + ".mc.root"; 
   TString outParFile = outputDir + name + ".params.root";
   TString loggerFile = outputDir + "log_" + name + ".mc.txt";
+
+  // ----------------------------------------------------------------
+  // Create directories for all the output if they are non-existent
+  recursive_mkdir(outputFile.Data());
+  recursive_mkdir(outParFile.Data());
+  recursive_mkdir(loggerFile.Data());
 
 
   // -----------------------------------------------------------------
@@ -223,4 +239,31 @@ void AddIons(FairRunSim *fRun, TString event)
 
     fRun -> AddNewIon(new FairIon(Form("%d", a) + symbol[z - 1], z, a, z));
   }
+}
+
+void rek_mkdir(char* path)
+{
+  char *sep = strrchr(path, '/' );
+  if(sep != NULL) {
+    *sep = 0;
+    rek_mkdir(path);
+    *sep = '/';
+  }
+  if( mkdir(path,0755) && errno != EEXIST )
+    printf("error while trying to create '%s'\n%m\n",path ); 
+}
+
+void recursive_mkdir(const char* t_path)
+{
+    char* path = new char[strlen(t_path) + 1];
+    strcpy(path, t_path);
+    char *sep = strrchr(path, '/' );
+    if(sep ) { 
+       char *path0 = strdup(path);
+       path0[ sep - path ] = 0;
+       rek_mkdir(path0);
+       free(path0);
+    }
+
+    delete[] path;
 }
