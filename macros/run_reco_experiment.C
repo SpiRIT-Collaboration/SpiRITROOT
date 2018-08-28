@@ -9,11 +9,12 @@ void run_reco_experiment
  TString fGCData = "",
  TString fGGData = "",
  std::vector<Int_t> fSkipEventArray = {},
+ TString fMCFile = "",
+ TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement",
  Double_t fPSAThreshold = 30,
  TString fParameterFile = "ST.parameters.PhysicsRuns_201707.par",
  TString fPathToData = "",
- Bool_t fUseMeta = kTRUE,
- TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement"
+ Bool_t fUseMeta = kTRUE
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -70,12 +71,9 @@ void run_reco_experiment
   decoder -> SetDataList(raw);
   decoder -> SetEventID(start);
   decoder -> SetTbRange(30, 257);
-  decoder -> SetEmbedding(false);
-  decoder -> SetEmbedFile("");
-//  decoder -> SetGainMatchingData("../parameters/RelativeGain.list");
-//  decoder -> SetEmbedFile("./data/one_test.digi.root");
+  decoder -> SetEmbedFile(fMCFile);
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
-  //decoder -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
+  decoder -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
   
   if (fUseMeta) {
     std::ifstream metalistFile(metaFile.Data());
@@ -104,14 +102,12 @@ void run_reco_experiment
   psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
-  psa -> SetEmbedding(false);
-  psa -> SetGainMatchingData("../parameters/RelativeGain.list");
   // Pulse having long tail
   psa -> SetPulserData("pulser_117ns_50tb.dat");
   // Rensheng's peak finding method (1).
   psa -> SetPSAPeakFindingOption(1);
   // Low gain calibration. Don't forget you need to uncomment decoder part, too.
-  //psa -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
+  psa -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
 
   auto helix = new STHelixTrackingTask();
   helix -> SetPersistence(false);
@@ -133,6 +129,8 @@ void run_reco_experiment
   genfitPID -> SetBDCFile("");  
   //genfitPID -> SetConstantField();
   genfitPID -> SetListPersistence(true);
+  // Removing shorter length tracklet by distance of adjacent clusters.
+  //genfitPID -> SetMaxDCluster(60);
 
   auto genfitVA = new STGenfitVATask();
   genfitVA -> SetPersistence(true);
@@ -153,8 +151,9 @@ void run_reco_experiment
   run -> AddTask(helix);
   run -> AddTask(correct);
   run -> AddTask(genfitPID);
-//  run -> AddTask(genfitVA);
-//  run -> AddTask(embedCorr);
+  //  run -> AddTask(genfitVA);
+  if(!fMCFile.IsNull())
+    run -> AddTask(embedCorr);
   
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");

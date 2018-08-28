@@ -64,9 +64,9 @@ STGenfitPIDTask::Init()
     fTreeBDC -> SetBranchAddress("ProjX",&fXBDC);
     fTreeBDC -> SetBranchAddress("ProjY",&fYBDC);
     fTreeBDC -> SetBranchAddress("ProjZ",&fZBDC);
-    fTreeBDC -> SetBranchAddress("ProjdX",&fdXBDC);
-    fTreeBDC -> SetBranchAddress("ProjdY",&fdYBDC);
-    fTreeBDC -> SetBranchAddress("ProjdZ",&fdZBDC);
+    //fTreeBDC -> SetBranchAddress("ProjdX",&fdXBDC);
+    //fTreeBDC -> SetBranchAddress("ProjdY",&fdYBDC);
+    //fTreeBDC -> SetBranchAddress("ProjdZ",&fdZBDC);
 
     fCovMatBDC = new TMatrixDSym(3);
   }
@@ -112,11 +112,57 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     recoTrack -> SetHelixTrack(helixTrack);
 
     auto clusterArray = helixTrack -> GetClusterArray();
+    vector<STHitCluster *> stableClusters;
     for (auto cluster : *clusterArray) {
-      if (cluster -> IsStable()) {
-        candList -> AddHitID(cluster -> GetClusterID());
-        recoTrack -> AddClusterID(cluster -> GetClusterID());
+      if (cluster -> IsStable())
+        stableClusters.push_back(cluster);
+    }
+
+    auto cleanClusters = [](vector<STHitCluster *> *anArray, Double_t dMax) -> Bool_t {
+      if (anArray -> size() == 1)
+        return kTRUE;
+
+      auto numClusters = anArray -> size(); 
+
+      for (auto iCluster = 0; iCluster < numClusters - 1; iCluster++) {
+        auto firstCluster = anArray -> at(iCluster);
+        auto secondCluster = anArray -> at(iCluster + 1);
+
+        auto dCluster = (secondCluster -> GetPosition() - firstCluster -> GetPosition()).Mag();
+        if (dCluster > dMax) {
+          auto former = iCluster + 1;
+          auto latter = numClusters - iCluster - 1;
+
+//          cout << "former:" << former << " latter:" << latter << " dCluster:" << dCluster << " dMax:" << dMax << endl;
+
+          if (former > latter) {
+            while (latter) {
+              anArray -> back() -> SetIsStable(kFALSE);
+              anArray -> pop_back();
+              latter--;
+            }
+
+            return kFALSE;
+          } else if (former <= latter) {
+            while (former) {
+              anArray -> front() -> SetIsStable(kFALSE);
+              anArray -> erase(anArray -> begin());
+              former--;
+            }
+
+            return kFALSE;
+          }
+        }
       }
+
+      return kTRUE;
+    };
+
+    while (!cleanClusters(&stableClusters, fMaxDCluster)) {}
+
+    for (auto cluster : stableClusters) {
+      candList -> AddHitID(cluster -> GetClusterID());
+      recoTrack -> AddClusterID(cluster -> GetClusterID());
     }
 
     STPID::PID bestPID = STPID::kNon;
@@ -273,10 +319,13 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
   if (!fBDCName.IsNull()) {
     fTreeBDC -> GetEntry(fEventHeader -> GetEventID());
-    TVector3 posBDC(fXBDC-1.462,fYBDC-235.57,fZBDC+580.4);
-    (*fCovMatBDC)[0][0] = fdXBDC;
-    (*fCovMatBDC)[1][1] = fdYBDC;
-    (*fCovMatBDC)[2][2] = fdZBDC;
+    TVector3 posBDC(0.1*fXBDC,0.1*(fYBDC-227),0.1*(fZBDC+580.4));
+    //(*fCovMatBDC)[0][0] = fdXBDC;
+    //(*fCovMatBDC)[1][1] = fdYBDC;
+    //(*fCovMatBDC)[2][2] = fdZBDC;
+    (*fCovMatBDC)[0][0] = 0.01*5.9*5.9;
+    (*fCovMatBDC)[1][1] = 0.01*4.5*4.5;
+    (*fCovMatBDC)[2][2] = 0.01*2.8*2.8;
 
     fVertexFactory -> setBeamspot(posBDC, *fCovMatBDC);
   }
