@@ -8,7 +8,7 @@
 
 struct RunInfo{
 	std::string filename;
-	int nevent;
+        std::string vertexfile;
 	double momentum;
 	int particle;
 	double phi, theta;
@@ -25,19 +25,19 @@ void RunListToFile(const std::vector<RunInfo>& t_run_list, const std::string& t_
 
 	// header for people to read
 	file << "#";
-	for(const auto& name : std::vector<std::string>{"Filename", "NEvent", "Momentum", "Particle", "Phi", "Theta"})
-		file << std::setw(20) << name;
+	for(const auto& name : std::vector<std::string>{"Filename", "VertexFile", "Momentum", "Particle", "Phi", "Theta"})
+		file << name << "\t";
 	file << "\n";
 
 	// write everything
 	for(const auto& info : t_run_list)
 	{
-		file << std::setw(20) << info.filename;
-		file << std::setw(20) << info.nevent;
-		file << std::setw(20) << info.momentum;
-		file << std::setw(20) << info.particle;
-		file << std::setw(20) << info.phi;
-		file << std::setw(20) << info.theta;
+		file << info.filename << "\t";
+		file << info.vertexfile << "\t";
+		file << info.momentum << "\t";
+		file << info.particle << "\t";
+		file << info.phi << "\t";
+		file << info.theta << "\t";
 		file << "\n";
 	}
 }
@@ -67,7 +67,7 @@ std::vector<RunInfo> RunListFromFile(const std::string& t_filename)
 
 		RunInfo info;
 		std::stringstream ss(line);
-		if(!(ss >> info.filename >> info.nevent >> info.momentum >> info.particle >> info.phi >> info.theta))
+		if(!(ss >> info.filename >> info.vertexfile >> info.momentum >> info.particle >> info.phi >> info.theta))
 		{
 			std::cerr << "Cannot read line " << line << "\n";
 			continue;
@@ -80,7 +80,7 @@ std::vector<RunInfo> RunListFromFile(const std::string& t_filename)
 	
 }
 
-const int num_jobs_in_queue = 10; // only allow this amount of jobs on ember for other users
+const int num_jobs_in_queue = 50; // only allow this amount of jobs on ember for other users
 
 void run_general(const std::string& t_config_list, int t_start_from = 1, int t_num_jobs_to_be_submitted = num_jobs_in_queue)
 {
@@ -115,7 +115,7 @@ void run_general(const std::string& t_config_list, int t_start_from = 1, int t_n
 		// right now we assume number of produced particles = total num / 6 as 6 being the numbers of available cocktail particles
 		// start simulation
 		std::cout << "Start simulation with output " << output_name << "\n";
-		TString command = TString::Format("sbatch ./submit_general.sh \"%s\" %d %f %d %f %f %d \"%s\"", output_name.Data(), info.nevent, info.momentum, info.particle, info.phi, info.theta, job_order + num_jobs_in_queue, t_config_list.c_str());
+		TString command = TString::Format("sbatch ./submit_general.sh \"%s\" \"%s\" %f %d %f %f %d \"%s\"", output_name.Data(), info.vertexfile.c_str(), info.momentum, info.particle, info.phi, info.theta, job_order + num_jobs_in_queue, t_config_list.c_str());
 
 		std::cout << " With command " << command << "\n";
 		system(command.Data());
