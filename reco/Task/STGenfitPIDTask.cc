@@ -80,7 +80,7 @@ STGenfitPIDTask::Init()
     fTreeBDC -> SetBranchAddress("ProjP",&fPBDC);
 
     fTreeBeam = (TTree *) fFileBDC -> Get("TBeam");
-    fTreeBeam -> SetBranchAddress("intA",fABeam);
+    fTreeBeam -> SetBranchAddress("intA",&fABeam);
 
     fCovMatBDC = new TMatrixDSym(3);
   }
@@ -338,7 +338,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     Int_t idxHelix = fHelixTrackArray -> GetEntries();
     STHelixTrack *bdcTrack = new ((*fHelixTrackArray)[idxHelix]) STHelixTrack(idxHelix);
     bdcTrack -> SetGenfitMomentum(fPBDC);
-    bdcTrack -> SetCharge(fABeam);
+    bdcTrack -> SetTrackID(fABeam);
 
     Double_t bdcYOffset = -224.1573;
 
@@ -347,19 +347,19 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     cluster1 -> SetIsStable(true);
     cluster1 -> SetCharge(-1);
     cluster1 -> SetPosition(fXBDC1,fYBDC1+bdcYOffset,-2579.6);
-    bdcTrack -> AddCluster(cluster1);
+    bdcTrack -> AddHitCluster(cluster1);
 
     auto cluster2 = new ((*fHitClusterArray)[idxCluster++]) STHitCluster();
     cluster1 -> SetIsStable(true);
     cluster1 -> SetCharge(-1);
     cluster1 -> SetPosition(fXBDC2,fYBDC2+bdcYOffset,-1579.56);
-    bdcTrack -> AddCluster(cluster2);
+    bdcTrack -> AddHitCluster(cluster2);
 
     auto cluster3 = new ((*fHitClusterArray)[idxCluster++]) STHitCluster();
     cluster1 -> SetIsStable(true);
     cluster1 -> SetCharge(-1);
     cluster1 -> SetPosition(fXBDC3,fYBDC3+bdcYOffset,-8.9);
-    bdcTrack -> AddCluster(cluster3);
+    bdcTrack -> AddHitCluster(cluster3);
 
     genfit::Track *gfBDCTrack = fGenfitTest -> FitBDC(bdcTrack, 1000501320);
     if (gfBDCTrack == nullptr) {

@@ -132,14 +132,16 @@ genfit::Track* STGenfitTest2::FitBDC(STHelixTrack *bdcTrack, Int_t pdg)
   for (Int_t iComp = 3; iComp < 6; iComp++)
     covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
 
-  Double_t momSeedMag = bdcTrack -> GetGenfitMomentum();
-  TVector3 momSeed(0., 0., momSeedMag/1000.);
+  Double_t momSeedMag = 729;
+  TVector3 momSeed(0., 0., momSeedMag);
 
   trackCand.setCovSeed(covSeed);
-  trackCand.setPosMomSeed(posSeed, momSeed, bdcTrack -> Charge());
+  //trackCand.setPosMomSeed(posSeed, momSeed, bdcTrack -> GetTrackID()/*temporarily used as charge*/);
+  trackCand.setPosMomSeed(posSeed, momSeed, 0/*temporarily used as charge*/);
 
   genfit::Track *gfTrack = new ((*fGenfitTrackArray)[fGenfitTrackArray -> GetEntriesFast()]) genfit::Track(trackCand, *fMeasurementFactory);
-  gfTrack -> addTrackRep(new genfit::RKTrackRep(pdg));
+  //gfTrack -> addTrackRep(new genfit::RKTrackRep(pdg));
+  gfTrack -> addTrackRep(new genfit::RKTrackRep(2112));
 
   genfit::RKTrackRep *trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
 
@@ -221,8 +223,8 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
 
   Double_t dip = helixTrack -> DipAngle();
   Double_t momSeedMag = helixTrack -> Momentum();
-  TVector3 momSeed(0., 0., momSeedMag/1000.);
-  momSeed.SetTheta(-1*dip);
+  TVector3 momSeed(0., 0., momSeedMag);
+  momSeed.SetTheta(TMath::Pi()/2. - dip);
 
   trackCand.setCovSeed(covSeed);
   trackCand.setPosMomSeed(posSeed, momSeed, helixTrack -> Charge());
@@ -317,8 +319,8 @@ genfit::Track* STGenfitTest2::FitTrackWithVertex(STHelixTrack *helixTrack, STHit
 
   Double_t dip = helixTrack -> DipAngle();
   Double_t momSeedMag = helixTrack -> Momentum();
-  TVector3 momSeed(0., 0., momSeedMag/1000.);
-  momSeed.SetTheta(-1*dip);
+  TVector3 momSeed(0., 0., momSeedMag);
+  momSeed.SetTheta(TMath::Pi()/2. - dip);
 
   trackCand.setCovSeed(covSeed);
   trackCand.setPosMomSeed(posSeed, momSeed, helixTrack -> Charge());
