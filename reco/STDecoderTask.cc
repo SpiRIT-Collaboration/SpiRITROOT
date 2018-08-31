@@ -322,6 +322,23 @@ STDecoderTask::Exec(Option_t *opt)
 void
 STDecoderTask::CheckSaturation(STRawEvent *event)
 {
+
+  Double_t fGainMatchingDataScale[112];
+  for (auto iLayer = 0; iLayer < 112; iLayer++)
+    fGainMatchingDataScale[iLayer] = 1;
+  
+  if (!(fGainMatchingData.IsNull()))
+    {
+      //    cout<< "== [STDecoderTask] Low anode gain file set!" <<endl;
+      std::ifstream matchList(fGainMatchingData.Data());
+      Int_t layer = 0;
+      Double_t relativeGain = 0;
+      for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
+	matchList >> layer >> relativeGain;
+	fGainMatchingDataScale[layer] = relativeGain;
+      }
+    }
+  
   //Find if a pad is saturated using Bill's pole zero technique 
   //Returns Time bucket (tb) position of begining of final saturating pulse
   //From this tb position we should not embed any hits also the pad is flagged saturated 
@@ -417,8 +434,10 @@ STDecoderTask::CheckSaturation(STRawEvent *event)
 	      value_min = minval.at(l);
 	    }
 	}
-      
-      if(time_over_thresh > 8 &&  value_min < thresh && max_value > 500 )
+
+      double gain = fGainMatchingDataScale[pad->GetLayer()];
+
+      if(time_over_thresh > 8 &&  value_min < (thresh*gain) && max_value > (gain*500) )
 	{
 	  pad -> SetIsSaturated(true);
 	  pad -> SetSaturatedTb(max_tb - 5);
