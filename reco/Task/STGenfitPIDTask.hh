@@ -11,6 +11,9 @@
 #include "STRecoTrackCandList.hh"
 #include "STVertex.hh"
 
+#include "TFile.h"
+#include "TTree.h"
+
 class STGenfitPIDTask : public STRecoTask
 {
   public:
@@ -32,14 +35,17 @@ class STGenfitPIDTask : public STRecoTask
     void SetTargetPlane(Double_t x, Double_t y, Double_t z);
 
     void SetMaxDCluster(Double_t val) { fMaxDCluster = val; }
+    void WriteYOffsetCalibrationFile();
 
     genfit::GFRaveVertexFactory *GetVertexFactoryInstance();
+    void WriteClusterCovFile();
 
   private:
     TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fCandListArray = nullptr;
     TClonesArray *fRecoTrackArray = nullptr;
     TClonesArray *fVertexArray = nullptr;
+    TClonesArray *fPadHitArray = nullptr;
 
     bool fIsListPersistence = false;
     bool fIsSamurai = true;
@@ -66,6 +72,24 @@ class STGenfitPIDTask : public STRecoTask
     Double_t fTargetZ = -8.9;
 
     Double_t fMaxDCluster = 9999;
+
+    TFile *fYOffsetCalibrationFile = nullptr;
+    TTree *fHitTree = nullptr;
+    Float_t fHitDY;
+    Float_t fHitDW;
+    Short_t fHitRow;
+    Short_t fHitLayer;
+
+    TFile *fClusterCovFile = nullptr;
+    TTree *fClusterTree = nullptr;
+    Float_t fClusterDX;
+    Float_t fClusterDY;
+    Float_t fClusterDZ;
+    Short_t fClusterSize;
+    Bool_t fClusterIsLayer;
+    Float_t fClusterTLTL;
+    Float_t fClusterTATA;
+    Float_t fClusterL;
 
   ClassDef(STGenfitPIDTask, 1)
 };

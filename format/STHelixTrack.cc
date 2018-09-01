@@ -458,9 +458,28 @@ Bool_t STHelixTrack::IsPositiveChargeParticle()  const { return fIsPositiveCharg
 
 
 
+Int_t STHelixTrack::GetNumPadHits() const { return fPadHits.size(); }
+STHit *STHelixTrack::GetPadHit(Int_t idx) const { return fPadHits.at(idx); }
+std::vector<STHit *> *STHelixTrack::GetPadHitArray() { return &fPadHits; }
+Bool_t STHelixTrack::AddPadHit(STHit *padHit)
+{
+  for (auto hit : fPadHits)
+    if (hit->GetRow()==padHit->GetRow() && hit->GetLayer()==padHit->GetLayer())
+      return false;
+
+  fPadHits.push_back(padHit);
+  return true;
+}
+
 Int_t STHelixTrack::GetNumHits() const { return fMainHits.size(); }
 STHit *STHelixTrack::GetHit(Int_t idx) const { return fMainHits.at(idx); }
 std::vector<STHit *> *STHelixTrack::GetHitArray() { return &fMainHits; }
+STHit *STHelixTrack::FindHit(Int_t row, Int_t layer) {
+  for (auto hit : fMainHits)
+    if (row==hit->GetRow() && layer==hit->GetLayer())
+      return hit;
+  return nullptr;
+}
 
 Int_t STHelixTrack::GetNumCandHits() const { return fCandHits.size(); }
 std::vector<STHit *> *STHelixTrack::GetCandHitArray() { return &fCandHits; }
