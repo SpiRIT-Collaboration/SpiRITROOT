@@ -59,7 +59,7 @@ STGenfitPIDTask::Init()
   fRootManager -> Register("STVertex", "SpiRIT", fVertexArray, fIsPersistence);
 
   fPadHitArray = new TClonesArray("STHit");
-  fRootManager -> Register("STPadHit", "SpiRIT", fPadHitArray, false);
+  fRootManager -> Register("STPadHit", "SpiRIT", fPadHitArray, fIsPadHitPersistence);
   fGenfitTest -> SetPadHitArray(fPadHitArray);
 
   if (!fBDCName.IsNull()) {

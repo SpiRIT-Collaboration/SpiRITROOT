@@ -554,7 +554,9 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
       Int_t row = (x+432)/8;
       Int_t layer = z/12;
 
-      auto padHit = (STHit *) fPadHitArray -> ConstructedAt(fPadHitArray->GetEntries());
+      Int_t idx = fPadHitArray->GetEntries();
+      auto padHit = (STHit *) fPadHitArray -> ConstructedAt(idx);
+      padHit -> SetHitID(idx);
 
       padHit -> SetRow(row);
       padHit -> SetLayer(layer);
@@ -565,13 +567,13 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
       padHit -> SetPosition(x,y,z);
       auto foundHit = helixTrack -> FindHit(row, layer);
       if (foundHit != nullptr) {
-        padHit -> SetHitID(foundHit->GetHitID());
+        padHit -> SetTrackID(foundHit->GetHitID());
         padHit -> SetCharge(foundHit->GetCharge());
         charge_mean += foundHit->GetCharge();
         ++count_mean;
       }
       else {
-        padHit -> SetHitID(-1);
+        padHit -> SetTrackID(-1);
         padHit -> SetCharge(-1);
       }
     }

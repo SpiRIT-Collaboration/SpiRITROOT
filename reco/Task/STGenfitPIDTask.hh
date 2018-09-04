@@ -22,6 +22,7 @@ class STGenfitPIDTask : public STRecoTask
     ~STGenfitPIDTask();
 
     void SetListPersistence(bool val = true) { fIsListPersistence = val; }
+    void SetPadHitPersistence(bool val = true) { fIsPadHitPersistence = val; }
     void SetPersistence(bool val = true) { fIsPersistence = val; }
 
     void SetClusteringType(Int_t type);
@@ -35,10 +36,15 @@ class STGenfitPIDTask : public STRecoTask
     void SetTargetPlane(Double_t x, Double_t y, Double_t z);
 
     void SetMaxDCluster(Double_t val) { fMaxDCluster = val; }
+
+
+    void MakeYOffsetCalibrationFile(TString fileName);
     void WriteYOffsetCalibrationFile();
 
-    genfit::GFRaveVertexFactory *GetVertexFactoryInstance();
+    void MakeClusterCovFile(TString fileName);
     void WriteClusterCovFile();
+
+    genfit::GFRaveVertexFactory *GetVertexFactoryInstance();
 
   private:
     TClonesArray *fHelixTrackArray = nullptr;
@@ -48,6 +54,7 @@ class STGenfitPIDTask : public STRecoTask
     TClonesArray *fPadHitArray = nullptr;
 
     bool fIsListPersistence = false;
+    bool fIsPadHitPersistence = false;
     bool fIsSamurai = true;
 
     TString fGFRaveVertexMethod;
