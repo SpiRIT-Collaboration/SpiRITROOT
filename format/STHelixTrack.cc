@@ -470,8 +470,8 @@ Int_t STHelixTrack::GetNumEmbedClusters() const
   Int_t num_embed = 0;
   for (auto cluster : fHitClusters)
     {
-      if(cluster->IsEmbed() == true);
-	 num_embed++;
+      if(cluster->IsEmbed() == true)
+	num_embed++;
     }
 
   return num_embed;

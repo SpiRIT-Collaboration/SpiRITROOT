@@ -24,6 +24,11 @@ class STEmbedTrack : public TObject
   void SetFinalTrack(STRecoTrack *);
   void SetInitialTrack(STMCTrack *);
 
+  Int_t GetNumRowClusters(){return num_row;};
+  Int_t GetNumLayerClusters(){return num_layer;};
+  Int_t GetNumRowClusters90(){return num_row90;};
+  Int_t GetNumLayerClusters90(){return num_layer90;};
+  
   TVector3 GetInitialMom(){return iMomentum;};
   TVector3 GetFinalMom(){return fMomentum;};
   TVector3 GetInitialVertex(){return iVertex;};
@@ -42,6 +47,12 @@ private:
 
   Int_t helix_id;    //helix track ID
   Bool_t fIsEmbed;    //
+
+  Int_t num_row;    //number of row clusters 
+  Int_t num_layer;  //number of layer clusters 
+
+  Int_t num_row90;    //number of row clusters 
+  Int_t num_layer90;  //number of layer clusters 
 
   STPID::PID iPID;         //initial PID from MC
   STPID::PID fPID;         //final PID from software

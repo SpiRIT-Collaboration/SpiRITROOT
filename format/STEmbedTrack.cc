@@ -21,6 +21,13 @@ STEmbedTrack::STEmbedTrack(STEmbedTrack *track)
 
   iVertex = track -> GetInitialVertex();
   fVertex = track -> GetFinalVertex();
+
+  num_row   = track -> GetNumRowClusters();
+  num_layer = track -> GetNumLayerClusters();
+ 
+  num_row90   = track -> GetNumRowClusters90();
+  num_layer90 = track -> GetNumLayerClusters90();
+
 }
 
 STEmbedTrack::~STEmbedTrack()
@@ -30,6 +37,9 @@ STEmbedTrack::~STEmbedTrack()
 void STEmbedTrack::Clear()
 {
   //  fIsMatched = false;
+
+  num_row   = -1;
+  num_layer = -1;
 
   iPID = STPID::kNon;
   fPID = STPID::kNon;
@@ -47,6 +57,13 @@ void STEmbedTrack::SetFinalTrack(STRecoTrack *track)
   fMomentum = track -> GetMomentum();
   fPID      = track -> GetPID();
   fVertex   = track -> GetPOCAVertex();
+
+  num_row   = track -> GetNumRowClusters();
+  num_layer = track -> GetNumLayerClusters();
+ 
+  num_row90   = track -> GetNumRowClusters90();
+  num_layer90 = track -> GetNumLayerClusters90();
+
 }
 
 void STEmbedTrack::SetInitialTrack(STMCTrack *track)
