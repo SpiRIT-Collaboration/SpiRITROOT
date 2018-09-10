@@ -93,6 +93,7 @@ class STDriftTask : public FairTask
     Double_t fCoefT;    //!< Transversal diffusion coefficient. [mm^(-1/2)]
     Double_t fCoefL;    //!< Longitudinal diffusion coefficient. [mm^(-1/2)]
     Double_t fGain;     //!< Gain.
+    Double_t fYDriftOffset; //!< offset for drift time
 
     STDriftTask(const STDriftTask&);
     STDriftTask operator=(const STDriftTask&);

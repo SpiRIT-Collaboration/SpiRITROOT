@@ -50,6 +50,7 @@ Double_t STDigiPar::GetGCConstant()                  { return fGCConstant; }
 Double_t STDigiPar::GetGCLinear()                    { return fGCLinear; }
 Double_t STDigiPar::GetGCQuadratic()                 { return fGCQuadratic; }
 Bool_t   STDigiPar::IsEmbed()                        { return fIsEmbed; }
+Double_t STDigiPar::GetYDriftOffset()                { return fYDriftOffset; }
 
 void     STDigiPar::SetIsEmbed(Bool_t val)               { fIsEmbed = val; }
 
@@ -187,6 +188,11 @@ STDigiPar::getParams(FairParamList *paramList)
       return kFALSE;
     }
 
+    if (!(paramList -> fill("YDriftOffset", &fYDriftOffset))) {
+      fLogger -> Info(MESSAGE_ORIGIN, "YDriftOffset not found. It will be set to zero.");
+      fYDriftOffset = 0;
+    }
+
     fInitialized = kTRUE;
   }
 
@@ -214,7 +220,6 @@ STDigiPar::putParams(FairParamList *paramList)
     fLogger -> Fatal(MESSAGE_ORIGIN, "Parameter list doesn't exist!");
     return;
   }
-
   paramList -> add("PadPlaneX", fPadPlaneX);
   paramList -> add("PadPlaneZ", fPadPlaneZ);
   paramList -> add("PadSizeX", fPadSizeX);
@@ -245,6 +250,7 @@ STDigiPar::putParams(FairParamList *paramList)
   paramList -> add("GCConstant", fGCConstant);
   paramList -> add("GCLinear", fGCLinear);
   paramList -> add("GCQuadratic", fGCQuadratic);
+  paramList -> add("YDriftOffset", fYDriftOffset);
 }
 
 TString 

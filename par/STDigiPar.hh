@@ -66,6 +66,7 @@ class STDigiPar : public FairParGenericSet
     /// returns the time duration of a time bucket in given sampling time in ns.
        Int_t GetTBTime();
     Bool_t IsEmbed();
+    Double_t GetYDriftOffset();
     void SetIsEmbed(Bool_t val);
 
   private :
@@ -109,6 +110,7 @@ class STDigiPar : public FairParGenericSet
     Double_t fGCConstant;
     Double_t fGCLinear;
     Double_t fGCQuadratic;
+    Double_t fYDriftOffset;
 
   ClassDef(STDigiPar, 1);
 };

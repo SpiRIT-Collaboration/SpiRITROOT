@@ -36,4 +36,5 @@ TrackingParFile:Int_t           6
 GCConstant:Double_t             3.576E-2
 GCLinear:Double_t               1.671E-3
 GCQuadratic:Double_t            -2.358E-8
+YDriftOffset:Double_t           21.242
 #########################################################################

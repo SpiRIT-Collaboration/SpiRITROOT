@@ -111,6 +111,7 @@ STDriftTask::Init()
   fCoefT    = fPar->GetCoefDiffusionTrans()*sqrt(10.); // [cm^(-1/2)] to [mm^(-1/2)]
   fCoefL    = fPar->GetCoefDiffusionLong()*sqrt(10.);  // [cm^(-1/2)] to [mm^(-1/2)]
   fGain     = fPar->GetGain();
+  fYDriftOffset = fPar->GetYDriftOffset();
 
   if(fSpline)
     fInterpolator = BichselCorrection(fSpecies);
@@ -161,7 +162,7 @@ STDriftTask::Exec(Option_t* option)
     }
     
     Double_t lDrift = fYAnodeWirePlane-(fMCPoint->GetY())*10; // drift length [mm]
-    Double_t tDrift = lDrift/fVelDrift; // drift time [ns]
+    Double_t tDrift = lDrift/fVelDrift + fYDriftOffset; // drift time [ns]
     Double_t sigmaL = fCoefL*sqrt(lDrift); // sigma in longitudinal direction
     Double_t sigmaT = fCoefT*sqrt(lDrift); // sigma in transversal direction
 
