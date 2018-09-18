@@ -136,15 +136,18 @@ STPadResponseTask::Exec(Option_t* option)
 
         Double_t x1 = jRow*fPadSizeRow - fXPadPlane/2;     // pad x-range lower edge
         Double_t x2 = (jRow+1)*fPadSizeRow - fXPadPlane/2; // pad x-range higth edge
+
+	Double_t sigma = 3.14;
+	Double_t x1_p = (x1-xEl)/(sqrt(2)*sigma);
+	Double_t x2_p = (x2-xEl)/(sqrt(2)*sigma);
+
         Double_t content;
         if(!fAssumeGausPRF){
           content = gain*fFillRatio[type][iLayer]
                    *(fPRIRow->Eval(x2-xEl)-fPRIRow->Eval(x1-xEl));
         }
         else{
-          content = gain*fFillRatio[type][iLayer]
-                   *( (0.5*TMath::Erf((x2-xEl)/fPRIPar0)) 
-                     -(0.5*TMath::Erf((x1-xEl)/fPRIPar0)) );
+          content = gain*fFillRatio[type][iLayer]* .5*(TMath::Erf(x2_p) - TMath::Erf(x1_p));
         }
         Double_t content0 = pad->GetADC(iTb);
         pad -> SetADC(iTb, content0+content);
@@ -236,13 +239,28 @@ STPadResponseTask::InitPRF()
                      "STPadResponseTask","PRFunction");
   fPRLayer -> SetParameter(0,12);
 
-  Double_t spacingWire = 4;
-  Double_t totL = fPRLayer->Integral(-effRangePR/2,effRangePR/2);
+  Double_t spacingWire = 4.;
+
+  Double_t sigma = 3.14;
+  Double_t x1 = -effRangePR/2.;
+  Double_t x2 = effRangePR/2.;
+
+  Double_t x1_p = x1/(sqrt(2)*sigma);
+  Double_t x2_p = x2/(sqrt(2)*sigma);
+  Double_t totL =  .5*(TMath::Erf(x2_p) - TMath::Erf(x1_p));
+
   for(Int_t iType=0; iType<3; iType++){
     for(Int_t iPad=0; iPad<5; iPad++){
-      Double_t val 
-        = fPRLayer->Integral(-fPadSizeLayer/2+(iPad-2)*fPadSizeLayer-(iType-1)*spacingWire,
-                              fPadSizeLayer/2+(iPad-2)*fPadSizeLayer-(iType-1)*spacingWire);
+
+      x1 = -fPadSizeLayer/2+(iPad-2)*fPadSizeLayer-(iType-1)*spacingWire;
+      x2 =  fPadSizeLayer/2+(iPad-2)*fPadSizeLayer-(iType-1)*spacingWire;
+      //      x1_p = (x1 -(iType-1)*spacingWire)/(sqrt(2)*sigma);
+      //      x2_p = (x2 -(iType-1)*spacingWire)/(sqrt(2)*sigma);
+      x1_p = (x1)/(sqrt(2)*sigma);
+      x2_p = (x2)/(sqrt(2)*sigma);
+
+      Double_t val = .5*(TMath::Erf(x2_p) - TMath::Erf(x1_p));
+
       fFillRatio[iType][iPad] = val/totL;
     }
   }

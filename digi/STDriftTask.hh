@@ -58,7 +58,7 @@ class STDriftTask : public FairTask
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
     TString fSpecies; ///< set the species for the energy loss correction
-    Bool_t fSpline; // use spline interpolation instead of analitical function
+    Bool_t fSpline = false; // use spline interpolation instead of analitical function
     Bool_t fVerbose; // testing with cout 
     ROOT::Math::Interpolator* fInterpolator; 
     Double_t fPmin, fPmax;

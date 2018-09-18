@@ -148,18 +148,19 @@ STDriftTask::Exec(Option_t* option)
 
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
     fMCPoint = (STMCPoint*) fMCPointArray->At(iPoint);
-    Double_t eLoss;
-    if(fSpline){
-      eLoss = (fMCPoint->GetEnergyLoss())*1.E9*fInterpolator->Eval(p); // [GeV] to [eV]        
-//      std::cout<<"[STDriftTask] energy loss GEANT4: " << (fMCPoint->GetEnergyLoss())*1.E9 << " eV" << std::endl;
-//      std::cout<<"[STDriftTask] energy loss Bichsel (with spline interpolation): " << eLoss << " eV" << std::endl;      
-    }
-    else{
-      eLoss = (fMCPoint->GetEnergyLoss())*1.E9*BichselCorrection(fSpecies,p); // [GeV] to [eV]        
-//      std::cout<<"[STDriftTask] energy loss GEANT4: " << (fMCPoint->GetEnergyLoss())*1.E9 << " eV" << std::endl;
-//      std::cout<<"[STDriftTask] energy loss Bichsel (with analytical fitting): " << eLoss << " eV" << std::endl;            
-    }
-    
+    Double_t eLoss = 0.;
+    if(fSpline)
+      {
+	eLoss = (fMCPoint->GetEnergyLoss())*1.E9*fInterpolator->Eval(p); // [GeV] to [eV]        
+	//      std::cout<<"[STDriftTask] energy loss GEANT4: " << (fMCPoint->GetEnergyLoss())*1.E9 << " eV" << std::endl;
+	std::cout<<"[STDriftTask] energy loss Bichsel (with spline interpolation): " << eLoss << " eV" << std::endl;      
+      }
+    else
+      {
+        eLoss = (fMCPoint->GetEnergyLoss())*1.E9; // [GeV] to [eV]        
+	//      eLoss = (fMCPoint->GetEnergyLoss())*1.E9*BichselCorrection(fSpecies,p); // [GeV] to [eV]
+      }
+
     Double_t lDrift = fYAnodeWirePlane-(fMCPoint->GetY())*10; // drift length [mm]
     Double_t tDrift = lDrift/fVelDrift; // drift time [ns]
     Double_t sigmaL = fCoefL*sqrt(lDrift); // sigma in longitudinal direction
