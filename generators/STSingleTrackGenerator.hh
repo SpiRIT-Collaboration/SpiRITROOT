@@ -27,74 +27,25 @@ public:
 
 	void OpenFile(const std::string& t_filename);
 
-	inline bool IsOpen(){ return file_.is_open(); };
-	inline bool IsEnd() { return line_.find_first_not_of(' ') == std::string::npos; };
+	inline bool IsOpen(){ return vectors_.size() > 0; };
+	inline bool IsEnd() { return it_ == vectors_.end(); };
 
-	void Next();
-	void LoopOver();	
-	TVector3 GetVertex();
+	void Next() {++it_;};
+	void LoopOver() {it_ = vectors_.begin();};	
+	int GetNumEvent() { int num = vectors_.size(); LOG(INFO) << " Number of events: " << num << FairLogger::endl; return num;};
+	TVector3 GetVertex() { return *it_;};
 private:
-	std::ifstream file_;
-	std::string line_;
+	std::vector<TVector3> vectors_;
+	std::vector<TVector3>::iterator it_;
 };
 
 class TrackParser
 {
 public:
-	TrackParser(const std::string& t_filename)
-	{
-		LOG(INFO) << "Reading configuration file " << t_filename << FairLogger::endl;
-		LOG(INFO) << std::setw(20) << "Key" << std::setw(20) << "Content" << FairLogger::endl;
+	TrackParser(const std::string& t_filename);
 
-		std::ifstream file(t_filename.c_str());
-		if(!file.is_open())
-			LOG(FATAL) << "Cannot read generator file " << t_filename << FairLogger::endl;
-
-		std::string line, key, content;
-		while(std::getline(file, line))
-		{
-			// erase everything after # char
-			auto pos = line.find("#");
-			if(pos != std::string::npos)
-				line.erase(line.begin() + pos, line.end());
-
-			const auto first_char = line.find_first_not_of(" \t\r\n");
-			if(first_char == std::string::npos) // skip if the line is empty
-				continue;
-
-
-			std::stringstream ss(line);
-			// first element is the key, second one is content
-			ss >> key >> std::ws;
-			std::getline(ss, content);
-			
-			// check and see if key exist
-			if( keys2lines_.find(key) != keys2lines_.end() )
-				LOG(ERROR) << "Key value " << key << " is duplicated. Only the newest value will be loaded\n";
-
-			keys2lines_[key] = content;
-			
-			LOG(INFO) << std::setw(20) << key << std::setw(20) << content << FairLogger::endl;
-		}
-	};
-
-	bool AllKeysExist(const std::vector<std::string> t_list_of_keys)
-	{
-		for(const auto& key : t_list_of_keys)
-			if(keys2lines_.find(key) == keys2lines_.end())
-				return false;
-		return true;
-	};
-
-	TVector3 GetVector3(const std::string& t_key)
-	{
-		std::stringstream ss(keys2lines_.at(t_key));
-		double x, y, z;
-		if(!(ss >> x >> y >> z))
-			LOG(FATAL) << t_key << " cannot be read as TVector as its content does not contain 3 values" << FairLogger::endl;
-
-		return TVector3(x, y, z);
-	};
+	bool AllKeysExist(const std::vector<std::string> t_list_of_keys);
+	TVector3 GetVector3(const std::string& t_key);
 
 	template<class T>
 	T Get(const std::string& t_key)

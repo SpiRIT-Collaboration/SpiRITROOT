@@ -70,10 +70,10 @@ class STHitCluster : public STHit
     void ApplyCovLowLimit();
 
     void SetChi(Double_t chi) { fChi = chi; } 
-    Double_t GetChi() { return fChi; }
+    Double_t GetChi() const { return fChi; }
 
     void SetLambda(Double_t dip) { fLambda = dip; }
-    Double_t GetLambda() { return fLambda; }
+    Double_t GetLambda() const { return fLambda; }
 
   protected:
     TMatrixD fCovMatrix;                  ///< Cluster covariance matrix
