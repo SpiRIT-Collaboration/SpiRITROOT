@@ -40,8 +40,10 @@ void run_reco_mc
   FairParAsciiFileIo* parReader = new FairParAsciiFileIo();
   parReader -> open(par);
 
+  auto inputFile = new FairFileSource(in1);
+
   FairRunAna* run = new FairRunAna();
-  run -> SetInputFile(in1);
+  run -> SetSource(inputFile);
   run -> AddFriend(in2);
   run -> SetGeomFile(geo);
   run -> SetOutputFile(out);
@@ -80,6 +82,19 @@ void run_reco_mc
   recoHeader -> Write("RecoHeader");
 
   run -> Init();
+
+  auto index = 1;
+  while (kTRUE) {
+    auto copyLine = in1;
+    auto path = copyLine.ReplaceAll("digi", Form("digi_%d", index++));
+    cout << path << endl;
+
+    if (!(gSystem -> IsFileInIncludePath(path)))
+      break;
+
+    inputFile -> GetInChain() -> AddFile(path);
+  }
+
   run -> Run(0, fNumEventsInSplit);
   //run -> Run(0, 2);
 
