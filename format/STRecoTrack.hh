@@ -22,6 +22,7 @@ class STRecoTrack : public STRecoTrackCand
 {
   private:
     Int_t fCharge; ///< Charge of the particle
+    Int_t fGFCharge; ///< Charge of the particle by GenFit
     Int_t fParentID; ///< ID from parent track
     Int_t fVertexID; ///< ID from vertex branch
     Int_t fHelixID; ///< Helix track ID
@@ -66,6 +67,9 @@ class STRecoTrack : public STRecoTrackCand
 
     void SetCharge(Int_t val) { fCharge = val; }
     Int_t GetCharge() { return fCharge; }
+
+    void SetGenfitCharge(Int_t val) { fGFCharge = val; }
+    Int_t GetGenfitCharge() { return fGFCharge; }
 
     void SetParentID(Int_t val) { fParentID = val; }
     Int_t GetParentID() { return fParentID; }
@@ -149,7 +153,7 @@ class STRecoTrack : public STRecoTrackCand
     void SetRecoID(Int_t val) { fRecoID = val; }
     Int_t GetRecoID() { return fRecoID; }
 
-  ClassDef(STRecoTrack, 7);
+  ClassDef(STRecoTrack, 8);
 };
 
 #endif

@@ -30,6 +30,7 @@ STRecoTrack::STRecoTrack(STRecoTrack *recoTrack)
 
   // STRecoTrack class members
   fCharge = recoTrack -> GetCharge();
+  fGFCharge = recoTrack -> GetGenfitCharge();
   fParentID = recoTrack -> GetParentID();
   fVertexID = recoTrack -> GetVertexID();
   fHelixID = recoTrack -> GetHelixID();
@@ -69,6 +70,7 @@ void STRecoTrack::Clear(Option_t *option)
   STRecoTrackCand::Clear();
 
   fCharge = -2;
+  fGFCharge = -2;
   fParentID = -1;
   fVertexID = -1;
   fHelixID = -1;
