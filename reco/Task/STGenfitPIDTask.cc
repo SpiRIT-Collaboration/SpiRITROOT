@@ -238,6 +238,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
     recoTrack -> SetChi2(fitStatus -> getChi2());
     recoTrack -> SetNDF(fitStatus -> getNdf());
+    recoTrack -> SetGenfitCharge(fitStatus -> getCharge());
     try {
       recoTrack -> SetTrackLength(bestGenfitTrack -> getTrackLen());
     } catch (...) {
