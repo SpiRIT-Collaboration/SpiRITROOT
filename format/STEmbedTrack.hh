@@ -22,8 +22,6 @@ class STEmbedTrack : public TObject
 
   void Clear();
   void SetInitialTrack(STMCTrack *);
-  
-  STRecoTrack *GetFinalTrack(); //The most probable final track
   TVector3 GetInitialMom(){return iMomentum;};
   TVector3 GetInitialVertex(){return iVertex;};
   STPID::PID GetInitialPID(){return iPID;};
@@ -34,8 +32,10 @@ class STEmbedTrack : public TObject
 
   std::vector<STRecoTrack *> *GetRecoTrackArray() {return recotrack_ary;};
   void SetRecoTrackArray(std::vector<STRecoTrack *> *array) {recotrack_ary = array;};
+  void SetArrayID(Int_t id){array_id = id;};
 
 private:
+  Int_t array_id;    // id in STReco TClonesArray
 
   Int_t helix_id;    //helix track ID
   Bool_t fIsEmbed;    //

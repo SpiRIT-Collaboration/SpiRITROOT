@@ -1,7 +1,7 @@
 void run_eve
 (
-  TString name = "run3000_s0", 
-  TString pathToData = "/Users/ejungwoo/spiritroot/macros/data/",
+  TString name = "Run2841_NoYDriftOffset/Run_2841_full.reco.mc",//run2841_s1.reco.develop.1736.b2a5a3e",// run2841_s0.reco.develop.1733.e8e67e6",//mc0_s0",//urqmd_short", 
+  TString pathToData = "data/",//"/Users/ejungwoo/spiritroot/macros/data/",
   TString parname = "ST.parameters.Commissioning_201604.par",
   /*
    * - If dataList is "", deactivate single pad data,
@@ -9,18 +9,19 @@ void run_eve
    *   XXX This may cause serious speed problem if meta data is not set.
    *   (depending on the system) if startEventID is not correct, pad may not match.
   */
-  TString dataList = "list_run3000.txt",
+  TString dataList = "",//"list_run3000.txt",
     Int_t runNo = 3000,
     Int_t startEventID = 0,
    Bool_t useMeta = false,
-  TString supplePath = "/data/Q16264/rawdataSupplement"
+  TString supplePath = "/data/Q16264/rawdataSupplement",
+  TString evtlist = ""
 )
 {
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
   if (pathToData.IsNull())
     pathToData = spiritroot+"macros/data/";
 
-  TString input     = pathToData + name + ".reco.root";
+  TString input     = pathToData + name + ".root";
   TString output    = pathToData + name + ".eve.root";
   TString parameter = spiritroot + "parameters/"  + parname;
   TString geomety   = spiritroot + "geometry/geomSpiRIT.man.root";
@@ -36,12 +37,13 @@ void run_eve
   eve -> SetGeomFile(geomety);        // Set geometry file (string)
   eve -> SetVolumeTransparency(80);   // Set geometry transparency (integer, 0~100)
   eve -> SetViewerPoint(-0.7, 1.1);   // Set camera angle (theta, phi)
+  if(!evtlist.IsNull()) eve -> ReadEventList(std::string(evtlist.Data()));
 
   STEveDrawTask *draw = new STEveDrawTask();
-  draw -> SetRendering("mc",         false);
-  draw -> SetRendering("digi",       false);
+  draw -> SetRendering("mc",         true);
+  draw -> SetRendering("digi",       true);
   draw -> SetRendering("hit",        true);
-  draw -> SetRendering("hitbox",     false);
+  draw -> SetRendering("hitbox",     true);
   draw -> SetRendering("helixhit",   true);
   draw -> SetRendering("helix",      true);
   draw -> SetRendering("cluster",    true);

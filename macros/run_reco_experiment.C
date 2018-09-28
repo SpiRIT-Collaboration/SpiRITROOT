@@ -78,7 +78,7 @@ void run_reco_experiment
 
   STDecoderTask *decoder = new STDecoderTask();
   decoder -> SetUseSeparatedData(true);
-  decoder -> SetPersistence(false);
+  decoder -> SetPersistence(true);
   if (fGCData.IsNull())
     decoder -> SetUseGainCalibration(false);
   else
@@ -115,7 +115,7 @@ void run_reco_experiment
 //  preview -> SetSelectingEvents(*events[fRunNo]);
 
   auto psa = new STPSAETask();
-  psa -> SetPersistence(false);
+  psa -> SetPersistence(true);
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
   // Pulse having long tail
@@ -126,8 +126,8 @@ void run_reco_experiment
   psa -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
 
   auto helix = new STHelixTrackingTask();
-  helix -> SetPersistence(false);
-  helix -> SetClusterPersistence(false);
+  helix -> SetPersistence(true);
+  helix -> SetClusterPersistence(true);
   // Left, right, top and bottom sides cut
   helix -> SetClusterCutLRTB(420, -420, -64, -522);
   // High density region cut

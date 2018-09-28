@@ -1,6 +1,6 @@
 void run_reco_mc
 (
-  TString fName = "he4_lowmom",
+  TString fName = "Run2841_WithOffset/Run_2841_mc_low_energy",
   Int_t fRunNo = 0,
   Int_t fNumEventsInRun = 10000,
   Int_t fSplitNo = 0,
@@ -31,8 +31,8 @@ void run_reco_mc
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root";
   TString in1 = fPathToData+fName+".digi.root"; 
   TString in2 = fPathToData+fName+".mc.root"; 
-  TString out = fPathToData+"mc"+sRunNo+"_s"+sSplitNo+".reco."+version+".root";
-  TString log = fPathToData+"mc"+sRunNo+"_s"+sSplitNo+"."+version+".log";
+  TString out = fPathToData+fName+".reco.mc.root";
+  TString log = fPathToData+fName+".log";
 
   FairLogger *logger = FairLogger::GetLogger();
   logger -> SetLogToScreen(true);

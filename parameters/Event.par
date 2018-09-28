@@ -1,0 +1,15 @@
+################################################################################
+# Parameters used throughout SPiRITROOT software
+# Format:
+# parameter_name:parameter_type(Int_t-integer, Double_t-double) parameter_value
+# STGenPar
+# Description of parameters
+################################################################################ 
+[STGenPar]
+NEvents:Int_t			1000
+Particle:Int_t			211
+Momentum:Double_t		600               # MeV
+Theta:Double_t			30                # deg
+Phi:Double_t                    0                 # deg
+VertexRunNum:Int_t              2849
+#########################################################################

@@ -101,6 +101,20 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
 	  e_track.numEmbed = recoTrack->GetNumEmbedClusters();
 
 	  e_track_vec.push_back(e_track);
+
+	  TVector3 mom_reco = recoTrack -> GetMomentum();
+	  mom_reco -= mom_mc;
+
+	  if(iReco == 0)
+	    {
+	      min_mom = mom_reco.Mag();
+	      mostprob_idx = iReco;
+	    }
+	  else if(mom_reco.Mag() < min_mom)
+	    {
+	      min_mom = mom_reco.Mag();
+	      mostprob_idx = iReco;
+	    }
 	}
 
  
@@ -112,6 +126,7 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
 	  recotrack_ary -> push_back(el.reco);
 	  num_corr++;
 	}
+      embedTrack -> SetArrayID(mostprob_idx);
 
       //Always create embedTrack if there is MC track input
       //Failed correlation will give -999,-999,-999, momentum

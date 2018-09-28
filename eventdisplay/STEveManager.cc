@@ -88,7 +88,7 @@ void STEveManager::PrevEvent()   { RunEvent(fCurrentEventEntry - 1); }
 void STEveManager::RunEvent(Long64_t entry) 
 {
   fCurrentEventEntry = entry;
-  fRun -> Run(entry);
+  fRun -> Run(fEventList[entry]);
   gEve -> Redraw3D();
 }
 
@@ -124,6 +124,16 @@ void STEveManager::UpdateSubNumberEntry1()
 void STEveManager::UpdateSubNumberEntry2() 
 {
   STDebugLogger::InstanceX() -> SetIntPar("SubNum2", fSubNumberEntry2 -> GetIntNumber());
+}
+
+void STEveManager::ReadEventList(const std::string& t_filename) //!< Read events id that are interesting.
+{
+  std::ifstream file(t_filename.c_str());
+  if(!file.is_open())
+    fLogger->Fatal(MESSAGE_ORIGIN, "Cannot read event list");
+
+  unsigned event;
+  while(file >> event) fEventList.push_back(event);
 }
 
 void 
@@ -256,6 +266,14 @@ STEveManager::BuildMenu()
   FairRootManager* fRootManager = FairRootManager::Instance();
   TChain* chain = fRootManager -> GetInChain();
   fTotalNumEntries = chain -> GetEntriesFast();
+
+  if(fEventList.empty())
+  {
+    fEventList.reserve(fTotalNumEntries);
+    for(unsigned i = 0; i < fTotalNumEntries; ++i)
+      fEventList.push_back(i);
+  }else if(fEventList.back() < fTotalNumEntries)
+    fTotalNumEntries = fEventList.size(); // use event list if it is present.
 
   /********************************************************************/
 

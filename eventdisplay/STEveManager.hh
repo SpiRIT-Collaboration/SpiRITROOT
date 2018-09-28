@@ -86,6 +86,9 @@ class STEveManager : public TEveEventManager
     void SetNumHelixSet(Int_t num);           //!< Set number of helix set
     void SetNumCurveSet(Int_t num);           //!< Set number of curve set
     void SetRowLayer(Int_t row, Int_t layer); //!< Set row & layer
+    void ReadEventList(const std::string& t_filename); //!< Read events id that are interesting.
+
+
 
     // GETTERS
     TCanvas*  GetCvsPadPlane();
@@ -170,6 +173,8 @@ class STEveManager : public TEveEventManager
     Double_t fVRotate;      //!<  Vertical   rotation angle of 3D viewer point
     Color_t  fClearColor;   //!<  Background color of the 3D viewer
 
+    /// use vector because sometimes we only want to view a subset of all data
+    std::vector<Long64_t> fEventList;
     Long64_t fCurrentEventEntry; //!< Current entry (in tree) of the event.
     Long64_t fTotalNumEntries;   //!< Total number of entries
 

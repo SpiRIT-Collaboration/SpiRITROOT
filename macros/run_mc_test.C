@@ -29,27 +29,18 @@
  *   @ event : kTRUE to use constant field, with 0.5T. 
  *             kFALSE to use field map file 'SamuraiMap_0.5T.dat'.
  */
-#include <sys/stat.h>
-#include <sys/types.h>
-
-/*************************************************************
-* Functions needed to create directory if it is non-existance*
-* Only call recursive_mkdir. There's no need to call rek_mkdir   *
-**************************************************************/
-void rek_mkdir(char* path);
-void recursive_mkdir(const char* t_path);
-//************End of Directory creation function****************
 
 void AddIons(FairRunSim *fRun, TString event);
 
 void run_mc
 (
- TString name  = "Run_2841_mc_low_energy",
- Int_t   nEvent = -1,
- TString inputDir = "",
- TString outputDir = "data/",
+ TString name  = "urqmd_short",
+ Int_t   nEvent = 100,
  Bool_t  useFieldMapFile = kTRUE,
- TString parName = "Generator.config.par"
+ double  t_momentum = 0.8828, // which corresponds to the mean momentum of cocktail beam for proton
+ Int_t   t_particle = 2212, // appartently 2212 means proton. please google "pdg_table.txt" for details 
+ double  t_phi = 0,	// both in degree
+ double  t_theta = 0
 )
 {
   //////////////////////////////////////////////////////////
@@ -60,27 +51,19 @@ void run_mc
   
   
   // -----------------------------------------------------------------
-  // Set environment
+  // Set enveiroment
   TString workDir   = gSystem -> Getenv("VMCWORKDIR");
+  TString dataDir   = workDir + "/macros/data/";
   TString geomDir   = workDir + "/geometry";
   TString g4ConfDir = workDir + "/gconfig";
-  TString dataDir   = workDir + "/macros/data/";
-  TString parDir    = workDir + "/parameters/";
+  TString genParFile = workDir + "/parameters/generator.par";
 
-  if(outputDir.IsNull())
-    outputDir = dataDir;
 
   // -----------------------------------------------------------------
   // Set file names
-  TString outputFile = outputDir + name + ".mc.root"; 
-  TString outParFile = outputDir + name + ".params.root";
-  TString loggerFile = outputDir + "log_" + name + ".mc.txt";
-
-  // ----------------------------------------------------------------
-  // Create directories for all the output if they are non-existent
-  recursive_mkdir(outputFile.Data());
-  recursive_mkdir(outParFile.Data());
-  recursive_mkdir(loggerFile.Data());
+  TString outputFile = dataDir + name + ".mc.root"; 
+  TString outParFile = dataDir + name + ".params.root";
+  TString loggerFile = dataDir + "log_" + name + ".mc.txt";
 
 
   // -----------------------------------------------------------------
@@ -134,28 +117,35 @@ void run_mc
     fRun -> SetField(fField);
   }
 
+  // -----------------------------------------------------------------
+  // Set data base for event generator
+  FairParAsciiFieldIo* fGenPar = new FairParAsciiFileIo();
+  fGenPar -> open(genParFile);
+
+  auto fDb = fRun -> GetRuntimeDb();
+  fDb -> SetInputFile(fGenPar);
+
 
   // -----------------------------------------------------------------
   // Event generator
-//  STSimpleEventGenerator* fEvent = new STSimpleEventGenerator();
-//  fEvent -> SetPrimaryVertex(0, -21.33, -.89);
+  //STSimpleEventGenerator* fEvent = new STSimpleEventGenerator();
+  //STEventGenGenerator *fEvent = new STEventGenGenerator(name + ".egen");
+  ///fEvent -> SetPrimaryVertex(0, -21.33, -.89);
 //  fEvent -> SetAngleStep(2212, numevent, 0.5, 0., 85., 180., 180.); // (pid, #evt, p, theta_begin, theta_end, phi_begin, phi_end[deg])
 
-  /* 
-  TString inputFile = name + ".root";
-  STTransportModelEventGenerator* fEvent;
-  if(inputDir.IsNull())
-    fEvent = new STTransportModelEventGenerator(inputDir, inputFile);
-  else
-    fEvent = new STTransportModelEventGenerator(inputFile);
-  fEvent->RegisterHeavyIon();
-  fEvent->SetPrimaryVertex(TVector3(0.,-21.33,-.89));
-*/
+   /*
+   TString inputFile = name + ".root";
+   auto fEvent = new STTransportmodelEventGenerator(inputFile);
+   fEvent->RegisterHeavyIon();
+   fEvent->SetPrimaryVertex(TVector3(0.,-21.33,-.89));
+   */
 
   auto fEvent = new STSingleTrackGenerator();
-  fEvent->ReadConfig((parDir + parName).Data());
   //fEvent->SetCocktailEvent(300.);
   //fEvent->SetUniformRandomDirection(true);
+  fEvent->SetMomentum(t_momentum);
+  fEvent->SetParticleList({t_particle});
+  fEvent->SetThetaPhi(t_theta*180./M_PI, t_phi*180/M_PI);
   //fEvent->SetParticleList({2212, 211, -211, 1000010020, 1000010030});
 
   FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();
@@ -168,7 +158,7 @@ void run_mc
   FairParRootFileIo* fMCPar = new FairParRootFileIo(kTRUE);
   fMCPar -> open(outParFile.Data());
 
-  FairRuntimeDb* fDb = fRun -> GetRuntimeDb();
+  //FairRuntimeDb* fDb = fRun -> GetRuntimeDb();
   fDb -> setOutput(fMCPar);
   fDb -> saveOutput();
   fDb -> print();
@@ -239,31 +229,4 @@ void AddIons(FairRunSim *fRun, TString event)
 
     fRun -> AddNewIon(new FairIon(Form("%d", a) + symbol[z - 1], z, a, z));
   }
-}
-
-void rek_mkdir(char* path)
-{
-  char *sep = strrchr(path, '/' );
-  if(sep != NULL) {
-    *sep = 0;
-    rek_mkdir(path);
-    *sep = '/';
-  }
-  if( mkdir(path,0755) && errno != EEXIST )
-    printf("error while trying to create '%s'\n%m\n",path ); 
-}
-
-void recursive_mkdir(const char* t_path)
-{
-    char* path = new char[strlen(t_path) + 1];
-    strcpy(path, t_path);
-    char *sep = strrchr(path, '/' );
-    if(sep ) { 
-       char *path0 = strdup(path);
-       path0[ sep - path ] = 0;
-       rek_mkdir(path0);
-       free(path0);
-    }
-
-    delete[] path;
 }

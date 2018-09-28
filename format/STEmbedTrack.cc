@@ -16,7 +16,8 @@ STEmbedTrack::STEmbedTrack(STEmbedTrack *track)
   iPID = track -> GetInitialPID();
   iMomentum = track -> GetInitialMom();
   iVertex = track -> GetInitialVertex();
-  recotrack_ary = track -> GetRecoTrackArray();
+
+  array_id = track -> GetArrayID();
 }
 
 STEmbedTrack::~STEmbedTrack()

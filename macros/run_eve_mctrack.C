@@ -6,8 +6,8 @@
 void run_eve_mctrack()
 {
   FairRunAna *fRun = new FairRunAna();
-  fRun -> SetInputFile("data/urqmd_short.mc.root"); 
-  fRun -> SetOutputFile("data/urqmd_short.mctrack.root");
+  fRun -> SetInputFile("data/Run_2841_full.mc.root"); 
+  fRun -> SetOutputFile("data/Run_2841_full.mctrack.root");
   fRun -> SetGeomFile("../geometry/geomSpiRIT.man.root");
 
   FairEventManager *fMan   = new FairEventManager();

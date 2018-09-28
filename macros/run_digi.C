@@ -12,7 +12,7 @@
  *   @ name : Name of simulation. Should be same with MC simulation.
  */
 
-void run_digi(TString name = "protons_75_events")
+void run_digi(TString name = "urqmd_short")
 {
   // -----------------------------------------------------------------
   // FairRun
@@ -71,8 +71,8 @@ void run_digi(TString name = "protons_75_events")
   // Logger
   FairLogger *fLogger = FairLogger::GetLogger();
   fLogger -> SetLogFileName(loggerFile);
-  fLogger -> SetLogToScreen(kTRUE);
-  fLogger -> SetLogToFile(kTRUE);
+  fLogger -> SetLogToScreen(kFALSE);
+  fLogger -> SetLogToFile(kFALSE);
   fLogger -> SetLogVerbosityLevel("LOW");
 
 
