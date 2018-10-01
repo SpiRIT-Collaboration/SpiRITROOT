@@ -1,0 +1,60 @@
+In file included from input_line_23:1:
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:58:66: error: expected function body after function declarator
+/*virtual*/ void ParallelRules::SetReader(TTreeReader& t_reader) override
+                                                                 ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:63:74: error: expected function body after function declarator
+/*virtual*/ void ParallelRules::Fill(DataSink& t_hist, unsigned t_entry) override
+                                                                         ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:85:74: error: expected function body after function declarator
+/*virtual*/ void RecoTrackRule::Fill(DataSink& t_hist, unsigned t_entry) override
+                                                                         ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:156:31: error: no type named 'DataSink' in 'FillComplex::Iterator'
+inline FillComplex::Iterator::DataSink operator*() const
+       ~~~~~~~~~~~~~~~~~~~~~~~^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:156:52: error: non-member function cannot have 'const' qualifier
+inline FillComplex::Iterator::DataSink operator*() const
+                                                   ^~~~~
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:156:21: error: 'Iterator' is a protected member of 'FillComplex'
+inline FillComplex::Iterator::DataSink operator*() const
+                    ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.h:138:11: note: declared protected here
+    class Iterator : public std::iterator<std::output_iterator_tag, DataSink>
+          ^
+In file included from input_line_23:1:
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:159:5: error: use of undeclared identifier 'fcomplex_'
+    fcomplex_.rule_.Fill(result, *it_);
+    ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:159:35: error: use of undeclared identifier 'it_'
+    fcomplex_.rule_.Fill(result, *it_);
+                                  ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:160:12: error: no viable conversion from returned value of type 'DataSink' (aka 'vector<std::vector<double> >') to function return type 'int'
+    return result;
+           ^~~~~~
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:168:8: error: unknown type name 'Iterator'
+inline Iterator & FillComplex::Iterator::operator++()
+       ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:171:12: error: non-const lvalue reference to type 'int' cannot bind to a value of unrelated type 'FillComplex::Iterator'
+    return *this;
+           ^~~~~
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:174:8: error: unknown type name 'Iterator'
+inline Iterator FillComplex::Iterator::operator++(int)
+       ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:176:12: error: no viable conversion from returned value of type 'FillComplex::Iterator' to function return type 'int'
+    return ++(*this);
+           ^~~~~~~~~
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:199:74: error: expected function body after function declarator
+/*virtual*/ void Observer::Selection(DataSink& t_hist, unsigned t_entry) override
+                                                                         ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:339:75: error: expected function body after function declarator
+/*virtual*/ void RenshengCompareEmbed::SetMyReader(TTreeReader& t_reader) override
+                                                                          ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:344:86: error: expected function body after function declarator
+/*virtual*/ void RenshengCompareEmbed::Selection(DataSink& t_hist, unsigned t_entry) override
+                                                                                     ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:378:74: error: expected function body after function declarator
+/*virtual*/ void RenshengCompareData::SetMyReader(TTreeReader& t_reader) override
+                                                                         ^
+/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/Rules.cpp:414:74: error: expected function body after function declarator
+/*virtual*/ void ValueCut::Selection(DataSink& t_hist, unsigned t_entry) override
+                                                                         ^
+Error in <TList::Clear>: A list is accessing an object (0x7f3de7cfca00) already deleted (list name = TList)

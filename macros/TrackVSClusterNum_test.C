@@ -1,40 +1,52 @@
 #include "EventSelection/Rules.h"
 
-void TrackVSClusterNum()
+void TrackVSClusterNum_test()
 {
 	gStyle->SetPalette(kBird);
 	gStyle->SetOptStat(0);
 	TCanvas c1;
 	c1.SetLogz();
 
-	TCanvas c2;
-	c2.Divide(3,1);
+	TCanvas c2("c2", "c2", 1500, 1200);
+	c2.Divide(4,1);
 
-	DrawMultipleComplex drawer_cut("data/Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc.root", "cbmsim");
+        std::string filename = "Run2841_WithOffset/HighEnergy/run2841_s*.reco.develop.1737.f55eaf6";//Run_2841_full.reco.mc";//mc0_s0.reco.v1.04";
+        DrawComplex drawer("data/" + filename + ".root", "cbmsim");
+
+	DrawMultipleComplex drawer_cut("data/" + filename + ".root", "cbmsim");
 	auto xz_checkpoint = drawer_cut.NewCheckPoint();
 	auto yz_checkpoint = drawer_cut.NewCheckPoint();
 	auto mom_checkpoint = drawer_cut.NewCheckPoint();
+	auto angle_checkpoint = drawer_cut.NewCheckPoint();
 
 	// draw cluster such that cut can be made
 	std::unique_ptr<RenshengCompareData> rc_data_nocut(new RenshengCompareData);
 	std::unique_ptr<RenshengCompareData> rc_data_withcut(new RenshengCompareData);
+        EmbedFilter filter1, filter2;
 	EmbedCut cut;
-	DrawHit track_xz(0, 2), track_yz(1, 2);
+	ValueCut mom_cut(0, -1);
+	DrawTrack track_xz(0, 2), track_yz(1, 2);
 	MomentumTracks track_mom(3);
-	rc_data_withcut->AddRule(cut.AddRule(
-                                 track_xz.AddRule(
-                                 xz_checkpoint->AddRule(
-                                 track_yz.AddRule(
-                                 yz_checkpoint->AddRule(
-                                 track_mom.AddRule(mom_checkpoint)))))));
+	ThetaPhi thetaphi;
+
+	filter1.AddRule(rc_data_nocut.get());
+	filter2.AddRule(rc_data_withcut->AddRule(
+                        cut.AddRule(
+			track_mom.AddRule(
+                        mom_cut.AddRule(
+                        mom_checkpoint->AddRule(
+                        track_xz.AddRule(
+                        xz_checkpoint->AddRule(
+                        track_yz.AddRule(
+                        yz_checkpoint->AddRule(
+			thetaphi.AddRule(
+			angle_checkpoint)))))))))));
 
 
-	std::string filename = "Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc";//mc0_s0.reco.v1.04";
-        DrawComplex drawer("data/" + filename + ".root", "cbmsim");
-
+	
 
 	c1.cd();
-	auto hist = drawer.FillRule<TH2F>(*rc_data_nocut, "num_cluster_real_data", "num_cluster;Number of clusters for MC data;Number of DB clusters", 150, 0, 150, 150, 0, 150);
+	auto hist = drawer.FillRule<TH2F>(filter1, "num_cluster_real_data", "num_cluster;Number of clusters for MC data;Number of DB clusters", 150, 0, 150, 150, 0, 150);
 	hist.Draw("colz");
 
 	TCutG* cutg = 0; 
@@ -58,7 +70,8 @@ void TrackVSClusterNum()
                 TH2F hist_xz("track_distribution_xz", "Track Hit distribution;X(mm);Z(mm)", pad_x, -0.5*((double)pad_x*size_x), 0.5*((double)pad_x*size_x), pad_y, 0, (double) pad_y*size_y);
                 TH2F hist_yz("track_distribution", "Track Hit distribution;Y(mm);Z(mm)", 100, -520., 0., pad_y, 0, (double) pad_y*size_y);
         	TH1F hist_mom("momentum_distribution", "Momentum Mag;Momentum (MeV/c^2)", 100, 0, 300);
-		drawer_cut.DrawMultiple(*rc_data_withcut, hist_xz, hist_yz, hist_mom);
+		TH2F hist_angle("angle", ";Theta (deg);Phi (deg)", 90, 0, 90, 360, -180, 180);
+		drawer_cut.DrawMultiple(filter2, hist_xz, hist_yz, hist_mom, hist_angle);
 
 		auto pad1 = c2.cd(1);
 		pad1->SetLogz();
@@ -70,6 +83,10 @@ void TrackVSClusterNum()
 
 		c2.cd(3);
 		hist_mom.Draw("hist");
+
+		auto pad4 = c2.cd(4);
+		pad4->SetLogz();
+		hist_angle.ProjectionX()->Draw("colz");
 
 		c2.Update();
 		c2.Modified();
