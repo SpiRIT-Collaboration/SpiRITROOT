@@ -10,8 +10,8 @@ void MCClusterNum()
 	EmbedCut cut("data/Run2841_WithOffset/CUTG.root");
 	EntryRecorder recorder;
 
-        FillComplex drawer("data/Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc.root", "cbmsim", *rc_data);
-	auto hist = drawer.Fill<TH2F>("num_cluster_real_data", "num_cluster", 150, 0, 150, 150, 0, 150);
+        DrawComplex drawer("data/Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc.root", "cbmsim");
+	auto hist = drawer.FillRule<TH2F>(*rc_data, "num_cluster_real_data", "num_cluster", 150, 0, 150, 150, 0, 150);
 
 	TCanvas c1;
 	hist.Draw("colz");

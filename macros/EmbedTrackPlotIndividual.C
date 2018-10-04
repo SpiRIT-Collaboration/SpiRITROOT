@@ -1,5 +1,15 @@
 #include "EventSelection/Rules.h"
 
+class RealMomObserver : public RecoTrackRule
+{
+public:
+	virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override
+	{
+		auto reco_mom = track_->GetMomentum();
+		std::cout << "MC momentum " << reco_mom.Mag() - t_hist.back()[0][0] << "\n";
+		this->FillData(t_hist, t_entry);
+	};
+};
 
 void EmbedTrackPlotIndividual()
 {
@@ -14,37 +24,51 @@ void EmbedTrackPlotIndividual()
 	TCanvas c1("canvas", "Tracks top down", 2.*canvas_scale*((double) pad_x)*size_x, canvas_scale*((double) pad_y)*size_y);
 	c1.Divide(2,1);
 
+	DrawMultipleComplex mc_draw("data/Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
+	DrawMultipleComplex embed_draw("data/Run2841_WithOffset/LowEnergy/run2841_s[0-5].reco.develop.1737.f55eaf6.root", "cbmsim");
+
 	DrawHit reco_track_xz, reco_track_yz(1,2);
-	MomentumTracks reco_mom;
+	MomentumTracks reco_mom(3);
 	Observer reco_obs;
+	auto reco_track_xz_cp = mc_draw.NewCheckPoint();	
+	auto reco_track_yz_cp = mc_draw.NewCheckPoint();
 
-	reco_mom.SetAxis(3);
-	reco_mom.AddRule(reco_obs.AddRule(&reco_track_xz));
+	reco_mom.AddRule(reco_obs.AddRule(reco_track_xz.AddRule(reco_track_xz_cp->AddRule(reco_track_yz.AddRule(reco_track_yz_cp)))));
 
-	ParallelRules reco_prule;
-	reco_prule.AddParallelRule(reco_mom);
-	reco_prule.AddParallelRule(reco_track_yz);
-
+	auto all_tracks_xz_cp = embed_draw.NewCheckPoint();
+	auto all_tracks_yz_cp = embed_draw.NewCheckPoint();
+	auto embed_mom_cp = embed_draw.NewCheckPoint();
+	auto embed_tracks_xz_cp = embed_draw.NewCheckPoint();
+	auto embed_tracks_yz_cp = embed_draw.NewCheckPoint();
 	
-	DrawTrackEmbed embed_track_xz, embed_track_yz(1,2);
-	CheckPoint cp;
-	MomentumEmbedTracks embed_mom;
-	embed_mom.SetAxis(3);
-	ValueCut cut(0, 10000);
-	Observer obs;
-	embed_mom.AddRule(cut.AddRule(obs.AddRule(embed_track_yz.AddRule(cp.AddRule(&embed_track_xz)))));
-
-	DrawTrack all_tracks_xz;
+	EmbedFilter filter;
+	DrawTrack embed_track_xz, embed_track_yz(1,2);
+        DrawTrack all_tracks_xz;
 	DrawTrack all_tracks_yz(1,2);
 
-	ParallelRules prule;
-	prule.AddParallelRule(embed_mom);
-	prule.AddParallelRule(all_tracks_xz);
-	prule.AddParallelRule(all_tracks_yz);
-        
+	MomentumTracks embed_mom;
+	embed_mom.SetAxis(3);
+	Observer embed_obs;
+	RealMomObserver real_obs;
+	CompareMCPrimary comp("data/Run2841_WithOffset/LowEnergy/Momentum_distribution.txt", CompareMCPrimary::MMag, CompareMCPrimary::None);
+	ValueCut cut(100, 10000);
+	all_tracks_xz.AddRule(all_tracks_xz_cp->AddRule(
+                              all_tracks_yz.AddRule(
+                              all_tracks_yz_cp->AddRule(
+                              filter.AddRule(
+	                      embed_mom.AddRule(
+                              comp.AddRule(
+                              cut.AddRule(
+                              real_obs.AddRule(
+                              embed_mom_cp->AddRule(
+                              embed_obs.AddRule(
+                              embed_track_yz.AddRule(
+                              embed_tracks_yz_cp->AddRule(
+                              embed_track_xz.AddRule(embed_tracks_xz_cp))))))))))))));
 
-	FillComplex mc_draw("data/Run2841_WithOffset/HighEnergy/Run_2841_full.reco.mc.root", "cbmsim", reco_prule);
-	FillComplex embed_draw("data/Run2841_WithOffset/HighEnergy/run2841_s[0-9].reco.develop.1737.f55eaf6.root", "cbmsim", prule);
+	mc_draw.SetRule(&reco_mom);
+	embed_draw.SetRule(&all_tracks_xz);
+
 
 	auto mc_it = mc_draw.begin();
 	auto embed_it = embed_draw.begin();
@@ -53,20 +77,28 @@ void EmbedTrackPlotIndividual()
 	{
 		TGraph hist_mc_xz, hist_embed_xz, hist_all_xz;
 		TGraph hist_mc_yz, hist_embed_yz, hist_all_yz;
-		*mc_it;
-		*embed_it;
+		TLegend legend1(0.7, 0.8, 0.9, 0.9);
+		TLegend legend2(0.7, 0.8, 0.9, 0.9);
+		auto mc_datalist = *mc_it;
+		auto embed_datalist = *embed_it;
 
+		bool empty = false;
 		for(int i = 0; i < 2; ++i)
 		{
 			auto& hist_mc = (i == 0)? hist_mc_xz : hist_mc_yz;
 			auto& hist_embed = (i == 0)? hist_embed_xz : hist_embed_yz;
 			auto& hist_all = (i == 0)? hist_all_xz : hist_all_yz;
+			auto& legend = (i == 0)? legend1 : legend2;
 
-			const auto& result_mc = reco_prule.GetData(i);
-			const auto& result_all = prule.GetData(i+1);
-			const auto& result_embed = (i == 0)? prule.GetData(0) : cp.GetData();
+			const auto& result_mc = mc_datalist[i];
+			const auto& result_all = embed_datalist[i];
+			const auto& result_embed = embed_datalist[i + 3];
 			
-			if(result_embed.size() == 0) continue;
+			if(result_embed.size() == 0) 
+			{
+				empty = true;
+				continue;
+			}
 
 			for(const auto& row : result_mc) hist_mc.SetPoint(hist_mc.GetN(), row[0], row[1]);
 			for(const auto& row : result_embed) hist_embed.SetPoint(hist_embed.GetN(), row[0], row[1]);
@@ -78,18 +110,28 @@ void EmbedTrackPlotIndividual()
 			hist_embed.SetMarkerColor(kBlue);
 			hist_all.SetMarkerColor(kYellow);
 			
+			hist_all.SetMarkerSize(1);
 			hist_all.Draw("AP");
 			if(i == 0) hist_all.GetXaxis()->SetLimits(-0.5*((double)pad_x*size_x), 0.5*((double)pad_x*size_x));
 			else hist_all.GetXaxis()->SetLimits(-700, 100);
 			hist_all.GetYaxis()->SetRangeUser((double) pad_y*0, (double) pad_y*size_y);
 
+			hist_mc.SetMarkerSize(0.6);
 			hist_mc.Draw("P same");
+			hist_embed.SetMarkerSize(0.5);
 			hist_embed.Draw("P same");
+
+			legend.AddEntry(&hist_mc, "MC hits", "p");
+			legend.AddEntry(&hist_embed, "Embeded hits", "p");
+			legend.Draw("same");
 			c1.Modified();
 			c1.Update();
 		}
-
-		std::cin.get();
+		if(!empty)
+		{
+			std::cout << "Continue ? \n";
+			gPad->WaitPrimitive();
+		}
 	}
 
 }

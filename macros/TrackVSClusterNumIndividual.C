@@ -1,16 +1,17 @@
 #include "EventSelection/Rules.h"
 
-void TrackVSClusterNum_test()
+void TrackVSClusterNumIndividual()
 {
 	gStyle->SetPalette(kBird);
 	gStyle->SetOptStat(0);
+
 	TCanvas c1;
 	c1.SetLogz();
 
 	TCanvas c2("c2", "c2", 1500, 1200);
 	c2.Divide(4,1);
 
-        std::string filename = "Run2841_WithOffset/HighEnergy/run2841_s[0-5].reco.develop.1737.f55eaf6";//Run_2841_full.reco.mc";//mc0_s0.reco.v1.04";
+        std::string filename = "Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc";//Run_2841_full.reco.mc";//run2841_s*.reco.develop.1737.f55eaf6";//Run_2841_full.reco.mc";//mc0_s0.reco.v1.04";
         DrawComplex drawer("data/" + filename + ".root", "cbmsim");
 
 	DrawMultipleComplex drawer_cut("data/" + filename + ".root", "cbmsim");
@@ -29,8 +30,8 @@ void TrackVSClusterNum_test()
 	MomentumTracks track_mom(3);
 	ThetaPhi thetaphi;
 
-	filter1.AddRule(rc_data_nocut.get());
-	filter2.AddRule(rc_data_withcut->AddRule(
+	/*filter1.AddRule(*/rc_data_nocut.get()/*)*/;
+	/*filter2.AddRule(*/rc_data_withcut->AddRule(
                         cut.AddRule(
 			track_mom.AddRule(
                         mom_cut.AddRule(
@@ -40,17 +41,24 @@ void TrackVSClusterNum_test()
                         track_yz.AddRule(
                         yz_checkpoint->AddRule(
 			thetaphi.AddRule(
-			angle_checkpoint)))))))))));
+			angle_checkpoint))))))))))/*)*/;
 
 
+	drawer_cut.SetRule(rc_data_withcut.get());//&filter2);
 	
 
 	c1.cd();
-	auto hist = drawer.FillRule<TH2F>(filter1, "num_cluster_real_data", "num_cluster;Number of clusters for MC data;Number of DB clusters", 150, 0, 150, 150, 0, 150);
+	auto hist = drawer.FillRule<TH2F>(*rc_data_nocut.get()/*filter1*/, "num_cluster_real_data", "num_cluster;Number of DB clusters;Number of clusters for MC data", 150, 0, 150, 150, 0, 150);
 	hist.Draw("colz");
 
 	TCutG* cutg = 0; 
 	TCutG* temp = 0;
+
+	// file to which all results are stored
+	DailyLogger logger;
+	logger.SaveClass(hist);
+
+	int iteration = 0;
 
 	while(true)
 	{
@@ -66,30 +74,54 @@ void TrackVSClusterNum_test()
 
 		// find entry number inside cut
 		cut.SetCut(cutg);
+		logger.SaveClass(*cutg);
 
                 TH2F hist_xz("track_distribution_xz", "Track Hit distribution;X(mm);Z(mm)", pad_x, -0.5*((double)pad_x*size_x), 0.5*((double)pad_x*size_x), pad_y, 0, (double) pad_y*size_y);
                 TH2F hist_yz("track_distribution", "Track Hit distribution;Y(mm);Z(mm)", 100, -520., 0., pad_y, 0, (double) pad_y*size_y);
         	TH1F hist_mom("momentum_distribution", "Momentum Mag;Momentum (MeV/c^2)", 100, 0, 300);
 		TH2F hist_angle("angle", ";Theta (deg);Phi (deg)", 90, 0, 90, 360, -180, 180);
-		drawer_cut.DrawMultiple(filter2, hist_xz, hist_yz, hist_mom, hist_angle);
 
-		auto pad1 = c2.cd(1);
-		pad1->SetLogz();
-		hist_xz.Draw("colz");
+		// Draw each tracks one by one
+		for(const auto& datalist : drawer_cut)
+		{
+			if(datalist.size() == 0) continue;
+			if(datalist[0].size() == 0) continue;
+			for(const auto& row : datalist[0]) hist_xz.Fill(row[0], row[1]);
+			for(const auto& row : datalist[1]) hist_yz.Fill(row[0], row[1]);
+			for(const auto& row : datalist[2]) hist_mom.Fill(row[0], row[1]);
+			for(const auto& row : datalist[3]) hist_angle.Fill(row[0], row[1]);
 
-		auto pad2 = c2.cd(2);
-		pad2->SetLogz();
-		hist_yz.Draw("colz");
+			auto pad1 = c2.cd(1);
+			pad1->SetLogz();
+			hist_xz.Draw("colz");
 
-		c2.cd(3);
-		hist_mom.Draw("hist");
+			auto pad2 = c2.cd(2);
+			pad2->SetLogz();
+			hist_yz.Draw("colz");
 
-		auto pad4 = c2.cd(4);
-		pad4->SetLogz();
-		hist_angle.ProjectionX()->Draw("colz");
+			c2.cd(3);
+			hist_mom.Draw("hist");
 
-		c2.Update();
-		c2.Modified();
+			auto pad4 = c2.cd(4);
+			pad4->SetLogz();
+			hist_angle.ProjectionX()->Draw("colz");
+
+			c2.Update();
+			c2.Modified();
+
+			// show each track for 0.1 second
+			gSystem->Sleep(50);
+		}
+
+		logger.SaveClass(hist_xz);
+		logger.SaveClass(hist_yz);
+                logger.SaveClass(hist_mom);
+		logger.SaveClass(hist_angle);
+		++iteration;
+		cout << "Continue? y/n";
+		std::string condi;
+		cin >> condi;
+		if(condi == "n") break;
 	}
 
 

@@ -9,9 +9,9 @@ void Rule::SetReader(TTreeReader& t_reader)
     if(NextRule_) NextRule_->SetReader(t_reader);
 };
 
-void Rule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
+void Rule::Fill(DataSink& t_hist, unsigned t_entry)
 {
-    //if(PreviousRule_) fill_ = PreviousRule_ -> fill_;
+    if(PreviousRule_) fill_ = PreviousRule_ -> fill_;
     this->Selection(t_hist, t_entry);
 }
 
@@ -43,10 +43,11 @@ Rule* Rule::AddRule(Rule* t_rule)
     return this;
 }
 
-void Rule::FillData(std::vector<DataSink>& t_hist, unsigned t_entry)
+void Rule::FillData(DataSink& t_hist, unsigned t_entry)
 {
     if(NextRule_) NextRule_->Fill(t_hist, t_entry);
-    //else t_hist.push_back(fill_);
+    else 
+        t_hist.push_back(fill_);
 };
 
 /****************************
@@ -60,7 +61,7 @@ void ParallelRules::SetReader(TTreeReader& t_reader)
     for(auto rule : rules_) rule->SetReader(t_reader);
 };
 
-void ParallelRules::Fill(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void ParallelRules::Fill(DataSink& t_hist, unsigned t_entry) 
 {
     data_.clear();
     for(auto rule : rules_)
@@ -82,10 +83,11 @@ void RecoTrackRule::SetReader(TTreeReader& t_reader)
     if(NextRule_) NextRule_->SetReader(t_reader);
 };
 
-void RecoTrackRule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void RecoTrackRule::Fill(DataSink& t_hist, unsigned t_entry) 
 {
     if(PreviousRule_) 
     {
+        fill_ = PreviousRule_->fill_;
         if(auto prule = dynamic_cast<RecoTrackRule*>(PreviousRule_))
         {
             track_ = prule->track_;
@@ -111,10 +113,11 @@ void RecoTrackRule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
 /******************************
 PID on tracks
 ******************************/
-void PID::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void PID::Selection(DataSink& t_hist, unsigned t_entry)
 {
     // find the average dE
-    t_hist.push_back({{track_->GetdEdxWithCut(0, 0.7), track_->GetMomentum().Mag()}});
+    fill_[1] = track_->GetdEdxWithCut(0, 0.7);
+    fill_[0] = track_->GetMomentum().Mag();
     this->FillData(t_hist, t_entry);
 }
 
@@ -122,9 +125,9 @@ void PID::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 CheckPoint stores intermediate results
 And allow user to retrieve it afterwards
 *********************************/
-void CheckPoint::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void CheckPoint::Selection(DataSink& t_hist, unsigned t_entry) 
 {
-    temp_sink_.insert(temp_sink_.end(), t_hist.back().begin(), t_hist.back().end());
+    temp_sink_.push_back(fill_);
     this->FillData(t_hist, t_entry);
 }
 
@@ -169,13 +172,20 @@ Iterator for draw multiple complex
 ********************************/
 inline std::vector<DataSink> DrawMultipleComplex::Iterator::operator*() const
 {
-    std::vector<DataSink> temp;
+    DataSink temp;
     if(!fcomplex_.rule_) std::cerr << "Rule is not set. Cannot use iterator\n";
+    cout << "Start Fill\n";
     fcomplex_.rule_->Fill(temp, *it_);
+    cout << "End Fill\n";
 
+    cout << "Start fill datalist\n";
     std::vector<DataSink> datalist;
     for(auto cp : fcomplex_.checkpoints_)
+    {
         datalist.push_back(cp->GetData());
+        cout << datalist.back().size() << "\n";
+    }
+    cout << "Finished datalist\n";
     return datalist;
 }
 
@@ -195,28 +205,71 @@ inline DrawMultipleComplex::Iterator DrawMultipleComplex::Iterator::operator++(i
     return ++(*this);
 }
 
+/*********************************
+Experimental drawer
+where an iterator can be used
+**********************************/
+
+inline DataSink FillComplex::Iterator::operator*() const
+{
+    DataSink result;
+    fcomplex_.rule_.Fill(result, *it_);
+    return result;
+}
+
+inline bool FillComplex::Iterator::operator!=(const Iterator& rhs) const
+{
+    return this->it_ != rhs.it_;
+}
+
+inline FillComplex::Iterator & FillComplex::Iterator::operator++()
+{
+    it_++;
+    return *this;
+}
+
+inline FillComplex::Iterator FillComplex::Iterator::operator++(int)
+{
+    return ++(*this);
+}
+
+FillComplex::FillComplex(const std::string& t_filenames, 
+                         const std::string& t_treename,
+                         Rule& t_rule) : rule_(t_rule),
+                                     chain_(t_treename.c_str()),
+                                     reader_(&chain_)
+{
+    chain_.Add(t_filenames.c_str());
+    rule_.SetReader(reader_);
+}
+
+inline void FillComplex::ChangeRule(Rule& t_rule) 
+{
+    rule_ = t_rule; 
+    reader_.Restart(); 
+    rule_.SetReader(reader_);
+};
 
 /****************************
 Observer: Pipe intermediate result to stdout
 ****************************/
-void Observer::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void Observer::Selection(DataSink& t_hist, unsigned t_entry) 
 {
-	auto fill = t_hist.back().back();
-        std::cout << " Momentum is " << fill[0] << " at entry " << t_entry << " track_id " << track_id_ <<" \n";
+        std::cout << " Momentum is " << fill_[1] << "\n";
         this->FillData(t_hist, t_entry);
 }
 
 /******************************
 Draw trackes from STRecoTrack
 ********************************/
-void DrawTrack::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void DrawTrack::Selection(DataSink& t_hist, unsigned t_entry) 
 {    
-    //t_hist.clear();
-    DataSink localsink;
     for(const auto& point : (*track_->GetdEdxPointArray()))
-        localsink.push_back({point.fPosition[x_], point.fPosition[y_]});
-    t_hist.push_back(localsink);
-    this->FillData(t_hist, t_entry);
+    {
+        fill_[0] = point.fPosition[x_];
+        fill_[1] = point.fPosition[y_];
+        this->FillData(t_hist, t_entry);
+    }
 }
 
 /******************************
@@ -228,7 +281,7 @@ void EmbedFilter::SetMyReader(TTreeReader& t_reader)
     myEmbedArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedTrack");
 }
 
-void EmbedFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void EmbedFilter::Selection(DataSink& t_hist, unsigned t_entry)
 {
     if((*myEmbedArray_)->GetEntries() == 0) return;
     for(int i = 0; i < (*myEmbedArray_)->GetEntries(); ++i)
@@ -276,7 +329,7 @@ CompareMCPrimary::CompareMCPrimary(const std::string& t_filename,
     }
 }
 
-void CompareMCPrimary::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void CompareMCPrimary::Selection(DataSink& t_hist, unsigned t_entry)
 {
     if(t_entry > Px_.size())
     {
@@ -286,40 +339,37 @@ void CompareMCPrimary::Selection(std::vector<DataSink>& t_hist, unsigned t_entry
 
     auto reco_mom = track_->GetMomentum();
     auto reco_Vert = track_->GetPOCAVertex();
-    double xval, yval;
 
     // fill x and y respectively
     // that's why the range is 2
     for(int i = 0; i < 2; ++i)
     {
         auto type = (i==0)? x_ : y_;
-        auto& val = (i==0)? xval : yval;
         switch(type)
         {
-            case MomX: val = reco_mom[0] - Px_[t_entry]; break; 
-            case MomY: val = reco_mom[1] - Py_[t_entry]; break;
-            case MomZ: val = reco_mom[2] - Pz_[t_entry]; break;
+            case MomX: fill_[i] = reco_mom[0] - Px_[t_entry]; break; 
+            case MomY: fill_[i] = reco_mom[1] - Py_[t_entry]; break;
+            case MomZ: fill_[i] = reco_mom[2] - Pz_[t_entry]; break;
             case MMag: {
                 double mag = sqrt(Px_[t_entry]*Px_[t_entry] 
                                   + Py_[t_entry]*Py_[t_entry] 
                                   + Pz_[t_entry]*Pz_[t_entry]);
-		val = reco_mom.Mag() - mag;
+		fill_[i] = reco_mom.Mag() - mag;
 		break;
             }
-            case StartX: val = reco_Vert[0] - X_[t_entry]; break;
-            case StartY: val = reco_Vert[1] - Y_[t_entry]; break;
-            case StartZ: val = reco_Vert[2] - Z_[t_entry]; break;
+            case StartX: fill_[i] = reco_Vert[0] - X_[t_entry]; break;
+            case StartY: fill_[i] = reco_Vert[1] - Y_[t_entry]; break;
+            case StartZ: fill_[i] = reco_Vert[2] - Z_[t_entry]; break;
             case StartMag: {
                  double mag = sqrt(X_[t_entry]*X_[t_entry] 
                                  + Y_[t_entry]*Y_[t_entry] 
                                  + Z_[t_entry]*Z_[t_entry]);
-                 val = reco_Vert.Mag() - mag;
+                 fill_[i] = reco_Vert.Mag() - mag;
                  break;
             }
-            case None: val = 1; break;
+            case None: fill_[i] = 1; break;
         }
     }
-    t_hist.push_back({{xval, yval}});
     this->FillData(t_hist, t_entry);
 }
 
@@ -329,15 +379,14 @@ MomentumTracks
 Draw the momentum associated with each track
 Set axis to plot different momentum direction
 *************************************/
-void MomentumTracks::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void MomentumTracks::Selection(DataSink& t_hist, unsigned t_entry) 
 {
     auto mom = track_->GetMomentum();
-    double val;
 
     // return magnitude if axis_ = 3
-    if(axis_ < 3) val = mom[axis_];
-    else val = mom.Mag();
-    t_hist.push_back({{val, 1}});
+    if(axis_ < 3) fill_[0] = mom[axis_];
+    else fill_[0] = mom.Mag();
+    fill_[1] = 1;
 
     this->FillData(t_hist, t_entry);
 }
@@ -351,17 +400,18 @@ void DrawHit::SetMyReader(TTreeReader& t_reader)
     myHitArray_ = std::make_shared<ReaderValue>(t_reader, "STHit");
 }
 
-void DrawHit::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void DrawHit::Selection(DataSink& t_hist, unsigned t_entry) 
 {    
-    DataSink localsink;
+    if(this->Repeated(t_entry)) return;
+    cout << "Draw Hit entry " << t_entry << "\n";
     for(int j = 0; j < (*myHitArray_)->GetEntries(); ++j)
     {
         auto hit = static_cast<STHit*>((*myHitArray_) -> At(j));
         auto pos = hit->GetPosition();
-        localsink.push_back({pos[x_], pos[y_]});
+        fill_[0] = pos[x_];
+        fill_[1] = pos[y_];
+        this->FillData(t_hist, t_entry);
     }
-    t_hist.push_back(localsink);
-    this->FillData(t_hist, t_entry);
 }
 
 /*******************************
@@ -372,17 +422,17 @@ void DrawHitEmbed::SetMyReader(TTreeReader& t_reader)
     myHitArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedHit");
 }
 
-void DrawHitEmbed::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void DrawHitEmbed::Selection(DataSink& t_hist, unsigned t_entry) 
 {    
-    DataSink localsink;
+    if(this->Repeated(t_entry)) return;
     for(int j = 0; j < (*myHitArray_)->GetEntries(); ++j)
     {
         auto hit = static_cast<STHit*>((*myHitArray_) -> At(j));
         auto pos = hit->GetPosition();
-        localsink.push_back({pos[x_], pos[y_]});
+        fill_[0] = pos[x_];
+        fill_[1] = pos[y_];
+        this->FillData(t_hist, t_entry);
     }
-    t_hist.push_back(localsink);
-    this->FillData(t_hist, t_entry);
 }
 
 /**********************************
@@ -399,7 +449,7 @@ RenshengCompareData::RenshengCompareData()
     db.Set_MomentumRange_Minus(Momentum_Range_Minus);
 };
 
-void RenshengCompareData::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void RenshengCompareData::Selection(DataSink& t_hist, unsigned t_entry) 
 {
 
     // find number of tracks for the embeded pions
@@ -421,19 +471,20 @@ void RenshengCompareData::Selection(std::vector<DataSink>& t_hist, unsigned t_en
     //for 90 layers
     int db_num_cluster = db.GetClusterNum(charge, thetaL, (phiL > 180 ? phiL - 360 : phiL), mom);
 
-    t_hist.push_back({{(double) num_cluster, (double) db_num_cluster}});
+    fill_[1] = (double) num_cluster;
+    fill_[0] = (double) db_num_cluster;
+
     this->FillData(t_hist, t_entry);
 };
 
 /*********************
 ValueCut : 1-D value cut on the previous rule
 ************************/
-void ValueCut::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void ValueCut::Selection(DataSink& t_hist, unsigned t_entry) 
 {
-    auto& fill = t_hist.back().back();
     if( upper_ > lower_)
     {
-        if( upper_ >= fill[0] && fill[0] >= lower_) 
+        if( upper_ >= fill_[0] && fill_[0] >= lower_) 
             this->FillData(t_hist, t_entry);
     }
     else this->FillData(t_hist, t_entry);
@@ -449,24 +500,24 @@ EmbedCut::EmbedCut(const std::string& t_file, const std::string& t_cutname) : fi
     if(!cutg_) std::cerr << "TCutG is not found in file!\n";
 }
 
-void EmbedCut::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void EmbedCut::Selection(DataSink& t_hist, unsigned t_entry) 
 {
-    auto& fill = t_hist.back().back();
-    if(cutg_->IsInside(fill[0], fill[1])) 
+    if(cutg_->IsInside(fill_[0], fill_[1])) 
         this->FillData(t_hist, t_entry);
 }
 
 /*********************
 ThetaPhi : angle of the initial momentum of each track
 *********************/
-void ThetaPhi::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void ThetaPhi::Selection(DataSink& t_hist, unsigned t_entry) 
 {
     //if(num_cluster < 20) continue;
     auto momVec = track_ -> GetMomentum();
     auto phiL = momVec.Phi()*180./TMath::Pi();
     auto thetaL = momVec.Theta()*180./TMath::Pi();
 
-    t_hist.push_back({{thetaL, phiL}});
+    fill_[0] = thetaL;
+    fill_[1] = phiL;
     this->FillData(t_hist, t_entry);
 }
 
@@ -474,18 +525,19 @@ void ThetaPhi::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 EntryRecorder: Save all entries that have been looped through
 Useful for when you want to know which entries satisfy all conditions
 ***************************/
-void EntryRecorder::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void EntryRecorder::Selection(DataSink& t_hist, unsigned t_entry) 
 {
     // do not fill repeated entry number
     if(list_.size() == 0) list_.push_back(t_entry);
     else if(t_entry != list_.back()) list_.push_back(t_entry);
 
+    if(NextRule_) NextRule_->Fill(t_hist, t_entry);
+    else t_hist.push_back(fill_);
+
     // it is a new event if the entry number doesn't match
     event_id_.push_back(list_.size() - 1);
-    auto fill = t_hist.back().back();
-    db_num_.push_back((int) (fill[1] + 0.5));
-    exp_num_.push_back((int) (fill[0] + 0.5));
-    this->FillData(t_hist, t_entry);
+    db_num_.push_back((int) (fill_[1] + 0.5));
+    exp_num_.push_back((int) (fill_[0] + 0.5));
 };
 
 
