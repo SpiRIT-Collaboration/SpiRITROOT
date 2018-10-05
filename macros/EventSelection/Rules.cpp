@@ -220,6 +220,22 @@ void DrawTrack::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 }
 
 /******************************
+RecoTrackNumFilter
+Skip events with track number > 1
+Useful for mc single track data
+******************************/
+void RecoTrackNumFilter::SetMyReader(TTreeReader& t_reader)
+{
+    myTrackArray_ = std::make_shared<ReaderValue>(t_reader, "STRecoTrack");
+}
+
+void RecoTrackNumFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+{
+    if((*myTrackArray_)->GetEntries() > 1) return;
+    this->FillData(t_hist, t_entry);
+}
+
+/******************************
 EmbedFilter
 Only STRecoTracks corresponds to embeded track will be futher processed
 ******************************/
@@ -341,6 +357,79 @@ void MomentumTracks::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 
     this->FillData(t_hist, t_entry);
 }
+
+/************************************
+this draws output of the previous rules
+will only work if it is DrawHit (or DrawTrack in the future). To do list
+Can only work with x-z or y-z plane. To do list for other dimensions
+*************************************/
+
+GetHitOutline::GetHitOutline(const std::string& t_outputname) : 
+	file_(t_outputname.c_str(), "RECREATE"),
+	cutg_array_("TCutG", max_num_) {}
+
+Rule* GetHitOutline::AddRule(Rule* t_rule)
+{
+    auto pt = this->Rule::AddRule(t_rule);
+    auto prule = static_cast<DrawHit*>(PreviousRule_);
+    if(!prule) std::cerr << "Only DrawHit class is allowed before GetHitOutline";
+    return pt;
+    //static_assert(prule->y_==2, "Only x-z plane can be used with GetHitOutline");
+    //static_assert(prule->x_==0, "Only works if x-axis of the DrawHit Clasas is axis 0");
+}
+
+GetHitOutline::~GetHitOutline()
+{
+    file_.cd();
+    cutg_array_.Write();
+}
+
+void GetHitOutline::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+{
+    if(t_entry > max_num_)
+    {
+        std::cerr << "Reached maximum number of allowed cuts. Will skip\n";
+        this->FillData(t_hist, t_entry);
+        return;
+    }
+
+    const auto& hit_data = t_hist.back();
+    TH2F hist("TEMP", "",pad_x, 
+              -0.5*((double)pad_x*size_x), 
+              0.5*((double)pad_x*size_x), 
+              pad_y, 0, (double) pad_y*size_y); 
+
+    for(const auto& row : hit_data) hist.Fill(row[0], row[1]);
+    auto cutg = HistToCutG(hist);
+    cutg.SetName(std::to_string(t_entry).c_str());
+    new(cutg_array_[t_entry]) TCutG(cutg);
+}
+
+/************************************
+TrackShapeFilter
+Compare the tracks with cut given by cut file
+See if the embed correlator is functioning
+*************************************/
+TrackShapeFilter::TrackShapeFilter(const std::string& t_cutfilename, double t_threshold) : 
+    cut_file_(t_cutfilename.c_str()),
+    threshold_(t_threshold){}
+
+void TrackShapeFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+{
+    auto cutg = (TCutG*) cut_file_.Get(std::to_string(t_entry).c_str());
+    if(! cutg ) return;// if no cut for such entry, treat as if it is rejected
+    auto& track_pts = t_hist.back();
+
+    unsigned num_inside = 0;
+    for(const auto& row : track_pts)
+        if(cutg->IsInside(row[0], row[1])) ++num_inside;
+    double percentage = (double) num_inside/ (double) track_pts.size();
+    cout << "per " << percentage << endl;
+    if(percentage < threshold_) this->FillData(t_hist, t_entry);
+    else return;
+    
+}
+
 
 /************************************
 DrawHit uses information from STHit class instead

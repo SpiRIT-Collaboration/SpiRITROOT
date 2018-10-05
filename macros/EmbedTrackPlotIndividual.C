@@ -1,5 +1,4 @@
 #include "EventSelection/Rules.h"
-
 class RealMomObserver : public RecoTrackRule
 {
 public:
@@ -10,6 +9,8 @@ public:
 		this->FillData(t_hist, t_entry);
 	};
 };
+
+
 
 void EmbedTrackPlotIndividual()
 {
@@ -27,13 +28,14 @@ void EmbedTrackPlotIndividual()
 	DrawMultipleComplex mc_draw("data/Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
 	DrawMultipleComplex embed_draw("data/Run2841_WithOffset/LowEnergy/run2841_s[0-5].reco.develop.1737.f55eaf6.root", "cbmsim");
 
+	RecoTrackNumFilter track_num_filter;
 	DrawHit reco_track_xz, reco_track_yz(1,2);
 	MomentumTracks reco_mom(3);
 	Observer reco_obs;
 	auto reco_track_xz_cp = mc_draw.NewCheckPoint();	
 	auto reco_track_yz_cp = mc_draw.NewCheckPoint();
 
-	reco_mom.AddRule(reco_obs.AddRule(reco_track_xz.AddRule(reco_track_xz_cp->AddRule(reco_track_yz.AddRule(reco_track_yz_cp)))));
+	track_num_filter.AddRule(reco_mom.AddRule(reco_obs.AddRule(reco_track_xz.AddRule(reco_track_xz_cp->AddRule(reco_track_yz.AddRule(reco_track_yz_cp))))));
 
 	auto all_tracks_xz_cp = embed_draw.NewCheckPoint();
 	auto all_tracks_yz_cp = embed_draw.NewCheckPoint();
@@ -48,25 +50,26 @@ void EmbedTrackPlotIndividual()
 
 	MomentumTracks embed_mom;
 	embed_mom.SetAxis(3);
-	Observer embed_obs;
-	RealMomObserver real_obs;
-	CompareMCPrimary comp("data/Run2841_WithOffset/LowEnergy/Momentum_distribution.txt", CompareMCPrimary::MMag, CompareMCPrimary::None);
-	ValueCut cut(100, 10000);
+	TrackShapeFilter shape_filter("HitsLowECutG.root", 0.8);
+	//Observer embed_obs;
+	//RealMomObserver real_obs;
+	//CompareMCPrimary comp("data/Run2841_WithOffset/LowEnergy/Momentum_distribution.txt", CompareMCPrimary::MMag, CompareMCPrimary::None);
+	//ValueCut cut(-100000, 10000);
 	all_tracks_xz.AddRule(all_tracks_xz_cp->AddRule(
                               all_tracks_yz.AddRule(
                               all_tracks_yz_cp->AddRule(
                               filter.AddRule(
-	                      embed_mom.AddRule(
-                              comp.AddRule(
-                              cut.AddRule(
-                              real_obs.AddRule(
-                              embed_mom_cp->AddRule(
-                              embed_obs.AddRule(
-                              embed_track_yz.AddRule(
-                              embed_tracks_yz_cp->AddRule(
-                              embed_track_xz.AddRule(embed_tracks_xz_cp))))))))))))));
+	                      //embed_mom.AddRule(
+                              //embed_obs.AddRule(
+                              //comp.AddRule(
+                              //cut.AddRule(
+                              //real_obs.AddRule(
+                              embed_track_xz.AddRule(
+                              shape_filter.AddRule(
+                              embed_tracks_xz_cp->AddRule(
+                              embed_track_yz.AddRule(embed_tracks_yz_cp)))))))));
 
-	mc_draw.SetRule(&reco_mom);
+	mc_draw.SetRule(&track_num_filter);
 	embed_draw.SetRule(&all_tracks_xz);
 
 
@@ -77,6 +80,7 @@ void EmbedTrackPlotIndividual()
 	{
 		TGraph hist_mc_xz, hist_embed_xz, hist_all_xz;
 		TGraph hist_mc_yz, hist_embed_yz, hist_all_yz;
+		TH2F hist_xz("track_distribution_xz", "Track Hit distribution;X(mm);Z(mm)", pad_x, -0.5*((double)pad_x*size_x), 0.5*((double)pad_x*size_x), pad_y, 0, (double) pad_y*size_y);
 		TLegend legend1(0.7, 0.8, 0.9, 0.9);
 		TLegend legend2(0.7, 0.8, 0.9, 0.9);
 		auto mc_datalist = *mc_it;
@@ -94,13 +98,17 @@ void EmbedTrackPlotIndividual()
 			const auto& result_all = embed_datalist[i];
 			const auto& result_embed = embed_datalist[i + 3];
 			
-			if(result_embed.size() == 0) 
+			if(result_embed.size() == 0 || result_mc.size() == 0) 
 			{
 				empty = true;
 				continue;
 			}
 
-			for(const auto& row : result_mc) hist_mc.SetPoint(hist_mc.GetN(), row[0], row[1]);
+			for(const auto& row : result_mc) 
+			{
+				hist_mc.SetPoint(hist_mc.GetN(), row[0], row[1]);
+				if(i == 0) hist_xz.Fill(row[0], row[1]);
+			}
 			for(const auto& row : result_embed) hist_embed.SetPoint(hist_embed.GetN(), row[0], row[1]);
 			for(const auto& row : result_all) hist_all.SetPoint(hist_all.GetN(), row[0], row[1]);
 
@@ -127,8 +135,14 @@ void EmbedTrackPlotIndividual()
 			c1.Modified();
 			c1.Update();
 		}
+
+		// fit the xz mc hit with a curve
 		if(!empty)
 		{
+			c1.cd(1);
+			auto cutg = HistToCutG(hist_xz);
+			cutg.Draw("same");
+			std::cout << "Percentage inside cut " << PercentageInsideCut(cutg, hist_embed_xz) << endl;
 			std::cout << "Continue ? \n";
 			gPad->WaitPrimitive();
 		}

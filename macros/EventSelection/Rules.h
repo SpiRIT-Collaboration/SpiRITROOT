@@ -1,5 +1,6 @@
 #ifndef RULESSS_H
 #define RULESSS_H
+#include "HistToCutG.h"
 
 typedef std::vector<std::vector<double>> DataSink;
 typedef TTreeReaderValue<TClonesArray> ReaderValue;
@@ -16,7 +17,7 @@ public:
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) = 0;
 
     bool Repeated(unsigned t_entry);
-    Rule* AddRule(Rule* t_rule);
+    virtual Rule* AddRule(Rule* t_rule);
     inline void AppendRule(Rule* t_rule) { if(NextRule_) NextRule_->AppendRule(t_rule); else this->AddRule(t_rule);};
 protected:
     void FillData(std::vector<DataSink>& t_hist, unsigned t_entry);
@@ -52,6 +53,15 @@ protected:
     bool can_init_loop_;
 };
 
+class RecoTrackNumFilter : public Rule
+{
+public: 
+    virtual void SetMyReader(TTreeReader& t_reader) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+protected:
+    std::shared_ptr<ReaderValue> myTrackArray_;
+};
+
 class EmbedFilter : public RecoTrackRule
 {
 public:
@@ -59,6 +69,16 @@ public:
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 protected:
     std::shared_ptr<ReaderValue> myEmbedArray_;
+};
+
+class TrackShapeFilter : public RecoTrackRule
+{
+public:
+    TrackShapeFilter(const std::string& t_cutfilename, double t_threshold);
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+protected:
+    double threshold_;
+    TFile cut_file_;
 };
 
 class CheckPoint : public RecoTrackRule
@@ -159,12 +179,14 @@ public:
         T hist(args...);
         reader_.Restart();
         t_rule.SetReader(reader_);
+	unsigned index = 0;
         while( reader_.Next() )
         {
             std::vector<DataSink> result;
-            t_rule.Fill(result, reader_.GetCurrentEntry());
+            t_rule.Fill(result, index);
             for(const auto& row : cp.GetData()) hist.Fill(row[0], row[1]);
-            std::cout << "Processing Entry " << reader_.GetCurrentEntry() << "\t\r";
+            std::cout << "Processing Entry " << index << "\t\r";
+            ++index;
         }
         return hist;
     }
@@ -223,6 +245,26 @@ public:
 protected:
     const int x_, y_;
     std::shared_ptr<ReaderValue> myHitArray_;
+};
+
+// this draws output of the previous rules
+// will only work if it is DrawHit (or DrawTrack in the future). To do list
+// Can only work with x-z or y-z plane. To do list for other dimensions
+class GetHitOutline : public Rule
+{
+public: 
+    GetHitOutline(const std::string& t_outputname);
+    virtual ~GetHitOutline();
+    virtual Rule* AddRule(Rule* t_rule) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+private:
+    const int pad_x = 108;              
+    const int pad_y = 112;
+    const double size_x = 8;
+    const double size_y = 12;
+    const int max_num_ = 10000; // maximum number of cuts to be stored
+    TFile file_;
+    TClonesArray cutg_array_;                        // to do list: by pass this number
 };
 
 class DrawHitEmbed : public Rule
