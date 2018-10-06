@@ -179,22 +179,6 @@ std::vector<DataSink> DrawMultipleComplex::Iterator::operator*() const
     return datalist;
 }
 
-bool DrawMultipleComplex::Iterator::operator!=(const Iterator& rhs) const
-{
-    return this->it_ != rhs.it_;
-}
-
-DrawMultipleComplex::Iterator & DrawMultipleComplex::Iterator::operator++()
-{
-    it_++;
-    return *this;
-}
-
-DrawMultipleComplex::Iterator DrawMultipleComplex::Iterator::operator++(int)
-{
-    return ++(*this);
-}
-
 
 /****************************
 Observer: Pipe intermediate result to stdout

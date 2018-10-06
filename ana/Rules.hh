@@ -164,9 +164,10 @@ public:
                               TTreeReader::Iterator_t t_it) : fcomplex_(t_complex),
                                                           it_(t_it){};
         std::vector<DataSink> operator*() const;
-        bool operator!=(const Iterator& rhs) const;
-        Iterator & operator++();
-        Iterator operator++(int);
+        inline bool operator!=(const Iterator& rhs) const {return this->it_ != rhs.it_;};
+        inline Iterator & operator++(){ it_++; return *this;};
+        inline Iterator operator++(int){ return ++(*this);};
+
     private:
         DrawMultipleComplex& fcomplex_;
         TTreeReader::Iterator_t it_;
