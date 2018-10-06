@@ -1,11 +1,32 @@
 #ifndef RULESSS_H
 #define RULESSS_H
-#include "HistToCutG.h"
+#include "HistToCutG.hh"
+#include <vector>
+#include <iostream>
+#include <memory>
+#include <fstream>
+#include <string>
+#include <sstream>
+
+#include "TObject.h"
+#include "TMath.h"
+#include "TH1.h"
+#include "TGraph.h"
+#include "TFile.h"
+#include "TTreeReader.h"
+#include "TTreeReaderValue.h"
+#include "TClonesArray.h"
+#include "TCutG.h"
+#include "TChain.h"
+
+#include "STRecoTrack.hh"
+#include "STEmbedTrack.hh"
+#include "ST_ClusterNum_DB.hh"
 
 typedef std::vector<std::vector<double>> DataSink;
 typedef TTreeReaderValue<TClonesArray> ReaderValue;
 
-class Rule
+class Rule 
 {
 public:
     Rule() : current_entry_(-1), NextRule_(0), PreviousRule_(0) {};
@@ -18,12 +39,23 @@ public:
 
     bool Repeated(unsigned t_entry);
     virtual Rule* AddRule(Rule* t_rule);
+    inline void PopRule() 
+    { 
+        if(NextRule_) NextRule_->PopRule(); 
+        else
+        {
+             PreviousRule_->NextRule_ = 0; 
+             PreviousRule_ = 0;
+        }
+    }
     inline void AppendRule(Rule* t_rule) { if(NextRule_) NextRule_->AppendRule(t_rule); else this->AddRule(t_rule);};
 protected:
     void FillData(std::vector<DataSink>& t_hist, unsigned t_entry);
     int current_entry_;
     Rule* NextRule_;
     Rule* PreviousRule_;
+
+    //ClassDef(Rule, 1);
 };
 
 class ParallelRules : public Rule
@@ -38,6 +70,8 @@ public:
 protected:
     std::vector<Rule*> rules_;
     std::vector<std::vector<DataSink>> data_;
+
+    //lassDefOverride(ParallelRules,7);
 };
 
 class RecoTrackRule : public Rule
@@ -51,6 +85,7 @@ protected:
     STRecoTrack* track_; 
     unsigned track_id_;
     bool can_init_loop_;
+    //lassDefOverride(RecoTrackRule,2);
 };
 
 class RecoTrackNumFilter : public Rule
@@ -60,6 +95,7 @@ public:
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 protected:
     std::shared_ptr<ReaderValue> myTrackArray_;
+    //lassDefOverride(RecoTrackNumFilter,2);;
 };
 
 class EmbedFilter : public RecoTrackRule
@@ -69,6 +105,7 @@ public:
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 protected:
     std::shared_ptr<ReaderValue> myEmbedArray_;
+    //lassDefOverride(EmbedFilter,3);;
 };
 
 class TrackShapeFilter : public RecoTrackRule
@@ -79,6 +116,7 @@ public:
 protected:
     double threshold_;
     TFile cut_file_;
+    //lassDefOverride(TrackShapeFilter,3);;
 };
 
 class CheckPoint : public RecoTrackRule
@@ -89,15 +127,17 @@ public:
     DataSink GetData();
 protected:
     DataSink temp_sink_;
+    //lassDefOverride(CheckPoint,3);;
 };
 
 class PID : public RecoTrackRule
 {
 public:
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override ;
+    //lassDefOverride(PID,3);;
 };
 
-class DrawMultipleComplex
+class DrawMultipleComplex 
 {
 public:
     DrawMultipleComplex(const std::string& t_filenames, const std::string& t_treename, Rule* t_rule=0);
@@ -119,6 +159,21 @@ public:
 
     void SetRule(Rule* t_rule){rule_ = t_rule; reader_.Restart(); rule_->SetReader(reader_);};
     
+    class Iterator : public std::iterator<std::output_iterator_tag, DataSink>
+    {
+    public:
+        explicit Iterator(DrawMultipleComplex& t_complex, 
+                              TTreeReader::Iterator_t t_it) : fcomplex_(t_complex),
+                                                          it_(t_it){};
+        std::vector<DataSink> operator*() const;
+        bool operator!=(const Iterator& rhs) const;
+        Iterator & operator++();
+        Iterator operator++(int);
+    private:
+        DrawMultipleComplex& fcomplex_;
+        TTreeReader::Iterator_t it_;
+    };
+
 protected:
     template<typename T, typename... ARGS>
     void FillHists(int t_ncp, Rule& t_rule, T& first_graph, ARGS&... args)
@@ -135,20 +190,7 @@ protected:
         for(const auto& row : data) graph.Fill(row[0], row[1]);
     }
 
-    class Iterator : public std::iterator<std::output_iterator_tag, DataSink>
-    {
-    public:
-        explicit Iterator(DrawMultipleComplex& t_complex, 
-                              TTreeReader::Iterator_t t_it) : fcomplex_(t_complex),
-                                                          it_(t_it){};
-        inline std::vector<DataSink> operator*() const;
-        inline bool operator!=(const Iterator& rhs) const;
-        inline Iterator & operator++();
-        inline Iterator operator++(int);
-    private:
-        DrawMultipleComplex& fcomplex_;
-        TTreeReader::Iterator_t it_;
-    };
+    
 
     Rule* rule_;
     TChain chain_;
@@ -157,10 +199,13 @@ protected:
 public:
     Iterator begin() { reader_.Restart(); return Iterator(*this, reader_.begin()); };
     Iterator end() { return Iterator(*this, reader_.end());};
+    //lassDef(DrawMultipleComplex,2);;
 };
 
 
-class DrawComplex
+
+
+class DrawComplex 
 {
 public:
     DrawComplex(const std::string& t_filenames, 
@@ -188,11 +233,13 @@ public:
             std::cout << "Processing Entry " << index << "\t\r";
             ++index;
         }
+        t_rule.PopRule();
         return hist;
     }
 protected:
     TChain chain_;
     TTreeReader reader_;
+    //lassDef(DrawComplex,2);;
 };
 
 
@@ -201,6 +248,7 @@ class Observer : public RecoTrackRule
 {
 public:
         virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    //lassDefOverride(Observer,3);;
 };
 
 class DrawTrack : public RecoTrackRule
@@ -210,6 +258,7 @@ public:
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 protected:
     const int x_, y_;
+    //lassDefOverride(DrawTrack,3);;
 };
 
 class CompareMCPrimary : public RecoTrackRule
@@ -222,6 +271,7 @@ public:
 protected:
     Type x_, y_;	
     std::vector<double> Px_, Py_, Pz_, X_, Y_, Z_;
+    //lassDefOverride(CompareMCPrimary,3);;
 };
 
 class MomentumTracks : public RecoTrackRule
@@ -233,6 +283,7 @@ public:
     inline void SetAxis(int t_axis) { axis_ = t_axis; };
 protected:
     int axis_;
+    //lassDefOverride(MomentumTracks,3);;
 };
 
 
@@ -245,6 +296,7 @@ public:
 protected:
     const int x_, y_;
     std::shared_ptr<ReaderValue> myHitArray_;
+    //lassDefOverride(DrawHit,2);;
 };
 
 // this draws output of the previous rules
@@ -265,6 +317,7 @@ private:
     const int max_num_ = 10000; // maximum number of cuts to be stored
     TFile file_;
     TClonesArray cutg_array_;                        // to do list: by pass this number
+    //lassDefOverride(GetHitOutline,2);;
 };
 
 class DrawHitEmbed : public Rule
@@ -276,6 +329,7 @@ public:
 protected:
     const int x_, y_;
     std::shared_ptr<ReaderValue> myHitArray_;
+    //lassDefOverride(DrawHitEmbed,2);;
 };
 
 
@@ -286,6 +340,7 @@ public:
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 protected:
     ST_ClusterNum_DB db;
+    //lassDefOverride(RenshengCompareData,3);;
 };
 
 class ValueCut : public RecoTrackRule
@@ -296,6 +351,7 @@ public:
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 protected:
     double lower_, upper_;
+    //lassDefOverride(ValueCut,3);;
 };
     
 class EmbedCut : public RecoTrackRule
@@ -310,12 +366,14 @@ public:
 protected:
     TFile file_;
     TCutG* cutg_;
+    //lassDefOverride(EmbedCut,3);;
 };
 
 class ThetaPhi : public RecoTrackRule
 {
 public:
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    //lassDefOverride(ThetaPhi,3);;
 };
 
 class EntryRecorder : public RecoTrackRule
@@ -329,6 +387,7 @@ public:
 protected:
     std::vector<int> list_;
     std::vector<int> event_id_, db_num_, exp_num_;
+    //lassDefOverride(EntryRecorder,3);;
 };
 
 #endif

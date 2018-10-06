@@ -48,6 +48,8 @@ set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
 ST_TrackCut.cc
 ST_ClusterNum_DB.cc
+HistToCutG.cc
+Rules.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

@@ -9,6 +9,8 @@ with tracks going in both direction
 ************************/
 #ifndef HISTTOCUTG_H
 #define HISTTOCUTG_H
+#include "TCutG.h"
+#include "TGraph.h"
 
 struct Point{double x, y;};
 enum class Direction{left, right, NoFlat};

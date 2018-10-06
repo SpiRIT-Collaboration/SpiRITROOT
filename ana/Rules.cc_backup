@@ -1,4 +1,4 @@
-#include "Rules.h"
+#include "Rules.hh"
 
 /****************************
 Rules: base abstract class for event cut and analysis
@@ -167,7 +167,7 @@ CheckPoint* DrawMultipleComplex::NewCheckPoint()
 /********************************
 Iterator for draw multiple complex
 ********************************/
-inline std::vector<DataSink> DrawMultipleComplex::Iterator::operator*() const
+std::vector<DataSink> DrawMultipleComplex::Iterator::operator*() const
 {
     std::vector<DataSink> temp;
     if(!fcomplex_.rule_) std::cerr << "Rule is not set. Cannot use iterator\n";
@@ -179,18 +179,18 @@ inline std::vector<DataSink> DrawMultipleComplex::Iterator::operator*() const
     return datalist;
 }
 
-inline bool DrawMultipleComplex::Iterator::operator!=(const Iterator& rhs) const
+bool DrawMultipleComplex::Iterator::operator!=(const Iterator& rhs) const
 {
     return this->it_ != rhs.it_;
 }
 
-inline DrawMultipleComplex::Iterator & DrawMultipleComplex::Iterator::operator++()
+DrawMultipleComplex::Iterator & DrawMultipleComplex::Iterator::operator++()
 {
     it_++;
     return *this;
 }
 
-inline DrawMultipleComplex::Iterator DrawMultipleComplex::Iterator::operator++(int)
+DrawMultipleComplex::Iterator DrawMultipleComplex::Iterator::operator++(int)
 {
     return ++(*this);
 }

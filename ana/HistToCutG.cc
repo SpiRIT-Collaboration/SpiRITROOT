@@ -7,7 +7,11 @@ Will not work otherwise
 But you garentte that the curve will neve goes flat (i.e. slope = 0), then it will work 
 with tracks going in both direction
 ************************/
-#include "HistToCutG.h"
+#include "HistToCutG.hh"
+#include <vector>
+#include "TProfile.h"
+#include "TH2.h"
+#include "TAxis.h"
 
 double Normal2Pts(const Point& t_p1, const Point& t_p2)
 {
