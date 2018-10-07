@@ -7,8 +7,8 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <functional>
 
-#include "TObject.h"
 #include "TMath.h"
 #include "TH1.h"
 #include "TGraph.h"
@@ -29,7 +29,7 @@ typedef TTreeReaderValue<TClonesArray> ReaderValue;
 class Rule
 {
 public:
-    Rule() : current_entry_(-1), NextRule_(0), PreviousRule_(0) {};
+    Rule() : current_entry_(-1), NextRule_(0), PreviousRule_(0), RejectRule_(0) {};
     virtual ~Rule(){};
 
     virtual void SetReader(TTreeReader& t_reader);
@@ -39,11 +39,14 @@ public:
 
     bool Repeated(unsigned t_entry);
     virtual Rule* AddRule(Rule* t_rule);
+    virtual Rule* AddRejectRule(Rule* t_rule);
     inline void AppendRule(Rule* t_rule) { if(NextRule_) NextRule_->AppendRule(t_rule); else this->AddRule(t_rule);};
 protected:
-    void FillData(std::vector<DataSink>& t_hist, unsigned t_entry);
+    inline void FillData(std::vector<DataSink>& t_hist, unsigned t_entry) {if(NextRule_) NextRule_->Fill(t_hist, t_entry);};
+    inline void RejectData(std::vector<DataSink>& t_hist, unsigned t_entry) {if(RejectRule_) RejectRule_->Fill(t_hist, t_entry);};
     int current_entry_;
     Rule* NextRule_;
+    Rule* RejectRule_;
     Rule* PreviousRule_;
 };
 
@@ -77,10 +80,12 @@ protected:
 class RecoTrackNumFilter : public Rule
 {
 public: 
+    RecoTrackNumFilter(const std::function<bool(int)>& t_compare = [](int t_tracks){return t_tracks < 2;}) : compare_(t_compare){};
     virtual void SetMyReader(TTreeReader& t_reader) override;
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 protected:
     std::shared_ptr<ReaderValue> myTrackArray_;
+    std::function<bool(int)> compare_;
 };
 
 class EmbedFilter : public RecoTrackRule
@@ -202,7 +207,7 @@ public:
         T hist(args...);
         reader_.Restart();
         t_rule.SetReader(reader_);
-	unsigned index = 0;
+        unsigned index = 0;
         while( reader_.Next() )
         {
             std::vector<DataSink> result;
@@ -211,6 +216,7 @@ public:
             std::cout << "Processing Entry " << index << "\t\r";
             ++index;
         }
+        std::cout << "\n";
         return hist;
     }
 protected:
@@ -243,7 +249,7 @@ public:
     inline void ChangeAxis(Type t_x, Type t_y) {x_ = t_x; y_ = t_y;};
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 protected:
-    Type x_, y_;	
+    Type x_, y_;    
     std::vector<double> Px_, Py_, Pz_, X_, Y_, Z_;
 };
 
@@ -344,14 +350,22 @@ public:
 class EntryRecorder : public RecoTrackRule
 {
 public:
-    EntryRecorder() {};
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
     void ToFile(const std::string& t_filename);
     inline void Clear() { list_.clear(); };
     std::vector<int> GetList() { return list_; };
 protected:
     std::vector<int> list_;
-    std::vector<int> event_id_, db_num_, exp_num_;
+};
+
+class TrackZFilter : public Rule
+{
+public:
+    void SetMyReader(TTreeReader& t_reader) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+protected:
+    std::shared_ptr<ReaderValue> myTrackArray_;
 };
 
 #endif
+

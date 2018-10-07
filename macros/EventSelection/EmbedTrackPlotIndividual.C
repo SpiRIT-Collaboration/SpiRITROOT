@@ -10,6 +10,32 @@ public:
 	};
 };
 
+class TrackZFilter : public Rule
+{
+public:
+	void SetMyReader(TTreeReader& t_reader) override {myTrackArray_ = std::make_shared<ReaderValue>(t_reader, "STRecoTrack");};
+
+	virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override
+	{
+		bool non_empty = false;
+		for(unsigned track_id_ = 0; track_id_ < (*myTrackArray_)->GetEntries(); ++track_id_)
+    		{
+			auto track_ = static_cast<STRecoTrack*>((*myTrackArray_) -> At(track_id_));
+			for(const auto& point : (*track_->GetdEdxPointArray()))
+				if(point.fPosition[2] > 10)
+				{
+					non_empty = true;
+					break;
+				}
+			if(non_empty) break;
+		}
+		if(non_empty) this->FillData(t_hist, t_entry);
+		else this->RejectData(t_hist, t_entry);
+    	};
+
+protected:
+	std::shared_ptr<ReaderValue> myTrackArray_;
+};
 
 
 void EmbedTrackPlotIndividual()
@@ -25,8 +51,8 @@ void EmbedTrackPlotIndividual()
 	TCanvas c1("canvas", "Tracks top down", 2.*canvas_scale*((double) pad_x)*size_x, canvas_scale*((double) pad_y)*size_y);
 	c1.Divide(2,1);
 
-	DrawMultipleComplex mc_draw("data/Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
-	DrawMultipleComplex embed_draw("data/Run2841_WithOffset/LowEnergy/run2841_s[0-5].reco.develop.1737.f55eaf6.root", "cbmsim");
+	DrawMultipleComplex mc_draw("data/Run2841_WithOffset/HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
+	DrawMultipleComplex embed_draw("data/Run2841_WithOffset/HighEnergy/run2841_s0[0-5].reco.develop.1737.f55eaf6.root", "cbmsim");
 
 	RecoTrackNumFilter track_num_filter;
 	DrawHit reco_track_xz, reco_track_yz(1,2);
@@ -43,6 +69,7 @@ void EmbedTrackPlotIndividual()
 	auto embed_tracks_xz_cp = embed_draw.NewCheckPoint();
 	auto embed_tracks_yz_cp = embed_draw.NewCheckPoint();
 	
+	TrackZFilter min_track_num;//([](int i){return i > 3;});
 	EmbedFilter filter;
 	DrawTrack embed_track_xz, embed_track_yz(1,2);
         DrawTrack all_tracks_xz;
@@ -50,12 +77,13 @@ void EmbedTrackPlotIndividual()
 
 	MomentumTracks embed_mom;
 	embed_mom.SetAxis(3);
-	TrackShapeFilter shape_filter("HitsLowECutG.root", 0.8);
+	TrackShapeFilter shape_filter("HitsHighECutG.root", 0.8);
 	//Observer embed_obs;
 	//RealMomObserver real_obs;
 	//CompareMCPrimary comp("data/Run2841_WithOffset/LowEnergy/Momentum_distribution.txt", CompareMCPrimary::MMag, CompareMCPrimary::None);
 	//ValueCut cut(-100000, 10000);
-	all_tracks_xz.AddRule(all_tracks_xz_cp->AddRule(
+        min_track_num.AddRule(all_tracks_xz.AddRule(
+                              all_tracks_xz_cp->AddRule(
                               all_tracks_yz.AddRule(
                               all_tracks_yz_cp->AddRule(
                               filter.AddRule(
@@ -67,10 +95,10 @@ void EmbedTrackPlotIndividual()
                               embed_track_xz.AddRule(
                               shape_filter.AddRule(
                               embed_tracks_xz_cp->AddRule(
-                              embed_track_yz.AddRule(embed_tracks_yz_cp)))))))));
+                              embed_track_yz.AddRule(embed_tracks_yz_cp))))))))));
 
 	mc_draw.SetRule(&track_num_filter);
-	embed_draw.SetRule(&all_tracks_xz);
+	embed_draw.SetRule(&min_track_num);
 
 
 	auto mc_it = mc_draw.begin();
@@ -102,14 +130,19 @@ void EmbedTrackPlotIndividual()
 			{
 				empty = true;
 				continue;
-			}
-
+ 			}
+			
 			for(const auto& row : result_mc) 
 			{
 				hist_mc.SetPoint(hist_mc.GetN(), row[0], row[1]);
 				if(i == 0) hist_xz.Fill(row[0], row[1]);
 			}
-			for(const auto& row : result_embed) hist_embed.SetPoint(hist_embed.GetN(), row[0], row[1]);
+			bool above = false;
+			for(const auto& row : result_embed) 
+			{
+				if(row[1] > 10) above = true;
+				hist_embed.SetPoint(hist_embed.GetN(), row[0], row[1]);
+			}
 			for(const auto& row : result_all) hist_all.SetPoint(hist_all.GetN(), row[0], row[1]);
 
 			c1.cd(i + 1);

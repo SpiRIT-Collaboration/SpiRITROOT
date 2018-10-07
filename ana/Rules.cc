@@ -7,6 +7,7 @@ void Rule::SetReader(TTreeReader& t_reader)
 {
     this->SetMyReader(t_reader);
     if(NextRule_) NextRule_->SetReader(t_reader);
+    if(RejectRule_) RejectRule_ -> SetReader(t_reader);
 };
 
 void Rule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
@@ -30,24 +31,31 @@ Rule* Rule::AddRule(Rule* t_rule)
 {
     // avoid self referencing
     if(this == t_rule)
-        std::cerr << "Try to add the same rule twice. Will be ignored\n";
+    {    std::cerr << "Try to add the same rule twice. Will be ignored\n";}
+    if(NextRule_)
+    {    std::cerr << "NextRule to this rule is alread set. Don't add again\n";}
     else
     {
-        if(NextRule_) NextRule_->AddRule(t_rule);
-        else
-        {
-            NextRule_ = t_rule;
-            t_rule->PreviousRule_ = this;
-        }
+        NextRule_ = t_rule;
+        t_rule->PreviousRule_ = this;
     }
     return this;
 }
 
-void Rule::FillData(std::vector<DataSink>& t_hist, unsigned t_entry)
+Rule* Rule::AddRejectRule(Rule* t_rule)
 {
-    if(NextRule_) NextRule_->Fill(t_hist, t_entry);
-    //else t_hist.push_back(fill_);
-};
+    // avoid self referencing
+    if(this == t_rule)
+    {    std::cerr << "Try to add the same rule twice. Will be ignored\n";}
+    if(RejectRule_)
+    {    std::cerr << "RejectedRules have been set. You cannot add another RejectedRule\n";}
+    else
+    {
+        RejectRule_ = t_rule;
+        t_rule->PreviousRule_ = this;
+    }
+    return this;
+}
 
 /****************************
 ParallelRules: Rules that runs in parallel
@@ -78,8 +86,7 @@ Base class that iterats through STRecoTracks
 void RecoTrackRule::SetReader(TTreeReader& t_reader) 
 {
     myTrackArray_ = std::make_shared<ReaderValue>(t_reader, "STRecoTrack");
-    this->SetMyReader(t_reader);
-    if(NextRule_) NextRule_->SetReader(t_reader);
+    this->Rule::SetReader(t_reader);
 };
 
 void RecoTrackRule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry) 
@@ -98,11 +105,11 @@ void RecoTrackRule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
     // if previous rule doesn't start looping on recotrack, it will initialize it
     if(can_init_loop_)
     {
-    	for(track_id_ = 0; track_id_ < (*myTrackArray_)->GetEntries(); ++track_id_)
-    	{
-    	    track_ = static_cast<STRecoTrack*>((*myTrackArray_) -> At(track_id_));
-    	    this->Selection(t_hist, t_entry);
-    	}
+        for(track_id_ = 0; track_id_ < (*myTrackArray_)->GetEntries(); ++track_id_)
+        {
+            track_ = static_cast<STRecoTrack*>((*myTrackArray_) -> At(track_id_));
+            this->Selection(t_hist, t_entry);
+        }
     }
     else this->Selection(t_hist, t_entry);
 }
@@ -185,7 +192,7 @@ Observer: Pipe intermediate result to stdout
 ****************************/
 void Observer::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
 {
-	auto fill = t_hist.back().back();
+    auto fill = t_hist.back().back();
         std::cout << " Momentum is " << fill[0] << " at entry " << t_entry << " track_id " << track_id_ <<" \n";
         this->FillData(t_hist, t_entry);
 }
@@ -215,8 +222,8 @@ void RecoTrackNumFilter::SetMyReader(TTreeReader& t_reader)
 
 void RecoTrackNumFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 {
-    if((*myTrackArray_)->GetEntries() > 1) return;
-    this->FillData(t_hist, t_entry);
+    if(this->compare_((*myTrackArray_)->GetEntries())) this->FillData(t_hist, t_entry);
+    else this->RejectData(t_hist, t_entry);
 }
 
 /******************************
@@ -230,12 +237,16 @@ void EmbedFilter::SetMyReader(TTreeReader& t_reader)
 
 void EmbedFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 {
-    if((*myEmbedArray_)->GetEntries() == 0) return;
     for(int i = 0; i < (*myEmbedArray_)->GetEntries(); ++i)
     {
         auto id = static_cast<STEmbedTrack*>((*myEmbedArray_)->At(i))->GetArrayID();
-        if(id == track_id_) this->FillData(t_hist, t_entry);
+        if(id == track_id_) 
+        {
+            this->FillData(t_hist, t_entry);
+            return;
+        }
     }
+    this->RejectData(t_hist, t_entry);
 }
 
 /*************************************
@@ -303,8 +314,8 @@ void CompareMCPrimary::Selection(std::vector<DataSink>& t_hist, unsigned t_entry
                 double mag = sqrt(Px_[t_entry]*Px_[t_entry] 
                                   + Py_[t_entry]*Py_[t_entry] 
                                   + Pz_[t_entry]*Pz_[t_entry]);
-		val = reco_mom.Mag() - mag;
-		break;
+        val = reco_mom.Mag() - mag;
+        break;
             }
             case StartX: val = reco_Vert[0] - X_[t_entry]; break;
             case StartY: val = reco_Vert[1] - Y_[t_entry]; break;
@@ -349,8 +360,8 @@ Can only work with x-z or y-z plane. To do list for other dimensions
 *************************************/
 
 GetHitOutline::GetHitOutline(const std::string& t_outputname) : 
-	file_(t_outputname.c_str(), "RECREATE"),
-	cutg_array_("TCutG", max_num_) {}
+    file_(t_outputname.c_str(), "RECREATE"),
+    cutg_array_("TCutG", max_num_) {}
 
 Rule* GetHitOutline::AddRule(Rule* t_rule)
 {
@@ -401,16 +412,19 @@ TrackShapeFilter::TrackShapeFilter(const std::string& t_cutfilename, double t_th
 void TrackShapeFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 {
     auto cutg = (TCutG*) cut_file_.Get(std::to_string(t_entry).c_str());
-    if(! cutg ) return;// if no cut for such entry, treat as if it is rejected
+    if(! cutg ) 
+    {
+        this->RejectData(t_hist, t_entry);
+        return;// if no cut for such entry, treat as if it is rejected
+    }
     auto& track_pts = t_hist.back();
 
     unsigned num_inside = 0;
     for(const auto& row : track_pts)
         if(cutg->IsInside(row[0], row[1])) ++num_inside;
     double percentage = (double) num_inside/ (double) track_pts.size();
-    cout << "per " << percentage << endl;
     if(percentage < threshold_) this->FillData(t_hist, t_entry);
-    else return;
+    else this->RejectData(t_hist, t_entry);
     
 }
 
@@ -552,12 +566,6 @@ void EntryRecorder::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
     // do not fill repeated entry number
     if(list_.size() == 0) list_.push_back(t_entry);
     else if(t_entry != list_.back()) list_.push_back(t_entry);
-
-    // it is a new event if the entry number doesn't match
-    event_id_.push_back(list_.size() - 1);
-    auto fill = t_hist.back().back();
-    db_num_.push_back((int) (fill[1] + 0.5));
-    exp_num_.push_back((int) (fill[0] + 0.5));
     this->FillData(t_hist, t_entry);
 };
 
@@ -567,9 +575,31 @@ void EntryRecorder::ToFile(const std::string& t_filename)
     std::ofstream file(t_filename.c_str());
     for(const auto& i : list_)
         file << i << "\n";
+};
 
-    std::ofstream record(("Record_" + t_filename).c_str());
-    record << "EventID\tExpNum\tDBNum\n";
-    for(unsigned i = 0; i < event_id_.size(); ++i)
-        record << event_id_[i] << "\t" << exp_num_[i] << "\t" << db_num_[i] << "\n";
+/*****************************
+TrackZFilter
+Use to see if the event contains tracks that goes forward
+For some reasons some tracks will only register their hit in origin
+Reject those
+*****************************/
+void TrackZFilter::SetMyReader(TTreeReader& t_reader)
+{ myTrackArray_ = std::make_shared<ReaderValue>(t_reader, "STRecoTrack");};
+
+void TrackZFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+{
+    bool non_empty = false;
+    for(unsigned track_id_ = 0; track_id_ < (*myTrackArray_)->GetEntries(); ++track_id_)
+    {
+        auto track_ = static_cast<STRecoTrack*>((*myTrackArray_) -> At(track_id_));
+        for(const auto& point : (*track_->GetdEdxPointArray()))
+            if(point.fPosition[2] > 10)
+            {
+                non_empty = true;
+                break;
+            }
+        if(non_empty) break;
+    }
+    if(non_empty) this->FillData(t_hist, t_entry);
+    else this->RejectData(t_hist, t_entry);
 };
