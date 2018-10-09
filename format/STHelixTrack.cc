@@ -562,7 +562,7 @@ TVector3 STHelixTrack::Direction(Double_t alpha) const
     alphaPointer =- TMath::Pi()/2.;
 
   TVector3 posCenter(fXHelixCenter, 0, fZHelixCenter);
-  TVector3 direction = PositionByAlpha(alphaPointer) - posCenter;
+  TVector3 direction = PositionByAlpha(alpha) - posCenter;
   auto directionY = direction.Y();
   direction.SetY(0);
   direction.SetMag(2*TMath::Pi()*fHelixRadius);
