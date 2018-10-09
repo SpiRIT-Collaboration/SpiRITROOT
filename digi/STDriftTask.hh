@@ -36,6 +36,7 @@
 // ROOT class headers
 #include "TClonesArray.h"
 #include "Math/Interpolator.h"
+#include "TF1.h"
 
 class STDriftTask : public FairTask
 {
@@ -94,6 +95,8 @@ class STDriftTask : public FairTask
     Double_t fCoefL;    //!< Longitudinal diffusion coefficient. [mm^(-1/2)]
     Double_t fGain;     //!< Gain.
     Double_t fYDriftOffset; //!< offset for drift time
+
+    TF1 *polya = new TF1("polya","(1/1024.)*(pow(1.41,1.41)/TMath::Gamma(1.41))*pow(x/1024.,1.41-1)*exp(-1.41*(x/1024.))",0,10000);
 
     STDriftTask(const STDriftTask&);
     STDriftTask operator=(const STDriftTask&);

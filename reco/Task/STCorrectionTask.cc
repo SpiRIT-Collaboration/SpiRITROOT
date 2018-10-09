@@ -23,6 +23,12 @@ InitStatus STCorrectionTask::Init()
   if(STRecoTask::Init()==kERROR)
     return kERROR;
 
+  fHelixArray = (TClonesArray*) fRootManager -> GetObject("STHelixTrack");
+  if (fHelixArray == nullptr) {
+    LOG(ERROR) << "Cannot find Helix array!" << FairLogger::endl;
+    return kERROR;
+  }
+
   fHitClusterArray = (TClonesArray*) fRootManager -> GetObject("STHitCluster");
   if (fHitClusterArray == nullptr) {
     LOG(ERROR) << "Cannot find Cluster array!" << FairLogger::endl;
@@ -44,13 +50,16 @@ void STCorrectionTask::Exec(Option_t *opt)
 {
   if(fDesaturate)
     {
-      fCorrection -> Desaturate(fHitClusterArray);  
-      LOG(INFO) << Space() << "STCorrection  Clusters Desaturated" << FairLogger::endl;
+      if(fSatOpt == 0)
+	{
+	  fCorrection -> Desaturate(fHitClusterArray);  
+	  LOG(INFO) << Space() << "STCorrection  Clusters Desaturated (Pad PRF)" << FairLogger::endl;
+	}
+      else if(fSatOpt == 1)
+	{
+	  fCorrection -> Desaturate_byHelix(fHelixArray,fHitClusterArray);  
+	  LOG(INFO) << Space() << "STCorrection  Clusters Desaturated (HelixPRF)" << FairLogger::endl;
+	}
     }
-
-}
-
-void STCorrectionTask::SetDesaturation(Bool_t opt )
-{
-  fDesaturate = opt;
+  
 }

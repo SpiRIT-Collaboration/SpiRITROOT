@@ -169,7 +169,9 @@ STDriftTask::Exec(Option_t* option)
 
     Int_t nElectrons = (Int_t)floor(fabs(eLoss/fEIonize));
     for(Int_t iElectron=0; iElectron<nElectrons; iElectron++) {
-      Int_t gain = gRandom -> Gaus(fGain,20); // TODO : Gain function is neede.
+
+      Int_t gain = polya -> GetRandom();
+      //      Int_t gain = gRandom -> Gaus(fGain,20); // TODO : Gain function is neede.
       if(gain<=0) continue;
 
       Double_t dr    = gRandom->Gaus(0,sigmaT); // displacement in radial direction
