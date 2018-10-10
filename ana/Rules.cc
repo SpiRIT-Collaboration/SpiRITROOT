@@ -17,16 +17,6 @@ void Rule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
 }
 
 
-bool Rule::Repeated(unsigned t_entry) 
-{ 
-    if(t_entry == current_entry_) return true; 
-    else 
-    {
-        current_entry_ = t_entry;
-        return false;
-    }
-};
-
 Rule* Rule::AddRule(Rule* t_rule)
 {
     // avoid self referencing
@@ -57,28 +47,6 @@ Rule* Rule::AddRejectRule(Rule* t_rule)
     return this;
 }
 
-/****************************
-ParallelRules: Rules that runs in parallel
-Get data to obtain data from each step
-With the design of DrawMultipleComplex, the use of this class is not recommended
-****************************/
-
-void ParallelRules::SetReader(TTreeReader& t_reader) 
-{
-    for(auto rule : rules_) rule->SetReader(t_reader);
-};
-
-void ParallelRules::Fill(std::vector<DataSink>& t_hist, unsigned t_entry) 
-{
-    data_.clear();
-    for(auto rule : rules_)
-    {
-        t_hist.clear();
-        rule->Fill(t_hist, t_entry);
-        data_.push_back(t_hist);
-    }
-}
-
 /******************************
 RecoTrackRule
 Base class that iterats through STRecoTracks
@@ -93,25 +61,27 @@ void RecoTrackRule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
 {
     if(PreviousRule_) 
     {
-        if(auto prule = dynamic_cast<RecoTrackRule*>(PreviousRule_))
+        // look for previous rule recrusively to see if the loop on track has started
+        // such that oridinay rule can be inserted in between RecoTrackRule without restarting the loop
+        Rule* find_reco_rule = PreviousRule_;
+        while(find_reco_rule)
         {
-            track_ = prule->track_;
-            track_id_ = prule->track_id_;
-            this->Selection(t_hist, t_entry);
-            return;
+            if(auto prule = dynamic_cast<RecoTrackRule*>(find_reco_rule))
+            {
+                track_ = prule->track_;
+                track_id_ = prule->track_id_;
+                this->Selection(t_hist, t_entry);
+                return;
+            }else find_reco_rule = find_reco_rule->PreviousRule_;
         }
     }
 
     // if previous rule doesn't start looping on recotrack, it will initialize it
-    if(can_init_loop_)
+    for(track_id_ = 0; track_id_ < (*myTrackArray_)->GetEntries(); ++track_id_)
     {
-        for(track_id_ = 0; track_id_ < (*myTrackArray_)->GetEntries(); ++track_id_)
-        {
-            track_ = static_cast<STRecoTrack*>((*myTrackArray_) -> At(track_id_));
-            this->Selection(t_hist, t_entry);
-        }
+        track_ = static_cast<STRecoTrack*>((*myTrackArray_) -> At(track_id_));
+        this->Selection(t_hist, t_entry);
     }
-    else this->Selection(t_hist, t_entry);
 }
 
 
@@ -169,6 +139,16 @@ CheckPoint* DrawMultipleComplex::NewCheckPoint()
     CheckPoint *cp = new CheckPoint;
     checkpoints_.push_back(cp);
     return checkpoints_.back();
+}
+
+std::vector<CheckPoint*> DrawMultipleComplex::NewCheckPoints(int t_num)
+{
+    for(unsigned i = 0; i < t_num; ++i)
+    {
+        CheckPoint *cp = new CheckPoint;
+        checkpoints_.push_back(cp);
+    }
+    return checkpoints_;
 }
 
 /********************************
@@ -411,8 +391,8 @@ TrackShapeFilter::TrackShapeFilter(const std::string& t_cutfilename, double t_th
 
 void TrackShapeFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 {
-    auto cutg = (TCutG*) cut_file_.Get(std::to_string(t_entry).c_str());
-    if(! cutg ) 
+    cutg_ = (TCutG*) cut_file_.Get(std::to_string(t_entry).c_str());
+    if(! cutg_ ) 
     {
         this->RejectData(t_hist, t_entry);
         return;// if no cut for such entry, treat as if it is rejected
@@ -421,7 +401,7 @@ void TrackShapeFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry
 
     unsigned num_inside = 0;
     for(const auto& row : track_pts)
-        if(cutg->IsInside(row[0], row[1])) ++num_inside;
+        if(cutg_->IsInside(row[0], row[1])) ++num_inside;
     double percentage = (double) num_inside/ (double) track_pts.size();
     if(percentage < threshold_) this->FillData(t_hist, t_entry);
     else this->RejectData(t_hist, t_entry);

@@ -1,5 +1,5 @@
 
-void TrackVSClusterNum_test()
+void TrackVSClusterNum()
 {
 	gStyle->SetPalette(kBird);
 	gStyle->SetOptStat(0);
@@ -19,8 +19,8 @@ void TrackVSClusterNum_test()
 	auto angle_checkpoint = drawer_cut.NewCheckPoint();
 
 	// draw cluster such that cut can be made
-	std::unique_ptr<RenshengCompareData> rc_data_nocut(new RenshengCompareData);
-	std::unique_ptr<RenshengCompareData> rc_data_withcut(new RenshengCompareData);
+	RenshengCompareData rc_data_nocut;
+	RenshengCompareData rc_data_withcut;
         EmbedFilter filter1, filter2;
 	EmbedCut cut;
 	ValueCut mom_cut(0, -1);
@@ -28,8 +28,8 @@ void TrackVSClusterNum_test()
 	MomentumTracks track_mom(3);
 	ThetaPhi thetaphi;
 
-	filter1.AddRule(rc_data_nocut.get());
-	filter2.AddRule(rc_data_withcut->AddRule(
+	filter1.AddRule(&rc_data_nocut);
+	filter2.AddRule(rc_data_withcut.AddRule(
                         cut.AddRule(
 			track_mom.AddRule(
                         mom_cut.AddRule(

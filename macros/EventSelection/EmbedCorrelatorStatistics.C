@@ -1,20 +1,7 @@
-//#include "EventSelection/Rules.h"
-class RealMomObserver : public RecoTrackRule
-{
-public:
-	virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override
-	{
-		auto reco_mom = track_->GetMomentum();
-		std::cout << "MC momentum " << reco_mom.Mag() - t_hist.back()[0][0] << "\n";
-		this->FillData(t_hist, t_entry);
-	};
-};
-
-
 void EmbedCorrelatorStatistics()
 {
-	DrawComplex mc_draw("data/Run2841_WithOffset/HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
-	DrawComplex embed_draw("data/Run2841_WithOffset/HighEnergy/run2841_s*.reco.develop.1737.f55eaf6.root", "cbmsim");
+	DrawComplex mc_draw("data/Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
+	DrawComplex embed_draw("data/Threshold_0.9/run2841_s*.reco.tommy_branch.1745.1a18905.root"/* data/Run2841_WithOffset/Threshold_1/run2841_s*.reco.develop.1737.f55eaf6.root"*/, "cbmsim");
 
 	RecoTrackNumFilter track_num_filter;
 	DrawHit hit;
@@ -23,7 +10,7 @@ void EmbedCorrelatorStatistics()
 	TrackZFilter min_track_num;//([](int i){return i > 3;});
 	EmbedFilter filter;
 	DrawTrack track;
-	TrackShapeFilter shape_filter("HitsHighECutG.root", 0.8);
+	TrackShapeFilter shape_filter("HitsLowECutG.root", 0.8);
  
         min_track_num.AddRule(filter.AddRule(
                               track.AddRule(

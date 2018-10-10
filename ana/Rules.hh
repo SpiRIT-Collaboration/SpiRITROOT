@@ -29,39 +29,24 @@ typedef TTreeReaderValue<TClonesArray> ReaderValue;
 class Rule
 {
 public:
-    Rule() : current_entry_(-1), NextRule_(0), PreviousRule_(0), RejectRule_(0) {};
+    friend class RecoTrackRule;
+    Rule() : NextRule_(nullptr), PreviousRule_(nullptr), RejectRule_(nullptr) {};
     virtual ~Rule(){};
 
-    virtual void SetReader(TTreeReader& t_reader);
-    virtual void SetMyReader(TTreeReader& t_reader){};
+    virtual void SetReader(TTreeReader& t_reader); // unless you know what you are doint, dont override SetReader
+    virtual void SetMyReader(TTreeReader& t_reader){}; // only override SetMyReader such that all inheriented class will set parent's reader
     virtual void Fill(std::vector<DataSink>& t_hist, unsigned t_entry);
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) = 0;
 
-    bool Repeated(unsigned t_entry);
     virtual Rule* AddRule(Rule* t_rule);
     virtual Rule* AddRejectRule(Rule* t_rule);
     inline void AppendRule(Rule* t_rule) { if(NextRule_) NextRule_->AppendRule(t_rule); else this->AddRule(t_rule);};
 protected:
     inline void FillData(std::vector<DataSink>& t_hist, unsigned t_entry) {if(NextRule_) NextRule_->Fill(t_hist, t_entry);};
     inline void RejectData(std::vector<DataSink>& t_hist, unsigned t_entry) {if(RejectRule_) RejectRule_->Fill(t_hist, t_entry);};
-    int current_entry_;
     Rule* NextRule_;
     Rule* RejectRule_;
     Rule* PreviousRule_;
-};
-
-class ParallelRules : public Rule
-{
-public:
-    virtual void SetReader(TTreeReader& t_reader) override;
-    virtual void Fill(std::vector<DataSink>& t_hist, unsigned t_entry) override;
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override {};
-
-    inline DataSink GetData(int t_i){ return data_[t_i].back(); };
-    inline void AddParallelRule(Rule& t_rule){ rules_.push_back(&t_rule); };
-protected:
-    std::vector<Rule*> rules_;
-    std::vector<std::vector<DataSink>> data_;
 };
 
 class RecoTrackRule : public Rule
@@ -102,15 +87,16 @@ class TrackShapeFilter : public RecoTrackRule
 public:
     TrackShapeFilter(const std::string& t_cutfilename, double t_threshold);
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    inline TCutG GetCurrentCut() { if(cutg_) return TCutG(*cutg_); else return TCutG();}
 protected:
     double threshold_;
     TFile cut_file_;
+    TCutG* cutg_;
 };
 
-class CheckPoint : public RecoTrackRule
+class CheckPoint : public Rule
 {
 public:
-    CheckPoint() {can_init_loop_ = false;};
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override ;
     DataSink GetData();
 protected:
@@ -129,6 +115,7 @@ public:
     DrawMultipleComplex(const std::string& t_filenames, const std::string& t_treename, Rule* t_rule=0);
     virtual ~DrawMultipleComplex();
     CheckPoint* NewCheckPoint();
+    std::vector<CheckPoint*> NewCheckPoints(int t_num);
 
     template<typename T, typename... ARGS>
     void DrawMultiple(Rule& t_rule, T& first_graph, ARGS&... args)
@@ -317,7 +304,7 @@ protected:
     ST_ClusterNum_DB db;
 };
 
-class ValueCut : public RecoTrackRule
+class ValueCut : public Rule
 {
 public:
     ValueCut(double t_lower=0, double t_upper=0) : lower_(t_lower), upper_(t_upper){};
@@ -327,7 +314,7 @@ protected:
     double lower_, upper_;
 };
     
-class EmbedCut : public RecoTrackRule
+class EmbedCut : public Rule
 {
 public:
     EmbedCut() : cutg_(0) {};
@@ -347,7 +334,7 @@ public:
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 };
 
-class EntryRecorder : public RecoTrackRule
+class EntryRecorder : public Rule
 {
 public:
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;

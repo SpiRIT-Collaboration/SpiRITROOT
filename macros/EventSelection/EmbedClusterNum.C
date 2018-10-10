@@ -20,7 +20,7 @@ void EmbedClusterNum(const std::string& t_cut_file = "")
 
 	// load embed files
 	TChain chain("cbmsim");
-	chain.Add("data/Run2841_WithOffset/LowEnergy/run2841_s[0-5].reco.develop.1737.f55eaf6.root");//   "data/Run run2841_s*.reco.develop.1737.f55eaf6.root");//run2841_s*.reco.develop.1736.b2a5a3e.root");
+	chain.Add("data/Run2841_WithOffset/LowEnergy/run2841_s0[0-5].reco.develop.1737.f55eaf6.root");//   "data/Run run2841_s*.reco.develop.1737.f55eaf6.root");//run2841_s*.reco.develop.1736.b2a5a3e.root");
 	TTreeReader reader(&chain);
 
 	TTreeReaderValue<TClonesArray> myTrackArray(reader, "STRecoTrack"),
