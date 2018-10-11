@@ -119,8 +119,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     }
 
     auto cleanClusters = [](vector<STHitCluster *> *anArray, Double_t dMax) -> Bool_t {
-      if (anArray -> size() == 1)
-        return kTRUE;
+      if (anArray -> size() <= 1)
+	return kTRUE;
 
       auto numClusters = anArray -> size(); 
 

@@ -41,6 +41,15 @@ InitStatus STCorrectionTask::Init()
     return kERROR;
   }
 
+  std::ifstream infile(fPRFcut_file.Data()); 
+  if(!infile.good())
+    {
+      std::cout << "== [STCorrectionTask] PRF file does not Exist!" << std::endl;
+      fPRFCheck = false;
+    }
+  else
+    fPRFCheck = true;
+  
   fCorrection = new STCorrection();
 
   return kSUCCESS;
@@ -62,4 +71,16 @@ void STCorrectionTask::Exec(Option_t *opt)
 	}
     }
   
+  if(fPRFCheck)
+    {
+      fCorrection -> LoadPRFCut(fPRFcut_file);
+      fCorrection -> CheckClusterPRF(fHitClusterArray,fHelixArray,fHitArray);  
+      LOG(INFO) << Space() << "STCorrection  Check PRF of Clusters" << FairLogger::endl;
+    }
+
+}
+
+void STCorrectionTask::SetPRFCutFile(TString filename)
+{
+  fPRFcut_file = filename;
 }

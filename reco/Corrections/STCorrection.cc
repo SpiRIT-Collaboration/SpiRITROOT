@@ -439,54 +439,54 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 	      int max_adc = 3499;       //may have to put this info into the minimizer max and min
 	      if( (hit -> GetLayer() <=98 && hit-> GetLayer() >=91) || hit->GetLayer()>=108)
 		max_adc *= 9.8;
-	    
+
 	      double chg = hit -> GetCharge();
 	      double z = pointOnHelix.Z();
 	      double x = pointOnHelix.X();
-	      
-	    if(byRow_cl)
-	      {
-		//by row clustering so look along z
-		if(chg >= max_adc)
-		  {
-		    s_hit_ptrs -> push_back(hit);
-		    s_hits_lambda_ary -> push_back(z);		
-		    s_hits_chg_ary -> push_back(chg);				    
-		  }
-		else
-		  {
-		    hit_ptrs -> push_back(hit);
-		    hits_lambda_ary -> push_back(z);		
-		    hits_chg_ary -> push_back(chg);				    
-		  }
-	      }
-	    
-	    else
-	      {
-		//by row clustering so look along x
-		if(chg >= max_adc)
-		  {
-		    s_hit_ptrs -> push_back(hit);
-		    s_hits_lambda_ary -> push_back(x);		
-		    s_hits_chg_ary -> push_back(chg);				    
-		  }
-		else
-		  {
-		    hit_ptrs -> push_back(hit);
-		    hits_lambda_ary -> push_back(x);		
-		    hits_chg_ary -> push_back(chg);				    
-		  }
-	      }
+
+	      if(byRow_cl)
+		{
+		  //by row clustering so look along z
+		  if(chg >= max_adc)
+		    {
+		      s_hit_ptrs -> push_back(hit);
+		      s_hits_lambda_ary -> push_back(z);
+		      s_hits_chg_ary -> push_back(chg);
+		    }
+		  else
+		    {
+		      hit_ptrs -> push_back(hit);
+		      hits_lambda_ary -> push_back(z);
+		      hits_chg_ary -> push_back(chg);
+		    }
+		}
+
+	      else
+		{
+		  //by row clustering so look along x
+		  if(chg >= max_adc)
+		    {
+		      s_hit_ptrs -> push_back(hit);
+		      s_hits_lambda_ary -> push_back(x);
+		      s_hits_chg_ary -> push_back(chg);
+		    }
+		  else
+		    {
+		      hit_ptrs -> push_back(hit);
+		      hits_lambda_ary -> push_back(x);
+		      hits_chg_ary -> push_back(chg);
+		    }
+		}
 
 	    }
 
 	  //no saturated hits to desaturate, too many to desaturate,or no non saturated hits to extrapolate
-	  if(s_hits_lambda_ary->size() == 0 || s_hits_lambda_ary->size() > 4 || hits_lambda_ary->size() ==0) 
+	  if(s_hits_lambda_ary->size() == 0 || s_hits_lambda_ary->size() > 4 || hits_lambda_ary->size() ==0)
 	    continue;
-	  
+
 	  const int npar = s_hits_lambda_ary->size();;
 	  vector<double>outpar = minimize_helix(npar);
-	  
+
 	  if(outpar.size() != s_hit_ptrs->size())
 	    cout<<"[STCorrection] Ouput parameter of MINUIT is different than number of saturated hits"<<endl;
 
@@ -495,14 +495,84 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 	      double new_chg = outpar.at(iSatHit);
 	      if( abs(new_chg-3500)<.001 || abs(new_chg-100000)<.001 )//set max min of MINUIT
 		continue;
-	      
+
 	      auto hit = s_hit_ptrs -> at(iSatHit);
 	      hit -> SetCharge(new_chg);
 	    }
 	  cluster -> ApplyModifiedHitInfo(); //update cluster position,charge, covariance, etc...
-	  
+
 	}
     }
-  
+
+  return;
+}
+
+void STCorrection::LoadPRFCut(TString filename)
+{
+  TFile f(filename);
+  prf_layer = (TCutG*)f.Get("prf_layer");
+  prf_row   = (TCutG*)f.Get("prf_row");
+
+  return;
+}
+
+void STCorrection::CheckClusterPRF(TClonesArray *clusterArray, TClonesArray *helixArray, TClonesArray *hitArray)
+{
+
+
+  for(auto iHelix = 0; iHelix < helixArray -> GetEntries(); iHelix++)
+    {
+      auto helix = (STHelixTrack *) helixArray ->At(iHelix);
+      auto cl_id = helix-> GetClusterIDArray();
+      for( auto iCluster = 0; iCluster < cl_id->size(); iCluster++)
+	{
+	  auto cluster = (STHitCluster *)clusterArray -> At(cl_id->at(iCluster));
+	  auto hit_ary = cluster -> GetHitIDs();
+	  vector<double> lambda,fract;
+	  bool byRow = cluster -> IsRowCluster();
+
+	  for(auto idx : *hit_ary)
+	    {
+	      TVector3 pointOnHelix;
+	      Double_t alpha;
+	      auto hit = (STHit *) hitArray -> At(idx);
+	      auto hit_vector = hit -> GetPosition();
+	      helix -> ExtrapolateToPointAlpha(hit->GetPosition(), pointOnHelix, alpha);
+	      pointOnHelix = pointOnHelix - hit_vector;
+
+	      if(byRow)
+		{
+		  lambda.push_back(pointOnHelix.Z());
+		  fract.push_back(hit->GetCharge()/cluster ->GetCharge());
+		}
+	      else
+		{
+		  lambda.push_back(pointOnHelix.X());
+		  fract.push_back(hit->GetCharge()/cluster ->GetCharge());
+		}
+	    }
+
+	  int num_in = 0;// number of hits inside prf cuts
+	  for(int i = 0; i< lambda.size(); i++)
+	    {
+	      if(byRow)
+		{
+		  if(prf_row -> IsInside(lambda.at(i),fract.at(i)))
+		    num_in++;
+		}
+	      else
+		{
+		  if(prf_layer -> IsInside(lambda.at(i),fract.at(i)))
+		    num_in++;
+		}
+	    }
+
+	  if((1.*num_in)/hit_ary->size() < .5)
+	    {
+	      cluster -> SetIsStable(false);
+	    }
+	}
+    }
+
   return;
 }
