@@ -68,20 +68,20 @@ double MyFitFunction::PRF(double x, double par[])
   double x2_p = x2/(sqrt(2)*sigma);
 
   //For Row PRF
-  double row_norm   = .7634;
-  double e          = 2.7182818;
-  double pi         = 3.1415926;
-  double sigma_row  = 6.15;
+  double h_w_r = 6; //half width
+  double x1_r = x-h_w_r;
+  double x2_r = x+h_w_r;
+
+  double sigma_r = 4.4;
+  double x1_p_r = x1_r/(sqrt(2)*sigma_r);
+  double x2_p_r = x2_r/(sqrt(2)*sigma_r);
+  
 
   if(byRow)
-      return row_norm * pow(e, -.5 * pow(x/sigma_row,2));
+    return .5*(TMath::Erf(x2_p_r)-TMath::Erf(x1_p_r));
   else
-    {
-      if( x < 9 && x > -9)
-	return .5*(TMath::Erf(x2_p)-TMath::Erf(x1_p));
-      else
-	return norm*pow( abs(x),power);
-    }
+    return .5*(TMath::Erf(x2_p)-TMath::Erf(x1_p));
+  
 };
 
 std::vector<double> MyFitFunction::getmean(double par[])
@@ -359,7 +359,7 @@ Double_t MyFitFunction::Function_helix(Int_t& npar, Double_t* deriv, Double_t &f
   
   for (int i=0; i < num_hits; i++)
     {
-      double v  = total_chg*PRF_helix(hits_lambda_ary->at(i),par);
+      double v  = total_chg*PRF(hits_lambda_ary->at(i),par);
       if ( v != 0.0 )
 	{
 	  double n = hits_chg_ary->at(i);
@@ -433,7 +433,12 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 	      TVector3 pointOnHelix;
 	      Double_t alpha;
 	      auto hit_vector = hit -> GetPosition();
-	      helix -> ExtrapolateToPointAlpha(hit->GetPosition(), pointOnHelix, alpha);
+
+	      if(byRow_cl)
+		helix->ExtrapolateToX(hit_vector.X(),pointOnHelix);
+	      else
+		helix->ExtrapolateToZ(hit_vector.Z(),pointOnHelix);
+	      
 	      pointOnHelix = pointOnHelix - hit_vector;
 
 	      int max_adc = 3499;       //may have to put this info into the minimizer max and min
@@ -441,6 +446,7 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 		max_adc *= 9.8;
 
 	      double chg = hit -> GetCharge();
+
 	      double z = pointOnHelix.Z();
 	      double x = pointOnHelix.X();
 
