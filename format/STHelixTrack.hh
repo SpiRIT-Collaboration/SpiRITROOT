@@ -337,6 +337,8 @@ class STHelixTrack : public TObject
     */
     bool ExtrapolateToZ(Double_t z, TVector3 &pointOnHelix) const;
 
+    bool ExtrapolateToX(Double_t x, TVector3 &pointOnHelix) const;
+
     /** 
      * Extrapolate head of track about length
      * Return extrapolated position

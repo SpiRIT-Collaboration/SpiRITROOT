@@ -921,6 +921,25 @@ STHelixTrack::ExtrapolateToZ(Double_t z, TVector3 &pointOnHelix) const
   return true;
 }
 
+bool
+STHelixTrack::ExtrapolateToX(Double_t x, TVector3 &pointOnHelix) const
+{
+  TVector3 position1, position2;
+  Double_t alpha1, alpha2;
+
+  if (ExtrapolateToX(x, position1, alpha1, position2, alpha2) == false)
+    return false;
+
+  Double_t alphaMid = (fAlphaHead + fAlphaTail)/2;
+
+  if (std::abs(alpha1 - alphaMid) < std::abs(alpha2 - alphaMid))
+    pointOnHelix = position1;
+  else
+    pointOnHelix = position2;
+
+  return true;
+}
+
 TVector3 
 STHelixTrack::ExtrapolateHead(Double_t length) const
 {
