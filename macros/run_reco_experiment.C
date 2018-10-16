@@ -14,7 +14,8 @@ void run_reco_experiment
  Double_t fPSAThreshold = 30,
  TString fParameterFile = "ST.parameters.PhysicsRuns_201707.par",
  TString fPathToData = "",
- Bool_t fUseMeta = kTRUE
+ Bool_t fUseMeta = kTRUE,
+ Double_t fembed_threshold = 0
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -30,7 +31,6 @@ void run_reco_experiment
     fPathToData = spiritroot+"macros/data/";
   else 
     gSystem->mkdir(fPathToData.Data());
-  
   TString version; {
     TString name = spiritroot + "VERSION.compiled";
     std::ifstream vfile(name);
@@ -158,7 +158,7 @@ void run_reco_experiment
   // Uncomment if you want to recalculate the vertex using refit tracks.
   //genfitVA -> SetUseRave(true);
   
-  auto embedCorr = new STEmbedCorrelatorTask();
+  auto embedCorr = new STEmbedCorrelatorTask(fembed_threshold);
   embedCorr -> SetPersistence(true);
     
   run -> AddTask(decoder);

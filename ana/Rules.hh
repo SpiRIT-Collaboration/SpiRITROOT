@@ -82,6 +82,24 @@ protected:
     std::shared_ptr<ReaderValue> myEmbedArray_;
 };
 
+class EmbedExistence : public RecoTrackRule
+{
+public:
+    virtual void SetMyReader(TTreeReader& t_reader) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+protected:
+    std::shared_ptr<ReaderValue> myEmbedArray_;
+};
+
+class RecoTrackClusterNumFilter : public RecoTrackRule
+{
+public: 
+    RecoTrackClusterNumFilter(const std::function<bool(int)>& t_compare = [](int t_tracks){return t_tracks > 5;}) : compare_(t_compare){};
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+protected:
+    std::function<bool(int)> compare_;
+};
+
 class TrackShapeFilter : public RecoTrackRule
 {
 public:
@@ -126,7 +144,25 @@ public:
         {
             std::vector<DataSink> result;
             t_rule.Fill(result, reader_.GetCurrentEntry());
+            std::cout << "Processing Entry " << reader_.GetCurrentEntry() << "\t\r";
         }
+        std::cout << "\n";
+        FillHists(0, t_rule, first_graph, args...);
+    }
+
+    template<typename T, typename... ARGS>
+    void DrawMultiple(const std::vector<int>& t_entry_list, Rule& t_rule, T& first_graph, ARGS&... args)
+    {
+        reader_.Restart();
+        t_rule.SetReader(reader_);
+        for(const auto& entry : t_entry_list)
+        {
+            reader_.SetEntry(entry);
+            std::vector<DataSink> result;
+            t_rule.Fill(result, entry);
+            std::cout << "Processing Entry " << reader_.GetCurrentEntry() << "\t\r";
+        }
+        std::cout << "\n";
         FillHists(0, t_rule, first_graph, args...);
     }
 
@@ -202,6 +238,26 @@ public:
             for(const auto& row : cp.GetData()) hist.Fill(row[0], row[1]);
             std::cout << "Processing Entry " << index << "\t\r";
             ++index;
+        }
+        std::cout << "\n";
+        return hist;
+    }
+
+    template<class T, typename... ARGS>
+    T FillRule(const std::vector<int>& t_entry_list, Rule& t_rule, ARGS... args)
+    {
+        CheckPoint cp;
+        t_rule.AppendRule(&cp);
+        T hist(args...);
+        reader_.Restart();
+        t_rule.SetReader(reader_);
+        for(const auto& entry : t_entry_list)
+        {
+            reader_.SetEntry(entry);
+            std::vector<DataSink> result;
+            t_rule.Fill(result, entry);
+            for(const auto& row : cp.GetData()) hist.Fill(row[0], row[1]);
+            std::cout << "Processing Entry " << entry << "\t\r";
         }
         std::cout << "\n";
         return hist;
@@ -304,6 +360,12 @@ protected:
     ST_ClusterNum_DB db;
 };
 
+class ClusterNum : public RecoTrackRule
+{
+public:
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+};
+
 class ValueCut : public Rule
 {
 public:
@@ -313,6 +375,7 @@ public:
 protected:
     double lower_, upper_;
 };
+
     
 class EmbedCut : public Rule
 {

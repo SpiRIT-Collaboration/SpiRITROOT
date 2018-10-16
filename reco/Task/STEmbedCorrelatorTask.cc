@@ -17,7 +17,7 @@ struct EmbedTrack {
 
 ClassImp(STEmbedCorrelatorTask)
 
-STEmbedCorrelatorTask::STEmbedCorrelatorTask()
+STEmbedCorrelatorTask::STEmbedCorrelatorTask(double t_threshold) : threshold_(t_threshold)
 {
   fIsPersistence = false;
 }

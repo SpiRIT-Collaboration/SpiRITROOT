@@ -91,7 +91,7 @@ PID on tracks
 void PID::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 {
     // find the average dE
-    t_hist.push_back({{track_->GetdEdxWithCut(0, 0.7), track_->GetMomentum().Mag()}});
+    t_hist.push_back({{track_->GetMomentum()[2], track_->GetdEdxWithCut(0, 0.7)}});
     this->FillData(t_hist, t_entry);
 }
 
@@ -227,6 +227,40 @@ void EmbedFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
         }
     }
     this->RejectData(t_hist, t_entry);
+}
+
+/******************************
+EmbedExistence
+Just to see if there are embeding tracks inside
+if so pass the entire event donw
+******************************/
+void EmbedExistence::SetMyReader(TTreeReader& t_reader)
+{
+    myEmbedArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedTrack");
+}
+
+void EmbedExistence::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+{
+    for(int i = 0; i < (*myEmbedArray_)->GetEntries(); ++i)
+    {
+        auto id = static_cast<STEmbedTrack*>((*myEmbedArray_)->At(i))->GetArrayID();
+        if(id >= 0) 
+        {
+            this->FillData(t_hist, t_entry);
+            return;
+        }
+    }
+    this->RejectData(t_hist, t_entry);
+}
+
+/********************************
+RecoTrackClusterNumFilter
+Reject a track if the number of clusters it contains is too small
+*********************************/
+void RecoTrackClusterNumFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+{
+    if(compare_((*track_->GetdEdxPointArray()).size())) this->FillData(t_hist, t_entry);
+    else this->RejectData(t_hist, t_entry);
 }
 
 /*************************************
@@ -491,6 +525,16 @@ void RenshengCompareData::Selection(std::vector<DataSink>& t_hist, unsigned t_en
     t_hist.push_back({{(double) num_cluster, (double) db_num_cluster}});
     this->FillData(t_hist, t_entry);
 };
+
+/***********************************
+ClusterNum: simply fill with number of clusters of each tracks
+***********************************/
+void ClusterNum::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+{
+    auto num_cluster = track_->GetNumRowClusters90() + track_->GetNumLayerClusters90();
+    t_hist.push_back({{num_cluster, 1.}});
+    this->FillData(t_hist, t_entry);
+}
 
 /*********************
 ValueCut : 1-D value cut on the previous rule

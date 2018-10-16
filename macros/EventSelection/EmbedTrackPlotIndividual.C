@@ -25,7 +25,7 @@ void EmbedTrackPlotIndividual()
 	c1.Divide(2,1);
 
 	DrawMultipleComplex mc_draw("data/Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
-	DrawMultipleComplex embed_draw("data/Run2841_WithOffset/LowEnergy/run2841_s0[0-5].reco.develop.1737.f55eaf6.root", "cbmsim");
+	DrawMultipleComplex embed_draw("data/Threshold_0.3/run2841_s*", "cbmsim");
 
 	RecoTrackNumFilter track_num_filter;
 	DrawHit reco_track_xz, reco_track_yz(1,2);
@@ -33,7 +33,7 @@ void EmbedTrackPlotIndividual()
 	Observer reco_obs;
 	auto reco_checkpoints = mc_draw.NewCheckPoints(2);
 
-	/*track_num_filter.AddRule(*/reco_mom.AddRule(reco_obs.AddRule(reco_track_xz.AddRule(reco_checkpoints[0]->AddRule(reco_track_yz.AddRule(reco_checkpoints[1])))));//);
+	track_num_filter.AddRule(reco_mom.AddRule(reco_obs.AddRule(reco_track_xz.AddRule(reco_checkpoints[0]->AddRule(reco_track_yz.AddRule(reco_checkpoints[1]))))));
 
 	auto checkpoints = embed_draw.NewCheckPoints(5);
 	TrackZFilter min_track_num;//([](int i){return i > 3;});
@@ -45,7 +45,7 @@ void EmbedTrackPlotIndividual()
 	MomentumTracks embed_mom;
 	embed_mom.SetAxis(3);
 	TrackShapeFilter shape_filter("HitsLowECutG.root", 0.8);
-        /*min_track_num.AddRule(*/all_tracks_xz.AddRule(
+        min_track_num.AddRule(all_tracks_xz.AddRule(
                               checkpoints[0]->AddRule(
                               all_tracks_yz.AddRule(
                               checkpoints[1]->AddRule(
@@ -53,10 +53,10 @@ void EmbedTrackPlotIndividual()
                               embed_track_xz.AddRule(
                               shape_filter.AddRule(
                               checkpoints[3]->AddRule(
-                              embed_track_yz.AddRule(checkpoints[4])))))))));
+                              embed_track_yz.AddRule(checkpoints[4]))))))))));
 
-	mc_draw.SetRule(&/*track_num_filter*/reco_mom);
-	embed_draw.SetRule(&/*min_track_num*/all_tracks_xz);
+	mc_draw.SetRule(&track_num_filter);
+	embed_draw.SetRule(&min_track_num);
 
 
 	auto mc_it = mc_draw.begin();

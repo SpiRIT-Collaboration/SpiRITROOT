@@ -20,6 +20,7 @@
 #pragma link C++ class RecoTrackRule;
 #pragma link C++ class RecoTrackNumFilter;
 #pragma link C++ class EmbedFilter;
+#pragma link C++ class EmbedExistence;
 #pragma link C++ class TrackShapeFilter;
 #pragma link C++ class CheckPoint;
 #pragma link C++ class PID;
@@ -31,10 +32,11 @@
 #pragma link C++ class GetHitOutline;
 #pragma link C++ class DrawHitEmbed;
 #pragma link C++ class RenshengCompareData;
+#pragma link C++ class ClusterNum;
 #pragma link C++ class ValueCut;
 #pragma link C++ class EmbedCut;
 #pragma link C++ class ThetaPhi;
 #pragma link C++ class EntryRecorder;
-
+#pragma link C++ class RecoTrackClusterNumFilter;
 
 #endif

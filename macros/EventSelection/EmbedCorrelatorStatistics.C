@@ -1,24 +1,27 @@
-void EmbedCorrelatorStatistics()
+void EmbedCorrelatorStatistics(const std::string& t_foldername = "Threshold_0.5")
 {
 	DrawComplex mc_draw("data/Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
-	DrawComplex embed_draw("data/Threshold_0.9/run2841_s*.reco.tommy_branch.1745.1a18905.root"/* data/Run2841_WithOffset/Threshold_1/run2841_s*.reco.develop.1737.f55eaf6.root"*/, "cbmsim");
+	DrawComplex embed_draw("data/" + t_foldername + "/run2841_s*.reco.tommy_branch.1745.1a18905.root"/* data/Run2841_WithOffset/Threshold_1/run2841_s*.reco.develop.1737.f55eaf6.root"*/, "cbmsim");
 
 	RecoTrackNumFilter track_num_filter;
 	DrawHit hit;
 	track_num_filter.AddRule(&hit);
 
 	TrackZFilter min_track_num;//([](int i){return i > 3;});
+	EmbedExistence existence;
 	EmbedFilter filter;
 	DrawTrack track;
-	TrackShapeFilter shape_filter("HitsLowECutG.root", 0.8);
+	TrackShapeFilter shape_filter("HitsLowECutG.root", 0.3);
  
-        min_track_num.AddRule(filter.AddRule(
+        min_track_num.AddRule(existence.AddRule(
+                              filter.AddRule(
                               track.AddRule(
-                              &shape_filter)));
+                              &shape_filter))));
                               
 
-	EntryRecorder num_multiple_mc, num_empty_embed, num_shape_mismatch;
+	EntryRecorder num_multiple_mc, num_empty_embed, num_shape_mismatch, num_embed_not_found;
 
+	existence.AddRejectRule(&num_embed_not_found);
 	track_num_filter.AddRejectRule(&num_multiple_mc);
 	min_track_num.AddRejectRule(&num_empty_embed);
 	shape_filter.AddRule(&num_shape_mismatch);
@@ -37,6 +40,8 @@ void EmbedCorrelatorStatistics()
 	std::cout << " Shape mismatch " << list_shape_mismatch.size() << "\n";
 	std::cout << " Shape mismatch due to multiple MC tracks " << intersect.size() << "\n";
 	std::cout << " Empty Embeded tracks " << num_empty_embed.GetList().size() << "\n";
+	std::cout << " Percentage of mismatch " << static_cast<double>(list_shape_mismatch.size() - intersect.size())/static_cast<double>(10000 - num_empty_embed.GetList().size()) << "\n";
+	std::cout << " Num not found " << num_embed_not_found.GetList().size() << "\n";
 	num_empty_embed.ToFile("ListEmpty.dat");
 
 }
