@@ -35,7 +35,7 @@ std::vector<double> linspace(double t_min, double t_max, int t_num)
     return linspace;
 }
 
-std::vector<int> SplitVertexFiles(const TString& t_vertex_file="VertexLocation_real.txt")
+std::vector<int> SplitVertexFiles(const TString& t_vertex_file="VertexLocation.txt")
 {
     /*
     Split vertex files into different files according to their run number
@@ -87,13 +87,13 @@ void run_pion_pixel()
       TString parDir    = workDir + "/parameters/";
 
     // set pixel size
-    const double phi_min = 0.;
-    const double phi_max = 360.;
-    const int phi_num_pixel = 2;
+    const double phi_min = 90.;
+    const double phi_max = 91.;
+    const int phi_num_pixel = 1;
 
-    const double theta_min = 5.;
-    const double theta_max = 90.;
-    const int theta_num_pixel = 2;
+    const double theta_min = 0.;
+    const double theta_max = 1.;
+    const int theta_num_pixel = 1;
 
     const double momentum_min = 100; // MeV / c
     const double momentum_max = 600;

@@ -3,9 +3,9 @@ void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
 void run_reco_experiment
 (
  Int_t fRunNo = 2894,
- Int_t fNumEventsInRun = 2,
+ Int_t fNumEventsInRun = 100,
  Int_t fSplitNo = 0,
- Int_t fNumEventsInSplit = 2,
+ Int_t fNumEventsInSplit = 100,
  TString fGCData = "",
  TString fGGData = "",
  std::vector<Int_t> fSkipEventArray = {},
@@ -34,12 +34,25 @@ void run_reco_experiment
     vfile >> version;
     vfile.close();
   }
+
   TString par = spiritroot+"parameters/"+fParameterFile;
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root";
   TString raw = TString(gSystem -> Getenv("PWD"))+"/list_run"+sRunNo+".txt";
   TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".root";
   TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+"."+version+".log";
 
+  if(!fMCFile.IsNull())
+    {
+      //Doing embedding so rename files
+      //with unique pixelID
+      std::string mcfile = fMCFile.Data();
+      std::string str2("PionPixel_ID_");
+      std::size_t found = mcfile.find(str2);
+      TString pixelID = mcfile.substr(found+str2.length(), 4);
+      out = fPathToData+"run"+sRunNo+"_pixelID_"+pixelID+".reco."+version+".root";
+      log = fPathToData+"run"+sRunNo+"_pixedlID_"+pixelID+"."+version+".log";
+    }
+  
   if (TString(gSystem -> Which(".", raw)).IsNull() && !fUseMeta)
     gSystem -> Exec("./createList.sh "+sRunNo);
 
@@ -123,7 +136,7 @@ void run_reco_experiment
   //helix -> SetClusteringAngleAndMargin(35., 3.);
   
   auto correct = new STCorrectionTask(); //Correct for saturation
-  //  correct  -> SetPRFCutFile("../parameters/prf_cuts.par");
+  correct  -> SetPRFCutFile("../parameters/prf_cuts.par");
   
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);

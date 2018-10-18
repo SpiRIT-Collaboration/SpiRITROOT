@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-#SBATCH -o "/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/log/slurm_%A.log"
-source /mnt/spirit/analysis/user/tsangc/SpiRITROOT/build/config.sh
+#SBATCH -o "./log/slurm_%A.log"
+source ${VMCWORKDIR}/build/config.sh
 
 INPUT=$1
 VERTEX=$2
@@ -29,7 +29,7 @@ EOF
 LOGDIR=log\/${INPUT}
 mkdir -p "${LOGDIR%/*}"
 
-cd /mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros
+cd ${VMCWORKDIR}/macros
 root run_mc.C\(\"$INPUT\",-1,\"\",\"data/\",kTRUE,\"$FILENAME\"\) -b -q -l > ${LOGDIR}_mc.log
 rm -f $SUBMITFILE
 

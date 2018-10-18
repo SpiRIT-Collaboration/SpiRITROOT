@@ -74,7 +74,9 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
 	    continue;
 	  if(recoTrack -> GetNumEmbedClusters() < 5)
 	    continue;//less than 5 embed clusters are not significant tracks
-
+	  if(static_cast<double>(recoTrack -> GetNumEmbedClusters())/static_cast<double>(recoTrack -> GetNumRowClusters() + recoTrack -> GetNumLayerClusters()) < .5 )
+	    continue;//<50% embed clusters not a significant embeded track. Mixed with too many other clusters from real tracks.
+	  
 	  TVector3 mom_reco = recoTrack -> GetMomentum();
 	  mom_reco -= mom_mc;
 

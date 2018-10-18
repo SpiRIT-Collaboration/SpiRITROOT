@@ -1,0 +1,20 @@
+
+createPickedList.sh : set up the dataList.txt files for a given run run by ./createPickedList.sh Run#
+
+generateMetadata.C  : will generate the meta data for all the runs in VertexLocaiton.txt. 
+
+
+createpicked_All.sh : Run this to do createPickedList.sh, generateMetadata.C togeather making everything needed for picking the raw data subset. 
+
+Once you make your VertexLocaiton.txt file of all the events you wish to pick. Run this script and it will pick the data from the larger raw data set and create a new metadata files. In the supplePath in run_reco_experiment.C point to the ./picked/ directory for the new path of the meta data.
+Then run_reco_experiment.C will work as normal taking in the run number as usual but the first event will be the first event in your VertexLocation.txt file and going through all the events you picked.
+
+
+renamePickedLists.sh : runs createPickedList.sh for all runs in VertexLocation.txt
+
+Sometimes you may want to move your ./picked/ directory to a common area for everyone to use. You must then rename all the dataList.txt files in the directories to point to the new location. This script will rename all the dataList.txt files to be pointing to the correct location of the picked data.
+
+
+GetVertexList.C      :  Given data you have reconstructed, you can generate the VertexLocation.txt file of the picked data. This will pick data that is within the Sn132 cut + vertex Z condition. From these basic cuts the events are picked at random using a uniform distribution with no redundant events.
+
+NOTE this reads the dedxROOT files that Genie condenses from the .reco.root data. 
