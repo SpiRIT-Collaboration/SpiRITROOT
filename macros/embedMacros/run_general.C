@@ -7,9 +7,9 @@
 #include <vector>
 #include "ConfigListToConfig.C"
 
-const int num_jobs_in_queue = 50; // only allow this amount of jobs on ember for other users
+const int num_jobs_in_queue = 20; // only allow this amount of jobs on ember for other users
 
-void run_general(const std::string& t_config_list, int t_start_from = 0, int t_num_jobs_to_be_submitted = num_jobs_in_queue)
+void run_general(const std::string& t_config_list, int t_start_from = 1, int t_num_jobs_to_be_submitted = num_jobs_in_queue)
 {
 	TString workDir   = gSystem -> Getenv("VMCWORKDIR");
   	TString parDir    = workDir + "/parameters/";
@@ -36,15 +36,14 @@ void run_general(const std::string& t_config_list, int t_start_from = 0, int t_n
 		if(file.IsOpen())
 		{
 			std::cout << output_name << " exist. We will skip to the next job\n";
-			//run_general(t_config_list, t_start_from + num_jobs_in_queue, t_num_jobs_to_be_submitted);
-			//return;
+			run_general(t_config_list, t_start_from + num_jobs_in_queue, t_num_jobs_to_be_submitted);
+			return;
 		}
 
 		// right now we assume number of produced particles = total num / 6 as 6 being the numbers of available cocktail particles
 		// start simulation
 		std::cout << "Start simulation with output " << output_name << "\n";
-             
-		TString command = TString::Format("sbatch %s/macros/embedMacros/submit_general.sh \"%s\" %d \"%s\" \"%s\"", workDir.Data(), output_name.Data(), i + num_jobs_in_queue, t_config_list.c_str(), par_name.c_str());
+		TString command = TString::Format("sbatch ./submit_general.sh \"%s\" %d \"%s\" \"%s\"", output_name.Data(), i + num_jobs_in_queue, t_config_list.c_str(), par_name.c_str());
 
 		std::cout << " With command " << command << "\n";
 		system(command.Data());

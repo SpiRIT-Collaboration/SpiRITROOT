@@ -480,7 +480,6 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 		max_adc *= 9.8;
 
 	      double chg = hit -> GetCharge();
-
 	      double z = pointOnHelix.Z();
 	      double x = pointOnHelix.X();
 

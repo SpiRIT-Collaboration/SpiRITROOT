@@ -139,6 +139,7 @@ void run_reco_experiment
   //helix -> SetClusteringAngleAndMargin(35., 3.);
   
   auto correct = new STCorrectionTask(); //Correct for saturation
+  correct  -> SetPRFCutFile("../parameters/prf_cuts.par");
   
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
