@@ -90,12 +90,12 @@ void run_pion_pixel()
     TString parDir    = workDir + "/parameters/";
 
     // set pixel size
-    const double phi_min = 90.;
-    const double phi_max = 91.;
+    const double phi_min = 0.;
+    const double phi_max = 360.;
     const int phi_num_pixel = 1;
 
-    const double theta_min = 0.;
-    const double theta_max = 1.;
+    const double theta_min = 5.;
+    const double theta_max = 90.;
     const int theta_num_pixel = 1;
 
     const double momentum_min = 100; // MeV / c

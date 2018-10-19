@@ -41,6 +41,7 @@ public:
     virtual Rule* AddRule(Rule* t_rule);
     virtual Rule* AddRejectRule(Rule* t_rule);
     inline void AppendRule(Rule* t_rule) { if(NextRule_) NextRule_->AppendRule(t_rule); else this->AddRule(t_rule);};
+    inline void PopRule() { if(NextRule_) NextRule_->PopRule(); else {this->PreviousRule_->NextRule_ = nullptr; this->PreviousRule_ = nullptr;}};
 protected:
     inline void FillData(std::vector<DataSink>& t_hist, unsigned t_entry) {if(NextRule_) NextRule_->Fill(t_hist, t_entry);};
     inline void RejectData(std::vector<DataSink>& t_hist, unsigned t_entry) {if(RejectRule_) RejectRule_->Fill(t_hist, t_entry);};
@@ -239,6 +240,7 @@ public:
             std::cout << "Processing Entry " << index << "\t\r";
             ++index;
         }
+        t_rule.PopRule();
         std::cout << "\n";
         return hist;
     }
@@ -259,6 +261,7 @@ public:
             for(const auto& row : cp.GetData()) hist.Fill(row[0], row[1]);
             std::cout << "Processing Entry " << entry << "\t\r";
         }
+        t_rule.PopRule();
         std::cout << "\n";
         return hist;
     }
@@ -406,6 +409,17 @@ public:
     std::vector<int> GetList() { return list_; };
 protected:
     std::vector<int> list_;
+};
+
+class TrackIDRecorder : public RecoTrackRule
+{
+public:
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    void ToFile(const std::string& t_filename);
+    inline void Clear() { list_.clear(); };
+    std::vector<std::pair<int, int>> GetList() { return list_; };
+protected:
+    std::vector<std::pair<int, int>> list_;// entry num, track id
 };
 
 class TrackZFilter : public Rule

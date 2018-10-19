@@ -37,6 +37,7 @@
 #pragma link C++ class EmbedCut;
 #pragma link C++ class ThetaPhi;
 #pragma link C++ class EntryRecorder;
+#pragma link C++ class TrackIDRecorder;
 #pragma link C++ class RecoTrackClusterNumFilter;
 
 #endif

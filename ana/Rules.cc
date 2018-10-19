@@ -546,6 +546,7 @@ void ValueCut::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
     {
         if( upper_ >= fill[0] && fill[0] >= lower_) 
             this->FillData(t_hist, t_entry);
+        else this->RejectData(t_hist, t_entry);
     }
     else this->FillData(t_hist, t_entry);
 }
@@ -600,6 +601,24 @@ void EntryRecorder::ToFile(const std::string& t_filename)
     for(const auto& i : list_)
         file << i << "\n";
 };
+
+/**************************
+TrackIDRecorder: Save all entries and its track id that have been looped through
+Useful for when you want to know which track satisfy all conditions
+***************************/
+void TrackIDRecorder::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+{
+    list_.push_back({t_entry, track_id_});
+    this->FillData(t_hist, t_entry);
+}
+
+void TrackIDRecorder::ToFile(const std::string& t_filename)
+{
+    std::ofstream file(t_filename.c_str());
+    file << "Entry\tTrack_id\n";
+    for(const auto& result : list_)
+        file << result.first << "\t" << result.second << "\n";
+}
 
 /*****************************
 TrackZFilter
