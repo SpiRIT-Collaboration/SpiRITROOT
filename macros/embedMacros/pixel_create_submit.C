@@ -138,18 +138,24 @@ void pixel_create_submit(string pixel_file = "./pion_pixel.dat")
   vector<int>      run_list   = {};
   vector<TString> embedf_list = {};
   ReadPionPixelFile(pixel_file,embedf_list,run_list);
+  
   if(embedf_list.size () != run_list.size() )
      cout<<"ERROR Array size not equal. Check pion pixel file format"<<endl;
 
   for (Int_t iRun = 0; iRun < run_list.size(); iRun++) {
-
     Int_t run      = run_list.at(iRun);
     TString MCFile = "/mnt/spirit/analysis/estee/SpiRITROOT.develop/macros/data/"+embedf_list.at(iRun)+".digi.root";
-
+    
+    //Find the sub string of pixel ID
+    std::string mcfile = embedf_list.at(iRun).Data();
+    std::string str2("PionPixel_ID_");
+    std::size_t found = mcfile.find(str2);
+    TString pixelID = mcfile.substr(found+str2.length(), 4);
+    
     Int_t numTotal = 0;
     Int_t numSplit = 2000;
     TString GCData, GGData;
-    TString fSupplePath = "/mnt/spirit/analysis/estee/SpiRITROOT.develop/macros/embedMacros/pickEventMacro/picked/";
+    TString fSupplePath = "/mnt/spirit/rawdata/misc/picked/";
     GetParameters(run, numTotal, GCData, GGData);
 
     if (numTotal == 0) 
@@ -160,7 +166,7 @@ void pixel_create_submit(string pixel_file = "./pion_pixel.dat")
 
     Int_t mjs = (numTotal/3+1)/numSplit;
 
-    TString fileName = Form("submit/r%d.sh",run);
+    TString fileName = Form("submit/r%d_pixelID%s.sh",run,pixelID.Data());
     ofstream out(fileName);
 
     out << "#!/usr/bin/env bash" << endl;

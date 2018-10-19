@@ -34,4 +34,6 @@ root run_mc.C\(\"$INPUT\",-1,\"\",\"data/\",kTRUE,\"$FILENAME\"\) -b -q -l > ${L
 rm -f $SUBMITFILE
 
 root run_digi.C\(\"$INPUT\"\) -b -q -l > ${LOGDIR}_digi.log
+
+cd ${VMCWORKDIR}/macros/embedMacros
 root run_general.C\(\"$CONFIGLIST\"\,$NEXTJOB,1\) -q -l > ${LOGDIR}_run.log 
