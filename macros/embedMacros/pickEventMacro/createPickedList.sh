@@ -27,7 +27,7 @@ echo "== Creating list as $OUTPUT of run ${RUN}. Please be patient."
 
 for COBO in $(seq -f "%02g" 0 11);
 do
-    echo "/mnt/spirit/analysis/estee/SpiRITROOT.develop/macros/embedMacros/pickEventMacro/picked/run_${RUN}/pickedData/run${RUN}_cobo${COBO}" >> picked/run_${RUN}/$OUTPUT
+    echo "${VMCWORKDIR}/macros/embedMacros/pickEventMacro/picked/run_${RUN}/pickedData/run${RUN}_cobo${COBO}" >> picked/run_${RUN}/$OUTPUT
 done
 
 echo "== Done! Enjoy picking and analysis!"

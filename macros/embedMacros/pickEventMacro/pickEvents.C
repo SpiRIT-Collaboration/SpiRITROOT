@@ -16,7 +16,9 @@ TString fParameterFile = "ST.parameters.PhysicsRuns_201707.par";
 // Set the supplement path which contains data list and meta data
 TString supplementPath = "/mnt/spirit/rawdata/misc/rawdataSupplement";
 
-TString eventListFile = "../../parameters/VertexLocation.txt";
+TString workDir = gSystem -> Getenv("VMCWORKDIR");
+TString parameterDir = workDir + "/parameters/";
+TString eventListFile = parameterDir + "VertexLocation.txt";
 
 //////////////////////////////////////////////////////////
 //                                                      //
@@ -31,9 +33,6 @@ TString eventListFile = "../../parameters/VertexLocation.txt";
 void run(Int_t &runNo, vector<Int_t> *eventList) {
   TString fOutPath = Form("picked/run_%d", runNo);
   gSystem -> Exec(Form("mkdir -p %s", (fOutPath + "/pickedData").Data()));
-
-  TString workDir = gSystem -> Getenv("VMCWORKDIR");
-  TString parameterDir = workDir + "/parameters/";
 
   STParReader *fPar = new STParReader(parameterDir + fParameterFile);
 
