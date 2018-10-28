@@ -247,12 +247,16 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
     Int_t numRowClusters = 0, numRowClusters90 = 0;
     Int_t numLayerClusters = 0, numLayerClusters90 = 0;
+    Int_t numEmbedClusters = 0;
     Double_t helixChi2R = 0, helixChi2X = 0, helixChi2Y = 0, helixChi2Z = 0;
     Double_t genfitChi2R = 0, genfitChi2X = 0, genfitChi2Y = 0, genfitChi2Z = 0;
     for (auto cluster : *helixTrack -> GetClusterArray()) {
       if (!cluster -> IsStable())
         continue;
 
+      if( cluster -> IsEmbed())
+	numEmbedClusters++;
+      
       auto pos = cluster -> GetPosition();
       if (cluster -> IsRowCluster()) {
         numRowClusters++;
@@ -296,6 +300,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       genfitChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
       */
     }
+    recoTrack -> SetNumEmbedClusters(numEmbedClusters);
     recoTrack -> SetNumRowClusters(numRowClusters);
     recoTrack -> SetNumLayerClusters(numLayerClusters);
     recoTrack -> SetNumRowClusters90(numRowClusters90);
