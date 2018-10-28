@@ -9,6 +9,12 @@
 #include <iostream>
 using namespace std;
 
+struct EmbedTrack {
+  STRecoTrack *reco;
+  double fract;
+  int numEmbed;
+};
+
 ClassImp(STEmbedCorrelatorTask)
 
 STEmbedCorrelatorTask::STEmbedCorrelatorTask()
@@ -67,51 +73,55 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
       int mostprob_idx = -1;                //most probable index of reco track array
       double min_mom = 999999;              //minimum momentum magnitude difference
 
+      std::vector<STRecoTrack *> *recotrack_ary = new std::vector<STRecoTrack *>(0);
+      //      std::vector< std::pair<STRecoTrack *, Double_t>> pair_vec;
+      std::vector<EmbedTrack> e_track_vec;
+      
       for (auto iReco = 0; iReco < numReco; iReco++)
 	{
 	  auto recoTrack = (STRecoTrack *) fRecoTrackArray -> At(iReco);
+
+	  double fract_embed_clusters = static_cast<double>(recoTrack -> GetNumEmbedClusters())/static_cast<double>(recoTrack -> GetNumRowClusters() + recoTrack -> GetNumLayerClusters());
+
 	  if(recoTrack -> IsEmbed() == false)
 	    continue;
+	  //less than 5 embed clusters are not significant tracks
 	  if(recoTrack -> GetNumEmbedClusters() < 5)
-	    continue;//less than 5 embed clusters are not significant tracks
-	  if(static_cast<double>(recoTrack -> GetNumEmbedClusters())/static_cast<double>(recoTrack -> GetNumRowClusters() + recoTrack -> GetNumLayerClusters()) < .5 )
-	    continue;//<50% embed clusters not a significant embeded track. Mixed with too many other clusters from real tracks.
-	  
-	  TVector3 mom_reco = recoTrack -> GetMomentum();
-	  mom_reco -= mom_mc;
+	    continue;
+	  //<50% embed clusters not a significant embeded track. Mixed with too many other clusters from real tracks.
+	  if(fract_embed_clusters < .5 )
+	    continue;
 
-	  if(iReco == 0)
-	    {
-	      min_mom = mom_reco.Mag();
-	      mostprob_idx = iReco;
-	    }
-	  else if(mom_reco.Mag() < min_mom)
-	    {
-	      min_mom = mom_reco.Mag();
-	      mostprob_idx = iReco;
-	    }
+	  EmbedTrack e_track;
+	  e_track.reco     = recoTrack;
+	  e_track.fract    = fract_embed_clusters;
+	  e_track.numEmbed = recoTrack->GetNumEmbedClusters();
+
+	  e_track_vec.push_back(e_track);
 	}
 
+ 
+      auto comp_fcn = [] (EmbedTrack &a, EmbedTrack &b)
+	{ return ( (a.fract > b.fract) && (a.numEmbed > b.numEmbed) ); };
+
+      for(auto el : e_track_vec)
+	{
+	  recotrack_ary -> push_back(el.reco);
+	  num_corr++;
+	}
 
       //Always create embedTrack if there is MC track input
       //Failed correlation will give -999,-999,-999, momentum
 
       STEmbedTrack *embedTrack = new STEmbedTrack();
       embedTrack -> SetInitialTrack(MCTrack);	  
-
-      if(mostprob_idx == -1)
-	LOG(INFO) << Space() << "No track correlation found" << FairLogger::endl;
-      else
-	{
-	  auto mostprobTrack = (STRecoTrack *) fRecoTrackArray -> At(mostprob_idx);
-	  embedTrack -> SetFinalTrack(mostprobTrack);	 
-	  num_corr++;
-	}
-
+      embedTrack -> SetRecoTrackArray(recotrack_ary);
+      
       new ((*fEmbedTrackArray)[iMC]) STEmbedTrack(embedTrack);
+      delete recotrack_ary ;
     }
 
-  LOG(INFO) << Space() << "STEmbedTrack "<< num_corr << FairLogger::endl;
+  LOG(INFO) << Space() << "STEmbedTrack "<< num_corr  << FairLogger::endl;
 }
 
 Bool_t STEmbedCorrelatorTask::CheckMomCorr(STMCTrack *mctrack, STRecoTrack *recotrack)

@@ -14,20 +14,8 @@ STEmbedTrack::STEmbedTrack(STEmbedTrack *track)
 {
   Clear();
   iPID = track -> GetInitialPID();
-  fPID = track -> GetFinalPID();
-
   iMomentum = track -> GetInitialMom();
-  fMomentum = track -> GetFinalMom();
-
   iVertex = track -> GetInitialVertex();
-  fVertex = track -> GetFinalVertex();
-
-  num_row   = track -> GetNumRowClusters();
-  num_layer = track -> GetNumLayerClusters();
- 
-  num_row90   = track -> GetNumRowClusters90();
-  num_layer90 = track -> GetNumLayerClusters90();
-
 }
 
 STEmbedTrack::~STEmbedTrack()
@@ -36,34 +24,12 @@ STEmbedTrack::~STEmbedTrack()
 
 void STEmbedTrack::Clear()
 {
-  //  fIsMatched = false;
-
-  num_row   = -1;
-  num_layer = -1;
-
   iPID = STPID::kNon;
-  fPID = STPID::kNon;
-    
   iMomentum.SetXYZ(-9999,-9999,-9999);
-  fMomentum.SetXYZ(-9999,-9999,-9999);
-
   iVertex.SetXYZ(-999,-999,-999);
-  fVertex.SetXYZ(-999,-999,-999);
 
-}
-
-void STEmbedTrack::SetFinalTrack(STRecoTrack *track)
-{
-  fMomentum = track -> GetMomentum();
-  fPID      = track -> GetPID();
-  fVertex   = track -> GetPOCAVertex();
-
-  num_row   = track -> GetNumRowClusters();
-  num_layer = track -> GetNumLayerClusters();
- 
-  num_row90   = track -> GetNumRowClusters90();
-  num_layer90 = track -> GetNumLayerClusters90();
-
+  recotrack_ary -> clear();
+  
 }
 
 void STEmbedTrack::SetInitialTrack(STMCTrack *track)
@@ -88,5 +54,14 @@ void STEmbedTrack::SetInitialTrack(STMCTrack *track)
 
 }
 
+STRecoTrack * STEmbedTrack::GetFinalTrack()
+{
+  STRecoTrack *finaltrack = nullptr;
+  if(recotrack_ary -> size() != 0)
+    finaltrack = new STRecoTrack(recotrack_ary -> front()); // first is most probable
+  else
+    finaltrack = new STRecoTrack(); //initialized to 0. track not found
 
+  return finaltrack;
+}
 

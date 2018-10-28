@@ -21,47 +21,32 @@ class STEmbedTrack : public TObject
   STEmbedTrack(STEmbedTrack *);
 
   void Clear();
-  void SetFinalTrack(STRecoTrack *);
   void SetInitialTrack(STMCTrack *);
-
-  Int_t GetNumRowClusters(){return num_row;};
-  Int_t GetNumLayerClusters(){return num_layer;};
-  Int_t GetNumRowClusters90(){return num_row90;};
-  Int_t GetNumLayerClusters90(){return num_layer90;};
   
+  STRecoTrack *GetFinalTrack(); //The most probable final track
   TVector3 GetInitialMom(){return iMomentum;};
-  TVector3 GetFinalMom(){return fMomentum;};
   TVector3 GetInitialVertex(){return iVertex;};
-  TVector3 GetFinalVertex(){return fVertex;};
   STPID::PID GetInitialPID(){return iPID;};
-  STPID::PID GetFinalPID(){return fPID;};
 
   void SetInitialPID(STPID::PID val){iPID = val;};
-  void SetFinalPID(STPID::PID val){fPID = val;};
   void SetInitialMom(TVector3 val){ iMomentum = val;};
-  void SetFinalMom(TVector3 val){fMomentum = val;};
   void SetInitialVertex(TVector3 val){iVertex = val;};
-  void SetFinalVertex(TVector3 val){fVertex = val;};
+
+  std::vector<STRecoTrack *> *GetRecoTrackArray() {return recotrack_ary;};
+  void SetRecoTrackArray(std::vector<STRecoTrack *> *array) {recotrack_ary = array;};
 
 private:
 
   Int_t helix_id;    //helix track ID
   Bool_t fIsEmbed;    //
 
-  Int_t num_row;    //number of row clusters 
-  Int_t num_layer;  //number of layer clusters 
-
-  Int_t num_row90;    //number of row clusters 
-  Int_t num_layer90;  //number of layer clusters 
-
   STPID::PID iPID;         //initial PID from MC
-  STPID::PID fPID;         //final PID from software
-
-  TVector3 fMomentum; //final momentum
   TVector3 iMomentum; //initial momentum
-
-  TVector3 fVertex;   //fianl vertex
   TVector3 iVertex;   //initial vertex
+  
+  //First element is the most probable track to be the final reco track
+  //next are less probable but saved for study. Vector of size 0 means no track found.
+  std::vector<STRecoTrack *> *recotrack_ary = new std::vector<STRecoTrack *>(0);
   
   ClassDef(STEmbedTrack, 1)
 };
