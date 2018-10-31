@@ -169,11 +169,6 @@ STDriftTask::Exec(Option_t* option)
 
     Int_t nElectrons = (Int_t)floor(fabs(eLoss/fEIonize));
     for(Int_t iElectron=0; iElectron<nElectrons; iElectron++) {
-
-      Int_t gain = polya -> GetRandom();
-      //      Int_t gain = gRandom -> Gaus(fGain,20); // TODO : Gain function is neede.
-      if(gain<=0) continue;
-
       Double_t dr    = gRandom->Gaus(0,sigmaT); // displacement in radial direction
       Double_t angle = gRandom->Uniform(2*TMath::Pi()); // random angle
 
@@ -187,6 +182,16 @@ STDriftTask::Exec(Option_t* option)
       Int_t zWire = iWire*fZSpacingWire+fZOffsetWire;
 
       Int_t index = fElectronArray->GetEntriesFast();
+
+      Int_t layer = (iWire/3);//We can find layer number with /3 because 3 cases for position of wire 
+      Int_t  gain = polya_highgain -> GetRandom();
+      if(fLowAnode)
+	{
+	  if( (layer >=91 && layer <= 98) || layer >=108)
+	    gain = polya_lowgain -> GetRandom(); //low anode sections
+	}
+      if(gain<=0) continue;
+
       STDriftedElectron *electron
         = new ((*fElectronArray)[index])
           STDriftedElectron(fMCPoint->GetX()*10, dx,

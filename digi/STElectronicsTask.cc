@@ -36,7 +36,7 @@ STElectronicsTask::STElectronicsTask()
   fADCMax(4095),
   fADCMaxUseable(4095),
   fPedestalMean(300),
-  fPedestalSigma(4),
+  fPedestalSigma(6),
   fPedestalSubtracted(kTRUE),
   fSignalPolarity(1),
   fKillAfterSaturation(kTRUE),

@@ -52,6 +52,7 @@ class STDriftTask : public FairTask
    void SetPersistence(Bool_t value = kTRUE);
    void SetParticleForCorrection(TString value);
    void SetVerbose(Bool_t value = kTRUE);
+   void SetLowAnode(Bool_t value){fLowAnode = value;};
    void SetSplineInterpolation(Bool_t value = kFALSE);
    Double_t BichselCorrection(TString species, Double_t value);
    ROOT::Math::Interpolator* BichselCorrection(TString species);
@@ -61,6 +62,7 @@ class STDriftTask : public FairTask
     TString fSpecies; ///< set the species for the energy loss correction
     Bool_t fSpline = false; // use spline interpolation instead of analitical function
     Bool_t fVerbose; // testing with cout 
+    Bool_t fLowAnode = true; //Two sections in anode lowered in gain 9.8x
     ROOT::Math::Interpolator* fInterpolator; 
     Double_t fPmin, fPmax;
   
@@ -96,7 +98,9 @@ class STDriftTask : public FairTask
     Double_t fGain;     //!< Gain.
     Double_t fYDriftOffset; //!< offset for drift time
 
-    TF1 *polya = new TF1("polya","(1/1024.)*(pow(1.41,1.41)/TMath::Gamma(1.41))*pow(x/1024.,1.41-1)*exp(-1.41*(x/1024.))",0,10000);
+    TF1 *polya_highgain = new TF1("polya_highgain","(1/1024.)*(pow(1.41,1.41)/TMath::Gamma(1.41))*pow(x/1024.,1.41-1)*exp(-1.41*(x/1024.))",0,10000);
+
+    TF1 *polya_lowgain = new TF1("polya_lowgain","(1/104.48)*(pow(1.41,1.41)/TMath::Gamma(1.41))*pow(x/104.48,1.41-1)*exp(-1.41*(x/104.48))",0,10000);
 
     STDriftTask(const STDriftTask&);
     STDriftTask operator=(const STDriftTask&);
