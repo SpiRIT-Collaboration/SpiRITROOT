@@ -16,14 +16,14 @@ public:
 
 static void myFitFunction_helix(Int_t& npar, Double_t* deriv, Double_t &f, Double_t* par, Int_t flag)
 {
-  MyFitFunction* fitFunc = MyFitFunction::Instance();
-  f = fitFunc->Function_helix(npar, deriv, f, par, flag);
+  MyFitFunction* fitFunc_helix = MyFitFunction::Instance_Helix();
+  f = fitFunc_helix -> Function_helix(npar, deriv, f, par, flag);
 }
 
 static void myFitFunction(Int_t& npar, Double_t* deriv, Double_t &f, Double_t* par, Int_t flag)
 {
   MyFitFunction* fitFunc = MyFitFunction::Instance();
-  f = fitFunc->Function(npar, deriv, f, par, flag);
+  f = fitFunc -> Function(npar, deriv, f, par, flag);
 }
 
 Double_t MyFitFunction::Function(Int_t& npar, Double_t* deriv, Double_t &f, Double_t* par, Int_t flag)
@@ -122,11 +122,18 @@ void MyFitFunction::SetAryPointers(std::vector<double> *a, std::vector<double> *
 }
 
 MyFitFunction* MyFitFunction::_instance = 0;
+MyFitFunction* MyFitFunction::_instance_helix = 0;
 
 MyFitFunction* MyFitFunction::Instance()
 {
   if (!_instance) _instance = new MyFitFunction;
   return _instance;
+}
+
+MyFitFunction* MyFitFunction::Instance_Helix()
+{
+  if (!_instance_helix) _instance_helix = new MyFitFunction;
+  return _instance_helix;
 }
 
 

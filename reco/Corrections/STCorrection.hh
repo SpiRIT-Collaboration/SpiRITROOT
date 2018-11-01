@@ -15,6 +15,7 @@ typedef std::vector<STHit*>* vhit_t;
 //class MyFitFunction;
 class MyFitFunction
 {
+  static MyFitFunction* _instance_helix;
   static MyFitFunction* _instance;
   MyFitFunction() {}
   MyFitFunction(const MyFitFunction& o) {}
@@ -22,6 +23,8 @@ class MyFitFunction
 
 public:
   static MyFitFunction* Instance();
+  static MyFitFunction* Instance_Helix();
+
   Double_t Function(Int_t&, Double_t*, Double_t&,Double_t *, Int_t);
   Double_t Function_helix(Int_t&, Double_t*, Double_t&,Double_t *, Int_t);
   double PRF(double x, double par[]);
