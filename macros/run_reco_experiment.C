@@ -128,7 +128,7 @@ void run_reco_experiment
   // Left, right, top and bottom sides cut
   helix -> SetClusterCutLRTB(420, -420, -64, -522);
   // High density region cut
-//  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(120, 100, 220), 5); // current use
+  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(120, 100, 220), 5); // current use
 //  helix -> SetCylinderCut(TVector3(0, -226.06, -11.9084), 100, 100, 5);
 //  helix -> SetSphereCut(TVector3(0, -226.06, -11.9084), 100, 5);
 //  helix -> SetEllipsoidCut(TVector3(0, -206.34, -11.9084), TVector3(120, 55, 240), 5);

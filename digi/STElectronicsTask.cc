@@ -105,6 +105,23 @@ STElectronicsTask::Init()
 void 
 STElectronicsTask::Exec(Option_t* option)
 {
+  //Gain Matching for low anode 
+  Double_t fGainMatchingDataScale[112];
+  for (auto iLayer = 0; iLayer < 112; iLayer++)
+    fGainMatchingDataScale[iLayer] = 1;
+
+  if (!(fGainMatchingData.IsNull()))
+    {
+      //    cout<< "== [STDecoderTask] Low anode gain file set!" <<endl;
+      std::ifstream matchList(fGainMatchingData.Data());
+      Int_t layer = 0;
+      Double_t relativeGain = 0;
+      for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
+	matchList >> layer >> relativeGain;
+	fGainMatchingDataScale[layer] = relativeGain;
+      }
+    }
+
   fLogger->Debug(MESSAGE_ORIGIN,"Exec of STElectronicsTask");
 
   if(!fRawEventArray) 
@@ -200,7 +217,8 @@ STElectronicsTask::Exec(Option_t* option)
     padO -> SetPedestalSubtracted();
     for(Int_t iTB=fStartTb; iTB<fEndTb; iTB++){
       adcO[iTB] += gRandom -> Gaus(0,fPedestalSigma);
-      padO -> SetADC(iTB,adcO[iTB]);
+
+      padO -> SetADC(iTB,adcO[iTB] * fGainMatchingDataScale[layer]);
     }
     fRawEvent -> SetPad(padO);
     delete padO;
