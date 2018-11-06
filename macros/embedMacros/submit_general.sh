@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-#SBATCH -o "./log/slurm_%A.log"
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=6
+#SBATCH --mem-per-cpu=4000
+#SBATCH --array=0-18
+#SBATCH -o "./log/slurm_%A_%a.log"
 source ${VMCWORKDIR}/build/config.sh
 
 OUTPUT=$1
@@ -14,6 +18,6 @@ mkdir -p "${LOGDIR%/*}"
 cd $VMCWORKDIR/macros
 root run_mc.C\(\"$OUTPUT\",-1,\"\",\"data/\",kTRUE,\"$CONFIGFILE\"\) -b -q -l > ${LOGDIR}_mc.log
 root run_digi.C\(\"$OUTPUT\"\) -b -q -l > ${LOGDIR}_digi.log
+root embedMacros/run_general.C\(\"$CONFIGLIST\"\,$NEXTJOB,1\) -q -l > ${LOGDIR}_run.log
 
-cd ${VMCWORKDIR}/macros/embedMacros
-root run_general.C\(\"$CONFIGLIST\"\,$NEXTJOB,1\) -q -l > ${LOGDIR}_run.log 
+

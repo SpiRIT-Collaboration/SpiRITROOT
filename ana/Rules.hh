@@ -30,10 +30,11 @@ class Rule
 {
 public:
     friend class RecoTrackRule;
+    friend std::pair<Rule*, Rule*> RuleBlock(Rule* t_rule);
     Rule() : NextRule_(nullptr), PreviousRule_(nullptr), RejectRule_(nullptr) {};
     virtual ~Rule(){};
 
-    virtual void SetReader(TTreeReader& t_reader); // unless you know what you are doint, dont override SetReader
+    virtual void SetReader(TTreeReader& t_reader); // unless you know what you are doing, dont override SetReader
     virtual void SetMyReader(TTreeReader& t_reader){}; // only override SetMyReader such that all inheriented class will set parent's reader
     virtual void Fill(std::vector<DataSink>& t_hist, unsigned t_entry);
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) = 0;
@@ -50,6 +51,9 @@ protected:
     Rule* PreviousRule_;
 };
 
+std::pair<Rule*, Rule*> RuleBlock(Rule* t_rule);
+
+
 class RecoTrackRule : public Rule
 {
 public: 
@@ -62,6 +66,28 @@ protected:
     unsigned track_id_;
     bool can_init_loop_;
 };
+
+class EmptyRule : public Rule
+{
+public:
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override {this->FillData(t_hist, t_entry);};
+};
+
+/*class RuleBlock : public Rule
+{
+public:
+    RuleBlock() : InternalFirst_(0), InternalLast_(0){};
+    RuleBlock(Rule* t_rule){this->AddBlockRule(t_rule);};
+    virtual void SetReader(TTreeReader& t_reader) override;
+    void AddBlockRule(Rule* t_rule);
+    virtual void Fill(std::vector<DataSink>& t_hist, unsigned t_entry) override {InternalFirst_->Fill(t_hist, t_entry);};
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override {}; // actually it doesnlty matter as Selection is only called by FillData, which is in turn called by Fill. We overwrite our Fill Method so it won't be called at any given time.
+    virtual Rule* AddRule(Rule* t_rule) override;
+    virtual Rule* AddRejectRule(Rule* t_rule) override;
+protected:
+    Rule* InternalFirst_;
+    Rule* InternalLast_;
+};*/
 
 class RecoTrackNumFilter : public Rule
 {
@@ -132,6 +158,7 @@ class DrawMultipleComplex
 {
 public:
     DrawMultipleComplex(const std::string& t_filenames, const std::string& t_treename, Rule* t_rule=0);
+    DrawMultipleComplex(TChain *t_chain, Rule* t_rule=0);
     virtual ~DrawMultipleComplex();
     CheckPoint* NewCheckPoint();
     std::vector<CheckPoint*> NewCheckPoints(int t_num);
@@ -141,6 +168,11 @@ public:
     {
         reader_.Restart();
         t_rule.SetReader(reader_);
+        if(reader_.GetEntries(true) == 0)
+        {
+            std::cerr << "No entries from reader. Failed to load tree from file. Will ignore\n";
+            return;
+        }
         while( reader_.Next() )
         {
             std::vector<DataSink> result;
@@ -196,6 +228,7 @@ public:
         inline bool operator!=(const Iterator& rhs) const {return this->it_ != rhs.it_;};
         inline Iterator & operator++(){ it_++; return *this;};
         inline Iterator operator++(int){ return ++(*this);};
+        inline int GetCurrentEntry() { return fcomplex_.reader_.GetCurrentEntry(); };
 
     private:
         DrawMultipleComplex& fcomplex_;
@@ -275,7 +308,10 @@ protected:
 class Observer : public RecoTrackRule
 {
 public:
+	Observer(const std::string t_title = "") : title_(t_title) {};
         virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+protected:
+	std::string title_;
 };
 
 class DrawTrack : public RecoTrackRule
@@ -372,11 +408,13 @@ public:
 class ValueCut : public Rule
 {
 public:
-    ValueCut(double t_lower=0, double t_upper=0) : lower_(t_lower), upper_(t_upper){};
+    ValueCut(double t_lower=0, double t_upper=0, bool t_yaxis=false) : lower_(t_lower), upper_(t_upper)
+    { index_ = (t_yaxis)? 1 : 0;};
     inline void SetCut(double t_lower, double t_upper) { lower_ = t_lower; upper_ = t_upper; };
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 protected:
     double lower_, upper_;
+    int index_;
 };
 
     

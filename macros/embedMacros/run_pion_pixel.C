@@ -36,7 +36,7 @@ std::vector<double> linspace(double t_min, double t_max, int t_num)
     return linspace;
 }
 
-std::vector<int> SplitVertexFiles(const TString& t_vertex_file="VertexLocation.txt")
+void SplitVertexFiles(const TString& t_vertex_file, std::vector<int>& run_list, std::vector<std::string>& filenames)
 {
     /*
     Split vertex files into different files according to their run number

@@ -19,8 +19,10 @@
 #pragma link C++ class ParallelRules;
 #pragma link C++ class RecoTrackRule;
 #pragma link C++ class RecoTrackNumFilter;
+#pragma link C++ class EmptyRule;
 #pragma link C++ class EmbedFilter;
 #pragma link C++ class EmbedExistence;
+#pragma link C++ class TrackZFilter;
 #pragma link C++ class TrackShapeFilter;
 #pragma link C++ class CheckPoint;
 #pragma link C++ class PID;

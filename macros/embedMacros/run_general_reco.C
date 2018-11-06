@@ -7,7 +7,7 @@
 #include <vector>
 #include "ConfigListToConfig.C"
 
-const int num_jobs_in_queue = 4; // only allow this amount of jobs on ember for other users
+const int num_jobs_in_queue = 20; // only allow this amount of jobs on ember for other users
 
 void run_general_reco(const std::string& t_config_list, int t_start_from = 0, int t_num_jobs_to_be_submitted = num_jobs_in_queue)
 {

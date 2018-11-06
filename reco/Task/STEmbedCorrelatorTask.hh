@@ -10,7 +10,7 @@
 class STEmbedCorrelatorTask : public STRecoTask
 {
 public:
-  STEmbedCorrelatorTask(double t_threshold=0);
+  STEmbedCorrelatorTask();
   STEmbedCorrelatorTask(Bool_t persistence);
   ~STEmbedCorrelatorTask();
   virtual InitStatus Init();
@@ -24,8 +24,6 @@ private:
   TClonesArray *fRecoTrackArray = nullptr;
   TClonesArray *fMCTrackArray = nullptr;
   TClonesArray *fEmbedTrackArray = nullptr;
-  
-  double threshold_;  // minimum fraction of hits that needs to be an embedded 
   
   ClassDef(STEmbedCorrelatorTask, 1)
 };

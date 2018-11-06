@@ -84,6 +84,54 @@ void RecoTrackRule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
     }
 }
 
+/********************************
+RuleBlock
+Simply group a few rules into 1
+Connect the rejected rule to the last rule within the block
+********************************/
+/*void RuleBlock::SetReader(TTreeReader& t_reader)
+{
+    InternalFirst_->SetReader(t_reader);
+};
+
+void RuleBlock::AddBlockRule(Rule* t_rule)
+{
+    // look for last/first rule in the internal rule
+    while(t_rule->PreviousRule_)
+        t_rule = t_rule->PreviousRule_;
+
+    InternalFirst_ = t_rule;
+    while(t_rule->NextRule_) 
+        t_rule = t_rule->NextRule_;
+    InternalLast_ = t_rule;
+}
+
+Rule* RuleBlock::AddRule(Rule* t_rule)
+{
+    if(!InternalFirst_ || !InternalLast_)
+        std::cerr << "RuleBlock is empty. Please check again";
+       
+    InternalLast_->AddRule(t_rule);
+    return InternalFirst_;
+}
+
+Rule* RuleBlock::AddRejectRule(Rule* t_rule)
+{
+    return InternalLast_->AddRejectRule(t_rule);
+}*/
+
+std::pair<Rule*, Rule*> RuleBlock(Rule* t_rule)
+{
+    // look for last/first rule in the internal rule
+    while(t_rule->PreviousRule_)
+        t_rule = t_rule->PreviousRule_;
+
+    Rule *InternalFirst_ = t_rule;
+    while(t_rule->NextRule_) 
+        t_rule = t_rule->NextRule_;
+    Rule *InternalLast_ = t_rule;
+    return {InternalFirst_, InternalLast_};
+}
 
 /******************************
 PID on tracks
@@ -91,7 +139,7 @@ PID on tracks
 void PID::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 {
     // find the average dE
-    t_hist.push_back({{track_->GetMomentum()[2], track_->GetdEdxWithCut(0, 0.7)}});
+    t_hist.push_back({{track_->GetMomentum().Mag(), track_->GetdEdxWithCut(0, 0.7)}});
     this->FillData(t_hist, t_entry);
 }
 
@@ -126,6 +174,13 @@ DrawMultipleComplex::DrawMultipleComplex(const std::string& t_filenames,
     rule_(t_rule)
 { 
     chain_.Add(t_filenames.c_str()); 
+    if(t_rule) t_rule->SetReader(reader_);
+}
+
+DrawMultipleComplex::DrawMultipleComplex(TChain* t_chain, Rule* t_rule) : 
+    reader_(t_chain),
+    rule_(t_rule)
+{
     if(t_rule) t_rule->SetReader(reader_);
 }
 
@@ -173,8 +228,8 @@ Observer: Pipe intermediate result to stdout
 void Observer::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
 {
     auto fill = t_hist.back().back();
-        std::cout << " Momentum is " << fill[0] << " at entry " << t_entry << " track_id " << track_id_ <<" \n";
-        this->FillData(t_hist, t_entry);
+    std::cout << title_ << " x: " << fill[0] << " y: " << fill[1] << " \n";
+    this->FillData(t_hist, t_entry);
 }
 
 /******************************
@@ -532,7 +587,7 @@ ClusterNum: simply fill with number of clusters of each tracks
 void ClusterNum::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 {
     auto num_cluster = track_->GetNumRowClusters90() + track_->GetNumLayerClusters90();
-    t_hist.push_back({{num_cluster, 1.}});
+    t_hist.push_back({{(double) num_cluster, 1.}});
     this->FillData(t_hist, t_entry);
 }
 
@@ -544,7 +599,7 @@ void ValueCut::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
     auto& fill = t_hist.back().back();
     if( upper_ > lower_)
     {
-        if( upper_ >= fill[0] && fill[0] >= lower_) 
+        if( upper_ >= fill[index_] && fill[index_] >= lower_) 
             this->FillData(t_hist, t_entry);
         else this->RejectData(t_hist, t_entry);
     }
@@ -566,6 +621,7 @@ void EmbedCut::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
     auto& fill = t_hist.back().back();
     if(cutg_->IsInside(fill[0], fill[1])) 
         this->FillData(t_hist, t_entry);
+    else this->RejectData(t_hist, t_entry);
 }
 
 /*********************
