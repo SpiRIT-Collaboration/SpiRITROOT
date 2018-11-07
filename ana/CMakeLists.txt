@@ -50,6 +50,8 @@ ST_TrackCut.cc
 ST_ClusterNum_DB.cc
 HistToCutG.cc
 Rules.cc
+RulesDrawer.cc
+RecoRules.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
