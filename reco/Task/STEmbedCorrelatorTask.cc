@@ -113,15 +113,11 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
       //Always create embedTrack if there is MC track input
       //Failed correlation will give -999,-999,-999, momentum
 
-      STEmbedTrack *embedTrack = new STEmbedTrack();
+      STEmbedTrack *embedTrack = (STEmbedTrack *) fEmbedTrackArray -> ConstructedAt(iMC);
       embedTrack -> SetInitialTrack(MCTrack);	  
       embedTrack -> SetRecoTrackArray(recotrack_ary);
-      
-      new ((*fEmbedTrackArray)[iMC]) STEmbedTrack(embedTrack);
-      delete recotrack_ary ;
+      LOG(INFO) << Space() << "STEmbedTrack "<< recotrack_ary -> size()  << FairLogger::endl;
     }
-
-  LOG(INFO) << Space() << "STEmbedTrack "<< num_corr  << FairLogger::endl;
 }
 
 Bool_t STEmbedCorrelatorTask::CheckMomCorr(STMCTrack *mctrack, STRecoTrack *recotrack)
