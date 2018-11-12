@@ -366,7 +366,7 @@ Double_t MyFitFunction::Function_helix(Int_t& npar, Double_t* deriv, Double_t &f
   
   for (int i=0; i < num_hits; i++)
     {
-      double v  = total_chg*PRF(hits_lambda_ary->at(i),par);
+      double v  = total_chg*PRF_helix(hits_lambda_ary->at(i),cluster_alpha);
       if ( v != 0.0 )
 	{
 	  double n = hits_chg_ary->at(i);
@@ -381,13 +381,19 @@ Double_t MyFitFunction::Function_helix(Int_t& npar, Double_t* deriv, Double_t &f
  return chisq;        
 }
 
-double MyFitFunction::PRF_helix(double x, double par[])
+double MyFitFunction::PRF_helix(double x, double alpha)
 {
-  double norm   = .78;
-  double e          = 2.7182818;
-  double sigma  = 4.12;
 
-  return norm*TMath::Gaus(x,0,sigma);
+  double norm[18]  = {0.8968,0.9206,0.916,0.9,0.8595,0.8244,0.794,0.7559,0.509,0.5609,0.6101,0.6602,0.69689,0.7358,0.7607,0.7794,0.788};
+  double sigma[18] = {5.4998, 5.3209, 5.34, 5.427, 5.5159, 5.663, 5.874, 6.126, 6.446, 6.367, 5.7938, 5.3636, 4.909, 4.645, 4.4248, 4.302, 4.1824, 4.108};
+  
+  int idx = floor(alpha/5.);
+  if(idx >=18)
+    cout<<"ERROR PRF_helix index out of range "<<endl;
+
+  gaus_prf->SetParameters(norm[idx],sigma[idx]);
+
+  return ( gaus_prf->Eval(x) );
 };
 
 
@@ -413,7 +419,7 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
   std::vector<STHit *> *s_hit_ptrs = new ::std::vector<STHit *>; 
   std::vector<STHit *> *hit_ptrs   = new ::std::vector<STHit *>; 
 
-  MyFitFunction* fitFunc = MyFitFunction::Instance();
+  MyFitFunction* fitFunc = MyFitFunction::Instance_Helix();
   fitFunc -> SetLambdaChg(hits_lambda_ary,hits_chg_ary,s_hits_lambda_ary,s_hits_chg_ary,hit_ptrs,s_hit_ptrs);
 
   for(int iHelix = 0; iHelix < helixArray->GetEntries(); iHelix++)
@@ -433,6 +439,7 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 
 	  auto hit_ary = cluster -> GetHitPtrs();
 	  Bool_t byRow_cl  = cluster -> IsRowCluster();
+	  fitFunc -> cluster_alpha = cluster -> GetChi()*TMath::RadToDeg();
 	  fitFunc -> byRow = byRow_cl;
 	    
 	  for(auto hit : *hit_ary)
