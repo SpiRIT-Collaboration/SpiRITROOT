@@ -28,7 +28,7 @@ public:
 
   Double_t Function(Int_t&, Double_t*, Double_t&,Double_t *, Int_t);
   Double_t Function_helix(Int_t&, Double_t*, Double_t&,Double_t *, Int_t);
-  double PRF(double x, double par[]);
+  double PRF(double x, double alpha);
   double PRF_helix(double x, double alpha);
   
   std::vector<double> getmean(double par[]);
@@ -38,7 +38,8 @@ public:
   Double_t cluster_alpha = 0;
   
 private:
-  TF1 *gaus_prf    = new TF1("gaus_prf","[0]*TMath::Gaus(x,0.,[1],false)",-30,30);
+  TF1 *gaus_prf          = new TF1("gaus_prf","[0]*TMath::Gaus(x,0.,[1],false)",-30,30);
+  TF1 *gaus_prf_helix    = new TF1("gaus_prf_helix","[0]*TMath::Gaus(x,0.,[1],false)",-30,30);
   std::vector<double> *hits_pos_ary   = new ::std::vector<double>;   //non saturated hit position array in cluster
   std::vector<double> *hits_chg_ary   = new ::std::vector<double>;   //non saturated hit charge array
   std::vector<double> *s_hits_pos_ary = new ::std::vector<double>; //saturated hit position array

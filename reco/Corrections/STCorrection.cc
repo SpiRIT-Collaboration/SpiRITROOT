@@ -36,7 +36,7 @@ Double_t MyFitFunction::Function(Int_t& npar, Double_t* deriv, Double_t &f, Doub
   int num_elem = hits_pos_ary->size();
   for (int i=0; i<num_elem; i++)
     {
-      double v  = total_chg*PRF(hits_pos_ary->at(i)-mean,par);
+      double v  = total_chg*PRF(hits_pos_ary->at(i)-mean,cluster_alpha);
       if ( v != 0.0 )
 	{
 	  double n = hits_chg_ary->at(i);
@@ -51,37 +51,24 @@ Double_t MyFitFunction::Function(Int_t& npar, Double_t* deriv, Double_t &f, Doub
  return chisq;        
 }
 
-double MyFitFunction::PRF(double x, double par[])
+double MyFitFunction::PRF(double x, double alpha)
 {
 
-  //For layer PRF
-  double h_w = 4; //half width
-  double x1 = x-h_w;
-  double x2 = x+h_w;
-  
-  //Fitted tail of EXP PRF
-  double norm  = 84.594;
-  double power = -3.231;
-  
-  double sigma = 3.4;
-  double x1_p = x1/(sqrt(2)*sigma);
-  double x2_p = x2/(sqrt(2)*sigma);
+  double norm[18]  = {0.8423,0.848, 0.8417, 0.8338, 0.82, 0.8, 0.775, 0.7519, 0.723, 0.5312, 0.57825, 0.6197, 0.659546, 0.694289, 0.72305, 0.743942, 0.75782, 0.7664};
+  double sigma[18] = {5.61, 5.49, 5.53, 5.601, 5.715, 5.86, 6.06, 6.29, 6.58, 6.1215, 5.6089, 5.2259, 4.904, 4.63829, 4.44797, 4.3118, 4.2215, 4.18};
 
-  //For Row PRF
-  double h_w_r = 6; //half width
-  double x1_r = x-h_w_r;
-  double x2_r = x+h_w_r;
-
-  double sigma_r = 4.4;
-  double x1_p_r = x1_r/(sqrt(2)*sigma_r);
-  double x2_p_r = x2_r/(sqrt(2)*sigma_r);
+  if(abs(alpha) < .0001)
+    alpha = 0; //sometimes alpha is small and negative 
+  int idx = floor(alpha/5.);
+  if(idx >=18 || idx < 0)
+    {
+      cout<<"ERROR PRF_helix index out of range!!!!!!!!!!!! "<<endl;
+      cout<<"IDX "<<idx<<" angle "<<alpha<<endl;
+    }
   
+  gaus_prf->SetParameters(norm[idx],sigma[idx]);
 
-  if(byRow)
-    return .5*(TMath::Erf(x2_p_r)-TMath::Erf(x1_p_r));
-  else
-    return .5*(TMath::Erf(x2_p)-TMath::Erf(x1_p));
-  
+  return ( gaus_prf->Eval(x) );
 };
 
 std::vector<double> MyFitFunction::getmean(double par[])
@@ -279,6 +266,7 @@ void STCorrection::Desaturate(TClonesArray *clusterArray)
       auto cluster  = (STHitCluster *) clusterArray -> At(iCluster);
       auto hit_ary = cluster -> GetHitPtrs();
       Bool_t byRow_cl  = cluster -> IsRowCluster();
+      fitFunc -> cluster_alpha = cluster -> GetChi()*TMath::RadToDeg();
       fitFunc -> byRow = byRow_cl;
 
       for(auto hit : *hit_ary)
@@ -387,13 +375,18 @@ double MyFitFunction::PRF_helix(double x, double alpha)
   double norm[18]  = {0.8968,0.9206,0.916,0.9,0.8595,0.8244,0.794,0.7559,0.509,0.5609,0.6101,0.6602,0.69689,0.7358,0.7607,0.7794,0.788};
   double sigma[18] = {5.4998, 5.3209, 5.34, 5.427, 5.5159, 5.663, 5.874, 6.126, 6.446, 6.367, 5.7938, 5.3636, 4.909, 4.645, 4.4248, 4.302, 4.1824, 4.108};
   
+  if(abs(alpha) < .0001)
+    alpha = 0; //sometimes alpha is small and negative 
   int idx = floor(alpha/5.);
-  if(idx >=18)
-    cout<<"ERROR PRF_helix index out of range "<<endl;
+  if(idx >=18 || idx < 0)
+    {
+      cout<<"ERROR PRF_helix index out of range!!!!!!!!!!!! "<<endl;
+      cout<<"IDX "<<idx<<" angle "<<alpha<<endl;
+    }
+  
+  gaus_prf_helix->SetParameters(norm[idx],sigma[idx]);
 
-  gaus_prf->SetParameters(norm[idx],sigma[idx]);
-
-  return ( gaus_prf->Eval(x) );
+  return ( gaus_prf_helix->Eval(x) );
 };
 
 
