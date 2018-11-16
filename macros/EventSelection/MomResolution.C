@@ -61,7 +61,7 @@ void MomResolution(double mom_min, double mom_max, double phi_min, double phi_ma
   }
 
   DrawMultipleComplex drawer(&chain);
-  auto cp = drawer.NewCheckPoints(2);
+  auto cp = ListOfCP(2);
 
   min_z_filter.AddRule(embed_filter.AddRule(
                        pid.AddRule(
@@ -71,8 +71,8 @@ void MomResolution(double mom_min, double mom_max, double phi_min, double phi_ma
                        theta_cut.AddRule(
                        /*mom.AddRule(
                        mom_cut.AddRule(*/
-                       cp[1]->AddRule(
-                       compare.AddRule(cp[0])))))))))/*))*/;
+                       cp[1].AddRule(
+                       compare.AddRule(&cp[0])))))))))/*))*/;
 
   TH1F mom_resolution("mom_res", "Momentum resolution;Real momentum - Reco momentum;", 200, -100, 100);
   TH1F mom_distribution("mom_dist", "Momentum distribution;Reco momentum;", 300, 200, 500);

@@ -41,5 +41,6 @@
 #pragma link C++ class TrackIDRecorder;
 #pragma link C++ class RecoTrackClusterNumFilter;
 #pragma link C++ class SwitchCut;
+#pragma link C++ class MCThetaPhi;
 
 #endif

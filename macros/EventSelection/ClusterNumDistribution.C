@@ -2,7 +2,7 @@ void ClusterNumDistribution(double theta_min = 0, double theta_max = 10,const st
 {
 	DrawMultipleComplex mc_draw("data/Run2841_WithOffset/LowEnergyIsotropicNew/run2841_s*.reco.tommy_branch.1749.ef952af.root", "cbmsim");// data/Run2841_WithOffset/LowEnergyIsotropic/run2841_s*.reco.tommy_branch.1746.7857ad9.root", "cbmsim");//data/Threshold_0.5/run2841_s*.reco.tommy_branch.1745.1a18905.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
 
-	auto cp = mc_draw.NewCheckPoints(3);
+	auto cp = ListOfCP(3);
 
 	TrackZFilter min_track_num;//([](int i){return i > 3;});
 	EmbedExistence existence;
@@ -21,13 +21,13 @@ void ClusterNumDistribution(double theta_min = 0, double theta_max = 10,const st
                               theta_cut.AddRule(
                               embed_mom.AddRule(
                               embed_50_100_cut.AddRule(
-                              embed_cnum1.AddRule(cp[0]))))))));
+                              embed_cnum1.AddRule(&cp[0]))))))));
 
 	embed_50_100_cut.AddRejectRule(embed_100_150_cut.AddRule(
-                                       embed_cnum2.AddRule(cp[1])));
+                                       embed_cnum2.AddRule(&cp[1])));
 
 	embed_100_150_cut.AddRejectRule(embed_150_200_cut.AddRule(
-                                        embed_cnum3.AddRule(cp[2])));
+                                        embed_cnum3.AddRule(&cp[2])));
 	
 
                               

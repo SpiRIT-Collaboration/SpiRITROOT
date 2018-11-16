@@ -113,6 +113,14 @@ DataSink CheckPoint::GetData()
     return sink;
 };
 
+std::vector<CheckPoint> ListOfCP(int t_num)
+{
+    std::vector<CheckPoint> checkpoints;
+    for(int i = 0; i < t_num; ++i) 
+        checkpoints.emplace_back(i);
+    return checkpoints;
+}
+
 
 /******************************
 RecoTrackNumFilter

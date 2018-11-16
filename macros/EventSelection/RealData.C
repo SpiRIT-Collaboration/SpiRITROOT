@@ -14,7 +14,7 @@ void RealData()
 	DrawMultipleComplex mc_draw("data/Run2894_OnlyData/run2894_s*.reco.GenieTemp.1728.18d377e.root", "cbmsim");//
 	//DrawMultipleComplex mc_draw("Threshold_0.5/run2841_s0*.reco.tommy_branch.1745.1a18905.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
 
-	auto cp = mc_draw.NewCheckPoints(2);
+	auto cp = ListOfCP(2);
 
 	PID pid;
 	EmbedCut gcut("PIDCut/piCuts.root", "pip");
@@ -24,11 +24,11 @@ void RealData()
 	TrackIDRecorder recorder;
  
 
-	pid.AddRule(cp[1]->AddRule(
+	pid.AddRule(cp[1].AddRule(
                     gcut.AddRule(
                     data_mom.AddRule(
                     data_cut.AddRule(
-                    data_cnum.AddRule(cp[0]->AddRule(&recorder)))))));
+                    data_cnum.AddRule(cp[0].AddRule(&recorder)))))));
                               
 	TH1F data_hist("data", "", 100, 0, 100);
 	TH2F PID_hist("PID", "", 300, -500, 2000, 300, 0, 800);

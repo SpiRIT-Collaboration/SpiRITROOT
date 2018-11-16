@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=6
-#SBATCH --mem-per-cpu=4000
-#SBATCH --array=0-18
-#SBATCH -o "./log/slurm_%A_%a.log"
+#SBATCH --mem-per-cpu=2000
+#SBATCH -o "./log/slurm_%A_.log"
 source ${VMCWORKDIR}/build/config.sh
 
 OUTPUT=$1

@@ -17,11 +17,11 @@ void TrackVSClusterNumPIDCut()
         DrawComplex drawer("data/" + filename + ".root", "cbmsim");
 
 	DrawMultipleComplex drawer_cut("data/" + filename + ".root", "cbmsim");
-	auto pid_checkpoint = drawer_cut.NewCheckPoint();
-	auto xz_checkpoint = drawer_cut.NewCheckPoint();
-	auto yz_checkpoint = drawer_cut.NewCheckPoint();
-	auto mom_checkpoint = drawer_cut.NewCheckPoint();
-	auto angle_checkpoint = drawer_cut.NewCheckPoint();
+	CheckPoint pid_checkpoint(0);// = drawer_cut.NewCheckPoint();
+	CheckPoint xz_checkpoint(1);// = drawer_cut.NewCheckPoint();
+	CheckPoint yz_checkpoint(2);// = drawer_cut.NewCheckPoint();
+	CheckPoint mom_checkpoint(3);// = drawer_cut.NewCheckPoint();
+	CheckPoint angle_checkpoint(4);// = drawer_cut.NewCheckPoint();
 
 	// draw cluster such that cut can be made
 	std::unique_ptr<RenshengCompareData> rc_data_nocut(new RenshengCompareData);

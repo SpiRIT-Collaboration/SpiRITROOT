@@ -24,29 +24,18 @@ DrawMultipleComplex::DrawMultipleComplex(TChain* t_chain, Rule* t_rule) :
     if(t_rule) t_rule->SetReader(reader_);
 }
 
-DrawMultipleComplex::~DrawMultipleComplex()
-{ 
-    for(auto cp : checkpoints_) delete cp; 
-}
-
-CheckPoint* DrawMultipleComplex::NewCheckPoint()
-{
-    CheckPoint *cp = new CheckPoint;
-    checkpoints_.push_back(cp);
-    return checkpoints_.back();
-}
-
-std::vector<CheckPoint*> DrawMultipleComplex::NewCheckPoints(int t_num)
-{
-    for(unsigned i = 0; i < t_num; ++i)
-    {
-        CheckPoint *cp = new CheckPoint;
-        checkpoints_.push_back(cp);
-    }
-    return checkpoints_;
-}
 
 void DrawMultipleComplex::GetCheckPoints(Rule* t_rule)
+{
+    checkpointset_.clear();
+    this->GetCheckPointsSet(t_rule);
+    // sort the vector according to checkpoint id
+    checkpoints_.resize(checkpointset_.size());
+    for(auto cp : checkpointset_)
+        checkpoints_[cp->id] = cp;
+}
+
+void DrawMultipleComplex::GetCheckPointsSet(Rule* t_rule)
 {
     // Find all checkpoints along the rule tree
     // Things to be aware: SwitchCut doesn't use NextRule_
@@ -54,13 +43,16 @@ void DrawMultipleComplex::GetCheckPoints(Rule* t_rule)
     auto current_rule = t_rule;
     if(current_rule)
     {
-        if(auto checkpoint = dynamic_cast<CheckPoint*>(current_rule)) checkpoints_.push_back(checkpoint);
+        // search for rejected rules to see if there are checkpoints there
+        if(current_rule->RejectRule_) this->GetCheckPointsSet(current_rule->RejectRule_);
+        if(auto checkpoint = dynamic_cast<CheckPoint*>(current_rule)) 
+            checkpointset_.insert(checkpoint);
         else if(auto switch_ = dynamic_cast<SwitchCut*>(current_rule))
         {
-            for(auto rule : switch_->execution_) this->GetCheckPoints(rule);
+            for(auto rule : switch_->execution_) this->GetCheckPointsSet(rule);
             return;
         }
-        this->GetCheckPoints(current_rule->NextRule_);
+        this->GetCheckPointsSet(current_rule->NextRule_);
     }
 }
 

@@ -31,6 +31,8 @@ class Rule
 {
 public:
     friend class RecoTrackRule;
+    friend class EmbedFilter;
+    friend class UseVATracks;
     friend class DrawMultipleComplex;
     friend std::pair<Rule*, Rule*> RuleBlock(Rule* t_rule);
 
@@ -77,11 +79,15 @@ protected:
 class CheckPoint : public Rule
 {
 public:
+    CheckPoint(int t_id = 0) : id(t_id) {};
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override ;
     DataSink GetData();
+    const int id;
 protected:
     DataSink temp_sink_;
 };
+
+std::vector<CheckPoint> ListOfCP(int t_num);
     
 class DrawHit : public Rule
 {

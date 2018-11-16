@@ -24,18 +24,18 @@ void EmbedTrackPlotIndividual()
 	TCanvas c1("canvas", "Tracks top down", 2.*canvas_scale*((double) pad_x)*size_x, canvas_scale*((double) pad_y)*size_y);
 	c1.Divide(2,1);
 
-	DrawMultipleComplex mc_draw("data/Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
-	DrawMultipleComplex embed_draw("data/Threshold_0.3/run2841_s*", "cbmsim");
+	DrawMultipleComplex mc_draw("data/Run2841_WithProton/TrackDistComp/Mom_350.0_400.0_Theta_20.0_30.0.reco.root", "cbmsim");//"data/Run2841_WithOffset/LowEnergy/Run_2841_mc_low_energy.reco.mc.root", "cbmsim");//HighEnergy/Run_2841_full.reco.mc.root", "cbmsim");
+	DrawMultipleComplex embed_draw("data/Run2841_WithProton/TrackDistComp/Mom_350.0_400.0_Theta_20.0_30.0/run2841_s*", "cbmsim"); //"data/Threshold_0.3/run2841_s*", "cbmsim");
 
 	RecoTrackNumFilter track_num_filter;
 	DrawHit reco_track_xz, reco_track_yz(1,2);
 	MomentumTracks reco_mom(3);
 	Observer reco_obs;
-	auto reco_checkpoints = mc_draw.NewCheckPoints(2);
+	auto reco_checkpoints = ListOfCP(2);
 
-	track_num_filter.AddRule(reco_mom.AddRule(reco_obs.AddRule(reco_track_xz.AddRule(reco_checkpoints[0]->AddRule(reco_track_yz.AddRule(reco_checkpoints[1]))))));
+	track_num_filter.AddRule(reco_mom.AddRule(reco_obs.AddRule(reco_track_xz.AddRule(reco_checkpoints[0].AddRule(reco_track_yz.AddRule(&reco_checkpoints[1]))))));
 
-	auto checkpoints = embed_draw.NewCheckPoints(5);
+	auto checkpoints = ListOfCP(5);
 	TrackZFilter min_track_num;//([](int i){return i > 3;});
 	EmbedFilter filter;
 	DrawTrack embed_track_xz, embed_track_yz(1,2);
@@ -44,16 +44,16 @@ void EmbedTrackPlotIndividual()
 
 	MomentumTracks embed_mom;
 	embed_mom.SetAxis(3);
-	TrackShapeFilter shape_filter("HitsLowECutG.root", 0.8);
+	//TrackShapeFilter shape_filter("HitsLowECutG.root", 0.8);
         min_track_num.AddRule(all_tracks_xz.AddRule(
-                              checkpoints[0]->AddRule(
+                              checkpoints[0].AddRule(
                               all_tracks_yz.AddRule(
-                              checkpoints[1]->AddRule(
+                              checkpoints[1].AddRule(
                               filter.AddRule(
                               embed_track_xz.AddRule(
-                              shape_filter.AddRule(
-                              checkpoints[3]->AddRule(
-                              embed_track_yz.AddRule(checkpoints[4]))))))))));
+                              /*shape_filter.AddRule(*/
+                              checkpoints[3].AddRule(
+                              embed_track_yz.AddRule(&checkpoints[4])))))))))/*)*/;
 
 	mc_draw.SetRule(&track_num_filter);
 	embed_draw.SetRule(&min_track_num);
@@ -63,7 +63,7 @@ void EmbedTrackPlotIndividual()
 	auto embed_it = embed_draw.begin();
 	int entry = -1;
 
-	DailyLogger logger("EmbedCorrelation_Wrong_example");
+	//DailyLogger logger("EmbedCorrelation_Wrong_example");
 
 	for(; mc_it != mc_draw.end() && embed_it != embed_draw.end(); ++mc_it, ++embed_it)
 	{
@@ -125,10 +125,10 @@ void EmbedTrackPlotIndividual()
 		if(!empty)
 		{
 			c1.cd(1);
-			auto cutg = shape_filter.GetCurrentCut();
-			cutg.Draw("same");
+			/*auto cutg = shape_filter.GetCurrentCut();
+			cutg.Draw("same");*
 			c1.SetName(("Event_" + std::to_string(entry)).c_str());
-			logger.SaveClass(c1);
+			logger.SaveClass(c1);*/
 			std::cout << "Continue ? \n";
 			gPad->WaitPrimitive();
 		}

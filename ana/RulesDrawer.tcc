@@ -9,6 +9,8 @@ Insert them in the right step and this class with read and fill them to histogra
 template<typename T, typename... ARGS>
 void DrawMultipleComplex::DrawMultiple(Rule& t_rule, T& first_graph, ARGS&... args)
 {
+    checkpoints_.clear();
+    this->GetCheckPoints(&t_rule);
     reader_.Restart();
     t_rule.SetReader(reader_);
     if(reader_.GetEntries(true) == 0)
@@ -29,6 +31,8 @@ void DrawMultipleComplex::DrawMultiple(Rule& t_rule, T& first_graph, ARGS&... ar
 template<typename T, typename... ARGS>
 void DrawMultipleComplex::DrawMultiple(const std::vector<int>& t_entry_list, Rule& t_rule, T& first_graph, ARGS&... args)
 {
+    checkpoints_.clear();
+    this->GetCheckPoints(&t_rule);
     reader_.Restart();
     t_rule.SetReader(reader_);
     for(const auto& entry : t_entry_list)
@@ -45,6 +49,14 @@ void DrawMultipleComplex::DrawMultiple(const std::vector<int>& t_entry_list, Rul
 template<typename T>
 void DrawMultipleComplex::DrawMultiple(Rule& t_rule, std::vector<T>& t_graphs)
 {
+    checkpoints_.clear();
+    this->GetCheckPoints(&t_rule);
+    if(t_graphs.size() != checkpoints_.size())
+    {
+        std::cerr << "Number of checkpoints and graphs doesn't match. Will abort\n";
+        return;
+    }
+
     reader_.Restart();
     t_rule.SetReader(reader_);
     if(reader_.GetEntries(true) == 0)
@@ -59,10 +71,10 @@ void DrawMultipleComplex::DrawMultiple(Rule& t_rule, std::vector<T>& t_graphs)
         std::cout << "Processing Entry " << reader_.GetCurrentEntry() << "\t\r";
     }
     std::cout << "\n";
-    for(unsigned i = 0; i < t_graphs.size(); ++i)
+    for(auto cp : checkpoints_)
     {
-        auto data = checkpoints_[i]->GetData();
-        for(const auto& row : data) t_graphs[i].Fill(row[0], row[1]);
+        auto data = cp->GetData();
+        for(const auto& row : data) t_graphs[cp->id].Fill(row[0], row[1]);
     };
 }
 
@@ -89,7 +101,7 @@ only draw 1 result
 template<class T, typename... ARGS>
 T DrawComplex::FillRule(Rule& t_rule, ARGS... args)
 {
-    CheckPoint cp;
+    CheckPoint cp(0);
     t_rule.AppendRule(&cp);
     T hist(args...);
     reader_.Restart();

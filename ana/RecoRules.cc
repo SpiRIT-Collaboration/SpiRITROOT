@@ -37,6 +37,31 @@ void RecoTrackRule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
     }
 }
 
+/*******************************
+If we enable BDC vertex
+We may want to use VATracks instead of STRecoTrack
+Everything comes after UseVATracks class will read data from STVATracks instead
+********************************/
+void UseVATracks::SetMyReader(TTreeReader& t_reader)
+{
+    myVATracksArray_ = std::make_shared<ReaderValue>(t_reader, "VATracks");
+}
+
+void UseVATracks::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+{
+    // look for va tracks that corresponds to the current track_id_
+    for(unsigned i = 0; i < (*myVATracksArray_)->GetEntries(); ++i)
+        if(static_cast<STRecoTrack*>((*myVATracksArray_) -> At(i))->GetRecoID() == track_id_)
+        {
+           track_id_ = i;
+           track_ = static_cast<STRecoTrack*>((*myVATracksArray_) -> At(track_id_));
+           this->FillData(t_hist, t_entry);
+           return;
+        }
+    // reject if the track is not found
+    this->RejectData(t_hist, t_entry);
+}
+
 /******************************
 PID on tracks
 ******************************/
@@ -80,11 +105,34 @@ void EmbedFilter::SetMyReader(TTreeReader& t_reader)
     myEmbedArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedTrack");
 }
 
+void EmbedFilter::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
+{
+    embed_id_ = 1e3;
+    embed_track_ = nullptr;
+    if(PreviousRule_) 
+    {
+        // look for previous rule recrusively to see if embed id is found
+        Rule* find_reco_rule = PreviousRule_;
+        while(find_reco_rule)
+        {
+            if(auto prule = dynamic_cast<EmbedFilter*>(find_reco_rule))
+            {
+                embed_track_ = prule->embed_track_;
+                embed_id_ = prule->embed_id_;
+                break;
+            }else find_reco_rule = find_reco_rule->PreviousRule_;
+        }
+    }
+
+    this->RecoTrackRule::Fill(t_hist, t_entry);
+}
+
 void EmbedFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 {
-    for(int i = 0; i < (*myEmbedArray_)->GetEntries(); ++i)
+    for(embed_id_ = 0; embed_id_ < (*myEmbedArray_)->GetEntries(); ++embed_id_)
     {
-        auto id = static_cast<STEmbedTrack*>((*myEmbedArray_)->At(i))->GetArrayID();
+        embed_track_ = static_cast<STEmbedTrack*>((*myEmbedArray_)->At(embed_id_));
+        auto id = embed_track_->GetArrayID();
         if(id == track_id_) 
         {
             this->FillData(t_hist, t_entry);
@@ -133,79 +181,42 @@ CompareMCPrimary
 Compare momentum distribution event by event to momentum layout by the give file
 Should only be used together with embed filter
 *************************************/
-CompareMCPrimary::CompareMCPrimary(const std::string& t_filename, 
-                                   CompareMCPrimary::Type t_x, 
+CompareMCPrimary::CompareMCPrimary(CompareMCPrimary::Type t_x, 
                                    CompareMCPrimary::Type t_y) :
     x_(t_x),
     y_(t_y)
+{}
+
+void CompareMCPrimary::SetMyReader(TTreeReader& t_reader)
 {
-    std::ifstream file(t_filename.c_str());
-    if(!file.is_open()) std::cerr << "File " << t_filename << " cannot be opened\n";
-    
-    int index;
-    double px, py, pz, x, y, z;
-    const double GeVToMeV = 1000;
-    const double cmTomm = 10;
-    // get rid of the header
-    std::string line;
-    std::getline(file, line);
-    while(std::getline(file, line))
-    {
-        std::stringstream ss(line);
-        if(!(ss >> index >> px >> py >> pz >> x >> y >> z))
-        {
-            std::cerr << "Error: cannot read line " << line << "\n";
-            continue;
-        }
-        Px_.push_back(GeVToMeV*px);
-        Py_.push_back(GeVToMeV*py);
-        Pz_.push_back(GeVToMeV*pz);
-        X_.push_back(cmTomm*x);
-        Y_.push_back(cmTomm*y);
-        Z_.push_back(cmTomm*z);
-    }
+    myEmbedArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedTrack");
 }
 
 void CompareMCPrimary::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 {
-    if(t_entry > Px_.size())
-    {
-        std::cerr << "Entries in tree exceed number of entries in the primary text file\n";
-        return;
-    }
-
+    auto mc_mom = embed_track_->GetInitialMom();
+    auto mc_Vert = embed_track_->GetInitialVertex();
     auto reco_mom = track_->GetMomentum();
     auto reco_Vert = track_->GetPOCAVertex();
     double xval, yval;
 
     // fill x and y respectively
     // that's why the range is 2
+    const double GEVTOMEV = 1e3;
     for(int i = 0; i < 2; ++i)
     {
         auto type = (i==0)? x_ : y_;
         auto& val = (i==0)? xval : yval;
         switch(type)
         {
-            case MomX: val = reco_mom[0] - Px_[t_entry]; break; 
-            case MomY: val = reco_mom[1] - Py_[t_entry]; break;
-            case MomZ: val = reco_mom[2] - Pz_[t_entry]; break;
-            case MMag: {
-                double mag = sqrt(Px_[t_entry]*Px_[t_entry] 
-                                  + Py_[t_entry]*Py_[t_entry] 
-                                  + Pz_[t_entry]*Pz_[t_entry]);
-        val = reco_mom.Mag() - mag;
-        break;
-            }
-            case StartX: val = reco_Vert[0] - X_[t_entry]; break;
-            case StartY: val = reco_Vert[1] - Y_[t_entry]; break;
-            case StartZ: val = reco_Vert[2] - Z_[t_entry]; break;
-            case StartMag: {
-                 double mag = sqrt(X_[t_entry]*X_[t_entry] 
-                                 + Y_[t_entry]*Y_[t_entry] 
-                                 + Z_[t_entry]*Z_[t_entry]);
-                 val = reco_Vert.Mag() - mag;
-                 break;
-            }
+            case MomX: val = reco_mom[0] - GEVTOMEV*mc_mom[0]; break; 
+            case MomY: val = reco_mom[1] - GEVTOMEV*mc_mom[1]; break;
+            case MomZ: val = reco_mom[2] - GEVTOMEV*mc_mom[2]; break;
+            case MMag: val = (reco_mom - GEVTOMEV*mc_mom).Mag(); break;
+            case StartX: val = reco_Vert[0] - mc_Vert[0]; break;
+            case StartY: val = reco_Vert[1] - mc_Vert[1]; break;
+            case StartZ: val = reco_Vert[2] - mc_Vert[2]; break;
+            case StartMag: val = (reco_Vert - mc_Vert).Mag(); break;
             case None: val = 1; break;
         }
     }
@@ -344,3 +355,35 @@ void TrackIDRecorder::ToFile(const std::string& t_filename)
         file << result.first << "\t" << result.second << "\n";
 }
 
+/****************************
+MCThetaPhi
+Plot initial MC theta vs phi instead of reco direction
+Must have EmbedFilter in front
+Only work for embedded data
+******************************/
+void MCThetaPhi::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+{
+    auto momVec = embed_track_->GetInitialMom();
+    auto phiL = momVec.Phi()*180./TMath::Pi();
+    auto thetaL = momVec.Theta()*180./TMath::Pi();
+
+    t_hist.push_back({{thetaL, phiL}});
+    this->FillData(t_hist, t_entry);
+}
+
+/************************************
+MCMomentumTracks
+Initial momentum of the mc data 
+*************************************/
+void MCMomentumTracks::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+{
+    auto mom = embed_track_->GetInitialMom();
+    double val;
+
+    // return magnitude if axis_ = 3
+    if(axis_ < 3) val = mom[axis_];
+    else val = mom.Mag();
+    t_hist.push_back({{val, 1}});
+
+    this->FillData(t_hist, t_entry);
+}

@@ -37,14 +37,25 @@ protected:
     bool can_init_loop_;
 };
 
-
-class EmbedFilter : public RecoTrackRule
+class UseVATracks : public RecoTrackRule
 {
 public:
     virtual void SetMyReader(TTreeReader& t_reader) override;
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 protected:
+    std::shared_ptr<ReaderValue> myVATracksArray_;
+};
+
+class EmbedFilter : public RecoTrackRule
+{
+public:
+    virtual void SetMyReader(TTreeReader& t_reader) override;
+    virtual void Fill(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+protected:
     std::shared_ptr<ReaderValue> myEmbedArray_;
+    STEmbedTrack* embed_track_;
+    unsigned embed_id_;
 };
 
 class EmbedExistence : public RecoTrackRule
@@ -101,16 +112,17 @@ protected:
     const int x_, y_;
 };
 
-class CompareMCPrimary : public RecoTrackRule
+class CompareMCPrimary : public EmbedFilter
 {
 public:
     enum Type{MomX, MomY, MomZ, MMag, StartX, StartY, StartZ, StartMag, None};
-    CompareMCPrimary(const std::string& t_filename, Type t_x, Type t_y);
+    CompareMCPrimary(Type t_x, Type t_y);
+    virtual void SetMyReader(TTreeReader& t_reader) override;
     inline void ChangeAxis(Type t_x, Type t_y) {x_ = t_x; y_ = t_y;};
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
 protected:
     Type x_, y_;    
-    std::vector<double> Px_, Py_, Pz_, X_, Y_, Z_;
+    std::shared_ptr<ReaderValue> myEmbedArray_;
 };
 
 class MomentumTracks : public RecoTrackRule
@@ -154,6 +166,23 @@ public:
     std::vector<std::pair<int, int>> GetList() { return list_; };
 protected:
     std::vector<std::pair<int, int>> list_;// entry num, track id
+};
+
+class MCThetaPhi : public EmbedFilter
+{
+public:
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+};
+
+class MCMomentumTracks : public EmbedFilter
+{
+public:
+    // which axis x y z or magnitude of the momentum do you want to plot
+    MCMomentumTracks(int t_axis=0) : axis_(t_axis) {};
+    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    inline void SetAxis(int t_axis) { axis_ = t_axis; };
+protected:
+    int axis_;
 };
 
 #endif

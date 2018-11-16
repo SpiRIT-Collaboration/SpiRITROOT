@@ -14,7 +14,7 @@ void ClusterNumDistribution(double mom_min = 300, double mom_max = 350, double t
 	}
 
 	DrawMultipleComplex mc_draw(&chain);
-	auto cp = mc_draw.NewCheckPoints(5);
+	auto cp = ListOfCP(5);
 
 	TrackZFilter min_track_num;//([](int i){return i > 3;});
 	EmbedExistence existence;
@@ -32,19 +32,19 @@ void ClusterNumDistribution(double mom_min = 300, double mom_max = 350, double t
         min_track_num.AddRule(existence.AddRule(
                               filter.AddRule(
                               pid1.AddRule(
-                              cp[0]->AddRule(
+                              cp[0].AddRule(
                               theta_phi.AddRule(
 	                      theta_cut.AddRule(
                               pid2.AddRule(
-                              cp[1]->AddRule(
+                              cp[1].AddRule(
 	                      embed_mom.AddRule(
 	                      mom_cut.AddRule(
                               pid3.AddRule(
-                              cp[2]->AddRule(
+                              cp[2].AddRule(
                               pid_cut.AddRule(
-                              embed_cnum.AddRule(cp[3])))))))))))))));
+                              embed_cnum.AddRule(&cp[3])))))))))))))));
 
-	pid_cut.AddRejectRule(rejected_cnum.AddRule(cp[4]));
+	pid_cut.AddRejectRule(rejected_cnum.AddRule(&cp[4]));
 
 	TH1F embed_hist("embed", "", 100, 0, 100);
 	TH1F rejected_embed("rejected_embed", "", 100, 0, 100);

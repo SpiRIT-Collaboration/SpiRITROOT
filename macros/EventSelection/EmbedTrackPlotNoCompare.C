@@ -10,6 +10,16 @@ public:
 	};
 };
 
+class ShowEntry : public Rule
+{
+public:
+	virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override
+	{
+		std::cout << "Entry " << t_entry << "\n";
+		this->FillData(t_hist, t_entry);
+	};
+};
+
 class GetEmbedInfo : public RecoTrackRule
 {
 public:
@@ -54,6 +64,27 @@ protected:
     unsigned current_i_;
 };
 
+void GetMomentumListFromMC(TChain *tree, const std::string& t_output_name = "MomDist.txt")
+{
+  std::ofstream output(t_output_name.c_str());
+  if(!output.is_open()) std::cerr << "Cannot open output file \n";
+  output << "Entry\tPx\tPy\tPz\tStartX\tStartY\tStartZ\n";
+
+  TTreeReader reader(tree);
+  TTreeReaderValue<TClonesArray> Momentum(reader, "PrimaryTrack");
+
+  while(reader.Next())
+  {
+    auto MomArray = *Momentum;
+    for(unsigned i = 0; i < MomArray.GetEntries(); ++i)
+    {
+      auto ptrack = (STMCTrack*) MomArray.At(i);
+      output << reader.GetCurrentEntry() << "\t" << ptrack->GetPx() << "\t" << ptrack->GetPy() << "\t" << ptrack->GetPz() << "\t"
+             << ptrack->GetStartX() << "\t" << ptrack->GetStartY() << "\t" << ptrack->GetStartZ() << "\n";   
+    }
+  }
+}
+
 
 void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected = false)
 {
@@ -68,9 +99,14 @@ void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected 
 	TCanvas c1("canvas", "Tracks top down", 2.*canvas_scale*((double) pad_x)*size_x, canvas_scale*((double) pad_y)*size_y);
 	c1.Divide(2,1);
 
- 	DrawMultipleComplex embed_draw("/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/data/Run2841_WithProton/TrackDistComp/Mom_350.0_400.0_Theta_20.0_30.0/run2841_s*","cbmsim");
+        TChain chain("cbmsim");
+        chain.Add("/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/data/Run2841_WithProton/TrackDistComp/Mom_350.0_400.0_Theta_20.0_30.0.mc.root");
+        GetMomentumListFromMC(&chain);
 
-	auto checkpoints = embed_draw.NewCheckPoints(5);
+ 	DrawMultipleComplex embed_draw("/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/data/Run2841_WithProton/TrackDistComp/Mom_350.0_400.0_Theta_20.0_30.0_WithBDC/run2841_s*","cbmsim");
+ 
+
+	auto checkpoints = ListOfCP(4);//embed_draw.NewCheckPoints(5);
 	TrackZFilter min_track_num;//([](int i){return i > 3;});
 	EmbedFilter filter;
 	DrawTrack embed_track_xz, embed_track_yz(1,2);
@@ -83,24 +119,25 @@ void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected 
 	auto block = RuleBlock(t_Additional_rules);
 
 	MomentumTracks embed_mom;
+	ShowEntry show_entry;
 	embed_mom.SetAxis(3);
         min_track_num.AddRule(all_tracks_xz.AddRule(
-                              checkpoints[0]->AddRule(
+                              checkpoints[0].AddRule(
                               all_tracks_yz.AddRule(
-                              checkpoints[1]->AddRule(
+                              checkpoints[1].AddRule(
                               filter.AddRule(
                               block.first))))));
 
 	if(t_show_rejected)
 		block.second->AddRejectRule(embed_track_xz.AddRule(
-        	                            checkpoints[3]->AddRule(
+        	                            checkpoints[2].AddRule(
         	                            embed_track_yz.AddRule(
-                                            info.AddRule(checkpoints[4])))));
+                                            info.AddRule(checkpoints[3].AddRule(&show_entry))))));
 	else
 		block.second->AddRule(embed_track_xz.AddRule(
-        	                      checkpoints[3]->AddRule(
+        	                      checkpoints[2].AddRule(
         	                      embed_track_yz.AddRule(
-                                      info.AddRule(checkpoints[4])))));
+                                      info.AddRule(checkpoints[3].AddRule(&show_entry))))));
 
 	embed_draw.SetRule(&min_track_num);
 
@@ -126,7 +163,7 @@ void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected 
 			auto& legend = (i == 0)? legend1 : legend2;
 
 			const auto& result_all = embed_datalist[i];
-			const auto& result_embed = embed_datalist[i + 3];
+			const auto& result_embed = embed_datalist[i + 2];
 			
 			if(result_embed.size() == 0) 
 			{
