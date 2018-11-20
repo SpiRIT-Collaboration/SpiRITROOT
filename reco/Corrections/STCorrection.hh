@@ -26,10 +26,15 @@ public:
   static MyFitFunction* Instance();
   static MyFitFunction* Instance_Helix();
 
+  Double_t Layer_norm(Double_t alpha);
+  Double_t Layer_sigma(Double_t alpha);
+  Double_t Row_norm(Double_t alpha);
+  Double_t Row_sigma(Double_t alpha);
+  
   Double_t Function(Int_t&, Double_t*, Double_t&,Double_t *, Int_t);
   Double_t Function_helix(Int_t&, Double_t*, Double_t&,Double_t *, Int_t);
-  double PRF(double x, double alpha);
-  double PRF_helix(double x, double alpha);
+  Double_t PRF(double x, double alpha);
+  Double_t PRF_helix(double x, double alpha);
   
   std::vector<double> getmean(double par[]);
   void SetAryPointers(std::vector<double> *a, std::vector<double> *a_chg, std::vector<double> *b, std::vector<double> *b_chg, std::vector<STHit*> *hit_ptrs_t, std::vector<STHit*> *s_hit_ptrs_t);
@@ -61,6 +66,7 @@ class STCorrection
   void Desaturate(TClonesArray *clusters);
   void Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *clusterArray);
   void CheckClusterPRF(TClonesArray *clusters,TClonesArray *helix, TClonesArray *hit);
+  void CheckClusterPRFOld(TClonesArray *clusters,TClonesArray *helix, TClonesArray *hit);
   void LoadPRFCut(TString filename);
   
   private:
