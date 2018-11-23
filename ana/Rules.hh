@@ -9,6 +9,7 @@
 #include <sstream>
 #include <functional>
 
+
 #include "TMath.h"
 #include "TH1.h"
 #include "TGraph.h"
@@ -41,8 +42,8 @@ public:
 
     virtual void SetReader(TTreeReader& t_reader); // unless you know what you are doing, dont override SetReader
     virtual void SetMyReader(TTreeReader& t_reader){}; // only override SetMyReader such that all inheriented class will set parent's reader
-    virtual void Fill(std::vector<DataSink>& t_hist, unsigned t_entry);
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) = 0;
+    virtual void Fill(std::vector<DataSink>& t_hist, int t_entry);
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) = 0;
 
     virtual Rule* AddRule(Rule* t_rule);
     virtual Rule* AddRejectRule(Rule* t_rule);
@@ -50,8 +51,8 @@ public:
     inline void AppendRule(Rule* t_rule) { if(NextRule_) NextRule_->AppendRule(t_rule); else this->AddRule(t_rule);};
     inline void PopRule() { if(NextRule_) NextRule_->PopRule(); else {this->PreviousRule_->NextRule_ = nullptr; this->PreviousRule_ = nullptr;}};
 protected:
-    inline void FillData(std::vector<DataSink>& t_hist, unsigned t_entry) {if(NextRule_) NextRule_->Fill(t_hist, t_entry);};
-    inline void RejectData(std::vector<DataSink>& t_hist, unsigned t_entry) {if(RejectRule_) RejectRule_->Fill(t_hist, t_entry);};
+    inline void FillData(std::vector<DataSink>& t_hist, int t_entry) {if(NextRule_) NextRule_->Fill(t_hist, t_entry);};
+    inline void RejectData(std::vector<DataSink>& t_hist, int t_entry) {if(RejectRule_) RejectRule_->Fill(t_hist, t_entry);};
     Rule* NextRule_;
     Rule* RejectRule_;
     Rule* PreviousRule_;
@@ -62,7 +63,7 @@ std::pair<Rule*, Rule*> RuleBlock(Rule* t_rule);
 class EmptyRule : public Rule
 {
 public:
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override {this->FillData(t_hist, t_entry);};
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override {this->FillData(t_hist, t_entry);};
 };
 
 class RecoTrackNumFilter : public Rule
@@ -70,7 +71,7 @@ class RecoTrackNumFilter : public Rule
 public: 
     RecoTrackNumFilter(const std::function<bool(int)>& t_compare = [](int t_tracks){return t_tracks < 2;}) : compare_(t_compare){};
     virtual void SetMyReader(TTreeReader& t_reader) override;
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
 protected:
     std::shared_ptr<ReaderValue> myTrackArray_;
     std::function<bool(int)> compare_;
@@ -80,7 +81,7 @@ class CheckPoint : public Rule
 {
 public:
     CheckPoint(int t_id = 0) : id(t_id) {};
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override ;
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override ;
     DataSink GetData();
     const int id;
 protected:
@@ -94,7 +95,7 @@ class DrawHit : public Rule
 public: 
     DrawHit(int t_x=0, int t_y=2) : x_(t_x), y_(t_y) {};
     virtual void SetMyReader(TTreeReader& t_reader) override;
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
 protected:
     const int x_, y_;
     std::shared_ptr<ReaderValue> myHitArray_;
@@ -109,7 +110,7 @@ public:
     GetHitOutline(const std::string& t_outputname);
     virtual ~GetHitOutline();
     virtual Rule* AddRule(Rule* t_rule) override;
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
 private:
     const int pad_x = 108;              
     const int pad_y = 112;
@@ -125,7 +126,7 @@ class DrawHitEmbed : public Rule
 public: 
     DrawHitEmbed(int t_x=0, int t_y=2) : x_(t_x), y_(t_y) {};
     virtual void SetMyReader(TTreeReader& t_reader) override;
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
 protected:
     const int x_, y_;
     std::shared_ptr<ReaderValue> myHitArray_;
@@ -138,7 +139,7 @@ public:
     ValueCut(double t_lower=0, double t_upper=0, bool t_yaxis=false) : lower_(t_lower), upper_(t_upper)
     { index_ = (t_yaxis)? 1 : 0;};
     inline void SetCut(double t_lower, double t_upper) { lower_ = t_lower; upper_ = t_upper; };
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
 protected:
     double lower_, upper_;
     int index_;
@@ -150,7 +151,7 @@ public:
     EmbedCut() : cutg_(0) {};
     EmbedCut(const std::string& t_file, const std::string& t_cutname = "CUTG");    
     inline void SetCut(TCutG* t_cutg) { cutg_ = t_cutg; };
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
     TCutG *GetCut() { return cutg_; };
 
 protected:
@@ -175,7 +176,7 @@ public:
         if(RejectRule_) RejectRule_->SetReader(t_reader);
     };
 
-    void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override
+    void Selection(std::vector<DataSink>& t_hist, int t_entry) override
     {
       double value = t_hist.back().back()[index_];
       for(const auto& bound : bounds_)
@@ -199,7 +200,7 @@ protected:
 class EntryRecorder : public Rule
 {
 public:
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
     void ToFile(const std::string& t_filename);
     inline void Clear() { list_.clear(); };
     std::vector<int> GetList() { return list_; };
@@ -211,7 +212,7 @@ class TrackZFilter : public Rule
 {
 public:
     void SetMyReader(TTreeReader& t_reader) override;
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
 protected:
     std::shared_ptr<ReaderValue> myTrackArray_;
 };

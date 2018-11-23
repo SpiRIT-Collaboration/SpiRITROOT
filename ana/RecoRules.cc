@@ -10,7 +10,7 @@ void RecoTrackRule::SetReader(TTreeReader& t_reader)
     this->Rule::SetReader(t_reader);
 };
 
-void RecoTrackRule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void RecoTrackRule::Fill(std::vector<DataSink>& t_hist, int t_entry) 
 {
     if(PreviousRule_) 
     {
@@ -47,28 +47,48 @@ void UseVATracks::SetMyReader(TTreeReader& t_reader)
     myVATracksArray_ = std::make_shared<ReaderValue>(t_reader, "VATracks");
 }
 
-void UseVATracks::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void UseVATracks::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
-    // look for va tracks that corresponds to the current track_id_
-    for(unsigned i = 0; i < (*myVATracksArray_)->GetEntries(); ++i)
-        if(static_cast<STRecoTrack*>((*myVATracksArray_) -> At(i))->GetRecoID() == track_id_)
+    // build up VATracks map that convert STRecoTrack array to VATrack array
+    // do this once at start up for efficiency consideration
+    if(t_entry != current_entry_)
+    {
+        /*if((*myVATracksArray_)->GetEntries() > (*myTrackArray_)->GetEntries())
         {
-           track_id_ = i;
-           track_ = static_cast<STRecoTrack*>((*myVATracksArray_) -> At(track_id_));
-           this->FillData(t_hist, t_entry);
-           return;
+            std::cerr << "More tracks in VA than STReco. Should not happen. Will skip\n";
+            this->RejectData(t_hist, t_entry);
+        }*/
+        idx_map.assign((*myTrackArray_)->GetEntries(), -1);
+        for(int i = 0; i < (*myVATracksArray_)->GetEntries(); ++i)
+        {
+            int idva = static_cast<STRecoTrack*>((*myVATracksArray_) -> At(i))->GetRecoID();
+            if(idva >= 0) idx_map[idva] = i;
         }
-    // reject if the track is not found
-    this->RejectData(t_hist, t_entry);
+        current_entry_ = t_entry;
+    }
+
+    // look for va tracks that corresponds to the current track_id_
+    track_id_ = idx_map[track_id_];
+    if(track_id_ >= 0)
+    {
+        track_ = static_cast<STRecoTrack*>((*myVATracksArray_) -> At(track_id_));
+        this->FillData(t_hist, t_entry);
+    }else
+    {
+        // reject if the track is not found
+        this->RejectData(t_hist, t_entry);
+    }
 }
 
 /******************************
 PID on tracks
 ******************************/
-void PID::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void PID::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     // find the average dE
-    t_hist.push_back({{track_->GetMomentum().Mag(), track_->GetdEdxWithCut(0, 0.7)}});
+    auto mag = track_->GetMomentum().Mag();
+    auto dedx = track_->GetdEdxWithCut(0, 0.7);
+    t_hist.push_back({{mag, dedx}});
     this->FillData(t_hist, t_entry);
 }
 
@@ -76,7 +96,7 @@ void PID::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 /****************************
 Observer: Pipe intermediate result to stdout
 ****************************/
-void Observer::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void Observer::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {
     auto fill = t_hist.back().back();
     std::cout << title_ << " x: " << fill[0] << " y: " << fill[1] << " \n";
@@ -86,7 +106,7 @@ void Observer::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 /******************************
 Draw trackes from STRecoTrack
 ********************************/
-void DrawTrack::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void DrawTrack::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {    
     //t_hist.clear();
     DataSink localsink;
@@ -105,7 +125,7 @@ void EmbedFilter::SetMyReader(TTreeReader& t_reader)
     myEmbedArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedTrack");
 }
 
-void EmbedFilter::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
+void EmbedFilter::Fill(std::vector<DataSink>& t_hist, int t_entry)
 {
     embed_id_ = 1e3;
     embed_track_ = nullptr;
@@ -127,7 +147,7 @@ void EmbedFilter::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
     this->RecoTrackRule::Fill(t_hist, t_entry);
 }
 
-void EmbedFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void EmbedFilter::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     for(embed_id_ = 0; embed_id_ < (*myEmbedArray_)->GetEntries(); ++embed_id_)
     {
@@ -152,7 +172,7 @@ void EmbedExistence::SetMyReader(TTreeReader& t_reader)
     myEmbedArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedTrack");
 }
 
-void EmbedExistence::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void EmbedExistence::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     for(int i = 0; i < (*myEmbedArray_)->GetEntries(); ++i)
     {
@@ -170,7 +190,7 @@ void EmbedExistence::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 RecoTrackClusterNumFilter
 Reject a track if the number of clusters it contains is too small
 *********************************/
-void RecoTrackClusterNumFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void RecoTrackClusterNumFilter::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     if(compare_((*track_->GetdEdxPointArray()).size())) this->FillData(t_hist, t_entry);
     else this->RejectData(t_hist, t_entry);
@@ -192,7 +212,7 @@ void CompareMCPrimary::SetMyReader(TTreeReader& t_reader)
     myEmbedArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedTrack");
 }
 
-void CompareMCPrimary::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void CompareMCPrimary::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     auto mc_mom = embed_track_->GetInitialMom();
     auto mc_Vert = embed_track_->GetInitialVertex();
@@ -224,13 +244,41 @@ void CompareMCPrimary::Selection(std::vector<DataSink>& t_hist, unsigned t_entry
     this->FillData(t_hist, t_entry);
 }
 
+/***********************************
+DistToVertex
+POCA distance to vertex from STVertex branch
+It can be used by all tracks, not just mc tracks
+***********************************/
+void DistToVertex::SetMyReader(TTreeReader& t_reader)
+{
+    myVertexArray_ = std::make_shared<ReaderValue>(t_reader, "STVertex");
+}
+
+void DistToVertex::Selection(std::vector<DataSink>& t_hist, int t_entry)
+{
+    auto reco_Vert = track_->GetPOCAVertex();
+    if((*myVertexArray_)->GetEntries() != 1) 
+    {
+      // reject if no vertex is found 
+      t_hist.push_back({{-1000, -1000}}); 
+      this->RejectData(t_hist, t_entry);
+    }
+    else
+    {
+      auto st_vertex = static_cast<STVertex*>((*myVertexArray_)->At(0));
+      auto vertex = st_vertex->GetPos();
+      t_hist.push_back({{(vertex - reco_Vert).Mag(), 1.}});
+      this->FillData(t_hist, t_entry);
+    }
+}
+
 
 /************************************
 MomentumTracks
 Draw the momentum associated with each track
 Set axis to plot different momentum direction
 *************************************/
-void MomentumTracks::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void MomentumTracks::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {
     auto mom = track_->GetMomentum();
     double val;
@@ -252,7 +300,7 @@ TrackShapeFilter::TrackShapeFilter(const std::string& t_cutfilename, double t_th
     cut_file_(t_cutfilename.c_str()),
     threshold_(t_threshold){}
 
-void TrackShapeFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void TrackShapeFilter::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     cutg_ = (TCutG*) cut_file_.Get(std::to_string(t_entry).c_str());
     if(! cutg_ ) 
@@ -262,7 +310,7 @@ void TrackShapeFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry
     }
     auto& track_pts = t_hist.back();
 
-    unsigned num_inside = 0;
+    int num_inside = 0;
     for(const auto& row : track_pts)
         if(cutg_->IsInside(row[0], row[1])) ++num_inside;
     double percentage = (double) num_inside/ (double) track_pts.size();
@@ -286,7 +334,7 @@ RenshengCompareData::RenshengCompareData()
     db.Set_MomentumRange_Minus(Momentum_Range_Minus);
 };
 
-void RenshengCompareData::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void RenshengCompareData::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {
 
     // find number of tracks for the embeded pions
@@ -315,7 +363,7 @@ void RenshengCompareData::Selection(std::vector<DataSink>& t_hist, unsigned t_en
 /***********************************
 ClusterNum: simply fill with number of clusters of each tracks
 ***********************************/
-void ClusterNum::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void ClusterNum::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     auto num_cluster = track_->GetNumRowClusters90() + track_->GetNumLayerClusters90();
     t_hist.push_back({{(double) num_cluster, 1.}});
@@ -326,7 +374,7 @@ void ClusterNum::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 /*********************
 ThetaPhi : angle of the initial momentum of each track
 *********************/
-void ThetaPhi::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void ThetaPhi::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {
     //if(num_cluster < 20) continue;
     auto momVec = track_ -> GetMomentum();
@@ -341,7 +389,7 @@ void ThetaPhi::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 TrackIDRecorder: Save all entries and its track id that have been looped through
 Useful for when you want to know which track satisfy all conditions
 ***************************/
-void TrackIDRecorder::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void TrackIDRecorder::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     list_.push_back({t_entry, track_id_});
     this->FillData(t_hist, t_entry);
@@ -361,7 +409,7 @@ Plot initial MC theta vs phi instead of reco direction
 Must have EmbedFilter in front
 Only work for embedded data
 ******************************/
-void MCThetaPhi::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void MCThetaPhi::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     auto momVec = embed_track_->GetInitialMom();
     auto phiL = momVec.Phi()*180./TMath::Pi();
@@ -375,7 +423,7 @@ void MCThetaPhi::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 MCMomentumTracks
 Initial momentum of the mc data 
 *************************************/
-void MCMomentumTracks::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void MCMomentumTracks::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {
     auto mom = embed_track_->GetInitialMom();
     double val;

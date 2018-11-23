@@ -10,7 +10,7 @@ void Rule::SetReader(TTreeReader& t_reader)
     if(RejectRule_) RejectRule_ -> SetReader(t_reader);
 };
 
-void Rule::Fill(std::vector<DataSink>& t_hist, unsigned t_entry)
+void Rule::Fill(std::vector<DataSink>& t_hist, int t_entry)
 {
     //if(PreviousRule_) fill_ = PreviousRule_ -> fill_;
     this->Selection(t_hist, t_entry);
@@ -22,8 +22,8 @@ Rule* Rule::AddRule(Rule* t_rule)
     // avoid self referencing
     if(this == t_rule)
     {    std::cerr << "Try to add the same rule twice. Will be ignored\n";}
-    if(NextRule_)
-    {    std::cerr << "NextRule to this rule is alread set. Don't add again\n";}
+    //if(NextRule_)
+    //{    std::cerr << "NextRule to this rule is alread set. Don't add again\n";}
     else
     {
         NextRule_ = t_rule;
@@ -37,8 +37,8 @@ Rule* Rule::AddRejectRule(Rule* t_rule)
     // avoid self referencing
     if(this == t_rule)
     {    std::cerr << "Try to add the same rule twice. Will be ignored\n";}
-    if(RejectRule_)
-    {    std::cerr << "RejectedRules have been set. You cannot add another RejectedRule\n";}
+    //if(RejectRule_)
+    //{    std::cerr << "RejectedRules have been set. You cannot add another RejectedRule\n";}
     else
     {
         RejectRule_ = t_rule;
@@ -100,7 +100,7 @@ std::pair<Rule*, Rule*> RuleBlock(Rule* t_rule)
 CheckPoint stores intermediate results
 And allow user to retrieve it afterwards
 *********************************/
-void CheckPoint::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void CheckPoint::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {
     temp_sink_.insert(temp_sink_.end(), t_hist.back().begin(), t_hist.back().end());
     this->FillData(t_hist, t_entry);
@@ -132,7 +132,7 @@ void RecoTrackNumFilter::SetMyReader(TTreeReader& t_reader)
     myTrackArray_ = std::make_shared<ReaderValue>(t_reader, "STRecoTrack");
 }
 
-void RecoTrackNumFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void RecoTrackNumFilter::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     if(this->compare_((*myTrackArray_)->GetEntries())) this->FillData(t_hist, t_entry);
     else this->RejectData(t_hist, t_entry);
@@ -166,7 +166,7 @@ GetHitOutline::~GetHitOutline()
     cutg_array_.Write();
 }
 
-void GetHitOutline::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void GetHitOutline::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     if(t_entry > max_num_)
     {
@@ -197,7 +197,7 @@ void DrawHit::SetMyReader(TTreeReader& t_reader)
     myHitArray_ = std::make_shared<ReaderValue>(t_reader, "STHit");
 }
 
-void DrawHit::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void DrawHit::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {    
     DataSink localsink;
     for(int j = 0; j < (*myHitArray_)->GetEntries(); ++j)
@@ -218,7 +218,7 @@ void DrawHitEmbed::SetMyReader(TTreeReader& t_reader)
     myHitArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedHit");
 }
 
-void DrawHitEmbed::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void DrawHitEmbed::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {    
     DataSink localsink;
     for(int j = 0; j < (*myHitArray_)->GetEntries(); ++j)
@@ -235,7 +235,7 @@ void DrawHitEmbed::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 /*********************
 ValueCut : 1-D value cut on the previous rule
 ************************/
-void ValueCut::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void ValueCut::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {
     auto& fill = t_hist.back().back();
     if( upper_ > lower_)
@@ -257,7 +257,7 @@ EmbedCut::EmbedCut(const std::string& t_file, const std::string& t_cutname) : fi
     if(!cutg_) std::cerr << "TCutG is not found in file!\n";
 }
 
-void EmbedCut::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void EmbedCut::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {
     auto& fill = t_hist.back().back();
     if(cutg_->IsInside(fill[0], fill[1])) 
@@ -269,7 +269,7 @@ void EmbedCut::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
 EntryRecorder: Save all entries that have been looped through
 Useful for when you want to know which entries satisfy all conditions
 ***************************/
-void EntryRecorder::Selection(std::vector<DataSink>& t_hist, unsigned t_entry) 
+void EntryRecorder::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {
     // do not fill repeated entry number
     if(list_.size() == 0) list_.push_back(t_entry);
@@ -294,10 +294,10 @@ Reject those
 void TrackZFilter::SetMyReader(TTreeReader& t_reader)
 { myTrackArray_ = std::make_shared<ReaderValue>(t_reader, "STRecoTrack");};
 
-void TrackZFilter::Selection(std::vector<DataSink>& t_hist, unsigned t_entry)
+void TrackZFilter::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     bool non_empty = false;
-    for(unsigned track_id_ = 0; track_id_ < (*myTrackArray_)->GetEntries(); ++track_id_)
+    for(int track_id_ = 0; track_id_ < (*myTrackArray_)->GetEntries(); ++track_id_)
     {
         auto track_ = static_cast<STRecoTrack*>((*myTrackArray_) -> At(track_id_));
         for(const auto& point : (*track_->GetdEdxPointArray()))

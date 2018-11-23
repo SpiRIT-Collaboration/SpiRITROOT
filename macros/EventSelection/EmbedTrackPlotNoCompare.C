@@ -20,48 +20,30 @@ public:
 	};
 };
 
-class GetEmbedInfo : public RecoTrackRule
+class GetEmbedInfo : public EmbedFilter
 {
 public:
-    GetEmbedInfo(const std::string& t_info = "")
-    {
-        if(t_info.empty()) return;
-
-        std::ifstream file(t_info.c_str());
-        if(!file.is_open()) std::cerr << "Cannot load info file\n";
-
-        std::string line;
-        // first line is header
-        std::getline(file, line);
-        while(std::getline(file, line))
-        {
-            std::stringstream ss(line);
-            int index;
-            double px, py, pz;
-            if(!(ss >> index >> px >> py >> pz)) std::cerr << "Cannot read line " << line << "\n";
-            p_.push_back(TVector3(1e3*px, 1e3*py, 1e3*pz));
-        }
-    };
 
     virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override
     {
-         current_p_ = track_->GetMomentum();
-         current_i_ = t_entry;
+         reco_p_ = track_->GetMomentum(); 
+         if(embed_track_) cor_p_ = embed_track_->GetInitialMom();
          this->FillData(t_hist, t_entry);
     };
 
     std::vector<TString> TrackDescription()
     {
-        auto embed_data = TString::Format("Reco info: |P| = %.1f, #theta = %.1f, #phi = %.1f", current_p_.Mag(), current_p_.Theta()*180/M_PI, current_p_.Phi()*180/M_PI);
-        if(current_i_ < p_.size()) 
-             return {embed_data, TString::Format("MC info: |P| = %.1f, #theta = %.1f, #phi = %.1f", p_[current_i_].Mag(), p_[current_i_].Theta()*180/M_PI, p_[current_i_].Phi()*180/M_PI)};
+        auto embed_data = TString::Format("Reco info: |P| = %.1f, #theta = %.1f, #phi = %.1f", reco_p_.Mag(), reco_p_.Theta()*180/M_PI, reco_p_.Phi()*180/M_PI);
+        if(embed_track_)
+             return {embed_data, TString::Format("MC info: |P| = %.1f, #theta = %.1f, #phi = %.1f", 1e3*cor_p_.Mag(), cor_p_.Theta()*180/M_PI, cor_p_.Phi()*180/M_PI)};
         return {embed_data};
     }
     
 protected:
-    std::vector<TVector3> p_;
-    TVector3 current_p_;
-    unsigned current_i_;
+    std::shared_ptr<ReaderValue> myEmbedArray_;
+
+    TVector3 reco_p_;
+    TVector3 cor_p_;
 };
 
 void GetMomentumListFromMC(TChain *tree, const std::string& t_output_name = "MomDist.txt")
@@ -86,7 +68,7 @@ void GetMomentumListFromMC(TChain *tree, const std::string& t_output_name = "Mom
 }
 
 
-void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected = false)
+void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected = false, const std::string& t_filename="data/Run2841_WithProton/TrackDistComp/Mom_350.0_400.0_Theta_20.0_30.0_WithBDC/run2841_s*")
 {
 	const int pad_x = 108;
 	const int pad_y = 112;
@@ -99,11 +81,7 @@ void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected 
 	TCanvas c1("canvas", "Tracks top down", 2.*canvas_scale*((double) pad_x)*size_x, canvas_scale*((double) pad_y)*size_y);
 	c1.Divide(2,1);
 
-        TChain chain("cbmsim");
-        chain.Add("/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/data/Run2841_WithProton/TrackDistComp/Mom_350.0_400.0_Theta_20.0_30.0.mc.root");
-        GetMomentumListFromMC(&chain);
-
- 	DrawMultipleComplex embed_draw("/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/data/Run2841_WithProton/TrackDistComp/Mom_350.0_400.0_Theta_20.0_30.0_WithBDC/run2841_s*","cbmsim");
+ 	DrawMultipleComplex embed_draw(t_filename.c_str(),"cbmsim");
  
 
 	auto checkpoints = ListOfCP(4);//embed_draw.NewCheckPoints(5);
@@ -112,7 +90,7 @@ void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected 
 	DrawTrack embed_track_xz, embed_track_yz(1,2);
         DrawTrack all_tracks_xz;
 	DrawTrack all_tracks_yz(1,2);
-        GetEmbedInfo info("MomDist.txt");
+        GetEmbedInfo info;//("MomDist.txt");
 	EmptyRule empty;
 
 	if(!t_Additional_rules) t_Additional_rules = &empty;	

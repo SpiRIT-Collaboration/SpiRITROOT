@@ -95,6 +95,11 @@ public:
     { chain_.Add(t_filenames.c_str()); }
 
     DrawComplex(TChain& t_chain) : reader_(&t_chain){};
+    DrawComplex(const std::vector<std::string>& t_filenames, 
+                const std::string& t_treename) : 
+        chain_(t_treename.c_str()),
+        reader_(&chain_)
+    { for(const auto& name : t_filenames) chain_.Add(name.c_str()); }
 
     template<class T, typename... ARGS>
     T FillRule(Rule& t_rule, ARGS... args);

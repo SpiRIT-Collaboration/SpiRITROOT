@@ -106,7 +106,7 @@ T DrawComplex::FillRule(Rule& t_rule, ARGS... args)
     T hist(args...);
     reader_.Restart();
     t_rule.SetReader(reader_);
-    unsigned index = 0;
+    int index = 0;
     while( reader_.Next() )
     {
         std::vector<DataSink> result;
