@@ -241,7 +241,7 @@ STPadResponseTask::InitPRF()
 
   Double_t spacingWire = 4.;
 
-  Double_t sigma = 3.14;
+  Double_t sigma = 3.5;
   Double_t x1 = -effRangePR/2.;
   Double_t x2 = effRangePR/2.;
 
