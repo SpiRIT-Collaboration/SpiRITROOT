@@ -58,21 +58,22 @@ STPSAFastFit::Init()
   for (auto iLayer = 0; iLayer < 112; iLayer++)
     fGainMatchingDataScale[iLayer] = 1;
   
-  fPSAPeakFindingOption = 0;
-  cout << "== [STPSAFastFit] The defalut option for Peak finding is the JungWoo's original method." << endl;
-  cout << "                  If you want to use the high efficiency version by Rensheng, call run_reco_experiment::STPSAETask::SetPSAPeakFindingOption(1)." << endl;
+  if (fPSAPeakFindingOption != 1 ||fPSAPeakFindingOption != 0)
+    {
+      cout << "== [STPSAFastFit] PSAPeakFindingOption: " << fPSAPeakFindingOption << " was not defined, the default value, 1=High efficiency peak finding, will be used!" << endl;
+      fPSAPeakFindingOption = 1;
+    }
 }
 
 void STPSAFastFit::SetPSAPeakFindingOption(Int_t opt)
 {
   fPSAPeakFindingOption = opt;
 
-       if (fPSAPeakFindingOption == 0) { cout << "== [STPSAFastFit] JungWoo's original peak finding method!" << endl; }
-  else if (fPSAPeakFindingOption == 1) { cout << "== [STPSAFastFit] High efficiency peak finding, especial for small pulses!" << endl; }
+  if (fPSAPeakFindingOption == 0) { cout << "== [STPSAFastFit] Setting to JungWoo's original peak finding method!" << endl; }
+  else if (fPSAPeakFindingOption == 1) { cout << "== [STPSAFastFit] Setting to High efficiency peak finding, especial for small pulses!" << endl; }
   else {
-    cout << "== [STPSAFastFit] PSAPeakFindingOption: " << fPSAPeakFindingOption << " is not defined, the default value, 1=JungWoo's method, will be used!" << endl;
-
-    fPSAPeakFindingOption = 0;
+    cout << "== [STPSAFastFit] PSAPeakFindingOption: " << fPSAPeakFindingOption << " is not defined, the default value, 1=High efficiency peak finding, will be used!" << endl;
+    fPSAPeakFindingOption = 1;
   }
 }
 

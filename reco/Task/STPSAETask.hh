@@ -54,7 +54,7 @@ class STPSAETask : public STRecoTask
   
     TString fEmbedFile = "";                   ///< MC file for embedding
     STPSAFastFit *fPSA;
-    Int_t fPSAPeakFindingOption;
+    Int_t fPSAPeakFindingOption = 1; //High efficiency set to defualt = 1; 0 is Jung Woo's org method
     TString fYOffsetFileName = "";
     
     Double_t fThreshold = 20;

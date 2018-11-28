@@ -140,7 +140,7 @@ class STPSAFastFit : public STPSA, public STPulse
     Double_t fGainMatchingDataScale[112] = {0};
     
     // the below is for setting the different PSA method.
-    Int_t fPSAPeakFindingOption;
+  Int_t fPSAPeakFindingOption = 1; //defualt is High efficiency = 1; 0 = Jung Woo original method 
 
   ClassDef(STPSAFastFit, 2)
 };
