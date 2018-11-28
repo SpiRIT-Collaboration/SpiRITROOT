@@ -192,7 +192,10 @@ Reject a track if the number of clusters it contains is too small
 *********************************/
 void RecoTrackClusterNumFilter::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
-    if(compare_((*track_->GetdEdxPointArray()).size())) this->FillData(t_hist, t_entry);
+    auto nrc90 = track_->GetNumRowClusters90();
+    auto nlc90 = track_->GetNumLayerClusters90();
+    int num_cluster = nrc90 + nlc90;
+    if(compare_(num_cluster)) this->FillData(t_hist, t_entry);
     else this->RejectData(t_hist, t_entry);
 }
 

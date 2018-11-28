@@ -47,6 +47,44 @@ Rule* Rule::AddRejectRule(Rule* t_rule)
     return this;
 }
 
+void Rule::InsertRule(Rule* t_rule)
+{
+    // avoid self referencing
+    if(this == t_rule)
+    {    std::cerr << "Try to add the same rule twice. Will be ignored\n";}
+
+    if(!NextRule_) this->AddRule(t_rule); // equivalent to add rule if nothing is behind
+    else
+    {
+        Rule *temp = NextRule_;
+        this->AddRule(t_rule);
+        t_rule->AddRule(temp);
+    }
+}
+
+void Rule::AppendRule(Rule* t_rule) 
+{ 
+    if(NextRule_) NextRule_->AppendRule(t_rule); 
+    else this->AddRule(t_rule);
+};
+
+void Rule::AppendRejectRule(Rule* t_rule) 
+{ 
+    if(RejectRule_) RejectRule_->AppendRule(t_rule); 
+    else this->AddRejectRule(t_rule);
+};
+
+void Rule::PopRule() 
+{ 
+    if(NextRule_) NextRule_->PopRule(); 
+    else 
+    {
+        this->PreviousRule_->NextRule_ = nullptr; 
+        this->PreviousRule_ = nullptr;
+    }
+};
+ 
+
 /********************************
 RuleBlock
 Simply group a few rules into 1

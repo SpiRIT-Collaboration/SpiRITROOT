@@ -16,6 +16,7 @@
 #pragma link C++ operators DrawMultipleComplex::Iterator;
 #pragma link C++ class DrawComplex;
 
+#pragma link C++ class Rule;
 #pragma link C++ class RecoTrackRule;
 #pragma link C++ class RecoTrackNumFilter;
 #pragma link C++ class EmptyRule;

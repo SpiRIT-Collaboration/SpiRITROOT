@@ -47,11 +47,11 @@ void DrawMultipleComplex::GetCheckPointsSet(Rule* t_rule)
         if(current_rule->RejectRule_) this->GetCheckPointsSet(current_rule->RejectRule_);
         if(auto checkpoint = dynamic_cast<CheckPoint*>(current_rule)) 
             checkpointset_.insert(checkpoint);
-        else if(auto switch_ = dynamic_cast<SwitchCut*>(current_rule))
+        /*else if(auto switch_ = dynamic_cast<SwitchCut*>(current_rule))
         {
             for(auto rule : switch_->execution_) this->GetCheckPointsSet(rule);
             return;
-        }
+        }*/
         this->GetCheckPointsSet(current_rule->NextRule_);
     }
 }

@@ -43,6 +43,7 @@ class UseVATracks : public RecoTrackRule
 public:
     virtual void SetMyReader(TTreeReader& t_reader) override;
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<UseVATracks>(*this); };
 protected:
     std::shared_ptr<ReaderValue> myVATracksArray_;
     std::vector<int> idx_map;
@@ -55,6 +56,7 @@ public:
     virtual void SetMyReader(TTreeReader& t_reader) override;
     virtual void Fill(std::vector<DataSink>& t_hist, int t_entry) override;
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<EmbedFilter>(*this); };
 protected:
     std::shared_ptr<ReaderValue> myEmbedArray_;
     STEmbedTrack* embed_track_;
@@ -66,6 +68,7 @@ class EmbedExistence : public RecoTrackRule
 public:
     virtual void SetMyReader(TTreeReader& t_reader) override;
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<EmbedExistence>(*this); };
 protected:
     std::shared_ptr<ReaderValue> myEmbedArray_;
 };
@@ -75,6 +78,7 @@ class RecoTrackClusterNumFilter : public RecoTrackRule
 public: 
     RecoTrackClusterNumFilter(const std::function<bool(int)>& t_compare = [](int t_tracks){return t_tracks > 5;}) : compare_(t_compare){};
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<RecoTrackClusterNumFilter>(*this); };
 protected:
     std::function<bool(int)> compare_;
 };
@@ -85,6 +89,7 @@ public:
     TrackShapeFilter(const std::string& t_cutfilename, double t_threshold);
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
     inline TCutG GetCurrentCut() { if(cutg_) return TCutG(*cutg_); else return TCutG();}
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<TrackShapeFilter>(std::string(cut_file_.GetName()), threshold_); };
 protected:
     double threshold_;
     TFile cut_file_;
@@ -95,6 +100,7 @@ class PID : public RecoTrackRule
 {
 public:
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override ;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<PID>(*this); };
 };
 
 class Observer : public RecoTrackRule
@@ -102,6 +108,7 @@ class Observer : public RecoTrackRule
 public:
 	Observer(const std::string t_title = "") : title_(t_title) {};
         virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<Observer>(*this); };
 protected:
 	std::string title_;
 };
@@ -111,6 +118,7 @@ class DrawTrack : public RecoTrackRule
 public: 
     DrawTrack(int t_x=0, int t_y=2) : x_(t_x), y_(t_y) {};
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<DrawTrack>(*this); };
 protected:
     const int x_, y_;
 };
@@ -123,6 +131,7 @@ public:
     virtual void SetMyReader(TTreeReader& t_reader) override;
     inline void ChangeAxis(Type t_x, Type t_y) {x_ = t_x; y_ = t_y;};
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<CompareMCPrimary>(*this); };
 protected:
     Type x_, y_;    
     std::shared_ptr<ReaderValue> myEmbedArray_;
@@ -133,6 +142,7 @@ class DistToVertex : public RecoTrackRule
 public:
     virtual void SetMyReader(TTreeReader& t_reader) override;
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<DistToVertex>(*this); };
 protected:
     std::shared_ptr<ReaderValue> myVertexArray_;
 };
@@ -144,6 +154,7 @@ public:
     MomentumTracks(int t_axis=0) : axis_(t_axis) {};
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
     inline void SetAxis(int t_axis) { axis_ = t_axis; };
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<MomentumTracks>(*this); };
 protected:
     int axis_;
 };
@@ -153,6 +164,7 @@ class RenshengCompareData : public RecoTrackRule
 public:
     RenshengCompareData();
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<RenshengCompareData>(*this); };
 protected:
     ST_ClusterNum_DB db;
 };
@@ -161,12 +173,14 @@ class ClusterNum : public RecoTrackRule
 {
 public:
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<ClusterNum>(*this); };
 };
 
 class ThetaPhi : public RecoTrackRule
 {
 public:
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<ThetaPhi>(*this); };
 };
 
 class TrackIDRecorder : public RecoTrackRule
@@ -176,6 +190,7 @@ public:
     void ToFile(const std::string& t_filename);
     inline void Clear() { list_.clear(); };
     std::vector<std::pair<int, int>> GetList() { return list_; };
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<TrackIDRecorder>(*this); };
 protected:
     std::vector<std::pair<int, int>> list_;// entry num, track id
 };
@@ -184,6 +199,7 @@ class MCThetaPhi : public EmbedFilter
 {
 public:
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<MCThetaPhi>(*this); };
 };
 
 class MCMomentumTracks : public EmbedFilter
@@ -193,6 +209,7 @@ public:
     MCMomentumTracks(int t_axis=0) : axis_(t_axis) {};
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
     inline void SetAxis(int t_axis) { axis_ = t_axis; };
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<MCMomentumTracks>(*this); };
 protected:
     int axis_;
 };

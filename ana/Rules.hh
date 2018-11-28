@@ -28,6 +28,18 @@ typedef std::vector<std::vector<double>> DataSink;
 typedef TTreeReaderValue<TClonesArray> ReaderValue;
 class DrawMultipleComplex;
 
+// apparently the compiler is not yet c++14 compitable
+// that's why it's here
+// apparently FairRoot has their own implementation of mylib::make_unique
+// I have to name it differently..
+namespace mylib
+{
+  template<typename T, typename... Args>
+  std::unique_ptr<T> make_unique(Args&&... args) {
+      return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+  }
+};
+
 class Rule
 {
 public:
@@ -46,13 +58,40 @@ public:
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) = 0;
 
     virtual Rule* AddRule(Rule* t_rule);
+    void InsertRule(Rule* t_rule);
     virtual Rule* AddRejectRule(Rule* t_rule);
 
-    inline void AppendRule(Rule* t_rule) { if(NextRule_) NextRule_->AppendRule(t_rule); else this->AddRule(t_rule);};
-    inline void PopRule() { if(NextRule_) NextRule_->PopRule(); else {this->PreviousRule_->NextRule_ = nullptr; this->PreviousRule_ = nullptr;}};
-protected:
-    inline void FillData(std::vector<DataSink>& t_hist, int t_entry) {if(NextRule_) NextRule_->Fill(t_hist, t_entry);};
-    inline void RejectData(std::vector<DataSink>& t_hist, int t_entry) {if(RejectRule_) RejectRule_->Fill(t_hist, t_entry);};
+    int CloneTo(std::vector<std::unique_ptr<Rule>>& t_rule)
+    {
+        auto cloned_rule = this->Clone();
+        t_rule.push_back(std::move(cloned_rule));
+        int idx = t_rule.size()-1;
+        std::cout << "IDX size " << idx << std::endl;
+        if(this->NextRule_)
+        {
+            int nextidx = this->NextRule_->CloneTo(t_rule);
+            std::cout << "NextRule idx " << nextidx << std::endl;
+            t_rule[idx]->AddRule(t_rule[nextidx].get());
+        }
+
+        if(this->RejectRule_)
+        {
+            int rejectidx = this->RejectRule_->CloneTo(t_rule);
+            t_rule[idx]->AddRejectRule(t_rule[rejectidx].get());
+        }
+        return idx;
+    }
+
+    void AppendRule(Rule* t_rule);
+    void AppendRejectRule(Rule* t_rule);
+    void PopRule();
+//protected:
+    virtual std::unique_ptr<Rule> Clone() = 0;
+    inline void FillData(std::vector<DataSink>& t_hist, int t_entry) 
+    {if(NextRule_) NextRule_->Fill(t_hist, t_entry);};
+    inline void RejectData(std::vector<DataSink>& t_hist, int t_entry) 
+    {if(RejectRule_) RejectRule_->Fill(t_hist, t_entry);};
+
     Rule* NextRule_;
     Rule* RejectRule_;
     Rule* PreviousRule_;
@@ -64,6 +103,7 @@ class EmptyRule : public Rule
 {
 public:
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override {this->FillData(t_hist, t_entry);};
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<EmptyRule>(*this); };
 };
 
 class RecoTrackNumFilter : public Rule
@@ -72,6 +112,7 @@ public:
     RecoTrackNumFilter(const std::function<bool(int)>& t_compare = [](int t_tracks){return t_tracks < 2;}) : compare_(t_compare){};
     virtual void SetMyReader(TTreeReader& t_reader) override;
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<RecoTrackNumFilter>(*this); };
 protected:
     std::shared_ptr<ReaderValue> myTrackArray_;
     std::function<bool(int)> compare_;
@@ -84,6 +125,7 @@ public:
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override ;
     DataSink GetData();
     const int id;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<CheckPoint>(*this); };
 protected:
     DataSink temp_sink_;
 };
@@ -96,6 +138,8 @@ public:
     DrawHit(int t_x=0, int t_y=2) : x_(t_x), y_(t_y) {};
     virtual void SetMyReader(TTreeReader& t_reader) override;
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<DrawHit>(*this); };
+
 protected:
     const int x_, y_;
     std::shared_ptr<ReaderValue> myHitArray_;
@@ -111,6 +155,8 @@ public:
     virtual ~GetHitOutline();
     virtual Rule* AddRule(Rule* t_rule) override;
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<GetHitOutline>(std::string(file_.GetName())); };
+
 private:
     const int pad_x = 108;              
     const int pad_y = 112;
@@ -127,6 +173,8 @@ public:
     DrawHitEmbed(int t_x=0, int t_y=2) : x_(t_x), y_(t_y) {};
     virtual void SetMyReader(TTreeReader& t_reader) override;
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<DrawHitEmbed>(*this); };
+
 protected:
     const int x_, y_;
     std::shared_ptr<ReaderValue> myHitArray_;
@@ -140,6 +188,8 @@ public:
     { index_ = (t_yaxis)? 1 : 0;};
     inline void SetCut(double t_lower, double t_upper) { lower_ = t_lower; upper_ = t_upper; };
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<ValueCut>(*this); };
+
 protected:
     double lower_, upper_;
     int index_;
@@ -154,12 +204,13 @@ public:
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
     TCutG *GetCut() { return cutg_; };
 
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<EmbedCut>(std::string(file_.GetName()), std::string(cutg_->GetName())); };
 protected:
     TFile file_;
     TCutG* cutg_;
 };
 
-class SwitchCut : public Rule
+/*class SwitchCut : public Rule
 {
 public:
     friend class DrawMultipleComplex;
@@ -195,7 +246,7 @@ protected:
     int index_;
     std::vector<std::pair<double, double>> bounds_;
     std::vector<Rule*> execution_;
-};
+};*/
 
 class EntryRecorder : public Rule
 {
@@ -204,6 +255,8 @@ public:
     void ToFile(const std::string& t_filename);
     inline void Clear() { list_.clear(); };
     std::vector<int> GetList() { return list_; };
+
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<EntryRecorder>(*this); };   
 protected:
     std::vector<int> list_;
 };
@@ -213,6 +266,7 @@ class TrackZFilter : public Rule
 public:
     void SetMyReader(TTreeReader& t_reader) override;
     virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<TrackZFilter>(*this); };   
 protected:
     std::shared_ptr<ReaderValue> myTrackArray_;
 };
