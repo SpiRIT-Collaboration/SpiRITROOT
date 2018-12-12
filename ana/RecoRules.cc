@@ -4,10 +4,9 @@
 RecoTrackRule
 Base class that iterats through STRecoTracks
 *******************************/
-void RecoTrackRule::SetReader(TTreeReader& t_reader) 
+void RecoTrackRule::SetMyReader(TTreeReader& t_reader) 
 {
     myTrackArray_ = std::make_shared<ReaderValue>(t_reader, "STRecoTrack");
-    this->Rule::SetReader(t_reader);
 };
 
 void RecoTrackRule::Fill(std::vector<DataSink>& t_hist, int t_entry) 
@@ -44,6 +43,7 @@ Everything comes after UseVATracks class will read data from STVATracks instead
 ********************************/
 void UseVATracks::SetMyReader(TTreeReader& t_reader)
 {
+    myTrackArray_ = std::make_shared<ReaderValue>(t_reader, "STRecoTrack");
     myVATracksArray_ = std::make_shared<ReaderValue>(t_reader, "VATracks");
 }
 
@@ -87,7 +87,7 @@ void PID::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     // find the average dE
     auto mag = track_->GetMomentum().Mag();
-    auto dedx = track_->GetdEdxWithCut(0, 0.7);
+    auto dedx = track_->GetdEdxWithCut(0, 0.6);
     t_hist.push_back({{mag, dedx}});
     this->FillData(t_hist, t_entry);
 }
@@ -236,10 +236,12 @@ void CompareMCPrimary::Selection(std::vector<DataSink>& t_hist, int t_entry)
             case MomY: val = reco_mom[1] - GEVTOMEV*mc_mom[1]; break;
             case MomZ: val = reco_mom[2] - GEVTOMEV*mc_mom[2]; break;
             case MMag: val = (reco_mom - GEVTOMEV*mc_mom).Mag(); break;
+            case MMagDiff: val = reco_mom.Mag() - (GEVTOMEV*mc_mom).Mag(); break;
             case StartX: val = reco_Vert[0] - mc_Vert[0]; break;
             case StartY: val = reco_Vert[1] - mc_Vert[1]; break;
             case StartZ: val = reco_Vert[2] - mc_Vert[2]; break;
             case StartMag: val = (reco_Vert - mc_Vert).Mag(); break;
+            case StartMagDiff: val = reco_Vert.Mag() - mc_Vert.Mag(); break;
             case None: val = 1; break;
         }
     }

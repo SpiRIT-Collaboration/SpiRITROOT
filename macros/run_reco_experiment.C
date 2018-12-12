@@ -24,7 +24,7 @@ void run_reco_experiment
     fNumEventsInSplit = fNumEventsInRun - start;
 
   TString sRunNo   = TString::Itoa(fRunNo, 10);
-  TString sSplitNo = TString::Itoa(fSplitNo, 10);
+  TString sSplitNo = TString::Format("%02d", fSplitNo);
 
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
   if (fPathToData.IsNull())
@@ -44,18 +44,6 @@ void run_reco_experiment
   TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".root";
   TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+"."+version+".log";
 
-  if(!fMCFile.IsNull())
-    {
-      //Doing embedding so rename files
-      //with unique pixelID
-      std::string mcfile = fMCFile.Data();
-      std::string str2("PionPixel_ID_");
-      std::size_t found = mcfile.find(str2);
-      TString pixelID = mcfile.substr(found+str2.length(), 4);
-      out = fPathToData+"run"+sRunNo+"_pixelID_"+pixelID+".reco."+version+".root";
-      log = fPathToData+"run"+sRunNo+"_pixedlID_"+pixelID+"."+version+".log";
-    }
-  
   if (TString(gSystem -> Which(".", raw)).IsNull() && !fUseMeta)
     gSystem -> Exec("./createList.sh "+sRunNo);
 
@@ -78,7 +66,7 @@ void run_reco_experiment
 
   STDecoderTask *decoder = new STDecoderTask();
   decoder -> SetUseSeparatedData(true);
-  decoder -> SetPersistence(true);
+  decoder -> SetPersistence(false);
   if (fGCData.IsNull())
     decoder -> SetUseGainCalibration(false);
   else
@@ -115,7 +103,7 @@ void run_reco_experiment
 //  preview -> SetSelectingEvents(*events[fRunNo]);
 
   auto psa = new STPSAETask();
-  psa -> SetPersistence(true);
+  psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
   // Pulse having long tail
@@ -126,8 +114,8 @@ void run_reco_experiment
   psa -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
 
   auto helix = new STHelixTrackingTask();
-  helix -> SetPersistence(true);
-  helix -> SetClusterPersistence(true);
+  helix -> SetPersistence(false);
+  helix -> SetClusterPersistence(false);
   // Left, right, top and bottom sides cut
   helix -> SetClusterCutLRTB(420, -420, -64, -522);
   // High density region cut
@@ -153,13 +141,13 @@ void run_reco_experiment
   genfitVA -> SetPersistence(true);
   //genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
-  genfitVA -> SetBeamFile("");
-//  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
-//  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
+//genfitVA -> SetBeamFile("");
+  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
+  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   // Uncomment if you want to recalculate the vertex using refit tracks.
-  //genfitVA -> SetUseRave(true);
+  genfitVA -> SetUseRave(true);
   
-  auto embedCorr = new STEmbedCorrelatorTask(fembed_threshold);
+  auto embedCorr = new STEmbedCorrelatorTask;
   embedCorr -> SetPersistence(true);
     
   run -> AddTask(decoder);

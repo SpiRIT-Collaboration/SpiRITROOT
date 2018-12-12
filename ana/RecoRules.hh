@@ -29,7 +29,7 @@ class RecoTrackRule : public Rule
 {
 public: 
     RecoTrackRule() : can_init_loop_(true) {};
-    virtual void SetReader(TTreeReader& t_reader) override;
+    virtual void SetMyReader(TTreeReader& t_reader) override;
     virtual void Fill(std::vector<DataSink>& t_hist, int t_entry) override;
 protected:
     std::shared_ptr<ReaderValue> myTrackArray_;
@@ -126,7 +126,7 @@ protected:
 class CompareMCPrimary : public EmbedFilter
 {
 public:
-    enum Type{MomX, MomY, MomZ, MMag, StartX, StartY, StartZ, StartMag, None};
+    enum Type{MomX, MomY, MomZ, MMag, MMagDiff, StartX, StartY, StartZ, StartMag, StartMagDiff, None};
     CompareMCPrimary(Type t_x, Type t_y);
     virtual void SetMyReader(TTreeReader& t_reader) override;
     inline void ChangeAxis(Type t_x, Type t_y) {x_ = t_x; y_ = t_y;};

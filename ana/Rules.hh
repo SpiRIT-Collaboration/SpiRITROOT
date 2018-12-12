@@ -130,6 +130,13 @@ protected:
     DataSink temp_sink_;
 };
 
+class Last2Rules2XY : public Rule
+{
+public:
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<Last2Rules2XY>(*this); };
+};
+
 std::vector<CheckPoint> ListOfCP(int t_num);
     
 class DrawHit : public Rule
@@ -210,43 +217,17 @@ protected:
     TCutG* cutg_;
 };
 
-/*class SwitchCut : public Rule
+class XYCut : public Rule
 {
 public:
-    friend class DrawMultipleComplex;
+    XYCut(double t_xlower, double t_xupper, double t_ylower, double t_yupper) :
+      xlower_(t_xlower), xupper_(t_xupper), ylower_(t_ylower), yupper_(t_yupper) {};
 
-    SwitchCut(const std::vector<std::pair<double, double>>& t_bounds, bool t_yaxis=false) : bounds_(t_bounds), execution_(t_bounds.size(), nullptr) 
-    { index_ = (t_yaxis)? 1 : 0;};
-
-    void SwitchRule(int t_i, Rule* t_rule) 
-    { this->AddRule(t_rule); this->NextRule_=nullptr; execution_[t_i] = t_rule; };
-
-    void SetReader(TTreeReader& t_reader) override
-    { 
-        for(auto rule : execution_) rule->SetReader(t_reader); 
-        if(RejectRule_) RejectRule_->SetReader(t_reader);
-    };
-
-    void Selection(std::vector<DataSink>& t_hist, int t_entry) override
-    {
-      double value = t_hist.back().back()[index_];
-      for(const auto& bound : bounds_)
-      {
-          if(bound.first < value && value < bound.second)
-          {
-              auto index = &bound - &bounds_[0];
-              if(execution_[index]) execution_[index]->Fill(t_hist, t_entry);
-              return;
-          }
-      }
-      this->RejectData(t_hist, t_entry);
-    };
-    
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<XYCut>(*this);};
 protected:
-    int index_;
-    std::vector<std::pair<double, double>> bounds_;
-    std::vector<Rule*> execution_;
-};*/
+    double xlower_, xupper_, ylower_, yupper_;
+};
 
 class EntryRecorder : public Rule
 {

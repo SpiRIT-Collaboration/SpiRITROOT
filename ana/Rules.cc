@@ -159,6 +159,20 @@ std::vector<CheckPoint> ListOfCP(int t_num)
     return checkpoints;
 }
 
+/*******************************
+Last2Rules2XY
+Merge the result of the previous 2 rules into a 2D hist
+in other words, it's a 1D to 2D converter
+******************************/
+void Last2Rules2XY::Selection(std::vector<DataSink>& t_hist, int t_entry)
+{
+    double x = t_hist.end()[-2].back()[0];
+    double y = t_hist.back().back()[0];
+    t_hist.push_back({{x, y}});
+    this->FillData(t_hist, t_entry);
+}
+
+
 
 /******************************
 RecoTrackNumFilter
@@ -301,6 +315,22 @@ void EmbedCut::Selection(std::vector<DataSink>& t_hist, int t_entry)
     if(cutg_->IsInside(fill[0], fill[1])) 
         this->FillData(t_hist, t_entry);
     else this->RejectData(t_hist, t_entry);
+}
+
+/****************************
+XYCut
+Same as value cut be cut on both X-Y axis at the smae time
+*****************************/
+void XYCut::Selection(std::vector<DataSink>& t_hist, int t_entry)
+{
+    auto& fill = t_hist.back().back();
+    if(xupper_ > xlower_ && yupper_ > ylower_)
+    {
+        if( xupper_ > fill[0] && fill[0] > xlower_ && yupper_ > fill[1] && fill[1] > ylower_)
+            this->FillData(t_hist, t_entry);
+        else this->RejectData(t_hist, t_entry);
+    }
+    else this->FillData(t_hist, t_entry);
 }
 
 /**************************

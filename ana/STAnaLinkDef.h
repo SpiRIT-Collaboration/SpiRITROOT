@@ -37,6 +37,7 @@
 #pragma link C++ class ClusterNum;
 #pragma link C++ class ValueCut;
 #pragma link C++ class EmbedCut;
+#pragma link C++ class XYCut;
 #pragma link C++ class ThetaPhi;
 #pragma link C++ class EntryRecorder;
 #pragma link C++ class TrackIDRecorder;
@@ -44,5 +45,8 @@
 #pragma link C++ class SwitchCut;
 #pragma link C++ class MCThetaPhi;
 #pragma link C++ class DistToVertex;
+#pragma link C++ class Last2Rules2XY;
+
+#pragma link C++ class RuleTree;
 
 #endif

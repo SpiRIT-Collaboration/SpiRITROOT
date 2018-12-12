@@ -63,7 +63,8 @@ void run_reco_mc
   helix -> SetPersistence(true);
   helix -> SetClusterPersistence(true);
   helix -> SetClusterCutLRTB(420, -420, -64, -522);
-  
+  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(120, 100, 220), 5); // current use
+
 
   auto correct = new STCorrectionTask(); //Correct for saturation   
   

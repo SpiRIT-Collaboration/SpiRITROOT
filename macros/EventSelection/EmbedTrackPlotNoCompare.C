@@ -1,22 +1,16 @@
 //#include "EventSelection/Rules.h"
-class RealMomObserver : public RecoTrackRule
-{
-public:
-	virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override
-	{
-		auto reco_mom = track_->GetMomentum();
-		std::cout << "MC momentum " << reco_mom.Mag() - t_hist.back()[0][0] << "\n";
-		this->FillData(t_hist, t_entry);
-	};
-};
-
 class ShowEntry : public Rule
 {
 public:
-	virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override
+	virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override
 	{
 		std::cout << "Entry " << t_entry << "\n";
 		this->FillData(t_hist, t_entry);
+	};
+    
+	std::unique_ptr<Rule> Clone() override
+	{
+		return std::make_unique<ShowEntry>(*this);
 	};
 };
 
@@ -24,7 +18,7 @@ class GetEmbedInfo : public EmbedFilter
 {
 public:
 
-    virtual void Selection(std::vector<DataSink>& t_hist, unsigned t_entry) override
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override
     {
          reco_p_ = track_->GetMomentum(); 
          if(embed_track_) cor_p_ = embed_track_->GetInitialMom();
@@ -38,9 +32,14 @@ public:
              return {embed_data, TString::Format("MC info: |P| = %.1f, #theta = %.1f, #phi = %.1f", 1e3*cor_p_.Mag(), cor_p_.Theta()*180/M_PI, cor_p_.Phi()*180/M_PI)};
         return {embed_data};
     }
+
+    std::unique_ptr<Rule> Clone() override
+    {
+        return std::make_unique<GetEmbedInfo>(*this);
+    };
     
 protected:
-    std::shared_ptr<ReaderValue> myEmbedArray_;
+    //std::shared_ptr<ReaderValue> myEmbedArray_;
 
     TVector3 reco_p_;
     TVector3 cor_p_;
@@ -58,7 +57,7 @@ void GetMomentumListFromMC(TChain *tree, const std::string& t_output_name = "Mom
   while(reader.Next())
   {
     auto MomArray = *Momentum;
-    for(unsigned i = 0; i < MomArray.GetEntries(); ++i)
+    for(int i = 0; i < MomArray.GetEntries(); ++i)
     {
       auto ptrack = (STMCTrack*) MomArray.At(i);
       output << reader.GetCurrentEntry() << "\t" << ptrack->GetPx() << "\t" << ptrack->GetPy() << "\t" << ptrack->GetPz() << "\t"
@@ -68,7 +67,7 @@ void GetMomentumListFromMC(TChain *tree, const std::string& t_output_name = "Mom
 }
 
 
-void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected = false, const std::string& t_filename="data/Run2841_WithProton/TrackDistComp/Mom_350.0_400.0_Theta_20.0_30.0_WithBDC/run2841_s*")
+void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected = false, const std::string& t_filename="data/Run2841_WithProton/TrackDistComp/Mom_350.0_450.0_Theta_10.0_20.0_Group_0/run2841_s*")
 {
 	const int pad_x = 108;
 	const int pad_y = 112;

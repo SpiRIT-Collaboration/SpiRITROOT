@@ -52,6 +52,7 @@ HistToCutG.cc
 Rules.cc
 RulesDrawer.cc
 RecoRules.cc
+RuleTree.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

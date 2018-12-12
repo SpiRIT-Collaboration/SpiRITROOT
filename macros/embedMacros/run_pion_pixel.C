@@ -90,17 +90,17 @@ void run_pion_pixel()
     TString parDir    = workDir + "/parameters/";
 
     // set pixel size
-    const double phi_min = 90.;
-    const double phi_max = 91.;
-    const int phi_num_pixel = 1;
+    const double phi_min = -180;
+    const double phi_max = 180;
+    const int phi_num_pixel = 10;
 
     const double theta_min = 0.;
-    const double theta_max = 1.;
-    const int theta_num_pixel = 1;
+    const double theta_max = 30.;
+    const int theta_num_pixel = 5;
 
-    const double momentum_min = 100; // MeV / c
-    const double momentum_max = 600;
-    const int momentum_num = 2;
+    const double momentum_min = 350; // MeV / c
+    const double momentum_max = 360;
+    const int momentum_num = 1;
 
     ConfigListIO configlist;
     configlist.SetHeader({"Filename", "Momentum", "VertexFile", "Particle", "Phi", "Theta"});
@@ -113,14 +113,14 @@ void run_pion_pixel()
         for(const auto& phi : linspace(phi_min, phi_max, phi_num_pixel))
             for(const auto& theta : linspace(theta_min, theta_max, theta_num_pixel))
             {
-                for(int i = 0; i < num_list.size(); ++i)
+                for(int i = 0; i < 1/*num_list.size()*/; ++i)
                 {
-                    int num = num_list[i];
+                    int num = 2841;//num_list[i];
                     std::string config_filename= filename_list[i];
 
                     configlist.SetElement("Filename", std::string(TString::Format("PionPixel/Run_%04d/PionPixel_ID_%04d_Momentum_%3.2f", num, index, momentum).Data()));
                     configlist.SetElement("Momentum", momentum/1.e3);
-                    configlist.SetElement("VertexFile", config_filename);
+                    configlist.SetElement("VertexFile", "/mnt/spirit/analysis/user/tsangc/SpiRITROOT/parameters/Vertex_r2841.txt"/*config_filename*/);
                     configlist.SetElement("Particle", pname2id.at("pi+"));
                     configlist.SetElement("Phi", phi);
                     configlist.SetElement("Theta", theta);
