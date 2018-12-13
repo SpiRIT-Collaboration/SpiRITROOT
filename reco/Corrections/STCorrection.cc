@@ -16,14 +16,14 @@ public:
 
 static void myFitFunction_helix(Int_t& npar, Double_t* deriv, Double_t &f, Double_t* par, Int_t flag)
 {
-  MyFitFunction* fitFunc = MyFitFunction::Instance();
-  f = fitFunc->Function_helix(npar, deriv, f, par, flag);
+  MyFitFunction* fitFunc_helix = MyFitFunction::Instance_Helix();
+  f = fitFunc_helix -> Function_helix(npar, deriv, f, par, flag);
 }
 
 static void myFitFunction(Int_t& npar, Double_t* deriv, Double_t &f, Double_t* par, Int_t flag)
 {
   MyFitFunction* fitFunc = MyFitFunction::Instance();
-  f = fitFunc->Function(npar, deriv, f, par, flag);
+  f = fitFunc -> Function(npar, deriv, f, par, flag);
 }
 
 Double_t MyFitFunction::Function(Int_t& npar, Double_t* deriv, Double_t &f, Double_t* par, Int_t flag)
@@ -36,7 +36,7 @@ Double_t MyFitFunction::Function(Int_t& npar, Double_t* deriv, Double_t &f, Doub
   int num_elem = hits_pos_ary->size();
   for (int i=0; i<num_elem; i++)
     {
-      double v  = total_chg*PRF(hits_pos_ary->at(i)-mean,par);
+      double v  = total_chg*PRF(hits_pos_ary->at(i)-mean,cluster_alpha);
       if ( v != 0.0 )
 	{
 	  double n = hits_chg_ary->at(i);
@@ -51,37 +51,24 @@ Double_t MyFitFunction::Function(Int_t& npar, Double_t* deriv, Double_t &f, Doub
  return chisq;        
 }
 
-double MyFitFunction::PRF(double x, double par[])
+double MyFitFunction::PRF(double x, double alpha)
 {
 
-  //For layer PRF
-  double h_w = 4; //half width
-  double x1 = x-h_w;
-  double x2 = x+h_w;
-  
-  //Fitted tail of EXP PRF
-  double norm  = 84.594;
-  double power = -3.231;
-  
-  double sigma = 3.4;
-  double x1_p = x1/(sqrt(2)*sigma);
-  double x2_p = x2/(sqrt(2)*sigma);
+  double norm[18]  = {0.8423,0.848, 0.8417, 0.8338, 0.82, 0.8, 0.775, 0.7519, 0.723, 0.5312, 0.57825, 0.6197, 0.659546, 0.694289, 0.72305, 0.743942, 0.75782, 0.7664};
+  double sigma[18] = {5.61, 5.49, 5.53, 5.601, 5.715, 5.86, 6.06, 6.29, 6.58, 6.1215, 5.6089, 5.2259, 4.904, 4.63829, 4.44797, 4.3118, 4.2215, 4.18};
 
-  //For Row PRF
-  double row_norm   = .7634;
-  double e          = 2.7182818;
-  double pi         = 3.1415926;
-  double sigma_row  = 6.15;
-
-  if(byRow)
-      return row_norm * pow(e, -.5 * pow(x/sigma_row,2));
-  else
+  if(abs(alpha) < .0001)
+    alpha = 0; //sometimes alpha is small and negative 
+  int idx = floor(alpha/5.);
+  if(idx >=18 || idx < 0)
     {
-      if( x < 9 && x > -9)
-	return .5*(TMath::Erf(x2_p)-TMath::Erf(x1_p));
-      else
-	return norm*pow( abs(x),power);
+      cout<<"ERROR PRF_helix index out of range!!!!!!!!!!!! "<<endl;
+      cout<<"IDX "<<idx<<" angle "<<alpha<<endl;
     }
+  
+  gaus_prf->SetParameters(norm[idx],sigma[idx]);
+
+  return ( gaus_prf->Eval(x) );
 };
 
 std::vector<double> MyFitFunction::getmean(double par[])
@@ -122,11 +109,18 @@ void MyFitFunction::SetAryPointers(std::vector<double> *a, std::vector<double> *
 }
 
 MyFitFunction* MyFitFunction::_instance = 0;
+MyFitFunction* MyFitFunction::_instance_helix = 0;
 
 MyFitFunction* MyFitFunction::Instance()
 {
   if (!_instance) _instance = new MyFitFunction;
   return _instance;
+}
+
+MyFitFunction* MyFitFunction::Instance_Helix()
+{
+  if (!_instance_helix) _instance_helix = new MyFitFunction;
+  return _instance_helix;
 }
 
 
@@ -272,6 +266,7 @@ void STCorrection::Desaturate(TClonesArray *clusterArray)
       auto cluster  = (STHitCluster *) clusterArray -> At(iCluster);
       auto hit_ary = cluster -> GetHitPtrs();
       Bool_t byRow_cl  = cluster -> IsRowCluster();
+      fitFunc -> cluster_alpha = cluster -> GetChi()*TMath::RadToDeg();
       fitFunc -> byRow = byRow_cl;
 
       for(auto hit : *hit_ary)
@@ -344,6 +339,25 @@ void STCorrection::Desaturate(TClonesArray *clusterArray)
   return;
 }
 
+Double_t MyFitFunction::Layer_norm(Double_t alpha){
+  return (1.22 - 6.2577e-2*alpha  + 1.6077e-3*pow(alpha,2) - 1.491997e-5*pow(alpha,3) + 4.65385e-8*pow(alpha,4) );
+}
+
+Double_t MyFitFunction::Layer_sigma(Double_t alpha){
+  return (31.368 - 1.1096*alpha + 1.7798e-2*pow(alpha,2) - 1.3362e-4*pow(alpha,3) + 3.9400867e-7*pow(alpha,4) );
+}
+
+Double_t MyFitFunction::Row_norm(Double_t alpha){
+  return ( .897 + 5.766e-3 * alpha - 4.2634e-4 * pow(alpha,2) + 7.44408e-6 * pow(alpha,3) - 5.705423e-8*pow(alpha,4) );
+}
+
+Double_t MyFitFunction::Row_sigma(Double_t alpha){
+  return (5.496 - .039206*alpha + 2.69317e-3*pow(alpha,2) - 5.20841e-5*pow(alpha,3) + 5.334729e-7*pow(alpha,4) );
+}
+
+
+
+
 Double_t MyFitFunction::Function_helix(Int_t& npar, Double_t* deriv, Double_t &f, Double_t* par, Int_t flag)
 {
   double chisq =0;
@@ -359,7 +373,7 @@ Double_t MyFitFunction::Function_helix(Int_t& npar, Double_t* deriv, Double_t &f
   
   for (int i=0; i < num_hits; i++)
     {
-      double v  = total_chg*PRF_helix(hits_lambda_ary->at(i),par);
+      double v  = total_chg*PRF_helix(hits_lambda_ary->at(i),cluster_alpha);
       if ( v != 0.0 )
 	{
 	  double n = hits_chg_ary->at(i);
@@ -374,13 +388,32 @@ Double_t MyFitFunction::Function_helix(Int_t& npar, Double_t* deriv, Double_t &f
  return chisq;        
 }
 
-double MyFitFunction::PRF_helix(double x, double par[])
+double MyFitFunction::PRF_helix(double x, double alpha)
 {
-  double norm   = .78;
-  double e          = 2.7182818;
-  double sigma  = 4.12;
 
-  return norm*TMath::Gaus(x,0,sigma);
+  double norm = 0.;
+  double sigma = 0.;
+ 
+  if(abs(alpha) < .0001)
+    alpha = 0; //sometimes alpha is small and negative 
+  
+  if (alpha <= 90 && alpha > 45)
+    {
+      norm = Layer_norm(alpha);
+      sigma = Layer_sigma(alpha);
+    }
+  else if (alpha <= 45 && alpha >=0)
+    {
+      norm = Row_norm(alpha);
+      sigma = Row_sigma(alpha);
+    }
+
+  if(abs(norm) < .01 || abs(sigma) < .01)
+    cout<<"ERROR norm and sigma not read properly "<<endl;
+  
+  gaus_prf_helix->SetParameters(norm,sigma);
+
+  return ( gaus_prf_helix->Eval(x) );
 };
 
 
@@ -406,7 +439,7 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
   std::vector<STHit *> *s_hit_ptrs = new ::std::vector<STHit *>; 
   std::vector<STHit *> *hit_ptrs   = new ::std::vector<STHit *>; 
 
-  MyFitFunction* fitFunc = MyFitFunction::Instance();
+  MyFitFunction* fitFunc = MyFitFunction::Instance_Helix();
   fitFunc -> SetLambdaChg(hits_lambda_ary,hits_chg_ary,s_hits_lambda_ary,s_hits_chg_ary,hit_ptrs,s_hit_ptrs);
 
   for(int iHelix = 0; iHelix < helixArray->GetEntries(); iHelix++)
@@ -426,6 +459,7 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 
 	  auto hit_ary = cluster -> GetHitPtrs();
 	  Bool_t byRow_cl  = cluster -> IsRowCluster();
+	  fitFunc -> cluster_alpha = cluster -> GetChi()*TMath::RadToDeg();
 	  fitFunc -> byRow = byRow_cl;
 	    
 	  for(auto hit : *hit_ary)
@@ -433,7 +467,12 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 	      TVector3 pointOnHelix;
 	      Double_t alpha;
 	      auto hit_vector = hit -> GetPosition();
-	      helix -> ExtrapolateToPointAlpha(hit->GetPosition(), pointOnHelix, alpha);
+
+	      if(byRow_cl)
+		helix->ExtrapolateToX(hit_vector.X(),pointOnHelix);
+	      else
+		helix->ExtrapolateToZ(hit_vector.Z(),pointOnHelix);
+	      
 	      pointOnHelix = pointOnHelix - hit_vector;
 
 	      int max_adc = 3499;       //may have to put this info into the minimizer max and min
@@ -441,6 +480,7 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 		max_adc *= 9.8;
 
 	      double chg = hit -> GetCharge();
+
 	      double z = pointOnHelix.Z();
 	      double x = pointOnHelix.X();
 
@@ -516,7 +556,7 @@ void STCorrection::LoadPRFCut(TString filename)
   return;
 }
 
-void STCorrection::CheckClusterPRF(TClonesArray *clusterArray, TClonesArray *helixArray, TClonesArray *hitArray)
+void STCorrection::CheckClusterPRFOld(TClonesArray *clusterArray, TClonesArray *helixArray, TClonesArray *hitArray)
 {
 
 
@@ -576,3 +616,66 @@ void STCorrection::CheckClusterPRF(TClonesArray *clusterArray, TClonesArray *hel
 
   return;
 }
+
+void STCorrection::CheckClusterPRF(TClonesArray *clusterArray, TClonesArray *helixArray, TClonesArray *hitArray)
+{
+  Double_t sigma     = 4.4e-2; //sigma of PRF (width)
+  Double_t num_sigma = 2.5;    //number of sigma deviations 
+
+  MyFitFunction* fitFunc = MyFitFunction::Instance_Helix();
+
+  for(auto iHelix = 0; iHelix < helixArray -> GetEntries(); iHelix++)
+    {
+      auto helix = (STHelixTrack *) helixArray ->At(iHelix);
+      auto cl_id = helix-> GetClusterIDArray();
+      for( auto iCluster = 0; iCluster < cl_id->size(); iCluster++)
+	{
+	  auto cluster = (STHitCluster *)clusterArray -> At(cl_id->at(iCluster));
+	  auto hit_ary = cluster -> GetHitIDs();
+	  vector<double> lambda,fract;
+	  bool byRow_cl = cluster -> IsRowCluster();
+	  Double_t cluster_alpha = cluster -> GetChi()*TMath::RadToDeg();
+
+	  for(auto idx : *hit_ary)
+	    {
+	      auto hit = (STHit *) hitArray -> At(idx);
+	      TVector3 pointOnHelix;
+	      auto hit_vector = hit -> GetPosition();
+
+	      if(byRow_cl)
+		{
+		  helix->ExtrapolateToX(hit_vector.X(),pointOnHelix);
+		  pointOnHelix = pointOnHelix - hit_vector;
+		  lambda.push_back(pointOnHelix.Z());
+		  fract.push_back(hit->GetCharge()/cluster ->GetCharge());
+		}
+	      else
+		{
+		  helix->ExtrapolateToZ(hit_vector.Z(),pointOnHelix);
+		  pointOnHelix = pointOnHelix - hit_vector;
+		  lambda.push_back(pointOnHelix.X());
+		  fract.push_back(hit->GetCharge()/cluster ->GetCharge());
+		}
+	    }
+
+	  int num_in = 0;// number of hits inside prf cuts
+	  for(int i = 0; i< lambda.size(); i++)
+	    {
+	      Double_t prf_value = fitFunc -> PRF_helix(lambda.at(i),cluster_alpha);
+	      Double_t minv = prf_value - sigma*num_sigma;
+	      Double_t maxv = prf_value + sigma*num_sigma;
+	      if(fract.at(i) >= minv && fract.at(i) <= maxv)
+		num_in++;
+	    }
+
+	  if((1.*num_in)/hit_ary->size() < .5)
+	      cluster -> SetIsStable(false);
+	}
+    }
+
+  return;
+}
+
+
+
+

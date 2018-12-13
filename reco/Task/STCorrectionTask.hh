@@ -19,6 +19,8 @@ public:
 
   void SetDesaturation(Bool_t opt){fDesaturate = opt;};  
   void SetDesatOpt(Int_t opt){fSatOpt = opt;};  
+  void SetPRFCheck(Bool_t opt){fPRFCheck = opt;};
+  void SetPRFOpt(Int_t opt){fPRFOpt = opt;};
   void SetPRFCutFile(TString filename);  
 
 private:
@@ -27,8 +29,9 @@ private:
   TClonesArray *fHitArray       = nullptr;
   TClonesArray *fHelixArray     = nullptr;
   Bool_t fDesaturate            = true;  //defualt is to desaturate
-  Int_t fSatOpt                 = 0;
-  Bool_t fPRFCheck              = false; //check clusters behave by prf
+  Int_t fSatOpt                 = 1;
+  Int_t fPRFOpt                 = 1;
+  Bool_t fPRFCheck              = true; //check clusters behave by prf
   TString fPRFcut_file = "";
 
   ClassDef(STCorrectionTask, 1)
