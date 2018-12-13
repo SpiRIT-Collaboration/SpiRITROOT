@@ -3,9 +3,9 @@ void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
 void run_reco_experiment
 (
  Int_t fRunNo = 2894,
- Int_t fNumEventsInRun = 100,
+ Int_t fNumEventsInRun = 1000,
  Int_t fSplitNo = 0,
- Int_t fNumEventsInSplit = 100,
+ Int_t fNumEventsInSplit = 1000,
  TString fGCData = "",
  TString fGGData = "",
  std::vector<Int_t> fSkipEventArray = {},
@@ -136,7 +136,6 @@ void run_reco_experiment
   //helix -> SetClusteringAngleAndMargin(35., 3.);
   
   auto correct = new STCorrectionTask(); //Correct for saturation
-  correct  -> SetPRFCutFile("../parameters/prf_cuts.par");
   
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetPersistence(true);
@@ -165,7 +164,7 @@ void run_reco_experiment
   run -> AddTask(helix);
   run -> AddTask(correct);
   run -> AddTask(genfitPID);
-  //  run -> AddTask(genfitVA);
+  //run -> AddTask(genfitVA);
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
   
