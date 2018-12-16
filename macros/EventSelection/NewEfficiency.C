@@ -1,28 +1,6 @@
 #include "/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/EventSelection/ChooseFolder.h"
+#include "/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/ProtonCutGeneration/AutoProtonCut.cxx"
 
-class TotClusNum : public RecoTrackRule
-{
-public:
-  void Selection(std::vector<DataSink>& t_hist, int t_entry) override
-  {
-    double tot_clus_num = (double) track_->GetClustNum(0.6);
-    t_hist.push_back({{tot_clus_num, 1.}});
-    this->FillData(t_hist, t_entry);
-  };
-  std::unique_ptr<Rule> Clone() override { return mylib::make_unique<TotClusNum>(*this);};
-};
-
-class NumShadowed : public RecoTrackRule
-{
-public:
-  void Selection(std::vector<DataSink>& t_hist, int t_entry) override
-  {
-    double shadowed_num = (double) (track_->GetClustNum(0.6) - track_->GetdEdxPointArray()->size());
-    t_hist.push_back({{shadowed_num, 1.}});
-    this->FillData(t_hist, t_entry);
-  };
-  std::unique_ptr<Rule> Clone() override { return mylib::make_unique<NumShadowed>(*this);};
-};
 
 class Multiplicity : public Rule
 {
@@ -71,36 +49,7 @@ protected:
   int current_entry_ = -1;
 };
 
-/*TH2F GetMCDist(double t_mult_low=30, double t_mult_high=40)
-{
-  // find real mc numbers
-  auto files = AggrateFolder(350, 450, 0, 30, 0, 0, false, ".mc.root");
-  TChain chain("cbmsim");
-  for(const auto& name : files) 
-  {
-    std::cout << "Loading " << name << std::endl;
-    chain.Add(name.c_str());
-  }
-
-  TEventList list("list", "lsit");
-  std::ifstream file(TString::Format("EventList/EventList_mult_%g_%g.dat", t_mult_low, t_mult_high).Data());
-  int id;
-  while(file >> id) list.Enter(id);
-  chain.SetEventList(&list);
-  
-
-  TH2F mc_hist(TString::Format("mc_num_mult_%g_%g", t_mult_low, t_mult_high).Data(), "mc_num;#theta (deg);#phi (deg)", 40, 0, 40, 50, -180, 180);
-
-  const std::string var("TMath::ATan2(STEmbedTrack.STEmbedTrack.iMomentum.fY, STEmbedTrack.STEmbedTrack.iMomentum.fX)*180/3.1415926");
-  const std::string var2("atan(sqrt(STEmbedTrack.STEmbedTrack.iMomentum.fX*STEmbedTrack.STEmbedTrack.iMomentum.fX + STEmbedTrack.STEmbedTrack.iMomentum.fY*STEmbedTrack.STEmbedTrack.iMomentum.fY)/STEmbedTrack.STEmbedTrack.iMomentum.fZ)*180/3.1415926");
-  const std::string var3("sqrt(STEmbedTrack.STEmbedTrack.iMomentum.fZ*STEmbedTrack.STEmbedTrack.iMomentum.fZ + STEmbedTrack.STEmbedTrack.iMomentum.fY*STEmbedTrack.STEmbedTrack.iMomentum.fY + STEmbedTrack.STEmbedTrack.iMomentum.fX*STEmbedTrack.STEmbedTrack.iMomentum.fX)");
-  chain.Draw((var + ":" + var2 + ">>" + std::string(mc_hist.GetName())).c_str(), ("0.35<" + var3 + " && " + var3 +" < 0.4").c_str(), "goff");
-
-
-  return mc_hist;
-}*/
-
-TH2F GetMCDist(TChain& t_chain, double t_mult_low=30, double t_mult_high=40)
+TH2F GetMCDist(TChain& t_chain, double t_mult_low, double t_mult_high, double t_energy_low, double t_energy_high)
 {
   // find real mc numbers
   TEventList list("list", "lsit");
@@ -114,36 +63,45 @@ TH2F GetMCDist(TChain& t_chain, double t_mult_low=30, double t_mult_high=40)
   const std::string var("TMath::ATan2(STEmbedTrack.STEmbedTrack.iMomentum.fY, STEmbedTrack.STEmbedTrack.iMomentum.fX)*180/3.1415926");
   const std::string var2("atan(sqrt(STEmbedTrack.STEmbedTrack.iMomentum.fX*STEmbedTrack.STEmbedTrack.iMomentum.fX + STEmbedTrack.STEmbedTrack.iMomentum.fY*STEmbedTrack.STEmbedTrack.iMomentum.fY)/STEmbedTrack.STEmbedTrack.iMomentum.fZ)*180/3.1415926");
   const std::string var3("sqrt(STEmbedTrack.STEmbedTrack.iMomentum.fZ*STEmbedTrack.STEmbedTrack.iMomentum.fZ + STEmbedTrack.STEmbedTrack.iMomentum.fY*STEmbedTrack.STEmbedTrack.iMomentum.fY + STEmbedTrack.STEmbedTrack.iMomentum.fX*STEmbedTrack.STEmbedTrack.iMomentum.fX)");
-  t_chain.Draw((var + ":" + var2 + ">>" + std::string(mc_hist.GetName())).c_str(), ("0.2 < " + var3 + " && " + var3 +" < 0.25").c_str(), "goff");
+  t_chain.Draw((var + ":" + var2 + ">>" + std::string(mc_hist.GetName())).c_str(), (std::to_string(t_energy_low/1000.) + " < " + var3 + " && " + var3 +" < " + std::to_string(t_energy_high/1000.)).c_str(), "goff");
 
 
   return mc_hist;
 }
 
-TH2F GetClusterDist(double t_numclus_low, double t_numclus_high)
+TGraph2D EfficiencyGraph(TH2F& t_embed, TH2F& t_mc)
 {
-  auto files = AggrateFolder(350, 450, 0, 30, 0, 0, false, ".reco.mc.root");
-  TChain chain("cbmsim");
-  for(const auto& name : files) 
+  t_embed.RebinX(2);
+  t_embed.RebinY(2);
+  if(t_embed.GetNbinsX() != t_mc.GetNbinsX())
   {
-    std::cout << "Loading file: " << name << std::endl;
-    chain.Add(name.c_str());
+    t_mc.RebinX(2);
+    t_mc.RebinY(2);
   }
-
-  TH2F mc_hist(TString::Format("mc_numclus_%g_%g", t_numclus_low, t_numclus_high).Data(), "mc_num;#theta (deg);#phi (deg)", 40, 0, 40, 50, -180, 180);
-
-  const std::string var("TMath::ATan2(STRecoTrack.STRecoTrack.fMomentum.fY, STRecoTrack.STRecoTrack.fMomentum.fX)*180/3.1415926");
-  const std::string var2("atan(sqrt(STRecoTrack.STRecoTrack.fMomentum.fX*STRecoTrack.STRecoTrack.fMomentum.fX + STRecoTrack.STRecoTrack.fMomentum.fY*STRecoTrack.STRecoTrack.fMomentum.fY)/STRecoTrack.STRecoTrack.fMomentum.fZ)*180/3.1415926");
-  const std::string var3("sqrt(STRecoTrack.STRecoTrack.fMomentum.fZ*STRecoTrack.STRecoTrack.fMomentum.fZ + STRecoTrack.STRecoTrack.fMomentum.fY*STRecoTrack.STRecoTrack.fMomentum.fY + STRecoTrack.STRecoTrack.fMomentum.fX*STRecoTrack.STRecoTrack.fMomentum.fX)");
-  const std::string var4("STRecoTrack.STRecoTrack.fNumRowClusters + STRecoTrack.STRecoTrack.fNumLayerClusters");
-
-  chain.Draw((var + ":" + var2 + ">>" + std::string(mc_hist.GetName())).c_str(), TString::Format("350 < %s && %s < 400 && %f < %s && %s < %f", var3.c_str(), var3.c_str(), t_numclus_low, var4.c_str(), var4.c_str(), t_numclus_high).Data(), "goff");
-  return mc_hist;
+  t_embed.Divide(&t_mc);
+  auto xaxis = t_embed.GetXaxis();
+  auto yaxis = t_embed.GetYaxis();
+  TGraph2D graph;
+  for(int j = 0; j < t_embed.GetNbinsX()+1; ++j)
+    for(int k = 0; k < t_embed.GetNbinsY()+1; ++k)
+    {
+      double x = xaxis->GetBinCenter(j);
+      double y = yaxis->GetBinCenter(k);
+      if(y < -170 || y > 170) continue;
+      graph.SetPoint(graph.GetN(), x, y, t_embed.GetBinContent(j, k));
+      graph.SetPoint(graph.GetN(), x, y + 360., t_embed.GetBinContent(j, k));
+      graph.SetPoint(graph.GetN(), x, y - 360., t_embed.GetBinContent(j, k));
+    }
+  return graph;
 }
 
-void NewEfficiency(const std::string& t_cutname = "LowMomProtonCut.root")
+
+void NewEfficiency()
 {
-  auto files = AggrateFolder(150, 250, 0, 30, 0, 0, false, "/run2841_s*.reco.tommy_branch.1754.b185c90.root");
+  double mom_low = 350;
+  double mom_high = 400;
+
+  auto files = AggrateFolder(mom_low, mom_high, 0, 30, 0, 0, false, "/run2841_s*.reco.tommy_branch.1754.b185c90.root");
   TChain chain("cbmsim");
   for(const auto& name : files) 
   {
@@ -152,64 +110,90 @@ void NewEfficiency(const std::string& t_cutname = "LowMomProtonCut.root")
   }
 
   std::vector<double> mult_cut{0, 30, 40, 50, 60, 70, 80, 110};
-  std::vector<double> sd_clust_cut{0, 20, 40, 60, 80, 100};
-  std::vector<double> sd_num{0, 4, 8, 12, 16, 20};
+  std::vector<TH2F> mc_hist;
 
-  for(int i = 0; i < 3; ++i)
+  for(int t_use_va = 0; t_use_va < 2; ++t_use_va)
   {
-    auto& cut = mult_cut;//(i==0)? mult_cut : (i==1)? sd_clust_cut : sd_num;
-    RuleTree tree;
-    std::shared_ptr<SwitchRecorder> recorder;
-    tree.AppendRule<Multiplicity>("mult");
-    if(i == 0)
-      recorder = tree.AppendRule<SwitchRecorder>("recorder", cut);
-
-    tree.AppendSwitch("switch", cut);
-    tree.AppendRuleToSwitch<RecoTrackClusterNumFilter>("switch", "CFilter", [](int t_tracks){return t_tracks > 20;});
-    tree.AppendRuleToSwitch<EmbedFilter>("switch", "EFilter");
-    tree.AppendRuleToSwitch<PID>("switch", "pid");
-    tree.AppendRuleToSwitch<EmbedCut>("switch", "pid_cut", t_cutname);
-    tree.AppendRuleToSwitch<DistToVertex>("switch", "avert");
-    tree.AppendRuleToSwitch<ValueCut>("switch", "acut", 0, (i==0)? 5 : ((i==1)? 10 : 20));
-    tree.AppendRuleToSwitch<MomentumTracks>("switch", "Mom", 3);
-    tree.AppendRuleToSwitch<ValueCut>("switch", "MomCut", 200, 250);
-    tree.AppendRuleToSwitch<MCThetaPhi>("switch", "angular");
-  
-    std::vector<TH2F> angular;
-    for(int j = 0; j < cut.size()-1; ++j)
+    for(int i = 0; i < 3; ++i)
     {
-      tree.WireTap("angular_" + std::to_string(j), j);
-      angular.emplace_back(TString::Format("EmbedData_%s_%g_%g", ((i==0)? "dist5" : (i==1)? "dist10" : "dist20"), cut[j], cut[j+1]).Data(), 
-                                           "Embeded Angular distribution;#theta (deg);#phi (deg)"
-                                           ,40,0,40,50,-180,180);
-    }
-              
-    DrawMultipleComplex drawer(&chain);
-    drawer.DrawMultiple(*tree.first_rule_.get(), angular);
+      auto& cut = mult_cut;//(i==0)? mult_cut : (i==1)? sd_clust_cut : sd_num;
+      std::string name = "cut" + std::to_string(i+1) + "sd";
+      if(t_use_va == 1) name += "VAtrack";
 
-    if(i == 0)
-      for(int j = 1; j < cut.size(); ++j)
+      auto cutg = AutoProtonCut(i+1);
+      auto cut_name = TString::Format("Cut_%dSD.root", i+1);
+      cutg->SaveAs(cut_name.Data());
+
+      RuleTree tree;
+      std::shared_ptr<SwitchRecorder> recorder;
+      
+      tree.AppendRule<Multiplicity>("mult");
+      if(i == 0)
+        recorder = tree.AppendRule<SwitchRecorder>("recorder", cut)[0];
+
+      tree.AppendSwitch("switch", cut);
+      tree.AppendRule<RecoTrackClusterNumFilter>("CFilter", [](int t_tracks){return t_tracks > 20;});
+      tree.AppendRule<EmbedFilter>("EFilter");
+      if(t_use_va == 1) tree.AppendRule<UseVATracks>("vatrack");
+      tree.AppendRule<PID>("pid");
+      tree.AppendRule<EmbedCut>("pid_cut", cut_name.Data());
+      tree.AppendRule<DistToVertex>("avert");
+      tree.AppendRule<ValueCut>("acut", 20);//, (i==0)? 5 : ((i==1)? 10 : 20));
+      tree.AppendRule<MomentumTracks>("Mom", 3);
+      tree.AppendRule<ValueCut>("MomCut", mom_low, mom_high);
+      tree.AppendRule<MCThetaPhi>("angular");
+
+      tree.AppendRejectedRuleTo<MCThetaPhi>("pid_cut", "Rjangular");
+
+      int index = tree.WireTap("angular", 0);
+      index = tree.WireTap("pid", index);
+      index = tree.WireTap("Rjangular", index);
+    
+      std::vector<TH2F> angular_and_pid;
+      for(int j = 0; j < cut.size()-1; ++j)
+        angular_and_pid.emplace_back(TString::Format("EmbedData_%s_%g_%g", name.c_str(), cut[j], cut[j+1]).Data(), 
+                                     "Embeded Angular distribution;#theta (deg);#phi (deg)"
+                                     ,40,0,40,50,-180,180);
+      for(int j = 0; j < cut.size()-1; ++j)
+        angular_and_pid.emplace_back(TString::Format("PID_Embed_%s_%g_%g", name.c_str(), cut[j], cut[j+1]).Data(), 
+                                     "PID of the embedded protons;Momentum (MeV/c);dE/dx (arb. unit)"
+                                     ,100,0.8*mom_low,1.2*mom_high,1000, 0,1000);
+      for(int j = 0; j < cut.size()-1; ++j)
+        angular_and_pid.emplace_back(TString::Format("PIDRejected_EmbedData_%s_%g_%g", name.c_str(), cut[j], cut[j+1]).Data(), 
+                                     "PID rejected Embeded Angular distribution;#theta (deg);#phi (deg)"
+                                     ,40,0,40,50,-180,180);
+ 
+                
+      DrawMultipleComplex drawer(&chain);
+      drawer.DrawMultiple(*tree.first_rule_.get(), angular_and_pid);
+
+      if(i == 0 && t_use_va == 0)
       {
-        std::ofstream file(TString::Format("EventList/EventList_mult_%g_%g.dat", cut[j-1], cut[j]).Data());
-        for(int event : recorder->GetList(j-1)) file << event << "\n";
+        DailyLogger logger(TString::Format("MCProtonMult_mom_%g_%g", mom_low, mom_high).Data());
+        for(int j = 1; j < cut.size(); ++j)
+        {
+          std::ofstream file(TString::Format("EventList/EventList_mult_%g_%g.dat", cut[j-1], cut[j]).Data());
+          for(int event : recorder->GetList(j-1)) file << event << "\n";
+
+          auto hist = GetMCDist(chain,cut[j-1], cut[j], mom_low, mom_high);
+          logger.SaveClass(hist);
+          mc_hist.push_back(hist);
+        }
       }
-  
-    {
-      DailyLogger logger((i==0)? "Efficiency_mom_200_250_dist5" : (i==1)? "Efficiency_mom_200_250_dist10" : "Efficiency_mom_200_250_dist20");
-      for(auto& hist : angular) logger.SaveClass(hist);
-    }
-
-    if( i == 0)
-    {
-      DailyLogger logger((i==0)? "MCProtonMult_mom_200_250" : "MCProtonNumClus" );
-      DailyLogger logger2("Efficiency_multiplicity_corrected");
-      for(int j = 1; j < cut.size(); ++j)
       {
-        auto hist = GetMCDist(chain,cut[j-1], cut[j]);
-        logger.SaveClass(hist);
-        angular[j-1].Divide(&hist);
-        logger2.SaveClass(angular[j-1]);
+        DailyLogger logger(TString::Format("Embedded_mom_%g_%g_%s", mom_low, mom_high, name.c_str()).Data());
+        logger.SaveClass(*cutg);
+        for(auto& hist : angular_and_pid) logger.SaveClass(hist);
+      }
+      for(int j = 1; j < cut.size()-1; ++j)
+      {
+        DailyLogger logger("Efficiency_" + name);
+        auto efficiency = EfficiencyGraph(angular_and_pid[j-1], mc_hist[j-1]);
+        auto efficiency_name = TString::Format("Efficiency_mult_%g_%g_%s", cut[j-1], cut[j], name.c_str());
+        efficiency.SetName(efficiency_name.Data());
+        logger.SaveClass(efficiency);
       }
     }
   }
 }
+

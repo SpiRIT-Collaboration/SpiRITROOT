@@ -43,8 +43,8 @@ Everything comes after UseVATracks class will read data from STVATracks instead
 ********************************/
 void UseVATracks::SetMyReader(TTreeReader& t_reader)
 {
-    myTrackArray_ = std::make_shared<ReaderValue>(t_reader, "STRecoTrack");
     myVATracksArray_ = std::make_shared<ReaderValue>(t_reader, "VATracks");
+    myTrackArray_ = std::make_shared<ReaderValue>(t_reader, "STRecoTrack");
 }
 
 void UseVATracks::Selection(std::vector<DataSink>& t_hist, int t_entry)

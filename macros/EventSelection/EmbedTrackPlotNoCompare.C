@@ -45,29 +45,7 @@ protected:
     TVector3 cor_p_;
 };
 
-void GetMomentumListFromMC(TChain *tree, const std::string& t_output_name = "MomDist.txt")
-{
-  std::ofstream output(t_output_name.c_str());
-  if(!output.is_open()) std::cerr << "Cannot open output file \n";
-  output << "Entry\tPx\tPy\tPz\tStartX\tStartY\tStartZ\n";
-
-  TTreeReader reader(tree);
-  TTreeReaderValue<TClonesArray> Momentum(reader, "PrimaryTrack");
-
-  while(reader.Next())
-  {
-    auto MomArray = *Momentum;
-    for(int i = 0; i < MomArray.GetEntries(); ++i)
-    {
-      auto ptrack = (STMCTrack*) MomArray.At(i);
-      output << reader.GetCurrentEntry() << "\t" << ptrack->GetPx() << "\t" << ptrack->GetPy() << "\t" << ptrack->GetPz() << "\t"
-             << ptrack->GetStartX() << "\t" << ptrack->GetStartY() << "\t" << ptrack->GetStartZ() << "\n";   
-    }
-  }
-}
-
-
-void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected = false, const std::string& t_filename="data/Run2841_WithProton/TrackDistComp/Mom_350.0_450.0_Theta_10.0_20.0_Group_0/run2841_s*")
+void EmbedTrackPlotNoCompare(RuleTree& t_Additional_rules, bool t_show_rejected = false, const std::string& t_filename="data/Run2841_WithProton/TrackDistComp/Mom_350.0_450.0_Theta_10.0_20.0_Group_0/run2841_s*")
 {
 	const int pad_x = 108;
 	const int pad_y = 112;
@@ -80,43 +58,26 @@ void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected 
 	TCanvas c1("canvas", "Tracks top down", 2.*canvas_scale*((double) pad_x)*size_x, canvas_scale*((double) pad_y)*size_y);
 	c1.Divide(2,1);
 
+	RuleTree tree;
+	tree.AppendRule<TrackZFilter>("min_track_num");
+        tree.AppendRule<DrawTrack>("all_xz");
+        tree.AppendRule<DrawTrack>("all_yz", 1, 2);
+        tree.AppendRule<EmbedFilter>("EFilter");
+        tree.AppendTree(t_Additional_rules);
+        tree.AppendRule<DrawTrack>("E_xz");
+        tree.AppendRule<DrawTrack>("E_yz", 1, 2);
+        auto info = tree.AppendRule<GetEmbedInfo>("info")[0];
+        tree.AppendRule<ShowEntry>("entry");
+        
+        tree.WireTap("all_xz", 0);
+        tree.WireTap("all_yz", 1);
+        tree.WireTap("E_xz", 2);
+        tree.WireTap("E_yz", 3);
+
+
  	DrawMultipleComplex embed_draw(t_filename.c_str(),"cbmsim");
  
-
-	auto checkpoints = ListOfCP(4);//embed_draw.NewCheckPoints(5);
-	TrackZFilter min_track_num;//([](int i){return i > 3;});
-	EmbedFilter filter;
-	DrawTrack embed_track_xz, embed_track_yz(1,2);
-        DrawTrack all_tracks_xz;
-	DrawTrack all_tracks_yz(1,2);
-        GetEmbedInfo info;//("MomDist.txt");
-	EmptyRule empty;
-
-	if(!t_Additional_rules) t_Additional_rules = &empty;	
-	auto block = RuleBlock(t_Additional_rules);
-
-	MomentumTracks embed_mom;
-	ShowEntry show_entry;
-	embed_mom.SetAxis(3);
-        min_track_num.AddRule(all_tracks_xz.AddRule(
-                              checkpoints[0].AddRule(
-                              all_tracks_yz.AddRule(
-                              checkpoints[1].AddRule(
-                              filter.AddRule(
-                              block.first))))));
-
-	if(t_show_rejected)
-		block.second->AddRejectRule(embed_track_xz.AddRule(
-        	                            checkpoints[2].AddRule(
-        	                            embed_track_yz.AddRule(
-                                            info.AddRule(checkpoints[3].AddRule(&show_entry))))));
-	else
-		block.second->AddRule(embed_track_xz.AddRule(
-        	                      checkpoints[2].AddRule(
-        	                      embed_track_yz.AddRule(
-                                      info.AddRule(checkpoints[3].AddRule(&show_entry))))));
-
-	embed_draw.SetRule(&min_track_num);
+	embed_draw.SetRule(tree.first_rule_.get());
 
 
 	auto embed_it = embed_draw.begin();
@@ -177,7 +138,7 @@ void EmbedTrackPlotNoCompare(Rule* t_Additional_rules = 0, bool t_show_rejected 
 			c1.cd(1);
 			c1.SetName(("Event_" + std::to_string(entry)).c_str());
 			TPaveText description(0.1,0.9,0.99,0.99, "NDC");
-                        for(auto& text : info.TrackDescription()) description.AddText(text.Data());
+                        for(auto& text : info->TrackDescription()) description.AddText(text.Data());
                         description.Draw("same");
 			std::cout << "Continue ? \n";
 			gPad->WaitPrimitive();

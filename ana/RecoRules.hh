@@ -47,7 +47,7 @@ public:
 protected:
     std::shared_ptr<ReaderValue> myVATracksArray_;
     std::vector<int> idx_map;
-    int current_entry_ = 2;
+    int current_entry_ = -1;
 };
 
 class EmbedFilter : public RecoTrackRule
