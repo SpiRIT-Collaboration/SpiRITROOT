@@ -134,19 +134,16 @@ void STGenfitVATask::Exec(Option_t *opt)
     }
   }
 
-  Bool_t targetVertex = kTRUE;
   auto vertex = (STVertex *) fVertexArray -> At(chosenVID);
   vertex -> SetIsCollisionVertex();
-  if (fPeakZ != 9999) {
-    if (vertex -> GetPos().Z() < fPeakZ - fSigmaMultiple*fSigma || vertex -> GetPos().Z() > fPeakZ + fSigmaMultiple*fSigma)
-      targetVertex = kFALSE;
-    else
-      vertex -> SetIsTargetVertex();
-  }
+  if (fPeakZ != -9999 && (vertex -> GetPos().Z() > fPeakZ - fSigmaMultiple*fSigma && vertex -> GetPos().Z() < fPeakZ + fSigmaMultiple*fSigma))
+    vertex -> SetIsTargetVertex();
+  else if (TMath::Abs(vertex -> GetPos().Z() + 10) < 10) // -20 < vz < 0
+    vertex -> SetIsTargetVertex();
 
   auto vertexPos = vertex -> GetPos();
   Bool_t goodBDC = kTRUE;
-  if (!fBeamFilename.IsNull()) {
+  if (!fBeamFilename.IsNull() || fPeakZ != -9999) {
     fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
     fBDCTree -> GetEntry(fEventHeader -> GetEventID() - 1);
     fBeamEnergy -> reset(fZ, fAoQ, fBeta37);
@@ -162,22 +159,22 @@ void STGenfitVATask::Exec(Option_t *opt)
     } else
       goodBDC = kFALSE;
 
-    if (!targetVertex && !goodBDC)
-      LOG(INFO) << Space() << "STGenfitVATask " << "Off-target event probable with bad BDC!" << FairLogger::endl;
-    else if (!targetVertex)
-      LOG(INFO) << Space() << "STGenfitVATask " << "Off-target event probable!" << FairLogger::endl;
-    else if (!goodBDC)
+    if (!goodBDC)
       LOG(INFO) << Space() << "STGenfitVATask " << "Bad BDC!" << FairLogger::endl;
     else {
       vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z()));
 
       auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
       bdcVertex -> SetIsGoodBDC();
-      bdcVertex -> SetIsTargetVertex();
-      bdcVertex -> SetIsCollisionVertex();
       bdcVertex -> SetPos(vertexPos);
 
-      LOG(INFO) << Space() << "STGenfitVATask " << "Target event probable with good BDC!" << FairLogger::endl;
+      if (vertex -> IsTargetVertex()) {
+        LOG(INFO) << Space() << "STGenfitVATask " << "Target event probable with good BDC!" << FairLogger::endl;
+        bdcVertex -> SetIsTargetVertex();
+      } else {
+        LOG(INFO) << Space() << "STGenfitVATask " << "Off-target event probable with good BDC!" << FairLogger::endl;
+        bdcVertex -> SetIsCollisionVertex();
+      }
     }
   }
 

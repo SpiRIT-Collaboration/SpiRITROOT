@@ -70,8 +70,8 @@ class STGenfitVATask : public STRecoTask
     STBDCProjection *fBDCProjection = nullptr;
 
     Double_t fPeakZ = -9999;
-    Double_t fSigma;
-    Double_t fSigmaMultiple;
+    Double_t fSigma = 0;
+    Double_t fSigmaMultiple = 0;
 
   ClassDef(STGenfitVATask, 1)
 };
