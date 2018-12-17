@@ -21,21 +21,22 @@ DrawMultipleComplex::DrawMultipleComplex(TChain* t_chain, Rule* t_rule) :
     reader_(t_chain),
     rule_(t_rule)
 {
+    chain_.Add(t_chain);
     if(t_rule) t_rule->SetReader(reader_);
 }
 
 
-void DrawMultipleComplex::GetCheckPoints(Rule* t_rule)
+void DrawMultipleComplex::GetCheckPoints(Rule* t_rule, std::vector<CheckPoint*>& t_checkpoints)
 {
-    checkpointset_.clear();
-    this->GetCheckPointsSet(t_rule);
+    std::set<CheckPoint*> checkpointset;
+    this->GetCheckPointsSet(t_rule, checkpointset);
     // sort the vector according to checkpoint id
-    checkpoints_.resize(checkpointset_.size());
-    for(auto cp : checkpointset_)
-        checkpoints_[cp->id] = cp;
+    t_checkpoints.resize(checkpointset.size());
+    for(auto cp : checkpointset)
+        t_checkpoints[cp->id] = cp;
 }
 
-void DrawMultipleComplex::GetCheckPointsSet(Rule* t_rule)
+void DrawMultipleComplex::GetCheckPointsSet(Rule* t_rule, std::set<CheckPoint*>& t_checkpointset)
 {
     // Find all checkpoints along the rule tree
     // Things to be aware: SwitchCut doesn't use NextRule_
@@ -44,15 +45,15 @@ void DrawMultipleComplex::GetCheckPointsSet(Rule* t_rule)
     if(current_rule)
     {
         // search for rejected rules to see if there are checkpoints there
-        if(current_rule->RejectRule_) this->GetCheckPointsSet(current_rule->RejectRule_);
+        if(current_rule->RejectRule_) this->GetCheckPointsSet(current_rule->RejectRule_, t_checkpointset);
         if(auto checkpoint = dynamic_cast<CheckPoint*>(current_rule)) 
-            checkpointset_.insert(checkpoint);
+            t_checkpointset.insert(checkpoint);
         /*else if(auto switch_ = dynamic_cast<SwitchCut*>(current_rule))
         {
             for(auto rule : switch_->execution_) this->GetCheckPointsSet(rule);
             return;
         }*/
-        this->GetCheckPointsSet(current_rule->NextRule_);
+        this->GetCheckPointsSet(current_rule->NextRule_, t_checkpointset);
     }
 }
 

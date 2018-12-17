@@ -66,11 +66,9 @@ public:
         auto cloned_rule = this->Clone();
         t_rule.push_back(std::move(cloned_rule));
         int idx = t_rule.size()-1;
-        std::cout << "IDX size " << idx << std::endl;
         if(this->NextRule_)
         {
             int nextidx = this->NextRule_->CloneTo(t_rule);
-            std::cout << "NextRule idx " << nextidx << std::endl;
             t_rule[idx]->AddRule(t_rule[nextidx].get());
         }
 

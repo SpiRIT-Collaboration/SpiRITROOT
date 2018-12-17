@@ -19,6 +19,8 @@
 #include "TClonesArray.h"
 #include "TCutG.h"
 #include "TChain.h"
+#include "ROOT/TTreeProcessorMT.hxx"
+#include "ROOT/TThreadedObject.hxx"
 
 #include "STRecoTrack.hh"
 #include "STEmbedTrack.hh"
@@ -40,11 +42,15 @@ public:
     template<typename T>
     void DrawMultiple(Rule& t_rule, std::vector<T>& t_graphs);
 
+    template<typename T>
+    void DrawMultipleParallel(Rule& t_rule, std::vector<T>& t_graphs, int nthreads=4);
+
+
 
     void SetRule(Rule* t_rule)
     {
         rule_ = t_rule; 
-        this->GetCheckPoints(t_rule);
+        this->GetCheckPoints(t_rule, checkpoints_);
         std::cout << "CP size " << checkpoints_.size() << "\n";
         reader_.Restart(); 
         rule_->SetReader(reader_);
@@ -54,8 +60,8 @@ protected:
     void FillHists(int t_ncp, Rule& t_rule, T& first_graph, ARGS&... args);
     template<typename T>
     void FillHists(int t_ncp, Rule& t_rule, T& graph);
-    void GetCheckPointsSet(Rule *t_rule);
-    void GetCheckPoints(Rule* t_rule);
+    void GetCheckPointsSet(Rule *t_rule, std::set<CheckPoint*>& t_checkpointset);
+    void GetCheckPoints(Rule* t_rule, std::vector<CheckPoint*>& t_checkpoints);
 
 public:
     class Iterator : public std::iterator<std::output_iterator_tag, DataSink>

@@ -10,7 +10,7 @@ template<typename T, typename... ARGS>
 void DrawMultipleComplex::DrawMultiple(Rule& t_rule, T& first_graph, ARGS&... args)
 {
     checkpoints_.clear();
-    this->GetCheckPoints(&t_rule);
+    this->GetCheckPoints(&t_rule, checkpoints_);
     reader_.Restart();
     t_rule.SetReader(reader_);
     if(reader_.GetEntries(true) == 0)
@@ -32,7 +32,7 @@ template<typename T, typename... ARGS>
 void DrawMultipleComplex::DrawMultiple(const std::vector<int>& t_entry_list, Rule& t_rule, T& first_graph, ARGS&... args)
 {
     checkpoints_.clear();
-    this->GetCheckPoints(&t_rule);
+    this->GetCheckPoints(&t_rule, checkpoints_);
     reader_.Restart();
     t_rule.SetReader(reader_);
     for(const auto& entry : t_entry_list)
@@ -50,7 +50,7 @@ template<typename T>
 void DrawMultipleComplex::DrawMultiple(Rule& t_rule, std::vector<T>& t_graphs)
 {
     checkpoints_.clear();
-    this->GetCheckPoints(&t_rule);
+    this->GetCheckPoints(&t_rule, checkpoints_);
     if(t_graphs.size() != checkpoints_.size())
     {
         std::cerr << "Number of checkpoints and graphs doesn't match. Will abort\n";
@@ -68,7 +68,7 @@ void DrawMultipleComplex::DrawMultiple(Rule& t_rule, std::vector<T>& t_graphs)
     {
         std::vector<DataSink> result;
         t_rule.Fill(result, reader_.GetCurrentEntry());
-        std::cout << "Processing Entry " << reader_.GetCurrentEntry() << "\t\r";
+        std::cout << "Processing Entry " << reader_.GetCurrentEntry() << "\t\r" << std::flush;
     }
     std::cout << "\n";
     for(auto cp : checkpoints_)
@@ -77,6 +77,59 @@ void DrawMultipleComplex::DrawMultiple(Rule& t_rule, std::vector<T>& t_graphs)
         for(const auto& row : data) t_graphs[cp->id].Fill(row[0], row[1]);
     };
 }
+
+template<typename T>
+void DrawMultipleComplex::DrawMultipleParallel(Rule& t_rule, std::vector<T>& t_graphs, int nthreads)
+{
+    ROOT::EnableThreadSafety();
+    std::vector<std::vector<std::unique_ptr<Rule>>> cloned_rules;
+
+    auto myFunction = [&](TObjArray* t_arr, int thread_id, int nelements)
+    {
+        TChain chain(t_arr->At(0)->GetName());
+        for(int i = 0; i < nelements; ++i)
+        {
+            int idx = i + nelements*thread_id;
+            if(idx < t_arr->GetEntries())
+                chain.Add(t_arr->At(idx)->GetTitle());
+        }
+        TTreeReader myReader(&chain);
+        t_rule.CloneTo(cloned_rules[thread_id]);
+        auto& first_rule = cloned_rules[thread_id][0];
+        first_rule->SetReader(myReader);
+
+        while( myReader.Next() )
+        {
+            std::vector<DataSink> result;
+            first_rule->Fill(result, myReader.GetCurrentEntry());
+            if(thread_id == 0) 
+              std::cout << "Processing Entry " << myReader.GetCurrentEntry() << "\t\r" << std::flush;
+            //if(myReader.GetCurrentEntry() > 100) break;
+        }
+    };
+
+    std::vector<std::thread> threads;
+    auto arr = chain_.GetListOfFiles();
+    cloned_rules.resize(nthreads);
+    for(int i = 0; i < nthreads; ++i) 
+        //myFunction(arr, i, (int)((arr->GetEntries() + nthreads - 1)/nthreads));
+        threads.push_back(std::thread(myFunction, arr, i, (int)((arr->GetEntries() + nthreads - 1)/nthreads)));
+
+    for(auto& th : threads) th.join();
+
+    for(auto& rule : cloned_rules)
+    {
+        std::vector<CheckPoint*> checkpoints;
+        this->GetCheckPoints(rule[0].get(), checkpoints);
+        for(auto cp : checkpoints)
+        {
+            auto data = cp->GetData();
+            for(const auto& row : data) t_graphs[cp->id].Fill(row[0], row[1]);
+        }
+    };
+}
+
+
 
 template<typename T, typename... ARGS>
 void DrawMultipleComplex::FillHists(int t_ncp, Rule& t_rule, T& first_graph, ARGS&... args)
