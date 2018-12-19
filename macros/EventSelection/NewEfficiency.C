@@ -58,33 +58,25 @@ std::vector<std::vector<int>> SwitchRecorder::entries_;
 
 TH2F GetMCDist(TChain& t_chain, double t_mult_low, double t_mult_high, double t_energy_low, double t_energy_high)
 {
-  // find real mc numbers
-  TEventList list("list", "lsit");
-  std::ifstream file(TString::Format("EventList/EventList_mult_%g_%g.dat", t_mult_low, t_mult_high).Data());
-  int id;
-  while(file >> id) list.Enter(id);
-  t_chain.SetEventList(&list);
-  
   TH2F mc_hist(TString::Format("mc_num_mult_%g_%g", t_mult_low, t_mult_high).Data(), "mc_num;#theta (deg);#phi (deg)", 40, 0, 40, 50, -180, 180);
 
-  const std::string var("TMath::ATan2(STEmbedTrack.STEmbedTrack.iMomentum.fY, STEmbedTrack.STEmbedTrack.iMomentum.fX)*180/3.1415926");
-  const std::string var2("atan(sqrt(STEmbedTrack.STEmbedTrack.iMomentum.fX*STEmbedTrack.STEmbedTrack.iMomentum.fX + STEmbedTrack.STEmbedTrack.iMomentum.fY*STEmbedTrack.STEmbedTrack.iMomentum.fY)/STEmbedTrack.STEmbedTrack.iMomentum.fZ)*180/3.1415926");
-  const std::string var3("sqrt(STEmbedTrack.STEmbedTrack.iMomentum.fZ*STEmbedTrack.STEmbedTrack.iMomentum.fZ + STEmbedTrack.STEmbedTrack.iMomentum.fY*STEmbedTrack.STEmbedTrack.iMomentum.fY + STEmbedTrack.STEmbedTrack.iMomentum.fX*STEmbedTrack.STEmbedTrack.iMomentum.fX)");
-  t_chain.Draw((var + ":" + var2 + ">>" + std::string(mc_hist.GetName())).c_str(), (std::to_string(t_energy_low/1000.) + " < " + var3 + " && " + var3 +" < " + std::to_string(t_energy_high/1000.)).c_str(), "goff");
-
+  const std::string var("STEmbedTrack.STEmbedTrack.iMomentum.Phi()*180/3.1415926");
+  const std::string var2("STEmbedTrack.STEmbedTrack.iMomentum.Theta()*180/3.1415926");
+  const std::string var3("STEmbedTrack.STEmbedTrack.iMomentum.Mag()");
+  const std::string var4("STRecoTrack@.GetEntries()");
+  t_chain.Draw((var + ":" + var2 + ">>" + std::string(mc_hist.GetName())).c_str(), (std::to_string(t_energy_low/1000.) + " < " + var3 + " && " + var3 +" < " + std::to_string(t_energy_high/1000.)+ " && " + std::to_string(t_mult_low) + " < " + var4 + " && " + var4 + " < " + std::to_string(t_mult_high)).c_str(), "goff");
 
   return mc_hist;
 }
 
-TGraph2D EfficiencyGraph(TH2F& t_embed, TH2F& t_mc)
+// you do not want to modify the embeded histograms
+// don't pass by reference
+TGraph2D EfficiencyGraph(TH2F t_embed, TH2F t_mc)
 {
   t_embed.RebinX(2);
   t_embed.RebinY(2);
-  if(t_embed.GetNbinsX() != t_mc.GetNbinsX())
-  {
-    t_mc.RebinX(2);
-    t_mc.RebinY(2);
-  }
+  t_mc.RebinX(2);
+  t_mc.RebinY(2);
   t_embed.Divide(&t_mc);
   auto xaxis = t_embed.GetXaxis();
   auto yaxis = t_embed.GetYaxis();
@@ -103,7 +95,7 @@ TGraph2D EfficiencyGraph(TH2F& t_embed, TH2F& t_mc)
 }
 
 
-void NewEfficiency(bool t_use_va, int t_sd, bool t_save_mc, bool t_make_cut=true)
+void NewEfficiency(bool t_use_va, int t_sd, bool t_make_cut=true)
 {
   double mom_low = 350;
   double mom_high = 400;
@@ -124,34 +116,34 @@ void NewEfficiency(bool t_use_va, int t_sd, bool t_save_mc, bool t_make_cut=true
   if(t_use_va) name += "VAtrack";
 
   auto cut_name = TString::Format("Cut_%dSD.root", t_sd);
-  auto cutg = AutoProtonCut(t_sd);
+  if(t_use_va) cut_name = "VA" + cut_name;
+  auto cutg = AutoProtonCut(t_sd, t_use_va);
   if(t_make_cut) cutg->SaveAs(cut_name.Data());
   
 
   RuleTree tree;
-  std::shared_ptr<SwitchRecorder> recorder;
-  
   tree.AppendRule<Multiplicity>("mult");
-  if(t_save_mc)
-    recorder = tree.AppendRule<SwitchRecorder>("recorder", cut)[0];
-
   tree.AppendSwitch("switch", cut);
+  tree.AppendRule<MCEmbedReader>("MCReader", mom_low, mom_high);
   tree.AppendRule<RecoTrackClusterNumFilter>("CFilter", [](int t_tracks){return t_tracks > 20;});
   tree.AppendRule<EmbedFilter>("EFilter");
-  if(t_use_va) tree.AppendRule<UseVATracks>("vatrack");
   tree.AppendRule<PID>("pid");
   tree.AppendRule<EmbedCut>("pid_cut", cut_name.Data());
   tree.AppendRule<DistToVertex>("avert");
   tree.AppendRule<ValueCut>("acut", 20);//, (i==0)? 5 : ((i==1)? 10 : 20));
+  if(t_use_va) tree.AppendRule<UseVATracks>("vatrack");
   tree.AppendRule<MomentumTracks>("Mom", 3);
   tree.AppendRule<ValueCut>("MomCut", mom_low, mom_high);
   tree.AppendRule<ThetaPhi>("angular");
 
   tree.AppendRejectedRuleTo<ThetaPhi>("pid_cut", "Rjangular");
+  tree.AppendRejectedRuleTo<CompareMCPrimary>("pid_cut", "comparemc", CompareMCPrimary::MMagDiff, CompareMCPrimary::StartMagDiff);
 
   int index = tree.WireTap("angular", 0);
   index = tree.WireTap("pid", index);
   index = tree.WireTap("Rjangular", index);
+  index = tree.WireTap("comparemc", index);
+  tree.WireTap("MCReader", index);
   
   std::vector<TH2F> angular_and_pid;
   for(int j = 0; j < cut.size()-1; ++j)
@@ -166,21 +158,27 @@ void NewEfficiency(bool t_use_va, int t_sd, bool t_save_mc, bool t_make_cut=true
     angular_and_pid.emplace_back(TString::Format("PIDRejected_EmbedData_%s_%g_%g", name.c_str(), cut[j], cut[j+1]).Data(), 
                                  "PID rejected Embeded Angular distribution;#theta (deg);#phi (deg)"
                                  ,40,0,40,50,-180,180);
+  for(int j = 0; j < cut.size()-1; ++j)
+    angular_and_pid.emplace_back(TString::Format("RejectedMomRes_EmbedData_%s_%g_%g", name.c_str(), cut[j], cut[j+1]).Data(), 
+                                 "Momentum of the rejected particles;Momentum (MeV/c2);Dist to vertex (mm)"
+                                 ,200,-50,50,500,-20,20);
+  for(int j = 0; j < cut.size()-1; ++j)
+    angular_and_pid.emplace_back(TString::Format("mc_num_mult_%g_%g", cut[j], cut[j+1]).Data(), 
+                                 "MC Angular distribution;#theta (deg);#phi (deg)"
+                                 ,40,0,40,50,-180,180);
  
-            
+  // enable error bar calculation for all histograms
+  for(auto& hist : angular_and_pid) hist.Sumw2(true);
+
   DrawMultipleComplex drawer(&chain);
   drawer.DrawMultiple(*tree.first_rule_.get(), angular_and_pid);
 
+  // save the results after calculation
   DailyLogger logger(TString::Format("MCProtonMult_mom_%g_%g", mom_low, mom_high).Data(), name + ".root");
-  for(int j = 1; j < cut.size(); ++j)
+  for(int j = 0; j < cut.size()-1; ++j)
   {
-    if(t_save_mc)
-    {
-      std::ofstream file(TString::Format("EventList/EventList_mult_%g_%g.dat", cut[j-1], cut[j]).Data());
-      for(int event : recorder->GetList(j-1)) file << event << "\n";
-    }
-
-    auto hist = GetMCDist(chain,cut[j-1], cut[j], mom_low, mom_high);
+    //auto hist = GetMCDist(chain,cut[j-1], cut[j], mom_low, mom_high);
+    auto& hist = angular_and_pid[j+index];
     logger.SaveClass(hist);
     mc_hist.push_back(hist);
   }
@@ -197,15 +195,20 @@ void NewEfficiency(bool t_use_va, int t_sd, bool t_save_mc, bool t_make_cut=true
     efficiency.SetName(efficiency_name.Data());
     logger.SaveClass(efficiency);
   }
+  for(int j =2; j < cut.size()-1; ++j)
+  {
+    mc_hist[0].Add(&mc_hist[j-1]);
+    angular_and_pid[0].Add(&angular_and_pid[j-1]);
+  }
+  DailyLogger logger2("Efficiency_" + name, name + ".root");
+  auto efficiency = EfficiencyGraph(angular_and_pid[0], mc_hist[0]);
+  efficiency.SetName("Efficiency_all_mult");
+  logger2.SaveClass(efficiency);
 }
 
 void NewEfficiency()
 {
-  bool first = true;
   for(int use_va = 0; use_va < 2; ++use_va)
     for(int sd = 1; sd < 4; ++sd)
-    {
-      NewEfficiency((use_va == 0), sd, first);
-      first = false;
-    }
+      NewEfficiency((use_va == 0), sd);
 }

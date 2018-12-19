@@ -379,3 +379,29 @@ void TrackZFilter::Selection(std::vector<DataSink>& t_hist, int t_entry)
     if(non_empty) this->FillData(t_hist, t_entry);
     else this->RejectData(t_hist, t_entry);
 };
+
+/*****************************
+MCEmbedReader
+Read momentum directly from STEmbedTrack class
+It's supposed to be the exact input momentum
+Only works if branch STEmbedTrack exist
+******************************/
+
+void MCEmbedReader::SetMyReader(TTreeReader& t_reader)
+{ myEmbedArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedTrack");};
+
+
+void MCEmbedReader::Selection(std::vector<DataSink>& t_hist, int t_entry)
+{
+    DataSink locak_sink;
+    for(int i = 0; i < (*myEmbedArray_)->GetEntries(); ++i)
+    {
+        auto embed_track = static_cast<STEmbedTrack*>((*myEmbedArray_)->At(i));
+        auto embed_mom = embed_track->GetInitialMom();
+        const double GEVTOMEV=1e3;
+        if(mom_low_ <= embed_mom.Mag()*GEVTOMEV && embed_mom.Mag()*GEVTOMEV <= mom_high_)
+            locak_sink.push_back({embed_mom.Theta()*180./M_PI, embed_mom.Phi()*180/M_PI});
+    }
+    t_hist.push_back(locak_sink);
+    this->FillData(t_hist, t_entry);
+}

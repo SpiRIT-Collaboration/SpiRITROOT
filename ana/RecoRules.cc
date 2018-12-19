@@ -226,6 +226,7 @@ void CompareMCPrimary::Selection(std::vector<DataSink>& t_hist, int t_entry)
     // fill x and y respectively
     // that's why the range is 2
     const double GEVTOMEV = 1e3;
+    const double TOMM = 1e-1;
     for(int i = 0; i < 2; ++i)
     {
         auto type = (i==0)? x_ : y_;
@@ -237,11 +238,11 @@ void CompareMCPrimary::Selection(std::vector<DataSink>& t_hist, int t_entry)
             case MomZ: val = reco_mom[2] - GEVTOMEV*mc_mom[2]; break;
             case MMag: val = (reco_mom - GEVTOMEV*mc_mom).Mag(); break;
             case MMagDiff: val = reco_mom.Mag() - (GEVTOMEV*mc_mom).Mag(); break;
-            case StartX: val = reco_Vert[0] - mc_Vert[0]; break;
-            case StartY: val = reco_Vert[1] - mc_Vert[1]; break;
-            case StartZ: val = reco_Vert[2] - mc_Vert[2]; break;
-            case StartMag: val = (reco_Vert - mc_Vert).Mag(); break;
-            case StartMagDiff: val = reco_Vert.Mag() - mc_Vert.Mag(); break;
+            case StartX: val = TOMM*reco_Vert[0] - mc_Vert[0]; break;
+            case StartY: val = TOMM*reco_Vert[1] - mc_Vert[1]; break;
+            case StartZ: val = TOMM*reco_Vert[2] - mc_Vert[2]; break;
+            case StartMag: val = (TOMM*reco_Vert - mc_Vert).Mag(); break;
+            case StartMagDiff: val = TOMM*reco_Vert.Mag() - mc_Vert.Mag(); break;
             case None: val = 1; break;
         }
     }

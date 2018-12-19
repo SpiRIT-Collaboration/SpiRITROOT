@@ -250,5 +250,17 @@ protected:
     std::shared_ptr<ReaderValue> myTrackArray_;
 };
 
+class MCEmbedReader : public Rule
+{
+public:
+    MCEmbedReader(double t_mom_low, double t_mom_high) : mom_low_(t_mom_low), mom_high_(t_mom_high) {};
+    void SetMyReader(TTreeReader& t_reader) override;
+    virtual void Selection(std::vector<DataSink>& t_hist, int t_entry) override;
+    std::unique_ptr<Rule> Clone() override { return mylib::make_unique<MCEmbedReader>(*this);};
+protected:
+    const double mom_low_, mom_high_;
+    std::shared_ptr<ReaderValue> myEmbedArray_;
+};
+
 #endif
 

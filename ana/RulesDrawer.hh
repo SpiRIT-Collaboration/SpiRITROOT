@@ -51,7 +51,6 @@ public:
     {
         rule_ = t_rule; 
         this->GetCheckPoints(t_rule, checkpoints_);
-        std::cout << "CP size " << checkpoints_.size() << "\n";
         reader_.Restart(); 
         rule_->SetReader(reader_);
     };

@@ -46,6 +46,7 @@
 #pragma link C++ class MCThetaPhi;
 #pragma link C++ class DistToVertex;
 #pragma link C++ class Last2Rules2XY;
+#pragma link C++ class MCEmbedReader;
 
 #pragma link C++ class RuleTree;
 
