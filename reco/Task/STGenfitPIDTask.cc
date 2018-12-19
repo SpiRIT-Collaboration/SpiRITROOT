@@ -235,10 +235,16 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     recoTrack -> SetPosKatana(katana);
     recoTrack -> SetPosNeuland(neuland);
 
+    auto fitState = bestGenfitTrack -> getFittedState();
+    TVector3 gfmomReco;
+    TVector3 gfposReco(-999,-999,-999);
+    TMatrixDSym covMat(6,6);
+    fitState.getPosMomCov(gfposReco, gfmomReco, covMat);
+
     auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
     recoTrack -> SetChi2(fitStatus -> getChi2());
     recoTrack -> SetNDF(fitStatus -> getNdf());
-    recoTrack -> SetGenfitCharge(fitStatus -> getCharge());
+    recoTrack -> SetGenfitCharge(gfmomReco.Z() < 0 ? -1 * fitStatus -> getCharge() : fitStatus -> getCharge());
     try {
       recoTrack -> SetTrackLength(bestGenfitTrack -> getTrackLen());
     } catch (...) {
