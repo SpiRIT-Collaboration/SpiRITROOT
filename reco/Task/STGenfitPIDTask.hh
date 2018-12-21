@@ -10,6 +10,8 @@
 #include "STRecoTrackCand.hh"
 #include "STRecoTrackCandList.hh"
 #include "STVertex.hh"
+#include "STBeamEnergy.hh"
+#include "STBDCProjection.hh"
 
 class STGenfitPIDTask : public STRecoTask
 {
@@ -55,15 +57,20 @@ class STGenfitPIDTask : public STRecoTask
     Int_t fClusteringType = 2;
 
     TString fBDCName = "";
-    TFile *fFileBDC;
-    TTree *fTreeBDC;
-    Double_t fXBDC1, fYBDC1;
-    Double_t fXBDC2, fYBDC2;
-    Double_t fXBDC3, fYBDC3;
+
+    TFile *fBeamFile;
+    TTree *fBeamTree;
+    Int_t fABeam;
+    Double_t fZ, fAoQ, fBeta37;
+    TFile *fBDCFile;
+    TTree *fBDCTree;
+    Double_t fBDC1x, fBDC1y, fBDC2x, fBDC2y, fBDCax, fBDCby;
     Double_t fPBDC;
 
-    TTree *fTreeBeam;
-    Int_t fABeam;
+    Int_t fRunNo;
+    Double_t fOffsetX, fOffsetY;
+    STBeamEnergy *fBeamEnergy = nullptr;
+    STBDCProjection *fBDCProjection = nullptr;
 
     TMatrixDSym *fCovMatBDC;
 

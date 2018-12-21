@@ -25,6 +25,7 @@
 #include "TGeoManager.h"
 #include "Math/DistFunc.h"
 #include "STDatabasePDG.hh"
+#include <iostream>
 
 using namespace std;
 
@@ -126,22 +127,19 @@ genfit::Track* STGenfitTest2::FitBDC(STHelixTrack *bdcTrack, Int_t pdg)
   posSeed.SetMag(posSeed.Mag()/10.);
 
   TMatrixDSym covSeed(6);
-  TMatrixD covMatrix = refCluster -> GetCovMatrix();
   for (Int_t iComp = 0; iComp < 3; iComp++)
-    covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
+    covSeed(iComp, iComp) = 0.0001;//covMatrix(iComp, iComp)/100.;
   for (Int_t iComp = 3; iComp < 6; iComp++)
     covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
 
-  Double_t momSeedMag = 729;
+  Double_t momSeedMag = 0.001*729;
   TVector3 momSeed(0., 0., momSeedMag);
 
   trackCand.setCovSeed(covSeed);
-  //trackCand.setPosMomSeed(posSeed, momSeed, bdcTrack -> GetTrackID()/*temporarily used as charge*/);
-  trackCand.setPosMomSeed(posSeed, momSeed, 0/*temporarily used as charge*/);
+  trackCand.setPosMomSeed(posSeed, momSeed, 50/*temporarily used as charge*/);
 
   genfit::Track *gfTrack = new ((*fGenfitTrackArray)[fGenfitTrackArray -> GetEntriesFast()]) genfit::Track(trackCand, *fMeasurementFactory);
-  //gfTrack -> addTrackRep(new genfit::RKTrackRep(pdg));
-  gfTrack -> addTrackRep(new genfit::RKTrackRep(2112));
+  gfTrack -> addTrackRep(new genfit::RKTrackRep(pdg));
 
   genfit::RKTrackRep *trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
 

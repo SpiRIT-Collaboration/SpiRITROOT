@@ -116,7 +116,8 @@ void geomSpiRIT()
 
   Double_t dxTop = dxTpc + 10;
   Double_t dyTop = dyTpc + 10;
-  Double_t dzTop = dzTpc + 10;
+  //Double_t dzTop = dzTpc + 10;
+  Double_t dzTop = 600;
 
   cout << "Tpc volume: " << dxTpc << ", " << dyTpc << ", " << dzTpc << endl;
   cout << "Top volume: " << dxTop << ", " << dyTop << ", " << dzTop << endl;

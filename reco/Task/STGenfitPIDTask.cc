@@ -65,24 +65,30 @@ STGenfitPIDTask::Init()
   fRootManager -> Register("STVertex", "SpiRIT", fVertexArray, fIsPersistence);
 
   if (!fBDCName.IsNull()) {
-    fFileBDC = new TFile(fBDCName);
-    fTreeBDC = (TTree *) fFileBDC -> Get("TBDC");
+    fBDCFile = new TFile(fBDCName);
+    fBDCTree = (TTree *) fBDCFile -> Get("TBDC");
 
-    fTreeBDC -> SetBranchAddress("bdc1x",&fXBDC1);
-    fTreeBDC -> SetBranchAddress("bdc1y",&fYBDC1);
+    fBDCTree -> SetBranchAddress("ProjP", &fPBDC);
+    fBDCTree -> SetBranchAddress("bdc1x", &fBDC1x);
+    fBDCTree -> SetBranchAddress("bdc1y", &fBDC1y);
+    fBDCTree -> SetBranchAddress("bdc2x", &fBDC2x);
+    fBDCTree -> SetBranchAddress("bdc2y", &fBDC2y);
+    fBDCTree -> SetBranchAddress("bdcax", &fBDCax);
+    fBDCTree -> SetBranchAddress("bdcby", &fBDCby);
 
-    fTreeBDC -> SetBranchAddress("bdc2x",&fXBDC2);
-    fTreeBDC -> SetBranchAddress("bdc2y",&fYBDC2);
-
-    fTreeBDC -> SetBranchAddress("ProjX",&fXBDC3);
-    fTreeBDC -> SetBranchAddress("ProjY",&fYBDC3);
-
-    fTreeBDC -> SetBranchAddress("ProjP",&fPBDC);
-
-    fTreeBeam = (TTree *) fFileBDC -> Get("TBeam");
-    fTreeBeam -> SetBranchAddress("intA",&fABeam);
+    //fBeamFile = new TFile(fBeamFilename);
+    fBeamTree = (TTree *) fBDCFile -> Get("TBeam");
+    fBeamTree -> SetBranchAddress("z", &fZ);
+    fBeamTree -> SetBranchAddress("aoq", &fAoQ);
+    fBeamTree -> SetBranchAddress("beta37", &fBeta37);
+    fBeamTree -> SetBranchAddress("intA",&fABeam);
 
     fCovMatBDC = new TMatrixDSym(3);
+
+    fBeamEnergy = new STBeamEnergy();
+    fBeamEnergy -> setBeam(fRunNo);
+    fBDCProjection = new STBDCProjection(TString(gSystem -> Getenv("VMCWORKDIR")) + "/parameters/ReducedBMap.txt");
+    fBDCProjection -> setBeam(fRunNo);
   }
 
   fVertexFactory = new genfit::GFRaveVertexFactory(/* verbosity */ 2, /* useVacuumPropagator */ false);
@@ -146,8 +152,6 @@ void STGenfitPIDTask::Exec(Option_t *opt)
         if (dCluster > dMax) {
           auto former = iCluster + 1;
           auto latter = numClusters - iCluster - 1;
-
-//          cout << "former:" << former << " latter:" << latter << " dCluster:" << dCluster << " dMax:" << dMax << endl;
 
           if (former > latter) {
             while (latter) {
@@ -323,7 +327,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     recoTrack -> SetChi2Z(genfitChi2Z);
   }
 
-  LOG(INFO) << Space() << "STRecoTrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
+  Int_t numRecoTracks = fRecoTrackArray -> GetEntriesFast();
+  LOG(INFO) << Space() << "STRecoTrack " << numRecoTracks << FairLogger::endl;
 
   if (gfTrackArrayToVertex.size() < 2) {
     for (auto recoTrack : recoTrackArrayToVertex)
@@ -332,44 +337,74 @@ void STGenfitPIDTask::Exec(Option_t *opt)
   }
 
   if (!fBDCName.IsNull()) {
-    fTreeBDC -> GetEntry(fEventHeader -> GetEventID());
-    fTreeBeam -> GetEntry(fEventHeader -> GetEventID());
+    fBDCTree -> GetEntry(fEventHeader -> GetEventID() -1);
+    fBeamTree -> GetEntry(fEventHeader -> GetEventID() -1);
 
     Int_t idxHelix = fHelixTrackArray -> GetEntries();
-    STHelixTrack *bdcTrack = new ((*fHelixTrackArray)[idxHelix]) STHelixTrack(idxHelix);
-    bdcTrack -> SetGenfitMomentum(fPBDC);
-    bdcTrack -> SetTrackID(fABeam);
+    STHelixTrack *bdcHelix = new ((*fHelixTrackArray)[idxHelix]) STHelixTrack(idxHelix);
+    bdcHelix -> SetTrackID(idxHelix);
+    bdcHelix -> SetTrackID(fABeam);
+
+    auto bdcTrack = (STRecoTrack *) fRecoTrackArray -> ConstructedAt(numRecoTracks);
+    bdcTrack -> SetRecoID(-1);
+    bdcTrack -> SetHelixID(idxHelix);
+    bdcTrack -> SetHelixTrack(bdcHelix);
 
     Double_t bdcYOffset = -224.1573;
 
-    auto idxCluster = fHitClusterArray -> GetEntries();
-    auto cluster1 = new ((*fHitClusterArray)[idxCluster++]) STHitCluster();
-    cluster1 -> SetIsStable(true);
-    cluster1 -> SetCharge(-1);
-    cluster1 -> SetPosition(fXBDC1,fYBDC1+bdcYOffset,-2579.6);
-    bdcTrack -> AddHitCluster(cluster1);
+    {
+      fBeamEnergy -> reset(fZ, fAoQ, fBeta37);
+      Double_t E1 = fBeamEnergy -> getCorrectedEnergy();
+      // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
 
-    auto cluster2 = new ((*fHitClusterArray)[idxCluster++]) STHitCluster();
-    cluster1 -> SetIsStable(true);
-    cluster1 -> SetCharge(-1);
-    cluster1 -> SetPosition(fXBDC2,fYBDC2+bdcYOffset,-1579.56);
-    bdcTrack -> AddHitCluster(cluster2);
+      Int_t idxCluster = fHitClusterArray -> GetEntries();
+      for (auto bdcz=-500.; bdcz<0; bdcz+=20.)
+      {
+        fBDCProjection -> ProjectParticle(fBDC2x, fBDC2y, -2160., fBDCax, fBDCby, fZ, E1, bdcz - 580.4, fBeamEnergy -> getMass());//-580.4,-583.904
+        auto bdcpos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + bdcYOffset, bdcz);
 
-    auto cluster3 = new ((*fHitClusterArray)[idxCluster++]) STHitCluster();
-    cluster1 -> SetIsStable(true);
-    cluster1 -> SetCharge(-1);
-    cluster1 -> SetPosition(fXBDC3,fYBDC3+bdcYOffset,-8.9);
-    bdcTrack -> AddHitCluster(cluster3);
+        auto cluster = new ((*fHitClusterArray)[idxCluster]) STHitCluster();
+        cluster -> SetClusterID(idxCluster);
+        cluster -> SetIsStable(true);
+        cluster -> SetCharge(-50);
+        cluster -> SetPosition(bdcpos);
+        bdcHelix -> AddHitCluster(cluster);
+        bdcTrack -> AddClusterID(cluster -> GetClusterID());
 
-    genfit::Track *gfBDCTrack = fGenfitTest -> FitBDC(bdcTrack, 1000501320);
+        cout << setw(15) << bdcpos.X() << setw(15) << bdcpos.Y() << setw(15) << bdcpos.Z() << endl;
+
+        idxCluster++;
+      }
+    }
+
+    genfit::Track *gfBDCTrack = fGenfitTest -> FitBDC(bdcHelix, 1000501320);
     if (gfBDCTrack == nullptr) {
-      cout << "******************************************************" << endl;
+      cout << "*******************************************" << endl;
       cout << Space() << "BDC Track is nullptr" << endl;
-      cout << "******************************************************" << endl;
-      return;
+      cout << "*******************************************" << endl;
+      bdcTrack -> SetPIDProbability(0);
     } else {
-      gfBDCTrack -> Print();
+      cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+      cout << Space() << "BDC Track is GOOD!!!" << endl;
+      cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+      //gfBDCTrack -> Print();
+      bdcTrack -> SetGenfitTrack(gfBDCTrack);
+      bdcTrack -> SetPIDProbability(100);
+
       gfTrackArrayToVertex.push_back(gfBDCTrack);
+      recoTrackArrayToVertex.push_back(bdcTrack);
+
+      TVector3 mom, momTargetPlane, posTargetPlane;
+      fGenfitTest -> GetTrackParameters(gfBDCTrack, mom, momTargetPlane, posTargetPlane);
+      if (mom.Z() < 0)
+        mom = -mom;
+      if (momTargetPlane.Z() < 0)
+        momTargetPlane = -momTargetPlane;
+      bdcTrack -> SetMomentum(mom);
+      bdcTrack -> SetMomentumTargetPlane(momTargetPlane);
+      bdcTrack -> SetPosTargetPlane(posTargetPlane);
+
+      bdcHelix -> SetGenfitMomentum(mom.Mag());
     }
   }
 
