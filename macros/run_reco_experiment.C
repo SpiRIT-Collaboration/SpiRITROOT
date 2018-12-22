@@ -28,6 +28,9 @@ void run_reco_experiment
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
   if (fPathToData.IsNull())
     fPathToData = spiritroot+"macros/data/";
+  else 
+    gSystem->mkdir(fPathToData.Data());
+  
   TString version; {
     TString name = spiritroot + "VERSION.compiled";
     std::ifstream vfile(name);

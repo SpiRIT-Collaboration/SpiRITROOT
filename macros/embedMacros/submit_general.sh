@@ -1,39 +1,24 @@
 #!/usr/bin/env bash
-#SBATCH -o "./log/slurm_%A.log"
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=6
+#SBATCH --mem-per-cpu=2000
+#SBATCH -o "./slurm_%A_.log"
 source ${VMCWORKDIR}/build/config.sh
+ 
+cd ${VMCWORKDIR}\/macros
 
-INPUT=$1
-VERTEX=$2
-MOMENTUM=$3
-PARTICLE=$4
-PHI=$5
-THETA=$6
-NEXTJOB=$7
-CONFIGLIST=$8
-
-# Create input config file
-FILENAME=.temp_${NEXTJOB}
-SUBMITFILE=${VMCWORKDIR}/parameters/${FILENAME}
-
-echo ${SUBMITFILE}
-
-cat > $SUBMITFILE << EOF
-Momentum        0.0     0.0     ${MOMENTUM} # in GeV/Z
-VertexFile      ${VERTEX}
-Particle        ${PARTICLE} # 211 for pion for some reasons
-Theta           ${THETA}
-Phi             ${PHI}
-EOF
+OUTPUT=$1
+NEXTJOB=$2
+CONFIGLIST=$3
+CONFIGFILE=$4
 
 # Creat directory for logging 
-LOGDIR=log\/${INPUT}
+LOGDIR=${VMCWORKDIR}\/macros\/log\/${OUTPUT}
 mkdir -p "${LOGDIR%/*}"
 
-cd ${VMCWORKDIR}/macros
-root run_mc.C\(\"$INPUT\",-1,\"\",\"data/\",kTRUE,\"$FILENAME\"\) -b -q -l > ${LOGDIR}_mc.log
-rm -f $SUBMITFILE
+cd $VMCWORKDIR/macros
+root ${VMCWORKDIR}\/macros\/run_mc.C\(\"$OUTPUT\",-1,\"\",\"data/\",kTRUE,\"$CONFIGFILE\"\) -b -q -l > ${LOGDIR}_mc.log
+root ${VMCWORKDIR}\/macros\/run_digi.C\(\"$OUTPUT\"\) -b -q -l > ${LOGDIR}_digi.log
+root ${VMCWORKDIR}\/macros\/embedMacros/run_general.C\(\"$CONFIGLIST\"\,$NEXTJOB,1\) -q -l > ${LOGDIR}_run.log
 
-root run_digi.C\(\"$INPUT\"\) -b -q -l > ${LOGDIR}_digi.log
 
-cd ${VMCWORKDIR}/macros/embedMacros
-root run_general.C\(\"$CONFIGLIST\"\,$NEXTJOB,1\) -q -l > ${LOGDIR}_run.log 

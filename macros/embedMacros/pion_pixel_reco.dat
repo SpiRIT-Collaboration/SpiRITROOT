@@ -1,0 +1,11 @@
+#Filename RandomMomentum VertexFile Particle ThetaLimit PhiLimit
+Run2841_WithPions/Mom_350.0_450.0_Theta_0.0_10.0_Group_1 "0.35 0.45" /mnt/spirit/analysis/estee/SpiRITROOT.now/parameters/Vertex_r2841.txt 211 "0 10" "-180 180"
+Run2841_WithPions/Mom_350.0_450.0_Theta_0.0_10.0_Group_2 "0.35 0.45" /mnt/spirit/analysis/estee/SpiRITROOT.now/parameters/Vertex_r2841.txt 211 "0 10" "-180 180" 
+Run2841_WithPions/Mom_350.0_450.0_Theta_0.0_10.0_Group_3 "0.35 0.45" /mnt/spirit/analysis/estee/SpiRITROOT.now/parameters/Vertex_r2841.txt 211 "0 10" "-180 180"
+Run2841_WithPions/Mom_350.0_450.0_Theta_0.0_10.0_Group_4 "0.35 0.45" /mnt/spirit/analysis/estee/SpiRITROOT.now/parameters/Vertex_r2841.txt 211 "0 10" "-180 180"
+Run2841_WithPions/Mom_350.0_450.0_Theta_0.0_10.0_Group_5 "0.35 0.45" /mnt/spirit/analysis/estee/SpiRITROOT.now/parameters/Vertex_r2841.txt 211 "0 10" "-180 180"
+Run2841_WithPions/Mom_350.0_450.0_Theta_0.0_10.0_Group_6 "0.35 0.45" /mnt/spirit/analysis/estee/SpiRITROOT.now/parameters/Vertex_r2841.txt 211 "0 10" "-180 180"
+Run2841_WithPions/Mom_350.0_450.0_Theta_0.0_10.0_Group_7 "0.35 0.45" /mnt/spirit/analysis/estee/SpiRITROOT.now/parameters/Vertex_r2841.txt 211 "0 10" "-180 180"
+Run2841_WithPions/Mom_350.0_450.0_Theta_0.0_10.0_Group_8 "0.35 0.45" /mnt/spirit/analysis/estee/SpiRITROOT.now/parameters/Vertex_r2841.txt 211 "0 10" "-180 180"
+Run2841_WithPions/Mom_350.0_450.0_Theta_0.0_10.0_Group_9 "0.35 0.45" /mnt/spirit/analysis/estee/SpiRITROOT.now/parameters/Vertex_r2841.txt 211 "0 10" "-180 180"
+Run2841_WithPions/Mom_350.0_450.0_Theta_0.0_10.0_Group_0 "0.35 0.45" /mnt/spirit/analysis/estee/SpiRITROOT.now/parameters/Vertex_r2841.txt 211 "0 10" "-180 180"

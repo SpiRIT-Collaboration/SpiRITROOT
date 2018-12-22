@@ -70,12 +70,20 @@ TrackParser::TrackParser(const std::string& t_filename)
 	}
 }
 
-bool TrackParser::AllKeysExist(const std::vector<std::string> t_list_of_keys)
+bool TrackParser::AllKeysExist(const std::vector<std::string>& t_list_of_keys)
 {
 	for(const auto& key : t_list_of_keys)
 		if(keys2lines_.find(key) == keys2lines_.end())
 			return false;
 	return true;
+}
+
+bool TrackParser::KeyExist(const std::string& t_key)
+{
+	if(keys2lines_.find(t_key) == keys2lines_.end())
+		return false;
+	else
+		return true;
 }
 
 TVector3 TrackParser::GetVector3(const std::string& t_key)
@@ -88,6 +96,16 @@ TVector3 TrackParser::GetVector3(const std::string& t_key)
 	return TVector3(x, y, z);
 }
 
+std::pair<double, double> TrackParser::GetBound(const std::string& t_key)
+{
+	std::stringstream ss(keys2lines_.at(t_key));
+	double lower, upper;
+	if(!(ss >> lower >> upper))
+		LOG(FATAL) << t_key << " cannot be read as Bound as its content does not contain 2 values" << FairLogger::endl;
+
+	return std::pair<double, double>{lower, upper};
+}
+
 
 ClassImp(STSingleTrackGenerator);
 
@@ -98,9 +116,14 @@ STSingleTrackGenerator::STSingleTrackGenerator()
   fRandomMomentum(kFALSE),
   fUniRandomDirection(kFALSE), 
   fSpheRandomDirection(kFALSE), 
+  fGausTheta(kFALSE),
+  fGausPhi(kFALSE),
+  fUniTheta(kFALSE),
+  fUniPhi(kFALSE),
   fIsCocktail(kFALSE), fBrho(0.),
   fIsDiscreteTheta(kFALSE), fIsDiscretePhi(kFALSE),
-  fNStepTheta(0), fNStepPhi(0)
+  fNStepTheta(0), fNStepPhi(0),
+  fGausMomentum(kFALSE), fGausMomentumMean(0), fGausMomentumSD(0)
 {
   fPdgList.clear();
   fMomentum.SetXYZ(0., 0., .5);
@@ -121,24 +144,80 @@ STSingleTrackGenerator::~STSingleTrackGenerator()
 void STSingleTrackGenerator::ReadConfig(const std::string& t_config)
 {
 	TrackParser parser(t_config);
-	std::vector<std::string> keys{	"Momentum",
-					"VertexFile",
-					"Particle",
-					"Theta",
-					"Phi" };
+	const double DEGTORAD = M_PI/180.;
 
-	if(!parser.AllKeysExist(keys))
+	if(parser.KeyExist("VertexFile")) 
 	{
-		LOG(FATAL) << "Some keys are missing from the config file " << t_config << FairLogger::endl;
-		return;
+		SetVertexFile(parser.Get<std::string>("VertexFile"));
+		SetNEvents(fVertexReader.GetNumEvent());
 	}
 
-	SetVertexFile(parser.Get<std::string>("VertexFile"));
-	SetNEvents(fVertexReader.GetNumEvent());
-	SetMomentum(parser.GetVector3("Momentum"));
-	
-	SetParticleList(std::vector<int>{parser.Get<int>("Particle")});
-	SetThetaPhi(parser.Get<double>("Theta")*180./M_PI, parser.Get<double>("Phi")*180./M_PI);
+	if(parser.KeyExist("Particle"))		SetParticleList(parser.GetList<int>("Particle"));
+	if(parser.KeyExist("PrimaryVertex"))	SetPrimaryVertex(parser.GetVector3("PrimaryVertex"));
+	if(parser.KeyExist("Momentum"))		SetMomentum(parser.Get<double>("Momentum"));
+	if(parser.KeyExist("Momentum3"))	SetMomentum(parser.GetVector3("Momentum3"));
+	if(parser.KeyExist("Direction"))	SetDirection(parser.GetVector3("Direction"));
+
+	if(parser.KeyExist("Theta") && parser.KeyExist("Phi")) 	
+		SetThetaPhi(	parser.Get<double>("Theta")*DEGTORAD, 
+				parser.Get<double>("Phi")*DEGTORAD);
+
+	if(parser.KeyExist("RandomMomentum"))
+	{
+		auto bound = parser.GetBound("RandomMomentum");
+		SetRandomMomentum(true, bound.first, bound.second);
+	}
+
+	if(parser.KeyExist("ThetaLimit"))
+	{
+		auto theta_bound = parser.GetBound("ThetaLimit");
+		//SetUniformRandomDirection(true);
+                fUniTheta = kTRUE;
+		SetThetaLimit(	theta_bound.first*DEGTORAD, 
+				theta_bound.second*DEGTORAD); 
+	}
+
+	if(parser.KeyExist("PhiLimit"))
+	{
+		auto phi_bound = parser.GetBound("PhiLimit");
+		//SetUniformRandomDirection(true);
+                fUniPhi = kTRUE;
+		SetPhiLimit(	phi_bound.first*DEGTORAD, 
+				phi_bound.second*DEGTORAD);
+	}
+
+	if(parser.KeyExist("CocktailEvent"))	SetCocktailEvent(parser.Get<double>("CocktailEvent"));
+	if(parser.KeyExist("Brho"))		SetBrho(parser.Get<double>("Brho"));
+
+	if(parser.KeyExist("DiscreteTheta"))
+	{
+		auto list = parser.GetList<double>("DiscreteTheta");
+		SetDiscreteTheta(static_cast<int>(list[0]+0.5), list[1], list[2]);
+	}
+
+	if(parser.KeyExist("DiscretePhi"))
+	{
+		auto list = parser.GetList<double>("DiscretePhi");
+		SetDiscretePhi(static_cast<int>(list[0]+0.5), list[1], list[2]);
+	}
+
+	if(parser.KeyExist("GausMomentum"))
+	{
+		auto list = parser.GetList<double>("GausMomentum");
+		SetGausMomentum(list[0], list[1]);
+	}
+
+	if(parser.KeyExist("GausTheta"))
+	{
+		auto list = parser.GetList<double>("GausTheta");
+		SetGausTheta(list[0]*DEGTORAD, list[1]*DEGTORAD);
+	}
+
+	if(parser.KeyExist("GausPhi"))
+	{
+		auto list = parser.GetList<double>("GausPhi");
+		SetGausPhi(list[0]*DEGTORAD, list[1]*DEGTORAD);
+	}
 	
 }
 
@@ -200,12 +279,38 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     momentum.SetMag(mom);
   }
 
+  if(fGausMomentum){
+    Double_t mom = gRandom->Gaus(fGausMomentumMean, fGausMomentumSD);
+    momentum.SetMag(mom);
+  }
+
   if(fUniRandomDirection){
     Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
     Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
     momentum.SetMagThetaPhi(momentum.Mag(), randTheta, randPhi);
   }
-  
+
+  if(fGausTheta){
+    Double_t randTheta = gRandom->Gaus(fGausThetaMean, fGausThetaSD);
+    momentum.SetTheta(fabs(randTheta));
+  }
+
+
+  if(fUniTheta){
+    Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
+    momentum.SetTheta(randTheta);
+  }
+
+  if(fUniPhi){
+    Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
+    momentum.SetPhi(randPhi);
+  }
+
+  if(fGausPhi){
+    Double_t randPhi = gRandom->Gaus(fGausPhiMean, fGausPhiSD);
+    momentum.SetPhi(randPhi);
+  }
+
   if(fSpheRandomDirection){
     Double_t px=0., py=0., pz=0., theta=-999., phi=0.;
     Double_t mom = momentum.Mag();

@@ -44,8 +44,20 @@ class TrackParser
 public:
 	TrackParser(const std::string& t_filename);
 
-	bool AllKeysExist(const std::vector<std::string> t_list_of_keys);
+	bool AllKeysExist(const std::vector<std::string>& t_list_of_keys);
+	bool KeyExist(const std::string& t_key);
 	TVector3 GetVector3(const std::string& t_key);
+	std::pair<double, double> GetBound(const std::string& t_key);
+
+	template<class T>
+	std::vector<T> GetList(const std::string& t_key)
+	{
+		std::vector<T> var;
+		std::stringstream ss(keys2lines_.at(t_key));
+		T temp;
+		while((ss >> temp)) var.push_back(temp);
+		return var;
+	}
 
 	template<class T>
 	T Get(const std::string& t_key)
@@ -106,6 +118,9 @@ class STSingleTrackGenerator : public FairGenerator
     { fThetaRange[0] = t0; fThetaRange[1] = t1; fPhiRange[0] = p0; fPhiRange[1] = p1; }
     void SetThetaLimit(Double_t t0, Double_t t1) { fThetaRange[0] = t0; fThetaRange[1] = t1; }
     void SetPhiLimit(Double_t p0, Double_t p1)   { fPhiRange[0] = p0; fPhiRange[1] = p1; }
+    void SetGausMomentum(Double_t mean, Double_t sd) {fGausMomentum = kTRUE; fGausMomentumMean = mean; fGausMomentumSD = sd;}
+    void SetGausPhi(Double_t mean, Double_t sd) {fGausPhi = kTRUE; fGausPhiMean = mean; fGausPhiSD = sd;}
+    void SetGausTheta(Double_t mean, Double_t sd) {fGausTheta = kTRUE; fGausThetaMean = mean; fGausThetaSD = sd;}
 
     // set parameters as cocktail beam run, argument is E/A setting
     void SetCocktailEvent(Double_t);
@@ -134,8 +149,19 @@ class STSingleTrackGenerator : public FairGenerator
 
     Bool_t   fUniRandomDirection; // uniform distribution within -180<phi<180 deg, 0<theta<90 deg.
     Bool_t   fSpheRandomDirection; // spherical distribution within -180<phi<180 deg, 0<theta<90 deg.
+    Bool_t   fUniTheta;
+    Bool_t   fUniPhi;
     Double_t fThetaRange[2];
     Double_t fPhiRange[2];
+    Bool_t   fGausMomentum;
+    Double_t fGausMomentumMean;
+    Double_t fGausMomentumSD;
+    Bool_t   fGausTheta;
+    Double_t fGausThetaMean;
+    Double_t fGausThetaSD;
+    Bool_t   fGausPhi;
+    Double_t fGausPhiMean;
+    Double_t fGausPhiSD;
 
     Bool_t   fIsCocktail;
     Double_t fBrho;
