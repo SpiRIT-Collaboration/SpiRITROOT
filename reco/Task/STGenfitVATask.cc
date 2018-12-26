@@ -306,20 +306,36 @@ void STGenfitVATask::Exec(Option_t *opt)
     Int_t numLayerClusters = 0, numLayerClusters90 = 0;
     Double_t helixChi2R = 0, helixChi2X = 0, helixChi2Y = 0, helixChi2Z = 0;
     Double_t genfitChi2R = 0, genfitChi2X = 0, genfitChi2Y = 0, genfitChi2Z = 0;
+    std::vector<Int_t> fByLayerClusters(112,0); //If cluster in layer 1 else 0
+    std::vector<Int_t> fByRowClusters(108,0);   //cluster in row 1 else 0
+    
     for (auto cluster : *helixTrack -> GetClusterArray()) {
       if (!cluster -> IsStable())
         continue;
 
       auto pos = cluster -> GetPosition();
-      if (cluster -> IsRowCluster()) {
-        numRowClusters++;
-        if (pos.Z() < 1080)
-          numRowClusters90++;
-      } else if (cluster -> IsLayerCluster()) {
-        numLayerClusters++;
-        if (pos.Z() < 1080)
-          numLayerClusters90++;
-      }
+      if (cluster -> IsRowCluster())
+	{
+	  numRowClusters++;
+	  if(cluster->GetRow() <= 108)
+	    fByRowClusters.at(cluster->GetRow()) = 1;
+	  else
+	    cout<<"ERROR IDX OF ROW WRONG"<<endl;
+	  
+	  if (pos.Z() < 1080)
+	    numRowClusters90++;
+	}
+      else if (cluster -> IsLayerCluster())
+	{
+	  numLayerClusters++;
+	  if(cluster->GetLayer() <= 112 )
+	    fByLayerClusters.at(cluster->GetLayer()) = 1;
+	  else
+	    cout<<"EROOR IDX OF LAYER WRONG "<<endl;
+	  
+	  if (pos.Z() < 1080)
+	    numLayerClusters90++;
+	}
 
       TVector3 dVec, point;
       Double_t dValue, alpha;
@@ -341,6 +357,8 @@ void STGenfitVATask::Exec(Option_t *opt)
     vaTrack -> SetNumLayerClusters(numLayerClusters);
     vaTrack -> SetNumRowClusters90(numRowClusters90);
     vaTrack -> SetNumLayerClusters90(numLayerClusters90);
+    vaTrack -> SetRowVec(fByRowClusters);
+    vaTrack -> SetLayerVec(fByLayerClusters);
     vaTrack -> SetHelixChi2R(helixChi2R);
     vaTrack -> SetHelixChi2X(helixChi2X);
     vaTrack -> SetHelixChi2Y(helixChi2Y);

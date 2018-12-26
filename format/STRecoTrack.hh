@@ -33,6 +33,10 @@ class STRecoTrack : public STRecoTrackCand
     TVector3 fPosKatana; ///< position at extrapolation to katana plane
     TVector3 fPosNeuland; ///< position at extrapolation to NeuLAND plane
 
+    //if cluster is in the layer or row corresponding to the vector index position a 1 is given else 0
+    //separate array for byrow and bylayer
+    std::vector<Int_t> fByLayerClusters;
+    std::vector<Int_t> fByRowClusters;
     vector<Int_t> fClusterIDArray; ///< Array of cluster-ID
 
     Double_t fEffCurvature1;
@@ -105,6 +109,13 @@ class STRecoTrack : public STRecoTrackCand
     Double_t GetEffCurvature2() { return fEffCurvature2; }
     Double_t GetEffCurvature3() { return fEffCurvature3; }
 
+    void SetRowVec(std::vector<Int_t> val) { fByRowClusters = val; }
+    void SetLayerVec(std::vector<Int_t> val) { fByLayerClusters = val; }
+    
+    std::vector<Int_t>  GetRowVec() { return fByRowClusters; }
+    std::vector<Int_t>  GetLayerVec() { return fByLayerClusters; }
+  
+  
     void SetNumRowClusters(Int_t val) { fNumRowClusters = val; }
     Int_t GetNumRowClusters() { return fNumRowClusters; }
 
