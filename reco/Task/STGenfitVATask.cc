@@ -314,12 +314,16 @@ void STGenfitVATask::Exec(Option_t *opt)
         continue;
 
       auto pos = cluster -> GetPosition();
+      Int_t clusRow = (pos.X() + 8*54.)/8;
+      Int_t clusLayer = pos.Z()/12;
       if (cluster -> IsRowCluster())
 	{
 	  numRowClusters++;
-	  if(cluster->GetRow() <= 108)
-	    fByRowClusters.at(cluster->GetRow()) = 1;
-	  else
+	  if(cluster->GetRow() <= 108) {
+//	    fByRowClusters.at(cluster->GetRow()) = 1;
+	    fByRowClusters.at(clusRow) += 1;
+	    fByLayerClusters.at(clusLayer) += 1;
+    } else
 	    cout<<"ERROR IDX OF ROW WRONG"<<endl;
 	  
 	  if (pos.Z() < 1080)
@@ -328,9 +332,11 @@ void STGenfitVATask::Exec(Option_t *opt)
       else if (cluster -> IsLayerCluster())
 	{
 	  numLayerClusters++;
-	  if(cluster->GetLayer() <= 112 )
-	    fByLayerClusters.at(cluster->GetLayer()) = 1;
-	  else
+	  if(cluster->GetLayer() <= 112 ) {
+//	    fByLayerClusters.at(cluster->GetLayer()) = 1;
+	    fByRowClusters.at(clusRow) += 1;
+	    fByLayerClusters.at(clusLayer) += 1;
+	  } else
 	    cout<<"EROOR IDX OF LAYER WRONG "<<endl;
 	  
 	  if (pos.Z() < 1080)
