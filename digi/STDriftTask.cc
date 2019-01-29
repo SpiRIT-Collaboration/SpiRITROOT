@@ -158,8 +158,8 @@ STDriftTask::Exec(Option_t* option)
       }
     else
       {
-        eLoss = (fMCPoint->GetEnergyLoss())*1.E9; // [GeV] to [eV]        
-	//      eLoss = (fMCPoint->GetEnergyLoss())*1.E9*BichselCorrection(fSpecies,p); // [GeV] to [eV]
+	//        eLoss = (fMCPoint->GetEnergyLoss())*1.E9; // [GeV] to [eV]        
+	eLoss = (fMCPoint->GetEnergyLoss())*1.E9*BichselCorrection(fSpecies,p); // [GeV] to [eV]
       }
 
     Double_t lDrift = fYAnodeWirePlane-(fMCPoint->GetY())*10; // drift length [mm]
@@ -222,16 +222,17 @@ void STDriftTask::SetSplineInterpolation(Bool_t value) { fSpline = value; }
 Double_t STDriftTask::BichselCorrection(TString species, Double_t value)
 {
   if (species == "pi")
-    return 1.52844-0.00533277*value+1.95981e-05*pow(value,2)-3.28283e-08*pow(value,3)+2.07723e-11*pow(value,4);
+    return 1;
   else if(species == "p")
-    return 1.68615-0.00124295*value+8.34557e-07*pow(value,2)-2.447e-10*pow(value,3)+2.57546e-14*pow(value,4);
+    return 1./(1.0619 -3.82863e-4 * value +1.91538e-7 * pow(value,2));
   else if(species == "d")
-    return 1.74617-0.0007082*value+2.50968e-07*pow(value,2)-3.93875e-11*pow(value,3)+2.24589e-15*pow(value,4);
+    return 1;
   else if(species == "t")
-    return 1.78826-0.000504648*value+1.18876e-07*pow(value,2)-1.21566e-11*pow(value,3)+4.4748e-16*pow(value,4);
+    return 1;
   else{
     std::cout << "It needs implementation, sorry!" << std::endl;
-    exit(0);}
+    exit(0);
+  }
 }
 
 ROOT::Math::Interpolator* STDriftTask::BichselCorrection(TString species)

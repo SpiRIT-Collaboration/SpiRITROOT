@@ -44,7 +44,7 @@ InitStatus STEmbedCorrelatorTask::Init()
   
   fEmbedTrackArray = new TClonesArray("STEmbedTrack");
   fRootManager -> Register("STEmbedTrack", "SpiRIT", fEmbedTrackArray, fIsPersistence);
-  
+
   return kSUCCESS;
 }
 
@@ -53,7 +53,10 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
   fEmbedTrackArray -> Delete();
   
   if (fEventHeader -> IsBadEvent())
-    return;
+    {
+      STEmbedTrack *embedTrack = (STEmbedTrack *) fEmbedTrackArray -> ConstructedAt(0);
+      return;
+    }
 
   if(fMCTrackArray == NULL)
     return;
