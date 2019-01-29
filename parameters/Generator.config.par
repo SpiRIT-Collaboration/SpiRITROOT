@@ -1,5 +1,5 @@
 RandomMomentum 0.05 0.2
 VertexFile /mnt/spirit/analysis/user/tsangc/SpiRITROOT/parameters/Vertex_r2841.txt
 Particle 211
-PhiLimit 0 0.000001 
-ThetaLimit -45 45
+PhiLimit 0. 360 
+ThetaLimit 0 45
