@@ -13,7 +13,7 @@ void DrawMultipleComplex::DrawMultiple(Rule& t_rule, T& first_graph, ARGS&... ar
     this->GetCheckPoints(&t_rule, checkpoints_);
     reader_.Restart();
     t_rule.SetReader(reader_);
-    if(reader_.GetEntries(true) == 0)
+    if(reader_.GetEntries(false) == 0)
     {
         std::cerr << "No entries from reader. Failed to load tree from file. Will ignore\n";
         return;
@@ -59,7 +59,7 @@ void DrawMultipleComplex::DrawMultiple(Rule& t_rule, std::vector<T>& t_graphs)
 
     reader_.Restart();
     t_rule.SetReader(reader_);
-    if(reader_.GetEntries(true) == 0)
+    if(reader_.GetEntries(false) == 0)
     {
         std::cerr << "No entries from reader. Failed to load tree from file. Will ignore\n";
         return;
@@ -75,6 +75,38 @@ void DrawMultipleComplex::DrawMultiple(Rule& t_rule, std::vector<T>& t_graphs)
     {
         auto data = cp->GetData();
         for(const auto& row : data) t_graphs[cp->id].Fill(row[0], row[1]);
+    };
+}
+
+template<typename T>
+void DrawMultipleComplex::DrawMultiple(Rule& t_rule, std::vector<std::shared_ptr<T>>& t_graphs)
+{
+    checkpoints_.clear();
+    this->GetCheckPoints(&t_rule, checkpoints_);
+    if(t_graphs.size() != checkpoints_.size())
+    {
+        std::cerr << "Number of checkpoints and graphs doesn't match. Will abort\n";
+        return;
+    }
+
+    reader_.Restart();
+    t_rule.SetReader(reader_);
+    if(reader_.GetEntries(false) == 0)
+    {
+        std::cerr << "No entries from reader. Failed to load tree from file. Will ignore\n";
+        return;
+    }
+    while( reader_.Next() )
+    {
+        std::vector<DataSink> result;
+        t_rule.Fill(result, reader_.GetCurrentEntry());
+        std::cout << "Processing Entry " << reader_.GetCurrentEntry() << "\t\r" << std::flush;
+    }
+    std::cout << "\n";
+    for(auto cp : checkpoints_)
+    {
+        auto data = cp->GetData();
+        for(const auto& row : data) t_graphs[cp->id]->Fill(row[0], row[1]);
     };
 }
 

@@ -1,4 +1,5 @@
 #include "RuleTree.hh"
+#include <stdexcept>
 
 template<class T, class ...Args>
 std::vector<std::shared_ptr<T>> RuleTree::AppendRule(const std::string& t_name, Args... args)
@@ -49,3 +50,21 @@ std::vector<std::shared_ptr<T>> RuleTree::AppendRejectedRuleTo(const std::string
   return handle;
 }
 
+template<class ...Args>
+std::vector<std::shared_ptr<TH2F>> RuleTree::Inspect(const std::string& t_name, Args... args)
+{
+  if(hists_.size() != current_cp_)
+    throw std::runtime_error("Please do not mix RuleTree::Inspect and RuleTree::WireTap. Use either one of them");
+  std::vector<std::shared_ptr<TH2F>> handles;
+  int prev = current_cp_;
+  this->WireTap(t_name);
+  for(int i = prev; i < current_cp_; ++i) 
+  {
+    auto hist = std::make_shared<TH2F>(args...);
+    hist->Sumw2(true);
+    hists_.push_back(hist); 
+    handles.push_back(hist);
+  }
+
+  return handles;
+}

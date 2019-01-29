@@ -1,4 +1,6 @@
 #include "Rules.hh"
+#include "STMCPoint.hh"
+#include "FairMCEventHeader.h"
 
 /****************************
 Rules: base abstract class for event cut and analysis
@@ -246,16 +248,19 @@ Cannot iterate through each tracks
 **************************************/
 void DrawHit::SetMyReader(TTreeReader& t_reader) 
 {
-    myHitArray_ = std::make_shared<ReaderValue>(t_reader, "STHit");
+    myHitArray_ = std::make_shared<ReaderValue>(t_reader, "STMCPoint");
 }
 
 void DrawHit::Selection(std::vector<DataSink>& t_hist, int t_entry) 
 {    
     DataSink localsink;
+    const double CMTOMM = 10.;
     for(int j = 0; j < (*myHitArray_)->GetEntries(); ++j)
     {
-        auto hit = static_cast<STHit*>((*myHitArray_) -> At(j));
-        auto pos = hit->GetPosition();
+        auto hit = static_cast<STMCPoint*>((*myHitArray_) -> At(j));
+        TVector3 pos;
+        hit->Position(pos);
+        pos = CMTOMM*pos;
         localsink.push_back({pos[x_], pos[y_]});
     }
     t_hist.push_back(localsink);
@@ -388,7 +393,7 @@ Only works if branch STEmbedTrack exist
 ******************************/
 
 void MCEmbedReader::SetMyReader(TTreeReader& t_reader)
-{ myEmbedArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedTrack");};
+{ myEmbedArray_ = std::make_shared<ReaderValue>(t_reader, "STEmbedTrack"); };
 
 
 void MCEmbedReader::Selection(std::vector<DataSink>& t_hist, int t_entry)

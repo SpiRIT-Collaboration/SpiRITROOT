@@ -69,10 +69,10 @@ void EmbedTrackPlotNoCompare(RuleTree& t_Additional_rules, bool t_show_rejected 
         auto info = tree.AppendRule<GetEmbedInfo>("info")[0];
         tree.AppendRule<ShowEntry>("entry");
         
-        tree.WireTap("all_xz", 0);
-        tree.WireTap("all_yz", 1);
-        tree.WireTap("E_xz", 2);
-        tree.WireTap("E_yz", 3);
+        tree.WireTap("all_xz");
+        tree.WireTap("all_yz");
+        tree.WireTap("E_xz");
+        tree.WireTap("E_yz");
 
 
  	DrawMultipleComplex embed_draw(t_filename.c_str(),"cbmsim");

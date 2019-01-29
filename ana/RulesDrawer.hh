@@ -41,6 +41,8 @@ public:
     void DrawMultiple(const std::vector<int>& t_entry_list, Rule& t_rule, T& first_graph, ARGS&... args);
     template<typename T>
     void DrawMultiple(Rule& t_rule, std::vector<T>& t_graphs);
+    template<typename T>
+    void DrawMultiple(Rule& t_rule, std::vector<std::shared_ptr<T>>& t_graphs);
 
     template<typename T>
     void DrawMultipleParallel(Rule& t_rule, std::vector<T>& t_graphs, int nthreads=4);

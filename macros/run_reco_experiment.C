@@ -66,7 +66,7 @@ void run_reco_experiment
 
   STDecoderTask *decoder = new STDecoderTask();
   decoder -> SetUseSeparatedData(true);
-  decoder -> SetPersistence(false);
+  //decoder -> SetPersistence(true);
   if (fGCData.IsNull())
     decoder -> SetUseGainCalibration(false);
   else

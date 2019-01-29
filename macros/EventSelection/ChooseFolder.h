@@ -42,13 +42,13 @@ std::vector<std::string> AggrateFolder(double mom_min, double mom_max,
                                        double phi_min, double phi_max, 
                                        bool t_bdc = false,
                                        const std::string t_file_end="/run2841_s*.reco.tommy_branch.1749.ef952af.root",
-                                       int group = -1)
+                                       int group = -1,
+                                       const std::string& t_dir = "data/Run2841_WithProton/TrackDistComp/")
 {
-    std::string dir = "data/Run2841_WithProton/TrackDistComp/";
     std::vector<std::string> folders;
-    for(auto& filename : listdir(dir))
+    for(auto& filename : listdir(t_dir))
     { 
-        if(IsDirectory(dir + filename))
+        if(IsDirectory(t_dir + filename))
         {
             std::istringstream iss(filename);
             // filename should be separated by _
@@ -99,7 +99,7 @@ std::vector<std::string> AggrateFolder(double mom_min, double mom_max,
                     contain_para = true;
                 }
             }
-            if(within_range && (is_bdc == t_bdc) && contain_para) folders.push_back(dir + filename + t_file_end);
+            if(within_range && (is_bdc == t_bdc) && contain_para) folders.push_back(t_dir + filename + t_file_end);
         }
     } 	
     return folders;

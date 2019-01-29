@@ -20,6 +20,7 @@
 #include "TCutG.h"
 #include "TChain.h"
 
+#include "FairMCEventHeader.h"
 #include "STRecoTrack.hh"
 #include "STEmbedTrack.hh"
 #include "ST_ClusterNum_DB.hh"
@@ -260,6 +261,7 @@ public:
 protected:
     const double mom_low_, mom_high_;
     std::shared_ptr<ReaderValue> myEmbedArray_;
+    std::shared_ptr<TTreeReaderValue<FairMCEventHeader>> myHeaderArray_;
 };
 
 #endif

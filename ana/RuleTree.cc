@@ -1,4 +1,6 @@
 #include "RuleTree.hh"
+#include "TCanvas.h"
+#include "TGraph2D.h"
 
 void RuleTree::AppendTree(RuleTree& t_tree)
 {
@@ -53,21 +55,97 @@ void RuleTree::AppendXYSwitch(const std::string& t_name, const std::vector<doubl
   current_name_ = t_name;
 }
 
-int RuleTree::WireTap(const std::string& t_name, int t_id)
+int RuleTree::WireTap(const std::string& t_name)
 {
-  
   auto it = rule_list_.find(t_name);
   if(it == rule_list_.end()) throw std::runtime_error(("Rule named " + t_name + " is not found for checkpoint").c_str());
  
-  int index = t_id;
   for(auto& rule : it->second)
   {
-    std::shared_ptr<CheckPoint> cp(new CheckPoint(index));
+    std::shared_ptr<CheckPoint> cp(new CheckPoint(current_cp_));
     rule_list_[t_name + "_cp"].push_back(cp);
     rule->InsertRule(cp.get());
-    index++;
+    current_cp_++;
   }
 
-  return index;
+  return current_cp_;
 }
 
+void RuleTree::DrawMultiple(TChain* t_chain)
+{
+  DrawMultipleComplex drawer(t_chain);
+  drawer.DrawMultiple(*this->first_rule_.get(), hists_);
+}
+
+void RuleTree::EventViewer(TChain* t_chain, const std::vector<std::string>& t_name)
+{
+  std::vector<int> start_index, xz_index, yz_index;
+  for(const auto& name : t_name)
+  {
+    start_index.push_back(current_cp_);
+    this->Inspect(name + "_xz");
+    xz_index.push_back(current_cp_);
+    this->Inspect(name + "_yz");
+    yz_index.push_back(current_cp_);
+  }
+
+  const int pad_x = 108;            
+  const int pad_y = 112;
+  const double size_x = 8;
+  const double size_y = 12;
+  const double canvas_scale = 0.5;
+
+  t_chain->GetNtrees();
+  DrawMultipleComplex drawer(t_chain);
+  drawer.SetRule(this->first_rule_.get());
+  TCanvas c1;
+  int index = 0;
+  for(const auto& list_datasink : drawer)
+  {
+    std::cout << "Working on Event " << index << "\r" << std::flush;
+    ++index;
+    std::vector<TGraph2D> graphs(t_name.size());
+    bool skip_event = false;
+    bool first_valid = true;
+    for(int i = 0; i < t_name.size(); ++i)
+    {
+      auto& graph = graphs[i];
+      int idx, idy;
+      for(idx=start_index[i], idy=xz_index[i]; idx < xz_index[i] || idy < yz_index[i]; ++idx, ++idy)
+        for(int row=0; row < list_datasink[idx].size(); ++row)
+          graph.SetPoint(graph.GetN(), list_datasink[idy][row][1], list_datasink[idx][row][0], list_datasink[idy][row][0]);
+      if(graph.GetN() == 0)
+      {
+        skip_event = true;
+        break;
+      }
+      graph.GetYaxis()->SetRangeUser(-0.5*((double)pad_x*size_x), 0.5*((double)pad_x*size_x));
+      graph.GetZaxis()->SetRangeUser(-600., 100.);
+      graph.GetXaxis()->SetRangeUser(0., 1350.);
+      graph.SetMarkerSize(0.5);
+      graph.SetMarkerColorAlpha(i+1, 0.2); // we don't want white color
+      graph.Draw((first_valid)? "P" : "P same");
+      first_valid = false;
+    }
+    if(skip_event) continue;
+    c1.Update();
+    c1.Modified();
+    c1.WaitPrimitive();
+  }
+}
+
+void RuleTree::EventCheckPoint(const std::string& t_name, const std::string& t_cpname)
+{
+  auto it = rule_list_.find(t_name);
+  if(it == rule_list_.end()) throw std::runtime_error(("Rule named " + t_name + " is not found for checkpoint").c_str());
+ 
+  for(auto& rule : it->second)
+  {
+    std::shared_ptr<DrawTrack> xz_dt = std::make_shared<DrawTrack>();
+    std::shared_ptr<DrawTrack> yz_dt = std::make_shared<DrawTrack>(1, 2);
+    rule_list_[t_cpname + "_xz"].push_back(xz_dt);
+    rule_list_[t_cpname + "_yz"].push_back(yz_dt);
+    rule->InsertRule(xz_dt.get());
+    rule->InsertRule(yz_dt.get());
+  }
+}
