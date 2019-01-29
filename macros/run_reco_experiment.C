@@ -43,18 +43,6 @@ void run_reco_experiment
   TString raw = TString(gSystem -> Getenv("PWD"))+"/list_run"+sRunNo+".txt";
   TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".root";
   TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+"."+version+".log";
-
-  if(!fMCFile.IsNull())
-    {
-      //Doing embedding so rename files
-      //with unique pixelID
-      std::string mcfile = fMCFile.Data();
-      std::string str2("PionPixel_ID_");
-      std::size_t found = mcfile.find(str2);
-      TString pixelID = mcfile.substr(found+str2.length(), 4);
-      out = fPathToData+"run"+sRunNo+"_pixelID_"+pixelID+".reco."+version+".root";
-      log = fPathToData+"run"+sRunNo+"_pixedlID_"+pixelID+"."+version+".log";
-    }
   
   if (TString(gSystem -> Which(".", raw)).IsNull() && !fUseMeta)
     gSystem -> Exec("./createList.sh "+sRunNo);
@@ -153,10 +141,10 @@ void run_reco_experiment
   //genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
   genfitVA -> SetBeamFile("");
-//  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
-//  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
+  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
+  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   // Uncomment if you want to recalculate the vertex using refit tracks.
-  //genfitVA -> SetUseRave(true);
+  genfitVA -> SetUseRave(true);
   
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
@@ -167,7 +155,7 @@ void run_reco_experiment
   run -> AddTask(helix);
   run -> AddTask(correct);
   run -> AddTask(genfitPID);
-  //run -> AddTask(genfitVA);
+  run -> AddTask(genfitVA);
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
   
