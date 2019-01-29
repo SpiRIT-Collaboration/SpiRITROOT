@@ -1,3 +1,4 @@
+
 /**
  * Digitization Simulation Macro
  *
@@ -14,11 +15,12 @@
 
 void run_digi(TString name = "protons_75_events")
 {
+  gRandom -> SetSeed(0);
+
   // -----------------------------------------------------------------
+
   // FairRun
   FairRunAna* fRun = new FairRunAna();
-
-
   // -----------------------------------------------------------------
   // Set digitization tasks
   STDriftTask* fDriftTask = new STDriftTask(); 
@@ -35,7 +37,7 @@ void run_digi(TString name = "protons_75_events")
 
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
   fElectronicsTask -> SetPersistence(true);
-  fElectronicsTask -> SetADCConstant(1);
+  fElectronicsTask -> SetADCConstant(1.);
   fRun -> AddTask(fElectronicsTask);
 
 
