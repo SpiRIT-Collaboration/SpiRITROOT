@@ -1,7 +1,7 @@
 #ifndef STPID_HH
 #define STPID_HH
 
-#define NUMSTPID 6
+#define NUMSTPID 1
 
 #include "TObject.h"
 #include "TString.h"

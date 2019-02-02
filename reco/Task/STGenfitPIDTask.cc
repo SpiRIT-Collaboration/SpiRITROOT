@@ -203,7 +203,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
       fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, recoTrackCand -> GetdEdxPointArray());
 
-      auto prob = fPIDTest -> GetProbability(pid, mom.Mag(), recoTrackCand -> GetdEdxWithCut(0,0.7));
+      auto prob = 1; // fPIDTest -> GetProbability(pid, mom.Mag(), recoTrackCand -> GetdEdxWithCut(0,0.7));
       recoTrackCand -> SetPIDProbability(prob);
 
       if (bestProb < prob) {
