@@ -388,6 +388,7 @@ void STGenfitVATask::Exec(Option_t *opt)
       fGenfitTest -> GetMomentumWithVertex(gfTrack, vertex -> GetPos(), momVertex, pocaVertex);
       if (momVertex.Z() < 0)
         momVertex = -momVertex;
+      vaTrack -> SetVertexID(chosenVID);
       vaTrack -> SetMomentum(momVertex);
       vaTrack -> SetPOCAVertex(pocaVertex);
 
