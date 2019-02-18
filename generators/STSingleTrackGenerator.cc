@@ -6,104 +6,105 @@
 #include "TDatabasePDG.h"
 #include "TParticlePDG.h"
 #include "TRandom.h"
+#include "TFile.h"
 
 void VertexReader::OpenFile(const std::string& t_filename)
 {
-	std::ifstream file;
-	file.open(t_filename.c_str());
-	if(!file.is_open())
-		LOG(FATAL) << "Vertex file " << t_filename << " cannot be opened!" << FairLogger::endl;
-	else
-		LOG(INFO) << "Loadiing vertex file " << t_filename << FairLogger::endl;
-	// get rid of the header
-	std::string line;
-	std::getline(file, line);
+  std::ifstream file;
+  file.open(t_filename.c_str());
+  if(!file.is_open())
+    LOG(FATAL) << "Vertex file " << t_filename << " cannot be opened!" << FairLogger::endl;
+  else
+    LOG(INFO) << "Loadiing vertex file " << t_filename << FairLogger::endl;
+  // get rid of the header
+  std::string line;
+  std::getline(file, line);
 
-	// load file into vectors
-	while(std::getline(file, line))
-	{
-		std::stringstream ss(line);
-		int temp;
-		double x, y, z;
-		if(!(ss >> temp >> temp >> x >> y >> z))
-			LOG(FATAL) << "Vertex file cannot be read properly this line: " << line << FairLogger::endl;
-		vectors_.push_back(TVector3(x, y, z));
-	}
+  // load file into vectors
+  while(std::getline(file, line))
+  {
+    std::stringstream ss(line);
+    int temp;
+    double x, y, z;
+    if(!(ss >> temp >> temp >> x >> y >> z))
+      LOG(FATAL) << "Vertex file cannot be read properly this line: " << line << FairLogger::endl;
+    vectors_.push_back(TVector3(x, y, z));
+  }
 
-	it_ = vectors_.begin();
+  it_ = vectors_.begin();
 }
 
 TrackParser::TrackParser(const std::string& t_filename)
 {
-	LOG(INFO) << "Reading configuration file " << t_filename << FairLogger::endl;
-	LOG(INFO) << std::setw(20) << "Key" << std::setw(20) << "Content" << FairLogger::endl;
+  LOG(INFO) << "Reading configuration file " << t_filename << FairLogger::endl;
+  LOG(INFO) << std::setw(20) << "Key" << std::setw(20) << "Content" << FairLogger::endl;
 
-	std::ifstream file(t_filename.c_str());
-	if(!file.is_open())
-		LOG(FATAL) << "Cannot read generator file " << t_filename << FairLogger::endl;
+  std::ifstream file(t_filename.c_str());
+  if(!file.is_open())
+    LOG(FATAL) << "Cannot read generator file " << t_filename << FairLogger::endl;
 
-	std::string line, key, content;
-	while(std::getline(file, line))
-	{
-		// erase everything after # char
-		auto pos = line.find("#");
-		if(pos != std::string::npos)
-			line.erase(line.begin() + pos, line.end());
+  std::string line, key, content;
+  while(std::getline(file, line))
+  {
+    // erase everything after # char
+    auto pos = line.find("#");
+    if(pos != std::string::npos)
+      line.erase(line.begin() + pos, line.end());
 
-		const auto first_char = line.find_first_not_of(" \t\r\n");
-		if(first_char == std::string::npos) // skip if the line is empty
-			continue;
+    const auto first_char = line.find_first_not_of(" \t\r\n");
+    if(first_char == std::string::npos) // skip if the line is empty
+      continue;
 
 
-		std::stringstream ss(line);
-		// first element is the key, second one is content
-		ss >> key >> std::ws;
-		std::getline(ss, content);
-		
-		// check and see if key exist
-		if( keys2lines_.find(key) != keys2lines_.end() )
-			LOG(ERROR) << "Key value " << key << " is duplicated. Only the newest value will be loaded\n";
+    std::stringstream ss(line);
+    // first element is the key, second one is content
+    ss >> key >> std::ws;
+    std::getline(ss, content);
+    
+    // check and see if key exist
+    if( keys2lines_.find(key) != keys2lines_.end() )
+      LOG(ERROR) << "Key value " << key << " is duplicated. Only the newest value will be loaded\n";
 
-		keys2lines_[key] = content;
-		
-		LOG(INFO) << std::setw(20) << key << std::setw(20) << content << FairLogger::endl;
-	}
+    keys2lines_[key] = content;
+    
+    LOG(INFO) << std::setw(20) << key << std::setw(20) << content << FairLogger::endl;
+  }
 }
 
 bool TrackParser::AllKeysExist(const std::vector<std::string>& t_list_of_keys)
 {
-	for(const auto& key : t_list_of_keys)
-		if(keys2lines_.find(key) == keys2lines_.end())
-			return false;
-	return true;
+  for(const auto& key : t_list_of_keys)
+    if(keys2lines_.find(key) == keys2lines_.end())
+      return false;
+  return true;
 }
 
 bool TrackParser::KeyExist(const std::string& t_key)
 {
-	if(keys2lines_.find(t_key) == keys2lines_.end())
-		return false;
-	else
-		return true;
+  if(keys2lines_.find(t_key) == keys2lines_.end())
+    return false;
+  else
+    return true;
 }
 
 TVector3 TrackParser::GetVector3(const std::string& t_key)
 {
-	std::stringstream ss(keys2lines_.at(t_key));
-	double x, y, z;
-	if(!(ss >> x >> y >> z))
-		LOG(FATAL) << t_key << " cannot be read as TVector as its content does not contain 3 values" << FairLogger::endl;
+  std::stringstream ss(keys2lines_.at(t_key));
+  double x, y, z;
+  if(!(ss >> x >> y >> z))
+    LOG(FATAL) << t_key << " cannot be read as TVector as its content does not contain 3 values" << FairLogger::endl;
 
-	return TVector3(x, y, z);
+  return TVector3(x, y, z);
 }
 
 std::pair<double, double> TrackParser::GetBound(const std::string& t_key)
 {
-	std::stringstream ss(keys2lines_.at(t_key));
-	double lower, upper;
-	if(!(ss >> lower >> upper))
-		LOG(FATAL) << t_key << " cannot be read as Bound as its content does not contain 2 values" << FairLogger::endl;
+  std::stringstream ss(keys2lines_.at(t_key));
+  double lower, upper;
+  if(!(ss >> lower >> upper))
+    LOG(FATAL) << t_key << " cannot be read as Bound as its content does not contain 2 values" << FairLogger::endl;
 
-	return std::pair<double, double>{lower, upper};
+  return std::pair<double, double>{lower, upper};
 }
 
 
@@ -139,86 +140,100 @@ STSingleTrackGenerator::STSingleTrackGenerator()
 }
 
 STSingleTrackGenerator::~STSingleTrackGenerator()
-{}
+{ delete fPhaseSpaceCut; }
+
+void STSingleTrackGenerator::SetPhaseSpaceCut(const std::string& filename)
+{
+  TFile cutfile(filename.c_str());
+  if(!cutfile.IsOpen())
+    LOG(FATAL) << "Phase Space cut file " << filename << " cannot be opened." << FairLogger::endl;
+  // search for CUTG in the file. 
+  fPhaseSpaceCut = (TCutG*) cutfile.Get("CUTG");
+  if(!fPhaseSpaceCut)
+    LOG(FATAL) << "CUTG is not found in phase space cut file " << filename << FairLogger::endl;
+}
 
 void STSingleTrackGenerator::ReadConfig(const std::string& t_config)
 {
-	TrackParser parser(t_config);
-	const double DEGTORAD = M_PI/180.;
+  const double DEGTORAD = M_PI/180.;
+  TrackParser parser(t_config);
 
-	if(parser.KeyExist("VertexFile")) 
-	{
-		SetVertexFile(parser.Get<std::string>("VertexFile"));
-		SetNEvents(fVertexReader.GetNumEvent());
-	}
+  if(parser.KeyExist("VertexFile")) 
+  {
+    // load from VMCWORKDIR/parameters
+    auto vmc_dir = gSystem->Getenv("VMCWORKDIR");
+    SetVertexFile(std::string(vmc_dir) + "/parameters/" + parser.Get<std::string>("VertexFile"));
+    SetNEvents(fVertexReader.GetNumEvent());
+  }
 
-	if(parser.KeyExist("Particle"))		SetParticleList(parser.GetList<int>("Particle"));
-	if(parser.KeyExist("PrimaryVertex"))	SetPrimaryVertex(parser.GetVector3("PrimaryVertex"));
-	if(parser.KeyExist("Momentum"))		SetMomentum(parser.Get<double>("Momentum"));
-	if(parser.KeyExist("Momentum3"))	SetMomentum(parser.GetVector3("Momentum3"));
-	if(parser.KeyExist("Direction"))	SetDirection(parser.GetVector3("Direction"));
+  if(parser.KeyExist("Particle"))    SetParticleList(parser.GetList<int>("Particle"));
+  if(parser.KeyExist("PrimaryVertex"))  SetPrimaryVertex(parser.GetVector3("PrimaryVertex"));
+  if(parser.KeyExist("Momentum"))    SetMomentum(parser.Get<double>("Momentum"));
+  if(parser.KeyExist("Momentum3"))  SetMomentum(parser.GetVector3("Momentum3"));
+  if(parser.KeyExist("Direction"))  SetDirection(parser.GetVector3("Direction"));
+  if(parser.KeyExist("PhaseSpaceCut"))  SetPhaseSpaceCut(parser.Get<std::string>("PhaseSpaceCut"));
 
-	if(parser.KeyExist("Theta") && parser.KeyExist("Phi")) 	
-		SetThetaPhi(	parser.Get<double>("Theta")*DEGTORAD, 
-				parser.Get<double>("Phi")*DEGTORAD);
+  if(parser.KeyExist("Theta") && parser.KeyExist("Phi"))   
+    SetThetaPhi(  parser.Get<double>("Theta")*DEGTORAD, 
+        parser.Get<double>("Phi")*DEGTORAD);
 
-	if(parser.KeyExist("RandomMomentum"))
-	{
-		auto bound = parser.GetBound("RandomMomentum");
-		SetRandomMomentum(true, bound.first, bound.second);
-	}
+  if(parser.KeyExist("RandomMomentum"))
+  {
+    auto bound = parser.GetBound("RandomMomentum");
+    SetRandomMomentum(true, bound.first, bound.second);
+  }
 
-	if(parser.KeyExist("ThetaLimit"))
-	{
-		auto theta_bound = parser.GetBound("ThetaLimit");
-		//SetUniformRandomDirection(true);
+  if(parser.KeyExist("ThetaLimit"))
+  {
+    auto theta_bound = parser.GetBound("ThetaLimit");
+    //SetUniformRandomDirection(true);
                 fUniTheta = kTRUE;
-		SetThetaLimit(	theta_bound.first*DEGTORAD, 
-				theta_bound.second*DEGTORAD); 
-	}
+    SetThetaLimit(  theta_bound.first*DEGTORAD, 
+        theta_bound.second*DEGTORAD); 
+  }
 
-	if(parser.KeyExist("PhiLimit"))
-	{
-		auto phi_bound = parser.GetBound("PhiLimit");
-		//SetUniformRandomDirection(true);
+  if(parser.KeyExist("PhiLimit"))
+  {
+    auto phi_bound = parser.GetBound("PhiLimit");
+    //SetUniformRandomDirection(true);
                 fUniPhi = kTRUE;
-		SetPhiLimit(	phi_bound.first*DEGTORAD, 
-				phi_bound.second*DEGTORAD);
-	}
+    SetPhiLimit(  phi_bound.first*DEGTORAD, 
+        phi_bound.second*DEGTORAD);
+  }
 
-	if(parser.KeyExist("CocktailEvent"))	SetCocktailEvent(parser.Get<double>("CocktailEvent"));
-	if(parser.KeyExist("Brho"))		SetBrho(parser.Get<double>("Brho"));
+  if(parser.KeyExist("CocktailEvent"))  SetCocktailEvent(parser.Get<double>("CocktailEvent"));
+  if(parser.KeyExist("Brho"))    SetBrho(parser.Get<double>("Brho"));
 
-	if(parser.KeyExist("DiscreteTheta"))
-	{
-		auto list = parser.GetList<double>("DiscreteTheta");
-		SetDiscreteTheta(static_cast<int>(list[0]+0.5), list[1], list[2]);
-	}
+  if(parser.KeyExist("DiscreteTheta"))
+  {
+    auto list = parser.GetList<double>("DiscreteTheta");
+    SetDiscreteTheta(static_cast<int>(list[0]+0.5), list[1], list[2]);
+  }
 
-	if(parser.KeyExist("DiscretePhi"))
-	{
-		auto list = parser.GetList<double>("DiscretePhi");
-		SetDiscretePhi(static_cast<int>(list[0]+0.5), list[1], list[2]);
-	}
+  if(parser.KeyExist("DiscretePhi"))
+  {
+    auto list = parser.GetList<double>("DiscretePhi");
+    SetDiscretePhi(static_cast<int>(list[0]+0.5), list[1], list[2]);
+  }
 
-	if(parser.KeyExist("GausMomentum"))
-	{
-		auto list = parser.GetList<double>("GausMomentum");
-		SetGausMomentum(list[0], list[1]);
-	}
+  if(parser.KeyExist("GausMomentum"))
+  {
+    auto list = parser.GetList<double>("GausMomentum");
+    SetGausMomentum(list[0], list[1]);
+  }
 
-	if(parser.KeyExist("GausTheta"))
-	{
-		auto list = parser.GetList<double>("GausTheta");
-		SetGausTheta(list[0]*DEGTORAD, list[1]*DEGTORAD);
-	}
+  if(parser.KeyExist("GausTheta"))
+  {
+    auto list = parser.GetList<double>("GausTheta");
+    SetGausTheta(list[0]*DEGTORAD, list[1]*DEGTORAD);
+  }
 
-	if(parser.KeyExist("GausPhi"))
-	{
-		auto list = parser.GetList<double>("GausPhi");
-		SetGausPhi(list[0]*DEGTORAD, list[1]*DEGTORAD);
-	}
-	
+  if(parser.KeyExist("GausPhi"))
+  {
+    auto list = parser.GetList<double>("GausPhi");
+    SetGausPhi(list[0]*DEGTORAD, list[1]*DEGTORAD);
+  }
+  
 }
 
 
@@ -274,67 +289,75 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
   auto index = (Int_t)gRandom->Uniform(0,fPdgList.size());
   pdg = fPdgList.at(index);
 
-  if(fRandomMomentum){
-    Double_t mom = gRandom->Uniform(fMomentumRange[0], fMomentumRange[1]);
-    momentum.SetMag(mom);
-  }
-
-  if(fGausMomentum){
-    Double_t mom = gRandom->Gaus(fGausMomentumMean, fGausMomentumSD);
-    momentum.SetMag(mom);
-  }
-
-  if(fUniRandomDirection){
-    Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
-    Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
-    momentum.SetMagThetaPhi(momentum.Mag(), randTheta, randPhi);
-  }
-
-  if(fGausTheta){
-    Double_t randTheta = gRandom->Gaus(fGausThetaMean, fGausThetaSD);
-    momentum.SetTheta(fabs(randTheta));
-  }
-
-
-  if(fUniTheta){
-    Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
-    momentum.SetTheta(randTheta);
-  }
-
-  if(fUniPhi){
-    Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
-    momentum.SetPhi(randPhi);
-  }
-
-  if(fGausPhi){
-    Double_t randPhi = gRandom->Gaus(fGausPhiMean, fGausPhiSD);
-    momentum.SetPhi(randPhi);
-  }
-
-  if(fSpheRandomDirection){
-    Double_t px=0., py=0., pz=0., theta=-999., phi=0.;
-    Double_t mom = momentum.Mag();
-    while(theta<fThetaRange[0]||theta>fThetaRange[1]||phi<fPhiRange[0]||phi>fPhiRange[1]){
-      gRandom->Sphere(px,py,pz,mom);
-      TVector3 tempP(px,py,pz);
-      theta = tempP.Theta();
-      phi = tempP.Phi();
+  // loop until the particle falles within the phase space
+  const double RADTODEG=180./TMath::Pi();
+  do 
+  {
+    if(fRandomMomentum){
+      Double_t mom = gRandom->Uniform(fMomentumRange[0], fMomentumRange[1]);
+      momentum.SetMag(mom);
     }
-    momentum.SetXYZ(px,py,pz);
-  }
 
-  if(fIsDiscreteTheta){
-    auto tIndex = (Int_t)gRandom->Uniform(0,fNStepTheta);
-    momentum.SetTheta(tIndex*(fThetaRange[1]-fThetaRange[0])/(Double_t)fNStepTheta);
-  }
-  if(fIsDiscretePhi){
-    auto pIndex = (Int_t)gRandom->Uniform(0,fNStepPhi);
-    momentum.SetPhi(pIndex*(fPhiRange[1]-fPhiRange[0])/(Double_t)fNStepPhi);
-  }
+    if(fGausMomentum){
+      Double_t mom = gRandom->Gaus(fGausMomentumMean, fGausMomentumSD);
+      momentum.SetMag(mom);
+    }
+
+    if(fUniRandomDirection){
+      Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
+      Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
+      momentum.SetMagThetaPhi(momentum.Mag(), randTheta, randPhi);
+    }
+
+    if(fGausTheta){
+      Double_t randTheta = gRandom->Gaus(fGausThetaMean, fGausThetaSD);
+      momentum.SetTheta(fabs(randTheta));
+    }
 
 
-  if(fIsCocktail||fBrho!=0.)
-    momentum.SetMag(0.3*fBrho*GetQ(pdg));
+    if(fUniTheta){
+      Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
+      momentum.SetTheta(randTheta);
+    }
+
+    if(fUniPhi){
+      Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
+      momentum.SetPhi(randPhi);
+    }
+
+    if(fGausPhi){
+      Double_t randPhi = gRandom->Gaus(fGausPhiMean, fGausPhiSD);
+      momentum.SetPhi(randPhi);
+    }
+
+    if(fSpheRandomDirection){
+      Double_t px=0., py=0., pz=0., theta=-999., phi=0.;
+      Double_t mom = momentum.Mag();
+      while(theta<fThetaRange[0]||theta>fThetaRange[1]||phi<fPhiRange[0]||phi>fPhiRange[1]){
+        gRandom->Sphere(px,py,pz,mom);
+        TVector3 tempP(px,py,pz);
+        theta = tempP.Theta();
+        phi = tempP.Phi();
+      }
+      momentum.SetXYZ(px,py,pz);
+    }
+
+    if(fIsDiscreteTheta){
+      auto tIndex = (Int_t)gRandom->Uniform(0,fNStepTheta);
+      momentum.SetTheta(tIndex*(fThetaRange[1]-fThetaRange[0])/(Double_t)fNStepTheta);
+    }
+    if(fIsDiscretePhi){
+      auto pIndex = (Int_t)gRandom->Uniform(0,fNStepPhi);
+      momentum.SetPhi(pIndex*(fPhiRange[1]-fPhiRange[0])/(Double_t)fNStepPhi);
+    }
+
+
+    if(fIsCocktail||fBrho!=0.)
+      momentum.SetMag(0.3*fBrho*GetQ(pdg));
+
+    // exit the loop only when momentum is outside of phase space cut 
+    if(!fPhaseSpaceCut) break;
+  }while(fPhaseSpaceCut->IsInside(momentum.Theta()*RADTODEG, momentum.Phi()*RADTODEG));
 
   auto event = (FairMCEventHeader*)primGen->GetEvent();
   if( event && !(event->IsSet()) ){

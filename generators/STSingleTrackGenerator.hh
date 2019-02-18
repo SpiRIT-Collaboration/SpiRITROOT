@@ -10,6 +10,7 @@
 #include "FairLogger.h"
 
 #include "TVector3.h"
+#include "TCutG.h"
 
 #include <map>
 #include <vector>
@@ -121,6 +122,7 @@ class STSingleTrackGenerator : public FairGenerator
     void SetGausMomentum(Double_t mean, Double_t sd) {fGausMomentum = kTRUE; fGausMomentumMean = mean; fGausMomentumSD = sd;}
     void SetGausPhi(Double_t mean, Double_t sd) {fGausPhi = kTRUE; fGausPhiMean = mean; fGausPhiSD = sd;}
     void SetGausTheta(Double_t mean, Double_t sd) {fGausTheta = kTRUE; fGausThetaMean = mean; fGausThetaSD = sd;}
+    void SetPhaseSpaceCut(const std::string& filename);
 
     // set parameters as cocktail beam run, argument is E/A setting
     void SetCocktailEvent(Double_t);
@@ -171,6 +173,8 @@ class STSingleTrackGenerator : public FairGenerator
     Int_t    fNStepTheta;
     Int_t    fNStepPhi;
 
+
+    TCutG    *fPhaseSpaceCut = nullptr;
 
     Int_t GetQ(Int_t);
     Int_t GetA(Int_t);
