@@ -73,7 +73,6 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
       TVector3 mom_mc(-999,-999,-999);
       MCTrack -> GetMomentum(mom_mc);
       mom_mc *= 1000;
-      int mostprob_idx = -1;                //most probable index of reco track array
       double min_mom = 999999;              //minimum momentum magnitude difference
 
       std::vector<STRecoTrack *> *recotrack_ary = new std::vector<STRecoTrack *>(0);
@@ -101,20 +100,6 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
 	  e_track.numEmbed = recoTrack->GetNumEmbedClusters();
 
 	  e_track_vec.push_back(e_track);
-
-	  TVector3 mom_reco = recoTrack -> GetMomentum();
-	  mom_reco -= mom_mc;
-
-	  if(iReco == 0)
-	    {
-	      min_mom = mom_reco.Mag();
-	      mostprob_idx = iReco;
-	    }
-	  else if(mom_reco.Mag() < min_mom)
-	    {
-	      min_mom = mom_reco.Mag();
-	      mostprob_idx = iReco;
-	    }
 	}
 
  
@@ -126,8 +111,6 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
 	  recotrack_ary -> push_back(el.reco);
 	  num_corr++;
 	}
-      embedTrack -> SetArrayID(mostprob_idx);
-
       //Always create embedTrack if there is MC track input
       //Failed correlation will give -999,-999,-999, momentum
 
