@@ -16,8 +16,7 @@ STEmbedTrack::STEmbedTrack(STEmbedTrack *track)
   iPID = track -> GetInitialPID();
   iMomentum = track -> GetInitialMom();
   iVertex = track -> GetInitialVertex();
-
-  array_id = track -> GetArrayID();
+  recotrack_ary = track -> GetRecoTrackArray();
 }
 
 STEmbedTrack::~STEmbedTrack()
@@ -56,7 +55,7 @@ void STEmbedTrack::SetInitialTrack(STMCTrack *track)
 
 }
 
-STRecoTrack * STEmbedTrack::GetFinalTrack()
+/*STRecoTrack * STEmbedTrack::GetFinalTrack()
 {
   STRecoTrack *finaltrack = nullptr;
   if(recotrack_ary -> size() != 0)
@@ -65,5 +64,4 @@ STRecoTrack * STEmbedTrack::GetFinalTrack()
     finaltrack = new STRecoTrack(); //initialized to 0. track not found
 
   return finaltrack;
-}
-
+}*/
