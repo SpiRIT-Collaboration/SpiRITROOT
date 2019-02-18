@@ -51,11 +51,11 @@ void DrawMultipleComplex::DrawMultiple(Rule& t_rule, std::vector<T>& t_graphs)
 {
     checkpoints_.clear();
     this->GetCheckPoints(&t_rule, checkpoints_);
-    if(t_graphs.size() != checkpoints_.size())
+    /*if(t_graphs.size() != checkpoints_.size())
     {
         std::cerr << "Number of checkpoints and graphs doesn't match. Will abort\n";
         return;
-    }
+    }*/
 
     reader_.Restart();
     t_rule.SetReader(reader_);
@@ -83,11 +83,11 @@ void DrawMultipleComplex::DrawMultiple(Rule& t_rule, std::vector<std::shared_ptr
 {
     checkpoints_.clear();
     this->GetCheckPoints(&t_rule, checkpoints_);
-    if(t_graphs.size() != checkpoints_.size())
+    /*if(t_graphs.size() != checkpoints_.size())
     {
         std::cerr << "Number of checkpoints and graphs doesn't match. Will abort\n";
         return;
-    }
+    }*/
 
     reader_.Restart();
     t_rule.SetReader(reader_);
@@ -106,6 +106,7 @@ void DrawMultipleComplex::DrawMultiple(Rule& t_rule, std::vector<std::shared_ptr
     for(auto cp : checkpoints_)
     {
         auto data = cp->GetData();
+        std::cout << cp->id << std::endl;
         for(const auto& row : data) t_graphs[cp->id]->Fill(row[0], row[1]);
     };
 }

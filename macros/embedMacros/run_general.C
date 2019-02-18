@@ -1,4 +1,3 @@
-//#include "/mnt/spirit/analysis/user/tsangc/create_submit.C"
 #include <map>
 #include <iostream>
 #include <string>
@@ -26,28 +25,51 @@ void run_general(const std::string& t_config_list, int t_start_from = 0, int t_n
 		// name of the output mc files
 		TString output_name(config_list.GetElement(i, "Filename"));
 
+		// directory for logging
+		// originally it should be created in submit_general_reco.sh
+		// but slurm log files dictates that this folder must be created before job submission
+		// that's why it mush be created now
+		auto logdir = workDir + "/macros/log/" + output_name;
+		gSystem->mkdir(logdir.Data(), true);
+
+
 		// create the parameter files
 		std::string par_name(".temp_");
 		par_name = par_name + std::to_string(i);
 		config_list.ToConfig(i, std::string(parDir.Data()) + par_name);
 
 		// skip file if it exists
-		TFile file(("data/" + output_name + ".digi.root").Data());
+		TFile file((workDir + "macros/data/" + output_name + ".digi.root").Data());
 		if(file.IsOpen())
 		{
 			std::cout << output_name << " exist. We will skip to the next job\n";
-			//run_general(t_config_list, t_start_from + num_jobs_in_queue, t_num_jobs_to_be_submitted);
-			//return;
+			run_general(t_config_list, t_start_from + num_jobs_in_queue, t_num_jobs_to_be_submitted);
+			return;
 		}
 
 		// right now we assume number of produced particles = total num / 6 as 6 being the numbers of available cocktail particles
 		// start simulation
 		std::cout << "Start simulation with output " << output_name << "\n";
-		TString command = TString::Format("sbatch ./embedMacros/submit_general.sh \"%s\" %d \"%s\" \"%s\"", output_name.Data(), i + num_jobs_in_queue, t_config_list.c_str(), par_name.c_str());
+		// copy and past logdir into submit_general
+		// the only way to get slurm log file to store in a designated area
+		char tempname[] = "/tmp/fileXXXXXX";
+		int fd = mkstemp(tempname);
+		logdir.ReplaceAll("/", "\\/");
+		TString command = TString::Format("sed \'s/LOGDIRTOBESUB/%s/g\' %s/macros/embedMacros/submit_general.sh > %s", logdir.Data(), workDir.Data(), tempname);
+		system(command.Data());
+		command = TString::Format("chmod 755 %s", tempname);
+		system(command.Data());
+		close(fd);
+
+
+		command = TString::Format("sbatch %s \"%s\" %d \"%s\" \"%s\"", tempname, output_name.Data(), i + num_jobs_in_queue, t_config_list.c_str(), par_name.c_str());
 
 		std::cout << " With command " << command << "\n";
 		system(command.Data());
 		std::cout << "Job submitted!\n";
+		// delete temp file
+		// unlink(tempname);
+		break;
 	}
 
 }

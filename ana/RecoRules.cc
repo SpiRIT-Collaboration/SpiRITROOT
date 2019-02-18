@@ -149,12 +149,39 @@ void EmbedFilter::Fill(std::vector<DataSink>& t_hist, int t_entry)
 
 void EmbedFilter::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
-    for(embed_id_ = 0; embed_id_ < (*myEmbedArray_)->GetEntries(); ++embed_id_)
+    // looks for embed id by identifying tracks which momentum is the closest to the original
+    // only do it once at each entry for efficiency consideration
+    // we have 1 helix id for each element of myEmbedArray
+    double smallest_mom_diff = 9.e9;
+    if(t_entry != current_entry_)
     {
-        embed_track_ = static_cast<STEmbedTrack*>((*myEmbedArray_)->At(embed_id_));
-        auto id = embed_track_->GetArrayID();
-        if(id == track_id_) 
+        helix_id_.clear();
+        helix_id_.resize((*myEmbedArray_)->GetEntries(), -1);
+        embed_id_ = -1;
+        current_entry_ = t_entry;
+        for(int id = 0; id < (*myEmbedArray_)->GetEntries(); ++id)
         {
+            embed_track_ = static_cast<STEmbedTrack*>((*myEmbedArray_)->At(id));
+            auto recotrack_ary = embed_track_->GetRecoTrackArray();
+            auto ini_mom = embed_track_->GetInitialMom();
+            for(auto track : *recotrack_ary)
+            {
+                const double GEV2MEV = 1e3;
+                double mom_diff = (GEV2MEV*ini_mom - track->GetMomentum()).Mag();
+                if(mom_diff < smallest_mom_diff)
+                {
+                    smallest_mom_diff = mom_diff;
+                    helix_id_[id] = track->GetHelixID();
+                }
+            }
+        }
+    }
+    for(embed_id_ = 0; embed_id_ < helix_id_.size(); ++embed_id_)
+    {
+        //std::cout << "Track helix id " << track_->GetHelixID() << " embedid " << helix_id_[embed_id_] << std::endl;
+        if(helix_id_[embed_id_] == track_->GetHelixID()) 
+        {
+            embed_track_ = static_cast<STEmbedTrack*>((*myEmbedArray_)->At(embed_id_));
             this->FillData(t_hist, t_entry);
             return;
         }
@@ -176,8 +203,9 @@ void EmbedExistence::Selection(std::vector<DataSink>& t_hist, int t_entry)
 {
     for(int i = 0; i < (*myEmbedArray_)->GetEntries(); ++i)
     {
-        auto id = static_cast<STEmbedTrack*>((*myEmbedArray_)->At(i))->GetArrayID();
-        if(id >= 0) 
+        auto embed_track = static_cast<STEmbedTrack*>((*myEmbedArray_)->At(i));
+        auto recotrack_ary = embed_track->GetRecoTrackArray();
+        if(recotrack_ary->size() > 0) 
         {
             this->FillData(t_hist, t_entry);
             return;
@@ -435,9 +463,10 @@ void MCMomentumTracks::Selection(std::vector<DataSink>& t_hist, int t_entry)
     double val;
 
     // return magnitude if axis_ = 3
+    const double GEV2MEV = 1.e3;
     if(axis_ < 3) val = mom[axis_];
     else val = mom.Mag();
-    t_hist.push_back({{val, 1}});
+    t_hist.push_back({{GEV2MEV*val, 1}});
 
     this->FillData(t_hist, t_entry);
 }

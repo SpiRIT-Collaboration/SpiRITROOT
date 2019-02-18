@@ -61,6 +61,8 @@ protected:
     std::shared_ptr<ReaderValue> myEmbedArray_;
     STEmbedTrack* embed_track_;
     int embed_id_;
+    std::vector<int> helix_id_;
+    int current_entry_ = -1;
 };
 
 class EmbedExistence : public RecoTrackRule

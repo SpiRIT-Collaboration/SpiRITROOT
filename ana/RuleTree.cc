@@ -10,6 +10,7 @@ void RuleTree::AppendTree(RuleTree& t_tree)
     if(rule_list_.empty()) first_rule_ = t_tree.first_rule_;
     else first_rule_->AppendRule(t_tree.first_rule_.get());
     current_name_ = t_tree.current_name_;
+    rule_order_ = t_tree.rule_order_;
   }
 }
 
@@ -30,6 +31,7 @@ void RuleTree::AppendSwitch(const std::string& t_name, const std::vector<double>
       rule_list_[t_name].push_back(cut);
     }
   }
+  rule_order_.push_back(t_name);
   current_name_ = t_name;
 }
 
@@ -52,22 +54,28 @@ void RuleTree::AppendXYSwitch(const std::string& t_name, const std::vector<doubl
         rule_list_[t_name].push_back(cut);
       }
   }
+  rule_order_.push_back(t_name);
   current_name_ = t_name;
 }
 
-int RuleTree::WireTap(const std::string& t_name)
+int RuleTree::WireTap(const std::string& t_name, int t_steps, int t_stride)
 {
   auto it = rule_list_.find(t_name);
   if(it == rule_list_.end()) throw std::runtime_error(("Rule named " + t_name + " is not found for checkpoint").c_str());
  
+  int hist_order;
+  if(t_stride <= 0) t_stride = it->second.size();
   for(auto& rule : it->second)
   {
-    std::shared_ptr<CheckPoint> cp(new CheckPoint(current_cp_));
+    int id = &rule - &(it->second[0]);
+    hist_order = current_cp_ + (int) ((double) id/ (double) t_steps) % t_stride;
+    std::shared_ptr<CheckPoint> cp(new CheckPoint(hist_order));
     rule_list_[t_name + "_cp"].push_back(cp);
     rule->InsertRule(cp.get());
-    current_cp_++;
   }
-
+ 
+  hist_order += 1;
+  current_cp_ += hist_order;
   return current_cp_;
 }
 
@@ -83,9 +91,9 @@ void RuleTree::EventViewer(TChain* t_chain, const std::vector<std::string>& t_na
   for(const auto& name : t_name)
   {
     start_index.push_back(current_cp_);
-    this->Inspect(name + "_xz");
+    this->Inspect(name + "_xz", "");
     xz_index.push_back(current_cp_);
-    this->Inspect(name + "_yz");
+    this->Inspect(name + "_yz", "");
     yz_index.push_back(current_cp_);
   }
 

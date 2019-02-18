@@ -31,9 +31,10 @@ void DrawMultipleComplex::GetCheckPoints(Rule* t_rule, std::vector<CheckPoint*>&
     std::set<CheckPoint*> checkpointset;
     this->GetCheckPointsSet(t_rule, checkpointset);
     // sort the vector according to checkpoint id
-    t_checkpoints.resize(checkpointset.size());
+    //t_checkpoints.resize(checkpointset.size());
+    t_checkpoints.clear();
     for(auto cp : checkpointset)
-        t_checkpoints[cp->id] = cp;
+        t_checkpoints.push_back(cp);
 }
 
 void DrawMultipleComplex::GetCheckPointsSet(Rule* t_rule, std::set<CheckPoint*>& t_checkpointset)

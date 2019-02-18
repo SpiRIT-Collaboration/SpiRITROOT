@@ -3,7 +3,7 @@
 #SBATCH --cpus-per-task=6
 #SBATCH --mem-per-cpu=2000
 #SBATCH --array=0-18
-#SBATCH -o "./slurm_%A_%a.log"
+#SBATCH -o "LOGDIRTOBESUB/slurm_%A_%a.log"
 source ${VMCWORKDIR}/build/config.sh
 
 cd ${VMCWORKDIR}\/macros
@@ -14,7 +14,7 @@ CONFIGLIST=$3
 MCFILE=$4
 
 # Creat directory for logging 
-LOGDIR=${VMCWORKDIR}\/log\/${OUTPUT}
+LOGDIR=${VMCWORKDIR}\/macros\/log\/${OUTPUT}
 mkdir -p "${LOGDIR%/*}"
 
 cd $VMCWORKDIR/macros
@@ -24,7 +24,7 @@ NTOTAL=10000
 NSPLIT=200
 GCData=/mnt/spirit/rawdata/misc/gainCalibration_groundPlane_120fC_117ns_20160509.root
 GGData=/mnt/spirit/rawdata/misc/ggNoise/ggNoise_2842.root
-MCFile=/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/data/${MCFILE}.digi.root
+MCFile=${VMCWORKDIR}/macros/data/${MCFILE}.digi.root
 #MCFile=
 SupplePath=/mnt/spirit/rawdata/misc/picked_tommy/
 ParameterFile=ST.parameters.PhysicsRuns_201707.par

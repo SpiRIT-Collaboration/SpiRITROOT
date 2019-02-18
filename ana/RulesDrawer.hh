@@ -28,6 +28,7 @@
 #include "Rules.hh"
 
 
+
 class DrawMultipleComplex
 {
 public:
@@ -85,7 +86,11 @@ protected:
     TChain chain_;
     TTreeReader reader_;
     std::vector<CheckPoint*> checkpoints_;
-    std::set<CheckPoint*> checkpointset_;
+    struct order{ 
+        inline bool operator()(const CheckPoint* a, const CheckPoint* b) const { return (a->id == b->id)? (a < b):(a->id < b->id); }
+    }; // compare id, then pointer for ordering
+
+    std::set<CheckPoint*, order> checkpointset_;
 public:
     Iterator begin() { reader_.Restart(); return Iterator(*this, reader_.begin()); };
     Iterator end() { return Iterator(*this, reader_.end());};

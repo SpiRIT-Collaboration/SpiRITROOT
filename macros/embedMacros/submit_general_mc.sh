@@ -2,7 +2,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=6
 #SBATCH --mem-per-cpu=2000
-#SBATCH -o "./log/slurm_%A.log"
+#SBATCH -o "LOGDIRTOBESUB/slurm_%A.log"
 source ${VMCWORKDIR}/build/config.sh
 
 OUTPUT=$1
@@ -21,7 +21,6 @@ NTOTAL=10000
 NSPLIT=10000
 GCData=/mnt/spirit/rawdata/misc/gainCalibration_groundPlane_120fC_117ns_20160509.root
 GGData=/mnt/spirit/rawdata/misc/ggNoise/ggNoise_2842.root
-#MCFile=/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/data/${MCFILE}
 #MCFile=
 SupplePath=/mnt/spirit/rawdata/misc/picked_tommy/
 ParameterFile=ST.parameters.PhysicsRuns_201707.par

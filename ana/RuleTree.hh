@@ -1,7 +1,7 @@
 #ifndef RULETREE_H
 #define RULETREE_H
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <utility>
 #include <exception>
@@ -28,7 +28,7 @@ public:
                                           Args... args);
 
   template<class ...Args>
-  std::vector<std::shared_ptr<TH2F>> Inspect(const std::string& t_name, Args... args);
+  std::vector<std::shared_ptr<TH2F>> Inspect(const std::string& t_name, const std::string& t_switch, Args... args);
 
   void EventCheckPoint(const std::string& t_name, const std::string& t_cpname);
   void EventViewer(TChain* t_chain, const std::vector<std::string>& t_name);
@@ -39,18 +39,19 @@ public:
                       const std::vector<double>& t_ybound);
 
 
-  int WireTap(const std::string& t_name);
+  int WireTap(const std::string& t_name, int t_steps=1, int t_stride=-1);
 
   
 
   void DrawMultiple(TChain* t_chain);
 
-//private:
+private:
   int current_cp_ = 0;
   std::vector<std::shared_ptr<TH2F>> hists_;
   std::shared_ptr<Rule> first_rule_;
   std::string current_name_; // name and suffix for switch indexing
-  std::map<std::string, std::vector<std::shared_ptr<Rule>>> rule_list_;
+  std::unordered_map<std::string, std::vector<std::shared_ptr<Rule>>> rule_list_;
+  std::vector<std::string> rule_order_;
 };
 
 #include "RuleTree.tcc"
