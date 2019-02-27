@@ -1100,7 +1100,7 @@ STHelixTrackFinder::FindVertex(TClonesArray *tracks, Int_t nIterations)
   Int_t halfOfSamples = (numSamples)/2;
 
   Double_t zArray[numSamples] = {0};
-  for (Int_t iSample = 0; iSample <= numSamples; iSample++)
+  for (Int_t iSample = 0; iSample < numSamples; iSample++)
     zArray[iSample] = (iSample - halfOfSamples) * dz + z0;
 
   for (auto z : zArray) {
@@ -1115,7 +1115,7 @@ STHelixTrackFinder::FindVertex(TClonesArray *tracks, Int_t nIterations)
 
   while (nIterations > 0) {
     dz = dz/halfOfSamples;
-    for (Int_t iSample = 0; iSample <= numSamples; iSample++)
+    for (Int_t iSample = 0; iSample < numSamples; iSample++)
       zArray[iSample] = (iSample - halfOfSamples) * dz + z0;
 
     for (auto z : zArray) {
