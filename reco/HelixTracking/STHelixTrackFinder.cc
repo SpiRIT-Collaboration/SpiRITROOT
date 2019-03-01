@@ -1169,6 +1169,11 @@ void STHelixTrackFinder::SetCylinderCut(TVector3 center, Double_t radius, Double
     cout << "== [STHelixTrackFinder] SetEllipsoidCut() was called before somewhere. EllipsoidCut will be ignored." << endl;
     fERadii = TVector3(-1, -1, -1);
   }
+
+  cout << "== [STHelixTrackFinder] Cylinderical cut is set with center at (" << center.X() << ", " << center.Y() << ", " << center.Z() << ") mm" << endl;
+  cout << "                                                     radius of " << radius << " mm" << endl;
+  cout << "                                                     length of " << zLength << " mm" << endl;
+  cout << "                                                 and margin of " << margin << " mm" << endl;
 }
 
 void STHelixTrackFinder::SetSphereCut(TVector3 center, Double_t radius, Double_t margin) {
@@ -1184,6 +1189,10 @@ void STHelixTrackFinder::SetSphereCut(TVector3 center, Double_t radius, Double_t
     cout << "== [STHelixTrackFinder] SetEllipsoidCut() was called before somewhere. EllipsoidCut will be ignored." << endl;
     fERadii = TVector3(-1, -1, -1);
   }
+
+  cout << "== [STHelixTrackFinder] Spherical cut is set with center at (" << center.X() << ", " << center.Y() << ", " << center.Z() << ") mm" << endl;
+  cout << "                                                  radius of " << radius << " mm" << endl;
+  cout << "                                              and margin of " << margin << " mm" << endl;
 }
 
 void STHelixTrackFinder::SetEllipsoidCut(TVector3 center, TVector3 radii, Double_t margin) {
@@ -1199,6 +1208,10 @@ void STHelixTrackFinder::SetEllipsoidCut(TVector3 center, TVector3 radii, Double
     fCRadius = -1;
     fZLength = -1;
   } 
+
+  cout << "== [STHelixTrackFinder] Ellipsoidal cut is set with center at (" << center.X() << ", " << center.Y() << ", " << center.Z() << ") mm" << endl;
+  cout << "                                                      radii of (" << radii.X() << ", " << radii.Y() << ", " << radii.Z() << ") mm" << endl;
+  cout << "                                                 and margin of " << margin << " mm" << endl;
 }
 
 void
