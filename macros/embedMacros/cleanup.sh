@@ -16,7 +16,7 @@ export LD_LIBRARY_PATH=${VMCWORKDIR}/macros/lib:$LD_LIBRARY_PATH
 
 
 root ${VMCWORKDIR}\/macros\/embedMacros/run_general_all.C\(\"${CONFIGLIST}\"\,${NEXTJOB},1\) -b -q -l > ${LOGDIR}_run.log
-rm -r $VMCWORKDIR/macros/data/$OUTPUT
-rm $VMCWORKDIR/macros/data/$OUTPUT_SARR*.digi.root
-rm $VMCWORKDIR/macros/data/$OUTPUT.digi.root
+rm -r $VMCWORKDIR/macros/data/${OUTPUT}
+rm $VMCWORKDIR/macros/data/${OUTPUT}_SARR*.digi.root
+rm $VMCWORKDIR/macros/data/${OUTPUT}.digi.root
 rm $VMCWORKDIR/macros/data/${OUTPUT}_SARR*.params.root
