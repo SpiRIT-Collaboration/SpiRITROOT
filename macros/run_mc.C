@@ -44,12 +44,13 @@ void AddIons(FairRunSim *fRun, TString event);
 
 void run_mc
 (
- TString name  = "urqmd_short",
+ TString name  = "Run_2841_mc_low_energy",
  Int_t   nEvent = -1,
  TString inputDir = "",
  TString outputDir = "data/",
  Bool_t  useFieldMapFile = kTRUE,
- TString parName = "Generator.config.par"
+ TString parName = "Generator.config.par",
+ Int_t   nSplit=0
 )
 {
   //////////////////////////////////////////////////////////
@@ -154,6 +155,7 @@ void run_mc
 
   auto fEvent = new STSingleTrackGenerator();
   fEvent->ReadConfig((parDir + parName).Data());
+  fEvent->SetVertexBegin(nSplit);
   //fEvent->SetCocktailEvent(300.);
   //fEvent->SetUniformRandomDirection(true);
   //fEvent->SetParticleList({2212, 211, -211, 1000010020, 1000010030});

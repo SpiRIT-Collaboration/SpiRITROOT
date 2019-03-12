@@ -10,6 +10,7 @@
 #include "FairLogger.h"
 
 #include "TVector3.h"
+#include "TCutG.h"
 
 #include <map>
 #include <vector>
@@ -29,8 +30,9 @@ public:
 
 	inline bool IsOpen(){ return vectors_.size() > 0; };
 	inline bool IsEnd() { return it_ == vectors_.end(); };
+	inline void BeginAt(int t_index){ it_ = vectors_.begin() + t_index;};
 
-	void Next() {++it_;};
+	inline void Next() {++it_;};
 	void LoopOver() {it_ = vectors_.begin();};	
 	int GetNumEvent() { int num = vectors_.size(); LOG(INFO) << " Number of events: " << num << FairLogger::endl; return num;};
 	TVector3 GetVertex() { return *it_;};
@@ -121,6 +123,7 @@ class STSingleTrackGenerator : public FairGenerator
     void SetGausMomentum(Double_t mean, Double_t sd) {fGausMomentum = kTRUE; fGausMomentumMean = mean; fGausMomentumSD = sd;}
     void SetGausPhi(Double_t mean, Double_t sd) {fGausPhi = kTRUE; fGausPhiMean = mean; fGausPhiSD = sd;}
     void SetGausTheta(Double_t mean, Double_t sd) {fGausTheta = kTRUE; fGausThetaMean = mean; fGausThetaSD = sd;}
+    void SetPhaseSpaceCut(const std::string& filename);
 
     // set parameters as cocktail beam run, argument is E/A setting
     void SetCocktailEvent(Double_t);
@@ -129,6 +132,7 @@ class STSingleTrackGenerator : public FairGenerator
 
     // load vertex location from file (it set)
     void SetVertexFile(const std::string& filename) { fVertexReader.OpenFile(filename); };
+    void SetVertexBegin(int t_begin) { fVertexReader.BeginAt(t_begin); }
 
     // set discrete angle distribution. set nDivision and angle range
     void SetDiscreteTheta(Int_t s, Double_t t0, Double_t t1)
@@ -171,6 +175,8 @@ class STSingleTrackGenerator : public FairGenerator
     Int_t    fNStepTheta;
     Int_t    fNStepPhi;
 
+
+    TCutG    *fPhaseSpaceCut = nullptr;
 
     Int_t GetQ(Int_t);
     Int_t GetA(Int_t);
