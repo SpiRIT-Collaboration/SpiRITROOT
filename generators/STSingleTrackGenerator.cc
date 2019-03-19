@@ -300,7 +300,7 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 
     if(fGausMomentum){
       Double_t mom = gRandom->Gaus(fGausMomentumMean, fGausMomentumSD);
-      momentum.SetMag(mom);
+      momentum.SetMag(fabs(mom));
     }
 
     if(fUniRandomDirection){

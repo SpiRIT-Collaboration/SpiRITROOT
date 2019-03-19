@@ -43,10 +43,10 @@ SPLIT=$((3*SLURM_ARRAY_TASK_ID+2)); root ${VMCWORKDIR}\/macros\/run_reco_experim
 
 
 wait
-ssh -o ProxyCommand="ssh -W %h:%p $FISHTANKUSER@nsclgw1.nscl.msu.edu" $FISHTANKUSER@fishtank "mkdir -p ${DESTINATION}/${OUTPUT}"
-SPLIT=$((3*SLURM_ARRAY_TASK_ID+0)); scp -o ProxyCommand="ssh -W %h:%p $FISHTANKUSER@nsclgw1.nscl.msu.edu" $VMCWORKDIR/macros/data/${OUTPUT}/*s$(printf "%02d" $SPLIT)* $FISHTANKUSER@fishtank:$DESTINATION/$OUTPUT/
-SPLIT=$((3*SLURM_ARRAY_TASK_ID+1)); scp -o ProxyCommand="ssh -W %h:%p $FISHTANKUSER@nsclgw1.nscl.msu.edu" $VMCWORKDIR/macros/data/${OUTPUT}/*s$(printf "%02d" $SPLIT)* $FISHTANKUSER@fishtank:$DESTINATION/$OUTPUT/
-SPLIT=$((3*SLURM_ARRAY_TASK_ID+2)); scp -o ProxyCommand="ssh -W %h:%p $FISHTANKUSER@nsclgw1.nscl.msu.edu" $VMCWORKDIR/macros/data/${OUTPUT}/*s$(printf "%02d" $SPLIT)* $FISHTANKUSER@fishtank:$DESTINATION/$OUTPUT/
+#ssh -o ProxyCommand="ssh -W %h:%p $FISHTANKUSER@nsclgw1.nscl.msu.edu" $FISHTANKUSER@fishtank "mkdir -p ${DESTINATION}/${OUTPUT}"
+#SPLIT=$((3*SLURM_ARRAY_TASK_ID+0)); scp -o ProxyCommand="ssh -W %h:%p $FISHTANKUSER@nsclgw1.nscl.msu.edu" $VMCWORKDIR/macros/data/${OUTPUT}/*s$(printf "%02d" $SPLIT)* $FISHTANKUSER@fishtank:$DESTINATION/$OUTPUT/
+#SPLIT=$((3*SLURM_ARRAY_TASK_ID+1)); scp -o ProxyCommand="ssh -W %h:%p $FISHTANKUSER@nsclgw1.nscl.msu.edu" $VMCWORKDIR/macros/data/${OUTPUT}/*s$(printf "%02d" $SPLIT)* $FISHTANKUSER@fishtank:$DESTINATION/$OUTPUT/
+#SPLIT=$((3*SLURM_ARRAY_TASK_ID+2)); scp -o ProxyCommand="ssh -W %h:%p $FISHTANKUSER@nsclgw1.nscl.msu.edu" $VMCWORKDIR/macros/data/${OUTPUT}/*s$(printf "%02d" $SPLIT)* $FISHTANKUSER@fishtank:$DESTINATION/$OUTPUT/
 
 
 #cd ${VMCWORKDIR}/macros
