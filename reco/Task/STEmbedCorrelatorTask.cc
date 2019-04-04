@@ -95,6 +95,11 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
 	  if(fract_embed_clusters < .5 )
 	    continue;
 
+	  //normally -1 for reco tracks
+	  //BDC reconstructed tracks(vaTracs) have the recoID set and we match to iReco
+	  //position in array. Since we only copy embed tracks in this class we need to save recoID pos
+	  recoTrack -> SetRecoID(iReco);
+	    
 	  EmbedTrack e_track;
 	  e_track.reco     = recoTrack;
 	  e_track.fract    = fract_embed_clusters;
