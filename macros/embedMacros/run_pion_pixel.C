@@ -5,6 +5,7 @@
 #include <sstream>
 #include <TString.h>
 #include <vector>
+#include "ConfigListToConfig.C"
 #include "run_general.C"
 
 
@@ -35,7 +36,7 @@ std::vector<double> linspace(double t_min, double t_max, int t_num)
     return linspace;
 }
 
-std::vector<int> SplitVertexFiles(const TString& t_vertex_file="VertexLocation.txt")
+void SplitVertexFiles(const TString& t_vertex_file, std::vector<int>& run_list, std::vector<std::string>& filenames)
 {
     /*
     Split vertex files into different files according to their run number
@@ -60,7 +61,9 @@ std::vector<int> SplitVertexFiles(const TString& t_vertex_file="VertexLocation.t
     int current_run_num = 0;
 
     std::ofstream new_vertex;
-    std::vector<int> run_list;
+    // fill vector to return data
+    run_list.clear();
+    filenames.clear();
     while(std::getline(vertex, line))
     {
         std::stringstream ss(line);
@@ -72,60 +75,65 @@ std::vector<int> SplitVertexFiles(const TString& t_vertex_file="VertexLocation.t
             run_list.push_back(run_num);
             if(new_vertex.is_open()) new_vertex.close();
 
-            new_vertex.open(TString::Format("%s/Vertex_Run_%04d", splitDir.Data(), run_num).Data());
+            std::string filename(TString::Format("%s/Vertex_Run_%04d", splitDir.Data(), run_num).Data()); 
+            new_vertex.open(filename);
+            filenames.push_back(filename);
             new_vertex << header << "\n";
         }
         new_vertex << line << "\n";
     }
-    
-    return run_list;
 }
 
 void run_pion_pixel()
 {
     TString workDir   = gSystem -> Getenv("VMCWORKDIR");
-      TString parDir    = workDir + "/parameters/";
+    TString parDir    = workDir + "/parameters/";
 
     // set pixel size
-    const double phi_min = 90.;
-    const double phi_max = 91.;
-    const int phi_num_pixel = 1;
+    const double phi_min = -180;
+    const double phi_max = 180;
+    const int phi_num_pixel = 10;
 
     const double theta_min = 0.;
-    const double theta_max = 1.;
-    const int theta_num_pixel = 1;
+    const double theta_max = 30.;
+    const int theta_num_pixel = 5;
 
-    const double momentum_min = 100; // MeV / c
-    const double momentum_max = 600;
-    const int momentum_num = 2;
+    const double momentum_min = 350; // MeV / c
+    const double momentum_max = 360;
+    const int momentum_num = 1;
 
-    std::vector<RunInfo> info_list;
+    ConfigListIO configlist;
+    configlist.SetHeader({"Filename", "Momentum", "VertexFile", "Particle", "Phi", "Theta"});
 
     int index = 0;
-    auto num_list = SplitVertexFiles();
+    std::vector<int> num_list;
+    std::vector<std::string> filename_list;
+    SplitVertexFiles("VertexLocation_real.txt", num_list, filename_list);
     for(const auto& momentum : linspace(momentum_min, momentum_max, momentum_num))
         for(const auto& phi : linspace(phi_min, phi_max, phi_num_pixel))
             for(const auto& theta : linspace(theta_min, theta_max, theta_num_pixel))
             {
-                for(const auto& num : num_list)
+                for(int i = 0; i < 1/*num_list.size()*/; ++i)
                 {
-                    RunInfo info;
-                    info.filename = std::string(TString::Format("PionPixel/Run_%04d/PionPixel_ID_%04d_Momentum_%3.2f", num, index, momentum).Data());
-                    info.momentum = momentum/1.e3;
-                    info.vertexfile = std::string(TString::Format("%s/VertexSplit/Vertex_Run_%04d", parDir.Data(), num).Data());
-                    info.particle = pname2id.at("pi+");
-                    info.phi = phi;
-                    info.theta = theta;
+                    int num = 2841;//num_list[i];
+                    std::string config_filename= filename_list[i];
 
-                    std::cout << "Processing " << info.filename << "\r";
-                    info_list.push_back(info);
+                    configlist.SetElement("Filename", std::string(TString::Format("PionPixel/Run_%04d/PionPixel_ID_%04d_Momentum_%3.2f", num, index, momentum).Data()));
+                    configlist.SetElement("Momentum", momentum/1.e3);
+                    configlist.SetElement("VertexFile", "/mnt/spirit/analysis/user/tsangc/SpiRITROOT/parameters/Vertex_r2841.txt"/*config_filename*/);
+                    configlist.SetElement("Particle", pname2id.at("pi+"));
+                    configlist.SetElement("Phi", phi);
+                    configlist.SetElement("Theta", theta);
+
+                    std::cout << "Processing " << TString::Format("PionPixel/Run_%04d/PionPixel_ID_%04d_Momentum_%3.2f", num, index, momentum) << "\r";
+                    configlist.Fill();
                 }
 		++index;
             }
     std::cout << "\n";
 
     std::string list_name("pion_pixel.dat");
-    RunListToFile(info_list, list_name);
+    configlist.ToText(list_name);
     run_general(list_name);
 
 }

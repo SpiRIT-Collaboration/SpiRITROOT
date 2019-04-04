@@ -27,6 +27,3 @@ SPLIT=$((NTOTAL*SLURM_ARRAY_TASK_ID))
 root run_mc.C\(\"$OUTPUT\",${NTOTAL},\"\",\"data/\",kTRUE,\"$CONFIGFILE\",$SPLIT\) -b -q -l > ${LOGDIR}_mc.log
 root run_digi.C\(\"$OUTPUT\"\) -b -q -l > ${LOGDIR}_digi.log
 
-#remove all mc files
-rm $VMCWORKDIR/macros/data/$OUTPUT.mc.root
-

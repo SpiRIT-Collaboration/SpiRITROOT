@@ -18,14 +18,14 @@ export LD_LIBRARY_PATH=${VMCWORKDIR}/macros/lib:$LD_LIBRARY_PATH
 
 root ${VMCWORKDIR}\/macros\/embedMacros/run_general_all.C\(\"${CONFIGLIST}\"\,${NEXTJOB},1\) -b -q -l > ${LOGDIR}_run.log
 
-echo TEST
 ssh -o ProxyCommand="ssh -W %h:%p $FISHTANKUSER@nsclgw1.nscl.msu.edu" $FISHTANKUSER@fishtank "mkdir -p ${DESTINATION}/${OUTPUT}"
 scp -o ProxyCommand="ssh -W %h:%p $FISHTANKUSER@nsclgw1.nscl.msu.edu" $VMCWORKDIR/macros/data/${OUTPUT}/*.root $FISHTANKUSER@fishtank:$DESTINATION/$OUTPUT/
-if [ $? -eq 0 ];
-then
-    rm -r $VMCWORKDIR/macros/data/${OUTPUT}
-fi
 
+echo "Cleaning up all mc file"
+rm $VMCWORKDIR/macros/data/${OUTPUT}_SARR*.mc.root
+echo "Cleaining up all Digi file"
 rm $VMCWORKDIR/macros/data/${OUTPUT}_SARR*.digi.root
+echo "Cleaining up Merged digi file"
 rm $VMCWORKDIR/macros/data/${OUTPUT}.digi.root
+echo "Cleaning up params file"
 rm $VMCWORKDIR/macros/data/${OUTPUT}_SARR*.params.root

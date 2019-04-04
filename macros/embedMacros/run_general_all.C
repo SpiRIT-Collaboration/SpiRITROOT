@@ -7,7 +7,7 @@
 #include "ConfigListToConfig.C"
 
 const int num_jobs_in_queue = 10; // only allow this amount of jobs on ember for other users
-const int NTOTAL=10000;
+const int NTOTAL=100;
 const std::string FISHTANK_USER = "tsangc";
 const std::string DESTINATION = "/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/data";
 
@@ -91,9 +91,9 @@ void run_general_all(const std::string& t_config_list, int t_start_from = 0, int
     system(command.Data());
     std::cout << "Job submitted!\n";
     // delete temp file
-    //unlink(tempname4reco);
-    //unlink(tempname4mc);
-    //unlink(tempname4cleanup);
+    unlink(tempname4reco);
+    unlink(tempname4mc);
+    unlink(tempname4cleanup);
   }
 
 }
