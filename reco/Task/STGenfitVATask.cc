@@ -317,6 +317,7 @@ void STGenfitVATask::Exec(Option_t *opt)
 
     Int_t numRowClusters = 0, numRowClusters90 = 0;
     Int_t numLayerClusters = 0, numLayerClusters90 = 0;
+    Int_t numEmbedClusters = 0;
     Double_t helixChi2R = 0, helixChi2X = 0, helixChi2Y = 0, helixChi2Z = 0;
     Double_t genfitChi2R = 0, genfitChi2X = 0, genfitChi2Y = 0, genfitChi2Z = 0;
     std::vector<Int_t> fByLayerClusters(112,0); //If cluster in layer 1 else 0
@@ -325,6 +326,9 @@ void STGenfitVATask::Exec(Option_t *opt)
     for (auto cluster : *helixTrack -> GetClusterArray()) {
       if (!cluster -> IsStable())
         continue;
+
+      if( cluster -> IsEmbed())
+        numEmbedClusters++;
 
       auto pos = cluster -> GetPosition();
       Int_t clusRow = (pos.X() + 8*54.)/8;
@@ -372,6 +376,7 @@ void STGenfitVATask::Exec(Option_t *opt)
       genfitChi2Y += (point.Y() - pos.Y())*(point.Y() - pos.Y());
       genfitChi2Z += (point.Z() - pos.Z())*(point.Z() - pos.Z());
     }
+    vaTrack -> SetNumEmbedClusters(numEmbedClusters);
     vaTrack -> SetNumRowClusters(numRowClusters);
     vaTrack -> SetNumLayerClusters(numLayerClusters);
     vaTrack -> SetNumRowClusters90(numRowClusters90);
