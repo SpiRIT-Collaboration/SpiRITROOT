@@ -63,6 +63,7 @@ void geomSpiRIT()
   FairGeoMedium *FGMpcb = media -> getMedium("pcb");
   FairGeoMedium *FGMaluminium = media -> getMedium("aluminium");
   FairGeoMedium *FGMcopper = media -> getMedium("copper");
+  FairGeoMedium *FGMpolycarb = media -> getMedium("polycarb");
 
   geoBuilder -> createMedium(FGMvacuum);
   geoBuilder -> createMedium(FGMp10);
@@ -70,6 +71,7 @@ void geomSpiRIT()
   geoBuilder -> createMedium(FGMpcb);
   geoBuilder -> createMedium(FGMaluminium);
   geoBuilder -> createMedium(FGMcopper);
+  geoBuilder -> createMedium(FGMpolycarb);
   
   gGeoManager = (TGeoManager *) gROOT -> FindObject("FAIRGeom");
   gGeoManager -> SetName("SpiRIT");
@@ -80,6 +82,7 @@ void geomSpiRIT()
   TGeoMedium *pcb = gGeoManager -> GetMedium("pcb");
   TGeoMedium *aluminium = gGeoManager -> GetMedium("aluminium");
   TGeoMedium *copper = gGeoManager -> GetMedium("copper");
+  TGeoMedium *polycarb = gGeoManager -> GetMedium("polycarb");
 
   // ----------------------------------------------------
   //  Dimensions (cm)
@@ -241,10 +244,10 @@ void geomSpiRIT()
   //  Field Cage Corner Frame
   // ----------------------------------------------------
 
-  TGeoVolume *cageCorner1 = gGeoManager -> MakeTubs("cageCorner1",aluminium,rActiveCorner,rCageCorner,dyActive/2,0  ,90 );
-  TGeoVolume *cageCorner2 = gGeoManager -> MakeTubs("cageCorner2",aluminium,rActiveCorner,rCageCorner,dyActive/2,90 ,180);
-  TGeoVolume *cageCorner3 = gGeoManager -> MakeTubs("cageCorner3",aluminium,rActiveCorner,rCageCorner,dyActive/2,180,270);
-  TGeoVolume *cageCorner4 = gGeoManager -> MakeTubs("cageCorner4",aluminium,rActiveCorner,rCageCorner,dyActive/2,270,360);
+  TGeoVolume *cageCorner1 = gGeoManager -> MakeTubs("cageCorner1",pcb,rActiveCorner,rCageCorner,dyActive/2,0  ,90 );
+  TGeoVolume *cageCorner2 = gGeoManager -> MakeTubs("cageCorner2",pcb,rActiveCorner,rCageCorner,dyActive/2,90 ,180);
+  TGeoVolume *cageCorner3 = gGeoManager -> MakeTubs("cageCorner3",pcb,rActiveCorner,rCageCorner,dyActive/2,180,270);
+  TGeoVolume *cageCorner4 = gGeoManager -> MakeTubs("cageCorner4",pcb,rActiveCorner,rCageCorner,dyActive/2,270,360);
 
   // ----------------------------------------------------
   //  Field Cage Frame
@@ -256,12 +259,12 @@ void geomSpiRIT()
   Double_t dyCageFrontHole = 17;
   Double_t dyCageFrontB  = dyActive - dyCageFrontT - dyCageFrontHole;
 
-  TGeoVolume* cageRight  = gGeoManager -> MakeBox("cageRight" ,aluminium,dwCage/2,dyActive/2,dzActiveIn/2);
-  TGeoVolume* cageLeft   = gGeoManager -> MakeBox("cageLeft"  ,aluminium,dwCage/2,dyActive/2,dzActiveIn/2);
-  TGeoVolume* cageFrontR = gGeoManager -> MakeBox("cageFrontR",aluminium,dxCageFrontRL/2,dyActive/2,dwCage/2);
-  TGeoVolume* cageFrontL = gGeoManager -> MakeBox("cageFrontL",aluminium,dxCageFrontRL/2,dyActive/2,dwCage/2);
-  TGeoVolume* cageFrontT = gGeoManager -> MakeBox("cageFrontT",aluminium,dxCageFrontTB/2,dyCageFrontT/2,dwCage/2);
-  TGeoVolume* cageFrontB = gGeoManager -> MakeBox("cageFrontB",aluminium,dxCageFrontTB/2,dyCageFrontB/2,dwCage/2);
+  TGeoVolume* cageRight  = gGeoManager -> MakeBox("cageRight" ,pcb,dwCage/2,dyActive/2,dzActiveIn/2);
+  TGeoVolume* cageLeft   = gGeoManager -> MakeBox("cageLeft"  ,pcb,dwCage/2,dyActive/2,dzActiveIn/2);
+  TGeoVolume* cageFrontR = gGeoManager -> MakeBox("cageFrontR",pcb,dxCageFrontRL/2,dyActive/2,dwCage/2);
+  TGeoVolume* cageFrontL = gGeoManager -> MakeBox("cageFrontL",pcb,dxCageFrontRL/2,dyActive/2,dwCage/2);
+  TGeoVolume* cageFrontT = gGeoManager -> MakeBox("cageFrontT",pcb,dxCageFrontTB/2,dyCageFrontT/2,dwCage/2);
+  TGeoVolume* cageFrontB = gGeoManager -> MakeBox("cageFrontB",pcb,dxCageFrontTB/2,dyCageFrontB/2,dwCage/2);
 
   Double_t offxCageSide   =  dwCage/2 + dxActiveIn/2 + rActiveCorner;
   Double_t offzCageFront  =  dzActiveIn/2 + rActiveCorner+dwCage/2;
@@ -316,14 +319,14 @@ void geomSpiRIT()
   Double_t thetaFrontWindowFrame2 = TMath::RadToDeg()*TMath::ATan(dxFrontWindowInnerFrame/2/dzFrontWindow);
   Double_t offxFrontWindowFrame2 = 0.16 - 3.50125; // TODO ???
 
-  TGeoVolume *FWFR = gGeoManager -> MakeBox("FWFR",aluminium,dwFrontWindowFrame/2,dyFrontWindowFrame/2,dzFrontWindow/2);
-  TGeoVolume *FWFL = gGeoManager -> MakeBox("FWFL",aluminium,dwFrontWindowFrame/2,dyFrontWindowFrame/2,dzFrontWindow/2);
-  TGeoVolume *FWFT = gGeoManager -> MakeBox("FWFT",aluminium,dxyFrontWindow/2,dwFrontWindowFrame/2,dzFrontWindow/2);
-  TGeoVolume *FWFB = gGeoManager -> MakeBox("FWFB",aluminium,dxyFrontWindow/2,dxFrontWindowFrame/2,dzFrontWindow/2);
-  TGeoVolume *FWF2R = gGeoManager -> MakeTrap("FWF2R",aluminium,dzFrontWindow/2,thetaFrontWindowFrame2,0,dxyFrontWindow/2,
+  TGeoVolume *FWFR = gGeoManager -> MakeBox("FWFR",polycarb,dwFrontWindowFrame/2,dyFrontWindowFrame/2,dzFrontWindow/2);
+  TGeoVolume *FWFL = gGeoManager -> MakeBox("FWFL",polycarb,dwFrontWindowFrame/2,dyFrontWindowFrame/2,dzFrontWindow/2);
+  TGeoVolume *FWFT = gGeoManager -> MakeBox("FWFT",polycarb,dxyFrontWindow/2,dwFrontWindowFrame/2,dzFrontWindow/2);
+  TGeoVolume *FWFB = gGeoManager -> MakeBox("FWFB",polycarb,dxyFrontWindow/2,dxFrontWindowFrame/2,dzFrontWindow/2);
+  TGeoVolume *FWF2R = gGeoManager -> MakeTrap("FWF2R",polycarb,dzFrontWindow/2,thetaFrontWindowFrame2,0,dxyFrontWindow/2,
                                                                                           dxFrontWindowInnerFrame/2,dxFrontWindowInnerFrame/2,0,
                                                                                           dxyFrontWindow/2,0,0,0);
-  TGeoVolume *FWF2L = gGeoManager -> MakeTrap("FWF2L",aluminium,dzFrontWindow/2,-thetaFrontWindowFrame2,0,dxyFrontWindow/2,
+  TGeoVolume *FWF2L = gGeoManager -> MakeTrap("FWF2L",polycarb,dzFrontWindow/2,-thetaFrontWindowFrame2,0,dxyFrontWindow/2,
                                                                                           dxFrontWindowInnerFrame/2,dxFrontWindowInnerFrame/2,0,
                                                                                           dxyFrontWindow/2,0,0,0);
 
@@ -370,12 +373,12 @@ void geomSpiRIT()
   Double_t offxFrontWindowCradleMS = dxFrontWindowCradle/2. - dwFrontWindowCradle/2.;
   Double_t offyFrontWindowCradleMS = dyActive/2. - dyFrontWindowCradleTop - dwFrontWindowCradle - dyFrontWindowCradle/2.;
 
-  TGeoVolume *FWCT  = gGeoManager -> MakeBox("FWCT",aluminium,dxFrontWindowCradleTB/2.,dyFrontWindowCradleTop/2.,dzFrontWindowCradle/2.);
-  TGeoVolume *FWCB  = gGeoManager -> MakeBox("FWCB",aluminium,dxFrontWindowCradleTB/2.,dyFrontWindowCradleBottom/2.,dzFrontWindowCradle/2.);
-  TGeoVolume *FWCMB = gGeoManager -> MakeBox("FWCMB",aluminium,dxFrontWindowCradle/2.,dwFrontWindowCradle/2.,dzFrontWindowCradle/2.);
-  TGeoVolume *FWCMT = gGeoManager -> MakeBox("FWCMT",aluminium,dxFrontWindowCradle/2.,dwFrontWindowCradle/2.,dzFrontWindowCradle/2.);
-  TGeoVolume *FWCML = gGeoManager -> MakeBox("FWCML",aluminium,dwFrontWindowCradle/2.,dyFrontWindowCradle/2.,dzFrontWindowCradle/2.);
-  TGeoVolume *FWCMR = gGeoManager -> MakeBox("FWCMR",aluminium,dwFrontWindowCradle/2.,dyFrontWindowCradle/2.,dzFrontWindowCradle/2.);
+  TGeoVolume *FWCT  = gGeoManager -> MakeBox("FWCT",polycarb,dxFrontWindowCradleTB/2.,dyFrontWindowCradleTop/2.,dzFrontWindowCradle/2.);
+  TGeoVolume *FWCB  = gGeoManager -> MakeBox("FWCB",polycarb,dxFrontWindowCradleTB/2.,dyFrontWindowCradleBottom/2.,dzFrontWindowCradle/2.);
+  TGeoVolume *FWCMB = gGeoManager -> MakeBox("FWCMB",polycarb,dxFrontWindowCradle/2.,dwFrontWindowCradle/2.,dzFrontWindowCradle/2.);
+  TGeoVolume *FWCMT = gGeoManager -> MakeBox("FWCMT",polycarb,dxFrontWindowCradle/2.,dwFrontWindowCradle/2.,dzFrontWindowCradle/2.);
+  TGeoVolume *FWCML = gGeoManager -> MakeBox("FWCML",polycarb,dwFrontWindowCradle/2.,dyFrontWindowCradle/2.,dzFrontWindowCradle/2.);
+  TGeoVolume *FWCMR = gGeoManager -> MakeBox("FWCMR",polycarb,dwFrontWindowCradle/2.,dyFrontWindowCradle/2.,dzFrontWindowCradle/2.);
 
   TGeoTranslation *transFWCT  = new TGeoTranslation("transFWCT",0,offyFrontWindowCradleTop,offzFrontWindowCradle);
   TGeoTranslation *transFWCB  = new TGeoTranslation("transFWCB",0,offyFrontWindowCradleBottom,offzFrontWindowCradle);
@@ -577,10 +580,10 @@ void geomSpiRIT()
 
   active            -> SetMedium(p10);
   cageSide          -> SetMedium(aluminium);
-  cageFront         -> SetMedium(aluminium);
+  cageFront         -> SetMedium(pcb);
   frontWindow       -> SetMedium(kapton);
-  frontWindowFrame  -> SetMedium(aluminium);
-  frontWindowCradle -> SetMedium(vacuum);
+  frontWindowFrame  -> SetMedium(polycarb);
+  frontWindowCradle -> SetMedium(polycarb);
   backWindow        -> SetMedium(kapton);
   backWindowFrame   -> SetMedium(vacuum);
   topFrame          -> SetMedium(vacuum);
