@@ -12,6 +12,7 @@
 #include "TLorentzVector.h"
 #include "TString.h"
 
+class pBUUProcessor;
 
 class STTransportModelEventGenerator : public FairGenerator
 {
@@ -41,6 +42,7 @@ class STTransportModelEventGenerator : public FairGenerator
       UrQMD,
       AMD,
       PHITS,
+      pBUU,
     };
 
   private:
@@ -63,6 +65,8 @@ class STTransportModelEventGenerator : public FairGenerator
     TVector2          fBeamAngle;             // beam angle
     TVector2          fBeamAngleABSigma;      // beam angle fluctuation in AB (gaus dist.)
     Bool_t            fIsRandomRP;            // flag for random reaction plane input
+
+    pBUUProcessor     *fpBUU;                  // pBUUProcessor
 
     Int_t kfToPDG(Long64_t kfCode);  // for PHITS data.
     void  RegisterFileIO();
@@ -121,6 +125,79 @@ class AMDParticle : public TObject
     Int_t fFragmentID;  // fragment ID of AMD
 
     ClassDef(AMDParticle,1);
+};
+
+class pBUUProcessor : public TObject
+{
+  public:
+    pBUUProcessor() {}
+    virtual ~pBUUProcessor() {}
+
+    void ConnectBranch(TTree *tree) {
+      tree -> SetBranchAddress("multi", &multi);
+      tree -> SetBranchAddress("pid", &pid);
+      tree -> SetBranchAddress("px", &px);
+      tree -> SetBranchAddress("py", &py);
+      tree -> SetBranchAddress("pz", &pz);
+      tree -> SetBranchAddress("t", &t);
+      tree -> SetBranchAddress("x", &x);
+      tree -> SetBranchAddress("y", &y);
+      tree -> SetBranchAddress("z", &z);
+      tree -> SetBranchAddress("rho", &rho);
+
+      tree -> SetBranchAddress("totEne", &totEne);
+      tree -> SetBranchAddress("kinEne", &kinEne);
+      tree -> SetBranchAddress("pt", &pt);
+      tree -> SetBranchAddress("theta", &theta);
+      tree -> SetBranchAddress("phi", &phi);
+
+      tree -> SetBranchAddress("rap", &rap);
+      tree -> SetBranchAddress("pzCMS", &pzCMS);
+      tree -> SetBranchAddress("totEneCMS", &totEneCMS);
+      tree -> SetBranchAddress("kinEneCMS", &kinEneCMS);
+      tree -> SetBranchAddress("thetaCMS", &thetaCMS);
+    }
+
+    Int_t GetPDG(Int_t index) {
+      switch (pid[index]) {
+        case  1: return 2212;
+        case  2: return 2112;
+        case  3: return 1000010020;
+        case  4: return 1000020030;
+        case  5: return 1000010030;
+        case 13: return 211;
+        case 14: return 111;
+        case 15: return -211;
+        default: break;
+      }
+
+      return -9999;
+    }
+
+    Short_t multi;
+    Short_t pid[300];
+    Short_t px[300];
+    Short_t py[300];
+    Short_t pz[300];
+    Short_t t[300];
+    Short_t x[300];
+    Short_t y[300];
+    Short_t z[300];
+    Short_t rho[300];
+
+    Float_t totEne[300];
+    Float_t kinEne[300];
+    Float_t theta[300];
+    Float_t phi[300];
+    Float_t pt[300];
+
+    Float_t rap[300];
+    Float_t pzCMS[300];
+    Float_t totEneCMS[300];
+    Float_t kinEneCMS[300];
+    Float_t thetaCMS[300];
+
+  ClassDef(pBUUProcessor, 2);
 };
 
 #endif
