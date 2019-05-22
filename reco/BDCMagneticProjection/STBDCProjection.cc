@@ -98,7 +98,10 @@ void STBDCProjection::ProjectParticle(Double_t sx, Double_t sy, Double_t sz, Dou
   m_b = sb;
   m_end_z = endz;
   m_charge = charge;
-  m_brho = 3.3356*m_momentum/m_charge/1000.;  //given charge in multiples of proton charge, momentum in MeV/c, provides Brho in T*m
+  m_pz=m_momentum/std::sqrt(1+std::tan(m_a/1000.)*std::tan(m_a/1000.)+std::tan(m_b/1000.)*std::tan(m_b/1000.));
+  m_px=m_pz*std::tan(m_a/1000.);
+  m_py=m_pz*std::tan(m_b/1000.);
+  m_brho=3.3356*std::sqrt(m_momentum*m_momentum-m_py*m_py)/m_charge/1000.; //given charge in multiples of proton charge, momentum in MeV/c, provides Brho in T*m
   //TLoadField();
   m_By = 0;
 
@@ -114,14 +117,14 @@ void STBDCProjection::ProjectParticle(Double_t sx, Double_t sy, Double_t sz, Dou
     }
   }
 
-  m_py = m_momentum*TMath::Sin(m_b/1000.);
-  m_px = TMath::Sqrt(m_momentum*m_momentum - m_py*m_py)*TMath::Sin(m_a/1000.);
-  m_pz = TMath::Sqrt(m_momentum*m_momentum - m_py*m_py - m_px*m_px);
+  m_pz=m_momentum/std::sqrt(1+std::tan(m_a/1000.)*std::tan(m_a/1000.)+std::tan(m_b/1000.)*std::tan(m_b/1000.));
+  m_px=m_pz*std::tan(m_a/1000.);
+  m_py=m_pz*std::tan(m_b/1000.);
 
 }
 void STBDCProjection::MagStep() {
   Double_t da = 0.;  //no change in angle unless |B|>0
-  m_brho = 3.3356*m_momentum/m_charge/1000.;
+  m_brho = 3.3356*std::sqrt(m_momentum*m_momentum-m_py*m_py)/m_charge/1000.;
   dx = -dz*TMath::Tan(m_a/1000.);  //linear projection used unless |B|>0
   dy = dz*TMath::Tan(m_b/1000.);
   if (TMath::Abs(m_By) > 0.) {
