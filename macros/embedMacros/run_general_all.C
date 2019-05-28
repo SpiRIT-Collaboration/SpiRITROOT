@@ -6,8 +6,8 @@
 #include <vector>
 #include "ConfigListToConfig.C"
 
-const int num_jobs_in_queue = 10; // only allow this amount of jobs on ember for other users
-const int NTOTAL=100;
+const int num_jobs_in_queue = 20; // only allow this amount of jobs on ember for other users
+const int NTOTAL=10000;
 const std::string FISHTANK_USER = "tsangc";
 const std::string DESTINATION = "/mnt/spirit/analysis/user/tsangc/SpiRITROOT/macros/data";
 

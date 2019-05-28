@@ -25,5 +25,6 @@ mkdir -p "${LOGDIR%/*}"
 cd $VMCWORKDIR/macros
 SPLIT=$((NTOTAL*SLURM_ARRAY_TASK_ID))
 root run_mc.C\(\"$OUTPUT\",${NTOTAL},\"\",\"data/\",kTRUE,\"$CONFIGFILE\",$SPLIT\) -b -q -l > ${LOGDIR}_mc.log
+sleep 1
 root run_digi.C\(\"$OUTPUT\"\) -b -q -l > ${LOGDIR}_digi.log
 
