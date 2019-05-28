@@ -69,6 +69,7 @@ void STTransportModelEventGenerator::RegisterFileIO()
   if(fInputName.BeginsWith("phits"))       { fGen = TransportModel::PHITS;  treeName = "tree";      partBranchName = "fparts"; }
   else if(fInputName.BeginsWith("amd"))    { fGen = TransportModel::AMD;    treeName = "amdTree";   partBranchName = "AMDParticle"; }
   else if(fInputName.BeginsWith("urqmd"))  { fGen = TransportModel::UrQMD;  treeName = "urqmdTree"; partBranchName = "partArray"; }
+  else if(fInputName.BeginsWith("pBUU"))   { fGen = TransportModel::pBUU;   treeName = "tree";      partBranchName = ""; }
   else
     LOG(FATAL)<<"STTransportModelEventGenerator cannot accept event files without specifying generator names."<<FairLogger::endl;
   
@@ -76,14 +77,23 @@ void STTransportModelEventGenerator::RegisterFileIO()
 
   LOG(INFO)<<"-I Opening file: "<<fInputName<<FairLogger::endl;
 
-  fInputTree -> SetBranchAddress("b",&fB);
   Bool_t isColSysFound = kFALSE;
   if(fInputTree->FindBranch("beamVector")&&fInputTree->FindBranch("targetVector")){
     isColSysFound = kTRUE;
     fInputTree -> SetBranchAddress("beamVector",&fBeamVector);
     fInputTree -> SetBranchAddress("targetVector",&fTargetVector);
   }
-  fInputTree -> SetBranchAddress(partBranchName,&fPartArray);
+  if (fGen != TransportModel::pBUU) {
+    fInputTree -> SetBranchAddress(partBranchName,&fPartArray);
+    fInputTree -> SetBranchAddress("b",&fB);
+  } else {
+    fpBUU = new pBUUProcessor();
+    fpBUU -> ConnectBranch(fInputTree);
+
+    auto temp = TString(fInputFile -> GetName()).Tokenize("/");
+    fB = TString(((TObjString *) temp -> At(5)) -> GetString()[1]).Atoi();
+    delete temp;
+  }
 
   fNEvents = fInputTree->GetEntries();
 
@@ -132,7 +142,11 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 
 
   fInputTree -> GetEntry(fCurrentEvent);
-  Int_t nPart = fPartArray->GetEntries();
+  Int_t nPart = 0;
+  if (fGen != TransportModel::pBUU)
+    nPart = fPartArray->GetEntries();
+  else
+    nPart = fpBUU -> multi;
   auto event = (FairMCEventHeader*)primGen->GetEvent();
   if( event && !(event->IsSet()) ){
     event->SetEventID(fCurrentEvent);
@@ -145,12 +159,14 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     event->SetNPrim(nPart);
   }
 
-
   fFillBeamVector->Clear();
   fFillTargetVector->Clear();
-  new((*fFillBeamVector)[0]) TLorentzVector(*fBeamVector);
-  new((*fFillTargetVector)[0]) TLorentzVector(*fTargetVector);
+  if (fBeamVector)
+    new((*fFillBeamVector)[0]) TLorentzVector(*fBeamVector);
+  if (fTargetVector)
+    new((*fFillTargetVector)[0]) TLorentzVector(*fTargetVector);
 
+  Int_t numNeutrons = 0;
   for(Int_t iPart=0; iPart<nPart; iPart++){
     Int_t pdg;
     TVector3 p;
@@ -181,9 +197,22 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 	  p.SetMag(p.Mag()/1000.);
 	  break;
 	}
+      case TransportModel::pBUU:
+  {
+    pdg = fpBUU -> GetPDG(iPart);
+    if (pdg == 2112) {
+      numNeutrons++;
+      continue;
+    }
+    p = TVector3(fpBUU -> px[iPart], fpBUU -> py[iPart], fpBUU -> pz[iPart]);
+    p.SetMag(p.Mag()/1000.);
+    break;
+  }
       default:
 	break;
     }
+
+    event -> SetNPrim(nPart - numNeutrons);
 
     p.SetPhi(p.Phi()+phiRP);  // random reaction plane orientation.
     p.RotateY(beamAngleA);    // rotate w.r.t Y axis
@@ -215,7 +244,12 @@ void STTransportModelEventGenerator::RegisterHeavyIon()
   std::vector<Int_t> ions;
   for(Int_t i=0; i<fNEvents; i++){
     fInputTree->GetEntry(i);
-    for(Int_t iPart=0; iPart<fPartArray->GetEntries(); iPart++){
+    auto nPart = 0;
+    if (fGen != TransportModel::pBUU)
+      nPart = fPartArray -> GetEntries();
+    else
+      nPart = fpBUU -> multi;
+    for(Int_t iPart=0; iPart<nPart; iPart++){
       Int_t pdg;
       switch(fGen){
 	case TransportModel::PHITS:
@@ -236,6 +270,11 @@ void STTransportModelEventGenerator::RegisterHeavyIon()
 	    pdg = part->GetPdg();
 	    break;
 	  }
+  case TransportModel::pBUU:
+    {
+      pdg = fpBUU -> GetPDG(iPart);
+      break;
+    }
 	default:
 	  break;
       }

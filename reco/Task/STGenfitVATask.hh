@@ -34,6 +34,7 @@ class STGenfitVATask : public STRecoTask
     void SetBeamFile(TString fileName);
     void SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_t offsetY);
     void SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple);
+    void SetFixedVertex(Double_t x, Double_t y, Double_t z);
 
     void SetUseRave(Bool_t val = kTRUE);
 
@@ -72,6 +73,10 @@ class STGenfitVATask : public STRecoTask
     Double_t fPeakZ = -9999;
     Double_t fSigma = 0;
     Double_t fSigmaMultiple = 0;
+
+    Double_t fFixedVertexX = -9999;
+    Double_t fFixedVertexY = -9999;
+    Double_t fFixedVertexZ = -9999;
 
   ClassDef(STGenfitVATask, 1)
 };

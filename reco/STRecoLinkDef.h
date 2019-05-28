@@ -103,5 +103,6 @@
 #pragma link C++ class STSource+;
 #pragma link C++ class STHelixTrackFinder+;
 #pragma link C++ class STCorrection+;
+#pragma link C++ class STBDCProjection+;
 
 #endif

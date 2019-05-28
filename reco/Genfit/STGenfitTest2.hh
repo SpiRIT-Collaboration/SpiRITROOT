@@ -32,7 +32,7 @@ class STGenfitTest2
   public:
     STGenfitTest2();
     STGenfitTest2(bool loadSamurai);
-    ~STGenfitTest2();
+    ~STGenfitTest2() {};
 
     void SetTargetPlane(Double_t x, Double_t y, Double_t z); // in cm
 

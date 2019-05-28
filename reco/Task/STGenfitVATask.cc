@@ -182,6 +182,8 @@ void STGenfitVATask::Exec(Option_t *opt)
         bdcVertex -> SetIsCollisionVertex();
       }
     }
+  } else if (fFixedVertexX != -9999 && fFixedVertexY != -9999 && fFixedVertexZ != -9999) {
+    vertexPos = TVector3(fFixedVertexX, fFixedVertexY, fFixedVertexZ);
   }
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();
@@ -491,6 +493,13 @@ void STGenfitVATask::SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigm
   fPeakZ = peakZ;
   fSigma = sigma;
   fSigmaMultiple = sigmaMultiple;
+}
+
+void STGenfitVATask::SetFixedVertex(Double_t x, Double_t y, Double_t z)
+{
+  fFixedVertexX = x;
+  fFixedVertexX = y;
+  fFixedVertexX = z;
 }
 
 void STGenfitVATask::SetUseRave(Bool_t val)

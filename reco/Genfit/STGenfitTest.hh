@@ -29,7 +29,7 @@ class STGenfitTest
   public:
     STGenfitTest();
     STGenfitTest(Bool_t loadSamurai);
-    ~STGenfitTest();
+    ~STGenfitTest() {};
 
     void Init();
     void SetTargetPlane(TVector3 position, TVector3 normal);
