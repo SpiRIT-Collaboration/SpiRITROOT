@@ -30,6 +30,11 @@ STGenfitPIDTask::~STGenfitPIDTask()
 
 void STGenfitPIDTask::SetClusteringType(Int_t type) { fClusteringType = type; }
 void STGenfitPIDTask::SetConstantField() { fIsSamurai = kFALSE; }
+void STGenfitPIDTask::SetFieldOffset(Double_t yOffset, Double_t zOffset)
+{
+  fFieldYOffset = yOffset;
+  fFieldZOffset = zOffset;
+}
 
 InitStatus
 STGenfitPIDTask::Init()
@@ -51,7 +56,7 @@ STGenfitPIDTask::Init()
   fRecoTrackArray = new TClonesArray("STRecoTrack");
   fRootManager -> Register("STRecoTrack", "SpiRIT", fRecoTrackArray, fIsPersistence);
 
-  fGenfitTest = new STGenfitTest2(fIsSamurai);
+  fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldYOffset, fFieldZOffset);
   fGenfitTest -> SetTargetPlane(fTargetX*0.1, fTargetY*0.1, fTargetZ*0.1); // Target plane position unit mm -> cm
   fPIDTest = new STPIDTest();
 
@@ -174,7 +179,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
       Int_t pdg;
            if (pid == STPID::kPion)     pdg = 211; 
-      else if (pid == STPID::kProton)   pdg = 2212; 
+//      else if (pid == STPID::kProton)   pdg = 2212; 
 //      else if (pid == STPID::kDeuteron) pdg = 1000010020;
 //      else if (pid == STPID::kTriton)   pdg = 1000010030;
       //else if (pid == STPID::k3He)      pdg = 1000020030;
@@ -235,16 +240,22 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     recoTrack -> SetPosKatana(katana);
     recoTrack -> SetPosNeuland(neuland);
 
-    auto fitState = bestGenfitTrack -> getFittedState();
-    TVector3 gfmomReco;
-    TVector3 gfposReco(-999,-999,-999);
-    TMatrixDSym covMat(6,6);
-    fitState.getPosMomCov(gfposReco, gfmomReco, covMat);
-
     auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
     recoTrack -> SetChi2(fitStatus -> getChi2());
     recoTrack -> SetNDF(fitStatus -> getNdf());
-    recoTrack -> SetGenfitCharge(gfmomReco.Z() < 0 ? -1 * fitStatus -> getCharge() : fitStatus -> getCharge());
+
+    try {
+      auto fitState = bestGenfitTrack -> getFittedState();
+      TVector3 gfmomReco;
+      TVector3 gfposReco(-999,-999,-999);
+      TMatrixDSym covMat(6,6);
+      fitState.getPosMomCov(gfposReco, gfmomReco, covMat);
+
+      recoTrack -> SetGenfitCharge(gfmomReco.Z() < 0 ? -1 * fitStatus -> getCharge() : fitStatus -> getCharge());
+    } catch (...) {
+      recoTrack -> SetGenfitCharge(-2);
+    }
+
     try {
       recoTrack -> SetTrackLength(bestGenfitTrack -> getTrackLen());
     } catch (...) {
