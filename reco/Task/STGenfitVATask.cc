@@ -154,7 +154,7 @@ void STGenfitVATask::Exec(Option_t *opt)
 
   auto vertexPos = vertex -> GetPos();
   Bool_t goodBDC = kTRUE;
-  if (!fBeamFilename.IsNull() || fPeakZ != -9999) {
+  if (!fBeamFilename.IsNull()) {
     fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
     fBDCTree -> GetEntry(fEventHeader -> GetEventID() - 1);
     fBeamEnergy -> reset(fZ, fAoQ, fBeta37);
