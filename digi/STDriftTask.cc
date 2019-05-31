@@ -176,9 +176,10 @@ STDriftTask::Exec(Option_t* option)
       Double_t dz = dr*TMath::Sin(angle); // displacement in y-direction
       Double_t dt = gRandom->Gaus(0,sigmaL)/fVelDrift; // displacement in time
 
-      Int_t iWire = (Int_t)floor((fMCPoint->GetZ()*10+dz+fZSpacingWire/2)/fZSpacingWire);
-      if(iWire<fIFirstWire) iWire = fIFirstWire;
-      if(iWire>fILastWire)  iWire = fILastWire;
+      Int_t iWire = (Int_t)floor((fMCPoint->GetZ()*10+dz)/fZSpacingWire); //The index of the anode wire is from 0 to 112*3-1
+      if(iWire < 0 || iWire > 112*3-1) continue; //the anode wire number wont change for the SpiRIT experiment
+      //      if(iWire<fIFirstWire) iWire = fIFirstWire;
+      //      if(iWire>fILastWire)  iWire = fILastWire;
       Int_t zWire = iWire*fZSpacingWire+fZOffsetWire;
 
       Int_t index = fElectronArray->GetEntriesFast();
