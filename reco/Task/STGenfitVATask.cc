@@ -30,6 +30,11 @@ STGenfitVATask::~STGenfitVATask()
 
 void STGenfitVATask::SetClusteringType(Int_t type) { fClusteringType = type; }
 void STGenfitVATask::SetConstantField() { fIsSamurai = kFALSE; }
+void STGenfitVATask::SetFieldOffset(Double_t yOffset, Double_t zOffset)
+{
+  fFieldYOffset = yOffset;
+  fFieldZOffset = zOffset;
+}
 
 InitStatus
 STGenfitVATask::Init()
@@ -66,7 +71,7 @@ STGenfitVATask::Init()
   fVAVertexArray = new TClonesArray("STVertex");
   fRootManager -> Register("VAVertex", "SpiRIT", fVAVertexArray, fIsPersistence);
 
-  fGenfitTest = new STGenfitTest2(fIsSamurai);
+  fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldYOffset, fFieldZOffset);
   fPIDTest = new STPIDTest();
 
   if (fUseRave)
@@ -168,7 +173,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     if (!goodBDC)
       LOG(INFO) << Space() << "STGenfitVATask " << "Bad BDC!" << FairLogger::endl;
     else {
-      vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z()));
+      vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z()) + fOffsetZ);
 
       auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
       bdcVertex -> SetIsGoodBDC();
@@ -301,16 +306,22 @@ void STGenfitVATask::Exec(Option_t *opt)
     vaTrack -> SetPosKatana(katana);
     vaTrack -> SetPosNeuland(neuland);
 
-    auto fitState = bestGenfitTrack -> getFittedState();
-    TVector3 gfmomReco;
-    TVector3 gfposReco(-999,-999,-999);
-    TMatrixDSym covMat(6,6);
-    fitState.getPosMomCov(gfposReco, gfmomReco, covMat);
-
     auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
     vaTrack -> SetChi2(fitStatus -> getChi2());
     vaTrack -> SetNDF(fitStatus -> getNdf());
-    vaTrack -> SetGenfitCharge(gfmomReco.Z() < 0 ? -1 * fitStatus -> getCharge() : fitStatus -> getCharge());
+
+    try {
+      auto fitState = bestGenfitTrack -> getFittedState();
+      TVector3 gfmomReco;
+      TVector3 gfposReco(-999,-999,-999);
+      TMatrixDSym covMat(6,6);
+      fitState.getPosMomCov(gfposReco, gfmomReco, covMat);
+
+      vaTrack -> SetGenfitCharge(gfmomReco.Z() < 0 ? -1 * fitStatus -> getCharge() : fitStatus -> getCharge());
+    } catch (...) {
+      vaTrack -> SetGenfitCharge(-2);
+    }
+
     try {
       vaTrack -> SetTrackLength(bestGenfitTrack -> getTrackLen());
     } catch (...) {
@@ -481,11 +492,12 @@ void STGenfitVATask::Exec(Option_t *opt)
 }
 
 void STGenfitVATask::SetBeamFile(TString fileName) { fBeamFilename = fileName; }
-void STGenfitVATask::SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_t offsetY)
+void STGenfitVATask::SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_t offsetY, Double_t offsetZ)
 {
   fRunNo = runNo;
   fOffsetX = offsetX;
   fOffsetY = offsetY;
+  fOffsetZ = offsetZ;
 }
 
 void STGenfitVATask::SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple)

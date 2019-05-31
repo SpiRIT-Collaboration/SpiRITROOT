@@ -27,12 +27,13 @@ class STGenfitVATask : public STRecoTask
 
     void SetClusteringType(Int_t type);
     void SetConstantField();
+    void SetFieldOffset(Double_t yOffset, Double_t zOffset);
 
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
 
     void SetBeamFile(TString fileName);
-    void SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_t offsetY);
+    void SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_t offsetY, Double_t offsetZ = 0);
     void SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple);
     void SetFixedVertex(Double_t x, Double_t y, Double_t z);
 
@@ -66,7 +67,7 @@ class STGenfitVATask : public STRecoTask
     Double_t fBDC1x, fBDC1y, fBDC2x, fBDC2y, fBDCax, fBDCby;
 
     Int_t fRunNo;
-    Double_t fOffsetX, fOffsetY;
+    Double_t fOffsetX, fOffsetY, fOffsetZ;
     STBeamEnergy *fBeamEnergy = nullptr;
     STBDCProjection *fBDCProjection = nullptr;
 
@@ -77,6 +78,9 @@ class STGenfitVATask : public STRecoTask
     Double_t fFixedVertexX = -9999;
     Double_t fFixedVertexY = -9999;
     Double_t fFixedVertexZ = -9999;
+
+    Double_t fFieldYOffset = -20.43;
+    Double_t fFieldZOffset = 58;
 
   ClassDef(STGenfitVATask, 1)
 };
