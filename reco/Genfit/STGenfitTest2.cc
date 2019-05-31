@@ -35,7 +35,7 @@ STGenfitTest2::STGenfitTest2()
 {
 }
 
-STGenfitTest2::STGenfitTest2(bool loadSamurai)
+STGenfitTest2::STGenfitTest2(bool loadSamurai, Double_t yOffset, Double_t zOffset)
 {
   fTPCDetID = 0;
 
@@ -51,7 +51,7 @@ STGenfitTest2::STGenfitTest2(bool loadSamurai)
   fMeasurementFactory = new genfit::MeasurementFactory<genfit::AbsMeasurement>();
   fMeasurementFactory -> addProducer(fTPCDetID, fMeasurementProducer);
 
-  auto fieldPointer = STGFBField::GetInstance("samurai_field_map", "A");
+  auto fieldPointer = STGFBField::GetInstance("samurai_field_map", "A", yOffset, zOffset);
 
   if (loadSamurai)
     genfit::FieldManager::getInstance() -> init(fieldPointer);

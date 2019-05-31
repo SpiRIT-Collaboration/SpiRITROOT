@@ -31,7 +31,7 @@ class STGenfitTest2
 {
   public:
     STGenfitTest2();
-    STGenfitTest2(bool loadSamurai);
+    STGenfitTest2(bool loadSamurai, Double_t yOffset = -20.43, Double_t zOffset = 58);
     ~STGenfitTest2() {};
 
     void SetTargetPlane(Double_t x, Double_t y, Double_t z); // in cm
