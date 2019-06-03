@@ -394,6 +394,32 @@ bool STGenfitTest2::ExtrapolateTo(genfit::Track *gfTrack, TVector3 to, TVector3 
   return true;
 }
 
+bool STGenfitTest2::ExtrapolateTrack(genfit::Track *gfTrack, Double_t distance, TVector3 &position, Int_t direction)
+{
+  Double_t d = direction * 0.1 * distance;
+
+  genfit::RKTrackRep *trackRep;
+  genfit::MeasuredStateOnPlane fitState;
+  genfit::FitStatus *fitStatus;
+
+  try {
+    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+    fitState = gfTrack -> getFittedState();
+    fitStatus = gfTrack -> getFitStatus(trackRep);
+  } catch (genfit::Exception &e) {
+    return false;
+  }
+
+  try {
+    trackRep -> extrapolateBy(fCurrentFitState, d);
+  } catch (genfit::Exception &e) {
+    return false;
+  }
+
+  position = 10 * fitState.getPos();
+  return true;
+}
+
 void STGenfitTest2::GetTrackParameters(genfit::Track *gfTrack, TVector3 &mom, TVector3 &momentumTargetPlane, TVector3 &posTargetPlane)
 {
   genfit::RKTrackRep *trackRep;

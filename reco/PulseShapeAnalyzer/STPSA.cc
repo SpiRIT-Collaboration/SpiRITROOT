@@ -192,6 +192,6 @@ void STPSA::SetYOffsets(TString fileName)
     if (abs(off) > 4 || err > 2 || n < 20)
       off = 0;
     fYOffsets[layer][row] = off;
-    cout << layer << " " << row << " " << off << endl;
+    //cout << layer << " " << row << " " << off << endl;
   }
 }

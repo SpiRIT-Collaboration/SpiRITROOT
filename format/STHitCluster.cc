@@ -13,6 +13,7 @@
 #include "TMath.h"
 
 #include <iostream>
+using namespace std;
 
 ClassImp(STHitCluster);
 
@@ -84,6 +85,26 @@ void STHitCluster::Clear(Option_t *)
   fIsMissingCharge = false;
 
   fIsContinuousHits = kFALSE;
+}      
+
+void STHitCluster::Print(Option_t *option) const
+{
+  if (fIsClustered)
+    cout << setw(10) << "STABLE"
+      << setw(4) << GetNumHits()
+      << setw(4) << fHitID
+      << setw(12) << fX
+      << setw(12) << fY
+      << setw(12) << fZ
+      << setw(12) << fCharge << endl;
+  else
+    cout << setw(10) << "XXX"
+      << setw(4) << GetNumHits()
+      << setw(4) << fHitID
+      << setw(12) << fX
+      << setw(12) << fY
+      << setw(12) << fZ
+      << setw(12) << fCharge << endl;
 }
 
 void STHitCluster::SetCovMatrix(TMatrixD matrix) { fCovMatrix = matrix; } 

@@ -30,6 +30,8 @@
 #pragma link C++ class STRecoTrackCand+;
 #pragma link C++ class STRecoTrackCandList+;
 
+#pragma link C++ class STExtrapolatedTrack+;
+
 #pragma link C++ class STMCEventHeader+;
 #pragma link C++ class STMCScintillatorHit+;
 #pragma link C++ class STMCTriggerResponse+;

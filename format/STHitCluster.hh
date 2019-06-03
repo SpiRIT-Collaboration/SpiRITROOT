@@ -26,6 +26,7 @@ class STHitCluster : public STHit
     virtual ~STHitCluster() {}
 
     void Clear(Option_t * = "");
+    virtual void Print(Option_t *option = "") const;
 
     void SetCovMatrix(TMatrixD matrix);  ///< Set covariance matrix
 

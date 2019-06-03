@@ -23,6 +23,7 @@ class STGenfitVATask : public STRecoTask
     ~STGenfitVATask();
 
     void SetListPersistence(bool val = true) { fIsListPersistence = val; }
+    void SetExPersistence(bool val = true) { fIsExPersistence = val; }
     void SetPersistence(bool val = true) { fIsPersistence = val; }
 
     void SetClusteringType(Int_t type);
@@ -48,7 +49,10 @@ class STGenfitVATask : public STRecoTask
     TClonesArray *fBDCVertexArray = nullptr;
     TClonesArray *fVAVertexArray = nullptr;
 
+    TClonesArray *fExTrackArray = nullptr;
+
     bool fIsListPersistence = false;
+    bool fIsExPersistence = false;
     bool fIsSamurai = true;
 
     Bool_t fUseRave = kFALSE;

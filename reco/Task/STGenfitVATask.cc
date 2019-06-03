@@ -1,6 +1,7 @@
 #include "STGenfitVATask.hh"
 #include "STDatabasePDG.hh"
 #include "STTrack.hh"
+#include "STExtrapolatedTrack.hh"
 
 #include "FairRun.h"
 #include "FairRuntimeDb.h"
@@ -71,6 +72,9 @@ STGenfitVATask::Init()
   fVAVertexArray = new TClonesArray("STVertex");
   fRootManager -> Register("VAVertex", "SpiRIT", fVAVertexArray, fIsPersistence);
 
+  fExTrackArray = new TClonesArray("STExtrapolatedTrack");
+  fRootManager -> Register("ExTracks", "SpiRIT", fExTrackArray, fIsExPersistence);
+
   fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldYOffset, fFieldZOffset);
   fPIDTest = new STPIDTest();
 
@@ -115,6 +119,8 @@ void STGenfitVATask::Exec(Option_t *opt)
   fVAVertexArray -> Clear("C");
   if (!fBeamFilename.IsNull())
     fBDCVertexArray -> Clear("C");
+
+  fExTrackArray -> Clear("C");
 
   if (fEventHeader -> IsBadEvent())
     return;
@@ -404,6 +410,36 @@ void STGenfitVATask::Exec(Option_t *opt)
     vaTrack -> SetChi2X(genfitChi2X);
     vaTrack -> SetChi2Y(genfitChi2Y);
     vaTrack -> SetChi2Z(genfitChi2Z);
+
+    // XXX
+    TVector3 exPoint;
+    if (fGenfitTest -> ExtrapolateTo(bestGenfitTrack, vertexPos, exPoint))
+    {
+      Int_t exID = fExTrackArray -> GetEntries();
+      auto exTrack = (STExtrapolatedTrack *) fExTrackArray -> ConstructedAt(exID);
+      exTrack -> SetParentID(vaTrack -> GetParentID());
+      exTrack -> SetTrackID(exID);
+
+      exTrack -> AddPoint(exPoint, 0);
+
+      Double_t total_length = 0;
+      Double_t dlength = 20; //mm
+
+      while (1)
+      {
+        if (!fGenfitTest -> ExtrapolateTrack(bestGenfitTrack, dlength, exPoint, 1))
+          break;
+
+        total_length += dlength;
+        exTrack -> AddPoint(exPoint, total_length);
+
+        if (total_length > 10000.)
+          break;
+
+        if (exPoint.Y() > 500. || exPoint.Y() < -1000. || exPoint.X() > 500. || exPoint.X() < 8000. || exPoint.Z() < 0.)
+          break;
+      }
+    }
 
     if (!fUseRave) {
       genfit::Track *gfTrack = bestRecoTrackCand -> GetGenfitTrack();
