@@ -528,7 +528,7 @@ void STGenfitTest2::GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 posVe
   pocaVertex = 10*pocaVertex;
 }
 
-Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Double_t &effCurvature1, Double_t &effCurvature2, Double_t &effCurvature3, bool ignoreFirst)
+Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, STExtrapolatedTrack *exTrack, TVector3 posVertex, Double_t &effCurvature1, Double_t &effCurvature2, Double_t &effCurvature3, bool ignoreFirst)
 {
   effCurvature1 = 0.;
   effCurvature2 = 0.;
@@ -634,6 +634,47 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
     dedx.fClusterSize = clusterSize;
     dedxArrayTemp.push_back(dedx);
   }
+
+  //////////////////////////////////////////////////////////////////////////////////
+  // STExtrapolatedTrack
+  //////////////////////////////////////////////////////////////////////////////////
+
+  Double_t dz = 100.;
+  TVector3 posref_ex = (0,0,0);
+  TVector3 position_ex;
+
+  try {
+    trackRep -> extrapolateToPlane(fitState, plane_ex);
+    position_ex = 10*fitState.getPos();
+  } catch (genfit::Exception &e) {
+    continue;
+  }
+  exTrack -> AddPoint(position_ex,0);
+
+  Double_t z_ex = 0.;
+  while (1)
+  {
+    posref_ex -> SetZ(z_ex);
+
+    genfit::SharedPlanePtr plane_ex = genfit::SharedPlanePtr(new genfit::DetPlane(posref_ex, TVector3(0,0,1)));
+
+    Double_t length;
+    try {
+      length = 10 * trackRep -> extrapolateToPlane(fitState, plane_ex);
+      position_ex = 10*fitState.getPos();
+    } catch (genfit::Exception &e) {
+      continue;
+    }
+    exTrack -> AddPoint(position_ex, length);
+
+    z_ex += dz;
+    if (z_ex < 12000.)
+      break;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////
+  //
+  //////////////////////////////////////////////////////////////////////////////////
 
   auto numdedx = dedxArrayTemp.size();
   if (numdedx < 5)

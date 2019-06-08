@@ -67,7 +67,7 @@ class STGenfitTest2
 
     bool ExtrapolateTrack(genfit::Track *gfTrack, Double_t distance, TVector3 &position, Int_t direction = 1);
 
-    Int_t DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex, Double_t &effCurvature1, Double_t &effCurvature2, Double_t &effCurvature3, bool ignoreFirst = false);
+    Int_t DetermineCharge(STRecoTrack *recoTrack, STExtrapolatedTrack *exTrack, TVector3 posVertex, Double_t &effCurvature1, Double_t &effCurvature2, Double_t &effCurvature3, bool ignoreFirst = false);
 
   private:
     Int_t fTPCDetID;
