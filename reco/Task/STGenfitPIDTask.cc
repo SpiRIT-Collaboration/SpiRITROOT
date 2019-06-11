@@ -34,6 +34,8 @@ void STGenfitPIDTask::SetFieldOffset(Double_t yOffset, Double_t zOffset)
 {
   fFieldYOffset = yOffset;
   fFieldZOffset = zOffset;
+
+  LOG(INFO) << "== [STGenfitPIDTask] Field center : (0, " << yOffset << ", " << zOffset << ") cm"<< FairLogger::endl;
 }
 
 InitStatus
