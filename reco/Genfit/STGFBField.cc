@@ -11,6 +11,8 @@ STGFBField::STGFBField(const char* mapName, const char* fileType, Double_t yOffs
   fFieldMap = new STFieldMap(mapName, fileType);
   fFieldMap -> SetPosition(0, yOffset, zOffset);
   fFieldMap -> Init();
+
+  std::cout << "== [STGFBField] Field center : (0, " << yOffset << ", " << zOffset << ") cm"<< std::endl;
 }
 
 STGFBField *STGFBField::GetInstance(const char* mapName, const char* fileType, Double_t yOffset, Double_t zOffset)
