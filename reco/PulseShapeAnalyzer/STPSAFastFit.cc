@@ -172,7 +172,7 @@ STPSAFastFit::Analyze(STRawEvent *rawEvent, TClonesArray *hitArray)
       row = hit -> GetRow();
 
       auto tbHit = hit -> GetTb() - fTbOffsets[coboIdx];
-      auto yHit = tbHit * fTbToYConv + fYOffsets[layer][row];
+      auto yHit = tbHit * fTbToYConv + fYOffsets[layer][row] + fYPedestalOffset;
 
       hit -> SetTb(tbHit);
       hit -> SetY(yHit);

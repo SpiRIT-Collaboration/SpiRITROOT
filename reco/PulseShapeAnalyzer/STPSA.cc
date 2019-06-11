@@ -116,6 +116,8 @@ STPSA::STPSA()
   for (auto layer = 0; layer < 112; ++layer)
     for (auto row = 0; row < 108; ++row)
       fYOffsets[layer][row] = 0.;
+
+  fYPedestalOffset = 0;
 }
 
 STPSA::~STPSA()
@@ -192,6 +194,11 @@ void STPSA::SetYOffsets(TString fileName)
     if (abs(off) > 4 || err > 2 || n < 20)
       off = 0;
     fYOffsets[layer][row] = off;
-    cout << layer << " " << row << " " << off << endl;
+//    cout << layer << " " << row << " " << off << endl;
   }
+}
+
+void STPSA::SetYPedestalOffset(Double_t offset)
+{
+  fYPedestalOffset = offset;
 }
