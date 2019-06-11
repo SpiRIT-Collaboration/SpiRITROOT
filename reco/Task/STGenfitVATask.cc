@@ -498,6 +498,8 @@ void STGenfitVATask::SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_
   fOffsetX = offsetX;
   fOffsetY = offsetY;
   fOffsetZ = offsetZ;
+
+  cout << "== [STGenfitVATask] BDC offset for run#" << runNo << " is set to (" << offsetX << ", " << offsetY << ", " << offsetZ << ") mm" << endl;
 }
 
 void STGenfitVATask::SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple)
@@ -505,6 +507,8 @@ void STGenfitVATask::SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigm
   fPeakZ = peakZ;
   fSigma = sigma;
   fSigmaMultiple = sigmaMultiple;
+
+  cout << "== [STGenfitVATask] BDC will be projected to z = " << peakZ << " mm, if TPC vertex is within " << fSigmaMultiple << " sigma range with sigma = " << sigma << " mm" << endl;
 }
 
 void STGenfitVATask::SetFixedVertex(Double_t x, Double_t y, Double_t z)
@@ -512,6 +516,8 @@ void STGenfitVATask::SetFixedVertex(Double_t x, Double_t y, Double_t z)
   fFixedVertexX = x;
   fFixedVertexY = y;
   fFixedVertexZ = z;
+
+  cout << "== [STGenfitVATask] BDC point added to a fixed point (" << x << ", " << y << ", " << z << ") mm" << endl;
 }
 
 void STGenfitVATask::SetUseRave(Bool_t val)
