@@ -44,6 +44,8 @@ class STPSAETask : public STRecoTask
 
     void SetYOffsets(TString fileName);
 
+    void SetYPedestalOffset(Double_t offset);
+
   private:
     TClonesArray *fRawEventArray = nullptr;
     TClonesArray *fRawEmbedEventArray = nullptr;
@@ -56,6 +58,7 @@ class STPSAETask : public STRecoTask
     STPSAFastFit *fPSA;
     Int_t fPSAPeakFindingOption = 1; //High efficiency set to defualt = 1; 0 is Jung Woo's org method
     TString fYOffsetFileName = "";
+    Double_t fYPedestalOffset = 0;
     
     Double_t fThreshold = 20;
     Int_t fLayerLowCut  = -1;

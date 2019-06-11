@@ -94,9 +94,14 @@ InitStatus STPSAETask::Init()
   fPSA -> SetLayerCut(fLayerLowCut, fLayerHighCut);
   fPSA -> SetGainMatchingScale(fGainMatchingScale);
   fPSA -> SetGainMatchingData(fGainMatchingData);
-  if (fYOffsetFileName)
+  if (fYOffsetFileName) {
     fPSA -> SetYOffsets(fYOffsetFileName);
-
+    std::cout << "== [STPSATask] y offset is set with file " << fYOffsetFileName << "." << std::endl;
+  }
+  if (fYPedestalOffset != 0) {
+    fPSA -> SetYPedestalOffset(fYPedestalOffset);
+    std::cout << "== [STPSATask] y pedestal offset is set with " << fYPedestalOffset << " mm. Event will be shifted upward!" << std::endl;
+  }
 
   fShapingTime = fPSA -> GetShapingTime();
   fPSA -> SetPSAPeakFindingOption(fPSAPeakFindingOption);
@@ -261,3 +266,4 @@ void STPSAETask::Exec(Option_t *opt)
 void STPSAETask::SetGainMatchingScale(Double_t val) { fGainMatchingScale = val; }
 void STPSAETask::SetGainMatchingData(TString filename) { fGainMatchingData = filename; }
 void STPSAETask::SetYOffsets(TString fileName) { fYOffsetFileName = fileName; }
+void STPSAETask::SetYPedestalOffset(Double_t offset) { fYPedestalOffset = offset; }
