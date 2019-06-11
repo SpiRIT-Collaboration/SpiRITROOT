@@ -510,8 +510,8 @@ void STGenfitVATask::SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigm
 void STGenfitVATask::SetFixedVertex(Double_t x, Double_t y, Double_t z)
 {
   fFixedVertexX = x;
-  fFixedVertexX = y;
-  fFixedVertexX = z;
+  fFixedVertexY = y;
+  fFixedVertexZ = z;
 }
 
 void STGenfitVATask::SetUseRave(Bool_t val)
