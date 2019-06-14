@@ -457,9 +457,9 @@ void STFieldMap::ReadAsciiFile(const char* fileName) {
 	  cout << "\b\b\b\b\b\b" << setw(3) << perc << " % " << flush;
 	}
 	mapFile >> xx >> yy >> zz >>  bx >> by >> bz ;
-	bx = bx>1e-10 ? bx : 0;
-	by = by>1e-10 ? by : 0;
-	bz = bz>1e-10 ? bz : 0;
+	bx = TMath::Abs(bx) > 1e-10 ? bx : 0;
+  by = TMath::Abs(by) > 1e-10 ? by : 0;
+  bz = TMath::Abs(bz) > 1e-10 ? bz : 0;
 	fBx->AddAt(bx*funit, index);
 	fBy->AddAt(by*funit, index);
 	fBz->AddAt(bz*funit, index);
