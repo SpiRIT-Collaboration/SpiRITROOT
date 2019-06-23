@@ -42,6 +42,15 @@
 
 void geomSpiRIT_wNeuland()
 {
+  // The detectorIDs of STMCPoint
+  Int_t copyNoTpc = 2;
+  Int_t copyNoNeuland = 3;
+  Int_t copyNoTpcComp = 1000;
+  Int_t copyNoKyoto = 2000;
+  Int_t copyNoKatana = 3000;
+  Int_t copyNoNeulandComp = 4000;
+  Int_t copyNoVeto = 5000;
+
   TString dir = gSystem -> Getenv("VMCWORKDIR");
   TString dirGeom = dir + "/geometry/";
 
@@ -103,6 +112,7 @@ void geomSpiRIT_wNeuland()
   TGeoMedium *popop       = gGeoManager -> GetMedium("popop");
   TGeoMedium *bc404       = gGeoManager -> GetMedium("bc404");
   TGeoMedium *polyvinyltoluene = gGeoManager -> GetMedium("polyvinyltoluene");
+  //TGeoMedium *polyvinyltoluene = p10;
 
   
 
@@ -145,8 +155,8 @@ void geomSpiRIT_wNeuland()
   Double_t dyTop = dyTpc + 10;
   Double_t dzTop = dzTpc + 10;
 
-  cout << "Tpc volume: " << dxTpc << ", " << dyTpc << ", " << dzTpc << endl;
-  cout << "Top volume: " << dxTop << ", " << dyTop << ", " << dzTop << endl;
+  //cout << "Tpc volume: " << dxTpc << ", " << dyTpc << ", " << dzTpc << endl;
+  //cout << "Top volume: " << dxTop << ", " << dyTop << ", " << dzTop << endl;
 
   Double_t dxTopFrameFloorSide = 17.5326;
   Double_t dxTopFrameFloorFB = 95.8523;
@@ -177,7 +187,7 @@ void geomSpiRIT_wNeuland()
   Double_t offsetTpc[] = {0,offyTpc,0};
 
   // ----------------------------------------------------
-  //  Top (World)
+  //  Top (top)
   // ----------------------------------------------------
 
   //auto boxTop = new TGeoBBox(dxTop/2,dyTop/2,dzTop/2,offsetTop);
@@ -191,6 +201,22 @@ void geomSpiRIT_wNeuland()
   }
   gGeoManager -> SetTopVolume(top);
   //gGeoManager -> SetTopVolume(top);
+
+  // ----------------------------------------------------
+  //  world (World)
+  //  : somehow only first node of top is activated.
+  //    so we have to make first node to top,
+  //    and add tpc and nueland to first node to top
+  // ----------------------------------------------------
+
+  auto boxWorld = new TGeoBBox(1000/2,300/2,2000/2);
+  TGeoVolume *world;
+  if (boxWorld -> IsRunTimeShape()) {
+    world = gGeoManager -> MakeVolumeMulti("world", vacuum);
+    world -> SetShape(boxWorld);
+  } else {
+    world = new TGeoVolume("world", boxWorld, vacuum);
+  }
 
   // ----------------------------------------------------
   //  TPC
@@ -475,7 +501,6 @@ void geomSpiRIT_wNeuland()
   Double_t dzBackWindowFrame = 1.27;
   Double_t dxBackWindowFrameSide = 2.4492;
   Double_t dyBackWindowFrameSide = dyActive - dyBackWindowFrameT - dyBackWindowFrameB;
-  cout << dyBackWindowFrameSide << endl;
 
   Double_t dwBackWindowFrame2 = 4.5;
   Double_t dzBackWindowFrame2 = 0.635;
@@ -964,43 +989,42 @@ void geomSpiRIT_wNeuland()
   TGeoVolume * neulandBox[400];
   TGeoVolume * neulandVetoBox[8];
   for(Int_t i=0; i<400; i++)
-  	neulandBox[i] = gGeoManager -> MakeBox(Form("neulandBox%d",i),polyvinyltoluene,dxNeuland/2.,dyNeuland/2.,dzNeuland/2.);
+    neulandBox[i] = gGeoManager -> MakeBox(Form("neulandBox%d",i),polyvinyltoluene,dxNeuland/2.,dyNeuland/2.,dzNeuland/2.);
   for(Int_t i=0; i<8; i++)
-     neulandVetoBox[i] = gGeoManager -> MakeBox(Form("neulandVetoBox%d",i),polyvinyltoluene,dxNeulandVeto/2.,dyNeulandVeto/2.,dzNeulandVeto/2.);
+    neulandVetoBox[i] = gGeoManager -> MakeBox(Form("neulandVetoBox%d",i),polyvinyltoluene,dxNeulandVeto/2.,dyNeulandVeto/2.,dzNeulandVeto/2.);
 
   Double_t offyNeulandLocal = -124.2;	// neuland bottom plastic position
   Double_t offxNeulandLocal = -122.185;
   Double_t offyNeulandNextBar   = 5.0;
   Double_t offxNeulandNextBar   = 5.0;
   Double_t offzNeulandNextLayer = 5.056;  // distance between layers
-  
+
   TGeoCombiTrans * combiNeulandBar[400];
   TGeoRotation * rotateNeulandY = new TGeoRotation("rotateNeulandY",0,0,90);
   for(Int_t i=0; i<4; i++)
-     for(Int_t j=0; j<50; j++){
-	combiNeulandBar[i*100+j] = new TGeoCombiTrans(Form("combiNeulandBar%d",i*100+j),0,offyNeulandLocal+offyNeulandNextBar*j,offzNeulandNextLayer*i*2,rotateNeulandY);
-	combiNeulandBar[i*100+50+j] = new TGeoCombiTrans(Form("combiNeulandBar%d",i*100+50+j),offxNeulandLocal+offxNeulandNextBar*j,0,offzNeulandNextLayer*(2*i+1),nullptr);
-
-     }
+    for(Int_t j=0; j<50; j++){
+      combiNeulandBar[i*100+j] = new TGeoCombiTrans(Form("combiNeulandBar%d",i*100+j),0,offyNeulandLocal+offyNeulandNextBar*j,offzNeulandNextLayer*i*2,rotateNeulandY);
+      combiNeulandBar[i*100+50+j] = new TGeoCombiTrans(Form("combiNeulandBar%d",i*100+50+j),offxNeulandLocal+offxNeulandNextBar*j,0,offzNeulandNextLayer*(2*i+1),nullptr);
+    }
   for(Int_t i=0; i<400; i++)
-     combiNeulandBar[i]->RegisterYourself();
-  
+    combiNeulandBar[i]->RegisterYourself();
+
   Double_t offxVetoLocal = -109.975;
   Double_t offxVetoNextBarLocal = 31.528;
   Double_t offzVetoLocal[2] = {-36.358,-34.058};
   TGeoCombiTrans * combiNeulandVeto[8];
   TGeoRotation * rotateNeulandVeto = new TGeoRotation("rotateNeulandVeto",0,0,0);
   for(Int_t i=0; i<8; i++)
-     combiNeulandVeto[i] = new TGeoCombiTrans(Form("combiNeulandVeto%d",i),offxVetoLocal+offxVetoNextBarLocal*i,0,offzVetoLocal[i%2],rotateNeulandVeto);
+    combiNeulandVeto[i] = new TGeoCombiTrans(Form("combiNeulandVeto%d",i),offxVetoLocal+offxVetoNextBarLocal*i,0,offzVetoLocal[i%2],rotateNeulandVeto);
   for(Int_t i=0; i<8; i++)
-     combiNeulandVeto[i]->RegisterYourself();
+    combiNeulandVeto[i]->RegisterYourself();
 
   for(Int_t i=0; i<400; i++)
-	neuland -> AddNode(neulandBox[i],i+1,combiNeulandBar[i]);
+    neuland -> AddNode(neulandBox[i],copyNoNeulandComp+i+1,combiNeulandBar[i]);
   for(Int_t i=0; i<8; i++)
-	neuland -> AddNode(neulandVetoBox[i],i+1,combiNeulandVeto[i]);
-  
-   
+    neuland -> AddNode(neulandVetoBox[i],copyNoVeto+i+1,combiNeulandVeto[i]);
+
+
   // ----------------------------------------------------
   //  Set Medium
   // ----------------------------------------------------
@@ -1038,64 +1062,65 @@ void geomSpiRIT_wNeuland()
   outerAir          -> SetMedium(air);
 
   // ----------------------------------------------------
-  //  AddNode to TOP
+  //  AddNode to TOP <- World <- (TPC, NeuLAND)
   // ----------------------------------------------------
 
-  top -> AddNode(tpc,1,combiTpc);
-  
-  top -> AddNode(neuland,1,combiNeuland);
+  top -> AddNode(world,1);
+
+  world -> AddNode(tpc,copyNoTpc,combiTpc);
+  world -> AddNode(neuland,copyNoTpc,combiNeuland);
  
   // ----------------------------------------------------
   //  AddNode to TPC
   //  *** Note when adding node, that center of TPC is center of active volume.
   // ----------------------------------------------------
 
-  tpc -> AddNode(active,1);
+  tpc -> AddNode(active,copyNoTpcComp++);
   
-  tpc -> AddNode(cageFront,1);
-  tpc -> AddNode(cageSide,1);
-  tpc -> AddNode(frontWindow,1,transFrontWindow);
-  tpc -> AddNode(frontWindowFrame,1);
-  tpc -> AddNode(frontWindowCradle,1);
-  tpc -> AddNode(bottomPlate,1);
-  tpc -> AddNode(backWindowFrame,1);
-  tpc -> AddNode(backWindow,1,transBackWindow);
+  tpc -> AddNode(cageFront,copyNoTpcComp++);
+  tpc -> AddNode(cageSide,copyNoTpcComp++);
+  tpc -> AddNode(frontWindow,copyNoTpcComp++,transFrontWindow);
+  tpc -> AddNode(frontWindowFrame,copyNoTpcComp++);
+  tpc -> AddNode(frontWindowCradle,copyNoTpcComp++);
+  tpc -> AddNode(bottomPlate,copyNoTpcComp++);
+  tpc -> AddNode(backWindowFrame,copyNoTpcComp++);
+  tpc -> AddNode(backWindow,copyNoTpcComp++,transBackWindow);
   
-  tpc -> AddNode(topFrame,1);
+  tpc -> AddNode(topFrame,copyNoTpcComp++);
   
-  tpc -> AddNode(topPlate,1,transTopPlateVolume);
+  tpc -> AddNode(topPlate,copyNoTpcComp++,transTopPlateVolume);
   
   //tpc -> AddNode(padPlane,1,transPadPlane); // TODO decide whether to add pad-plane to node or not, overlap with topPlate
   //tpc -> AddNode(padArray,1,transPadArray); // TODO decide whether to add pad-plane to node or not, overlap with topPlate
 
 
 
-  tpc -> AddNode(p10gas,1);
+  tpc -> AddNode(p10gas,copyNoTpcComp++);
 
-  tpc -> AddNode(enclosureFrame,1);
+  tpc -> AddNode(enclosureFrame,copyNoTpcComp++);
 
-  tpc -> AddNode(plateL,1,transPlateL);
-  tpc -> AddNode(plateR,1,transPlateR);
-  tpc -> AddNode(plateD,1,transPlateD);
-  tpc -> AddNode(thinWindowLR,1,transThinWindowL);
-  tpc -> AddNode(thinWindowLR,1,transThinWindowR);
-  tpc -> AddNode(thinWindowD,1,transThinWindowD);
-  tpc -> AddNode(plateFL,1,transPlateFL);
-  tpc -> AddNode(plateFR,1,transPlateFR);
-  tpc -> AddNode(grassWindow,1,transGrassWindowL);
-  tpc -> AddNode(grassWindow,1,transGrassWindowR);
+  tpc -> AddNode(plateL,copyNoTpcComp++,transPlateL);
+  tpc -> AddNode(plateR,copyNoTpcComp++,transPlateR);
+  tpc -> AddNode(plateD,copyNoTpcComp++,transPlateD);
+  tpc -> AddNode(thinWindowLR,copyNoTpcComp++,transThinWindowL);
+  tpc -> AddNode(thinWindowLR,copyNoTpcComp++,transThinWindowR);
+  tpc -> AddNode(thinWindowD,copyNoTpcComp++,transThinWindowD);
+  tpc -> AddNode(plateFL,copyNoTpcComp++,transPlateFL);
+  tpc -> AddNode(plateFR,copyNoTpcComp++,transPlateFR);
+  tpc -> AddNode(grassWindow,copyNoTpcComp++,transGrassWindowL);
+  tpc -> AddNode(grassWindow,copyNoTpcComp++,transGrassWindowR);
  
 
   for(Int_t i=0; i<30; i++)
-    tpc -> AddNode(kyoto[i],i+1,transKyotoPlaL[i]);
+    tpc -> AddNode(kyoto[i],copyNoKyoto+i+1,transKyotoPlaL[i]);
   for(Int_t i=0; i<30; i++)
-    tpc -> AddNode(kyoto[i+30],i+1+30,transKyotoPlaR[i]);
+    tpc -> AddNode(kyoto[i+30],copyNoKyoto+i+1+30,transKyotoPlaR[i]);
   
-  tpc -> AddNode(katanaVPlaL,1,transKatanaVPlaL); 
-  tpc -> AddNode(katanaVPlaM,2,transKatanaVPlaM); 
-  tpc -> AddNode(katanaVPlaR,3,transKatanaVPlaR); 
+  tpc -> AddNode(katanaVPlaL,copyNoKatana+1,transKatanaVPlaL);
+  tpc -> AddNode(katanaVPlaM,copyNoKatana+2,transKatanaVPlaM);
+  tpc -> AddNode(katanaVPlaR,copyNoKatana+3,transKatanaVPlaR);
 
-  tpc -> AddNode(outerAir,1);  
+  tpc -> AddNode(outerAir,copyNoTpcComp++);
 
 
 

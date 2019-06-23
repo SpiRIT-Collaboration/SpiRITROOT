@@ -79,7 +79,8 @@ STDetector::ProcessHits(FairVolume* vol)
   STStack* stack = (STStack*) gMC->GetStack();
 
   fTrackID     = stack->GetCurrentTrackNumber();
-  fVolumeID    = vol->getMCid();
+  //fVolumeID    = vol->getMCid();
+  fVolumeID    = vol->getCopyNo();
   fTime        = gMC->TrackTime() * 1.0e09;
   fLength      = gMC->TrackLength();
   gMC->TrackPosition(fPos);
@@ -204,6 +205,8 @@ STDetector::CheckIfSensitive(std::string name)
   if (nameStr.BeginsWith("kyoto"))
     return kTRUE;
   if (nameStr.BeginsWith("katanaVPla"))
+    return kTRUE;
+  if (nameStr.BeginsWith("neuland"))
     return kTRUE;
 
 

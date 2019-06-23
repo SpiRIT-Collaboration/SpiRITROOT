@@ -8,3 +8,7 @@ build
 !*/build
 .AppleDouble
 *.gi
+input/samurai_field_map.dat
+neuland_macros/
+VERSION.compiled
+cmake/STLog.cmake
