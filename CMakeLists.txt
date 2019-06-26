@@ -198,6 +198,11 @@ ENDIF(HAS_CXX11_SHAREDPOINTER)
 
 add_subdirectory(global)
 add_subdirectory(mc)
+
+add_subdirectory(r3b_neuland/r3bbase)
+add_subdirectory(r3b_neuland/r3bdata)
+add_subdirectory(r3b_neuland/neuland)
+
 add_subdirectory(digi)
 add_subdirectory(eventdisplay)
 add_subdirectory(stack)

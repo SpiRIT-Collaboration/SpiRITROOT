@@ -87,6 +87,9 @@ STDetector::ProcessHits(FairVolume* vol)
   gMC->TrackMomentum(fMom);
   fPdg         = gMC->TrackPid();
 
+  if (fVolumeID>=4000 && fVolumeID<5000)
+    return kFALSE;
+
   AddHit(fTrackID, fVolumeID, 
       TVector3(fPos.X(),  fPos.Y(),  fPos.Z()),
       TVector3(fMom.Px(), fMom.Py(), fMom.Pz()), 
@@ -205,8 +208,6 @@ STDetector::CheckIfSensitive(std::string name)
   if (nameStr.BeginsWith("kyoto"))
     return kTRUE;
   if (nameStr.BeginsWith("katanaVPla"))
-    return kTRUE;
-  if (nameStr.BeginsWith("neuland"))
     return kTRUE;
 
 
