@@ -370,11 +370,11 @@ void STFieldMap::Print() {
   cout << "----" << endl;
   cout << "----  Field map grid : " << endl;
   cout << "----  x = " << setw(4) << fXmin << " to " << setw(4) << fXmax 
-       << " cm, " << fNx << " grid points, dx = " << fXstep << " cm" << endl;
+       << " cm, " << fNx << " grid points, dx = " << fXstep << " mm" << endl;
   cout << "----  y = " << setw(4) << fYmin << " to " << setw(4) << fYmax 
-       << " cm, " << fNy << " grid points, dy = " << fYstep << " cm" << endl;
+       << " cm, " << fNy << " grid points, dy = " << fYstep << " mm" << endl;
   cout << "----  z = " << setw(4) << fZmin << " to " << setw(4) << fZmax 
-       << " cm, " << fNz << " grid points, dz = " << fZstep << " cm" << endl;
+       << " cm, " << fNz << " grid points, dz = " << fZstep << " mm" << endl;
   cout << endl;
   cout << "----  Field centre position: ( " << setw(6) << fPosX << ", "
        << setw(6) << fPosY << ", " << setw(6) << fPosZ << ") cm" << endl;
