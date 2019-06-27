@@ -23,7 +23,7 @@ class STGenfitPIDTask : public STRecoTask
 
     void SetClusteringType(Int_t type);
     void SetConstantField();
-    void SetFieldOffset(Double_t yOffset, Double_t zOffset);
+    void SetFieldOffset(Double_t xOffset, Double_t yOffset, Double_t zOffset);
 
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
@@ -68,6 +68,7 @@ class STGenfitPIDTask : public STRecoTask
 
     Double_t fMaxDCluster = 9999;
 
+    Double_t fFieldXOffset = 0;
     Double_t fFieldYOffset = -20.43;
     Double_t fFieldZOffset = 58;
 

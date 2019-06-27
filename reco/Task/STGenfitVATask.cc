@@ -30,10 +30,13 @@ STGenfitVATask::~STGenfitVATask()
 
 void STGenfitVATask::SetClusteringType(Int_t type) { fClusteringType = type; }
 void STGenfitVATask::SetConstantField() { fIsSamurai = kFALSE; }
-void STGenfitVATask::SetFieldOffset(Double_t yOffset, Double_t zOffset)
+void STGenfitVATask::SetFieldOffset(Double_t xOffset, Double_t yOffset, Double_t zOffset)
 {
+  fFieldXOffset = xOffset;
   fFieldYOffset = yOffset;
   fFieldZOffset = zOffset;
+
+  LOG(INFO) << "== [STGenfitVATask] Field center : (" << xOffset << ", " << yOffset << ", " << zOffset << ") cm"<< FairLogger::endl;
 }
 
 InitStatus
@@ -71,7 +74,7 @@ STGenfitVATask::Init()
   fVAVertexArray = new TClonesArray("STVertex");
   fRootManager -> Register("VAVertex", "SpiRIT", fVAVertexArray, fIsPersistence);
 
-  fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldYOffset, fFieldZOffset);
+  fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldXOffset, fFieldYOffset, fFieldZOffset);
   fPIDTest = new STPIDTest();
 
   if (fUseRave)

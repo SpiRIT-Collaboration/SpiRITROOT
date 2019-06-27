@@ -30,12 +30,13 @@ STGenfitPIDTask::~STGenfitPIDTask()
 
 void STGenfitPIDTask::SetClusteringType(Int_t type) { fClusteringType = type; }
 void STGenfitPIDTask::SetConstantField() { fIsSamurai = kFALSE; }
-void STGenfitPIDTask::SetFieldOffset(Double_t yOffset, Double_t zOffset)
+void STGenfitPIDTask::SetFieldOffset(Double_t xOffset, Double_t yOffset, Double_t zOffset)
 {
+  fFieldXOffset = yOffset;
   fFieldYOffset = yOffset;
   fFieldZOffset = zOffset;
 
-  LOG(INFO) << "== [STGenfitPIDTask] Field center : (0, " << yOffset << ", " << zOffset << ") cm"<< FairLogger::endl;
+  LOG(INFO) << "== [STGenfitPIDTask] Field center : (" << xOffset << ", " << yOffset << ", " << zOffset << ") cm"<< FairLogger::endl;
 }
 
 InitStatus
@@ -58,7 +59,7 @@ STGenfitPIDTask::Init()
   fRecoTrackArray = new TClonesArray("STRecoTrack");
   fRootManager -> Register("STRecoTrack", "SpiRIT", fRecoTrackArray, fIsPersistence);
 
-  fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldYOffset, fFieldZOffset);
+  fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldXOffset, fFieldYOffset, fFieldZOffset);
   fGenfitTest -> SetTargetPlane(fTargetX*0.1, fTargetY*0.1, fTargetZ*0.1); // Target plane position unit mm -> cm
   fPIDTest = new STPIDTest();
 

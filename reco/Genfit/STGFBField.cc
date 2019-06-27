@@ -6,19 +6,19 @@ ClassImp(STGFBField)
 
 STGFBField *STGFBField::fInstance = nullptr;
 
-STGFBField::STGFBField(const char* mapName, const char* fileType, Double_t yOffset, Double_t zOffset)
+STGFBField::STGFBField(const char* mapName, const char* fileType, Double_t xOffset, Double_t yOffset, Double_t zOffset)
 {
   fFieldMap = new STFieldMap(mapName, fileType);
-  fFieldMap -> SetPosition(0, yOffset, zOffset);
+  fFieldMap -> SetPosition(xOffset, yOffset, zOffset);
   fFieldMap -> Init();
 
   std::cout << "== [STGFBField] Field center : (0, " << yOffset << ", " << zOffset << ") cm"<< std::endl;
 }
 
-STGFBField *STGFBField::GetInstance(const char* mapName, const char* fileType, Double_t yOffset, Double_t zOffset)
+STGFBField *STGFBField::GetInstance(const char* mapName, const char* fileType, Double_t xOffset, Double_t yOffset, Double_t zOffset)
 {
   if (fInstance == nullptr)
-    fInstance = new STGFBField(mapName, fileType, yOffset, zOffset);
+    fInstance = new STGFBField(mapName, fileType, xOffset, yOffset, zOffset);
   else
     std::cout << "== [STGFBField] Existing pointer is returned" << std::endl;
 
