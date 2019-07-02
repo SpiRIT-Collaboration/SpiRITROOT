@@ -547,6 +547,88 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
   return;
 }
 
+void STCorrection::LoadExBShift(TString filename)
+{
+  exb_f = TFile::Open(filename);
+  exb_x = (TH3D *)exb_f->Get("shiftX_data");
+  exb_z = (TH3D *)exb_f->Get("shiftZ_data");
+
+  return;
+}
+
+void STCorrection::CorrectExB(TClonesArray *clusterArray)
+{
+  if(exb_x == nullptr)
+    {
+      cout<<"ERROR: No ExB Xshift file set!!! "<<endl;
+      return;
+    }
+  if(exb_z == nullptr)
+    {
+      cout<<"ERROR: No ExB Zshift file set!!! "<<endl;
+      return;
+    }
+
+  double x_xmin = exb_x->GetXaxis()->GetBinCenter(1);
+  double x_xmax = exb_x->GetXaxis()->GetBinCenter(exb_x->GetNbinsX());
+  double x_ymin = exb_x->GetYaxis()->GetBinCenter(1);
+  double x_ymax = exb_x->GetYaxis()->GetBinCenter(exb_x->GetNbinsY());
+  double x_zmin = exb_x->GetZaxis()->GetBinCenter(1);
+  double x_zmax = exb_x->GetZaxis()->GetBinCenter(exb_x->GetNbinsZ());
+
+  double z_xmin = exb_z->GetXaxis()->GetBinCenter(1);
+  double z_xmax = exb_z->GetXaxis()->GetBinCenter(exb_z->GetNbinsX());
+  double z_ymin = exb_z->GetYaxis()->GetBinCenter(1);
+  double z_ymax = exb_z->GetYaxis()->GetBinCenter(exb_z->GetNbinsY());
+  double z_zmin = exb_z->GetZaxis()->GetBinCenter(1);
+  double z_zmax = exb_z->GetZaxis()->GetBinCenter(exb_z->GetNbinsZ());
+
+  for( auto iCluster = 0; iCluster < clusterArray->GetEntries(); iCluster++)
+    {
+      auto cluster = (STHitCluster *)clusterArray -> At(iCluster);
+
+      double x = cluster->GetX();
+      double y = cluster->GetY();
+      double z = cluster->GetZ();
+      
+      double new_x = 0, new_z = 0;
+
+	if( (x > x_xmin && x < x_xmax) && (y > x_ymin && y < x_ymax) && (z > x_zmin && z < x_zmax) && exb_x != nullptr)
+	new_x = cluster->GetX() + exb_x->Interpolate(x,y,z);
+      else
+	{
+	  //	  cout <<"[STCorrection] X CLUSTER OUT OF RANGE "<<endl;
+	  //	  cout << cluster->GetX()<<endl;
+	}
+      if( (x > z_xmin && x < z_xmax) && (y > z_ymin && y < z_ymax) && (z > z_zmin && z < z_zmax) && exb_z != nullptr)
+	new_z =  cluster->GetZ() + exb_z->Interpolate(x,y,z);
+      else
+	{
+	  //	  cout <<"[STCorrection] Z CLUSTER OUT OF RANGE"<<endl;
+	  //	  cout << cluster->GetZ()<<endl;
+	}
+
+      if(new_x > 432)
+	cluster -> SetX(432);
+      else if(new_x < -432)
+	cluster -> SetX(-432);
+      else
+	cluster -> SetX(new_x);
+
+      if(new_z > 1338)
+	cluster -> SetZ(1338);
+      else if(new_z < 0)
+	cluster -> SetZ(0);
+      else
+	cluster -> SetZ(new_z);
+
+
+    }
+
+  return;
+}
+
+
 void STCorrection::LoadPRFCut(TString filename)
 {
   TFile f(filename);

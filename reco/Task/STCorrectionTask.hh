@@ -22,6 +22,7 @@ public:
   void SetPRFCheck(Bool_t opt){fPRFCheck = opt;};
   void SetPRFOpt(Int_t opt){fPRFOpt = opt;};
   void SetPRFCutFile(TString filename);  
+  void SetExBFile(TString filename){ fExB_file = filename;} ;  
 
 private:
   STCorrection *fCorrection        = nullptr;
@@ -31,9 +32,12 @@ private:
   Bool_t fDesaturate            = true;  //defualt is to desaturate
   Int_t fSatOpt                 = 1;
   Int_t fPRFOpt                 = 1;
+  Int_t fExB                    = 1;
+  Bool_t fExBShift              = false; //check clusters behave by prf
   Bool_t fPRFCheck              = true; //check clusters behave by prf
   TString fPRFcut_file = "";
-
+  TString fExB_file = "";
+  
   ClassDef(STCorrectionTask, 1)
 };
 

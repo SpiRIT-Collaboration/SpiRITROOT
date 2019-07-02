@@ -53,7 +53,19 @@ InitStatus STCorrectionTask::Init()
 	fPRFCheck = true;
     }
   
+  std::ifstream infile(fExB_file.Data()); 
+  if(!infile.good())
+    {
+      std::cout << "== [STCorrectionTask] ExB file does not Exist!" << std::endl;
+      fExBShift = false;
+    }
+  else
+    fExBShift = true;
+
   fCorrection = new STCorrection();
+
+  if(fExBShift)
+    fCorrection -> LoadExBShift(fExB_file);
 
   return kSUCCESS;
 }
@@ -86,6 +98,13 @@ void STCorrectionTask::Exec(Option_t *opt)
       fCorrection -> CheckClusterPRF(fHitClusterArray,fHelixArray,fHitArray);  
       LOG(INFO) << Space() << "STCorrection  Check PRF of Clusters" << FairLogger::endl;
     }
+
+  if(fExBShift)
+    {
+      fCorrection -> CorrectExB(fHitClusterArray);
+      LOG(INFO) << Space() << "STCorrection  Shift Clusters for ExB effect" << FairLogger::endl;
+    }
+
   
 }
 
