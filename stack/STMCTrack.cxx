@@ -166,8 +166,7 @@ Int_t STMCTrack::GetNPoints(DetectorId detId) const
   else if ( detId == kTutDet  ) { return ( (fNPoints & ( 7 <<  1) ) >>  1); }
   else if ( detId == kSPiRIT ) { return ( (fNPoints & (31 <<  4) ) >>  4); }
   else {
-    LOG(ERROR) << "Unknown detector ID "
-      << detId << FairLogger::endl;
+    //LOG(ERROR) << "Unknown detector ID " << detId << FairLogger::endl;
     return 0;
   }
 }
@@ -230,8 +229,7 @@ void STMCTrack::SetNPoints(Int_t iDet, Int_t nPoints)
     fNPoints = ( fNPoints & ( ~ ( 31 <<  4 ) ) )  |  ( nPoints <<  4 );
   }
 
-  else LOG(ERROR) << "Unknown detector ID "
-    << iDet << FairLogger::endl;
+  //else LOG(ERROR) << "Unknown detector ID " << iDet << FairLogger::endl;
 
 }
 // -------------------------------------------------------------------------

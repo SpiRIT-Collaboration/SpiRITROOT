@@ -49,7 +49,7 @@ void geomSpiRIT_wNeuland()
   Int_t copyNoKyoto = 2000;
   Int_t copyNoKatana = 3000;
   Int_t copyNoNeulandComp = 4000;
-  Int_t copyNoVeto = 5000;
+  Int_t copyNoVetoComp = 5000;
 
   TString dir = gSystem -> Getenv("VMCWORKDIR");
   TString dirGeom = dir + "/geometry/";
@@ -1020,9 +1020,9 @@ void geomSpiRIT_wNeuland()
     combiNeulandVeto[i]->RegisterYourself();
 
   for(Int_t i=0; i<400; i++)
-    neuland -> AddNode(neulandBox[i],copyNoNeulandComp+i+1,combiNeulandBar[i]);
+    neuland -> AddNode(neulandBox[i],copyNoNeulandComp+i,combiNeulandBar[i]);
   for(Int_t i=0; i<8; i++)
-    neuland -> AddNode(neulandVetoBox[i],copyNoVeto+i+1,combiNeulandVeto[i]);
+    neuland -> AddNode(neulandVetoBox[i],copyNoVetoComp+i,combiNeulandVeto[i]);
 
 
   // ----------------------------------------------------
@@ -1068,7 +1068,7 @@ void geomSpiRIT_wNeuland()
   top -> AddNode(world,1);
 
   world -> AddNode(tpc,copyNoTpc,combiTpc);
-  world -> AddNode(neuland,copyNoTpc,combiNeuland);
+  world -> AddNode(neuland,copyNoNeuland,combiNeuland);
  
   // ----------------------------------------------------
   //  AddNode to TPC

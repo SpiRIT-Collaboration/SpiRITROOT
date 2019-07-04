@@ -60,6 +60,15 @@ class STDetector: public FairDetector
                              Double_t time, Double_t length,
                              Double_t eLoss, Int_t pdg);
 
+    Double_t GetLightYield(const Int_t charge,
+                           const Double_t length,
+                           const Double_t edep);
+
+    STMCPoint* AddNeulandHit(Int_t trackID, Int_t detID,
+                             TVector3 pos, TVector3 mom,
+                             Double_t time, Double_t length,
+                             Double_t eLoss, Int_t pdg);
+
     /** Check the volume is sensitive or not **/
     virtual bool CheckIfSensitive(std::string name);
 
@@ -78,6 +87,8 @@ class STDetector: public FairDetector
     virtual void PreTrack() {;}
     virtual void BeginEvent() {;}
 
+    void SetOnlyNLSensitive(Bool_t v = true) { fOnlyNLSensitive = v; }
+
 
   private:
 
@@ -95,8 +106,11 @@ class STDetector: public FairDetector
     Double32_t     fELoss;             //!<  energy loss
 	 Int_t 			 fPdg;					//!<  particle data group code
 
+    Bool_t fOnlyNLSensitive = false;
+
     /** Container for data points */
     TClonesArray*  fSTMCPointCollection;
+    TClonesArray*  fNLMCPointCollection;
 
     STDetector(const STDetector&);
     STDetector& operator=(const STDetector&);

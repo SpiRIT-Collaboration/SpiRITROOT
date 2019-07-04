@@ -32,7 +32,8 @@ STDetector::STDetector()
   fLength(-1.),
   fELoss(-1),
   fPdg(0),
-  fSTMCPointCollection(new TClonesArray("STMCPoint"))
+  fSTMCPointCollection(new TClonesArray("STMCPoint")),
+  fNLMCPointCollection(new TClonesArray("STMCPoint"))
 {
 }
 
@@ -46,7 +47,8 @@ STDetector::STDetector(const char* name, Bool_t active)
   fLength(-1.),
   fELoss(-1),
   fPdg(0),
-  fSTMCPointCollection(new TClonesArray("STMCPoint"))
+  fSTMCPointCollection(new TClonesArray("STMCPoint")),
+  fNLMCPointCollection(new TClonesArray("STMCPoint"))
 {
 }
 
@@ -56,6 +58,10 @@ STDetector::~STDetector()
     fSTMCPointCollection->Delete();
     delete fSTMCPointCollection;
   }
+  if (fNLMCPointCollection) {
+    fNLMCPointCollection->Delete();
+    delete fNLMCPointCollection;
+  }
 }
 
   void 
@@ -64,6 +70,26 @@ STDetector::Initialize()
   FairDetector::Initialize();
   FairRuntimeDb* rtdb= FairRun::Instance()->GetRuntimeDb();
   STGeoPar* par=(STGeoPar*)(rtdb->getContainer("STGeoPar"));
+}
+
+Double_t STDetector::GetLightYield(const Int_t charge, const Double_t length, const Double_t edep)
+{
+  Double_t BirkdP = 1.032;
+  Double_t BirkC1 = 0.013 / BirkdP;
+  Double_t BirkC2 = 9.6e-6 / (BirkdP * BirkdP);
+
+  // Apply Birk's law ( Adapted from G3BIRK/Geant3)
+  Double_t birkC1Mod = BirkC1;
+
+  // Apply correction for higher charge states
+  if (TMath::Abs(charge) >= 2)
+  {
+    birkC1Mod *= 7.2 / 12.6;
+  }
+
+  Double_t dedxcm = 1000. * edep / length;
+  Double_t lightYield = edep / (1. + birkC1Mod * dedxcm + BirkC2 * dedxcm * dedxcm);
+  return lightYield;
 }
 
   Bool_t
@@ -79,7 +105,6 @@ STDetector::ProcessHits(FairVolume* vol)
   STStack* stack = (STStack*) gMC->GetStack();
 
   fTrackID     = stack->GetCurrentTrackNumber();
-  //fVolumeID    = vol->getMCid();
   fVolumeID    = vol->getCopyNo();
   fTime        = gMC->TrackTime() * 1.0e09;
   fLength      = gMC->TrackLength();
@@ -87,18 +112,33 @@ STDetector::ProcessHits(FairVolume* vol)
   gMC->TrackMomentum(fMom);
   fPdg         = gMC->TrackPid();
 
-  if (fVolumeID>=4000 && fVolumeID<5000)
-    return kFALSE;
-
-  AddHit(fTrackID, fVolumeID, 
-      TVector3(fPos.X(),  fPos.Y(),  fPos.Z()),
-      TVector3(fMom.Px(), fMom.Py(), fMom.Pz()), 
-      fTime, fLength, fELoss, fPdg);
-
-  stack->AddPoint(kSPiRIT);
-
   Double_t stepLength = gMC->TrackStep();
+
+  if (fVolumeID>=4000 && fVolumeID<5000) {
+    auto charge = gMC->TrackCharge();
+    if (charge!=0) {
+      fELoss = GetLightYield(charge, stepLength, fELoss);
+      AddNeulandHit(fTrackID, fVolumeID,
+          TVector3(fPos.X(),  fPos.Y(),  fPos.Z()),
+          TVector3(fMom.Px(), fMom.Py(), fMom.Pz()),
+          fTime, fLength, fELoss, fPdg);
+
+      stack->AddPoint(kNeuLAND);
+    }
+  }
+
+
+  else {
+    AddHit(fTrackID, fVolumeID,
+        TVector3(fPos.X(),  fPos.Y(),  fPos.Z()),
+        TVector3(fMom.Px(), fMom.Py(), fMom.Pz()),
+        fTime, fLength, fELoss, fPdg);
+
+    stack->AddPoint(kSPiRIT);
+  }
+
   stack->AddPoint(fVolumeID,fELoss,stepLength);
+
   return kTRUE;
 }
 
@@ -106,6 +146,7 @@ STDetector::ProcessHits(FairVolume* vol)
 STDetector::EndOfEvent()
 {
   fSTMCPointCollection->Clear();
+  fNLMCPointCollection->Clear();
 }
 
   void 
@@ -121,6 +162,9 @@ STDetector::Register()
   FairRootManager::Instance()->Register("STMCPoint", "SPiRIT",
       fSTMCPointCollection, kTRUE);
 
+  FairRootManager::Instance()->Register("NLMCPoint", "SPiRIT",
+      fNLMCPointCollection, kTRUE);
+
 }
 
 
@@ -134,6 +178,7 @@ TClonesArray* STDetector::GetCollection(Int_t iColl) const
 void STDetector::Reset()
 {
   fSTMCPointCollection->Clear();
+  fNLMCPointCollection->Clear();
 }
 
 
@@ -198,16 +243,32 @@ STDetector::AddHit(Int_t trackID, Int_t detID,
       time, length, eLoss, pdg);
 }
 
+  STMCPoint*
+STDetector::AddNeulandHit(Int_t trackID, Int_t detID,
+    TVector3 pos, TVector3 mom,
+    Double_t time, Double_t length,
+    Double_t eLoss, Int_t pdg)
+{
+  TClonesArray& clref = *fNLMCPointCollection;
+  Int_t size = clref.GetEntriesFast();
+  return new(clref[size]) STMCPoint(trackID, detID, pos, mom,
+      time, length, eLoss, pdg);
+}
+
   Bool_t
 STDetector::CheckIfSensitive(std::string name)
 {
   TString nameStr(name);
 
-  if (nameStr.EqualTo("field_cage_in"))
-    return kTRUE;
-  if (nameStr.BeginsWith("kyoto"))
-    return kTRUE;
-  if (nameStr.BeginsWith("katanaVPla"))
+  if (!fOnlyNLSensitive) {
+    if (nameStr.EqualTo("field_cage_in"))
+      return kTRUE;
+    if (nameStr.BeginsWith("kyoto"))
+      return kTRUE;
+    if (nameStr.BeginsWith("katanaVPla"))
+      return kTRUE;
+  }
+  if (nameStr.BeginsWith("neuland"))
     return kTRUE;
 
 

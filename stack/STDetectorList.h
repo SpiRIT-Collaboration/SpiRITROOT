@@ -11,6 +11,6 @@
 #define STDETECTORLIST_H 1
 
 // kSTOPHERE is needed for iteration over the enum. All detectors have to be put before.
-enum DetectorId {kREF, kSPiRIT, kTutDet, kSTOPHERE};
+enum DetectorId {kREF, kNeuLAND, kSPiRIT, kTutDet, kSTOPHERE};
 
 #endif
