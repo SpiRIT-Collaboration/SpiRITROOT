@@ -41,6 +41,10 @@ STNLDigiTask.cc
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
 
+set(HEADERS
+    STNeuLAND.hh
+   )
+
 Set(LINKDEF STDigiLinkDef.h)
 Set(LIBRARY_NAME STDigi)
 Set(DEPENDENCIES
