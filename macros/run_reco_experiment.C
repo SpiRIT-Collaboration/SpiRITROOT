@@ -2,19 +2,22 @@ void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
 
 void run_reco_experiment
 (
- Int_t fRunNo = 2894,
- Int_t fNumEventsInRun = 1000,
- Int_t fSplitNo = 0,
- Int_t fNumEventsInSplit = 1000,
- TString fGCData = "",
- TString fGGData = "",
- std::vector<Int_t> fSkipEventArray = {},
- TString fMCFile = "",
- TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement",
- Double_t fPSAThreshold = 30,
- TString fParameterFile = "ST.parameters.PhysicsRuns_201707.par",
- TString fPathToData = "",
- Bool_t fUseMeta = kTRUE
+  Int_t fRunNo = 2894,
+  Int_t fNumEventsInRun = 500,
+  Int_t fSplitNo = 0,
+  Int_t fNumEventsInSplit = 500,
+  TString fGCData = "abc", // this parameter can be anything, but nothing.
+  TString fGGData = "/mnt/spirit/rawdata/misc/ggNoise/ggNoise_2886.root", //the different run will has different GG noise, for the accurate corresponding file, you can ask Genie.
+  std::vector<Int_t> fSkipEventArray = {},
+  TString fMCFile = "",
+  TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement",
+  Double_t fPSAThreshold = 30,
+  TString fParameterFile = "ST.parameters.PhysicsRuns_201707.par",
+  TString fPathToData = "",
+  Bool_t fUseMeta = kTRUE,
+  double YPedestalOffset = +21.88,  // 132Sn: +21.88, 124Sn: +21.68, 112Sn: +22.98, 108Sn: +23.28, this value will move all the STHit YPedestalOffset, after applying this offset, the PosY of reconstructed TPC vertex will at -205.5mm, same with BDC.
+  double BDC_Xoffset = -0.299, // 132Sn: -0.299, 124Sn: -0.609, 112Sn: -0.757, 108Sn: -0.706, this value will adjust the center of TPC vertex same with the center of BDC.
+  double BDC_Yoffset = -205.5 //this value will transfer the BDC frame to TPC frame along Y direction.
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -74,12 +77,13 @@ void run_reco_experiment
   decoder -> SetGGNoiseData(fGGData);
   decoder -> SetDataList(raw);
   decoder -> SetEventID(start);
-  decoder -> SetTbRange(30, 257);
+  decoder -> SetTbRange(30, 257); 
   decoder -> SetEmbedFile(fMCFile);
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
   decoder -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
   
-  if (fUseMeta) {
+  if (fUseMeta) 
+  {
     std::ifstream metalistFile(metaFile.Data());
     TString dataFileWithPath;
     for (Int_t iCobo = 0; iCobo < 12; iCobo++) {
@@ -101,7 +105,7 @@ void run_reco_experiment
 //  map<Int_t, vector<Int_t> *> events;
 //  readEventList("eventList-Sn132.txt", events);
 //  preview -> SetSelectingEvents(*events[fRunNo]);
-
+ 
   auto psa = new STPSAETask();
   psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
@@ -112,14 +116,17 @@ void run_reco_experiment
   psa -> SetPSAPeakFindingOption(1);
   // Low gain calibration. Don't forget you need to uncomment decoder part, too.
   psa -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
-
+  psa -> SetYPedestalOffset(YPedestalOffset); // unit: mm, this is used to match the TPC-Vertex_Y with the BDC_Y.
+  
   auto helix = new STHelixTrackingTask();
   helix -> SetPersistence(false);
   helix -> SetClusterPersistence(false);
   // Left, right, top and bottom sides cut
-  helix -> SetClusterCutLRTB(420, -420, -64, -522);
+//  helix -> SetClusterCutLRTB(420, -420, -64, -522);
+  helix -> SetClusterCutLRTB(420, -420, -64+YPedestalOffset, -522+YPedestalOffset);
   // High density region cut
-  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(120, 100, 220), 5); // current use
+//  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(120, 100, 220), 5); // current use
+  helix -> SetEllipsoidCut(TVector3(0, -260+YPedestalOffset, -11.9084), TVector3(120, 100, 220), 5); // current use
 //  helix -> SetCylinderCut(TVector3(0, -226.06, -11.9084), 100, 100, 5);
 //  helix -> SetSphereCut(TVector3(0, -226.06, -11.9084), 100, 5);
 //  helix -> SetEllipsoidCut(TVector3(0, -206.34, -11.9084), TVector3(120, 55, 240), 5);
@@ -129,22 +136,26 @@ void run_reco_experiment
   auto correct = new STCorrectionTask(); //Correct for saturation
   
   auto genfitPID = new STGenfitPIDTask();
+  genfitPID -> SetFieldOffset(-0.1794, -20.5502, 58.0526); //unit: cm, which comes from Jon's measurement. It means the position of magnetic field in the TPC frame.
+  genfitPID -> SetTargetPlane(0,-213.3,-13.2); // unit: mm, in the TPC frame. here the z position is used when Genfit do the extrapolation.
   genfitPID -> SetPersistence(true);
-  genfitPID -> SetBDCFile("");  
+  genfitPID -> SetBDCFile("");
   //genfitPID -> SetConstantField();
   genfitPID -> SetListPersistence(true);
   // Removing shorter length tracklet by distance of adjacent clusters.
   //genfitPID -> SetMaxDCluster(60);
-
+  
   auto genfitVA = new STGenfitVATask();
   genfitVA -> SetPersistence(true);
   //genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
-  genfitVA -> SetBeamFile("");
+//  genfitVA -> SetBeamFile("");
   genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
-  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
+//  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
+  genfitVA -> SetInformationForBDC(fRunNo,BDC_Xoffset,BDC_Yoffset);
   // Uncomment if you want to recalculate the vertex using refit tracks.
   genfitVA -> SetUseRave(true);
+  genfitVA -> SetFieldOffset(-0.1794, -20.5502, 58.0526); //unit: cm, which comes from Jon's measurement. It means the position of magnetic field in the TPC frame.
   
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
