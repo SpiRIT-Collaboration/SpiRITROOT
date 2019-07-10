@@ -14,6 +14,7 @@
 #include "STVertex.hh"
 #include "STBeamEnergy.hh"
 #include "STBDCProjection.hh"
+#include "ST_VertexShift.hh"
 
 class STGenfitVATask : public STRecoTask
 {
@@ -79,9 +80,19 @@ class STGenfitVATask : public STRecoTask
     Double_t fFixedVertexY = -9999;
     Double_t fFixedVertexZ = -9999;
 
-    Double_t fFieldXOffset = 0;
-    Double_t fFieldYOffset = -20.43;
-    Double_t fFieldZOffset = 58;
+    Double_t fFieldXOffset = 0;  //unit: cm
+    Double_t fFieldYOffset = -20.43;  //unit: cm
+    Double_t fFieldZOffset = 58;  //unit: cm
+
+public:     
+    //the below is related to BDC shift.
+    ST_VertexShift* Vertex_Shifter; 
+    string FileName_BDCCorrection_Theta_TargetPos;
+    void Set_FileName_BDCCorrection_Theta_TargetPos(string NameTem){ FileName_BDCCorrection_Theta_TargetPos = NameTem; }
+    bool IsOption_BDCCorrection;
+    void Set_IsOption_BDCCorrection(bool IsOption) { IsOption_BDCCorrection = IsOption; }
+    
+    
 
   ClassDef(STGenfitVATask, 1)
 };

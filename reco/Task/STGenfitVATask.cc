@@ -17,11 +17,17 @@ ClassImp(STGenfitVATask)
 STGenfitVATask::STGenfitVATask()
 : STRecoTask("GENFIT VA Task", 1, false)
 {
+  Vertex_Shifter = 0;
+  FileName_BDCCorrection_Theta_TargetPos = "";
+  IsOption_BDCCorrection = 0;
 }
 
 STGenfitVATask::STGenfitVATask(Bool_t persistence)
 : STRecoTask("GENFIT VA Task", 1, persistence)
 {
+  Vertex_Shifter = 0;
+  FileName_BDCCorrection_Theta_TargetPos = "";
+  IsOption_BDCCorrection = 0;
 }
 
 STGenfitVATask::~STGenfitVATask()
@@ -107,7 +113,13 @@ STGenfitVATask::Init()
     fRecoHeader -> SetPar("genfitva_loadSamuraiMap", fIsSamurai);
     fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
   }
-
+  
+  if(IsOption_BDCCorrection==1)
+  {
+    Vertex_Shifter = new ST_VertexShift();
+    Vertex_Shifter->Load_BDC_Correction("f1_BDCCorrection_Theta_TargetPos.root");
+  }
+  
   return kSUCCESS;
 }
 
@@ -155,7 +167,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     return; // if the event is not vertex event, not add vertex in
   }
 
-  auto vertexPos = vertex -> GetPos();
+  auto vertexPos = vertex -> GetPos(); //this position is TPC Vertex
   Bool_t goodBDC = kTRUE;
   if (!fBeamFilename.IsNull()) {
     fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
@@ -200,7 +212,22 @@ void STGenfitVATask::Exec(Option_t *opt)
 
     if (track -> GetVertexID() != chosenVID)
       continue;
-
+    
+    double BDCShiftX = 0; double BDCShiftY = 0; //unit: mm
+    
+    //the below if for getting the shift value according to the RecoMomentum.
+    if(IsOption_BDCCorrection==1)
+    {
+      TVector3 RecoMom = track->GetMomentumTargetPlane();
+      double Phi = RecoMom.Phi()*TMath::RadToDeg();
+      double Theta = RecoMom.Theta()*TMath::RadToDeg();
+      if(Phi<0) { Phi = Phi+360; }
+      Vertex_Shifter->GetShiftValue_Smooth(Theta,Phi,&BDCShiftX,&BDCShiftY);
+    }
+    
+    TVector3 VertexPosShift(BDCShiftX,BDCShiftY,0);
+//    cout<<" Phi: "<<Phi<<" Theta: "<<Theta<<" ShiftX: "<<ShiftX<<" ShiftY: "<<ShiftY<<endl;
+    
     auto cov = vertex -> GetCov();
     cov(0,0) = abs(cov(0,0));
     cov(1,1) = abs(cov(1,1));
@@ -214,7 +241,7 @@ void STGenfitVATask::Exec(Option_t *opt)
 
     auto vertexCluster = new STHitCluster();
     vertexCluster -> SetIsStable(kTRUE);
-    vertexCluster -> SetHit(-4, vertexPos, 30);
+    vertexCluster -> SetHit(-4, vertexPos+VertexPosShift, 30); // here add this shift to the BDC original position 
     vertexCluster -> SetCovMatrix(cov);
     vertexCluster -> SetDFromCovForGenfit(1,1,1,true);
 

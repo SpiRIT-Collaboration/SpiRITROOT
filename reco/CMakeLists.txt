@@ -65,6 +65,7 @@ Task/STGenfitVATask.cc
 Task/STEmbedCorrelatorTask.cc
 Task/STCorrectionTask.cc
 Task/STMCEventTask.cc
+Task/ST_VertexShift.cc
 
 Corrections/STCorrection.cc
 

@@ -17,6 +17,7 @@
 #pragma link C++ class STPIDCorrelatorTask+;
 #pragma link C++ class STRiemannToHelixTask+;
 #pragma link C++ class STMCEventTask+;
+#pragma link C++ class ST_VertexShift+;
 
 #pragma link C++ class STPIDTest+;
 
