@@ -17,7 +17,8 @@ void run_reco_experiment
   Bool_t fUseMeta = kTRUE,
   double YPedestalOffset = +21.88,  // 132Sn: +21.88, 124Sn: +21.68, 112Sn: +22.98, 108Sn: +23.28, this value will move all the STHit YPedestalOffset, after applying this offset, the PosY of reconstructed TPC vertex will at -205.5mm, same with BDC.
   double BDC_Xoffset = -0.299, // 132Sn: -0.299, 124Sn: -0.609, 112Sn: -0.757, 108Sn: -0.706, this value will adjust the center of TPC vertex same with the center of BDC.
-  double BDC_Yoffset = -205.5 //this value will transfer the BDC frame to TPC frame along Y direction.
+  double BDC_Yoffset = -205.5, //this value will transfer the BDC frame to TPC frame along Y direction.
+  double BDC_Zoffset = 0
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -152,10 +153,13 @@ void run_reco_experiment
 //  genfitVA -> SetBeamFile("");
   genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
 //  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
-  genfitVA -> SetInformationForBDC(fRunNo,BDC_Xoffset,BDC_Yoffset);
+  genfitVA -> SetInformationForBDC(fRunNo,BDC_Xoffset,BDC_Yoffset,BDC_Zoffset);
   // Uncomment if you want to recalculate the vertex using refit tracks.
   genfitVA -> SetUseRave(true);
   genfitVA -> SetFieldOffset(-0.1794, -20.5502, 58.0526); //unit: cm, which comes from Jon's measurement. It means the position of magnetic field in the TPC frame.
+  genfitVA -> Set_IsOption_BDCCorrection(0); 
+  genfitVA -> Set_FileName_BDCCorrection_Theta_TargetPos("f1_BDCCorrection_Theta_TargetPos.root");
+  genfitVA -> SetZtoProject(-13.2, 1.7, 3); //(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple), this function will project the BDC on the Target.
   
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
