@@ -1,26 +1,3 @@
-/**
- * @brief Process drifting of electron from created position to anode wire
- * plane. 
- *
- * @author JungWoo Lee (Korea Univ.)
- *
- * @detail This class recieves STMCPoint as a input and returns
- * STDriftedElectron as a output. 
- *
- * Calculate Number of electrons created from ionization of gas. 
- * Each electron is drifted along y-direction by electric field. Position in
- * the anode wire plane is calculated based on drift velocity and diffusion 
- * parameters. 
- *
- * Position is corrected with diffusion parameters and time is calculated with drift
- * velocity. Drift velocity is constant but there is also difusion along
- * drifting axis. These parameters(diffusion and drift velocity) are calculated
- * from Garfield++. 
- *
- * Once electron reaches anode wire pane, electron is absorbed in the closest wire. 
- * Thus z-component of STDriftedElectron is z-position of corresponding wire 
- */
-
 #ifndef STSPACECHARGETASK
 #define STSPACECHARGETASK
 
