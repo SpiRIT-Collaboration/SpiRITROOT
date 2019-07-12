@@ -1,13 +1,3 @@
-/**
- * @brief Process drifting of electron from created position to anode wire
- * plane. 
- *
- * @author JungWoo Lee (Korea Univ.)
- *
- * @detail See header file for detail.
- */
-
-// This class & SPiRIT class headers
 #include "STSpaceChargeTask.hh"
 #include "STProcessManager.hh"
 
