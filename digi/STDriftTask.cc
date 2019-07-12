@@ -60,7 +60,7 @@ STDriftTask::Init()
 
   FairRootManager* ioman = FairRootManager::Instance();
 
-  fMCPointArray = (TClonesArray*) ioman->GetObject("STMCPoint");
+  fMCPointArray = (TClonesArray*) ioman->GetObject("DispMCPoint");//"STMCPoint");
   fMCTrackArray = (TClonesArray*) ioman->GetObject("PrimaryTrack");  
   fElectronArray = new TClonesArray("STDriftedElectron");
   ioman->Register("STDriftedElectron","ST",fElectronArray,fIsPersistence);

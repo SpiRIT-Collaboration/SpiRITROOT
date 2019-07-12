@@ -7,6 +7,7 @@ ${GENFIT2_INCLUDE_DIR}
 ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/mc
+${CMAKE_SOURCE_DIR}/field
 ${CMAKE_SOURCE_DIR}/par
 ${CMAKE_SOURCE_DIR}/stack
 ${CMAKE_SOURCE_DIR}/format
@@ -31,6 +32,7 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
+STSpaceChargeTask.cc
 STDriftTask.cc
 STPadResponseTask.cc
 STElectronicsTask.cc
@@ -52,6 +54,7 @@ Set(DEPENDENCIES
   STUtil
   STReco
   STTool
+  STField
   MathMore
 )
 

@@ -22,6 +22,15 @@ void run_digi(TString name = "protons_75_events")
   // FairRun
   FairRunAna* fRun = new FairRunAna();
   // -----------------------------------------------------------------
+  // Set space charge task
+  STSpaceChargeTask *fSpaceChargeTask = new STSpaceChargeTask();
+  STFieldMap *fField = new STFieldMap("samurai_field_map","A");
+  fField -> SetPosition(0., -20.43, 58.);
+  fSpaceChargeTask -> SetPersistence(true);
+  fSpaceChargeTask -> SetElectronDrift(false); // set this to true if you want space charge
+  fSpaceChargeTask -> SetVerbose(false);
+  fSpaceChargeTask -> SetBField(fField);
+  fRun -> AddTask(fSpaceChargeTask);
   // Set digitization tasks
   STDriftTask* fDriftTask = new STDriftTask(); 
   fDriftTask -> SetPersistence(true);
@@ -105,4 +114,5 @@ void run_digi(TString name = "protons_75_events")
   cout << endl << endl;
   cout << "Macro finished succesfully."  << endl << endl;
   cout << "- Output file : " << outputFile << endl << endl;
+  //fSpaceChargeTask -> ExportDisplacementMap("../SpaceCharge/DriftElectrons/test.root");
 }

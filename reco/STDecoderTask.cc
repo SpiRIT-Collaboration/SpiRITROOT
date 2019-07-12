@@ -121,16 +121,21 @@ STDecoderTask::Init()
   //Check if embedding is turned on
   if (!fEmbedFile.EqualTo(""))
     {
-      std::ifstream infile(fEmbedFile.Data());
+      /*std::ifstream infile(fEmbedFile.Data());
       if(!infile.good())
 	{
 	  std::cout << "== [STDecoderTask] Embed file does not Exist!" << std::endl;
 	  return kERROR;
-	}
+	}*/
 
       std::cout << "== [STDecoderTask] Setting up embed mode" << std::endl;
       fChain = new TChain("cbmsim");
-      fChain -> AddFile(fEmbedFile);
+      fChain -> Add(fEmbedFile);
+      if(fChain -> GetListOfFiles() -> GetEntries() == 0)
+      {
+	  std::cout << "== [STDecoderTask] Embed file does not Exist!" << std::endl;
+	  return kERROR;
+	}
       fChain -> SetBranchAddress("STRawEvent", &fEventArray);
       fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
 
