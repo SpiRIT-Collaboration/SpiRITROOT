@@ -28,6 +28,8 @@
 class ODRFitter
 {
   public:
+    static ODRFitter* GetFitter();
+
     ODRFitter();
     ~ODRFitter();
 
@@ -96,8 +98,10 @@ class ODRFitter
     Double_t fRMSLine; /// Root mean square of the line fit
     Double_t fRMSPlane; /// Root mean square of the plane fit
 
+  private:
+    static ODRFitter *fInstance;
 
-  ClassDef(ODRFitter, 2)
+  ClassDef(ODRFitter, 3)
 };
 
 #endif

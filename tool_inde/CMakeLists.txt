@@ -5,9 +5,6 @@ ${GENFIT2_INCLUDE_DIR}
 ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/tool_inde
-${CMAKE_SOURCE_DIR}/tool
-${CMAKE_SOURCE_DIR}/util
-${CMAKE_SOURCE_DIR}/format
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -24,27 +21,18 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
-STDatabasePDG.cc
-STRiemannFitter.cc
-STCircleFitter.cc
-STPadPlaneMap.cc
-STHelixTrackFitter.cc
-STSamplePoint.cc
-STGeoLine.cc
+ODRFitter.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
 
-Set(LINKDEF STToolLinkDef.h)
-Set(LIBRARY_NAME STTool)
+Set(LINKDEF STToolIndeLinkDef.h)
+Set(LIBRARY_NAME STToolIndependent)
 Set(DEPENDENCIES
     Base
     Stack
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
-    STFormat
-    STToolIndependent
-    STUtil
 )
 
 GENERATE_LIBRARY()

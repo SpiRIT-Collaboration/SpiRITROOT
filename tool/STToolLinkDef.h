@@ -7,7 +7,6 @@
 #pragma link C++ class STDatabasePDG;
 #pragma link C++ class STRiemannFitter+;
 #pragma link C++ class STCircleFitter+;
-#pragma link C++ class ODRFitter+;
 #pragma link C++ class STHelixTrackFitter+;
 #pragma link C++ class STPadPlaneMap+;
 #pragma link C++ class STSamplePoint+;

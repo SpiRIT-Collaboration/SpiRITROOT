@@ -7,8 +7,17 @@ using namespace std;
 
 ClassImp(ODRFitter)
 
+ODRFitter* ODRFitter::fInstance = nullptr;
+
+ODRFitter* ODRFitter::GetFitter() {
+  if (fInstance != nullptr)
+    return fInstance;
+  return new ODRFitter();
+}
+
 ODRFitter::ODRFitter()
 {
+  fInstance = this;
   fNormal = new TVectorD(3);
   fMatrixA = new TMatrixD(3,3);
   fEigenValues = new TVectorD(3);
