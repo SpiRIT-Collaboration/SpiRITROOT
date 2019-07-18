@@ -9,6 +9,7 @@ ${BASE_INCLUDE_DIRECTORIES}
 ${CMAKE_SOURCE_DIR}/mc
 ${CMAKE_SOURCE_DIR}/par
 ${CMAKE_SOURCE_DIR}/stack
+${CMAKE_SOURCE_DIR}/tool_inde
 ${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/tool
 ${CMAKE_SOURCE_DIR}/digi
@@ -37,13 +38,10 @@ STElectronicsTask.cc
 STAnalyzeG4StepTask.cc
 
 STNLDigiTask.cc
+STNeuLAND.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
-
-set(HEADERS
-    STNeuLAND.hh
-   )
 
 Set(LINKDEF STDigiLinkDef.h)
 Set(LIBRARY_NAME STDigi)

@@ -1,7 +1,10 @@
 #ifndef STNEULAND_HH
 #define STNEULAND_HH
 
-namespace STNeuLAND
+#include "TMath.h"
+#include "TVector3.h"
+
+class STNeuLAND
 {
   public:
     Double_t fZTarget = -13.24; // mm
@@ -13,7 +16,7 @@ namespace STNeuLAND
     Double_t fOffzNeuland = fDistNeuland * cos( fRotYNeuland_rad ) + fZTarget;
 
     Int_t fFirstMCDetectorID = 4000;
-    Int_t fLastCDetectorID = 4400;
+    Int_t fLastMCDetectorID = 4400;
 
     Int_t fNumLayers = 8;
     Int_t fNumRows = 50;
@@ -27,57 +30,19 @@ namespace STNeuLAND
     //Double_t fdhwNlBar = 1250.; ///< Half length of neuland bar
 
 
-
-
     /// Convert local position to global position
-    TVector3
-    GlobalPos(TVector3 localPos)
-    {
-      TVector3 globalPos = localPos;
-      globalPos.RotateY( fRotYNeuland_rad );
-      globalPos += TVector3(fOffxNeuland, fOffyNeuland, fOffzNeuland);
-      return globalPos;
-    }
-
-
+    TVector3 GlobalPos(TVector3 localPos);
 
     /// Convert global position to local position
-    TVector3
-    LocalPos(TVector3 globalPos)
-    {
-      TVector3 localPos = globalPos;
-      localPos -= TVector3(fOffxNeuland, fOffyNeuland, fOffzNeuland);
-      localPos.RotateY( -fRotYNeuland_rad );
-      return localPos;
-    }
-
-
-
-    /// Get row from bar-id
-    Int_t
-    GetRow(Int_t barID)
-    {
-      auto layer = GetLayer(barID);
-      if (layer < 0)
-        return -1;
-      Int_t row = id - layer*fWidthBar;
-      return row;
-    }
-
-
+    TVector3 LocalPos(TVector3 globalPos);
 
     /// Get layer from bar-id
-    Int_t
-    GetLayer(Int_t barID)
-    {
-      if (id < fFirstMCDetectorID && id >= fLastCDetectorID ) {
-        Int_t layer = Int_t((id-fFirstMCDetectorID)/fWidthBar);
-        return layer;
-      }
-      return -1;
-    }
+    Int_t GetLayer(Int_t mcDetID);
 
+    /// Get row from bar-id
+    Int_t GetRow(Int_t mcDetID);
 
+    Int_t IsAlongXNotY(Int_t mcDetID);
 
     /* Get (local)  center position from mc-det-id
      *
@@ -96,30 +61,13 @@ namespace STNeuLAND
      * 250 + 0-49 : layer 5, from     -x(0) to  +x(49)
      * 250 + 0-49 : layer 7, from     -x(0) to  +x(49)
      */
-    TVector3
-    GetBarLocalPosition(Int_t detIDMC)
-    {
-      auto layer = GetLayer(id);
-      auto row = GetRow(id);
-
-      TVector3 localPosition(0,0,0);
-      if (layer > 0 && row > 0) {
-        localPosition.SetZ((layer+.5)*fdzNlBar);
-        if (layer%2==0) localPosition.SetY(-fHalfLengthBar+(row+1)*fWidthBar);
-        else            localPosition.SetX(-fHalfLengthBar+(row+1)*fWidthBar);
-      }
-
-      return localPosition;
-    }
-
-
+    TVector3 GetBarLocalPosition(Int_t mcDetID);
 
     /// Get (global) center position from mc-det-id
-    TVector3
-    GetBarGlobalPosition(Int_t detIDMC)
-    {
-      return LocalPos(GetBarLocalPosition(id));
-    }
+    TVector3 GetBarGlobalPosition(Int_t mcDetID);
+
+
+  ClassDef(STNeuLAND,1);
 };
 
 #endif
