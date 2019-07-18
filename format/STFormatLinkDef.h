@@ -25,6 +25,9 @@
 #pragma link C++ class STRecoHeader+;
 #pragma link C++ class STMCRecoMatching+;
 
+#pragma link C++ class STChannelBar+;
+#pragma link C++ class STNLHit+;
+
 #pragma link C++ class STdEdxPoint+;
 #pragma link C++ class STRecoTrack+;
 #pragma link C++ class STRecoTrackCand+;

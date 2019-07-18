@@ -7,6 +7,7 @@ ${GENFIT2_INCLUDE_DIR}
 ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/global
+${CMAKE_SOURCE_DIR}/tool_inde
 ${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/stack
 )
@@ -53,6 +54,9 @@ STRecoTrackCandList.cc
 STMCEventHeader.cc
 STMCScintillatorHit.cc
 STMCTriggerResponse.cc
+
+STChannelBar.cc
+STNLHit.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
@@ -67,6 +71,7 @@ Set(DEPENDENCIES
 # Basically those are the libraries in the header files' directory
     STGlobal
     genfit2	    
+    STToolIndependent
 )
 
 GENERATE_LIBRARY()
