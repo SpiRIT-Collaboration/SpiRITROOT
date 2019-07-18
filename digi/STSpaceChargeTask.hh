@@ -9,7 +9,7 @@
 #include "STMCPoint.hh"
 #include "STDriftedElectron.hh"
 #include "STDigiPar.hh"
-#include "STFieldMap.hh"
+#include "FairField.h"
 
 // ROOT class headers
 #include "TClonesArray.h"
@@ -65,12 +65,16 @@ class STSpaceChargeTask : public FairTask
     virtual void SetParContainers();  //!< Load the parameter container from the runtime database.
 
    void SetCustomMap(TH3D* dispx, TH3D* dispy, TH3D* dispz);
-   void SetBField(STFieldMap* Bfield);
+   void SetBField(FairField* Bfield);
    void SetEFieldSolution(const std::string& value);
    void SetBeamRate(Double_t value);
    void SetProjectile(const std::string& value);
+   void SetDriftParameters(double mu, double wtau);
+   void SetCustomRule(const std::function<void(double, double, double, double&, double&, double&)>& rule);
+
    void ExportDisplacementMap(const std::string& value);
    void ExportEField(const std::string& value);
+   void CalculateEDrift(double drift_vel);
 
    void SetPersistence(Bool_t value = kTRUE);
    void SetElectronDrift(Bool_t value = kTRUE);
@@ -79,6 +83,7 @@ class STSpaceChargeTask : public FairTask
   private:
     void fSpaceChargeEffect(double x, double y, double z, 
                            double& x_out, double& y_out, double& z_out);
+
 
     void fSetEField();
     Double_t fBeamRate;
@@ -96,7 +101,7 @@ class STSpaceChargeTask : public FairTask
     TClonesArray* fDispMCPointArray;    //!< [OUTPUT] Array of displaced STMCPoint due to E and B-field.
     STDigiPar* fPar; //!< Base parameter container
 
-    STFieldMap* fBField; //!< Samurai magnetic field map
+    FairField* fBField; //!< Samurai magnetic field map
     TH3D *fEx;//!< E-field after space charge
     TH3D *fEy;//!< E-field after space charge
     TH3D *fEz;//!< E-field after space charge
@@ -104,6 +109,8 @@ class STSpaceChargeTask : public FairTask
     TH3D *fDispX;
     TH3D *fDispY;
     TH3D *fDispZ;
+    double fmu, fwtau;
+    std::function<void(double, double, double, double&, double&, double&)> fCustomRule;
     STSpaceChargeTask(const STSpaceChargeTask&);
     STSpaceChargeTask operator=(const STSpaceChargeTask&);
 

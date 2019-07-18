@@ -77,9 +77,12 @@ STSpaceChargeTask::STSpaceChargeTask()
  fEventID(0),
  fIsDrift(kTRUE),
  fIsPersistence(kTRUE),
+ fBField(nullptr),
  fDispX(nullptr),
  fDispY(nullptr),
- fDispZ(nullptr)
+ fDispZ(nullptr),
+ fmu(-4.252e4),
+ fwtau(-4)
 {
   fIsPersistence = kFALSE;
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STSpaceChargeTask");
@@ -125,84 +128,7 @@ STSpaceChargeTask::Init()
     if(fDispX && fDispY && fDispZ)
       fLogger->Info(MESSAGE_ORIGIN,"Using custom displacement map");
     else
-    {
-      if(!fBField) fLogger->Fatal(MESSAGE_ORIGIN, "B-field is not loaded");
-      else fBField->Init();
-      gErrorIgnoreLevel = kFatal;
-      fLogger->Info(MESSAGE_ORIGIN, "Begin calculation of electron displacement map");
-      this -> fSetEField();
-
-      // Rewrite E and B field in a form that can be read by ElectronDrifter
-      auto EFieldWrapper = [this](const TVector3& t_pos)
-        {
-          double x = t_pos.X();
-          double y = t_pos.Y();
-          double z = t_pos.Z();
-          double ex = fEx->Interpolate(x, y, z);
-          double ey = fEy->Interpolate(x, y, z);
-          double ez = fEz->Interpolate(x, y, z);
-          if(ey >= -10) ey = -127.7;
-          return TVector3(ex, ey, ez);
-        };
-
-      auto BFieldWrapper = [this](const TVector3& t_pos)
-        {
-          double x = t_pos.X();
-          double y = t_pos.Y();
-          double z = t_pos.Z();
-          return TVector3(fBField->GetBx(x,y,z)/10,
-                          fBField->GetBy(x,y,z)/10,
-                          fBField->GetBz(x,y,z)/10);
-        };
-
-      // mu= -4.252e4, wtau= -4 was found to reproduce E cross B result
-      // still subjected to change, not finalized
-      auto eom = EquationOfMotion(EFieldWrapper, BFieldWrapper, -4.252e4, -4); 
-      const double dt = 2e-7; // seconds
-      auto drifter = ElectronDrifter(dt, eom);
-
-      // create displacement map with the following dimensions:
-      // all dimensions are in cm
-
-      double x_min = -50, x_max = 50;
-      double y_min = -55, y_max = 0;
-      double z_min = 0, z_max = 150;
-      int binsx = 40, binsy = 40, binsz = 40;
-      double assumed_drift_velocity = fPar->GetDriftVelocity();
-
-      fDispX = new TH3D("shiftX","shiftX",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
-      fDispY = new TH3D("shiftY","shiftY",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
-      fDispZ = new TH3D("shiftZ","shiftZ",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
-       
-
-      int counter = 1;
-      int percentage = 0;
-      std::cout << "STSpaceChargeTask Displacement map Calculation Percent completion: " << "\t";
-      for(int idx = 1; idx <= binsx; ++idx)
-       for(int idy = 1; idy <= binsy; ++idy)
-         for(int idz = 1; idz <= binsz; ++idz)
-         {
-           double x = fDispX->GetXaxis()->GetBinCenter(idx);
-           double y = fDispX->GetYaxis()->GetBinCenter(idy);
-           double z = fDispX->GetZaxis()->GetBinCenter(idz);
-
-           // initial position
-           TVector3 pos(x, y, z);
-           pos = drifter.DriftFrom(pos);
-
-           fDispX->SetBinContent(idx, idy, idz, (pos.X()-x));
-           fDispY->SetBinContent(idx, idy, idz, (pos.Y()+assumed_drift_velocity*drifter.GetDriftTime()));
-           fDispZ->SetBinContent(idx, idy, idz, (pos.Z()-z));
-           int new_progress =  int(counter/(double) (binsx*binsy*binsz)*100);
-           if(new_progress != percentage)
-           {
-             percentage = new_progress;
-             std::cout << "\b\b\b\b\b" << std::setw(3) << percentage << " %" << std::flush;
-           }
-           ++counter;
-        }
-      std::cout << std::endl;
-    }
+      this->CalculateEDrift(fPar->GetDriftVelocity());
   } else fLogger->Info(MESSAGE_ORIGIN, "Space Chrage displacement is disabled");
   return kSUCCESS;
 }
@@ -238,16 +164,106 @@ void STSpaceChargeTask::fSetEField()
   else fLogger->Fatal(MESSAGE_ORIGIN, "E-field cannot be loaded from files.");
 }
 
+void STSpaceChargeTask::CalculateEDrift(double drift_vel)
+{
+  if(!fBField) fLogger->Fatal(MESSAGE_ORIGIN, "B-field is not loaded");
+  else fBField->Init();
+  gErrorIgnoreLevel = kFatal;
+  fLogger->Info(MESSAGE_ORIGIN, "Begin calculation of electron displacement map");
+  this -> fSetEField();
+
+  // Rewrite E and B field in a form that can be read by ElectronDrifter
+  auto EFieldWrapper = [this](const TVector3& t_pos)
+    {
+      double x = t_pos.X();
+      double y = t_pos.Y();
+      double z = t_pos.Z();
+      double ex = fEx->Interpolate(x, y, z);
+      double ey = fEy->Interpolate(x, y, z);
+      double ez = fEz->Interpolate(x, y, z);
+      if(ey >= -10) ey = -127.7;
+      return TVector3(ex, ey, ez);
+    };
+
+  auto BFieldWrapper = [this](const TVector3& t_pos)
+    {
+      double x = t_pos.X();
+      double y = t_pos.Y();
+      double z = t_pos.Z();
+      return TVector3(fBField->GetBx(x,y,z)/10,
+                      fBField->GetBy(x,y,z)/10,
+                      fBField->GetBz(x,y,z)/10);
+    };
+
+  // mu= -4.252e4, wtau= -4 was found to reproduce E cross B result
+  // still subjected to change, not finalized
+  fLogger->Info(MESSAGE_ORIGIN, TString::Format("Drift parameter: mu = %f, wtau = %f", fmu, fwtau));
+  auto eom = EquationOfMotion(EFieldWrapper, BFieldWrapper, fmu, fwtau); 
+  const double dt = 2e-7; // seconds
+  auto drifter = ElectronDrifter(dt, eom);
+
+  // create displacement map with the following dimensions:
+  // all dimensions are in cm
+
+  double x_min = -50, x_max = 50;
+  double y_min = -55, y_max = 0;
+  double z_min = 0, z_max = 150;
+  int binsx = 40, binsy = 40, binsz = 40;
+
+  fDispX = new TH3D("shiftX","shiftX",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
+  fDispY = new TH3D("shiftY","shiftY",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
+  fDispZ = new TH3D("shiftZ","shiftZ",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
+   
+
+  int counter = 1;
+  int percentage = 0;
+  if(fCustomRule) fLogger->Info(MESSAGE_ORIGIN, "Calculating displcement map with custom rule");
+  std::cout << "STSpaceChargeTask Displacement map Calculation Percent completion: " << "\t";
+  for(int idx = 1; idx <= binsx; ++idx)
+   for(int idy = 1; idy <= binsy; ++idy)
+     for(int idz = 1; idz <= binsz; ++idz)
+     {
+       double x = fDispX->GetXaxis()->GetBinCenter(idx);
+       double y = fDispX->GetYaxis()->GetBinCenter(idy);
+       double z = fDispX->GetZaxis()->GetBinCenter(idz);
+
+       // initial position
+       double diffx;
+       double diffy;
+       double diffz;
+      
+       if(fCustomRule) 
+         fCustomRule(x, y, z, diffx, diffy, diffz);
+       else 
+       {
+         TVector3 pos(x, y, z);
+         pos = drifter.DriftFrom(pos);
+         diffx = pos.X()-x;
+         diffy = 0;
+         diffz = pos.Z()-z;
+       }
+       fDispX->SetBinContent(idx, idy, idz, diffx);
+       fDispY->SetBinContent(idx, idy, idz, diffy);// still not sure about how drift velocity is calculated. Recommend that we disable y drift for now (-drift_vel*drifter.GetDriftTime()*1e6-y));
+       fDispZ->SetBinContent(idx, idy, idz, diffz);
+       int new_progress =  int(counter/(double) (binsx*binsy*binsz)*100);
+       if(new_progress != percentage)
+       {
+         percentage = new_progress;
+         std::cout << "\b\b\b\b\b" << std::setw(3) << percentage << " %" << std::flush;
+       }
+       ++counter;
+     }
+  std::cout << std::endl;
+}
+
 void 
 STSpaceChargeTask::Exec(Option_t* option)
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Exec of STSpaceChargeTask");
-
   if(!fDispMCPointArray) 
     fLogger->Fatal(MESSAGE_ORIGIN,"No Drifted MC Point Array!");
   fDispMCPointArray -> Delete();
   Int_t nMCPoints = fMCPointArray->GetEntries();
-
   /**
    * NOTE! that fMCPoint has unit of [cm] for length scale,
    * [GeV] for energy and [ns] for time.
@@ -266,25 +282,27 @@ STSpaceChargeTask::Exec(Option_t* option)
     }
   }
 
-  fLogger->Info(MESSAGE_ORIGIN, 
-                Form("Event #%d : MC points (%d) found. The are dispaced due to space charge",
-                     fEventID++, nMCPoints));
-
+  if(fIsDrift)
+    fLogger->Info(MESSAGE_ORIGIN, 
+              Form("Event #%d : MC points (%d) found. They are dispaced due to space charge",
+                   fEventID++, nMCPoints));
 
   return;
 }
 
 void STSpaceChargeTask::SetCustomMap(TH3D* dispx, TH3D* dispy, TH3D* dispz)
 { fDispX = dispx; fDispY = dispy; fDispZ = dispz; }
-void STSpaceChargeTask::SetBField(STFieldMap* Bfield){ fBField = Bfield; }
+void STSpaceChargeTask::SetBField(FairField* Bfield){ fBField = Bfield; }
 void STSpaceChargeTask::SetEFieldSolution(const std::string& value)
 {
-  std::string vmc_dir(std::getenv("VMCWOKRDIR")); 
+  std::string vmc_dir(std::getenv("VMCWORKDIR")); 
   fEFieldFile = vmc_dir + "/input/" + value; 
 }
 
 void STSpaceChargeTask::SetBeamRate(Double_t value){ fBeamRate = value; }
 void STSpaceChargeTask::SetProjectile(const std::string& value){ fProj = value; }
+void STSpaceChargeTask::SetDriftParameters(double mu, double wtau) { fmu = mu; fwtau = wtau; }
+void STSpaceChargeTask::SetCustomRule(const std::function<void(double, double, double, double&, double&, double&)>& rule) { fCustomRule = rule; };
 
 void STSpaceChargeTask::SetPersistence(Bool_t value) { fIsPersistence = value; }
 void STSpaceChargeTask::SetVerbose(Bool_t value) { fVerbose = value; }
@@ -301,6 +319,8 @@ void STSpaceChargeTask::fSpaceChargeEffect(double x, double y, double z,
 
 void STSpaceChargeTask::ExportDisplacementMap(const std::string& value)
 {
+  if(!fDispX || !fDispY || !fDispZ) 
+    fLogger->Warning(MESSAGE_ORIGIN, "No displacement map is loaded. You need to either initialize this class or invoke CalculateEDrift method");
   TFile file(value.c_str(), "UPDATE");
   if(fDispX) fDispX->Write();
   if(fDispY) fDispY->Write();

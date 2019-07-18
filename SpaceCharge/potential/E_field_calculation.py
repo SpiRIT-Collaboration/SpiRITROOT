@@ -172,14 +172,14 @@ def CalculateEField(strength_and_beamfile):
   solver.Solve()
   result = grid.V
 
-  #ArrayToGif(grid.TPCx, grid.TPCy, grid.TPCz, result, 'strength%.2E.gif' % strength)
+  ArrayToGif(grid.TPCx, grid.TPCy, grid.TPCz, result, 'strength%.2E_%s.gif' % (strength, beam_file))
   Ex, Ey, Ez = VToE(result, grid.TPCx, grid.TPCy, grid.TPCz)
   E_strength = np.sqrt(Ex*Ex + Ey*Ey + Ez*Ez)
   print('Maximum E-field strength: %.2f V/cm' % E_strength.ravel().max())
   print('Minimum E-field strength: %.2f V/cm' % E_strength.ravel().min())
   density_grid = np.zeros(grid.V.shape)
   density_grid[tuple(charge.geo_index)] = charge.geo_charge
-  return grid.TPCx, grid.TPCy, grid.TPCz, Ex, Ey, Ez, result, density_grid
+  return grid.TPCx, grid.TPCy, grid.TPCz, Ex, Ey, Ez, result, density_grid, beam_file
 
 def ArrayToGif(x, y, z, content, title):
   fig, ax = plt.subplots()
@@ -205,8 +205,8 @@ def ArrayToGif(x, y, z, content, title):
     im.set_array(new_content[i, :-1, :-1].ravel())
 
 
-  anim = FuncAnimation(fig, update, frames=np.arange(0, new_content.shape[0]), interval=33)
-  anim.save(title, writer='imagemagick')
+  #anim = FuncAnimation(fig, update, frames=np.arange(0, new_content.shape[0]), interval=33)
+  #anim.save(title, writer='imagemagick')
 
 def Fill3DHist(hist, content, x, y, z):
   for index, val in np.ndenumerate(content):
@@ -218,9 +218,9 @@ if __name__ == '__main__':
   # lets try different a
   fig, ax = plt.subplots()
   #strengths = np.linspace(0.0)
-  beam_files = ['_132Sn_BeamTrack.data']
-  beam_name = ['132Sn']
-  strengths_and_beamfile = [(3.14e-8*factor, beam_file) for factor in range(0,2) for beam_file in beam_files]
+  beam_files = ['_132Sn_BeamTrack.data', '_124Sn_BeamTrack.data', '_108Sn_BeamTrack.data', '_112Sn_BeamTrack.data']
+  beam_name = ['132Sn', '124Sn', '108Sn', '112Sn']
+  strengths_and_beamfile = [(3.14e-8*factor, beam_file) for beam_file in beam_files for factor in range(0,2)]
   
   pool = Pool()
   results = pool.map(CalculateEField, strengths_and_beamfile)
@@ -230,9 +230,10 @@ if __name__ == '__main__':
   # homogeneous solution
   print('Export result to ROOT')
   for beam_file, homo_result, nohomo_result in zip(beam_name, results[::2], results[1::2]):
-    x, y, z, Ex_homo, Ey_homo, Ez_homo, V_homo, rho_homo = results[0]
+    x, y, z, Ex_homo, Ey_homo, Ez_homo, V_homo, rho_homo, filename = homo_result
     # non-homogeneous solution
-    _, _, _, Ex_nohomo, Ey_nohomo, Ez_nohomo, V_nohomo, rho_nohomo = results[1]
+    _, _, _, Ex_nohomo, Ey_nohomo, Ez_nohomo, V_nohomo, rho_nohomo, nohomo_filename = nohomo_result
+
     Ex_nohomo = Ex_nohomo - Ex_homo
     Ey_nohomo = Ey_nohomo - Ey_homo
     Ez_nohomo = Ez_nohomo - Ez_homo
@@ -244,6 +245,7 @@ if __name__ == '__main__':
         hist = ROOT.TH3D(title, type_, len(x), x.min(), x.max()
                                      , len(y), y.min(), y.max()
                                      , len(z), z.min(), z.max())
+
         Fill3DHist(hist, content, x, y, z)
         hist.Write('%s_%s_%s' % (type_, beam_file, title))
         hist.Delete()
