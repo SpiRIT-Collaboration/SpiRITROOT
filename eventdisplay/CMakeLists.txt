@@ -11,6 +11,7 @@ ${CMAKE_SOURCE_DIR}/eventdisplay
 ${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/par
 ${CMAKE_SOURCE_DIR}/reco
+${CMAKE_SOURCE_DIR}/tool_inde
 ${CMAKE_SOURCE_DIR}/tool
 ${CMAKE_SOURCE_DIR}/util
 ${CMAKE_SOURCE_DIR}/reco/PulseShapeAnalyzer

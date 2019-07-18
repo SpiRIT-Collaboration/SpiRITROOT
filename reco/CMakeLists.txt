@@ -10,6 +10,7 @@ ${CMAKE_SOURCE_DIR}/global
 ${CMAKE_SOURCE_DIR}/mc
 ${CMAKE_SOURCE_DIR}/stack
 ${CMAKE_SOURCE_DIR}/par
+${CMAKE_SOURCE_DIR}/tool_inde
 ${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/tool
 ${CMAKE_SOURCE_DIR}/util
@@ -179,6 +180,7 @@ Set(DEPENDENCIES
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
     STGlobal
+    STToolIndependent
     STFormat
     STTool
     STPar
