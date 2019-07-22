@@ -23,13 +23,14 @@ class TPCGrid:
   Vbottom = -7023.5#6463
   Vtop = 0
 
-  def __init__(self, h=1.4):#1.4):
+  def __init__(self, dx=1, dy=2, dz=2):#h=1.4):#1.4):
     # h must equally divide y for boundary condition to be exact
-    h = self.Height/int(self.Height/h)
-    self.h = h
-    self.x = np.arange(0, self.Width + h, h)
-    self.y = np.arange(0, self.Height + h, h)
-    self.z = np.arange(0, self.Length + h, h)
+    self.dx = self.Width/(int(self.Width/dx))
+    self.dy = self.Height/(int(self.Height/dy))
+    self.dz = self.Length/(int(self.Length/dz))
+    self.x = np.arange(0, self.Width + self.dx, self.dx)
+    self.y = np.arange(0, self.Height + self.dy, self.dy)
+    self.z = np.arange(-10, self.Length + self.dz, self.dz)
     self.V = np.zeros((self.z.shape[0], self.y.shape[0], self.x.shape[0]))
     self.V[:, :, :] = (self.Vbottom + (self.Vtop - self.Vbottom)*self.y/self.Height)[None, :, None]
     self._ApplyBC()
@@ -134,21 +135,22 @@ class PossionSolver:
   def __init__(self, grid, charge):
     self.grid = grid
     self.charge = charge
-    self.charge.SetGeo(grid.TPCx, grid.TPCy, grid.TPCz, grid.h)
+    self.charge.SetGeo(grid.TPCx, grid.TPCy, grid.TPCz, grid.dx)
 
   def Stepper(self, save_error=False):
     if save_error:
       self.grid.Snapshot()
-    self.grid.V[1:-1, 1:-1, 1:-1] = 1/6.*(self.grid.V[1:-1, 1:-1, :-2]
-                                        + self.grid.V[1:-1, 1:-1, 2:]
-                                        + self.grid.V[1:-1, :-2, 1:-1]
-                                        + self.grid.V[1:-1, 2:, 1:-1]
-                                        + self.grid.V[2:, 1:-1, 1:-1]
-                                        + self.grid.V[:-2, 1:-1, 1:-1])
-    self.grid.V[tuple(self.charge.geo_index)] += 1/6.*self.grid.h*self.grid.h*self.charge.geo_charge
+    inv_dsum = 1/(2*(1/(self.grid.dx**2) + 1/(self.grid.dy**2) + 1/(self.grid.dz**2)))
+    self.grid.V[1:-1, 1:-1, 1:-1] = inv_dsum*((self.grid.V[1:-1, 1:-1, :-2]
+                                             + self.grid.V[1:-1, 1:-1, 2:])/(self.grid.dx**2)
+                                             + (self.grid.V[1:-1, :-2, 1:-1]
+                                             + self.grid.V[1:-1, 2:, 1:-1])/(self.grid.dy**2)
+                                             + (self.grid.V[:-2, 1:-1, 1:-1]
+                                             + self.grid.V[2:, 1:-1, 1:-1])/(self.grid.dz**2))
+    self.grid.V[tuple(self.charge.geo_index)] += inv_dsum*self.charge.geo_charge
     #self.grid.UpdateBC()
 
-  def Solve(self, tol=1e-2, max_iter=5000):
+  def Solve(self, tol=1e-4, max_iter=5000):
     idx = 0
     while True:
       self.Stepper(save_error=True)

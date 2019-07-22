@@ -81,6 +81,10 @@ STSpaceChargeTask::STSpaceChargeTask()
  fDispX(nullptr),
  fDispY(nullptr),
  fDispZ(nullptr),
+ fOffsetX(0),
+ fOffsetY(0),
+ fOffsetZ(0),
+ fRotateXZ(0),
  fmu(-4.252e4),
  fwtau(-4)
 {
@@ -178,11 +182,16 @@ void STSpaceChargeTask::CalculateEDrift(double drift_vel)
       double x = t_pos.X();
       double y = t_pos.Y();
       double z = t_pos.Z();
-      double ex = fEx->Interpolate(x, y, z);
-      double ey = fEy->Interpolate(x, y, z);
-      double ez = fEz->Interpolate(x, y, z);
+      // rotate x and z
+      double rot_x = x*cos(fRotateXZ) - z*sin(fRotateXZ);
+      double rot_z = x*sin(fRotateXZ) + z*cos(fRotateXZ);
+      double ex = fEx->Interpolate(rot_x, y, rot_z);
+      double ey = fEy->Interpolate(rot_x, y, rot_z);
+      double ez = fEz->Interpolate(rot_x, y, rot_z);
+      double rot_ex = ex*cos(fRotateXZ) + ez*sin(fRotateXZ);
+      double rot_ez = -ex*sin(fRotateXZ) + ez*cos(fRotateXZ);
       if(ey >= -10) ey = -127.7;
-      return TVector3(ex, ey, ez);
+      return TVector3(rot_ex, ey, rot_ez);
     };
 
   auto BFieldWrapper = [this](const TVector3& t_pos)
@@ -198,6 +207,8 @@ void STSpaceChargeTask::CalculateEDrift(double drift_vel)
   // mu= -4.252e4, wtau= -4 was found to reproduce E cross B result
   // still subjected to change, not finalized
   fLogger->Info(MESSAGE_ORIGIN, TString::Format("Drift parameter: mu = %f, wtau = %f", fmu, fwtau));
+  fLogger->Info(MESSAGE_ORIGIN, TString::Format("Displacement map is shifted by: x = %f, y = %f, z = %f", fOffsetX, fOffsetY, fOffsetZ));
+  fLogger->Info(MESSAGE_ORIGIN, TString::Format("E field is rotated in the XZ plane by %f deg", fRotateXZ*180/M_PI));
   auto eom = EquationOfMotion(EFieldWrapper, BFieldWrapper, fmu, fwtau); 
   const double dt = 2e-7; // seconds
   auto drifter = ElectronDrifter(dt, eom);
@@ -208,7 +219,7 @@ void STSpaceChargeTask::CalculateEDrift(double drift_vel)
   double x_min = -50, x_max = 50;
   double y_min = -55, y_max = 0;
   double z_min = 0, z_max = 150;
-  int binsx = 40, binsy = 40, binsz = 40;
+  int binsx = 200, binsy = 40, binsz = 30;
 
   fDispX = new TH3D("shiftX","shiftX",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
   fDispY = new TH3D("shiftY","shiftY",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
@@ -311,11 +322,17 @@ void STSpaceChargeTask::fSpaceChargeEffect(double x, double y, double z,
                        double& x_out, double& y_out, double& z_out)
 {
   // remember the unit is now in cm
-  x_out = x + fDispX->Interpolate(x, y, z);
-  y_out = y + fDispY->Interpolate(x, y, z); 
-  z_out = z + fDispZ->Interpolate(x, y, z);
+  x_out = x + fDispX->Interpolate(x + fOffsetX, y + fOffsetY, z + fOffsetZ);
+  y_out = y + fDispY->Interpolate(x + fOffsetX, y + fOffsetY, z + fOffsetZ); 
+  z_out = z + fDispZ->Interpolate(x + fOffsetX, y + fOffsetY, z + fOffsetZ);
 
 }
+
+
+void STSpaceChargeTask::RotateEFieldXZDeg(double rot)
+{ fRotateXZ = rot*M_PI/180.; } // convert deg to rad
+void STSpaceChargeTask::ShiftDisplacementMap(double x, double y, double z)
+{ fOffsetX = x; fOffsetY = y; fOffsetZ = z; }
 
 void STSpaceChargeTask::ExportDisplacementMap(const std::string& value)
 {

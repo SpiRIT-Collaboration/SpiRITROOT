@@ -72,6 +72,8 @@ class STSpaceChargeTask : public FairTask
    void SetDriftParameters(double mu, double wtau);
    void SetCustomRule(const std::function<void(double, double, double, double&, double&, double&)>& rule);
 
+   void ShiftDisplacementMap(double x, double y, double z);
+   void RotateEFieldXZDeg(double rot);
    void ExportDisplacementMap(const std::string& value);
    void ExportEField(const std::string& value);
    void CalculateEDrift(double drift_vel);
@@ -109,6 +111,8 @@ class STSpaceChargeTask : public FairTask
     TH3D *fDispX;
     TH3D *fDispY;
     TH3D *fDispZ;
+    double fOffsetX, fOffsetY, fOffsetZ;
+    double fRotateXZ;
     double fmu, fwtau;
     std::function<void(double, double, double, double&, double&, double&)> fCustomRule;
     STSpaceChargeTask(const STSpaceChargeTask&);
