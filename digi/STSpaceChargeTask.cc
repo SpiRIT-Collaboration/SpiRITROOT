@@ -22,7 +22,7 @@ EquationOfMotion::EquationOfMotion(const FieldFunc& t_EField,
                                      const FieldFunc& t_BField,
                                      double t_mu,
                                      double t_wtau) : 
-  EField_(t_EField), BField_(t_BField), mu_(t_mu), wtau_(t_wtau) {};
+  EField_(t_EField), BField_(t_BField), mu_(t_mu), wtau_(t_wtau){};
 
 TVector3 EquationOfMotion::operator()(const TVector3& t_pos, double t_t)
 {
@@ -52,24 +52,29 @@ TVector3 RK4Stepper(EquationOfMotion& t_eom, const TVector3& t_pos, double t_t, 
   return t_pos + 1/6.*(k1 + 2*k2 + 2*k3 + k4);
 }
 
-ElectronDrifter::ElectronDrifter(double t_dt, EquationOfMotion& t_eom) : dt_(t_dt), eom_(t_eom) {};
+ElectronDrifter::ElectronDrifter(double t_dt, EquationOfMotion& t_eom) : 
+  dt_(t_dt),   
+  eom_(t_eom),
+  stop_cond_([](const TVector3& t_pos, double t){ return t_pos.Y() > 0; }) 
+ {};
+
+ElectronDrifter& ElectronDrifter::DriftUntil(const std::function<bool(const TVector3&, double)>& t_stop_cond)
+{ stop_cond_ = t_stop_cond; return *this; }
 
 TVector3 ElectronDrifter::DriftFrom(const TVector3& t_pos)
 {
   t_ = 0;
   TVector3 pos = t_pos;
-  while(pos.Y() < ymax_)
+  while(!stop_cond_(pos, t_))
   {
     double old_y = pos.Y();
     pos = RK4Stepper(eom_, pos, t_, dt_);
-    if(pos.Y() < ymax_) t_ += dt_;
-    else t_ += std::fabs(old_y/(pos.Y() - old_y)*dt_);
+    t_ += dt_;
   }
   return pos;
 };
 
 double ElectronDrifter::GetDriftTime() { return t_; };
-
 
 
 STSpaceChargeTask::STSpaceChargeTask()
@@ -168,7 +173,7 @@ void STSpaceChargeTask::fSetEField()
   else fLogger->Fatal(MESSAGE_ORIGIN, "E-field cannot be loaded from files.");
 }
 
-void STSpaceChargeTask::CalculateEDrift(double drift_vel)
+void STSpaceChargeTask::CalculateEDrift(double drift_vel, bool t_invert)
 {
   if(!fBField) fLogger->Fatal(MESSAGE_ORIGIN, "B-field is not loaded");
   else fBField->Init();
@@ -177,53 +182,30 @@ void STSpaceChargeTask::CalculateEDrift(double drift_vel)
   this -> fSetEField();
 
   // Rewrite E and B field in a form that can be read by ElectronDrifter
-  auto EFieldWrapper = [this](const TVector3& t_pos)
-    {
-      double x = t_pos.X();
-      double y = t_pos.Y();
-      double z = t_pos.Z();
-      // rotate x and z
-      double rot_x = x*cos(fRotateXZ) - z*sin(fRotateXZ);
-      double rot_z = x*sin(fRotateXZ) + z*cos(fRotateXZ);
-      double ex = fEx->Interpolate(rot_x, y, rot_z);
-      double ey = fEy->Interpolate(rot_x, y, rot_z);
-      double ez = fEz->Interpolate(rot_x, y, rot_z);
-      double rot_ex = ex*cos(fRotateXZ) + ez*sin(fRotateXZ);
-      double rot_ez = -ex*sin(fRotateXZ) + ez*cos(fRotateXZ);
-      if(ey >= -10) ey = -127.7;
-      return TVector3(rot_ex, ey, rot_ez);
-    };
-
-  auto BFieldWrapper = [this](const TVector3& t_pos)
-    {
-      double x = t_pos.X();
-      double y = t_pos.Y();
-      double z = t_pos.Z();
-      return TVector3(fBField->GetBx(x,y,z)/10,
-                      fBField->GetBy(x,y,z)/10,
-                      fBField->GetBz(x,y,z)/10);
-    };
+  auto EFieldWrapper = this->GetEFieldWrapper();
+  auto BFieldWrapper = this->GetBFieldWrapper();
+  auto eom = EquationOfMotion(EFieldWrapper, BFieldWrapper, fmu, fwtau); 
+  const double dt = (t_invert)? -2e-7:2e-7; // seconds
+  auto drifter = ElectronDrifter(dt, eom);
 
   // mu= -4.252e4, wtau= -4 was found to reproduce E cross B result
   // still subjected to change, not finalized
+  if(t_invert) fLogger->Info(MESSAGE_ORIGIN, "Dispacemant is inverted, i.e. arguments of the displacement map is the detected locattion");
+  else fLogger->Info(MESSAGE_ORIGIN, "Displacement is not inverted, i.e. arguments of the displacement map is the physical location");
   fLogger->Info(MESSAGE_ORIGIN, TString::Format("Drift parameter: mu = %f, wtau = %f", fmu, fwtau));
   fLogger->Info(MESSAGE_ORIGIN, TString::Format("Displacement map is shifted by: x = %f, y = %f, z = %f", fOffsetX, fOffsetY, fOffsetZ));
   fLogger->Info(MESSAGE_ORIGIN, TString::Format("E field is rotated in the XZ plane by %f deg", fRotateXZ*180/M_PI));
-  auto eom = EquationOfMotion(EFieldWrapper, BFieldWrapper, fmu, fwtau); 
-  const double dt = 2e-7; // seconds
-  auto drifter = ElectronDrifter(dt, eom);
-
   // create displacement map with the following dimensions:
   // all dimensions are in cm
 
   double x_min = -50, x_max = 50;
   double y_min = -55, y_max = 0;
   double z_min = 0, z_max = 150;
-  int binsx = 200, binsy = 40, binsz = 30;
+  int binsx = 40, binsy = 40, binsz = 30;
 
-  fDispX = new TH3D("shiftX","shiftX",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
-  fDispY = new TH3D("shiftY","shiftY",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
-  fDispZ = new TH3D("shiftZ","shiftZ",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
+  fDispX = new TH3D("shiftX_data","shiftX",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
+  fDispY = new TH3D("shiftY_data","shiftY",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
+  fDispZ = new TH3D("shiftZ_data","shiftZ",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
    
 
   int counter = 1;
@@ -247,11 +229,20 @@ void STSpaceChargeTask::CalculateEDrift(double drift_vel)
          fCustomRule(x, y, z, diffx, diffy, diffz);
        else 
        {
-         TVector3 pos(x, y, z);
-         pos = drifter.DriftFrom(pos);
+         TVector3 pos;
+         if(t_invert)
+         {
+           pos[0] = x; pos[1] = 0; pos[2] = z;
+           pos = drifter.DriftUntil([drift_vel, y](const TVector3& t_pos, double t){ return t*1e6*drift_vel < y; })
+                        .DriftFrom(pos);
+         }else
+         {
+           pos[0] = x; pos[1] = y; pos[2] = z;
+           pos = drifter.DriftFrom(pos);
+         }
          diffx = pos.X()-x;
          diffy = 0;
-         diffz = pos.Z()-z;
+         diffz = pos.Z()-z ;
        }
        fDispX->SetBinContent(idx, idy, idz, diffx);
        fDispY->SetBinContent(idx, idy, idz, diffy);// still not sure about how drift velocity is calculated. Recommend that we disable y drift for now (-drift_vel*drifter.GetDriftTime()*1e6-y));
@@ -328,6 +319,39 @@ void STSpaceChargeTask::fSpaceChargeEffect(double x, double y, double z,
 
 }
 
+std::function<TVector3(const TVector3&)> STSpaceChargeTask::GetEFieldWrapper()
+{
+  return [this](const TVector3& t_pos)
+    {
+      double x = t_pos.X();
+      double y = t_pos.Y();
+      double z = t_pos.Z();
+      // rotate x and z
+      double rot_x = x*cos(fRotateXZ) - z*sin(fRotateXZ);
+      double rot_z = x*sin(fRotateXZ) + z*cos(fRotateXZ);
+      double ex = fEx->Interpolate(rot_x, y, rot_z);
+      double ey = fEy->Interpolate(rot_x, y, rot_z);
+      double ez = fEz->Interpolate(rot_x, y, rot_z);
+      double rot_ex = ex*cos(fRotateXZ) + ez*sin(fRotateXZ);
+      double rot_ez = -ex*sin(fRotateXZ) + ez*cos(fRotateXZ);
+      if(ey >= -10) ey = -127.7;
+      return TVector3(rot_ex, ey, rot_ez);
+    };
+}
+
+std::function<TVector3(const TVector3&)> STSpaceChargeTask::GetBFieldWrapper()
+{
+  return [this](const TVector3& t_pos)
+    {
+      double x = t_pos.X();
+      double y = t_pos.Y();
+      double z = t_pos.Z();
+      return TVector3(fBField->GetBx(x,y,z)/10,
+                      fBField->GetBy(x,y,z)/10,
+                      fBField->GetBz(x,y,z)/10);
+    };
+}
+
 
 void STSpaceChargeTask::RotateEFieldXZDeg(double rot)
 { fRotateXZ = rot*M_PI/180.; } // convert deg to rad
@@ -339,9 +363,9 @@ void STSpaceChargeTask::ExportDisplacementMap(const std::string& value)
   if(!fDispX || !fDispY || !fDispZ) 
     fLogger->Warning(MESSAGE_ORIGIN, "No displacement map is loaded. You need to either initialize this class or invoke CalculateEDrift method");
   TFile file(value.c_str(), "UPDATE");
-  if(fDispX) fDispX->Write();
-  if(fDispY) fDispY->Write();
-  if(fDispZ) fDispZ->Write();
+  if(fDispX) fDispX->Write("shiftX_data");
+  if(fDispY) fDispY->Write("shiftY_data");
+  if(fDispZ) fDispZ->Write("shiftZ_data");
 }
 
 void STSpaceChargeTask::ExportEField(const std::string& value)
@@ -351,4 +375,5 @@ void STSpaceChargeTask::ExportEField(const std::string& value)
   if(fEy) fEy->Write();
   if(fEz) fEz->Write();
 }
+
 ClassImp(STSpaceChargeTask);

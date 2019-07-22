@@ -40,6 +40,7 @@ class ElectronDrifter
 {
 public:
   ElectronDrifter(double t_dt, EquationOfMotion& t_eom);
+  ElectronDrifter& DriftUntil(const std::function<bool(const TVector3&, double)>&);
   TVector3 DriftFrom(const TVector3& t_pos);
   double GetDriftTime();
 
@@ -47,6 +48,7 @@ private:
   const double dt_;
   double t_;
   const double ymax_ = 0; // stopping condition
+  std::function<bool(const TVector3&, double)> stop_cond_; // setoping condition
   EquationOfMotion eom_;
 };
 
@@ -76,7 +78,7 @@ class STSpaceChargeTask : public FairTask
    void RotateEFieldXZDeg(double rot);
    void ExportDisplacementMap(const std::string& value);
    void ExportEField(const std::string& value);
-   void CalculateEDrift(double drift_vel);
+   void CalculateEDrift(double drift_vel, bool t_invert=false);
 
    void SetPersistence(Bool_t value = kTRUE);
    void SetElectronDrift(Bool_t value = kTRUE);
@@ -86,7 +88,8 @@ class STSpaceChargeTask : public FairTask
     void fSpaceChargeEffect(double x, double y, double z, 
                            double& x_out, double& y_out, double& z_out);
 
-
+    std::function<TVector3(const TVector3&)> GetEFieldWrapper();
+    std::function<TVector3(const TVector3&)> GetBFieldWrapper();
     void fSetEField();
     Double_t fBeamRate;
     std::string fEFieldFile;
