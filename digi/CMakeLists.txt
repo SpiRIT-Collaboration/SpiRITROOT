@@ -38,7 +38,6 @@ STElectronicsTask.cc
 STAnalyzeG4StepTask.cc
 
 STNLDigiTask.cc
-STNeuLAND.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

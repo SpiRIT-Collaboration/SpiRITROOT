@@ -20,7 +20,7 @@ using namespace std;
 #include "TString.h"
 #include "TCollection.h"
 
-STNLDigiTask::STNLDigiTask()
+STNLDigiTask::STNLDigiTask(TString name)
 :FairTask("STNLDigiTask"), fEventID(-1)
 {
 }
@@ -59,7 +59,7 @@ STNLDigiTask::Init()
 
   //
 
-  fNL = new STNeuLAND();
+  fNL = STNeuLAND::GetNeuLAND();
   
   return kSUCCESS;
 }
@@ -68,6 +68,7 @@ void
 STNLDigiTask::Exec(Option_t* option)
 {
   ++fEventID;
+  TString digiName = fName + Form("_%d",fEventID);
 
   fBarArray -> Clear("C");
   fNLHitArray -> Clear("C");
@@ -76,11 +77,9 @@ STNLDigiTask::Exec(Option_t* option)
   Int_t numMCPoints = fMCPointArray -> GetEntries();
 
   if(numMCPoints<2) {
-    LOG(WARNING) << "Not enough hits for digitization! ("<<numMCPoints<<"<2)" << FairLogger::endl;
+    LOG(INFO) << "  Event_" << fEventID << " : Not enough hits for digitization! ("<< numMCPoints << " < 2)" << FairLogger::endl;
     return;
   }
-  else
-    LOG(INFO) << "Number of mc points: " << numMCPoints << FairLogger::endl;
 
   STChannelBar *bar = nullptr;
 
@@ -97,12 +96,12 @@ STNLDigiTask::Exec(Option_t* option)
 
     bar = (STChannelBar *) fBarArray -> ConstructedAt(d-4000);
     if (bar -> GetChannelID() < 0) {
-      // id, layer, row
+      // name, id, layer, row
       // x_or_y, local_pos, 
       // num_tdc_bins, bar_length, attenuation_length
       // pulse_decay_time, pulse_rise_time, time_err,
       // effective_speed_of_light
-      bar -> SetBar(
+      bar -> SetBar(digiName,
           d, fNL->GetLayer(d), fNL->GetRow(d),
           fNL->IsAlongXNotY(d), fNL->GetBarLocalPosition(d),
           100, 2500, 1250,
@@ -267,10 +266,10 @@ STNLDigiTask::Exec(Option_t* option)
     cluster -> AddHit(hitSingle);
   }
 
-  cout << "  [STNLDigiTask]  Event_" << fEventID << " : "
+  LOG(INFO) << "  Event_" << fEventID << " : "
        << fBarArray -> GetEntries() << " bars,  "  
        << fNLHitArray -> GetEntries() << " hits,  " 
-       << fNLHitClusterArray -> GetEntries() << " clusters." << endl; 
+       << fNLHitClusterArray -> GetEntries() << " clusters." << FairLogger::endl;
 
   return;
 }

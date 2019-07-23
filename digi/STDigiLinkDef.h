@@ -11,6 +11,4 @@
 
 #pragma link C++ class STNLDigiTask+;
 
-#pragma link C++ class STNeuLAND;
-
 #endif

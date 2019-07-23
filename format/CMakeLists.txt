@@ -57,6 +57,8 @@ STMCTriggerResponse.cc
 
 STChannelBar.cc
 STNLHit.cc
+
+STNeuLAND.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

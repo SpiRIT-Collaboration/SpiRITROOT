@@ -3,10 +3,41 @@
 
 #include "TMath.h"
 #include "TVector3.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TF1.h"
+#include "TGraph.h"
+#include "TCanvas.h"
 
 class STNeuLAND
 {
   public:
+    static STNeuLAND* GetNeuLAND();
+
+    STNeuLAND();
+
+    //////////////////////////////////////////////////////////
+
+    Int_t fNumTDCBins = 100;
+
+    Double_t fDecayTime = 2.1; ///< decay time of the pulse  [ns]
+    Double_t fRiseTime = 0.01; ///< rise time of the pulse  [ns]
+    Double_t fTimeErrorSigma = 0.15; ///< time resolution error sigma (of gaussian) [ns]
+    Double_t fEffc = 140.; ///< [mm/ns]
+
+    Int_t fPulseTDCRange = 0;
+
+    Double_t ConvertTDCToTime(Double_t tdc) const { return tdc / fNumTDCBins * fLengthBar / fEffc; }
+    Double_t ConvertTimeToTDC(Double_t time) const { return time * fEffc / fLengthBar * fNumTDCBins; }
+
+    Double_t PulseWithError(double *xx, double *pp);
+    TF1  *fFuncPulse = nullptr; //!
+
+    TH1D *fHistPulse = nullptr; //! < for fast calculation
+    TH1D *GetHistPulse() { return fHistPulse; }
+
+    //////////////////////////////////////////////////////////
+
     Double_t fZTarget = -13.24; // mm
     Double_t fDistNeuland = 9093.85;
     Double_t fRotYNeuland_deg = 29.579;
@@ -25,9 +56,6 @@ class STNeuLAND
     Double_t fWidthBar = 50.;                ///< Size of neuland bar in z (= fdzNl/fNumLayers)
     Double_t fLengthBar = 2500.;             ///< Half length of neuland bar
     Double_t fHalfLengthBar = fLengthBar/2.; ///< Half length of neuland bar
-
-    //Double_t fdzNlBar = 50.; ///< Size of neuland bar in z (= fdzNl/fNumLayers)
-    //Double_t fdhwNlBar = 1250.; ///< Half length of neuland bar
 
 
     /// Convert local position to global position
@@ -65,6 +93,39 @@ class STNeuLAND
 
     /// Get (global) center position from mc-det-id
     TVector3 GetBarGlobalPosition(Int_t mcDetID);
+
+
+
+    //////////////////////////////////////////////////////////
+
+    TH2D *fLocalFrameDownStream = nullptr;
+    TH2D *fLocalFrameSide = nullptr;
+    TGraph *fLocalNLGraphDownStream = nullptr;
+    TGraph *fLocalNLGraphSideOut = nullptr;
+
+    TCanvas *DrawLocal();
+    void DrawLocalFrameDownStream(Option_t *opt="");
+    void DrawLocalFrameSide(Option_t *opt="");
+    void DrawLocalNLGraphDownStream(Option_t *opt="");
+    void DrawLocalNLGraphSide(Option_t *opt="");
+
+
+    TH2D *fGlobalFrameTop = nullptr;
+    TH2D *fGlobalFrameSide = nullptr;
+    TGraph *fGlobalNLGraphTop = nullptr;
+    TGraph *fGlobalNLGraphSideOut = nullptr;
+    TGraph *fGLobalNLGraphSideIn = nullptr;
+
+    TCanvas *DrawGlobal();
+    void DrawGlobalFrameTop(Option_t *opt="");
+    void DrawGlobalFrameSide(Option_t *opt="");
+    void DrawGlobalNLGraphTop(Option_t *opt="");
+    void DrawGlobalNLGraphSide(Option_t *opt="");
+
+    //////////////////////////////////////////////////////////
+
+  private:
+    static STNeuLAND *fInstance;
 
 
   ClassDef(STNeuLAND,1);

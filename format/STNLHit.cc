@@ -82,6 +82,8 @@ void STNLHit::AddHit(STNLHit *hit)
 
   fQ = wsum;
 
+  fPosition.SetXYZ(fEX, fEY, fEZ);
+
 
 
   if (fN > 1)

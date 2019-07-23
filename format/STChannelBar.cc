@@ -4,7 +4,6 @@
 #include "TCanvas.h"
 #include "TStyle.h"
 #include "TPaveStats.h"
-#include "TF1.h"
 #include "TLine.h"
 #include "TLatex.h"
 
@@ -19,14 +18,16 @@ STChannelBar::STChannelBar()
 }
 
 STChannelBar::STChannelBar(
+    TString name,
     Int_t id, Int_t layer, Int_t row, Bool_t xy, TVector3 center, Int_t nbins,
     Double_t barl, Double_t attl, Double_t tdcy, Double_t tris, Double_t terr, Double_t effc)
 {
   Clear();
-  SetBar(id, layer, row, xy, center, nbins, barl, attl, tdcy, tris, terr, effc);
+  SetBar(name, id, layer, row, xy, center, nbins, barl, attl, tdcy, tris, terr, effc);
 }
 
 void STChannelBar::SetBar(
+    TString name,
     Int_t id, Int_t layer, Int_t row, Bool_t xy, TVector3 center, Int_t nbins,
     Double_t barl, Double_t attl, Double_t tdcy, Double_t tris, Double_t terr, Double_t effc)
 {
@@ -45,14 +46,16 @@ void STChannelBar::SetBar(
   fTimeErrorSigma = terr;
   fEffc = effc;
 
-  Init();
+  Init(name);
 }
 
-void STChannelBar::Init()
+void STChannelBar::Init(TString name)
 {
   if (fChannelL == nullptr)
   {
-    TString name = Form("Ch%d_L%d_R%d",fChannelID,fLayer,fRow);
+    TString namet = Form("Ch%d_L%d_R%d",fChannelID,fLayer,fRow);
+    if (name.IsNull()) name = namet;
+    else name = name + "_" + namet;
 
     fChannelL = new TH1D(name+"_L",";TDC;ADC_{L}",fNumTDCBins,0,fNumTDCBins);
     fChannelR = new TH1D(name+"_R",";TDC;ADC_{R}",fNumTDCBins,0,fNumTDCBins);
@@ -74,6 +77,9 @@ void STChannelBar::Init()
 
   if (fHistPulse == nullptr)
   {
+    fHistPulse = STNeuLAND::GetNeuLAND() -> fHistPulse;
+    fPulseTDCRange = STNeuLAND::GetNeuLAND() -> fPulseTDCRange;
+    /*
     auto pulseTimeRange1 = 2*(-fRiseTime-fTimeErrorSigma)*TMath::Log(2);
     auto pulseTimeRange2 = 8*(fDecayTime+fTimeErrorSigma)*TMath::Log(2);
     fPulseTDCRange = Int_t(ConvertTimeToTDC(pulseTimeRange2));
@@ -90,6 +96,7 @@ void STChannelBar::Init()
       normalizePulse += ConvertTimeToTDC(bin_content);
     }
     fHistPulse -> Scale(1./normalizePulse);
+    */
   }
 }
 
@@ -231,7 +238,11 @@ void STChannelBar::Draw(Option_t *option)
   {
     if (fIsAlongXNotY) namexy = "#it{x}";
     else               namexy = "#it{x}";
-    fHistSpace = new TH1D("barhist",TString(";")+namexy,fNumTDCBins,ConvertTDCToPos(0),ConvertTDCToPos(fNumTDCBins));
+
+    TString namehist = fChannelL -> GetName();
+    namehist.Replace(namehist.Sizeof()-3,2,"_Bar");
+
+    fHistSpace = new TH1D(namehist,TString(";")+namexy,fNumTDCBins,ConvertTDCToPos(0),ConvertTDCToPos(fNumTDCBins));
 
     for (auto axis : {fHistSpace -> GetXaxis(), fHistSpace -> GetYaxis()})
     {

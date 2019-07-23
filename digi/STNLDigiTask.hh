@@ -10,7 +10,7 @@
 class STNLDigiTask : public FairTask
 {
   public:
-    STNLDigiTask();
+    STNLDigiTask(TString name = "");
     ~STNLDigiTask();
 
     virtual InitStatus Init();
@@ -22,6 +22,7 @@ class STNLDigiTask : public FairTask
     void SetHitClusterPersistence(Bool_t value);
 
   private:
+    TString fName;
     Int_t fEventID;
 
     TClonesArray* fMCPointArray;

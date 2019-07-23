@@ -5,16 +5,53 @@
 #include "TVector3.h"
 #include "TArrayD.h"
 #include "TH1D.h"
+#include "TF1.h"
 
 #include <cmath>
 using namespace std;
 
+#include "STNeuLAND.hh"
+
 class STChannelBar : public TObject
 {
+  private:
+    Int_t fChannelID = -1;
+    Int_t fLayer = -1;
+    Int_t fRow = -1;
+
+    Bool_t fIsAlongXNotY = true;
+    TVector3 fBarCenter = TVector3(-999,-999,-999);
+    Int_t fNumTDCBins = 1;
+
+    Double_t fBarLength = -1; ///< [mm]
+    Double_t fAttenuationLength = DBL_MAX; ///< [mm]
+    Double_t fDecayTime = 1; ///< decay time of the pulse  [ns]
+    Double_t fRiseTime = 0.1; ///< rise time of the pulse  [ns]
+    Double_t fTimeErrorSigma = 0.1; ///< time resolution error sigma (of gaussian) [ns]
+    Double_t fEffc = 140.; ///< [mm/ns]
+
+    Int_t fPulseTDCRange = 0;
+
+    Bool_t fFlagFindHit = false; //!
+    Double_t fThreshold = 0;
+
+    Double_t fADC[2];
+    Double_t fQDC[2];
+    Double_t fTDC[2];
+
+    TH1D *fChannelL = nullptr;  //-> < Beam(+z) left(-x) or Beam below(-y)
+    TH1D *fChannelR = nullptr;  //-> < Beam(+z) right(+x) or Beam above(+y)
+
+    TF1  *fFuncPulse = nullptr; //!
+    TH1D *fHistPulse = nullptr; //! < for fast calculation
+
+    TH1D *fHistSpace = nullptr; //! < for Draw
+
   public:
     STChannelBar();
 
     STChannelBar(
+           TString name,
            Int_t id,
            Int_t layer,
            Int_t row,
@@ -38,6 +75,7 @@ class STChannelBar : public TObject
     };
 
     void SetBar(
+           TString name,
            Int_t id,
            Int_t layer,
            Int_t row,
@@ -52,7 +90,7 @@ class STChannelBar : public TObject
         Double_t effc = 140.  // [mm/ns]
         );
 
-    void Init();
+    void Init(TString name = "");
 
     virtual void Clear(Option_t *option="");
     virtual void Print(Option_t *option="") const;
@@ -143,39 +181,6 @@ class STChannelBar : public TObject
     TH1D *GetHistPulse() { return fHistPulse; }
 
     Double_t PulseWithError(double *xx, double *pp);
-
-  private:
-    Int_t fChannelID = -1;
-    Int_t fLayer = -1;
-    Int_t fRow = -1;
-
-    Bool_t fIsAlongXNotY = true;
-    TVector3 fBarCenter = TVector3(-999,-999,-999);
-    Int_t fNumTDCBins = 1;
-
-    Double_t fBarLength = -1; ///< [mm]
-    Double_t fAttenuationLength = DBL_MAX; ///< [mm]
-    Double_t fDecayTime = 1; ///< decay time of the pulse  [ns]
-    Double_t fRiseTime = 0.1; ///< rise time of the pulse  [ns]
-    Double_t fTimeErrorSigma = 0.1; ///< time resolution error sigma (of gaussian) [ns]
-    Double_t fEffc = 140.; ///< [mm/ns]
-
-    Int_t fPulseTDCRange = 0;
-
-    Bool_t fFlagFindHit = false; //!
-    Double_t fThreshold = 0;
-
-    Double_t fADC[2];
-    Double_t fQDC[2];
-    Double_t fTDC[2];
-
-    TH1D *fChannelL = nullptr;  //-> < Beam(+z) left(-x) or Beam below(-y)
-    TH1D *fChannelR = nullptr;  //-> < Beam(+z) right(+x) or Beam above(+y)
-
-    TF1  *fFuncPulse = nullptr; //!
-    TH1D *fHistPulse = nullptr; //! < for fast calculation
-
-    TH1D *fHistSpace = nullptr; //! < for Draw
 
   ClassDef(STChannelBar, 5);
 };
