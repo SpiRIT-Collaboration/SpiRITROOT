@@ -141,6 +141,8 @@ void run_reco_experiment
   
   // Space charge task is here only to create displacement map
   // it is not menant to be add to reco task
+  char tempmap[] = "/tmp/InvMapXXXXXX.root";
+  int fd = mkstemp(tempmap);
   if(beam_rate >= 0)
   {
     STSpaceChargeTask *fSpaceChargeTask = new STSpaceChargeTask();
@@ -151,8 +153,7 @@ void run_reco_experiment
     fSpaceChargeTask -> SetBeamRate(beam_rate);
     fSpaceChargeTask -> CalculateEDrift(5.43, true);
     // inverse map must be saved to a unique location to prevent problems with cocurrent file read
-    char tempmap[] = "/tmp/InvMapXXXXXX.root";
-    int fd = mkstemp(tempmap);
+
     fSpaceChargeTask -> ExportDisplacementMap(tempmap);
     delete fSpaceChargeTask;
     correct->SetExBFile(tempmap);
