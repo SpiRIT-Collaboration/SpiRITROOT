@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
 
 void run_reco_experiment
@@ -18,7 +20,8 @@ void run_reco_experiment
   double YPedestalOffset = +21.88,  // 132Sn: +21.88, 124Sn: +21.68, 112Sn: +22.98, 108Sn: +23.28, this value will move all the STHit YPedestalOffset, after applying this offset, the PosY of reconstructed TPC vertex will at -205.5mm, same with BDC.
   double BDC_Xoffset = -0.299, // 132Sn: -0.299, 124Sn: -0.609, 112Sn: -0.757, 108Sn: -0.706, this value will adjust the center of TPC vertex same with the center of BDC.
   double BDC_Yoffset = -205.5, //this value will transfer the BDC frame to TPC frame along Y direction.
-  double BDC_Zoffset = 0
+  double BDC_Zoffset = 0,
+  double beam_rate = -1,
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -27,7 +30,7 @@ void run_reco_experiment
     fNumEventsInSplit = fNumEventsInRun - start;
 
   TString sRunNo   = TString::Itoa(fRunNo, 10);
-  TString sSplitNo = TString::Itoa(fSplitNo, 10);
+  TString sSplitNo = TString::Format("%02d", fSplitNo);
 
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
   if (fPathToData.IsNull())
@@ -133,9 +136,28 @@ void run_reco_experiment
 //  helix -> SetEllipsoidCut(TVector3(0, -206.34, -11.9084), TVector3(120, 55, 240), 5);
   // Changing clustering direction angle and margin. Default: 45 deg with 0 deg margin
   //helix -> SetClusteringAngleAndMargin(35., 3.);
-  
+
   auto correct = new STCorrectionTask(); //Correct for saturation
   
+  // Space charge task is here only to create displacement map
+  // it is not menant to be add to reco task
+  if(beam_rate >= 0)
+  {
+    STSpaceChargeTask *fSpaceChargeTask = new STSpaceChargeTask();
+    STFieldMap *fField = new STFieldMap("samurai_field_map","A");
+    fField -> SetPosition(0., -20.43, 58.);
+    fSpaceChargeTask -> SetBField(fField);
+    fSpaceChargeTask -> SetDriftParameters(-4.252e4, -2.14);
+    fSpaceChargeTask -> SetBeamRate(beam_rate);
+    fSpaceChargeTask -> CalculateEDrift(5.43, true);
+    // inverse map must be saved to a unique location to prevent problems with cocurrent file read
+    char tempmap[] = "/tmp/InvMapXXXXXX.root";
+    int fd = mkstemp(tempmap);
+    fSpaceChargeTask -> ExportDisplacementMap(tempmap);
+    delete fSpaceChargeTask;
+    correct->SetExBFile(tempmap);
+  }
+
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetFieldOffset(-0.1794, -20.5502, 58.0526); //unit: cm, which comes from Jon's measurement. It means the position of magnetic field in the TPC frame.
   genfitPID -> SetTargetPlane(0,-213.3,-13.2); // unit: mm, in the TPC frame. here the z position is used when Genfit do the extrapolation.
@@ -151,7 +173,7 @@ void run_reco_experiment
   //genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
 //  genfitVA -> SetBeamFile("");
-  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
+  genfitVA -> SetBeamFile(Form("/mnt/home/tsangchu/SpiRITROOT_develope/SpiRITROOT/BeamInfo/beam_run%d.ridf.root", fRunNo));
 //  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   genfitVA -> SetInformationForBDC(fRunNo,BDC_Xoffset,BDC_Yoffset,BDC_Zoffset);
   // Uncomment if you want to recalculate the vertex using refit tracks.
@@ -196,6 +218,8 @@ void run_reco_experiment
   cout << "Output : " << out << endl;
 
   gApplication -> Terminate();
+  close(fd);
+  unlink(tempmap);
 }
 
 void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events) {

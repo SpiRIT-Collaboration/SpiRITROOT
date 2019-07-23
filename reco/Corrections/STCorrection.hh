@@ -9,6 +9,7 @@
 #include "TFile.h"
 #include "TCutG.h"
 #include "TF1.h"
+#include "TH3.h"
 #include <vector>
 
 typedef std::vector<STHit*>* vhit_t;
@@ -67,12 +68,17 @@ class STCorrection
   void Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *clusterArray);
   void CheckClusterPRF(TClonesArray *clusters,TClonesArray *helix, TClonesArray *hit);
   void CheckClusterPRFOld(TClonesArray *clusters,TClonesArray *helix, TClonesArray *hit);
+  void CorrectExB(TClonesArray *clusters);
   void LoadPRFCut(TString filename);
+  void LoadExBShift(TString filename);
   
   private:
 
+  TH3D *exb_x   = nullptr; 
+  TH3D *exb_z   = nullptr;
   TCutG *prf_row   = nullptr;
   TCutG *prf_layer = nullptr;
+  TFile *exb_f = nullptr;
   
   std::vector<double> minimize(const int npar);
   std::vector<double> minimize_helix(const int npar);    
