@@ -21,7 +21,7 @@ void run_reco_experiment
   double BDC_Xoffset = -0.299, // 132Sn: -0.299, 124Sn: -0.609, 112Sn: -0.757, 108Sn: -0.706, this value will adjust the center of TPC vertex same with the center of BDC.
   double BDC_Yoffset = -205.5, //this value will transfer the BDC frame to TPC frame along Y direction.
   double BDC_Zoffset = 0,
-  double beam_rate = -1,
+  double beam_rate = -1
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -141,7 +141,7 @@ void run_reco_experiment
   
   // Space charge task is here only to create displacement map
   // it is not menant to be add to reco task
-  char tempmap[] = "/tmp/InvMapXXXXXX.root";
+  char tempmap[] = "/tmp/InvMapXXXXXX";
   int fd = mkstemp(tempmap);
   if(beam_rate >= 0)
   {
@@ -174,7 +174,7 @@ void run_reco_experiment
   //genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
 //  genfitVA -> SetBeamFile("");
-  genfitVA -> SetBeamFile(Form("/mnt/home/tsangchu/SpiRITROOT_develope/SpiRITROOT/BeamInfo/beam_run%d.ridf.root", fRunNo));
+  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
 //  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   genfitVA -> SetInformationForBDC(fRunNo,BDC_Xoffset,BDC_Yoffset,BDC_Zoffset);
   // Uncomment if you want to recalculate the vertex using refit tracks.

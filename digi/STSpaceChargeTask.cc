@@ -362,7 +362,7 @@ void STSpaceChargeTask::ExportDisplacementMap(const std::string& value)
 {
   if(!fDispX || !fDispY || !fDispZ) 
     fLogger->Warning(MESSAGE_ORIGIN, "No displacement map is loaded. You need to either initialize this class or invoke CalculateEDrift method");
-  TFile file(value.c_str(), "UPDATE");
+  TFile file(value.c_str(), "RECREATE");
   if(fDispX) fDispX->Write("shiftX_data");
   if(fDispY) fDispY->Write("shiftY_data");
   if(fDispZ) fDispZ->Write("shiftZ_data");
@@ -370,7 +370,7 @@ void STSpaceChargeTask::ExportDisplacementMap(const std::string& value)
 
 void STSpaceChargeTask::ExportEField(const std::string& value)
 {
-  TFile file(value.c_str(), "UPDATE");
+  TFile file(value.c_str(), "RECREATE");
   if(fEx) fEx->Write();
   if(fEy) fEy->Write();
   if(fEz) fEz->Write();
