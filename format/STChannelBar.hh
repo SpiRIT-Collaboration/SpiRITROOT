@@ -8,6 +8,7 @@
 #include "TF1.h"
 
 #include <cmath>
+#include <vector>
 using namespace std;
 
 #include "STNeuLAND.hh"
@@ -46,6 +47,8 @@ class STChannelBar : public TObject
     TH1D *fHistPulse = nullptr; //! < for fast calculation
 
     TH1D *fHistSpace = nullptr; //! < for Draw
+
+    vector<Int_t> fMCIDs;
 
   public:
     STChannelBar();
@@ -96,14 +99,14 @@ class STChannelBar : public TObject
     virtual void Print(Option_t *option="") const;
     virtual void Draw (Option_t *option="");
 
-    void Fill(TVector3 pos, Double_t adc);
-    TVector3 FindHit(Double_t threshold, Bool_t forceFindHit = false);
+    void Fill(TVector3 pos, Double_t adc, Int_t mcid = -1);
+    bool FindHit(Double_t threshold, Bool_t forceFindHit = false);
 
     Int_t GetChannelID() const { return fChannelID; }
     Int_t GetLayer() const { return fLayer; }
     Int_t GetRow() const { return fRow; }
 
-    Int_t GetIsALongXNotY() const { return fIsAlongXNotY; }
+    Int_t IsAlongXNotY() const { return fIsAlongXNotY; }
     TVector3 GetBarCenter() const { return fBarCenter; }
     Double_t GetBarCenterL() const { return (fIsAlongXNotY ? fBarCenter.X() : fBarCenter.Y()); }
     Int_t GetNumTDCBins() const { return fNumTDCBins; }
@@ -181,6 +184,8 @@ class STChannelBar : public TObject
     TH1D *GetHistPulse() { return fHistPulse; }
 
     Double_t PulseWithError(double *xx, double *pp);
+
+    vector<Int_t> *GetHitIDs() { return &fMCIDs; }
 
   ClassDef(STChannelBar, 5);
 };

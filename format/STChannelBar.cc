@@ -343,7 +343,7 @@ Double_t STChannelBar::PulseWithError(Double_t *xx, Double_t *pp)
   return value;
 }
 
-void STChannelBar::Fill(TVector3 pos, Double_t adc)
+void STChannelBar::Fill(TVector3 pos, Double_t adc, Int_t mcid)
 {
   Double_t x0;
 
@@ -405,9 +405,12 @@ void STChannelBar::Fill(TVector3 pos, Double_t adc)
       fChannelR -> Fill(t_bincenter, adc_bin);
     }
   }
+
+  if (mcid >= 0)
+    fMCIDs.push_back(mcid);
 }
 
-TVector3 STChannelBar::FindHit(Double_t threshold, Bool_t forceFindHit)
+bool STChannelBar::FindHit(Double_t threshold, Bool_t forceFindHit)
 {
   if (forceFindHit || !fFlagFindHit)
   {
@@ -461,5 +464,8 @@ TVector3 STChannelBar::FindHit(Double_t threshold, Bool_t forceFindHit)
     }
   }
 
-  return GetTDCHitPosition();
+  if (fTDC[0] < 0 || fTDC[1] < 0)
+    return false;
+
+  return true;
 }

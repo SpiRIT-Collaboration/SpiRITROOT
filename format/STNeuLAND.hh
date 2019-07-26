@@ -8,6 +8,13 @@
 #include "TF1.h"
 #include "TGraph.h"
 #include "TCanvas.h"
+#include "TLine.h"
+#include "TText.h"
+#include "TLatex.h"
+
+#include <vector>
+
+using namespace std;
 
 class STNeuLAND
 {
@@ -53,6 +60,7 @@ class STNeuLAND
     Int_t fNumRows = 50;
 
     Double_t fdzNl = 400.;                   ///< Length of neuland array in z-direction
+    Double_t fdzLayer = fdzNl/fNumLayers;  ///< Length of neuland array in z-direction
     Double_t fWidthBar = 50.;                ///< Size of neuland bar in z (= fdzNl/fNumLayers)
     Double_t fLengthBar = 2500.;             ///< Half length of neuland bar
     Double_t fHalfLengthBar = fLengthBar/2.; ///< Half length of neuland bar
@@ -71,6 +79,10 @@ class STNeuLAND
     Int_t GetRow(Int_t mcDetID);
 
     Int_t IsAlongXNotY(Int_t mcDetID);
+
+    /// find bar ID from local position
+    Int_t FindBarID(TVector3 pos);
+    Int_t FindBarID(Int_t layer, Int_t row);
 
     /* Get (local)  center position from mc-det-id
      *
@@ -103,7 +115,22 @@ class STNeuLAND
     TGraph *fLocalNLGraphDownStream = nullptr;
     TGraph *fLocalNLGraphSideOut = nullptr;
 
-    TCanvas *DrawLocal();
+    TLine *fGlobalNLGuideLineC = nullptr;
+    TLine *fGlobalNLGuideLineR = nullptr;
+    TLine *fGlobalNLGuideLineL = nullptr;
+    TLatex *fGlobalNLGuideTextC = nullptr;
+    TLatex *fGlobalNLGuideTextR = nullptr;
+    TLatex *fGlobalNLGuideTextL = nullptr;
+
+    TLine *fGlobalNLGuideLineT = nullptr;
+    TLine *fGlobalNLGuideLineB = nullptr;
+    TLatex *fGlobalNLGuideTextT = nullptr;
+    TLatex *fGlobalNLGuideTextB = nullptr;
+
+    vector<TLine *> fLocalNLGraphDownStreamArray;
+    vector<TLine *> fLocalNLGraphSideArray;
+
+    TCanvas *DrawLocal(TString name);
     void DrawLocalFrameDownStream(Option_t *opt="");
     void DrawLocalFrameSide(Option_t *opt="");
     void DrawLocalNLGraphDownStream(Option_t *opt="");
@@ -116,11 +143,12 @@ class STNeuLAND
     TGraph *fGlobalNLGraphSideOut = nullptr;
     TGraph *fGLobalNLGraphSideIn = nullptr;
 
-    TCanvas *DrawGlobal();
+    TCanvas *DrawGlobal(TString name);
     void DrawGlobalFrameTop(Option_t *opt="");
     void DrawGlobalFrameSide(Option_t *opt="");
     void DrawGlobalNLGraphTop(Option_t *opt="");
     void DrawGlobalNLGraphSide(Option_t *opt="");
+
 
     //////////////////////////////////////////////////////////
 

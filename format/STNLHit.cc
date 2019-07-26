@@ -1,5 +1,8 @@
 #include <cmath>
+#include <iostream>
 #include "STNLHit.hh"
+
+using namespace std;
 
 ClassImp(STNLHit);
 
@@ -108,6 +111,7 @@ void STNLHit::FitLine()
     fODRFitter -> Reset();
     fODRFitter -> SetCentroid(fEX,fEY,fEZ);
     fODRFitter -> SetMatrixA(GetAXX(),GetAYY(),GetAZZ(),GetAXY(),GetAYZ(),GetAZX());
+
     fODRFitter -> SetWeightSum(fQ);
     fODRFitter -> SetNumPoints(fN);
 
