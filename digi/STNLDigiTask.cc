@@ -19,6 +19,7 @@ using namespace std;
 // Root class headers
 #include "TString.h"
 #include "TCollection.h"
+#include "TLorentzVector.h"
 
 STNLDigiTask::STNLDigiTask(TString name)
 :FairTask("STNLDigiTask"), fEventID(-1)
@@ -45,8 +46,15 @@ STNLDigiTask::Init()
   // input
 
   fMCPointArray = (TClonesArray*) ioman -> GetObject("NLMCPoint");
+  fGeoTrack = (TClonesArray*) ioman -> GetObject("GeoTracks");
 
   // output
+
+  fMCPointArrayOut = new TClonesArray("TLorentzVector");
+  ioman -> Register("MCPoint","ST",fMCPointArrayOut,true);
+
+  fGeoTrackOut = new TClonesArray("TGeoTrack");
+  ioman -> Register("GeoTracks","ST",fGeoTrackOut,true);
 
   fBarArray = new TClonesArray("STChannelBar");
   ioman -> Register("Bars","ST",fBarArray,true);
@@ -70,9 +78,20 @@ STNLDigiTask::Exec(Option_t* option)
   ++fEventID;
   TString digiName = fName + Form("_%d",fEventID);
 
+  fMCPointArrayOut -> Clear("C");
+  fGeoTrackOut -> Clear("C");
   fBarArray -> Clear("C");
   fNLHitArray -> Clear("C");
   fNLHitClusterArray -> Clear("C");
+
+  Int_t numGeoTracks = fGeoTrack -> GetEntries();
+  for (auto iGeoTrack=0; iGeoTrack<numGeoTracks; ++iGeoTrack)
+  {
+    auto track1 = (TGeoTrack *) fGeoTrack    ->            At(iGeoTrack);
+    auto track2 = (TGeoTrack *) fGeoTrackOut -> ConstructedAt(iGeoTrack);
+
+    CopyGeoTrackFromTo(track1, track2);
+  }
 
   Int_t numMCPoints = fMCPointArray -> GetEntries();
 
@@ -83,18 +102,28 @@ STNLDigiTask::Exec(Option_t* option)
 
   STChannelBar *bar = nullptr;
 
+  Int_t countGoodMCPoints = -1;
+
   for(Int_t iPoint=0; iPoint<numMCPoints; iPoint++)
   {
     auto point = (STMCPoint*) fMCPointArray -> At(iPoint);
 
-    auto t = point -> GetTime();
-    auto e = point -> GetEnergyLoss();
-    auto d = point -> GetDetectorID();
+    //auto t = point -> GetTime();
+    auto e = 1000 * point -> GetEnergyLoss(); // to MeV
+    if (e <= 0)
+      continue;
+
+    //auto d = point -> GetDetectorID();
 
     TVector3 gpos = 10 * TVector3(point -> GetX(), point -> GetY(), point -> GetZ());
     auto local = fNL -> LocalPos(gpos);
 
-    bar = (STChannelBar *) fBarArray -> ConstructedAt(d-4000);
+    auto d = fNL -> FindBarID(local);
+
+    auto pointout = (TLorentzVector *) fMCPointArrayOut -> ConstructedAt(++countGoodMCPoints);
+    pointout -> SetXYZT(gpos.X(),gpos.Y(),gpos.Z(),d);
+
+    bar = (STChannelBar *) fBarArray -> ConstructedAt(4000);
     if (bar -> GetChannelID() < 0) {
       // name, id, layer, row
       // x_or_y, local_pos, 
@@ -108,7 +137,7 @@ STNLDigiTask::Exec(Option_t* option)
           2.1, 0.1, 0.0,
           140.);
     }
-    bar -> Fill(local, e);
+    bar -> Fill(local, e, countGoodMCPoints);
   }
 
   fBarArray -> Compress();
@@ -121,17 +150,20 @@ STNLDigiTask::Exec(Option_t* option)
   Int_t countHits = 0;
   STNLHit *hit = nullptr;
   while ((bar = (STChannelBar *) itBars())) {
-    hit = (STNLHit *) fNLHitArray -> ConstructedAt(countHits);
 
-    auto position = bar -> FindHit(0.00001);
-    hit -> SetHitID(countHits);
-    hit -> SetClusterID(bar -> GetChannelID());
-    hit -> SetPosition(position);
-    hit -> SetCharge(bar -> GetChargeA());
+    if (bar -> FindHit(0.00001))
+    {
+      hit = (STNLHit *) fNLHitArray -> ConstructedAt(countHits);
+      auto position = bar -> GetTDCHitPosition();
+      hit -> SetHitID(countHits);
+      hit -> SetBarID(bar -> GetChannelID());
+      hit -> SetPosition(position);
+      hit -> SetCharge(bar -> GetChargeA());
 
-    hitArray.push_back(hit);
+      hitArray.push_back(hit);
 
-    ++countHits;
+      ++countHits;
+    }
   }
 
   // reconstruct neuland hit clusters (neuland track)
@@ -227,6 +259,7 @@ STNLDigiTask::Exec(Option_t* option)
 
 
 
+
   // =======================================================================
   // compare cluster to left over hits only by the residual
   // =======================================================================
@@ -247,10 +280,11 @@ STNLDigiTask::Exec(Option_t* option)
 
       if (residual < rs_cut) {
         cluster -> AddHit(hitCandidate);
-        hitArray.erase(singleHitArray.begin() + iCandidate);
+        singleHitArray.erase(singleHitArray.begin() + iCandidate);
       }
     }
   }
+
 
   // =======================================================================
   // compare cluster to left over hits only by the residual
@@ -267,6 +301,8 @@ STNLDigiTask::Exec(Option_t* option)
   }
 
   LOG(INFO) << "  Event_" << fEventID << " : "
+       << numGeoTracks << " geotrks,  "
+       << fMCPointArrayOut -> GetEntries() << " points,  "
        << fBarArray -> GetEntries() << " bars,  "  
        << fNLHitArray -> GetEntries() << " hits,  " 
        << fNLHitClusterArray -> GetEntries() << " clusters." << FairLogger::endl;
@@ -277,5 +313,38 @@ STNLDigiTask::Exec(Option_t* option)
 void STNLDigiTask::SetBarPersistence(Bool_t value) { fIsBarPersistence = value; }
 void STNLDigiTask::SetHitPersistence(Bool_t value) { fIsHitPersistence = value; }
 void STNLDigiTask::SetHitClusterPersistence(Bool_t value) { fIsHitClusterPersistence = value; }
+
+void STNLDigiTask::CopyGeoTrackFromTo(TGeoTrack *from, TGeoTrack *to)
+{
+  to -> ResetTrack();
+
+  to -> SetId(from -> GetId());
+  to -> SetPDG(from -> GetPDG());
+
+  auto parent = from -> GetMother();
+  if (parent != nullptr)
+    to -> SetParent(parent);
+
+  auto particle = from -> GetParticle();
+  if (particle != nullptr)
+    to -> SetParticle(particle);
+
+  auto numTracks = from -> GetNdaughters();
+  for (auto iTrack=0; iTrack<numTracks; ++iTrack)
+  {
+    auto daughter = from -> GetDaughter(iTrack);
+    if (daughter == nullptr)
+      break;
+    to -> AddDaughter(daughter);
+  }
+
+  auto numPoints = from -> GetNpoints();
+  for (auto iPoint=0; iPoint<numPoints; ++iPoint)
+  {
+    Double_t x, y, z, t;
+    from -> GetPoint(iPoint, x, y, z, t);
+    to -> AddPoint(x, y, z, t);
+  }
+}
 
 ClassImp(STNLDigiTask);

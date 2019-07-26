@@ -4,6 +4,7 @@
 #include "FairTask.h"
 #include "STMCPoint.hh"
 #include "TClonesArray.h"
+#include "TGeoTrack.h"
 
 #include "STNeuLAND.hh"
 
@@ -21,11 +22,17 @@ class STNLDigiTask : public FairTask
     void SetHitPersistence(Bool_t value);
     void SetHitClusterPersistence(Bool_t value);
 
+    void CopyGeoTrackFromTo(TGeoTrack *from, TGeoTrack *to);
+
   private:
     TString fName;
     Int_t fEventID;
 
     TClonesArray* fMCPointArray;
+    TClonesArray* fMCPointArrayOut;
+
+    TClonesArray* fGeoTrack;
+    TClonesArray* fGeoTrackOut;
 
     TClonesArray* fBarArray;
     TClonesArray* fNLHitArray;
