@@ -1,7 +1,8 @@
 void Produce_Theta_TargetPos()
 {
-  bool IsOption_CheckCorrection = 1;
-  string BDCCorrection_FileName = "f1_BDCCorrection_Theta_TargetPos.root";
+  bool IsOption_CheckCorrection = 1; // after you get the BDC correction file, you can use this option to check does the correction files can correct the postion of BDC.
+  
+  string BDCCorrection_FileName = "./f1_BDCCorrection_Theta_TargetPos.root";
   
   TChain* tree = new TChain("cbmsim");
   tree->AddFile("../data/run2894_s0.40kEvts.noBDCShift.reco.develop.1820.549ad58.root");
