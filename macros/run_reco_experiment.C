@@ -181,7 +181,7 @@ void run_reco_experiment
   genfitVA -> SetUseRave(true);
   genfitVA -> SetFieldOffset(-0.1794, -20.5502, 58.0526); //unit: cm, which comes from Jon's measurement. It means the position of magnetic field in the TPC frame.
   genfitVA -> Set_IsOption_BDCCorrection(0); 
-  genfitVA -> Set_FileName_BDCCorrection_Theta_TargetPos("f1_BDCCorrection_Theta_TargetPos.root");
+  genfitVA -> Set_FileName_BDCCorrection_Theta_TargetPos("./BDCShift_Correction/f1_BDCCorrection_Theta_TargetPos.root");
   genfitVA -> SetZtoProject(-13.2, 1.7, 3); //(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple), this function will project the BDC on the Target.
   
   auto embedCorr = new STEmbedCorrelatorTask();
