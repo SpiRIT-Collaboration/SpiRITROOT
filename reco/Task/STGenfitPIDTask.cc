@@ -201,10 +201,6 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
       TVector3 mom, momTargetPlane, posTargetPlane;
       fGenfitTest -> GetTrackParameters(gfTrack, mom, momTargetPlane, posTargetPlane);
-      if (mom.Z() < 0)
-        mom = -mom;
-      if (momTargetPlane.Z() < 0)
-        momTargetPlane = -momTargetPlane;
       recoTrackCand -> SetMomentum(mom);
       recoTrackCand -> SetMomentumTargetPlane(momTargetPlane);
       recoTrackCand -> SetPosTargetPlane(posTargetPlane);
