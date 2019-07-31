@@ -61,7 +61,7 @@ STGenfitTest2::STGenfitTest2(bool loadSamurai, Double_t xOffset, Double_t yOffse
   genfit::MaterialEffects *materialEffects = genfit::MaterialEffects::getInstance();
   materialEffects -> init(new genfit::TGeoMaterialInterface());
 
-  TVector3 posTarget(0, -21.33, -0.89);
+  TVector3 posTarget(0, -21.33, -1.32);
   TVector3 normalTarget(0, 0, 1);
   fTargetPlane = genfit::SharedPlanePtr(new genfit::DetPlane(posTarget, normalTarget));
 
