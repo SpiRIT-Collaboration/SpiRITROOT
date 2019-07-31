@@ -411,25 +411,30 @@ void STGenfitTest2::GetTrackParameters(genfit::Track *gfTrack, TVector3 &mom, TV
   TVector3 posReco(-999,-999,-999);
   TMatrixDSym covMat(6,6);
 
-  try { 
-    trackRep -> extrapolateToPlane(fitState, fTargetPlane); 
-    momentumTargetPlane = fitState.getMom();
-    posTargetPlane = fitState.getPos();
-  } catch (genfit::Exception &e) {
-  }
-
-  momentumTargetPlane = 1000*momentumTargetPlane;
-  posTargetPlane = 10*posTargetPlane;
-
   try {
     fitState.getPosMomCov(posReco, mom, covMat);
   } catch (genfit::Exception &e) {
-    return;
+    mom.SetXYZ(0, 0, 0);
   }
 
   if (mom.Z() < 0)
     mom = -mom;
   mom = 1000*mom;
+
+  try { 
+    trackRep -> extrapolateToPlane(fitState, fTargetPlane); 
+    momentumTargetPlane = fitState.getMom();
+    posTargetPlane = fitState.getPos();
+  } catch (genfit::Exception &e) {
+    momentumTargetPlane.SetXYZ(0, 0, 0);
+    posTargetPlane.SetXYZ(0, 0, 0);
+  }
+
+  momentumTargetPlane = 1000*momentumTargetPlane;
+  posTargetPlane = 10*posTargetPlane;
+
+  if (momentumTargetPlane.Z() < 0)
+    momentumTargetPlane = -momentumTargetPlane;
 }
 
 void STGenfitTest2::GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVector3 &kyotoR, TVector3 &katana, TVector3 &neuland)
