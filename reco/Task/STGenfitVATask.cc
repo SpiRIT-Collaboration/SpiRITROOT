@@ -117,7 +117,7 @@ STGenfitVATask::Init()
   if(IsOption_BDCCorrection==1)
   {
     Vertex_Shifter = new ST_VertexShift();
-    Vertex_Shifter->Load_BDC_Correction("f1_BDCCorrection_Theta_TargetPos.root");
+    Vertex_Shifter -> Load_BDC_Correction(FileName_BDCCorrection_Theta_TargetPos);
   }
   
   return kSUCCESS;

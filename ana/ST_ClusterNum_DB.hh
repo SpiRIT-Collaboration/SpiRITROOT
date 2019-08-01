@@ -42,7 +42,9 @@ public:
   // the below is for some functions.
   double GetClusterNum(int Charge_Tem, double Theta_Tem,double Phi_Tem,double Momentum_Tem);
   double GetClusterNum(int Charge_Tem, TVector3 Momentum_Tem);
-  void Draw_Theta_Phi_Dis(int Charge_Tem, double Momentum_Tem,int Opt_interpolation);
+  bool Get_DB_Info(int Charge_Tem, TVector3 Momentum_Tem, double* DB_Results); //double* DB_Results: ClusterNum_AlongX, ClusterNum_AlongZ,  TrackLength_XZ, TrackLength_3D, dEdX_Avg, dEdX_Truncated
+
+  void Draw_Theta_Phi_Dis(int Charge_Tem, double Momentum_Tem);
   void Draw_withMomentum_Dis(double Theta_Tem,double Phi_Tem,int Charge_Tem,int MomentumNum_Tem,double* MomentumValue_Tem);
   TGraph* Draw_withMomentum_Dis(double Theta_Tem,double Phi_Tem,int Charge_Tem,int DrawOpt);
   
@@ -61,10 +63,20 @@ private:
   double Momentum_Range_Minus[2];
   
   double MomentumValue_Plus[MaxMomentumNum_Plus];
-  double ClusterNum_Plus[THETANUM][PHINUM][MaxMomentumNum_Plus];
+  double ClusterNum_AlongX_Plus[THETANUM][PHINUM][MaxMomentumNum_Plus];
+  double ClusterNum_AlongZ_Plus[THETANUM][PHINUM][MaxMomentumNum_Plus];
+  double TrackLength_XZ_Plus[THETANUM][PHINUM][MaxMomentumNum_Plus];
+  double TrackLength_3D_Plus[THETANUM][PHINUM][MaxMomentumNum_Plus];
+  double dEdX_Avg_Plus[THETANUM][PHINUM][MaxMomentumNum_Plus];
+  double dEdX_Truncated_Plus[THETANUM][PHINUM][MaxMomentumNum_Plus];
   
   double MomentumValue_Minus[MaxMomentumNum_Minus];
-  double ClusterNum_Minus[THETANUM][PHINUM][MaxMomentumNum_Minus];
+  double ClusterNum_AlongX_Minus[THETANUM][PHINUM][MaxMomentumNum_Minus];
+  double ClusterNum_AlongZ_Minus[THETANUM][PHINUM][MaxMomentumNum_Minus];
+  double TrackLength_XZ_Minus[THETANUM][PHINUM][MaxMomentumNum_Minus];
+  double TrackLength_3D_Minus[THETANUM][PHINUM][MaxMomentumNum_Minus];
+  double dEdX_Avg_Minus[THETANUM][PHINUM][MaxMomentumNum_Minus];
+  double dEdX_Truncated_Minus[THETANUM][PHINUM][MaxMomentumNum_Minus];
   
   ClassDef(ST_ClusterNum_DB,1)
 };
