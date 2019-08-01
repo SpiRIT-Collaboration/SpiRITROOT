@@ -89,8 +89,8 @@ STSpaceChargeTask::STSpaceChargeTask()
  fOffsetY(0),
  fOffsetZ(0),
  fRotateXZ(0),
- fmu(-4.252e4),
- fwtau(-4)
+ fmu(-4.3556e4),
+ fwtau(-2.18)
 {
   fIsPersistence = kFALSE;
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STSpaceChargeTask");
