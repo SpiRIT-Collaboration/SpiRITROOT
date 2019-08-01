@@ -16,21 +16,22 @@ from scipy.ndimage import zoom
 from matplotlib.widgets import Slider
 
 class TPCGrid:
-  Width = 100.#86.4
-  Height = 55.#50.61
+  Width = 86.4
+  Height = 50.61
   Length = 150.#134.
   
-  Vbottom = -7023.5#6463
+  Vbottom = -124.7*Height#-7023.5#6463
   Vtop = 0
 
-  def __init__(self, dx=1, dy=2, dz=2):#h=1.4):#1.4):
+  def __init__(self, dx=1, dy=2, dz=1):#h=1.4):#1.4):
     # h must equally divide y for boundary condition to be exact
     self.dx = self.Width/(int(self.Width/dx))
     self.dy = self.Height/(int(self.Height/dy))
     self.dz = self.Length/(int(self.Length/dz))
+
     self.x = np.arange(0, self.Width + self.dx, self.dx)
     self.y = np.arange(0, self.Height + self.dy, self.dy)
-    self.z = np.arange(-10, self.Length + self.dz, self.dz)
+    self.z = np.arange(0, self.Length + self.dz, self.dz)
     self.V = np.zeros((self.z.shape[0], self.y.shape[0], self.x.shape[0]))
     self.V[:, :, :] = (self.Vbottom + (self.Vtop - self.Vbottom)*self.y/self.Height)[None, :, None]
     self._ApplyBC()
@@ -52,7 +53,7 @@ class TPCGrid:
     return np.sqrt(np.mean((tmp*tmp).ravel()))
 
   def UpdateBC(self):
-    pass
+    self._ApplyBC()
 
   @property
   def TPCx(self):
@@ -65,6 +66,21 @@ class TPCGrid:
   @property
   def TPCz(self):
     return self.z
+
+class SecVolCharge:
+  def __init__(self):
+    pass
+
+  def SetGeo(self, x, y, z, h):
+    ch_x, ch_y, ch_z = np.meshgrid(x[1:-1], y[1:-1], z[1:-1])
+    ch_x = ch_x.flatten()
+    ch_y = ch_y.flatten()
+    ch_z = ch_z.flatten()
+    ch = (x.max()  - np.fabs(ch_x))/x.max()*(np.fabs(ch_y)/np.fabs(y).max())
+
+    idx, idy, idz = np.meshgrid(np.arange(x.shape[0]), np.arange(y.shape[0]), np.arange(z.shape[0]))
+    self.geo_index = [idz.flatten(), idy.flatten(), idx.flatten()]
+    self.geo_charge = ch
 
 class LineCharge:
 
@@ -81,61 +97,41 @@ class LineCharge:
     # our sheet charge has to span 2 pixels
     beam_x = np.interp(z[z < self.beam_loc['z'].max()], self.beam_loc['z'], self.beam_loc['x'])
     beam_y = np.interp(z[z < self.beam_loc['z'].max()], self.beam_loc['z'], self.beam_loc['y'])
-    # convert to my calculation coordinates
-
+    # convert real location to index
     line_idx = [np.abs(x - X).argmin() for X in beam_x]
     line_idy = [np.abs(y - Height).argmin() for Height in beam_y]
+
+    # draw geometry
     self.geo_index = [[], [], []]
-    self.geo_charge = []
+    self.geo_charge = [] 
+    factor_along_beam =  np.ones(z.shape)#1 - np.exp(-np.fabs(z)/10)
     for idz, (max_idy, idx) in enumerate(zip(line_idy, line_idx)):
-      # cannot modify boundaries. Therefore range start from 1
-      if idx == 0 or idx == x.shape[0] - 1:
-        continue
-      if idz == 0 or idz == z.shape[0] - 1:
-        continue
-      if max_idy == y.shape[0] - 1:
-        max_idy -= 1
-      self.geo_index[0] += [idz for idy in range(1, max_idy)]
-      self.geo_index[1] += [idy for idy in range(1, max_idy)]
-      self.geo_index[2] += [idx for idy in range(1, max_idy)]
-      self.geo_charge += [self.sheet_density/2. for idy in range(1, max_idy)]
+      self.geo_index[0] += [idz for idy in range(max_idy)]
+      self.geo_index[1] += [idy for idy in range(max_idy)]
+      self.geo_index[2] += [idx for idy in range(max_idy)]
+      self.geo_charge += [factor_along_beam[idz]*self.sheet_density/2. for idy in range(max_idy)]
 
-    for idz, (max_idy, idx) in enumerate(zip(line_idy, line_idx)):
-      # cannot modify boundaries. Therefore range start from 1
-      if idx + 1 == x.shape[0] - 1:
-        continue
-      if idz == 0 or idz == z.shape[0] - 1:
-        continue
-      if max_idy == y.shape[0] - 1:
-        max_idy -= 1
-      self.geo_index[0] += [idz for idy in range(1, max_idy)]
-      self.geo_index[1] += [idy for idy in range(1, max_idy)]
-      self.geo_index[2] += [idx + 1 for idy in range(1, max_idy)]
-      self.geo_charge += [(- beam_x[idz] + x[idx] + 0.5*h)*self.sheet_density/(2.*h) for idy in range(1, max_idy)]
-
-    for idz, (max_idy, idx) in enumerate(zip(line_idy, line_idx)):
-      # cannot modify boundaries. Therefore range start from 1
-      if idx - 1 == 0:
-        continue
-      if idz == 0 or idz == z.shape[0] - 1:
-        continue
-      if max_idy == y.shape[0] - 1:
-        max_idy -= 1
-      self.geo_index[0] += [idz for idy in range(1, max_idy)]
-      self.geo_index[1] += [idy for idy in range(1, max_idy)]
-      self.geo_index[2] += [idx - 1 for idy in range(1, max_idy)]
-      self.geo_charge += [(beam_x[idz] - x[idx] + 0.5*h)*self.sheet_density/(2.*h) for idy in range(1, max_idy)]
-
+      if idx + 1 < x.shape:
+        self.geo_index[0] += [idz for idy in range(max_idy)]
+        self.geo_index[1] += [idy for idy in range(max_idy)]
+        self.geo_index[2] += [idx + 1 for idy in range(max_idy)]
+        self.geo_charge += [factor_along_beam[idz]*(- beam_x[idz] + x[idx] + 0.5*h)*self.sheet_density/(2.*h) for idy in range(max_idy)]
+      if idx - 1 >= 0:
+        self.geo_index[0] += [idz for idy in range(max_idy)]
+        self.geo_index[1] += [idy for idy in range(max_idy)]
+        self.geo_index[2] += [idx - 1 for idy in range(max_idy)]
+        self.geo_charge += [factor_along_beam[idz]*(beam_x[idz] - x[idx] + 0.5*h)*self.sheet_density/(2.*h) for idy in range(max_idy)]
 
     self.geo_index = [np.array(geo_index) for geo_index in self.geo_index]
     self.geo_charge = np.array(self.geo_charge)/h#self.sheet_density/h # divide by h for line charge to conserve total charge
       
 class PossionSolver:
 
-  def __init__(self, grid, charge):
+  def __init__(self, grid, charges):
     self.grid = grid
-    self.charge = charge
-    self.charge.SetGeo(grid.TPCx, grid.TPCy, grid.TPCz, grid.dx)
+    self.charges = charges
+    for charge in self.charges:
+      charge.SetGeo(grid.TPCx, grid.TPCy, grid.TPCz, grid.dx)
 
   def Stepper(self, save_error=False):
     if save_error:
@@ -147,8 +143,9 @@ class PossionSolver:
                                              + self.grid.V[1:-1, 2:, 1:-1])/(self.grid.dy**2)
                                              + (self.grid.V[:-2, 1:-1, 1:-1]
                                              + self.grid.V[2:, 1:-1, 1:-1])/(self.grid.dz**2))
-    self.grid.V[tuple(self.charge.geo_index)] += inv_dsum*self.charge.geo_charge
-    #self.grid.UpdateBC()
+    for charge in self.charges:
+      self.grid.V[tuple(charge.geo_index)] += inv_dsum*charge.geo_charge
+    self.grid.UpdateBC()
 
   def Solve(self, tol=1e-4, max_iter=5000):
     idx = 0
@@ -169,18 +166,21 @@ def CalculateEField(strength_and_beamfile):
   beam_file = strength_and_beamfile[1]
 
   grid = TPCGrid()
-  charge = LineCharge(beam_file, strength)
-  solver = PossionSolver(grid, charge)
+  line_charge = LineCharge(beam_file, strength)
+  solver = PossionSolver(grid, [line_charge])
   solver.Solve()
   result = grid.V
+
+  density_grid = np.zeros(grid.V.shape)
+  for charge in solver.charges:
+    density_grid[tuple(charge.geo_index)] += charge.geo_charge
 
   ArrayToGif(grid.TPCx, grid.TPCy, grid.TPCz, result, 'strength%.2E_%s.gif' % (strength, beam_file))
   Ex, Ey, Ez = VToE(result, grid.TPCx, grid.TPCy, grid.TPCz)
   E_strength = np.sqrt(Ex*Ex + Ey*Ey + Ez*Ez)
   print('Maximum E-field strength: %.2f V/cm' % E_strength.ravel().max())
   print('Minimum E-field strength: %.2f V/cm' % E_strength.ravel().min())
-  density_grid = np.zeros(grid.V.shape)
-  density_grid[tuple(charge.geo_index)] = charge.geo_charge
+
   return grid.TPCx, grid.TPCy, grid.TPCz, Ex, Ey, Ez, result, density_grid, beam_file
 
 def ArrayToGif(x, y, z, content, title):
@@ -211,8 +211,16 @@ def ArrayToGif(x, y, z, content, title):
   #anim.save(title, writer='imagemagick')
 
 def Fill3DHist(hist, content, x, y, z):
-  for index, val in np.ndenumerate(content):
-    hist.Fill(x[index[2]], y[index[1]], z[index[0]], val)
+  dx = np.fabs(x[1] - x[0])
+  dy = np.fabs(y[1] - y[0])
+  dz = np.fabs(z[1] - z[0])
+  # pad the array for TH3D interpolation
+  padx = np.pad(x, (1,1), 'constant', constant_values=(x.min()-dx, x.max()+dx))
+  pady = np.pad(y, (1,1), 'constant', constant_values=(y.min()-dy, y.max()+dy))
+  padz = np.pad(z, (1,1), 'constant', constant_values=(z.min()-dz, z.max()+dz))
+  pad_content = np.pad(content, ((1,1),(1,1),(1,1)), 'edge')
+  for index, val in np.ndenumerate(pad_content):
+    hist.Fill(padx[index[2]], pady[index[1]]+dy, padz[index[0]], val)
 
 if __name__ == '__main__':
   file_ = ROOT.TFile.Open('E-field.root', 'RECREATE')
@@ -244,9 +252,12 @@ if __name__ == '__main__':
     # save everything to ROOT
     for type_, (Ex, Ey, Ez, V, rho) in zip(['homo', 'nohomo'], [[Ex_homo, Ey_homo, Ez_homo, V_homo, rho_homo], [Ex_nohomo, Ey_nohomo, Ez_nohomo, V_nohomo, rho_nohomo]]):
       for title, content in zip(['Ex', 'Ey', 'Ez', 'V', 'rho'], [Ex, Ey, Ez, V, rho]):
-        hist = ROOT.TH3D(title, type_, len(x), x.min(), x.max()
-                                     , len(y), y.min(), y.max()
-                                     , len(z), z.min(), z.max())
+        dx = np.fabs(x[1] - x[0])
+        dy = np.fabs(y[1] - y[0])
+        dz = np.fabs(z[1] - z[0])
+        hist = ROOT.TH3D(title, type_, len(x) + 2, x.min() - dx, x.max() + dx
+                                     , len(y) + 2, y.min(), y.max() + 2*dy
+                                     , len(z) + 2, z.min() - dz, z.max() + dz)
 
         Fill3DHist(hist, content, x, y, z)
         hist.Write('%s_%s_%s' % (type_, beam_file, title))

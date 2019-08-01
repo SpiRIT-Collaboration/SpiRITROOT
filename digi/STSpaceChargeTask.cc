@@ -67,7 +67,6 @@ TVector3 ElectronDrifter::DriftFrom(const TVector3& t_pos)
   TVector3 pos = t_pos;
   while(!stop_cond_(pos, t_))
   {
-    double old_y = pos.Y();
     pos = RK4Stepper(eom_, pos, t_, dt_);
     t_ += dt_;
   }
@@ -185,7 +184,7 @@ void STSpaceChargeTask::CalculateEDrift(double drift_vel, bool t_invert)
   auto EFieldWrapper = this->GetEFieldWrapper();
   auto BFieldWrapper = this->GetBFieldWrapper();
   auto eom = EquationOfMotion(EFieldWrapper, BFieldWrapper, fmu, fwtau); 
-  const double dt = (t_invert)? -2e-7:2e-7; // seconds
+  const double dt = (t_invert)? -5e-8:5e-8; // seconds
   auto drifter = ElectronDrifter(dt, eom);
 
   // mu= -4.252e4, wtau= -4 was found to reproduce E cross B result
@@ -198,10 +197,10 @@ void STSpaceChargeTask::CalculateEDrift(double drift_vel, bool t_invert)
   // create displacement map with the following dimensions:
   // all dimensions are in cm
 
-  double x_min = -50, x_max = 50;
-  double y_min = -55, y_max = 0;
+  double x_min = -43.2, x_max = 43.2;
+  double y_min = -50.61, y_max = 0;
   double z_min = 0, z_max = 150;
-  int binsx = 40, binsy = 40, binsz = 30;
+  int binsx = 35, binsy = 30, binsz = 50;
 
   fDispX = new TH3D("shiftX_data","shiftX",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
   fDispY = new TH3D("shiftY_data","shiftY",binsx,x_min,x_max,binsy,y_min,y_max,binsz,z_min,z_max);
@@ -222,7 +221,7 @@ void STSpaceChargeTask::CalculateEDrift(double drift_vel, bool t_invert)
 
        // initial position
        double diffx;
-       double diffy;
+       double diffy=0;
        double diffz;
       
        if(fCustomRule) 
@@ -235,13 +234,14 @@ void STSpaceChargeTask::CalculateEDrift(double drift_vel, bool t_invert)
            pos[0] = x; pos[1] = 0; pos[2] = z;
            pos = drifter.DriftUntil([drift_vel, y](const TVector3& t_pos, double t){ return t*1e6*drift_vel < y; })
                         .DriftFrom(pos);
+           //diffy = pos.Y()-y;
          }else
          {
            pos[0] = x; pos[1] = y; pos[2] = z;
            pos = drifter.DriftFrom(pos);
+           //diffy = -drift_vel*drifter.GetDriftTime()*1e6-y;
          }
          diffx = pos.X()-x;
-         diffy = 0;
          diffz = pos.Z()-z ;
        }
        fDispX->SetBinContent(idx, idy, idz, diffx);
@@ -334,7 +334,7 @@ std::function<TVector3(const TVector3&)> STSpaceChargeTask::GetEFieldWrapper()
       double ez = fEz->Interpolate(rot_x, y, rot_z);
       double rot_ex = ex*cos(fRotateXZ) + ez*sin(fRotateXZ);
       double rot_ez = -ex*sin(fRotateXZ) + ez*cos(fRotateXZ);
-      if(ey >= -10) ey = -127.7;
+      if(ey >= -10) ey = -124.7;
       return TVector3(rot_ex, ey, rot_ez);
     };
 }
