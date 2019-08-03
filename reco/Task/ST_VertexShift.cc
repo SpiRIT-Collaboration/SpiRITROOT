@@ -15,6 +15,9 @@ ST_VertexShift::ST_VertexShift()
     h1_Theta_TargetPosX_Smooth[i] = 0;
     h1_Theta_TargetPosY_Smooth[i] = 0;
   }
+  Threshold_Remove_BG = 1;
+  Opt_Remove_BG = 0;
+  ThetaCountClear_Fraction = 0.5; //only the first half bin will be applied count clearance.
 }
 
 ST_VertexShift::~ST_VertexShift()
@@ -111,7 +114,7 @@ void ST_VertexShift::Cal_BDC_Correction(string FileName)
     if(h2_Theta_TargetPosX[i]==0) { cout<<"Error when read TH2D: "<<NameTem<<endl; continue;}
     
     sprintf(NameTem,"h2_Theta_TargetPosX_Phi_%d_%d_pfx",PhiRange[i][0],PhiRange[i][1]);
-    Clean_1Count(h2_Theta_TargetPosX[i]);
+    Clean_Count(h2_Theta_TargetPosX[i]);
     Profile_Theta_TargetPosX[i] = (TProfile*) h2_Theta_TargetPosX[i]->ProfileX(NameTem);
     
     sprintf(NameTem,"h2_Theta_TargetPosX_Phi_%d_%d_pfx_Smooth",PhiRange[i][0],PhiRange[i][1]);
@@ -131,7 +134,7 @@ void ST_VertexShift::Cal_BDC_Correction(string FileName)
     if(h2_Theta_TargetPosY[i]==0) { cout<<"Error when read TH2D: "<<NameTem<<endl; continue;}
     
     sprintf(NameTem,"h2_Theta_TargetPosY_Phi_%d_%d_pfx",PhiRange[i][0],PhiRange[i][1]);
-    Clean_1Count(h2_Theta_TargetPosY[i]);
+    Clean_Count(h2_Theta_TargetPosY[i]);
     Profile_Theta_TargetPosY[i] = (TProfile*) h2_Theta_TargetPosY[i]->ProfileX(NameTem);
     
     sprintf(NameTem,"h2_Theta_TargetPosY_Phi_%d_%d_pfx_Smooth",PhiRange[i][0],PhiRange[i][1]);
@@ -147,17 +150,30 @@ void ST_VertexShift::Cal_BDC_Correction(string FileName)
   }
 }
 
-void ST_VertexShift::Clean_1Count(TH2D* h2_tem)
+
+//remove the small count to get a more accurate center value, but do not change the bin content in the root file.
+void ST_VertexShift::Clean_Count(TH2D* h2_tem)
 {
   int XbinNum = h2_tem->GetNbinsX();
   int YbinNum = h2_tem->GetNbinsY();
   
-  for(int iX=1;iX<=XbinNum;iX++)
+  int XbinNum_forClean = XbinNum;
+  
+  if(Opt_Remove_BG==0) { XbinNum_forClean = XbinNum; } //clean all the count that is less than the threshold(Threshold_Remove_BG).
+  else if(Opt_Remove_BG==1) { XbinNum_forClean = ThetaCountClear_Fraction*XbinNum; }
+  
+  for(int iX=1;iX<=XbinNum_forClean;iX++)
   {
     for(int iY=1;iY<=YbinNum;iY++)
     {
       double Content = h2_tem->GetBinContent(iX,iY);
-      if(Content<=1) { h2_tem->SetBinContent(iX,iY,0); }
+      if(Content<=Threshold_Remove_BG) { h2_tem->SetBinContent(iX,iY,0); }
     }
   }
+}
+
+void ST_VertexShift::Set_ThetaCountClear_Fraction(double tem)
+{ 
+  if( tem>1 || tem<=0 ) { cout<<"The count clear fraction should be belong to (0,1)! The value that you set failed!"<<endl; getchar(); }
+  ThetaCountClear_Fraction = tem;
 }

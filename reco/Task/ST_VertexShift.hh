@@ -70,8 +70,17 @@ public:
   
   void Cal_BDC_Correction(string FileName); //from TH2D to profile and TH1D( with smooth ).
   void Load_BDC_Correction(string FileName); // load TH2D, profile, and TH1D if the file has.
-  void Clean_1Count(TH2D* h2_tem);
+  void Clean_Count(TH2D* h2_tem);
   
+  int Threshold_Remove_BG; //normally, it will be applied to the whole histogram. 
+  int Opt_Remove_BG; //0: remove the count for the whole histogram; 
+                     //1: remove the different count for the  different theta region.
+  double ThetaCountClear_Fraction; //this value is belong to (0,1).
+  
+  void Set_Threshold_Remove_BG(int tem) { Threshold_Remove_BG = tem; }
+  void Set_Opt_Remove_BG(int tem) { Opt_Remove_BG = tem; }
+  void Set_ThetaCountClear_Fraction(double tem);
+
   ClassDef(ST_VertexShift,1)
 };
 
