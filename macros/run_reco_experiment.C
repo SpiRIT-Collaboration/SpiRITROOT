@@ -21,7 +21,7 @@ void run_reco_experiment
   double BDC_Xoffset = -0.299, // 132Sn: -0.299, 124Sn: -0.609, 112Sn: -0.757, 108Sn: -0.706, this value will adjust the center of TPC vertex same with the center of BDC.
   double BDC_Yoffset = -205.5, //this value will transfer the BDC frame to TPC frame along Y direction.
   double BDC_Zoffset = 0,
-  double beam_rate = -1
+  double charge_density = -1
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -143,19 +143,19 @@ void run_reco_experiment
   // it is not menant to be add to reco task
   char tempmap[] = "/tmp/InvMapXXXXXX";
   int fd = mkstemp(tempmap);
-  if(beam_rate >= 0)
+  if(charge_density >= 0)
   {
-    STSpaceChargeTask *fSpaceChargeTask = new STSpaceChargeTask();
+    STSpaceCharge *fSpaceCharge = new STSpaceCharge();
     STFieldMap *fField = new STFieldMap("samurai_field_map","A");
     fField -> SetPosition(0., -20.43, 58.);
-    fSpaceChargeTask -> SetBField(fField);
-    fSpaceChargeTask -> SetDriftParameters(-4.252e4, -2.14);
-    fSpaceChargeTask -> SetBeamRate(beam_rate);
-    fSpaceChargeTask -> CalculateEDrift(5.43, true);
+    fSpaceCharge -> SetBField(fField);
+    fSpaceCharge -> SetDriftParameters(-4.355e4, -2.18);
+    fSpaceCharge -> SetSheetChargeDensity(charge_density);
+    fSpaceCharge -> CalculateEDrift(5.43, true);
     // inverse map must be saved to a unique location to prevent problems with cocurrent file read
 
-    fSpaceChargeTask -> ExportDisplacementMap(tempmap);
-    delete fSpaceChargeTask;
+    fSpaceCharge -> ExportDisplacementMap(tempmap);
+    delete fSpaceCharge;
     correct->SetExBFile(tempmap);
   }
 

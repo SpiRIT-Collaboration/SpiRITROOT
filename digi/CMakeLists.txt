@@ -32,6 +32,7 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
+STSpaceCharge.cc
 STSpaceChargeTask.cc
 STDriftTask.cc
 STPadResponseTask.cc
