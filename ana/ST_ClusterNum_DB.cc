@@ -67,7 +67,7 @@ void ST_ClusterNum_DB::Initial_Config(string FileName_Tem)
 
 void ST_ClusterNum_DB::ReadDB(string FileName_Tem)
 {
-  f1_DB_ClusterNum = new TFile(FileName_Tem.c_str(),"Update");
+  f1_DB_ClusterNum = new TFile(FileName_Tem.c_str(),"read");
   char NameTem[200];
   cout<<"--> Reading File: "<<FileName_Tem<<" ..."<<endl;
   cout<<"--->Download DB for positive charge!"<<endl;
