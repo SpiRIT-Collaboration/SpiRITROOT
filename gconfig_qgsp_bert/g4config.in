@@ -1,0 +1,27 @@
+#=============================================#
+# SPiRIT g4config.in - Called from g4Config.C #
+#=============================================#
+
+#/mcPhysics/rangeCuts 0.01 mm
+
+/cuts/setLowEdge  100 eV
+/cuts/setHighEdge   10 GeV
+
+#/mcPhysics/rangeCutForElectron    100 km
+#/mcphysics/rangeCutForPositron    1 mm
+#/run/setCut 1 um
+#/run/dumpCutValues
+#/run/particle/applyCuts
+
+/mcDet/setIsUserMaxStep 1
+
+#/mcVerbose/all                   0
+#/mcVerbose/runAction             1
+#/mcVerbose/composedPhysicsList   1
+#/mcVerbose/trackingAction        1
+#/mcVerbose/eventAction           0
+
+#/mcphysics/rangeCutForGamma    0.01 mm   # ERROR
+#/mcRegions/setRangePrecision   0.01 mm   # ERROR
+#/mcPhysics/printGlobalCuts               # ERROR
+#/mcPhysics/printGlobalControls           # ERROR
