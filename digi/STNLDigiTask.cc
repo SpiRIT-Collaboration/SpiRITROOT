@@ -1,7 +1,7 @@
 #include "STNLDigiTask.hh"
 #include "STDigiPar.hh"
 #include "STNLHit.hh"
-#include "STChannelBar.hh"
+#include "STNeuLANDBar.hh"
 
 // Fair class header
 #include "FairRootManager.h"
@@ -19,7 +19,7 @@ using namespace std;
 // Root class headers
 #include "TString.h"
 #include "TCollection.h"
-#include "TLorentzVector.h"
+#include "STMCPoint.hh"
 
 STNLDigiTask::STNLDigiTask(TString name)
 :FairTask("STNLDigiTask"), fEventID(-1)
@@ -50,13 +50,13 @@ STNLDigiTask::Init()
 
   // output
 
-  fMCPointArrayOut = new TClonesArray("TLorentzVector");
+  fMCPointArrayOut = new TClonesArray("STMCPoint");
   ioman -> Register("MCPoint","ST",fMCPointArrayOut,true);
 
   fGeoTrackOut = new TClonesArray("TGeoTrack");
   ioman -> Register("GeoTracks","ST",fGeoTrackOut,true);
 
-  fBarArray = new TClonesArray("STChannelBar");
+  fBarArray = new TClonesArray("STNeuLANDBar");
   ioman -> Register("Bars","ST",fBarArray,true);
 
   fNLHitArray = new TClonesArray("STNLHit");
@@ -68,7 +68,32 @@ STNLDigiTask::Init()
   //
 
   fNL = STNeuLAND::GetNeuLAND();
-  
+
+  if (fCreateSummary)
+  {
+    TString filename = ioman -> GetOutFile() -> GetName();
+    filename.ReplaceAll(".digi.",".summary.");
+
+    fSummaryFile = new TFile(filename,"recreate");
+
+    fSummaryTreeEvent = new TTree("data","");
+    fSummaryTreeEvent -> Branch("qreco",&fSummaryQReco);
+    fSummaryTreeEvent -> Branch("qmc",&fSummaryQMC);
+    fSummaryTreeEvent -> Branch("nbars",&fSummaryNumBars);
+    fSummaryTreeEvent -> Branch("nhits",&fSummaryNumHits);
+    fSummaryTreeEvent -> Branch("nclusters",&fSummaryNumClusters);
+
+    //fSummaryTreeHit = new TTree("hit","");
+    //fSummaryTreeHit -> Branch("pos",&fSummaryPosHit);
+
+    //fSummaryTreeMC = new TTree("mc","");
+    //fSummaryTreeMC -> Branch("pos",&fSummaryPosMC);
+
+    fSummaryTreeDist = new TTree("dist","");
+    fSummaryTreeDist -> Branch("event",&fEventID);
+    fSummaryTreeDist -> Branch("dist",&fSummaryTwoHitDist);
+  }
+
   return kSUCCESS;
 }
 
@@ -83,6 +108,8 @@ STNLDigiTask::Exec(Option_t* option)
   fBarArray -> Clear("C");
   fNLHitArray -> Clear("C");
   fNLHitClusterArray -> Clear("C");
+
+  fSummaryIsGoodToFill = false;
 
   Int_t numGeoTracks = fGeoTrack -> GetEntries();
   for (auto iGeoTrack=0; iGeoTrack<numGeoTracks; ++iGeoTrack)
@@ -100,69 +127,106 @@ STNLDigiTask::Exec(Option_t* option)
     return;
   }
 
-  STChannelBar *bar = nullptr;
+  STNeuLANDBar *bar = nullptr;
+  map<Int_t, Int_t> mapBarIDToBarIdx;
 
-  Int_t countGoodMCPoints = -1;
+  Int_t idxGoodMCPoint = -1;
+  Int_t idxBar = -1;
 
-  for(Int_t iPoint=0; iPoint<numMCPoints; iPoint++)
+  fSummaryQMC = 0;
+
+  for(Int_t iMCPoint=0; iMCPoint<numMCPoints; iMCPoint++)
   {
-    auto point = (STMCPoint*) fMCPointArray -> At(iPoint);
+    auto mcin = (STMCPoint*) fMCPointArray -> At(iMCPoint);
 
-    //auto t = point -> GetTime();
-    auto e = 1000 * point -> GetEnergyLoss(); // to MeV
+    //auto t = mcin -> GetTime();
+    auto e = 1000 * mcin -> GetEnergyLoss(); // to MeV
     if (e <= 0)
       continue;
 
-    //auto d = point -> GetDetectorID();
+    auto trackID = mcin -> GetTrackID();
 
-    TVector3 gpos = 10 * TVector3(point -> GetX(), point -> GetY(), point -> GetZ());
-    auto local = fNL -> LocalPos(gpos);
+    TVector3 posg = 10 * TVector3(mcin -> GetX(), mcin -> GetY(), mcin -> GetZ());
+    auto posl = fNL -> LocalPos(posg);
 
-    auto d = fNL -> FindBarID(local);
+    auto d = fNL -> FindBarID(posl);
+    if (d < 4000)
+      continue;
 
-    auto pointout = (TLorentzVector *) fMCPointArrayOut -> ConstructedAt(++countGoodMCPoints);
-    pointout -> SetXYZT(gpos.X(),gpos.Y(),gpos.Z(),d);
+    ++idxGoodMCPoint;
 
-    bar = (STChannelBar *) fBarArray -> ConstructedAt(4000);
-    if (bar -> GetChannelID() < 0) {
-      // name, id, layer, row
-      // x_or_y, local_pos, 
-      // num_tdc_bins, bar_length, attenuation_length
-      // pulse_decay_time, pulse_rise_time, time_err,
-      // effective_speed_of_light
-      bar -> SetBar(digiName,
-          d, fNL->GetLayer(d), fNL->GetRow(d),
-          fNL->IsAlongXNotY(d), fNL->GetBarLocalPosition(d),
-          100, 2500, 1250,
-          2.1, 0.1, 0.0,
-          140.);
+    auto mcout = (STMCPoint *) fMCPointArrayOut -> ConstructedAt(idxGoodMCPoint);
+    mcout -> SetTrackID(mcin -> GetTrackID());
+    mcout -> SetEnergyLoss(mcin -> GetEnergyLoss());
+    mcout -> SetX(mcin -> GetX());
+    mcout -> SetY(mcin -> GetY());
+    mcout -> SetZ(mcin -> GetZ());
+
+    fSummaryQMC += 1000 * mcout -> GetEnergyLoss();
+    fSummaryPosMC = 10 * TVector3(mcout -> GetX(), mcout -> GetY(), mcout -> GetZ());
+    if (fSummaryTreeMC != nullptr) fSummaryTreeMC -> Fill();
+
+    if (mapBarIDToBarIdx.find(d) == mapBarIDToBarIdx.end()) {
+      ++idxBar;
+      bar = (STNeuLANDBar *) fBarArray -> ConstructedAt(idxBar);
+      mapBarIDToBarIdx[d] = idxBar;
+
+      bar -> SetBarID(d, fNL->GetLayer(d), fNL->GetRow(d),0,0);
+      bar -> SetBar(fNL->IsAlongXNotY(d), fNL->GetBarLocalPosition(d));
     }
-    bar -> Fill(local, e, countGoodMCPoints);
+    else
+      bar = (STNeuLANDBar *) fBarArray -> ConstructedAt(mapBarIDToBarIdx[d]);
+
+    bar -> Fill(posl, e, idxGoodMCPoint);
   }
 
-  fBarArray -> Compress();
+  //fBarArray -> Compress();
 
   // reconstruct neuland hits
 
   vector<STNLHit *> hitArray;
 
+  fSummaryQReco = 0;
+
   TIter itBars(fBarArray);
   Int_t countHits = 0;
   STNLHit *hit = nullptr;
-  while ((bar = (STChannelBar *) itBars())) {
+  while ((bar = (STNeuLANDBar *) itBars())) {
 
-    if (bar -> FindHit(0.00001))
+    if (bar -> FindHit(fThreshold))
     {
       hit = (STNLHit *) fNLHitArray -> ConstructedAt(countHits);
       auto position = bar -> GetTDCHitPosition();
       hit -> SetHitID(countHits);
-      hit -> SetBarID(bar -> GetChannelID());
+      hit -> SetBarID(bar -> GetBarID());
       hit -> SetPosition(position);
       hit -> SetCharge(bar -> GetChargeA());
 
       hitArray.push_back(hit);
 
+      fSummaryPosHit = hit -> GetPosition();
+      if (fSummaryTreeHit != nullptr) fSummaryTreeHit -> Fill();
+
       ++countHits;
+    }
+
+    if (fCreateSummary) {
+      fSummaryQReco += bar -> GetChargeA();
+
+      fSummaryNumHits = fNLHitArray -> GetEntries();
+
+      for (auto ihit=0; ihit<fSummaryNumHits; ++ihit)
+      {
+        auto hit1 = (STNLHit *) fNLHitArray -> At(ihit);
+        for (auto jhit=0; jhit<fSummaryNumHits; ++jhit)
+        {
+          if (ihit == jhit)
+            continue;
+          auto hit2 = (STNLHit *) fNLHitArray -> At(jhit);
+          fSummaryTwoHitDist = (hit1 -> GetPosition() - hit2 -> GetPosition()).Mag();
+          fSummaryTreeDist -> Fill();
+        }
+      }
     }
   }
 
@@ -300,14 +364,43 @@ STNLDigiTask::Exec(Option_t* option)
     cluster -> AddHit(hitSingle);
   }
 
+  fSummaryNumBars = idxBar+1;
+  //fSummaryNumHits = fNLHitArray -> GetEntries();
+  fSummaryNumClusters = fNLHitClusterArray -> GetEntries();
+  fSummaryNumMCPoints = idxGoodMCPoint+1;
+  fSummaryIsGoodToFill = true;
+
   LOG(INFO) << "  Event_" << fEventID << " : "
        << numGeoTracks << " geotrks,  "
-       << fMCPointArrayOut -> GetEntries() << " points,  "
-       << fBarArray -> GetEntries() << " bars,  "  
+       << idxGoodMCPoint+1 << " points,  "
+       << idxBar+1 << " bars,  "
        << fNLHitArray -> GetEntries() << " hits,  " 
        << fNLHitClusterArray -> GetEntries() << " clusters." << FairLogger::endl;
 
+
   return;
+}
+
+void STNLDigiTask::FinishEvent()
+{
+  if (fCreateSummary && fSummaryIsGoodToFill) {
+    if (fSummaryTreeEvent != nullptr) fSummaryTreeEvent -> Fill();
+  }
+}
+
+void STNLDigiTask::FinishTask()
+{
+  if (fCreateSummary) {
+    fSummaryFile -> cd();
+    if (fSummaryTreeEvent != nullptr) fSummaryTreeEvent -> Write();
+    if (fSummaryTreeHit   != nullptr) fSummaryTreeHit   -> Write();
+    if (fSummaryTreeMC    != nullptr) fSummaryTreeMC    -> Write();
+    if (fSummaryTreeDist  != nullptr) fSummaryTreeDist  -> Write();
+
+    LOG(INFO) << "Summary file " << fSummaryFile -> GetName() << "create." << FairLogger::endl;
+    fSummaryFile -> ls();
+    fSummaryFile -> Close();
+  }
 }
 
 void STNLDigiTask::SetBarPersistence(Bool_t value) { fIsBarPersistence = value; }
@@ -339,12 +432,18 @@ void STNLDigiTask::CopyGeoTrackFromTo(TGeoTrack *from, TGeoTrack *to)
   }
 
   auto numPoints = from -> GetNpoints();
-  for (auto iPoint=0; iPoint<numPoints; ++iPoint)
+  for (auto iGeoPoint=0; iGeoPoint<numPoints; ++iGeoPoint)
   {
     Double_t x, y, z, t;
-    from -> GetPoint(iPoint, x, y, z, t);
+    from -> GetPoint(iGeoPoint, x, y, z, t);
     to -> AddPoint(x, y, z, t);
   }
+}
+
+void STNLDigiTask::SetThreshold(Double_t threshold)
+{
+  fThreshold = threshold;
+  LOG(INFO) << "NeuLAND bar threshold is set to " << fThreshold << FairLogger::endl;
 }
 
 ClassImp(STNLDigiTask);
