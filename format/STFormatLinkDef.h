@@ -26,6 +26,7 @@
 #pragma link C++ class STMCRecoMatching+;
 
 #pragma link C++ class STChannelBar+;
+#pragma link C++ class STNeuLANDBar+;
 #pragma link C++ class STNLHit+;
 
 #pragma link C++ class STdEdxPoint+;

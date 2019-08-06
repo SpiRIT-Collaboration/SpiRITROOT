@@ -133,6 +133,8 @@ void STChannelBar::Clear(Option_t *)
     fChannelR -> Reset(0);
     fChannelL -> Reset(0);
   }
+
+  fMCIDs.clear();
 }
 
 void STChannelBar::Print(Option_t *option) const

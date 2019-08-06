@@ -91,6 +91,14 @@ void STNLHit::AddHit(STNLHit *hit)
 
   if (fN > 1)
     FitLine();
+  else {
+    fX1 = x;
+    fY1 = y;
+    fZ1 = z;
+    fX2 = x;
+    fY2 = y;
+    fZ2 = z;
+  }
 }
 
 void STNLHit::FitLine()

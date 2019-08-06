@@ -56,6 +56,7 @@ STMCScintillatorHit.cc
 STMCTriggerResponse.cc
 
 STChannelBar.cc
+STNeuLANDBar.cc
 STNLHit.cc
 
 STNeuLAND.cc

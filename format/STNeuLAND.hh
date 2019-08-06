@@ -130,11 +130,14 @@ class STNeuLAND
     vector<TLine *> fLocalNLGraphDownStreamArray;
     vector<TLine *> fLocalNLGraphSideArray;
 
-    TCanvas *DrawLocal(TString name);
+    TCanvas *DrawLocal(TString name, Int_t detail=0);
     void DrawLocalFrameDownStream(Option_t *opt="");
     void DrawLocalFrameSide(Option_t *opt="");
-    void DrawLocalNLGraphDownStream(Option_t *opt="");
-    void DrawLocalNLGraphSide(Option_t *opt="");
+
+    /// @param detail 0:full, 1:x0.1, 2:only-layer
+    void DrawLocalNLGraphDownStream(Option_t *opt="", Int_t detail=0);
+    /// @param detail 0:full, 1:x0.1, 2:only-layer
+    void DrawLocalNLGraphSide(Option_t *opt="", Int_t detail=0);
 
 
     TH2D *fGlobalFrameTop = nullptr;

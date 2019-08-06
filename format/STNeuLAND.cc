@@ -168,6 +168,9 @@ Int_t STNeuLAND::FindBarID(TVector3 pos)//Double_t x, Double_t y, Double_t z)
   Double_t y = pos.y();
   Double_t z = pos.z();
 
+  if (z < 0)
+    return -1;
+
   Int_t layer = z / fdzLayer;
   Int_t row = -1;
 
@@ -201,7 +204,7 @@ TVector3 STNeuLAND::GetBarGlobalPosition(Int_t mcDetID)
 
 
 
-TCanvas *STNeuLAND::DrawLocal(TString name)
+TCanvas *STNeuLAND::DrawLocal(TString name, Int_t detail)
 {
   name = name + "_cvs_local";
   auto cvs = new TCanvas(name,name,1100,500);
@@ -210,11 +213,11 @@ TCanvas *STNeuLAND::DrawLocal(TString name)
 
   cvs -> cd(1);
   DrawLocalFrameDownStream();
-  DrawLocalNLGraphDownStream("same");
+  DrawLocalNLGraphDownStream("same", detail);
 
   cvs -> cd(2);
   DrawLocalFrameSide();
-  DrawLocalNLGraphSide("same");
+  DrawLocalNLGraphSide("same", detail);
 
   return cvs;
 }
@@ -237,11 +240,21 @@ void STNeuLAND::DrawLocalFrameSide(Option_t *opt)
   fLocalFrameSide -> Draw(opt);
 }
 
-void STNeuLAND::DrawLocalNLGraphDownStream(Option_t *opt)
+void STNeuLAND::DrawLocalNLGraphDownStream(Option_t *opt, Int_t detail)
 {
   if (fLocalNLGraphDownStreamArray.size() == 0)
   {
-    for (auto row=1; row<50; ++row)
+    auto row0 = 1;
+    auto drow = 1;
+    if (detail==1) {
+      row0 = 10;
+      drow = 10;
+    }
+    else if (detail==2) {
+      row0=50;
+    }
+
+    for (auto row=row0; row<50; row+=drow)
     {
       auto line1 = new TLine(-fHalfLengthBar,row*fWidthBar-fHalfLengthBar,+fHalfLengthBar,row*fWidthBar-fHalfLengthBar);
       auto line2 = new TLine(row*fWidthBar-fHalfLengthBar,-fHalfLengthBar,row*fWidthBar-fHalfLengthBar,+fHalfLengthBar);
@@ -256,7 +269,7 @@ void STNeuLAND::DrawLocalNLGraphDownStream(Option_t *opt)
     line -> Draw(opt);
 }
 
-void STNeuLAND::DrawLocalNLGraphSide(Option_t *opt)
+void STNeuLAND::DrawLocalNLGraphSide(Option_t *opt, Int_t detail)
 {
   if (fLocalNLGraphSideArray.size() == 0)
   {
@@ -266,8 +279,18 @@ void STNeuLAND::DrawLocalNLGraphSide(Option_t *opt)
       fLocalNLGraphSideArray.push_back(line1);
     }
 
+    auto row0 = 1;
+    auto drow = 1;
+    if (detail==1) {
+      row0 = 10;
+      drow = 10;
+    }
+    else if (detail==2) {
+      row0=50;
+    }
+
     for (auto layer : {0,2,4,6})
-      for (auto row=1; row<50; ++row) {
+      for (auto row=row0; row<50; row+=drow) {
         //auto line2 = new TLine(0,row*fWidthBar-fHalfLengthBar,fdzNl,row*fWidthBar-fHalfLengthBar);
         auto line2 = new TLine( layer   *fdzLayer ,row*fWidthBar-fHalfLengthBar,
                                (layer+1)*fdzLayer ,row*fWidthBar-fHalfLengthBar);
