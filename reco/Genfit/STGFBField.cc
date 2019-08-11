@@ -12,7 +12,7 @@ STGFBField::STGFBField(const char* mapName, const char* fileType, Double_t xOffs
   fFieldMap -> SetPosition(xOffset, yOffset, zOffset);
   fFieldMap -> Init();
 
-  std::cout << "== [STGFBField] Field center : (0, " << yOffset << ", " << zOffset << ") cm"<< std::endl;
+  std::cout << "== [STGFBField] Field center : (" << xOffset << ", " << yOffset << ", " << zOffset << ") cm"<< std::endl;
 }
 
 STGFBField *STGFBField::GetInstance(const char* mapName, const char* fileType, Double_t xOffset, Double_t yOffset, Double_t zOffset)
