@@ -30,7 +30,7 @@ void run_reco_experiment
     fNumEventsInSplit = fNumEventsInRun - start;
 
   TString sRunNo   = TString::Itoa(fRunNo, 10);
-  TString sSplitNo = TString::Format("%02d", fSplitNo);
+  TString sSplitNo = TString::Itoa(fSplitNo, 10);
 
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
   if (fPathToData.IsNull())
