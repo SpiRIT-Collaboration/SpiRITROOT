@@ -22,7 +22,7 @@ void run_reco_experiment
   double BDC_Yoffset = -205.5, //this value will transfer the BDC frame to TPC frame along Y direction.
   double BDC_Zoffset = 0,
   double charge_density = -1, // the magnitude of charge density used in space-charge correction
-  bool fUseRunInfo = true // if enabled, it will look for run-by-run information in parameters/RunInfo.dat, and charge_density value will be ignored
+  bool fUseRunInfo = false // if enabled, it will look for run-by-run information in parameters/RunInfo.dat, and charge_density value will be ignored
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
