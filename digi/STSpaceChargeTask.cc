@@ -51,7 +51,7 @@ STSpaceChargeTask::Init()
   fDispMCPointArray = new TClonesArray("STMCPoint");
   ioman->Register("DispMCPoint","ST",fDispMCPointArray,fIsPersistence);
 
-  const double TPCHeight = 50.61;
+  const double TPCHeight = 506.1;
   this -> SetTPCSize(fPar->GetPadPlaneX(), fPar->GetPadPlaneZ(), TPCHeight);
 
   if(fIsDrift) this -> CalculateEDrift(fPar->GetDriftVelocity());

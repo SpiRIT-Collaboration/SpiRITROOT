@@ -21,7 +21,8 @@ void run_reco_experiment
   double BDC_Xoffset = -0.299, // 132Sn: -0.299, 124Sn: -0.609, 112Sn: -0.757, 108Sn: -0.706, this value will adjust the center of TPC vertex same with the center of BDC.
   double BDC_Yoffset = -205.5, //this value will transfer the BDC frame to TPC frame along Y direction.
   double BDC_Zoffset = 0,
-  double charge_density = -1
+  double charge_density = -1, // the magnitude of charge density used in space-charge correction
+  bool fUseRunInfo = true // if enabled, it will look for run-by-run information in parameters/RunInfo.dat, and charge_density value will be ignored
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -139,25 +140,29 @@ void run_reco_experiment
 
   auto correct = new STCorrectionTask(); //Correct for saturation
   
-  // Space charge task is here only to create displacement map
-  // it is not menant to be add to reco task
-  char tempmap[] = "/tmp/InvMapXXXXXX";
-  int fd = mkstemp(tempmap);
-  if(charge_density >= 0)
+  auto spaceCharge = new STSpaceChargeCorrectionTask();
+  STFieldMap *fField = new STFieldMap("samurai_field_map","A");
+  fField -> SetPosition(0., -20.43, 58.);
+  spaceCharge -> SetBField(fField);
+  // this task will try to load space charge information from RunInfo.dat
+  // Space charge correction will be disabled if the file is not present/Information of fRunNo is not found
+  if(fUseRunInfo)
   {
-    STSpaceCharge *fSpaceCharge = new STSpaceCharge();
-    STFieldMap *fField = new STFieldMap("samurai_field_map","A");
-    fField -> SetPosition(0., -20.43, 58.);
-    fSpaceCharge -> SetBField(fField);
-    fSpaceCharge -> SetDriftParameters(-4.355e4, -2.18);
-    fSpaceCharge -> SetSheetChargeDensity(charge_density);
-    fSpaceCharge -> CalculateEDrift(5.43, true);
-    // inverse map must be saved to a unique location to prevent problems with cocurrent file read
+    // space charge will only be enabled if run info contains information about the reco run
+    if(spaceCharge -> SearchForRunPar(std::string(spiritroot.Data()) + "parameters/RunInfo.dat", fRunNo))
+      spaceCharge -> SetElectronDrift(true);
+    else
+      spaceCharge -> SetElectronDrift(false); // disable space charge otherwise
+  }else if(charge_density >= 0)
+  {
+    // If charge_density >= 0 and fUseRunInfo is disabled, you will need to configure everything manually
+    spaceCharge -> SetDriftParameters(-4.355e4, -2.18); // omega tau and mu of the Langevin equation
+    spaceCharge -> SetSheetChargeDensity(charge_density);  
+    spaceCharge -> SetProjectile(STSpaceCharge::Projectile::Sn132); // Choose Projectile. Each of them have a slightly different beam path
+    spaceCharge -> SetElectronDrift(true);
+  }else spaceCharge -> SetElectronDrift(false);
 
-    fSpaceCharge -> ExportDisplacementMap(tempmap);
-    delete fSpaceCharge;
-    correct->SetExBFile(tempmap);
-  }
+
 
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetFieldOffset(-0.1794, -20.5502, 58.0526); //unit: cm, which comes from Jon's measurement. It means the position of magnetic field in the TPC frame.
@@ -192,6 +197,7 @@ void run_reco_experiment
   run -> AddTask(psa);
   run -> AddTask(helix);
   run -> AddTask(correct);
+  run -> AddTask(spaceCharge);
   run -> AddTask(genfitPID);
   run -> AddTask(genfitVA);
   if(!fMCFile.IsNull())
@@ -219,8 +225,6 @@ void run_reco_experiment
   cout << "Output : " << out << endl;
 
   gApplication -> Terminate();
-  close(fd);
-  unlink(tempmap);
 }
 
 void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events) {

@@ -223,7 +223,7 @@ def Fill3DHist(hist, content, x, y, z):
     hist.Fill(padx[index[2]], pady[index[1]]+dy, padz[index[0]], val)
 
 if __name__ == '__main__':
-  file_ = ROOT.TFile.Open('E-field.root', 'RECREATE')
+  file_ = ROOT.TFile.Open('E-field.root', 'RECREATE', '', 9)
 
   # lets try different a
   fig, ax = plt.subplots()
@@ -232,7 +232,7 @@ if __name__ == '__main__':
   beam_name = ['132Sn', '124Sn', '108Sn', '112Sn']
   strengths_and_beamfile = [(3.14e-8*factor, beam_file) for beam_file in beam_files for factor in range(0,2)]
   
-  pool = Pool()
+  pool = Pool(4)
   results = pool.map(CalculateEField, strengths_and_beamfile)
   pool.close()
   pool.join()

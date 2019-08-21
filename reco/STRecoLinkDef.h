@@ -18,6 +18,8 @@
 #pragma link C++ class STRiemannToHelixTask+;
 #pragma link C++ class STMCEventTask+;
 #pragma link C++ class ST_VertexShift+;
+#pragma link C++ class STSpaceCharge+;
+#pragma link C++ class STSpaceChargeCorrectionTask++;
 
 #pragma link C++ class STPIDTest+;
 

@@ -16,6 +16,7 @@ ${CMAKE_SOURCE_DIR}/digi
 ${CMAKE_SOURCE_DIR}/util
 ${CMAKE_SOURCE_DIR}/reco
 ${CMAKE_SOURCE_DIR}/reco/PulseShapeAnalyzer
+${CMAKE_SOURCE_DIR}/reco/SpaceCharge
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -32,7 +33,6 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
-STSpaceCharge.cc
 STSpaceChargeTask.cc
 STDriftTask.cc
 STPadResponseTask.cc

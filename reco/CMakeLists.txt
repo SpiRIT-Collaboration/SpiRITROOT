@@ -31,6 +31,7 @@ ${CMAKE_SOURCE_DIR}/reco/HelixTracking
 ${CMAKE_SOURCE_DIR}/reco/Task
 ${CMAKE_SOURCE_DIR}/reco/PID
 ${CMAKE_SOURCE_DIR}/reco/BDCMagneticProjection
+${CMAKE_SOURCE_DIR}/reco/SpaceCharge
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -66,6 +67,7 @@ Task/STEmbedCorrelatorTask.cc
 Task/STCorrectionTask.cc
 Task/STMCEventTask.cc
 Task/ST_VertexShift.cc
+Task/STSpaceChargeCorrectionTask.cc
 
 Corrections/STCorrection.cc
 
@@ -168,6 +170,8 @@ HelixTracking/STHelixTrackFinder.cc
 
 BDCMagneticProjection/STBeamEnergy.cc
 BDCMagneticProjection/STBDCProjection.cc
+
+SpaceCharge/STSpaceCharge.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
