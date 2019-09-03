@@ -121,6 +121,7 @@ void run_reco_experiment
   psa -> SetPSAPeakFindingOption(1);
   // Low gain calibration. Don't forget you need to uncomment decoder part, too.
   psa -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
+  psa -> SetYOffsets(spiritroot + "parameters/yOffsetCalibration.dat");
   psa -> SetYPedestalOffset(YPedestalOffset); // unit: mm, this is used to match the TPC-Vertex_Y with the BDC_Y.
   
   auto helix = new STHelixTrackingTask();
