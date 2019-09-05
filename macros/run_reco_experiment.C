@@ -142,9 +142,8 @@ void run_reco_experiment
   auto correct = new STCorrectionTask(); //Correct for saturation
   
   auto spaceCharge = new STSpaceChargeCorrectionTask();
-  STFieldMap *fField = new STFieldMap("samurai_field_map","A");
-  fField -> SetPosition(0., -20.43, 58.);
-  spaceCharge -> SetBField(fField);
+  auto gfBField = new STGFBField("samurai_field_map", "A", -0.1794, -20.5502, 58.0526);   
+  spaceCharge -> SetBField(gfBField -> GetFieldMap());
   // this task will try to load space charge information from RunInfo.dat
   // Space charge correction will be disabled if the file is not present/Information of fRunNo is not found
   if(fUseRunInfo)
