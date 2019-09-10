@@ -33,17 +33,14 @@ class STSpaceChargeTask : public FairTask, public STSpaceCharge
 
    void SetPersistence(Bool_t value = kTRUE);
    void SetVerbose(Bool_t value = kTRUE);
-   void SetElectronDrift(Bool_t value = kTRUE);
 
    private:
     Bool_t fIsPersistence;  ///< Persistence check variable
     Bool_t fVerbose; // testing with cout 
-    Bool_t fIsDrift; // flag to make space charge effect optional
     Int_t fEventID; //!< EventID
     
     TClonesArray* fMCPointArray;     //!< [INPUT] Array of STMCPoint.
     STMCPoint* fMCPoint;             //!< [INPUT] MC data container (position, time, energyloss etc.)
-    TClonesArray* fDispMCPointArray;    //!< [OUTPUT] Array of displaced STMCPoint due to E and B-field.
     STDigiPar* fPar; //!< Base parameter container
 
     STSpaceChargeTask(const STSpaceChargeTask&);

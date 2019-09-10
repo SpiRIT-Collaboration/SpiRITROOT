@@ -17,20 +17,25 @@ void run_digi(TString name = "protons_75_events")
 {
   gRandom -> SetSeed(0);
 
+
   // -----------------------------------------------------------------
 
   // FairRun
   FairRunAna* fRun = new FairRunAna();
   // -----------------------------------------------------------------
   // Set space charge task
-  STSpaceChargeTask *fSpaceChargeTask = new STSpaceChargeTask();
-  STFieldMap *fField = new STFieldMap("samurai_field_map","A");
-  fField -> SetPosition(0., -20.43, 58.);
-  fSpaceChargeTask -> SetPersistence(true);
-  fSpaceChargeTask -> SetElectronDrift(false); // set this to true if you want space charge
-  fSpaceChargeTask -> SetVerbose(false);
-  fSpaceChargeTask -> SetBField(fField);
-  fRun -> AddTask(fSpaceChargeTask);
+  // uncomment the following to enable space charge
+  // STSpaceChargeTask *fSpaceChargeTask = new STSpaceChargeTask();
+  // auto fField = new STFieldMap("samurai_field_map","A");
+  // fField -> SetPosition(0., -20.43, 58.);
+  // fSpaceChargeTask -> SetBField(fField);
+  // fSpaceChargeTask -> SetPersistence(false);
+  // fSpaceChargeTask -> SetVerbose(false);
+  // fSpaceChargeTask -> SetProjectile(STSpaceCharge::Projectile::Sn132);
+  // fSpaceChargeTask -> SetSheetChargeDensity(4e-8); // sheet charge density for run 2899
+  //fRun -> AddTask(fSpaceChargeTask);
+
+
   // Set digitization tasks
   STDriftTask* fDriftTask = new STDriftTask(); 
   fDriftTask -> SetPersistence(true);
@@ -114,5 +119,4 @@ void run_digi(TString name = "protons_75_events")
   cout << endl << endl;
   cout << "Macro finished succesfully."  << endl << endl;
   cout << "- Output file : " << outputFile << endl << endl;
-  //fSpaceChargeTask -> ExportDisplacementMap("../SpaceCharge/DriftElectrons/test.root");
 }
