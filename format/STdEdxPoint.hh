@@ -19,6 +19,7 @@ class STdEdxPoint : public TObject {
     Double_t fdx;       ///< (mm)
     Double_t fLength;   ///< Length from vertex to this point (mm)
     TVector3 fPosition; ///<
+    TVector3 fGenfitPos; ///<
     Bool_t fisRow;      ///< true if clustered by row
 
     Bool_t fIsContinuousHits; ///< Hit distribution of the cluster is continuous?

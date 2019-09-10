@@ -583,6 +583,7 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
       trackRep -> extrapolateToPlane(fitState, referencePlane0);
       cluster -> SetPOCA(10*fitState.getPos());
     } catch (genfit::Exception &e) {
+      cluster -> SetPOCA(TVector3(0,0,0));
       //cluster -> SetIsStable(false); //TODO
       continue;
     }
@@ -603,6 +604,7 @@ Int_t STGenfitTest2::DetermineCharge(STRecoTrack *recoTrack, TVector3 posVertex,
     }
     */
 
+    dedx.fGenfitPos = cluster -> GetPOCA();
     dedx.fdE = dE;
     dedx.fdx = dx;
     dedx.fLength = 88;
@@ -856,6 +858,7 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
       trackRep -> extrapolateToPlane(fitState, referencePlane0);
       cluster -> SetPOCA(10*fitState.getPos());
     } catch (genfit::Exception &e) {
+      cluster -> SetPOCA(TVector3(0, 0, 0));
       //cluster -> SetIsStable(false); //TODO
       continue;
     }
@@ -876,6 +879,8 @@ STGenfitTest2::GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *hel
     auto isContinuousHits = cluster -> IsContinuousHits();
     auto clusterSize = cluster -> GetNumHits();
     dEdxPointArray -> push_back(STdEdxPoint(cluster -> GetClusterID(), dE, dx, -999, nHits, nShadowHits, isRow, isContinuousHits, clusterSize));
+    dEdxPointArray -> back().fPosition = cluster -> GetPosition();
+    dEdxPointArray -> back().fGenfitPos = cluster -> GetPOCA();
   }
 
   return true;
