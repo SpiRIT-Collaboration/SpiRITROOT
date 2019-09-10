@@ -13,9 +13,9 @@ void VertexReader::OpenFile(const std::string& t_filename)
   std::ifstream file;
   file.open(t_filename.c_str());
   if(!file.is_open())
-    LOG(FATAL) << "Vertex file " << t_filename << " cannot be opened!" << FairLogger::endl;
+    LOG(FATAL) << "file " << t_filename << " cannot be opened!" << FairLogger::endl;
   else
-    LOG(INFO) << "Loadiing vertex file " << t_filename << FairLogger::endl;
+    LOG(INFO) << "Loadiing file " << t_filename << FairLogger::endl;
   // get rid of the header
   std::string line;
   std::getline(file, line);
@@ -27,7 +27,11 @@ void VertexReader::OpenFile(const std::string& t_filename)
     int temp;
     double x, y, z;
     if(!(ss >> temp >> temp >> x >> y >> z))
-      LOG(FATAL) << "Vertex file cannot be read properly this line: " << line << FairLogger::endl;
+    {
+      std::stringstream newss(line);
+      if(!(newss >> x >> y >> z)) // load file without run number and event number
+        LOG(FATAL) << "Vertex file cannot be read properly this line: " << line << FairLogger::endl;
+    }
     vectors_.push_back(TVector3(x, y, z));
   }
 
@@ -165,6 +169,8 @@ void STSingleTrackGenerator::ReadConfig(const std::string& t_config)
     SetVertexFile(std::string(vmc_dir) + "/parameters/" + parser.Get<std::string>("VertexFile"));
     SetNEvents(fVertexReader.GetNumEvent());
   }
+  if(parser.KeyExist("MomentumFile"))
+    SetParticleFile(parser.Get<std::string>("MomentumFile"));
 
   if(parser.KeyExist("Particle"))    SetParticleList(parser.GetList<int>("Particle"));
   if(parser.KeyExist("PrimaryVertex"))  SetPrimaryVertex(parser.GetVector3("PrimaryVertex"));
@@ -272,92 +278,106 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     fPdgList.push_back(2212);
   }
 
-
+  const double RADTODEG=180./TMath::Pi();
+  const double DEGTORAD = TMath::Pi()/180.;
   Int_t pdg;  // pdg code of the particle for this event
   TVector3 momentum=fMomentum, vertex=fPrimaryVertex;
   if(fVertexReader.IsOpen())
   {
       if(fVertexReader.IsEnd())
       {
-          LOG(ERROR) << "Number of events should equal to number of vertex. This should not happens" << FairLogger::endl;
+          LOG(ERROR) << "Number of events should equal to number of vertex. This should not happens";
           fVertexReader.LoopOver();
       }
       vertex = fVertexReader.GetVertex();
       fVertexReader.Next();
-  }
+  } 
 
   auto index = (Int_t)gRandom->Uniform(0,fPdgList.size());
   pdg = fPdgList.at(index);
 
   // loop until the particle falles within the phase space
-  const double RADTODEG=180./TMath::Pi();
-  do 
+  if(fParticleReader.IsOpen())
   {
-    if(fRandomMomentum){
-      Double_t mom = gRandom->Uniform(fMomentumRange[0], fMomentumRange[1]);
-      momentum.SetMag(mom);
-    }
-
-    if(fGausMomentum){
-      Double_t mom = gRandom->Gaus(fGausMomentumMean, fGausMomentumSD);
-      momentum.SetMag(fabs(mom));
-    }
-
-    if(fUniRandomDirection){
-      Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
-      Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
-      momentum.SetMagThetaPhi(momentum.Mag(), randTheta, randPhi);
-    }
-
-    if(fGausTheta){
-      Double_t randTheta = gRandom->Gaus(fGausThetaMean, fGausThetaSD);
-      momentum.SetTheta(fabs(randTheta));
-    }
-
-
-    if(fUniTheta){
-      Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
-      momentum.SetTheta(randTheta);
-    }
-
-    if(fUniPhi){
-      Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
-      momentum.SetPhi(randPhi);
-    }
-
-    if(fGausPhi){
-      Double_t randPhi = gRandom->Gaus(fGausPhiMean, fGausPhiSD);
-      momentum.SetPhi(randPhi);
-    }
-
-    if(fSpheRandomDirection){
-      Double_t px=0., py=0., pz=0., theta=-999., phi=0.;
-      Double_t mom = momentum.Mag();
-      while(theta<fThetaRange[0]||theta>fThetaRange[1]||phi<fPhiRange[0]||phi>fPhiRange[1]){
-        gRandom->Sphere(px,py,pz,mom);
-        TVector3 tempP(px,py,pz);
-        theta = tempP.Theta();
-        phi = tempP.Phi();
+      if(fParticleReader.IsEnd())
+      {
+          LOG(ERROR) << "Number of events should equal to number of particles. This should not happen.\n";
+          fParticleReader.LoopOver();
       }
-      momentum.SetXYZ(px,py,pz);
-    }
+      auto mom_config = fParticleReader.GetVertex();
+      fParticleReader.Next();
+      momentum.SetMagThetaPhi(mom_config[0]/1000., mom_config[1]*DEGTORAD, mom_config[2]*DEGTORAD);
+  }
+  else
+  {
+    do 
+    {
+      if(fRandomMomentum){
+        Double_t mom = gRandom->Uniform(fMomentumRange[0], fMomentumRange[1]);
+        momentum.SetMag(mom);
+      }
 
-    if(fIsDiscreteTheta){
-      auto tIndex = (Int_t)gRandom->Uniform(0,fNStepTheta);
-      momentum.SetTheta(tIndex*(fThetaRange[1]-fThetaRange[0])/(Double_t)fNStepTheta);
-    }
-    if(fIsDiscretePhi){
-      auto pIndex = (Int_t)gRandom->Uniform(0,fNStepPhi);
-      momentum.SetPhi(pIndex*(fPhiRange[1]-fPhiRange[0])/(Double_t)fNStepPhi);
-    }
+      if(fGausMomentum){
+        Double_t mom = gRandom->Gaus(fGausMomentumMean, fGausMomentumSD);
+        momentum.SetMag(fabs(mom));
+      }
+
+      if(fUniRandomDirection){
+        Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
+        Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
+        momentum.SetMagThetaPhi(momentum.Mag(), randTheta, randPhi);
+      }
+
+      if(fGausTheta){
+        Double_t randTheta = gRandom->Gaus(fGausThetaMean, fGausThetaSD);
+        momentum.SetTheta(fabs(randTheta));
+      }
 
 
-    if(fIsCocktail||fBrho!=0.)
-      momentum.SetMag(0.3*fBrho*GetQ(pdg));
+      if(fUniTheta){
+        Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
+        momentum.SetTheta(randTheta);
+      }
 
-    // exit the loop only when momentum is outside of phase space cut 
-    if(!fPhaseSpaceCut) break;
-  }while(fPhaseSpaceCut->IsInside(momentum.Theta()*RADTODEG, momentum.Phi()*RADTODEG));
+      if(fUniPhi){
+        Double_t randPhi   = gRandom->Uniform(fPhiRange[0],fPhiRange[1]);
+        momentum.SetPhi(randPhi);
+      }
+
+      if(fGausPhi){
+        Double_t randPhi = gRandom->Gaus(fGausPhiMean, fGausPhiSD);
+        momentum.SetPhi(randPhi);
+      }
+
+      if(fSpheRandomDirection){
+        Double_t px=0., py=0., pz=0., theta=-999., phi=0.;
+        Double_t mom = momentum.Mag();
+        while(theta<fThetaRange[0]||theta>fThetaRange[1]||phi<fPhiRange[0]||phi>fPhiRange[1]){
+          gRandom->Sphere(px,py,pz,mom);
+          TVector3 tempP(px,py,pz);
+          theta = tempP.Theta();
+          phi = tempP.Phi();
+        }
+        momentum.SetXYZ(px,py,pz);
+      }
+
+      if(fIsDiscreteTheta){
+        auto tIndex = (Int_t)gRandom->Uniform(0,fNStepTheta);
+        momentum.SetTheta(tIndex*(fThetaRange[1]-fThetaRange[0])/(Double_t)fNStepTheta);
+      }
+      if(fIsDiscretePhi){
+        auto pIndex = (Int_t)gRandom->Uniform(0,fNStepPhi);
+        momentum.SetPhi(pIndex*(fPhiRange[1]-fPhiRange[0])/(Double_t)fNStepPhi);
+      }
+
+
+      if(fIsCocktail||fBrho!=0.)
+        momentum.SetMag(0.3*fBrho*GetQ(pdg));
+
+      // exit the loop only when momentum is outside of phase space cut 
+      if(!fPhaseSpaceCut) break;
+    }while(fPhaseSpaceCut->IsInside(momentum.Theta()*RADTODEG, momentum.Phi()*RADTODEG));
+  }
 
   auto event = (FairMCEventHeader*)primGen->GetEvent();
   if( event && !(event->IsSet()) ){

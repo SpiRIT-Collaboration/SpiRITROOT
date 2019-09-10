@@ -132,7 +132,10 @@ class STSingleTrackGenerator : public FairGenerator
 
     // load vertex location from file (it set)
     void SetVertexFile(const std::string& filename) { fVertexReader.OpenFile(filename); };
-    void SetVertexBegin(int t_begin) { fVertexReader.BeginAt(t_begin); }
+    void SetVertexBegin(int t_begin) { fVertexReader.BeginAt(t_begin); fParticleReader.BeginAt(t_begin);}
+
+    // load particles from list
+    void SetParticleFile(const std::string& filename) { fParticleReader.OpenFile(filename); };
 
     // set discrete angle distribution. set nDivision and angle range
     void SetDiscreteTheta(Int_t s, Double_t t0, Double_t t1)
@@ -187,6 +190,7 @@ class STSingleTrackGenerator : public FairGenerator
     STSingleTrackGenerator& operator=(const STSingleTrackGenerator&);
 
     VertexReader fVertexReader;   
+    VertexReader fParticleReader;
 
     ClassDef(STSingleTrackGenerator,1);
 };
