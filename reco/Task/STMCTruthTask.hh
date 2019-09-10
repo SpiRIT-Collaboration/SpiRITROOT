@@ -1,6 +1,7 @@
 #ifndef STMCTRUTHTASK_HH
 #define STMCTRUTHTASK_HH
 
+#include "STVertex.hh"
 #include "STRecoTask.hh"
 
 class STMCTruthTask : public STRecoTask
@@ -18,6 +19,7 @@ class STMCTruthTask : public STRecoTask
 
     TClonesArray *fMCTrackArray = nullptr;
     TClonesArray *fRecoTrackArray = nullptr;
+    TClonesArray *fMCVertex = nullptr;
 
     TClonesArray *fMCArray;
     TClonesArray *fRecoArray;

@@ -5,7 +5,7 @@
 #include "FairRuntimeDb.h"
 
 #include "STMCTrack.h"
-#include "STTrack.hh"
+#include "STRecoTrack.hh"
 #include "STMCRecoMatching.hh"
 
 #include <iostream>
@@ -38,7 +38,7 @@ InitStatus STMCTruthTask::Init()
     return kERROR;
   }
 
-  fRecoTrackArray = (TClonesArray*) fRootManager -> GetObject("STTrack");
+  fRecoTrackArray = (TClonesArray*) fRootManager -> GetObject("STRecoTrack");
   if (fRecoTrackArray == nullptr) {
     LOG(ERROR) << "Cannot find RecoTrack array!" << FairLogger::endl;
     return kERROR;
@@ -49,6 +49,10 @@ InitStatus STMCTruthTask::Init()
 
   fMCTruthArray = new TClonesArray("STMCRecoMatching", 100);
   fRootManager -> Register("STMCRecoMatching", "SpiRIT", fMCTruthArray, fIsPersistence);
+
+  fMCVertex = new TClonesArray("STVertex");
+  fRootManager -> Register("STVertex", "SpiRIT", fMCVertex, fIsPersistence);
+  fRootManager -> Register("STMCTrack", "SpiRIT", fMCTrackArray, fIsPersistence);
   
   return kSUCCESS;
 }
@@ -72,6 +76,11 @@ void STMCTruthTask::Exec(Option_t *opt)
     TVector3 momMC;
     mcTrack -> GetMomentum(momMC);
     momMC = 1000*momMC;
+    
+    TVector3 vertex;
+    mcTrack -> GetStartVertex(vertex);
+    auto vert = (STVertex *) fMCVertex -> ConstructedAt(fMCVertex -> GetEntries());
+    vert -> SetPos(vertex);
 
     auto mc = (STMCRecoMatching *) fMCArray -> ConstructedAt(fMCArray -> GetEntries());
     mc -> SetMCID(iTrack);
@@ -83,11 +92,11 @@ void STMCTruthTask::Exec(Option_t *opt)
   auto numRecoTracks = fRecoTrackArray -> GetEntries();
   for (auto iTrack = 0; iTrack < numRecoTracks; iTrack++)
   {
-    auto recoTrack = (STTrack *) fRecoTrackArray -> At(iTrack);
+    auto recoTrack = (STRecoTrack *) fRecoTrackArray -> At(iTrack);
     if (recoTrack -> GetParentID() != 0)
       continue;
 
-    auto vtrack = recoTrack -> GetVertex();
+    //auto vtrack = recoTrack -> GetVertex();
     auto momReco = recoTrack -> GetMomentum();
 
     auto reco = (STMCRecoMatching *) fRecoArray -> ConstructedAt(fRecoArray -> GetEntries());
