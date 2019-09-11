@@ -9,7 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include "stdlib.h"
-//#include "FairLogger.h"
+#include "FairLogger.h"
 
 #include "TArrayD.h"
 #include "TFile.h"
@@ -32,8 +32,10 @@ STFieldMap::STFieldMap()
 	fYmin(0), fYmax(0), fYstep(0),
     fZmin(0), fZmax(0), fZstep(0),
     fNx(0),fNy(0),fNz(0),
-    fBx(NULL), fBy(NULL), fBz(NULL)   
+    fBx(NULL), fBy(NULL), fBz(NULL),
+    fLoaded(kFALSE)   
 {
+  fLogger = FairLogger::GetLogger();
   SetName("");
   fType = 1;
 }
@@ -52,8 +54,10 @@ STFieldMap::STFieldMap(const char* mapName, const char* fileType)
     fYmin(-400), fYmax(400), fYstep(10),
     fZmin(0), fZmax(3000), fZstep(10),
     fNx(301),fNy(81),fNz(301),
-    fBx(NULL), fBy(NULL), fBz(NULL)   
+    fBx(NULL), fBy(NULL), fBz(NULL),
+    fLoaded(kFALSE)
 {
+  fLogger = FairLogger::GetLogger();
   SetName(mapName);
   TString dir = getenv("VMCWORKDIR");
   fFileName = dir + "/input/" + mapName;
@@ -77,8 +81,10 @@ STFieldMap::STFieldMap(STFieldPar* fieldPar)
     fYmin(0), fYmax(0), fYstep(0),
     fZmin(0), fZmax(0), fZstep(0),
     fNx(0),fNy(0),fNz(0),
-    fBx(NULL), fBy(NULL), fBz(NULL)   
+    fBx(NULL), fBy(NULL), fBz(NULL), 
+    fLoaded(kFALSE)
 {
+  fLogger = FairLogger::GetLogger();
   fType = 1;
   if ( ! fieldPar ) {
 //FairLogger *fLogger;
@@ -116,12 +122,17 @@ STFieldMap::~STFieldMap() {
 
 // -----------   Intialisation   ------------------------------------------
 void STFieldMap::Init() {
-  if      (fFileName.EndsWith(".root")) ReadRootFile(fFileName, fName);
-  else if (fFileName.EndsWith(".dat"))  ReadAsciiFile(fFileName);
-  else {
-    fLogger->Error(MESSAGE_ORIGIN,"-E- STFieldMap::Init: No proper file name defined! (%s) ");
-    Fatal("Init", "No proper file name");
-  }
+  if(!fLoaded)
+  {
+    if      (fFileName.EndsWith(".root")) ReadRootFile(fFileName, fName);
+    else if (fFileName.EndsWith(".dat"))  ReadAsciiFile(fFileName);
+    else {
+      fLogger->Error(MESSAGE_ORIGIN,"-E- STFieldMap::Init: No proper file name defined! (%s) ");
+      Fatal("Init", "No proper file name");
+    }
+    fLoaded = kTRUE;
+  } 
+  else fLogger->Info(MESSAGE_ORIGIN, "-Info- STFieldMap::Init: File map is loaded");
 }
 // ------------------------------------------------------------------------
 

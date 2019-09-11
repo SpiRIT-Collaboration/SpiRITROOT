@@ -187,6 +187,8 @@ public:
   Double_t fHa[2][2][2];            //! Field at corners of a grid cell
   Double_t fHb[2][2];               //! Interpolated field (2-dim)
   Double_t fHc[2];                  //! Interpolated field (1-dim)
+  
+  Bool_t fLoaded; //! True if Init is called at least once in for the object. Prevent re-loading if Init is called multiple times
 ClassDef(STFieldMap,1) 
 
 };
