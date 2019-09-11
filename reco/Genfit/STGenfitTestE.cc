@@ -50,7 +50,7 @@ STGenfitTestE::STGenfitTestE(Bool_t loadSamurai)
   fMeasurementFactory -> addProducer(fTPCDetID, fMeasurementProducer);
 
   if (loadSamurai)
-    genfit::FieldManager::getInstance() -> init(new STGFBField("samurai_field_map","A"));
+    genfit::FieldManager::getInstance() -> init(STGFBField::GetInstance("samurai_field_map","A"));
   else
     genfit::FieldManager::getInstance() -> init(new genfit::ConstField(0., 5., 0.));
 
