@@ -57,6 +57,7 @@ class STPadResponseTask : public FairTask
      * calculated from original function.
      */
     void AssumeGausPRF(Bool_t val = kTRUE) { fAssumeGausPRF = val; };
+    void SetElectronicsJitterFile(TString filename) { fElectronicsJitterFilename = filename.Data(); };
 
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
@@ -96,8 +97,11 @@ class STPadResponseTask : public FairTask
     Double_t fPadSizeRow;   //!< Pad size through row. [mm]
     Int_t    fNRows;        //!< Number of row.
     Int_t    fNLayers;      //!< Number of layer.
-
+    Double_t fDriftVelocity; //!M electron drift velocity
+   
     Double_t fTbOffset;     //!< offset for adjusting time bucket for exp.
+    std::string fElectronicsJitterFilename; //!< file with electronics jitter
+    std::vector<std::vector<double>> fElectronicsJitter; //!< Loaded yoffset
 
     /**
      * fFillRatio[type][ipad]\n

@@ -73,6 +73,28 @@ STPadResponseTask::Init()
 
   fTbOffset = fPar->GetAnodeWirePlaneY()/(fPar->GetDriftVelocity()/100.);
 
+  fElectronicsJitter.clear();
+  for(int i = 0; i < fNLayers; ++i)
+    fElectronicsJitter.push_back(std::vector<double>(fNRows, 0));
+  if(fElectronicsJitterFilename.empty()) fLogger->Info(MESSAGE_ORIGIN, "Electronics jittering is disabled");
+  else
+  {
+    ifstream calfile(fElectronicsJitterFilename.c_str());
+    if(calfile.is_open())
+    {
+      fLogger -> Info(MESSAGE_ORIGIN, ("Loading electronics jittering from " + fElectronicsJitterFilename).c_str());
+      Int_t layer, row, n;
+      Double_t amp, off, err;
+      while (calfile >> layer >> row >> n >> amp >> off >> err) {
+        if (abs(off) > 4 || err > 2 || n < 20) off = 0;
+        fElectronicsJitter[layer][row] = off;
+      }
+    }
+    else fLogger->Info(MESSAGE_ORIGIN, ("Electronics jitter is disabled as file " + fElectronicsJitterFilename + " cannot be loaded").c_str());
+  }
+
+  fDriftVelocity = fPar->GetDriftVelocity() / 100; // cm/us to mm/ns
+
   InitDummy();
   InitPRF();
 
@@ -118,9 +140,12 @@ STPadResponseTask::Exec(Option_t* option)
      * - 2 : wire with 5/6 across (z) the pad.
      */
     Int_t layer = iWire/3;
+    tEl += fElectronicsJitter[layer][row]/fDriftVelocity; // subtraction is performed on MC data. It will be added back is PSA in reco task
+
     Int_t type  = iWire%3; //< %3 : same reason as above
     Int_t iTb   = tEl/fTBTime;
     if(iTb>fNTbs) continue;
+    if(iTb < 0) iTb = 0;
 
     // Covering 5x5(25 in total) pads cover 99.97 % of all the charges.
     for(Int_t iLayer=0; iLayer<5; iLayer++){ 

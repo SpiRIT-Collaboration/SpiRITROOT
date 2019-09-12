@@ -46,6 +46,8 @@ void run_digi(TString name = "protons_75_events")
   STPadResponseTask* fPadResponseTask = new STPadResponseTask(); 
   fPadResponseTask -> SetPersistence(true);
   fPadResponseTask -> AssumeGausPRF();
+  fPadResponseTask -> SetElectronicsJitterFile(TString(gSystem -> Getenv("VMCWORKDIR")) 
+                                               + "/parameters/yOffsetCalibration.dat");
   fRun -> AddTask(fPadResponseTask);
 
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
