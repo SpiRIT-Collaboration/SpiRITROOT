@@ -76,7 +76,6 @@ class STSpaceCharge
     void ExportEField(const std::string& value);
     void CalculateEDrift(double drift_vel, bool t_invert=false);
 
-    void SetElectronDrift(Bool_t value = kTRUE);
     void DisplaceElectrons(double x, double y, double z, 
                            double& x_out, double& y_out, double& z_out);
   private:
