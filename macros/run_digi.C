@@ -39,7 +39,6 @@ void run_digi(TString name = "protons_75_events")
   // Set digitization tasks
   STDriftTask* fDriftTask = new STDriftTask(); 
   fDriftTask -> SetPersistence(true);
-  fDriftTask -> SetParticleForCorrection("p");
   fDriftTask -> SetSplineInterpolation(false);
   fDriftTask -> SetVerbose(false);  
   fRun -> AddTask(fDriftTask);

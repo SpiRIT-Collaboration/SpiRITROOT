@@ -159,7 +159,7 @@ STDriftTask::Exec(Option_t* option)
     else
       {
 	//        eLoss = (fMCPoint->GetEnergyLoss())*1.E9; // [GeV] to [eV]        
-	eLoss = (fMCPoint->GetEnergyLoss())*1.E9*BichselCorrection(fSpecies,p); // [GeV] to [eV]
+	eLoss = (fMCPoint->GetEnergyLoss())*1.E9*BichselCorrection(fMCPoint->GetPDG(),p); // [GeV] to [eV]
       }
 
     Double_t lDrift = fYAnodeWirePlane-(fMCPoint->GetY())*10; // drift length [mm]
@@ -175,6 +175,7 @@ STDriftTask::Exec(Option_t* option)
       Double_t dx = dr*TMath::Cos(angle); // displacement in x-direction
       Double_t dz = dr*TMath::Sin(angle); // displacement in y-direction
       Double_t dt = gRandom->Gaus(0,sigmaL)/fVelDrift; // displacement in time
+      if(dt + tDrift +fMCPoint->GetTime() < 0) dt = 0;
 
       Int_t iWire = (Int_t)floor((fMCPoint->GetZ()*10+dz)/fZSpacingWire); //The index of the anode wire is from 0 to 112*3-1
       if(iWire < 0 || iWire > 112*3-1) continue; //the anode wire number wont change for the SpiRIT experiment
@@ -198,7 +199,7 @@ STDriftTask::Exec(Option_t* option)
           STDriftedElectron(fMCPoint->GetX()*10, dx,
                             fMCPoint->GetZ()*10, dz, 
                             fMCPoint->GetY()*10,
-                            fMCPoint->GetTime(), tDrift, abs(dt),
+                            fMCPoint->GetTime(), tDrift, dt,
                             iWire, zWire,
                             gain);
 
@@ -234,6 +235,17 @@ Double_t STDriftTask::BichselCorrection(TString species, Double_t value)
     std::cout << "It needs implementation, sorry!" << std::endl;
     exit(0);
   }
+}
+
+Double_t STDriftTask::BichselCorrection(Int_t pdg, Double_t value)
+{ 
+  TString pname;
+  if(pdg == 2212) pname = "p";
+  else if(fabs(pdg) == 211) pname = "pi";
+  else if(pdg == 1000010020) pname = "d";
+  else if(pdg == 1000010030) pname = "t";
+  else return 1.; // return 1. for unknown substance (e.g. e-)
+  return this->BichselCorrection(pname, value);
 }
 
 ROOT::Math::Interpolator* STDriftTask::BichselCorrection(TString species)

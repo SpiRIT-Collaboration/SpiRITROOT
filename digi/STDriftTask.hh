@@ -55,6 +55,7 @@ class STDriftTask : public FairTask
    void SetLowAnode(Bool_t value){fLowAnode = value;};
    void SetSplineInterpolation(Bool_t value = kFALSE);
    Double_t BichselCorrection(TString species, Double_t value);
+   Double_t BichselCorrection(Int_t pdg, Double_t value);
    ROOT::Math::Interpolator* BichselCorrection(TString species);
   
   private:
