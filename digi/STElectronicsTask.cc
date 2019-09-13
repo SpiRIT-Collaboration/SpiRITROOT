@@ -99,13 +99,34 @@ STElectronicsTask::Init()
 
   fRawEvent = new ((*fRawEventArray)[0]) STRawEvent();
 
+  for (auto iLayer = 0; iLayer < 112; iLayer++)
+    fGainMatchingDataScale[iLayer] = 1;
+
+  if (!(fGainMatchingData.IsNull()))
+    {
+      
+      std::ifstream matchList(fGainMatchingData.Data());
+      if(matchList.is_open()) 
+      {
+        fLogger->Info(MESSAGE_ORIGIN, (" Gain matching file " + fGainMatchingData + " set!"));
+        Int_t layer = 0;
+        Double_t relativeGain = 0;
+        for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
+          matchList >> layer >> relativeGain;
+          fGainMatchingDataScale[layer] = relativeGain;
+        }
+      } else fLogger->Info(MESSAGE_ORIGIN, (" Cannot load gain matching file " + fGainMatchingData + ". Gain matching is ignored"));
+    }
+
+
+
   return kSUCCESS;
 }
 
 void 
 STElectronicsTask::Exec(Option_t* option)
 {
-  fLogger->Debug(MESSAGE_ORIGIN,"Exec of STElectronicsTask");
+    fLogger->Debug(MESSAGE_ORIGIN,"Exec of STElectronicsTask");
 
   if(!fRawEventArray) 
     fLogger->Fatal(MESSAGE_ORIGIN,"No RawEventArray!");
@@ -125,6 +146,7 @@ STElectronicsTask::Exec(Option_t* option)
   for(Int_t iPad=0; iPad<nPads; iPad++) {
     padI = fPPEvent -> GetPad(iPad);
     adcI = padI -> GetADC();
+
     for(Int_t iTB=0; iTB<fNTBs; iTB++) adcO[iTB]=0;
     for(Int_t iTB=0; iTB<fNTBs; iTB++) {
       Double_t val = adcI[iTB];
@@ -134,7 +156,6 @@ STElectronicsTask::Exec(Option_t* option)
 	adcO[jTB++] += val*fPulser[kTB++];
 
     }
-
 
     Double_t satThreshold;
     if(fPedestalSubtracted)
@@ -197,11 +218,12 @@ STElectronicsTask::Exec(Option_t* option)
     Int_t row   = padI -> GetRow();
     Int_t layer = padI -> GetLayer();
     STPad *padO = new STPad(row, layer);
+    Double_t gainI = fGainMatchingDataScale[layer];
     padO -> SetPedestalSubtracted();
     for(Int_t iTB=fStartTb; iTB<fEndTb; iTB++){
       adcO[iTB] += gRandom -> Gaus(0,fPedestalSigma);
 
-      padO -> SetADC(iTB,adcO[iTB]/* * fGainMatchingDataScale[layer]*/);
+      padO -> SetADC(iTB,adcO[iTB]*gainI);
     }
     fRawEvent -> SetPad(padO);
     delete padO;

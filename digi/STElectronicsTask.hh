@@ -52,6 +52,7 @@ class STElectronicsTask : public FairTask
     void SetSaturatedPulseData(TString);	
     void SetIsKillAfterSaturation(Bool_t);
     void SetTbRange(Int_t s, Int_t e);
+    void SetGainMatchingData(TString filename){ fGainMatchingData = filename; };
   
 
   private:
@@ -70,6 +71,7 @@ class STElectronicsTask : public FairTask
 
     Int_t   fNTBs;       //!< Number of time buckets.
     TString fPulseFileName;
+    TString fGainMatchingData = "";          ///< Gain matching data
   
     Int_t   fNBinPulser; //!< Number of bin for pulser data.
     Int_t   fNBinSaturatedPulse; //!< Number of bin for saturated pulser data.
@@ -88,6 +90,7 @@ class STElectronicsTask : public FairTask
     Bool_t   fPedestalSubtracted; //!< Pedestal subtracted flag.
     Bool_t   fSignalPolarity;     //!< Polartity of signal (1: positive, 0: negative)
     Bool_t   fKillAfterSaturation;//!< Kill after saturation ?
+    Double_t fGainMatchingDataScale[112]; //!<
 
     Int_t    fStartTb;
     Int_t    fEndTb;

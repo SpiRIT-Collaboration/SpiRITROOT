@@ -43,16 +43,17 @@ void run_digi(TString name = "protons_75_events")
   fDriftTask -> SetVerbose(false);  
   fRun -> AddTask(fDriftTask);
 
+  TString workDir   = gSystem -> Getenv("VMCWORKDIR");
   STPadResponseTask* fPadResponseTask = new STPadResponseTask(); 
   fPadResponseTask -> SetPersistence(true);
   fPadResponseTask -> AssumeGausPRF();
-  fPadResponseTask -> SetElectronicsJitterFile(TString(gSystem -> Getenv("VMCWORKDIR")) 
-                                               + "/parameters/yOffsetCalibration.dat");
+  fPadResponseTask -> SetElectronicsJitterFile(workDir + "/parameters/yOffsetCalibration.dat");
   fRun -> AddTask(fPadResponseTask);
 
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
   fElectronicsTask -> SetPersistence(true);
   fElectronicsTask -> SetADCConstant(1.);
+  fElectronicsTask -> SetGainMatchingData(workDir + "/parameters/RelativeGain.list");
   fRun -> AddTask(fElectronicsTask);
 
 
@@ -65,7 +66,6 @@ void run_digi(TString name = "protons_75_events")
 
   // -----------------------------------------------------------------
   // Set enveiroment
-  TString workDir   = gSystem -> Getenv("VMCWORKDIR");
   TString dataDir   = workDir + "/macros/data/";
 
 
