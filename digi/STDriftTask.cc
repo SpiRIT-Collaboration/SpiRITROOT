@@ -57,6 +57,8 @@ InitStatus
 STDriftTask::Init()
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Initilization of STDriftTask");
+  polya_lowgain->SetNpx(1000); // part of the function is not simulated well due to the narrow nature of the function
+  // resolution needs to be manually increase
 
   FairRootManager* ioman = FairRootManager::Instance();
 
