@@ -286,7 +286,12 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
 #endif
       yHit = tbHit * fTbToYConv;
 
-      STHit *hit = (STHit *) hitArray -> ConstructedAt(hitNum);
+      STHit *hit = nullptr;
+      {
+        std::lock_guard<std::mutex> lg(fMutex);
+        hit = (STHit *) hitArray -> ConstructedAt(hitNum);
+      }
+
       hit -> Clear();
       if (amplitude > adcHighLimit)
         amplitude = adcHighLimit;
