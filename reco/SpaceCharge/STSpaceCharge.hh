@@ -69,6 +69,7 @@ class STSpaceCharge
     void SetSheetChargeDensity(Double_t value);
     void SetProjectile(Projectile t_proj);
     void SetDriftParameters(double mu, double wtau);
+    void InferDriftParameters(double drift_vel, double e_field, double b_field);
 
     void ShiftDisplacementMap(double x, double y, double z);
     void RotateEFieldXZDeg(double rot);

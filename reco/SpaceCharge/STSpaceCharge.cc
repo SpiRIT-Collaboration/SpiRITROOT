@@ -149,6 +149,25 @@ void STSpaceCharge::fFinalizeEField()
   else fSCLogger->Fatal(MESSAGE_ORIGIN, "E-field cannot be loaded from files.");
 }
 
+// drift_vel in cm/um, e_field in V/cm
+void STSpaceCharge::InferDriftParameters(double drift_vel, double e_field, double b_field)
+{
+  fSCLogger->Info(MESSAGE_ORIGIN, "Infering electron drift parameters from drift velocity");
+  const double me = 9.11e-31; // mass of electrons in kg
+  const double echarge = 1.6e-19; // charge of electrons 
+
+  e_field *= 100; // V/cm to V/m
+  drift_vel *= 10000; // cm/um to m/s
+  double tau = drift_vel*me/(echarge*e_field); // in s
+   
+  double omega = echarge*b_field/me; // rad/s
+  double wtau = omega*tau;
+  double mu = drift_vel/e_field*10000;
+
+  // both mu and wtau are signed
+  this->SetDriftParameters(-mu, -wtau);
+}
+
 void STSpaceCharge::CalculateEDrift(double drift_vel, bool t_invert)
 {
   if(!fBField) fSCLogger->Fatal(MESSAGE_ORIGIN, "B-field is not loaded");

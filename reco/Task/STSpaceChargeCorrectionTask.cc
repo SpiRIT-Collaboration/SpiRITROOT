@@ -36,6 +36,9 @@ STSpaceChargeCorrectionTask::Init()
   TPCz = fDigiPar->GetPadPlaneZ();
   this -> SetTPCSize(TPCx, TPCz, TPCy);
 
+  const double EField = 127.4; // V/cm
+  const double BField = 0.5; // T
+  this -> InferDriftParameters(fDigiPar->GetDriftVelocity(), EField, BField);
   if(fIsDrift) this -> CalculateEDrift(fDigiPar->GetDriftVelocity(), true);
   else LOG(INFO) << "Space Chrage displacement is disabled" << FairLogger::endl;
   return kSUCCESS;
