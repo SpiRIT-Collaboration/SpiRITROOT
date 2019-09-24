@@ -108,4 +108,8 @@
 #pragma link C++ class STCorrection+;
 #pragma link C++ class STBDCProjection+;
 
+#pragma link C++ class std::vector<TVector3>+;
+#pragma link C++ class STData+;
+#pragma link C++ class STSmallOutputTask+;
+
 #endif

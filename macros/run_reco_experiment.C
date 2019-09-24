@@ -18,7 +18,7 @@ void run_reco_experiment
   TString fPathToData = "",
   Bool_t fUseMeta = kTRUE,
   double YPedestalOffset = +21.88,  // 132Sn: +21.88, 124Sn: +21.68, 112Sn: +22.98, 108Sn: +23.28, this value will move all the STHit YPedestalOffset, after applying this offset, the PosY of reconstructed TPC vertex will at -205.5mm, same with BDC.
-  double BDC_Xoffset = -0.299, // 132Sn: -0.299, 124Sn: -0.609, 112Sn: -0.757, 108Sn: -0.706, this value will adjust the center of TPC vertex same with the center of BDC.
+  double BDC_Xoffset = -1.5,//-0.299, // 132Sn: -0.299, 124Sn: -0.609, 112Sn: -0.757, 108Sn: -0.706, this value will adjust the center of TPC vertex same with the center of BDC.
   double BDC_Yoffset = -205.5, //this value will transfer the BDC frame to TPC frame along Y direction.
   double BDC_Zoffset = 0,
   double charge_density = -1, // the magnitude of charge density used in space-charge correction
@@ -81,11 +81,27 @@ void run_reco_experiment
     decoder -> SetUseGainCalibration(true);
   decoder -> SetGGNoiseData(fGGData);
   decoder -> SetDataList(raw);
-  decoder -> SetEventID(start);
+  //decoder -> SetEventID(start);
   decoder -> SetTbRange(30, 257); 
   decoder -> SetEmbedFile(fMCFile);
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
   decoder -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
+  // Method to select events to reconstruct
+  // Format of the input file:
+  //        runid eventid
+  //        runid eventid
+  //        runid eventid
+  //        runid eventid
+  //map<Int_t, vector<Int_t> *> events;
+  //string FileName_PiEvt = "./Pick_PiEvt/Sn108_PiEvt/";
+  //FileName_PiEvt = FileName_PiEvt+"Sn108_Run"+fRunNo+"_PiEvt";
+  //cout<<"Reading the Event list for the pion events : "<<FileName_PiEvt<<endl;
+  //readEventList(FileName_PiEvt, events);
+  //cout <<"Number of events " << fNumEventsInSplit << " starting at " << start <<endl;
+
+  //decoder -> SetEventList(*events[fRunNo]);
+  decoder -> SetEventID(start);
+ 
   
   if (fUseMeta) 
   {
@@ -101,15 +117,9 @@ void run_reco_experiment
   auto preview = new STEventPreviewTask();
   preview -> SetSkippingEvents(fSkipEventArray);
   preview -> SetPersistence(true);
-  // Method to select events to reconstruct
-  // Format of the input file:
-  //        runid eventid
-  //        runid eventid
-  //        runid eventid
-  //        runid eventid
-//  map<Int_t, vector<Int_t> *> events;
-//  readEventList("eventList-Sn132.txt", events);
-//  preview -> SetSelectingEvents(*events[fRunNo]);
+  //preview -> SetSelectingEvents(*events[fRunNo]);
+
+
  
   auto psa = new STPSAETask();
   psa -> SetPersistence(false);
@@ -180,6 +190,7 @@ void run_reco_experiment
   genfitVA -> SetListPersistence(true);
 //  genfitVA -> SetBeamFile("");
   genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
+//  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn108/beam_run%d.ridf.root", fRunNo));
 //  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   genfitVA -> SetInformationForBDC(fRunNo,BDC_Xoffset,BDC_Yoffset,BDC_Zoffset);
   // Uncomment if you want to recalculate the vertex using refit tracks.
@@ -191,6 +202,9 @@ void run_reco_experiment
   
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
+
+  auto smallOutput = new STSmallOutputTask();
+  smallOutput->SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.conc."+version+".root").Data());
     
   run -> AddTask(decoder);
   run -> AddTask(preview);
@@ -202,6 +216,7 @@ void run_reco_experiment
   run -> AddTask(genfitVA);
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
+  run -> AddTask(smallOutput);
   
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
@@ -218,7 +233,7 @@ void run_reco_experiment
   helix -> GetTrackFinder() -> SetTrackWidthCutLimits(4, 10);
   helix -> GetTrackFinder() -> SetTrackHeightCutLimits(2, 4);
 
-  run -> Run(0, fNumEventsInSplit);
+  run -> Run(0,fNumEventsInSplit);
 
   cout << "Log    : " << log << endl;
   cout << "Input  : " << raw << endl;
