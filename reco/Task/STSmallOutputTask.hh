@@ -7,6 +7,7 @@
 
 #include "STRecoTask.hh"
 #include "STEmbedTrack.hh"
+#include "STBeamInfo.hh"
 
 #include "TFile.h"
 #include "TTree.h"
@@ -63,6 +64,7 @@ struct STData : public TObject
 
   void Clear()
   {
+    aoq = z = a = b = proja = projb = projx = projy = beamEnergy = beta = 0;
     recoMomVec.clear();
     multiplicity = 0;
     vaMultiplicity = 0;
@@ -93,7 +95,7 @@ struct STData : public TObject
     }
   }
   // beam data
-    
+  double aoq, z, a, b, proja, projb, projx, projy, beamEnergy, beta;    
 
   //Vertex
   TVector3 tpcVertex; 
@@ -144,11 +146,14 @@ protected:
   TClonesArray *fSTVertex = nullptr;
   TClonesArray *fBDCVertex = nullptr;
   TClonesArray *fSTEmbedTrack = nullptr;
+  STBeamInfo *fBeamInfo = nullptr;
 
   STData fData; //!< the class of data itself 
   std::unique_ptr<TFile> fSmallOutput_; //!< File where the tree is stored
   TTree *fSmallTree_; //!< Tree itself
-  bool fHasEmbed; //!< flag for embedding mode
+  int fEventID;
+  int fRunID;
+  int fEventType;
 
   ClassDef(STSmallOutputTask,1);
 };

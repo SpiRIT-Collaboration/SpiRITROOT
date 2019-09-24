@@ -15,6 +15,7 @@
 #include "STBeamEnergy.hh"
 #include "STBDCProjection.hh"
 #include "ST_VertexShift.hh"
+#include "STBeamInfo.hh"
 
 class STGenfitVATask : public STRecoTask
 {
@@ -48,6 +49,7 @@ class STGenfitVATask : public STRecoTask
     TClonesArray *fVATrackArray = nullptr;
     TClonesArray *fBDCVertexArray = nullptr;
     TClonesArray *fVAVertexArray = nullptr;
+    STBeamInfo *fBeamInfo = nullptr;
 
     bool fIsListPersistence = false;
     bool fIsSamurai = true;
