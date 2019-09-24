@@ -63,6 +63,7 @@ struct STData : public TObject
 
   void Clear()
   {
+    recoMomVec.clear();
     multiplicity = 0;
     vaMultiplicity = 0;
     tpcVertex.SetXYZ(0,0,0);
@@ -101,6 +102,7 @@ struct STData : public TObject
   static const int kMaxTracks = 100; // assume that max multiplicity in the experiment is 100
   int multiplicity;
   // Reco Data
+  std::vector<TVector3> recoMomVec;
   TVector3 *recoMom; //[multiplicity]
   TVector3 *recoPosPOCA; //[multiplicity] 
   TVector3 *recoPosTargetPlane; //[multiplicity] 
