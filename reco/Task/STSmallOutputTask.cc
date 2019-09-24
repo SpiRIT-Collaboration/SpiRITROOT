@@ -88,6 +88,7 @@ void STSmallOutputTask::Exec(Option_t* option)
     for(int ii = 0; ii < fSTRecoTrack->GetEntries(); ++ii)
     {
       auto RecoTrack = static_cast<STRecoTrack*>(fSTRecoTrack->At(ii));
+      fData.recoMomVec.push_back(RecoTrack->GetMomentumTargetPlane());
       fData.recodedx[ii] = RecoTrack->GetdEdxWithCut(0, 0.6);
       fData.recoPosPOCA[ii] = RecoTrack->GetPOCAVertex();
       fData.recoMom[ii] = RecoTrack->GetMomentumTargetPlane();
