@@ -38,11 +38,14 @@ InitStatus STSmallOutputTask::Init()
     fBDCVertex =   static_cast<TClonesArray*>(fRootManager->GetObject("BDCVertex"));
     fSTVertex =    static_cast<TClonesArray*>(fRootManager->GetObject("STVertex"));
     fSTEmbedTrack = static_cast<TClonesArray*>(fRootManager->GetObject("STEmbedTrack"));
+    fBeamInfo = static_cast<STBeamInfo*>(fRootManager->GetObject("STBeamInfo"));
 
     fSmallOutput_->cd();
     fSmallTree_ = new TTree("cbmsim", "", 99, fSmallOutput_.get());
 
     fSmallTree_->Branch("EvtData", &fData);
+    fSmallTree_->Branch("eventID", &fEventID);
+    fSmallTree_->Branch("eventType", &fEventType);
   }
   else LOG(INFO) << "No file is set for small output" << FairLogger::endl;
 }
@@ -53,6 +56,22 @@ void STSmallOutputTask::Exec(Option_t* option)
   if(fSmallOutput_)
   {
     fData.Clear();
+    fEventID = fEventHeader -> GetEventID();
+    fEventType = fEventHeader -> GetStatus();
+    if(fBeamInfo)
+    {
+      fData.aoq = fBeamInfo -> fBeamAoQ;
+      fData.z = fBeamInfo -> fBeamZ;
+      fData.a = fBeamInfo -> fRotationAngleA;
+      fData.b = fBeamInfo -> fRotationAngleB;
+      fData.proja = fBeamInfo -> fRotationAngleTargetPlaneA;
+      fData.projb = fBeamInfo -> fRotationAngleTargetPlaneB;
+      fData.projx = fBeamInfo -> fProjX;
+      fData.projy = fBeamInfo -> fProjY;
+      fData.beamEnergy = fBeamInfo -> fBeamEnergy;
+      fData.beta = fBeamInfo -> fBeamVelocity;
+    }
+
     if(fBDCVertex->GetEntries() > 0) fData.bdcVertex = static_cast<STVertex*>(fBDCVertex->At(0))->GetPos();
     if(fSTVertex->GetEntries() > 0) fData.tpcVertex = static_cast<STVertex*>(fSTVertex->At(0))->GetPos();
 
