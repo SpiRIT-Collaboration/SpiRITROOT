@@ -51,6 +51,9 @@ STSpaceChargeTask::Init()
   const double TPCHeight = 506.1;
   this -> SetTPCSize(fPar->GetPadPlaneX(), fPar->GetPadPlaneZ(), TPCHeight);
 
+  const double EField = 127.4; // V/cm
+  const double BField = 0.5; // T
+  this -> InferDriftParameters(fPar->GetDriftVelocity(), EField, BField);
   this -> CalculateEDrift(fPar->GetDriftVelocity());
   return kSUCCESS;
 }

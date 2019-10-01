@@ -19,10 +19,10 @@ STSmallOutputTask::~STSmallOutputTask()
   LOG(DEBUG) << "Destructor of STSmallOutputTask" << FairLogger::endl;
 }
 
-void STSmallOutputTask::SetOutputFile(const std::string& filename, const std::string& treename)
-{
-  fSmallOutput_ = std::unique_ptr<TFile>(new TFile(filename.c_str(), "RECREATE"));
-}
+void STSmallOutputTask::SetOutputFile(const std::string& filename)
+{fSmallOutput_ = std::unique_ptr<TFile>(new TFile(filename.c_str(), "RECREATE"));}
+
+void STSmallOutputTask::SetRun(int runID){ fRunID = runID; }
 
 InitStatus STSmallOutputTask::Init()
 {
@@ -38,11 +38,14 @@ InitStatus STSmallOutputTask::Init()
     fBDCVertex =   static_cast<TClonesArray*>(fRootManager->GetObject("BDCVertex"));
     fSTVertex =    static_cast<TClonesArray*>(fRootManager->GetObject("STVertex"));
     fSTEmbedTrack = static_cast<TClonesArray*>(fRootManager->GetObject("STEmbedTrack"));
+    // BeamInfo comes from GenfitVATask
+    // It won;t be filled if VA Task is absent
     fBeamInfo = static_cast<STBeamInfo*>(fRootManager->GetObject("STBeamInfo"));
 
     fSmallOutput_->cd();
     fSmallTree_ = new TTree("cbmsim", "", 99, fSmallOutput_.get());
 
+    fSmallTree_->Branch("runID", &fRunID);
     fSmallTree_->Branch("EvtData", &fData);
     fSmallTree_->Branch("eventID", &fEventID);
     fSmallTree_->Branch("eventType", &fEventType);
@@ -55,7 +58,7 @@ void STSmallOutputTask::Exec(Option_t* option)
   LOG(DEBUG) << "Exec of STSmallOutputTask" << FairLogger::endl;
   if(fSmallOutput_)
   {
-    fData.Clear();
+    fData.ResetDefaultWithLength(fSTRecoTrack->GetEntries());
     fEventID = fEventHeader -> GetEventID();
     fEventType = fEventHeader -> GetStatus();
     if(fBeamInfo)
@@ -72,8 +75,13 @@ void STSmallOutputTask::Exec(Option_t* option)
       fData.beta = fBeamInfo -> fBeamVelocity;
     }
 
-    if(fBDCVertex->GetEntries() > 0) fData.bdcVertex = static_cast<STVertex*>(fBDCVertex->At(0))->GetPos();
-    if(fSTVertex->GetEntries() > 0) fData.tpcVertex = static_cast<STVertex*>(fSTVertex->At(0))->GetPos();
+    if(fBDCVertex)
+      if(fBDCVertex->GetEntries() > 0) 
+        fData.bdcVertex = static_cast<STVertex*>(fBDCVertex->At(0))->GetPos();
+
+    if(fSTVertex)
+      if(fSTVertex->GetEntries() > 0) 
+        fData.tpcVertex = static_cast<STVertex*>(fSTVertex->At(0))->GetPos();
 
     // map that stores id of reco track
     // will be used to map VATracks back to STRecoTracks
@@ -87,27 +95,11 @@ void STSmallOutputTask::Exec(Option_t* option)
         RecoToVATracks[bdc_track->GetRecoID()] = bdc_track;
       }
     }
-
-    if(fSTEmbedTrack)
-    {
-      for(int ii = 0; ii < fSTEmbedTrack->GetEntries(); ++ii)
-      {
-        auto embed_track = static_cast<STEmbedTrack*>(fSTEmbedTrack->At(ii));
-        for(auto track : *embed_track->GetRecoTrackArray())
-        {
-          // given that RecoID and VA ID are aligned, the two IsEmbed array should always be identical
-          auto embed_id = track->GetRecoID();
-          fData.recoEmbedTag[embed_id] = true;
-          fData.vaEmbedTag[embed_id] = true;
-        }
-      }
-    }
  
     fData.multiplicity = fSTRecoTrack->GetEntries(); 
     for(int ii = 0; ii < fSTRecoTrack->GetEntries(); ++ii)
     {
       auto RecoTrack = static_cast<STRecoTrack*>(fSTRecoTrack->At(ii));
-      fData.recoMomVec.push_back(RecoTrack->GetMomentumTargetPlane());
       fData.recodedx[ii] = RecoTrack->GetdEdxWithCut(0, 0.6);
       fData.recoPosPOCA[ii] = RecoTrack->GetPOCAVertex();
       fData.recoMom[ii] = RecoTrack->GetMomentumTargetPlane();
@@ -134,6 +126,20 @@ void STSmallOutputTask::Exec(Option_t* option)
         fData.vadpoca[ii] = fData.vaPosPOCA[ii] - fData.tpcVertex;
       }
     }
+
+    // swith on embedding tag
+    if(fSTEmbedTrack)
+      for(int ii = 0; ii < fSTEmbedTrack->GetEntries(); ++ii)
+      {
+        auto embed_track = static_cast<STEmbedTrack*>(fSTEmbedTrack->At(ii));
+        for(auto track : *embed_track->GetRecoTrackArray())
+        {
+          // given that RecoID and VA ID are aligned, the two IsEmbed array should always be identical
+          auto embed_id = track->GetRecoID();
+          fData.recoEmbedTag[embed_id] = true;
+          fData.vaEmbedTag[embed_id] = true;
+        }
+      }
     fSmallTree_->Fill();
     LOG(INFO) << Space() << "Saving event to file" << FairLogger::endl;
   }

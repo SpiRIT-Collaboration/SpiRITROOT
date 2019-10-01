@@ -205,6 +205,7 @@ void run_reco_experiment
 
   auto smallOutput = new STSmallOutputTask();
   smallOutput->SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.conc."+version+".root").Data());
+  //smallOutput->SetRun(fRunNo);
     
   run -> AddTask(decoder);
   run -> AddTask(preview);
