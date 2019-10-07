@@ -67,6 +67,10 @@ InitStatus STCorrectionTask::Init()
   if(fExBShift)
     fCorrection -> LoadExBShift(fExB_file);
 
+  fCorrection->UseFittedPos(fUseFittedPos);
+  if(fUseFittedPos) std::cout << "== [STCorrectionTask] Cluster position will be fitted with PRF." << std::endl;
+  else std::cout << "== [STCorrectionTask] Cluster position will NOT be fitted with PRF." << std::endl;
+
   return kSUCCESS;
 }
 

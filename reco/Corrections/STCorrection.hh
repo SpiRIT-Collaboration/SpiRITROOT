@@ -51,9 +51,6 @@ private:
   std::vector<double> *s_hits_pos_ary = new ::std::vector<double>; //saturated hit position array
   std::vector<double> *s_hits_chg_ary = new ::std::vector<double>; //saturated hit charge array
 
-  std::vector<double> *hits_lambda_ary   = new ::std::vector<double>;   //non saturated hit lambda array in cluster
-  std::vector<double> *s_hits_lambda_ary = new ::std::vector<double>; //saturated hit lambda array
-
   std::vector<STHit *> *s_hit_ptrs = new ::std::vector<STHit *>; //saturated hit ptrs
   std::vector<STHit *> *hit_ptrs   = new ::std::vector<STHit *>; //non saturated hit ptrs 
 };
@@ -71,9 +68,11 @@ class STCorrection
   void CorrectExB(TClonesArray *clusters);
   void LoadPRFCut(TString filename);
   void LoadExBShift(TString filename);
+  void UseFittedPos(bool value) { vary_pos = value; }
   
   private:
 
+  bool vary_pos = false;
   TH3D *exb_x   = nullptr; 
   TH3D *exb_z   = nullptr;
   TCutG *prf_row   = nullptr;
@@ -81,7 +80,7 @@ class STCorrection
   TFile *exb_f = nullptr;
   
   std::vector<double> minimize(const int npar);
-  std::vector<double> minimize_helix(const int npar);    
+  std::vector<double> minimize_helix(const int npar, double ini_pos);    
 
   //  TClonesArray *fTrackArray = nullptr;       ///< STHelixTrack array
   //  TClonesArray *fClusterArray = nullptr;  ///< STHitCluster array
