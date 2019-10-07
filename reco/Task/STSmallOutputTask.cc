@@ -138,6 +138,7 @@ void STSmallOutputTask::Exec(Option_t* option)
           auto embed_id = track->GetRecoID();
           fData.recoEmbedTag[embed_id] = true;
           fData.vaEmbedTag[embed_id] = true;
+          fData.embedMom[embed_id] = embed_track->GetInitialMom()*1000;
         }
       }
     fSmallTree_->Fill();

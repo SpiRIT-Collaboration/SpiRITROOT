@@ -179,19 +179,19 @@ std::vector<double> STCorrection::minimize(const int npar)
 };
 
 
-std::vector<double> STCorrection::minimize_helix(const int npar)
+std::vector<double> STCorrection::minimize_helix(const int npar, double ini_pos)
 {
   // Initialize minuit, set initial values etc. of parameters.
   vector<double> f_par;
-  TMinuit minuit(npar);
+  TMinuit minuit(npar + 1); // one extra variables for position determination
   minuit.SetPrintLevel(-1);
   minuit.SetFCN(myFitFunction_helix);
   
-  double par[npar];               // the start values
-  double stepSize[npar];          // step sizes
-  double minVal[npar];            // minimum bound on parameter
-  double maxVal[npar];            // maximum bound on parameter
-  string parName[npar];
+  double par[npar + 1];               // the start values
+  double stepSize[npar + 1];          // step sizes
+  double minVal[npar + 1];            // minimum bound on parameter
+  double maxVal[npar + 1];            // maximum bound on parameter
+  string parName[npar + 1];
   
   for( int i =0;i < npar; ++i)
     {
@@ -201,25 +201,32 @@ std::vector<double> STCorrection::minimize_helix(const int npar)
       maxVal[i] = 100000;
       parName[i] = "miss charge";
     }
+
+  par[npar] = ini_pos;
+  stepSize[npar] = 0.1;
+  minVal[npar] = ini_pos - 2*12; // 2 pad's width from CoC seems to be reasonable
+  maxVal[npar] = ini_pos + 2*12;
+  parName[npar] = "Position";
   
-  for (int i=0; i<npar; i++)
+  
+  for (int i=0; i<npar + 1; i++)
     {
       minuit.DefineParameter(i, parName[i].c_str(),
 			     par[i], stepSize[i], minVal[i], maxVal[i]);
     }
+  if(!vary_pos) minuit.FixParameter(npar);
   
   // Do the minimization!
   
   minuit.Migrad();       // Minuit's best minimization algorithm
-  double outpar[npar], err[npar];
-  for (int i=0; i<npar; i++){
+  double outpar[npar+1], err[npar+1];
+  for (int i=0; i<npar+1; i++){
     minuit.GetParameter(i,outpar[i],err[i]);
     f_par.push_back(outpar[i]);
   }
   //       cout << endl << endl << endl;
   //       cout << "*********************************" << endl;
   //       cout << "   "<<parName[0]<<": " << outpar[0] << " +/- " << err[0] << endl;
-  
   return f_par;
 };
 
@@ -315,8 +322,10 @@ void STCorrection::Desaturate(TClonesArray *clusterArray)
 	  }
 
       //no saturated hits to desaturate, too many to desaturate,or no non saturated hits to extrapolate
-      if(s_hits_pos_ary->size() == 0 || s_hits_pos_ary->size() > 4 || hits_pos_ary->size() ==0) 
-	continue;
+      //if(s_hits_pos_ary->size() == 0 || s_hits_pos_ary->size() > 4 || hits_pos_ary->size() ==0) 
+      //	continue;
+
+      if(hits_pos_ary->size() == 0) continue;
       
       const int npar = s_hits_pos_ary->size();;
       vector<double>outpar = minimize(npar);
@@ -334,6 +343,15 @@ void STCorrection::Desaturate(TClonesArray *clusterArray)
 	}
       cluster -> ApplyModifiedHitInfo(); //update cluster position,charge, covariance, etc...
     }
+
+  delete hits_pos_ary; 
+  delete hits_chg_ary;
+  delete s_hits_pos_ary; 
+  delete s_hits_chg_ary; 
+
+  delete s_hit_ptrs; 
+  delete hit_ptrs; 
+
 
 
   return;
@@ -362,18 +380,20 @@ Double_t MyFitFunction::Function_helix(Int_t& npar, Double_t* deriv, Double_t &f
 {
   double chisq =0;
   double total_chg = 0.;
-  int num_hits = hits_lambda_ary->size();
-  int num_s_hits = s_hits_lambda_ary->size();
+  int num_hits = hits_pos_ary->size();
+  int num_s_hits = s_hits_pos_ary->size();
 
   for(int i = 0; i < num_s_hits; ++i)
     total_chg += par[i]; //add saturated chg estimate 
 
   for(int i = 0; i < num_hits; ++i)
     total_chg += hits_chg_ary->at(i);//add measured hits
+
+  double pos = par[npar-1]; // last parameter is the position
   
   for (int i=0; i < num_hits; i++)
     {
-      double v  = total_chg*PRF_helix(hits_lambda_ary->at(i),cluster_alpha);
+      double v  = total_chg*PRF_helix(hits_pos_ary->at(i) - pos,cluster_alpha);
       if ( v != 0.0 )
 	{
 	  double n = hits_chg_ary->at(i);
@@ -419,9 +439,9 @@ double MyFitFunction::PRF_helix(double x, double alpha)
 
 void MyFitFunction::SetLambdaChg(std::vector<double> *a, std::vector<double> *a_chg, std::vector<double> *b, std::vector<double> *b_chg, std::vector<STHit*> *hit_ptrs_t, std::vector<STHit*> *s_hit_ptrs_t)
 {
-  hits_lambda_ary = a;
+  hits_pos_ary = a;
   hits_chg_ary = a_chg;
-  s_hits_lambda_ary = b;
+  s_hits_pos_ary = b;
   s_hits_chg_ary = b_chg;
 
   hit_ptrs   = hit_ptrs_t;
@@ -431,16 +451,16 @@ void MyFitFunction::SetLambdaChg(std::vector<double> *a, std::vector<double> *a_
 void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *clusterArray)
 {
 
-  std::vector<double> *hits_lambda_ary   = new ::std::vector<double>; 
+  std::vector<double> *hits_pos_ary   = new ::std::vector<double>; 
   std::vector<double> *hits_chg_ary   = new ::std::vector<double>;
-  std::vector<double> *s_hits_lambda_ary = new ::std::vector<double>; 
+  std::vector<double> *s_hits_pos_ary = new ::std::vector<double>; 
   std::vector<double> *s_hits_chg_ary = new ::std::vector<double>; 
 
   std::vector<STHit *> *s_hit_ptrs = new ::std::vector<STHit *>; 
   std::vector<STHit *> *hit_ptrs   = new ::std::vector<STHit *>; 
 
   MyFitFunction* fitFunc = MyFitFunction::Instance_Helix();
-  fitFunc -> SetLambdaChg(hits_lambda_ary,hits_chg_ary,s_hits_lambda_ary,s_hits_chg_ary,hit_ptrs,s_hit_ptrs);
+  fitFunc -> SetLambdaChg(hits_pos_ary,hits_chg_ary,s_hits_pos_ary,s_hits_chg_ary,hit_ptrs,s_hit_ptrs);
 
   for(int iHelix = 0; iHelix < helixArray->GetEntries(); iHelix++)
     {
@@ -449,9 +469,9 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
       
       for(auto cluster : *cluster_ary)
 	{
-	  hits_lambda_ary   -> clear();
+	  hits_pos_ary   -> clear();
 	  hits_chg_ary   -> clear();
-	  s_hits_lambda_ary -> clear();
+	  s_hits_pos_ary -> clear();
 	  s_hits_chg_ary -> clear();
 	  
 	  hit_ptrs       -> clear();
@@ -462,9 +482,9 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 	  fitFunc -> cluster_alpha = cluster -> GetChi()*TMath::RadToDeg();
 	  fitFunc -> byRow = byRow_cl;
 	    
+          TVector3 pointOnHelix;
 	  for(auto hit : *hit_ary)
 	    {
-	      TVector3 pointOnHelix;
 	      Double_t alpha;
 	      auto hit_vector = hit -> GetPosition();
 
@@ -473,7 +493,7 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 	      else
 		helix->ExtrapolateToZ(hit_vector.Z(),pointOnHelix);
 	      
-	      pointOnHelix = pointOnHelix - hit_vector;
+	      //pointOnHelix = pointOnHelix - hit_vector;
 
 	      int max_adc = 3499;       //may have to put this info into the minimizer max and min
 	      if( (hit -> GetLayer() <=98 && hit-> GetLayer() >=91) || hit->GetLayer()>=108)
@@ -481,8 +501,8 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 
 	      double chg = hit -> GetCharge();
 
-	      double z = pointOnHelix.Z();
-	      double x = pointOnHelix.X();
+	      double z = hit_vector.Z();
+	      double x = hit_vector.X();
 
 	      if(byRow_cl)
 		{
@@ -490,13 +510,13 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 		  if(chg >= max_adc)
 		    {
 		      s_hit_ptrs -> push_back(hit);
-		      s_hits_lambda_ary -> push_back(z);
+		      s_hits_pos_ary -> push_back(z);
 		      s_hits_chg_ary -> push_back(chg);
 		    }
 		  else
 		    {
 		      hit_ptrs -> push_back(hit);
-		      hits_lambda_ary -> push_back(z);
+		      hits_pos_ary -> push_back(z);
 		      hits_chg_ary -> push_back(chg);
 		    }
 		}
@@ -507,13 +527,13 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 		  if(chg >= max_adc)
 		    {
 		      s_hit_ptrs -> push_back(hit);
-		      s_hits_lambda_ary -> push_back(x);
+		      s_hits_pos_ary -> push_back(x);
 		      s_hits_chg_ary -> push_back(chg);
 		    }
 		  else
 		    {
 		      hit_ptrs -> push_back(hit);
-		      hits_lambda_ary -> push_back(x);
+		      hits_pos_ary -> push_back(x);
 		      hits_chg_ary -> push_back(chg);
 		    }
 		}
@@ -521,13 +541,16 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 	    }
 
 	  //no saturated hits to desaturate, too many to desaturate,or no non saturated hits to extrapolate
-	  if(s_hits_lambda_ary->size() == 0 || s_hits_lambda_ary->size() > 4 || hits_lambda_ary->size() ==0)
+	  //if(s_hits_pos_ary->size() == 0 || s_hits_pos_ary->size() > 4 || hits_pos_ary->size() ==0)
+	  //  continue;
+	 
+          if(hits_pos_ary->size() ==0)
 	    continue;
 
-	  const int npar = s_hits_lambda_ary->size();;
-	  vector<double>outpar = minimize_helix(npar);
+	  const int npar = s_hits_pos_ary->size();
+	  vector<double>outpar = minimize_helix(npar, (byRow_cl)? pointOnHelix.z(): pointOnHelix.x());
 
-	  if(outpar.size() != s_hit_ptrs->size())
+	  if(outpar.size() != s_hit_ptrs->size() + 1) // extra parameter for fit location
 	    cout<<"[STCorrection] Ouput parameter of MINUIT is different than number of saturated hits"<<endl;
 
 	  for(int iSatHit = 0; iSatHit < s_hit_ptrs -> size(); iSatHit++)
@@ -540,9 +563,14 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 	      hit -> SetCharge(new_chg);
 	    }
 	  cluster -> ApplyModifiedHitInfo(); //update cluster position,charge, covariance, etc...
+          if(vary_pos)
+          {
+            if(byRow_cl) cluster -> SetZ(outpar[npar]);
+            else cluster -> SetX(outpar[npar]);
+          }
 
 	}
-    }
+   }
 
   return;
 }
