@@ -389,7 +389,7 @@ Double_t MyFitFunction::Function_helix(Int_t& npar, Double_t* deriv, Double_t &f
   for(int i = 0; i < num_hits; ++i)
     total_chg += hits_chg_ary->at(i);//add measured hits
 
-  double pos = par[npar-1]; // last parameter is the position
+  double pos = par[num_s_hits]; // last parameter is the position
   
   for (int i=0; i < num_hits; i++)
     {
@@ -562,11 +562,24 @@ void STCorrection::Desaturate_byHelix(TClonesArray *helixArray, TClonesArray *cl
 	      auto hit = s_hit_ptrs -> at(iSatHit);
 	      hit -> SetCharge(new_chg);
 	    }
+
 	  cluster -> ApplyModifiedHitInfo(); //update cluster position,charge, covariance, etc...
           if(vary_pos)
           {
-            if(byRow_cl) cluster -> SetZ(outpar[npar]);
-            else cluster -> SetX(outpar[npar]);
+            if(byRow_cl) 
+            { 
+              double z = outpar[npar]; 
+              if(z < 0) z = 0; 
+              if(z > 1338) z = 1338; 
+              cluster -> SetZ(z); 
+            }
+            else 
+            {
+              double x = outpar[npar]; 
+              if(x < -432) x = -432; 
+              if(x > 432) x = 432; 
+              cluster -> SetX(x);
+            }
           }
 
 	}
