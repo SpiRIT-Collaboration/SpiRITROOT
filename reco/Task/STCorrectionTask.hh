@@ -22,10 +22,8 @@ public:
   void SetPRFOpt(Int_t opt){fPRFOpt = opt;};
   void SetPRFCutFile(TString filename);  
   void SetExBFile(TString filename){ fExB_file = filename;} ;  
-  void UseFittedPos(bool value) { fUseFittedPos = value; };
 
 private:
-  bool fUseFittedPos = false;
   STCorrection *fCorrection        = nullptr;
   TClonesArray *fHitClusterArray   = nullptr;
   TClonesArray *fHitArray       = nullptr;
