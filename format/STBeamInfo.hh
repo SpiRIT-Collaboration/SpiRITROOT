@@ -8,16 +8,16 @@ public:
   STBeamInfo();
   virtual ~STBeamInfo() {};
 
-  double fBeamAoQ;
-  double fBeamZ;
-  double fRotationAngleA;
-  double fRotationAngleB;
-  double fRotationAngleTargetPlaneA;
-  double fRotationAngleTargetPlaneB;
-  double fProjX;
-  double fProjY;
-  double fBeamEnergy;
-  double fBeamVelocity;
+  double fBeamAoQ = 0;
+  double fBeamZ = 0;
+  double fRotationAngleA = 0;
+  double fRotationAngleB = 0;
+  double fRotationAngleTargetPlaneA = 0;
+  double fRotationAngleTargetPlaneB = 0;
+  double fProjX = 0;
+  double fProjY = 0;
+  double fBeamEnergy = 0;
+  double fBeamVelocity = 0;
 
   ClassDef(STBeamInfo, 1);
 };
