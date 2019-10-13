@@ -84,12 +84,13 @@ STGenfitVATask::Init()
   fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldXOffset, fFieldYOffset, fFieldZOffset);
   fPIDTest = new STPIDTest();
 
+  fBeamInfo = new STBeamInfo();
+  fRootManager -> Register("STBeamInfo", "SpiRIT", fBeamInfo, fIsPersistence);
+
   if (fUseRave)
     fVertexFactory = ((STGenfitPIDTask *) FairRunAna::Instance() -> GetTask("GENFIT Task")) -> GetVertexFactoryInstance();
 
   if (!fBeamFilename.IsNull()) {
-    fBeamInfo = new STBeamInfo();
-    fRootManager -> Register("STBeamInfo", "SpiRIT", fBeamInfo, fIsPersistence);
     fBDCVertexArray = new TClonesArray("STVertex");
     fRootManager -> Register("BDCVertex", "SpiRIT", fBDCVertexArray, kTRUE);
 
@@ -220,6 +221,8 @@ void STGenfitVATask::Exec(Option_t *opt)
     }
   } else if (fFixedVertexX != -9999 && fFixedVertexY != -9999 && fFixedVertexZ != -9999) {
     vertexPos = TVector3(fFixedVertexX, fFixedVertexY, fFixedVertexZ);
+    fBeamInfo -> fProjX = fFixedVertexX;
+    fBeamInfo -> fProjY = fFixedVertexY;
   }
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();
