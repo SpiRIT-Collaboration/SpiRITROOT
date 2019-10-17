@@ -54,7 +54,7 @@ void ST_VertexShift::GetShiftValue_Smooth(double Theta,double Phi,double* ShiftX
 
 void ST_VertexShift::Load_BDC_Correction(string FileName)
 { //this function will load the profile and histogram directly.
-  TFile* f1_CorrectionData = new TFile(FileName.c_str(),"update");
+  TFile* f1_CorrectionData = new TFile(FileName.c_str());
   PhiNum = 36; // here I will always suppose it is 36 now.
   int PhiRange[MaxPhiNum_ST_VertexShift][2];
   int ThetaRange[MaxPhiNum_ST_VertexShift][2]; //[0]: X, [1]: Y.
