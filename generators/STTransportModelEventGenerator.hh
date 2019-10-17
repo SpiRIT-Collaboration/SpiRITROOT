@@ -32,6 +32,8 @@ class STTransportModelEventGenerator : public FairGenerator
     void SetBeamAngle(TVector2 angle)         { fBeamAngle = angle; }
     void SetBeamAngleSigma(TVector2 sig)      { fBeamAngleABSigma = sig; }
     void SetRandomRP(Bool_t flag)             { fIsRandomRP = flag; }
+    void SetStartEvent(int t_start)           { fCurrentEvent = t_start; }
+    void SetMaxZAllowed(int t_z);              
 
     virtual Bool_t ReadEvent(FairPrimaryGenerator* primGen);
     Long64_t GetNEvents() { return fNEvents; }
@@ -43,6 +45,7 @@ class STTransportModelEventGenerator : public FairGenerator
       AMD,
       PHITS,
       pBUU,
+      ImQMD
     };
 
   private:
@@ -65,6 +68,7 @@ class STTransportModelEventGenerator : public FairGenerator
     TVector2          fBeamAngle;             // beam angle
     TVector2          fBeamAngleABSigma;      // beam angle fluctuation in AB (gaus dist.)
     Bool_t            fIsRandomRP;            // flag for random reaction plane input
+    int               fMaxZ = -1;                  // Maximum Z of the allowed particles. Geant4 cannot handle heavy ion well so we may as well discard it....
 
     pBUUProcessor     *fpBUU;                  // pBUUProcessor
 
@@ -77,6 +81,18 @@ class STTransportModelEventGenerator : public FairGenerator
 
 #include "TObject.h"
 #include "TLorentzVector.h"
+
+class ImQMDParticle : public TObject
+{
+public:
+  ImQMDParticle() {};
+  virtual ~ImQMDParticle() {};
+
+  int pdg;
+  double px, py, pz;
+  double x, y, z;
+  ClassDef(ImQMDParticle, 1);
+};
 
 class PHITSParticle : public TObject
 {

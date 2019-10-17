@@ -16,5 +16,6 @@
 #pragma link C++ class PHITSParticle+;
 #pragma link C++ class AMDParticle+;
 #pragma link C++ class pBUUProcessor+;
+#pragma link C++ class ImQMDParticle+;
 
 #endif

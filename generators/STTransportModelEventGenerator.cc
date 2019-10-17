@@ -17,7 +17,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator()
   fPartArray(NULL),
   fCurrentEvent(0), fNEvents(0),
   fVertex(TVector3()), fVertexXYSigma(TVector2()), fTargetThickness(),
-  fBeamAngle(TVector2()), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
+  fBeamAngle(TVector2(-0.022,0.)), fBeamAngleABSigma(TVector2(0.035,0)), fIsRandomRP(kTRUE)
 {
 }
 
@@ -29,7 +29,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
   fPartArray(NULL),
   fCurrentEvent(0), fNEvents(0),
   fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
-  fBeamAngle(TVector2(-0.06,0.)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
+  fBeamAngle(TVector2(-0.022,0.)), fBeamAngleABSigma(TVector2(0.035,0)), fIsRandomRP(kTRUE)
 {
 
   TString inputDir = gSystem->Getenv("VMCWORKDIR");
@@ -46,8 +46,8 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString filePath,
   fFillBeamVector(NULL), fFillTargetVector(NULL), 
   fPartArray(NULL),
   fCurrentEvent(0), fNEvents(0),
-  fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
-  fBeamAngle(TVector2(-0.06,0.)), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
+  fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.043),
+  fBeamAngle(TVector2(-0.022,0.)), fBeamAngleABSigma(TVector2(0.035,0)), fIsRandomRP(kTRUE)
 {
 
   fInputFile = new TFile(fInputPath+fileName);
@@ -70,6 +70,7 @@ void STTransportModelEventGenerator::RegisterFileIO()
   else if(fInputName.BeginsWith("amd"))    { fGen = TransportModel::AMD;    treeName = "amdTree";   partBranchName = "AMDParticle"; }
   else if(fInputName.BeginsWith("urqmd"))  { fGen = TransportModel::UrQMD;  treeName = "urqmdTree"; partBranchName = "partArray"; }
   else if(fInputName.BeginsWith("pBUU"))   { fGen = TransportModel::pBUU;   treeName = "tree";      partBranchName = ""; }
+  else if(fInputName.BeginsWith("imqmd"))  { fGen = TransportModel::ImQMD;  treeName = "ImQMD";     partBranchName = "ImQMD"; }
   else
     LOG(FATAL)<<"STTransportModelEventGenerator cannot accept event files without specifying generator names."<<FairLogger::endl;
   
@@ -166,11 +167,12 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
   if (fTargetVector)
     new((*fFillTargetVector)[0]) TLorentzVector(*fTargetVector);
 
-  Int_t numNeutrons = 0;
+  Int_t numDiscarded = 0;
   for(Int_t iPart=0; iPart<nPart; iPart++){
     Int_t pdg;
     TVector3 p;
     TVector3 pos;
+
     switch(fGen){
       case TransportModel::PHITS:
 	{
@@ -198,32 +200,50 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 	  break;
 	}
       case TransportModel::pBUU:
-  {
-    pdg = fpBUU -> GetPDG(iPart);
-    if (pdg == 2112) {
-      numNeutrons++;
-      continue;
-    }
-    p = TVector3(fpBUU -> px[iPart], fpBUU -> py[iPart], fpBUU -> pz[iPart]);
-    p.SetMag(p.Mag()/1000.);
-    break;
-  }
+        {
+          pdg = fpBUU -> GetPDG(iPart);
+          if (pdg == 2112) {
+            numDiscarded++;
+            continue;
+          }
+          p = TVector3(fpBUU -> px[iPart], fpBUU -> py[iPart], fpBUU -> pz[iPart]);
+          p.SetMag(p.Mag()/1000.);
+          break;
+        }
+      case TransportModel::ImQMD:
+        {
+          auto part = (ImQMDParticle*)fPartArray->At(iPart);
+          pdg = part->pdg;
+          if (pdg == 2112) {
+            numDiscarded++;
+            continue;
+          }
+          p = TVector3(part->px, part->py, part->pz); // ImQMD model stores in GeV already
+          break;
+        }
       default:
 	break;
     }
+    auto Z = (pdg%10000000)/10000;
+    if(Z > fMaxZ && fMaxZ > 0)
+    {
+      numDiscarded++;
+      continue;
+    }
 
-    event -> SetNPrim(nPart - numNeutrons);
+    event -> SetNPrim(nPart - numDiscarded);
 
     p.SetPhi(p.Phi()+phiRP);  // random reaction plane orientation.
     p.RotateY(beamAngleA);    // rotate w.r.t Y axis
     p.Transform(rotateInRotatedFrame);
 
-    pos.SetPhi(pos.Phi()+phiRP);
-    pos.RotateY(beamAngleA);
-    pos.Transform(rotateInRotatedFrame);
-    pos += eventVertex;   // caution!! set the event to vertex position "after" the rotation operations!!
+    // temporarily comment the code out because I don't know what it is doing
+    //pos.SetPhi(pos.Phi()+phiRP);
+    //pos.RotateY(beamAngleA);
+    //pos.Transform(rotateInRotatedFrame);
+    //pos += eventVertex;   // caution!! set the event to vertex position "after" the rotation operations!!
 
-    primGen -> AddTrack(pdg, p.X(), p.Y(), p.Z(), pos.X(), pos.Y(), pos.Z());
+    primGen -> AddTrack(pdg, p.X(), p.Y(), p.Z(), eventVertex.X(), eventVertex.Y(), eventVertex.Z());
   }
 
   fCurrentEvent++;
@@ -232,8 +252,6 @@ Bool_t STTransportModelEventGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 
 void STTransportModelEventGenerator::RegisterHeavyIon()
 {
-  if(!fInputFile)
-    return;
 
   TString symbol[50] = {"H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
     "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca",
@@ -270,11 +288,17 @@ void STTransportModelEventGenerator::RegisterHeavyIon()
 	    pdg = part->GetPdg();
 	    break;
 	  }
-  case TransportModel::pBUU:
-    {
-      pdg = fpBUU -> GetPDG(iPart);
-      break;
-    }
+       case TransportModel::pBUU:
+         {
+           pdg = fpBUU -> GetPDG(iPart);
+           break;
+         }
+       case TransportModel::ImQMD:
+         {
+           auto part = (ImQMDParticle*) fPartArray->At(iPart);
+           pdg = part->pdg;
+           break;
+         }
 	default:
 	  break;
       }
@@ -289,7 +313,7 @@ void STTransportModelEventGenerator::RegisterHeavyIon()
     auto z = (ions.at(iIon)%10000000)/10000;
     auto a = (ions.at(iIon)%10000)/10;
 
-    FairRunSim::Instance()->AddNewIon(new FairIon(Form("%d",a)+symbol[z-1],z,a,z));
+    if(z > 0) FairRunSim::Instance()->AddNewIon(new FairIon(Form("%d",a)+symbol[z-1],z,a,z));
   }
 
 
@@ -306,6 +330,12 @@ Int_t STTransportModelEventGenerator::kfToPDG(Long64_t kfCode)
 
     return (1000000000 + Z*10000 + A*10);
   }
+}
+
+void STTransportModelEventGenerator::SetMaxZAllowed(int t_z)
+{
+  fMaxZ = t_z;
+  LOG(INFO) << "Generator will discard all heavy ions with Z > " << fMaxZ << FairLogger::endl;
 }
 
 ClassImp(STTransportModelEventGenerator);
