@@ -86,6 +86,10 @@ void run_reco_mc
   genfitVA -> SetUseRave(true);
   genfitVA -> SetFieldOffset(-0.1794, -20.5502, 58.0526); 
   
+  TString out2 = fPathToData+fName+"_s"+sSplitNo+".reco."+version+".conc.root";
+  auto smallOutput = new STSmallOutputTask();
+  smallOutput -> SetOutputFile(out2.Data());
+
   auto mctruth = new STMCTruthTask(true);
 
   run -> AddTask(preview);
@@ -95,6 +99,7 @@ void run_reco_mc
   run -> AddTask(spaceCharge);
   run -> AddTask(genfitPID);
   run -> AddTask(genfitVA);
+  run -> AddTask(smallOutput);
   run -> AddTask(mctruth);
 
   auto outFile = FairRootManager::Instance() -> GetOutFile();
