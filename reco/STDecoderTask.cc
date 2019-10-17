@@ -89,8 +89,9 @@ void STDecoderTask::SetTbRange(Int_t startTb, Int_t endTb)                      
 void STDecoderTask::SetUseSeparatedData(Bool_t value)                                         { fIsSeparatedData = value; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
 void STDecoderTask::SetEmbedding(Bool_t value)                                                { fIsEmbedding = value; }
+void STDecoderTask::SetEventList(const std::vector<int>& eventlist)                           { fEventIDList = eventlist; }
+void STDecoderTask::ClearEventList()                                                          { fEventIDList.clear(); }
 void STDecoderTask::SetEmbedFile(TString filename)                                            { fEmbedFile = filename; }
-
 void STDecoderTask::SetDataList(TString list)
 {
   std::ifstream listFile(list.Data());
@@ -123,19 +124,20 @@ STDecoderTask::Init()
     {
       /*std::ifstream infile(fEmbedFile.Data());
       if(!infile.good())
-	{
-	  std::cout << "== [STDecoderTask] Embed file does not Exist!" << std::endl;
-	  return kERROR;
-	}*/
+       {
+         std::cout << "== [STDecoderTask] Embed file does not Exist!" << std::endl;
+         return kERROR;
+       }*/
 
       std::cout << "== [STDecoderTask] Setting up embed mode" << std::endl;
       fChain = new TChain("cbmsim");
       fChain -> Add(fEmbedFile);
       if(fChain -> GetListOfFiles() -> GetEntries() == 0)
       {
-	  std::cout << "== [STDecoderTask] Embed file does not Exist!" << std::endl;
-	  return kERROR;
-	}
+         std::cout << "== [STDecoderTask] Embed file does not Exist!" << std::endl;
+         return kERROR;
+       }
+
       fChain -> SetBranchAddress("STRawEvent", &fEventArray);
       fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
 
@@ -233,6 +235,8 @@ STDecoderTask::Init()
     fEndTb = fPar -> GetNumTbs();
   fDecoder -> SetTbRange(fStartTb, fEndTb);
 
+  if(fEventIDList.size() > 0) fLogger -> Info(MESSAGE_ORIGIN, "EventID list is supplied. Will only run those events");
+
   return kSUCCESS;
 }
 
@@ -262,10 +266,17 @@ STDecoderTask::Exec(Option_t *opt)
   fRawEventArray -> Delete();
   fRawEmbedEventArray -> Delete();
   fRawDataEventArray -> Delete();
+  int EventID = fEventID;
+  if(fEventIDList.size() > 0) 
+  {
+    if(fEventIDList.size() > fEventID) EventID = fEventIDList[fEventID] - 1; // Run number starts at 1
+    else fLogger -> Fatal(MESSAGE_ORIGIN, "fEventID is larger than the size of fEventIDList");
+  }
+  if(EventID < 0) fLogger -> Fatal(MESSAGE_ORIGIN, "EventID < 0");
   
   if (fRawEvent == NULL)
     {
-      fRawEvent = fDecoder -> GetRawEvent(fEventID);
+      fRawEvent = fDecoder -> GetRawEvent(EventID);
       *fRawEventData = *fRawEvent;
     }
 
@@ -273,9 +284,9 @@ STDecoderTask::Exec(Option_t *opt)
     
   if (fIsEmbedding)
     {
-      if( (fEventID % fChain->GetEntries()) < fChain->GetEntries())
+      if( (EventID % fChain->GetEntries()) < fChain->GetEntries())
 	{
-	  int fMCEventID = fEventID % fChain -> GetEntries();
+	  int fMCEventID = EventID % fChain -> GetEntries();
 	  fChain -> GetEntry(fMCEventID);
 	  fRawEventMC = (STRawEvent *) fEventArray -> At(0);
 	}

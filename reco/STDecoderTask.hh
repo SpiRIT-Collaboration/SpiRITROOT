@@ -106,10 +106,13 @@ class STDecoderTask : public FairTask {
     /// Read event for STSource
     Int_t ReadEvent(Int_t eventID);
 
+    void SetEventList(const std::vector<int>& eventlist);
+    void ClearEventList();
+
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
 
-    STCore *fDecoder;                   ///< STConverter pointer
+    STCore *fDecoder;         ///< STConverter pointer
 
     vector<TString> fDataList[12];      ///< Raw data file list
     TString fMetaData[12];              ///< Meta data files
@@ -153,6 +156,8 @@ class STDecoderTask : public FairTask {
 
     Long64_t fEventIDLast;              ///< Last event ID 
     Long64_t fEventID;                  ///< Event ID for STSource
+    std::vector<int> fEventIDList;      ///< List of events to be ran
+
 
   ClassDef(STDecoderTask, 1);
 };
