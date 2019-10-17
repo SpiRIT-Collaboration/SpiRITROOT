@@ -162,7 +162,7 @@ STPadResponseTask::Exec(Option_t* option)
         Double_t x1 = jRow*fPadSizeRow - fXPadPlane/2;     // pad x-range lower edge
         Double_t x2 = (jRow+1)*fPadSizeRow - fXPadPlane/2; // pad x-range higth edge
 
-	Double_t sigma = 3.14;
+	Double_t sigma = 3.4;
 	Double_t x1_p = (x1-xEl)/(sqrt(2)*sigma);
 	Double_t x2_p = (x2-xEl)/(sqrt(2)*sigma);
 

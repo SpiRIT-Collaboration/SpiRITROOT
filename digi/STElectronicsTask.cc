@@ -90,12 +90,14 @@ STElectronicsTask::Init()
   Double_t pulserConstant = fADCConstant*(fADCMaxUseable-fPedestalMean)/(fADCDynamicRange*coulombToEV);
   for(Int_t i=0; i<200; i++)
     fPulser[fNBinPulser++] = pulserConstant * stpulse -> Pulse(i, 1, 0);
+  delete stpulse;
 
   fNBinSaturatedPulse=0;
   STPulse *satpulse = new STPulse(fSaturatedPulseFileName);
   Int_t ADCdynamicrange = fPedestalSubtracted ? fADCMaxUseable-fPedestalMean : fADCMaxUseable;
   for(Int_t i=0; i<256; i++)
     fSaturatedPulse[fNBinSaturatedPulse++] = satpulse -> Pulse(i, ADCdynamicrange, 0);
+  delete satpulse;
 
   fRawEvent = new ((*fRawEventArray)[0]) STRawEvent();
 
@@ -167,27 +169,44 @@ STElectronicsTask::Exec(Option_t* option)
     }
 
     // handling the saturation.
+    bool is_sat = false;
+    Int_t satTB=-1;
+
     if(fUseSaturationTemplate){
       if(fKillAfterSaturation){
 
-	Int_t satTB=-1;
 	if(adcO[0]>satThreshold&&adcO[1]>satThreshold)
 	  satTB=0;
 
 	Int_t currentADC, previousADC, nextADC;
+        Int_t raising_edge_pulse = 0;
 	for(Int_t iTB=1; iTB<fNTBs-1; iTB++){
+          if(adcO[iTB] < 100) raising_edge_pulse = iTB;
 	  currentADC=adcO[iTB];
 	  previousADC=adcO[iTB-1];
 	  nextADC=adcO[iTB+1];
 
+          // looking for the raisinig edge to embed a saturated pulse
+          // Two criteria: If there are no pulse in front of the sat pulse, we subsitute the pulse with the raising edge of the saturated pulse at time bucket when adc channel < 100
+          // Second: If there is a pulse infront, it will subsitute at the trough between the two pulses
+          if(currentADC < 100) raising_edge_pulse = iTB;
+          else if(nextADC < currentADC && currentADC < previousADC) raising_edge_pulse = iTB;
+
 	  if(previousADC<=satThreshold && currentADC>satThreshold && nextADC>satThreshold){
-	    satTB=iTB;
+	    satTB=raising_edge_pulse+1;
 	    break;		// search first saturation point.
 	  }
 	}
 
 	if(satTB!=-1){	// found saturation.
-	  Int_t tempIndex=51;	// saturation moment of the template.
+          is_sat = true;
+	  Int_t tempIndex;	// saturation moment of the template.
+          // embed the pulse index according to the pulse height at saturation
+          double sat_height = adcO[satTB];
+          if(sat_height < 94) tempIndex = 48;
+          else if(sat_height < 555) tempIndex = 49;
+          else if(sat_height < 1890) tempIndex = 50;
+          else tempIndex = 51;
 	  while( satTB<fNTBs && tempIndex<fNBinSaturatedPulse )
 	    adcO[satTB++] = fSaturatedPulse[tempIndex++];
 	  while(satTB<fNTBs)
@@ -224,6 +243,11 @@ STElectronicsTask::Exec(Option_t* option)
       adcO[iTB] += gRandom -> Gaus(0,fPedestalSigma);
 
       padO -> SetADC(iTB,adcO[iTB]*gainI);
+    }
+    if(is_sat)
+    {
+      padO -> SetIsSaturated(is_sat);
+      padO -> SetSaturatedTb(satTB);
     }
     fRawEvent -> SetPad(padO);
     delete padO;
