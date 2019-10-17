@@ -13,7 +13,7 @@
  *   @ name : Name of simulation. Should be same with MC simulation.
  */
 
-void run_digi(TString name = "protons_75_events")
+void run_digi(TString name = "protons_75_events", double beamrate=-1, TString ParFile = "ST.parameters.par")
 {
   gRandom -> SetSeed(0);
 
@@ -25,20 +25,20 @@ void run_digi(TString name = "protons_75_events")
   // -----------------------------------------------------------------
   // Set space charge task
   // uncomment the following to enable space charge
-  // STSpaceChargeTask *fSpaceChargeTask = new STSpaceChargeTask();
-  // auto fField = new STFieldMap("samurai_field_map","A");
-  // fField -> SetPosition(0., -20.43, 58.);
-  // fSpaceChargeTask -> SetBField(fField);
-  // fSpaceChargeTask -> SetPersistence(false);
-  // fSpaceChargeTask -> SetVerbose(false);
-  // fSpaceChargeTask -> SetProjectile(STSpaceCharge::Projectile::Sn132);
-  // fSpaceChargeTask -> SetSheetChargeDensity(4e-8); // sheet charge density for run 2899
-  //fRun -> AddTask(fSpaceChargeTask);
+  STSpaceChargeTask *fSpaceChargeTask = new STSpaceChargeTask();
+  auto fField = new STFieldMap("samurai_field_map","A");
+  fField -> SetPosition(0., -20.43, 58.);
+  fSpaceChargeTask -> SetBField(fField);
+  fSpaceChargeTask -> SetPersistence(false);
+  fSpaceChargeTask -> SetVerbose(false);
+  fSpaceChargeTask -> SetProjectile(STSpaceCharge::Projectile::Sn132);
+  fSpaceChargeTask -> SetSheetChargeDensity(beamrate); // sheet charge density for run 2899
+  if(beamrate >= 0) fRun -> AddTask(fSpaceChargeTask);
 
 
   // Set digitization tasks
   STDriftTask* fDriftTask = new STDriftTask(); 
-  fDriftTask -> SetPersistence(true);
+  fDriftTask -> SetPersistence(false);
   fDriftTask -> SetSplineInterpolation(false);
   fDriftTask -> SetVerbose(false);  
   fRun -> AddTask(fDriftTask);
@@ -54,6 +54,7 @@ void run_digi(TString name = "protons_75_events")
   fElectronicsTask -> SetPersistence(true);
   fElectronicsTask -> SetADCConstant(1.);
   fElectronicsTask -> SetGainMatchingData(workDir + "/parameters/RelativeGain.list");
+  //fElectronicsTask -> SetPulseData("pulser_117ns_50tb.dat");
   fRun -> AddTask(fElectronicsTask);
 
 
@@ -75,7 +76,7 @@ void run_digi(TString name = "protons_75_events")
   TString outputFile  = dataDir + name + ".digi.root"; 
   TString mcParFile   = dataDir + name + ".params.root";
   TString loggerFile  = dataDir + "log_" + name + ".digi.txt";
-  TString digiParFile = workDir + "/parameters/ST.parameters.par";
+  TString digiParFile = workDir + "/parameters/" + ParFile;
 
 
   // -----------------------------------------------------------------
