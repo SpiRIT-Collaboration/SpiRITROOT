@@ -51,6 +51,7 @@ Double_t STDigiPar::GetGCLinear()                    { return fGCLinear; }
 Double_t STDigiPar::GetGCQuadratic()                 { return fGCQuadratic; }
 Bool_t   STDigiPar::IsEmbed()                        { return fIsEmbed; }
 Double_t STDigiPar::GetYDriftOffset()                { return fYDriftOffset; }
+Double_t STDigiPar::GetTotalADCWhenSat()               { return fTotalADCWhenSat; }
 
 void     STDigiPar::SetIsEmbed(Bool_t val)               { fIsEmbed = val; }
 
@@ -191,6 +192,10 @@ STDigiPar::getParams(FairParamList *paramList)
     if (!(paramList -> fill("YDriftOffset", &fYDriftOffset))) {
       fLogger -> Info(MESSAGE_ORIGIN, "YDriftOffset not found. It will be set to zero.");
       fYDriftOffset = 0;
+    }
+    if (!(paramList -> fill("TotalADCWhenSat", &fTotalADCWhenSat))) {
+      fLogger -> Info(MESSAGE_ORIGIN, "TotalADCWhenSat not found. It will be set to -1 (Neg. values disable this saturation mode)");
+      fTotalADCWhenSat = -1;
     }
 
     fInitialized = kTRUE;
