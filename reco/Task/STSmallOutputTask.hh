@@ -26,6 +26,7 @@ struct STData : public TObject
     vaMultiplicity = 0;
     tpcVertex.SetXYZ(0,0,0);
     bdcVertex.SetXYZ(0,0,0);
+    embedMom.SetXYZ(0,0,0);
     
     recoMom.clear();
     recoPosPOCA.clear();
@@ -46,8 +47,6 @@ struct STData : public TObject
     vaCharge.clear();
     vaEmbedTag.clear();
     vadedx.clear();
-
-    embedMom.clear();
 
     for(int i = 0; i < ntracks; ++i)
     {
@@ -71,7 +70,6 @@ struct STData : public TObject
       vaEmbedTag.push_back(false);
       vadedx.push_back(0);
 
-      embedMom.emplace_back(0,0,0);
     }
   }
 
@@ -108,7 +106,7 @@ struct STData : public TObject
   std::vector<bool> vaEmbedTag;  
   std::vector<double> vadedx;  
 
-  std::vector<TVector3> embedMom;
+  TVector3 embedMom;
   ClassDef(STData, 1);
 };
 

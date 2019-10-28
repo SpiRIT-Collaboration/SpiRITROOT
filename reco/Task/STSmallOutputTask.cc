@@ -132,13 +132,13 @@ void STSmallOutputTask::Exec(Option_t* option)
       for(int ii = 0; ii < fSTEmbedTrack->GetEntries(); ++ii)
       {
         auto embed_track = static_cast<STEmbedTrack*>(fSTEmbedTrack->At(ii));
+        fData.embedMom = embed_track->GetInitialMom()*1000;
         for(auto track : *embed_track->GetRecoTrackArray())
         {
           // given that RecoID and VA ID are aligned, the two IsEmbed array should always be identical
           auto embed_id = track->GetRecoID();
           fData.recoEmbedTag[embed_id] = true;
           fData.vaEmbedTag[embed_id] = true;
-          fData.embedMom[embed_id] = embed_track->GetInitialMom()*1000;
         }
       }
     fSmallTree_->Fill();
