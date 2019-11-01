@@ -50,10 +50,10 @@ void run_reco_mc
   run -> GetRuntimeDb() -> setSecondInput(parReader);
 
   auto preview = new STEventPreviewTask();
-  preview -> SetPersistence(true);
+  preview -> SetPersistence(false);
 
   auto psa = new STPSAETask();
-  psa -> SetPersistence(true);
+  psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
   psa -> SetPulserData("pulser_117ns_50tb.dat");
@@ -62,10 +62,11 @@ void run_reco_mc
   psa -> SetYOffsets(spiritroot + "parameters/yOffsetCalibration.dat");
   
   auto helix = new STHelixTrackingTask();
-  helix -> SetPersistence(true);
+  helix -> SetPersistence(false);
   helix -> SetClusterPersistence(true);
-  helix -> SetClusterCutLRTB(420, -420, -64, -522);
-  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(60, 50, 110), 5); // current use
+  double YPedestalOffset = 21.88;
+  helix -> SetClusterCutLRTB(420, -420, -64+YPedestalOffset, -522+YPedestalOffset);
+  helix -> SetEllipsoidCut(TVector3(0, -260+YPedestalOffset, -11.9084), TVector3(120, 100, 220), 5); // current us
   
 
   auto correct = new STCorrectionTask(); //Correct for saturation   
@@ -73,7 +74,7 @@ void run_reco_mc
   auto spaceCharge = new STSpaceChargeCorrectionTask();
   auto gfBField = STGFBField::GetInstance("samurai_field_map", "A", -0.1794, -20.5502, 58.0526);   
   spaceCharge -> SetBField(gfBField -> GetFieldMap());
-  spaceCharge -> SetSheetChargeDensity(4e-8);
+  spaceCharge -> SetSheetChargeDensity(3.5e-8);
   spaceCharge -> SetProjectile(STSpaceCharge::Projectile::Sn132);
   spaceCharge -> SetElectronDrift(true); 
   
@@ -82,7 +83,7 @@ void run_reco_mc
 
   auto genfitVA = new STGenfitVATask();
   genfitVA -> SetPersistence(true);
-  genfitVA -> SetFixedVertex(0.,-213.3,-13.2);
+  genfitVA -> SetFixedVertex(0.,-203.3,-13.2);
   genfitVA -> SetUseRave(true);
   genfitVA -> SetFieldOffset(-0.1794, -20.5502, 58.0526); 
   

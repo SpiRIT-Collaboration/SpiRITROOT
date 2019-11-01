@@ -90,10 +90,13 @@ STGenfitVATask::Init()
   if (fUseRave)
     fVertexFactory = ((STGenfitPIDTask *) FairRunAna::Instance() -> GetTask("GENFIT Task")) -> GetVertexFactoryInstance();
 
-  if (!fBeamFilename.IsNull()) {
+  if (!fBeamFilename.IsNull() || (fFixedVertexX != -9999 && fFixedVertexY != -9999 && fFixedVertexZ != -9999)) {
     fBDCVertexArray = new TClonesArray("STVertex");
     fRootManager -> Register("BDCVertex", "SpiRIT", fBDCVertexArray, kTRUE);
+  }
 
+  if (!fBeamFilename.IsNull())
+  {
     fBeamFile = new TFile(fBeamFilename);
     fBeamTree = (TTree *) fBeamFile -> Get("TBeam");
     fBeamTree -> SetBranchAddress("z", &fZ);
@@ -132,7 +135,7 @@ void STGenfitVATask::Exec(Option_t *opt)
   fCandListArray -> Clear("C");
   fVATrackArray -> Clear("C");
   fVAVertexArray -> Clear("C");
-  if (!fBeamFilename.IsNull())
+  if (!fBeamFilename.IsNull() || (fFixedVertexX != -9999 && fFixedVertexY != -9999 && fFixedVertexZ != -9999))
     fBDCVertexArray -> Clear("C");
 
   if (fEventHeader -> IsBadEvent())
@@ -223,6 +226,19 @@ void STGenfitVATask::Exec(Option_t *opt)
     vertexPos = TVector3(fFixedVertexX, fFixedVertexY, fFixedVertexZ);
     fBeamInfo -> fProjX = fFixedVertexX;
     fBeamInfo -> fProjY = fFixedVertexY;
+
+    auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
+    bdcVertex -> SetIsGoodBDC();
+    bdcVertex -> SetPos(vertexPos);
+
+    if (vertex -> IsTargetVertex()) {
+      LOG(INFO) << Space() << "STGenfitVATask " << "Target event probable with Fixed BDC!" << FairLogger::endl;
+      bdcVertex -> SetIsTargetVertex();
+    } else {
+      LOG(INFO) << Space() << "STGenfitVATask " << "Off-target event probable with Fixed BDC!" << FairLogger::endl;
+      bdcVertex -> SetIsCollisionVertex();
+    }
+
   }
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();
