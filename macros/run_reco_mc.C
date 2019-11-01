@@ -79,6 +79,10 @@ void run_reco_mc
   spaceCharge -> SetElectronDrift(true); 
   
   auto genfitPID = new STGenfitPIDTask();
+  genfitPID -> SetFieldOffset(-0.1794, -20.5502, 58.0526); //unit: cm, which comes from Jon's measurement. It means the position of magnetic field in the TPC frame.
+  genfitPID -> SetTargetPlane(0,-213.3,-13.2); // unit: mm, in the TPC frame. here the z position is used when Genfit do the extrapolation.
+  genfitPID -> SetPersistence(true);
+  genfitPID -> SetBDCFile("");
   genfitPID -> SetPersistence(true);
 
   auto genfitVA = new STGenfitVATask();
