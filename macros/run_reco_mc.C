@@ -7,7 +7,9 @@ void run_reco_mc
   Int_t fNumEventsInSplit = 10000,
   Double_t fPSAThreshold = 30,
   TString fParameterFile = "ST.parameters.fullmc.par",
-  TString fPathToData = ""
+  TString fPathToData = "",
+  TString fMCFile = "",
+  TString fOutName = ""
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -15,7 +17,6 @@ void run_reco_mc
   if (start + fNumEventsInSplit > fNumEventsInRun)
     fNumEventsInSplit = fNumEventsInRun - start;
 
-  TString sRunNo   = TString::Itoa(fRunNo, 10);
   TString sSplitNo = TString::Itoa(fSplitNo, 10);
 
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
@@ -27,12 +28,15 @@ void run_reco_mc
     vfile >> version;
     vfile.close();
   }
+
+  if(fOutName.IsNull()) fOutName = fName;
+
   TString par = spiritroot+"parameters/"+fParameterFile;
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root";
   TString in1 = fPathToData+fName+".digi.root"; 
   TString in2 = fPathToData+fName+".mc.root"; 
-  TString out = fPathToData+fName+"_s"+sSplitNo+".reco."+version+".root";
-  TString log = fPathToData+fName+"_s"+sSplitNo+"."+version+".log";
+  TString out = fPathToData+fOutName+"_s"+sSplitNo+".reco."+version+".root";
+  TString log = fPathToData+fOutName+"_s"+sSplitNo+"."+version+".log";
 
   FairLogger *logger = FairLogger::GetLogger();
   logger -> SetLogToScreen(true);
@@ -49,11 +53,15 @@ void run_reco_mc
   run -> SetOutputFile(out);
   run -> GetRuntimeDb() -> setSecondInput(parReader);
 
+  auto embedTask = new STEmbedTask();
+  embedTask -> SetEventID(start);
+  embedTask -> SetEmbedFile(fMCFile);
+
   auto preview = new STEventPreviewTask();
-  preview -> SetPersistence(true);
+  preview -> SetPersistence(false);
 
   auto psa = new STPSAETask();
-  psa -> SetPersistence(true);
+  psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
   psa -> SetLayerCut(-1, 112);
   psa -> SetPulserData("pulser_117ns_50tb.dat");
@@ -62,11 +70,11 @@ void run_reco_mc
   psa -> SetYOffsets(spiritroot + "parameters/yOffsetCalibration.dat");
   
   auto helix = new STHelixTrackingTask();
-  helix -> SetPersistence(true);
+  helix -> SetPersistence(false);
   helix -> SetClusterPersistence(true);
-  helix -> SetClusterCutLRTB(420, -420, -64, -522);
-  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(60, 50, 110), 5); // current use
-  
+  double YPedestalOffset = 21.88;
+  helix -> SetClusterCutLRTB(420, -420, -64+YPedestalOffset, -522+YPedestalOffset);
+  helix -> SetEllipsoidCut(TVector3(0, -260+YPedestalOffset, -11.9084), TVector3(120, 100, 220), 5); // current us
 
   auto correct = new STCorrectionTask(); //Correct for saturation   
 
@@ -78,16 +86,28 @@ void run_reco_mc
   spaceCharge -> SetElectronDrift(true); 
   
   auto genfitPID = new STGenfitPIDTask();
+  genfitPID -> SetFieldOffset(-0.1794, -20.5502, 58.0526); //unit: cm, which comes from Jon's measurement. It means the position of magnetic field in the TPC frame.
+  genfitPID -> SetTargetPlane(0,-203.3,-13.2); // unit: mm, in the TPC frame. here the z position is used when Genfit do the extrapolation.
+  genfitPID -> SetPersistence(true);
+  genfitPID -> SetBDCFile("");
   genfitPID -> SetPersistence(true);
 
   auto genfitVA = new STGenfitVATask();
   genfitVA -> SetPersistence(true);
-  genfitVA -> SetFixedVertex(0.,-213.3,-13.2);
+  genfitVA -> SetFixedVertex(0.,-203.3,-13.2);
   genfitVA -> SetUseRave(true);
   genfitVA -> SetFieldOffset(-0.1794, -20.5502, 58.0526); 
-  
+
+  auto embedCorr = new STEmbedCorrelatorTask();
+  embedCorr -> SetPersistence(true);
+  TString out2 = fPathToData+fOutName+"_s"+sSplitNo+".reco."+version+".conc.root";
+  auto smallOutput = new STSmallOutputTask();
+  smallOutput -> SetOutputFile(out2.Data());
+
   auto mctruth = new STMCTruthTask(true);
 
+  if(!fMCFile.IsNull())
+    run -> AddTask(embedTask);
   run -> AddTask(preview);
   run -> AddTask(psa);
   run -> AddTask(helix);
@@ -95,6 +115,9 @@ void run_reco_mc
   run -> AddTask(spaceCharge);
   run -> AddTask(genfitPID);
   run -> AddTask(genfitVA);
+  if(!fMCFile.IsNull())
+    run -> AddTask(embedCorr);
+  run -> AddTask(smallOutput);
   run -> AddTask(mctruth);
 
   auto outFile = FairRootManager::Instance() -> GetOutFile();
@@ -107,19 +130,19 @@ void run_reco_mc
 
   run -> Init();
 
-  auto index = 1;
-  while (kTRUE) {
-    auto copyLine = in1;
-    auto path = copyLine.ReplaceAll("digi", Form("digi_%d", index++));
-    cout << path << endl;
+  //auto index = 1;
+  //while (kTRUE) {
+  //  auto copyLine = in1;
+  //  auto path = copyLine.ReplaceAll("digi", Form("digi_%d", index++));
+  //  cout << path << endl;
 
-    if (!(gSystem -> IsFileInIncludePath(path)))
-      break;
+  //  if (!(gSystem -> IsFileInIncludePath(path)))
+  //    break;
 
-    inputFile -> GetInChain() -> AddFile(path);
-  }
+  //  inputFile -> GetInChain() -> AddFile(path);
+  //}
 
-  run -> Run(0, fNumEventsInSplit);
+  //run -> Run(0, fNumEventsInSplit);
   //run -> Run(0, 2);
 
   cout << "Log    : " << log << endl;

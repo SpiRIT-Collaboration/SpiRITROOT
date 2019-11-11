@@ -51,15 +51,10 @@ STDecoderTask::STDecoderTask()
   fEndTb = -1;
 
   fIsPersistence = kFALSE;
-  fIsEmbedding = kFALSE;
-  fEmbedFile = "";
   
   fPar = NULL;
-  fEmbedTrackArray = new TClonesArray("STMCTrack");
   fRawEventArray = new TClonesArray("STRawEvent");
-  fRawEmbedEventArray = new TClonesArray("STRawEvent");
   fRawDataEventArray = new TClonesArray("STRawEvent");
-  fRawEventMC = NULL;
   fRawEventData = new STRawEvent();
   fRawEvent = NULL;
   fChain = NULL;
@@ -88,10 +83,8 @@ void STDecoderTask::SetGainMatchingData(TString filename)                       
 void STDecoderTask::SetTbRange(Int_t startTb, Int_t endTb)                                    { fStartTb = startTb; fEndTb = endTb; }
 void STDecoderTask::SetUseSeparatedData(Bool_t value)                                         { fIsSeparatedData = value; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
-void STDecoderTask::SetEmbedding(Bool_t value)                                                { fIsEmbedding = value; }
 void STDecoderTask::SetEventList(const std::vector<int>& eventlist)                           { fEventIDList = eventlist; }
 void STDecoderTask::ClearEventList()                                                          { fEventIDList.clear(); }
-void STDecoderTask::SetEmbedFile(TString filename)                                            { fEmbedFile = filename; }
 void STDecoderTask::SetDataList(TString list)
 {
   std::ifstream listFile(list.Data());
@@ -118,41 +111,6 @@ STDecoderTask::Init()
 
     return kERROR;
   }
-
-  //Check if embedding is turned on
-  if (!fEmbedFile.EqualTo(""))
-    {
-      /*std::ifstream infile(fEmbedFile.Data());
-      if(!infile.good())
-       {
-         std::cout << "== [STDecoderTask] Embed file does not Exist!" << std::endl;
-         return kERROR;
-       }*/
-
-      std::cout << "== [STDecoderTask] Setting up embed mode" << std::endl;
-      fChain = new TChain("cbmsim");
-      fChain -> Add(fEmbedFile);
-      if(fChain -> GetListOfFiles() -> GetEntries() == 0)
-      {
-         std::cout << "== [STDecoderTask] Embed file does not Exist!" << std::endl;
-         return kERROR;
-       }
-
-      fChain -> SetBranchAddress("STRawEvent", &fEventArray);
-      fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
-
-      ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
-      ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
-      ioMan -> Register("STMCTrack", "SPiRIT", fEmbedTrackArray, fIsPersistence);
-      fPar -> SetIsEmbed(kTRUE);
-      fIsEmbedding = kTRUE;
-    }
-  else
-    {
-      fPar -> SetIsEmbed(kFALSE);
-      fIsEmbedding = kFALSE;
-      std::cout << "== [STDecoderTask] Embedding mode DISABLED" << std::endl; 
-    }
 
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
   
@@ -262,9 +220,7 @@ STDecoderTask::Exec(Option_t *opt)
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStart("DecoderTask");
 #endif
-  fEmbedTrackArray -> Delete();
   fRawEventArray -> Delete();
-  fRawEmbedEventArray -> Delete();
   fRawDataEventArray -> Delete();
   int EventID = fEventID;
   if(fEventIDList.size() > 0) 
@@ -282,52 +238,10 @@ STDecoderTask::Exec(Option_t *opt)
 
   CheckSaturation(fRawEvent);
     
-  if (fIsEmbedding)
-    {
-      if( (EventID % fChain->GetEntries()) < fChain->GetEntries())
-	{
-	  int fMCEventID = EventID % fChain -> GetEntries();
-	  fChain -> GetEntry(fMCEventID);
-	  fRawEventMC = (STRawEvent *) fEventArray -> At(0);
-	}
-
-      if(fRawEventMC != NULL)
-	{
-	  Int_t numPads = fRawEvent -> GetNumPads();
-	  Int_t numPadsMC = fRawEventMC -> GetNumPads();  
-	  
-	  for (Int_t iPad = 0; iPad < numPads; iPad++) {
-	    STPad *pad = fRawEvent -> GetPad(iPad);
-	    Double_t *adc = pad -> GetADC();
-	    Int_t maxTb = fPar -> GetNumTbs();
-	    if(pad -> IsSaturated())
-	      maxTb = pad -> GetSaturatedTbMC();// only embed MC up to just before saturation point
-	    
-	    for (Int_t iPadMC = 0; iPadMC < numPadsMC; iPadMC++){
-	      STPad *padMC = fRawEventMC -> GetPad(iPadMC);
-	      Double_t *adcMC = padMC -> GetADC();
-	      
-	      if ((padMC -> GetRow() == pad -> GetRow()) &&
-		  (padMC -> GetLayer() == pad -> GetLayer()))
-		{
-		  for (Int_t iTb = 0; iTb < maxTb; iTb++)
-		    {
-		      pad -> SetADC(iTb, adc[iTb]+adcMC[iTb]);
-		      
-		    }
-		}
-	    }
-	  }
-	}
-    }
-  
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
   new ((*fRawDataEventArray)[0]) STRawEvent(fRawEventData);
-  if(fRawEventMC != NULL)
-    new ((*fRawEmbedEventArray)[0]) STRawEvent(fRawEventMC);
 
   fRawEvent = NULL;
-  fRawEventMC = NULL;
   fEventID++;
 
 #ifdef TASKTIMER

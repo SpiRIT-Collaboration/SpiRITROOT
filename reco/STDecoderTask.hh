@@ -84,11 +84,6 @@ class STDecoderTask : public FairTask {
 
     /// If set, decoded raw data is written in ROOT file with STRawEvent class.
     void SetPersistence(Bool_t value = kTRUE);
-    // If set, events are embedded from MC sample
-    void SetEmbedding(Bool_t value = kTRUE);
-    
-    // MC file for embedding
-    void SetEmbedFile(TString filename);
   
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
@@ -99,8 +94,6 @@ class STDecoderTask : public FairTask {
     /// Finishing the event.
     virtual void FinishEvent();
 
-    // Embed montecarlo events
-  //    STRawEvent* Embedding(TString datafile, Int_t eventId);
     
   
     /// Read event for STSource
@@ -136,19 +129,14 @@ class STDecoderTask : public FairTask {
     Int_t fNumTbs;                      ///< The number of time buckets
 
     Bool_t fIsPersistence;              ///< Persistence check variable
-    Bool_t fIsEmbedding;                ///< Enabling embedding
-    TString fEmbedFile;                 ///< MC file for embedding
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TChain *fChain;
     TClonesArray *fEventArray;
 
-    TClonesArray *fEmbedTrackArray;     ///< STRecoTrack embed track exact info
     TClonesArray *fRawEventArray;       ///< STRawEvent container embeded + data
-    TClonesArray *fRawEmbedEventArray;  ///< STRawEvent container of embeded event
     TClonesArray *fRawDataEventArray;   ///< STRawEvent container just data
     STRawEvent *fRawEvent;              ///< Current raw event for data + MC
-    STRawEvent *fRawEventMC;            ///< Current raw event for MC run  
     STRawEvent *fRawEventData;          ///< Current raw event for just data
   
     Bool_t fOldData;                    ///< Set to decode old data
