@@ -119,8 +119,12 @@ STSimulateBeamTask::Exec(Option_t* option)
     {
       double prob = fDeadOnBeamProb -> GetBinContent(layer + 1, row + 1); // has to add 1 because bin starts from 1
       if(prob > gRandom->Uniform(0,1)) 
+      {
+        padI -> SetIsSaturated(true);
+        padI -> SetSaturatedTb(0);
         for(Int_t iTB=0; iTB<fNTBs; iTB++)
           adcI[iTB] = 0; // the entire pad is reset if it is dead
+      }
     }
 
 

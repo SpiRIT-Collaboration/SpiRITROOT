@@ -69,6 +69,12 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
   //fElectronicsTask -> SetPulseData("pulser_117ns_50tb.dat");
   fRun -> AddTask(fElectronicsTask);
 
+  STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
+  fElectronicsTask -> SetPersistence(true);
+  fElectronicsTask -> SetADCConstant(1.);
+  fElectronicsTask -> SetGainMatchingData(workDir + "/parameters/RelativeGain.list");
+  fRun -> AddTask(fElectronicsTask);
+
 
   //////////////////////////////////////////////////////////
   //                                                      //
