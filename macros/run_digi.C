@@ -50,12 +50,6 @@ void run_digi(TString name = "protons_75_events")
   fPadResponseTask -> SetElectronicsJitterFile(workDir + "/parameters/yOffsetCalibration.dat");
   fRun -> AddTask(fPadResponseTask);
 
-  STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
-  fElectronicsTask -> SetPersistence(true);
-  fElectronicsTask -> SetADCConstant(1.);
-  fElectronicsTask -> SetGainMatchingData(workDir + "/parameters/RelativeGain.list");
-  fRun -> AddTask(fElectronicsTask);
-
   /*******************************************************************************
   // This class simulates dead pads due to drift electrons from the beam
   // You don't need this if you want to do embedding
@@ -65,6 +59,12 @@ void run_digi(TString name = "protons_75_events")
   //STSimulateBeamTask* beamTask = new STSimulateBeamTask();
   //beamTask -> SetDeadPadOnBeam(workDir + "/input/ProbDeadPad.root", "Sn132");
   //fRun -> AddTask(beamTask);
+
+  STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
+  fElectronicsTask -> SetPersistence(true);
+  fElectronicsTask -> SetADCConstant(1.);
+  fElectronicsTask -> SetGainMatchingData(workDir + "/parameters/RelativeGain.list");
+  fRun -> AddTask(fElectronicsTask);
 
 
   //////////////////////////////////////////////////////////
