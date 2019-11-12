@@ -42,6 +42,7 @@ STEmbedTrack.cc
 STTrackCandidate.cc
 STEventHeader.cc
 STBeamInfo.cc
+STData.cc
 STHelixTrack.cc
 STVertex.cc
 STRecoHeader.cc
