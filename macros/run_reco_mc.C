@@ -46,18 +46,17 @@ void run_reco_mc
 
   FairFileSource *inputFile = nullptr;
   // use TCHain to search for all files
-  TChain chain("cbmsim");
-  chain.Add(in1);
-  auto fileList = chain.GetListOfFiles();
-  int nfiles = fileList->GetEntries();
-  inputFile = new FairFileSource(fileList->At(0)->GetTitle());
-  for(int i = 1; i < nfiles; ++i) 
-    inputFile->AddFile(fileList->At(i)->GetTitle());
+  inputFile = new FairFileSource(in1);
+  bool has_in2 = false;
+  {
+    TFile file(in2);
+    if(file.IsOpen()) has_in2 = true; 
+  }
+  if(has_in2) inputFile -> AddFriend(in2);
 
 
   FairRunAna* run = new FairRunAna();
   run -> SetSource(inputFile);
-  //run -> AddFriend(in2);
   run -> SetGeomFile(geo);
   run -> SetOutputFile(out);
   run -> GetRuntimeDb() -> setSecondInput(parReader);
@@ -127,7 +126,8 @@ void run_reco_mc
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
   run -> AddTask(smallOutput);
-  //run -> AddTask(mctruth);
+  //if(has_in2)
+  //  run -> AddTask(mctruth);
 
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
