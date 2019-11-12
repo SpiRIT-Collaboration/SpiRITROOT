@@ -13,7 +13,7 @@
  *   @ name : Name of simulation. Should be same with MC simulation.
  */
 
-void run_digi(TString name = "protons_75_events", double beamrate=-1, TString ParFile = "ST.parameters.par", bool simulateBeam = true)
+void run_digi(TString name = "protons_75_events", double beamrate=-1, TString ParFile = "ST.parameters.par", bool simulateBeam = false)
 {
   gRandom -> SetSeed(0);
 
