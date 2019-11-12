@@ -139,7 +139,6 @@ void run_reco_mc
 
   run -> Init();
   run -> Run(start, start + fNumEventsInSplit);
-  //run -> Run(0, 2);
 
   cout << "Log    : " << log << endl;
   cout << "Input1 : " << in1 << endl;

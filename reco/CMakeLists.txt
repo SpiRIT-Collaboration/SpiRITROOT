@@ -150,6 +150,7 @@ LinearTracking/STLinearTrackFinder2.cc
 LinearTracking/STLinearTrackFitter.cc
 
 STDecoderTask.cc
+STEmbedTask.cc
 
 STPSATask.cc
 STHitClusteringTask.cc
