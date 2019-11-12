@@ -83,7 +83,7 @@ void run_reco_experiment
   decoder -> SetDataList(raw);
   //decoder -> SetEventID(start);
   decoder -> SetTbRange(30, 257); 
-  decoder -> SetEmbedFile(fMCFile);
+  // decoder -> SetEmbedFile(fMCFile);
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
   decoder -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
   // Method to select events to reconstruct
@@ -102,6 +102,10 @@ void run_reco_experiment
   //decoder -> SetEventList(*events[fRunNo]);
   decoder -> SetEventID(start);
  
+  auto embedTask = new STEmbedTask();
+  embedTask -> SetEventID(start);
+  embedTask -> SetEmbedFile(fMCFile);
+  embedTask -> SetPersistence(false);
   
   if (fUseMeta) 
   {
@@ -189,7 +193,7 @@ void run_reco_experiment
   //genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
 //  genfitVA -> SetBeamFile("");
-  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
+  genfitVA -> SetBeamFile(Form("/mnt/home/tsangchu/SpiRITROOT_develope/SpiRITROOT/BeamInfo/beam_run%d.ridf.root", fRunNo));
 //  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn108/beam_run%d.ridf.root", fRunNo));
 //  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   genfitVA -> SetInformationForBDC(fRunNo,BDC_Xoffset,BDC_Yoffset,BDC_Zoffset);
@@ -208,6 +212,8 @@ void run_reco_experiment
   //smallOutput->SetRun(fRunNo);
     
   run -> AddTask(decoder);
+  if(!fMCFile.IsNull())
+    run -> AddTask(embedTask);
   run -> AddTask(preview);
   run -> AddTask(psa);
   run -> AddTask(helix);

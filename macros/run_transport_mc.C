@@ -143,11 +143,11 @@ void run_transport_mc
 
    
   //TString inputFile = name + ".root";
-  STTransportModelEventGenerator* fEvent = new STTransportModelEventGenerator("imqmd_sn132sn124_withPionsLowMom.root");
+  STTransportModelEventGenerator* fEvent = new STTransportModelEventGenerator("imqmd_sn132sn124_RealPionsImpMore.root");
   fEvent->RegisterHeavyIon();
   fEvent->SetStartEvent(start_evt);
   fEvent->SetPrimaryVertex(TVector3(0.,-20.33,-1.34));
-  fEvent->SetVertexXYSigma(TVector2(0.03,0.03)); // random error of BDC vertex from Jon. 
+  fEvent->SetVertexXYSigma(TVector2(0.07,0.03)); // random error of BDC vertex from Jon. 
   fEvent->SetMaxZAllowed(2);
   //fEvent->SetMaxMult(60);
 

@@ -63,9 +63,10 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
   // But if you are running a full Transport model simulation and you want the correct efficiency you need this
   ********************************************************************************/
 
-  //STSimulateBeamTask* beamTask = new STSimulateBeamTask();
-  //beamTask -> SetDeadPadOnBeam(workDir + "/input/ProbDeadPad.root", "Sn132");
-  //fRun -> AddTask(beamTask);
+  STSimulateBeamTask* beamTask = new STSimulateBeamTask();
+  beamTask -> SetDeadPadOnBeam(workDir + "/input/ProbDeadPad.root", "Sn132");
+  beamTask -> SetHeavyFragments(workDir + "/SpaceCharge/potential/_132Sn_BeamTrack.data", -203.3, 5000000, 4.3);
+  fRun -> AddTask(beamTask);
 
 
   //////////////////////////////////////////////////////////
