@@ -101,8 +101,6 @@ void run_reco_mc
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
   TString out2 = fPathToData+fOutName+"_s"+sSplitNo+".reco."+version+".conc.root";
-  auto smallOutput = new STSmallOutputTask();
-  smallOutput -> SetOutputFile(out2.Data());
 
   auto mctruth = new STMCTruthTask(true);
 
@@ -117,7 +115,6 @@ void run_reco_mc
   run -> AddTask(genfitVA);
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
-  run -> AddTask(smallOutput);
   run -> AddTask(mctruth);
 
   auto outFile = FairRootManager::Instance() -> GetOutFile();
