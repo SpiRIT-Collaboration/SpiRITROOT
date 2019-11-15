@@ -239,6 +239,11 @@ STElectronicsTask::Exec(Option_t* option)
     STPad *padO = new STPad(row, layer);
     Double_t gainI = fGainMatchingDataScale[layer];
     padO -> SetPedestalSubtracted();
+
+    // pad I saturats only if it is killed by STSimulateBeamTask
+    if(padI -> IsSaturated())
+    { is_sat = true; satTB = 0; }
+
     for(Int_t iTB=fStartTb; iTB<fEndTb; iTB++){
       adcO[iTB] += gRandom -> Gaus(0,fPedestalSigma);
 

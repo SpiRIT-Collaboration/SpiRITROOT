@@ -39,6 +39,17 @@ Int_t fSn132[fNumSn132] = {2841, 2843, 2844, 2845, 2846, 2848, 2849, 2850, 2851,
                            2988, 2989, 2990, 2991, 2992, 2993, 2997, 2999, 3000, 3002, 
                            3003, 3007, 3039};
 
+const Int_t fNumSn124 = 68;
+Int_t fSn124[fNumSn124] = {3059, 3061, 3062, 3065, 3066, 3068, 3069, 3071, 3074, 3075,
+                           3076, 3077, 3078, 3080, 3081, 3082, 3083, 3084, 3085, 3087,
+                           3088, 3089, 3090, 3091, 3092, 3093, 3094, 3095, 3097, 3098,
+                           3102, 3103, 3138, 3139, 3140, 3141, 3142, 3143, 3144, 3145,
+                           3146, 3148, 3149, 3150, 3151, 3152, 3153, 3154, 3155, 3156,
+                           3157, 3158, 3159, 3165, 3166, 3167, 3168, 3169, 3170, 3171,
+                           3172, 3177, 3179, 3180, 3181, 3182, 3183, 3184};
+
+
+
 std::map<Int_t, Int_t> fSn108Index;
 std::map<Int_t, Int_t> fSn132Index;
 
@@ -57,47 +68,52 @@ void GetVertexList() {
   double low_vz = mean - 3*sigma;
   double high_vz = mean + 3*sigma;
 
-  auto t = new TChain("dedx");
-  for(int iRun = 0; iRun < fNumSn132; iRun++)
-    {
-      TString filename = Form(path+"dedxROOT/dedxSn132-LC112-%d.root", iRun);
-      cout<<"Loading file "<<filename<<endl;
-      t -> AddFile(filename);
-    }
-
   vector<track> track_vec;
   Double_t vx,vy,vz;
   Bool_t sigma20;
   Int_t eventid,run;
-  t -> SetBranchAddress("run", &run);
-  t -> SetBranchAddress("eventid", &eventid);
-  t -> SetBranchAddress("vx",&vx);
-  t -> SetBranchAddress("vy",&vy);
-  t -> SetBranchAddress("vz",&vz);
-  t -> SetBranchAddress("sigma20",&sigma20);
 
-  for(int iEntry = 0; iEntry < 144000; iEntry++)
-  //  for(int iEntry = 0; iEntry < t->GetEntries(); iEntry++)
+  for(int iRun = 0; iRun < 60; iRun++)
     {
-      t->GetEntry(iEntry);
-      if(iEntry%100000==0)
-	printProgress((1.*iEntry)/t->GetEntries());
+      auto t = new TChain("mult");
 
-      track t_entry;
-      t_entry.run = run;
-      t_entry.event = eventid;
-      t_entry.vx = vx;
-      t_entry.vy = vy;
-      t_entry.vz = vz;
+      //TString filename = Form(path+"dedxROOT/dedxSn132-LC112-%d.root", iRun);
+      TString filename = Form("/mnt/spirit/analysis/changj/SpiRITROOT.latest.forTommy/macros/data/analysisCode-analysis-pion-Sn124/singles/multSn124-%d.root", iRun);
+      cout<<"Loading file "<<filename<<endl;
+      t -> AddFile(filename);
 
-      if( !( (vz < high_vz && vz > low_vz) && sigma20 == true) ) //vertex && beamcut
-	continue;
+      run = fSn124[iRun];
+      //t -> SetBranchAddress("run", &run);
+      t -> SetBranchAddress("eventid", &eventid);
+      t -> SetBranchAddress("vx",&vx);
+      t -> SetBranchAddress("vy",&vy);
+      t -> SetBranchAddress("vz",&vz);
+      t -> SetBranchAddress("sn124s20",&sigma20);
 
-      if(track_vec.size() == 0)
-	  track_vec.push_back(t_entry);
-      else if(eventid != track_vec.back().event)
-	track_vec.push_back(t_entry);
+      for(int iEntry = 0; iEntry < t->GetEntries(); iEntry++)
+      //  for(int iEntry = 0; iEntry < t->GetEntries(); iEntry++)
+        {
+          t->GetEntry(iEntry);
+          if(iEntry%100000==0)
+            std::cout << iEntry << " over " << t->GetEntries() << std::endl;//printProgress((1.*iEntry)/t->GetEntries());
 
+          track t_entry;
+          t_entry.run = run;
+          t_entry.event = eventid;
+          t_entry.vx = vx;
+          t_entry.vy = vy;
+          t_entry.vz = vz;
+
+          if( !( (vz < high_vz && vz > low_vz) && sigma20 == true) ) //vertex && beamcut
+            continue;
+
+          if(track_vec.size() == 0)
+              track_vec.push_back(t_entry);
+          else if(eventid != track_vec.back().event)
+            track_vec.push_back(t_entry);
+
+          if(track_vec.size() > 1e4) break;
+        }
     }
 
   //  for(int i =0 ;i<track_vec.size(); i++)
@@ -108,12 +124,12 @@ void GetVertexList() {
   outfile<<"#RunNum   EventNum    x(mm)    y(mm)    z(mm)"<<endl;
 
   TRandom3 *ran = new TRandom3(12345);
-  int num_picked = 1e1; //number of picked events
+  int num_picked = 1e4; //number of picked events
 
   if(num_picked > track_vec.size())
     {
       cout<<endl;
-      cout<<"ERROR Size of data events smaller than number of picked events you want "<<endl;
+      cout<<"ERROR Size of data events smaller than number of picked events you want " << track_vec.size() <<endl;
       return;
     }
   

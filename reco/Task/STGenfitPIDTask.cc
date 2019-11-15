@@ -278,8 +278,10 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 	numEmbedClusters++;
       
       auto pos = cluster -> GetPosition();
+
       Int_t clusRow = (pos.X() + 8*54.)/8;
       Int_t clusLayer = pos.Z()/12;
+      if(clusLayer > 111) clusLayer = 111;
       if (cluster -> IsRowCluster())
 	{
 	  numRowClusters++;

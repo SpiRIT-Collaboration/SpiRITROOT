@@ -13,7 +13,7 @@
  *   @ name : Name of simulation. Should be same with MC simulation.
  */
 
-void run_digi(TString name = "protons_75_events", double beamrate=-1, TString ParFile = "ST.parameters.par")
+void run_digi(TString name = "protons_75_events", double beamrate=-1, TString ParFile = "ST.parameters.par", bool simulateBeam = false)
 {
   gRandom -> SetSeed(0);
 
@@ -50,17 +50,22 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
   fPadResponseTask -> SetElectronicsJitterFile(workDir + "/parameters/yOffsetCalibration.dat");
   fRun -> AddTask(fPadResponseTask);
 
+  /*******************************************************************************
+  // This class simulates dead pads due to drift electrons from the beam
+  // You don't need this if you want to do embedding
+  // But if you are running a full Transport model simulation and you want the correct efficiency you need this
+  ********************************************************************************/
+
   STSimulateBeamTask* beamTask = new STSimulateBeamTask();
   beamTask -> SetDeadPadOnBeam(workDir + "/input/ProbDeadPad.root", "Sn132");
   beamTask -> SetHeavyFragments(workDir + "/SpaceCharge/potential/_132Sn_BeamTrack.data", -203.3, 5000000, 4.3);
-  fRun -> AddTask(beamTask);
+  if(simulateBeam) fRun -> AddTask(beamTask);
+
 
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
   fElectronicsTask -> SetPersistence(true);
   fElectronicsTask -> SetADCConstant(1.);
   fElectronicsTask -> SetGainMatchingData(workDir + "/parameters/RelativeGain.list");
-  //fElectronicsTask -> SetDeadPadOnBeam(workDir + "/input/ProbDeadPad.root", "Sn132");
-  //fElectronicsTask -> SetDeadPadAtBeam(workDir + "/input/ProbDeadAtBeam.root", "Sn132", 203.3);
   fRun -> AddTask(fElectronicsTask);
 
 

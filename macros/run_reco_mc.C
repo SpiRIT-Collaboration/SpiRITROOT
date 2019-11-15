@@ -46,25 +46,17 @@ void run_reco_mc
 
   FairFileSource *inputFile = nullptr;
   // use TCHain to search for all files
-  TChain chain("cbmsim"), friendChain("cbmsim");
-  chain.Add(in1);
-  friendChain.Add(in2);
-  auto fileList = chain.GetListOfFiles();
-  auto friendList = friendChain.GetListOfFiles();
-  int nfiles = fileList->GetEntries();
-  inputFile = new FairFileSource(fileList->At(0)->GetTitle());
-  inputFile->AddFriend(friendList->At(0)->GetTitle());
-  for(int i = 1; i < nfiles; ++i) 
-  { 
-    inputFile->AddFile(fileList->At(i)->GetTitle());
-    inputFile->AddFriend(friendList->At(i)->GetTitle()); 
+  inputFile = new FairFileSource(in1);
+  bool has_in2 = false;
+  {
+    TFile file(in2);
+    if(file.IsOpen()) has_in2 = true; 
   }
- 
+  if(has_in2) inputFile -> AddFriend(in2);
 
 
   FairRunAna* run = new FairRunAna();
   run -> SetSource(inputFile);
-  //run -> AddFriend(in2);
   run -> SetGeomFile(geo);
   run -> SetOutputFile(out);
   run -> GetRuntimeDb() -> setSecondInput(parReader);
@@ -91,7 +83,6 @@ void run_reco_mc
   double YPedestalOffset = 21.88;
   helix -> SetClusterCutLRTB(420, -420, -64+YPedestalOffset, -522+YPedestalOffset);
   helix -> SetEllipsoidCut(TVector3(0, -260+YPedestalOffset, -11.9084), TVector3(120, 100, 220), 5); // current us
-  
 
   auto correct = new STCorrectionTask(); //Correct for saturation   
 
@@ -117,7 +108,6 @@ void run_reco_mc
 
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
-  
   TString out2 = fPathToData+fOutName+"_s"+sSplitNo+".reco."+version+".conc.root";
   auto smallOutput = new STSmallOutputTask();
   smallOutput -> SetOutputFile(out2.Data());
@@ -137,6 +127,8 @@ void run_reco_mc
     run -> AddTask(embedCorr);
   run -> AddTask(smallOutput);
   //run -> AddTask(mctruth);
+  if(has_in2)
+    run -> AddTask(mctruth);
 
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
@@ -148,7 +140,6 @@ void run_reco_mc
 
   run -> Init();
   run -> Run(start, start + fNumEventsInSplit);
-  //run -> Run(0, 2);
 
   cout << "Log    : " << log << endl;
   cout << "Input1 : " << in1 << endl;

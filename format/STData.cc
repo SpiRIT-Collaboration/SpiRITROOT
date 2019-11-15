@@ -64,6 +64,5 @@ void STData::ResetDefaultWithLength(int ntracks)
     VAPIDLoose.push_back(0);
     VAPIDNormal.push_back(0);
     VAPIDTight.push_back(0);
-
   }
 }

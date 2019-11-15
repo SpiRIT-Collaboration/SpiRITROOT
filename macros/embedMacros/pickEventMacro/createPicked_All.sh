@@ -1,6 +1,7 @@
 #!/bin/bash
 #Add Vertex file here
-file=${VMCWORKDIR}/parameters/VertexLocation.txt
+file=VertexLocation.txt
+#${VMCWORKDIR}/parameters/VertexLocation.txt
 
 i=0
 declare -a runList
@@ -20,6 +21,7 @@ done
 
 for i in "${unique_runs[@]}"
 do
+    #cp generateMetadata.C ./picked/
     cd ./picked/
     RUN=${i} root -b -q generateMetadata.C
 done

@@ -28,10 +28,12 @@ void generateMetadata() {
   Int_t iCobo = -1;
   while (dataFileWithPath.ReadLine(listFile)) {
     if (dataFileWithPath.Contains("s."))
-      fCore -> AddData("/mnt/spirit/analysis/estee/SpiRITROOT.develop/macros/pickEventMacro/" + dataFileWithPath, iCobo);
+      fCore -> AddData(dataFileWithPath, iCobo);
+//      fCore -> AddData("/mnt/spirit/analysis/estee/SpiRITROOT.develop/macros/pickEventMacro/" + dataFileWithPath, iCobo);
     else {
       iCobo++;
-      fCore -> AddData("/mnt/spirit/analysis/estee/SpiRITROOT.develop/macros/pickEventMacro/" + dataFileWithPath, iCobo);
+      fCore -> AddData(dataFileWithPath, iCobo);
+//      fCore -> AddData("/mnt/spirit/analysis/estee/SpiRITROOT.develop/macros/pickEventMacro/" + dataFileWithPath, iCobo);
     }
   }
   

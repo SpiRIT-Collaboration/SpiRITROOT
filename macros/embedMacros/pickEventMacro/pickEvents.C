@@ -18,7 +18,8 @@ TString supplementPath = "/mnt/spirit/rawdata/misc/rawdataSupplement";
 
 TString workDir = gSystem -> Getenv("VMCWORKDIR");
 TString parameterDir = workDir + "/parameters/";
-TString eventListFile = parameterDir + "VertexLocation.txt";
+//TString eventListFile = parameterDir + "VertexLocation.txt";
+TString eventListFile = "VertexLocation.txt";
 
 //////////////////////////////////////////////////////////
 //                                                      //
