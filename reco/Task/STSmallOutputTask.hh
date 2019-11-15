@@ -11,7 +11,6 @@
 #include "STRecoTask.hh"
 #include "STEmbedTrack.hh"
 #include "STBeamInfo.hh"
-#include "STPIDAnalysis.hh"
 
 #include "TFile.h"
 #include "TTree.h"
