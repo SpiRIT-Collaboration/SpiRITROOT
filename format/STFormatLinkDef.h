@@ -4,6 +4,7 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
+
 #pragma link C++ class STMCPoint+;
 #pragma link C++ class STRawEvent+;
 #pragma link C++ class STPad+;
@@ -26,6 +27,9 @@
 #pragma link C++ class STMCRecoMatching+;
 #pragma link C++ class STBeamInfo+;
 #pragma link C++ class STData+;
+#pragma link C++ class STVectorF+;
+#pragma link C++ class STVectorI+;
+#pragma link C++ class STVectorVec3+;
 
 #pragma link C++ class STdEdxPoint+;
 #pragma link C++ class STRecoTrack+;

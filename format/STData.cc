@@ -29,13 +29,6 @@ void STData::ResetDefaultWithLength(int ntracks)
   vaEmbedTag.clear();
   vadedx.clear();
 
-  RecoPIDLoose.clear();
-  RecoPIDNormal.clear();
-  RecoPIDTight.clear();
-  VAPIDLoose.clear();
-  VAPIDNormal.clear();
-  VAPIDTight.clear();
-
   for(int i = 0; i < ntracks; ++i)
   {
     recoMom.emplace_back(0,0,0);
@@ -58,11 +51,5 @@ void STData::ResetDefaultWithLength(int ntracks)
     vaEmbedTag.push_back(false);
     vadedx.push_back(0);
 
-    RecoPIDLoose.push_back(0);
-    RecoPIDNormal.push_back(0);
-    RecoPIDTight.push_back(0);
-    VAPIDLoose.push_back(0);
-    VAPIDNormal.push_back(0);
-    VAPIDTight.push_back(0);
   }
 }

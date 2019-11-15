@@ -4,7 +4,6 @@
 #include "STSmallOutputTask.hh"
 #include "STRecoTrack.hh"
 #include "STVertex.hh"
-#include "STParticle.hh"
 #include "TError.h"
 
 ClassImp(STSmallOutputTask);
@@ -39,8 +38,6 @@ InitStatus STSmallOutputTask::Init()
     fBDCVertex =   static_cast<TClonesArray*>(fRootManager->GetObject("BDCVertex"));
     fSTVertex =    static_cast<TClonesArray*>(fRootManager->GetObject("STVertex"));
     fSTEmbedTrack = static_cast<TClonesArray*>(fRootManager->GetObject("STEmbedTrack"));
-    fSTParticle =  static_cast<TClonesArray*>(fRootManager->GetObject("STParticle"));
-    fVAParticle =  static_cast<TClonesArray*>(fRootManager->GetObject("VAParticle"));
     // BeamInfo comes from GenfitVATask
     // It won;t be filled if VA Task is absent
     fBeamInfo = static_cast<STBeamInfo*>(fRootManager->GetObject("STBeamInfo"));
@@ -94,7 +91,6 @@ void STSmallOutputTask::Exec(Option_t* option)
     // map that stores id of reco track
     // will be used to map VATracks back to STRecoTracks
     std::map<int, STRecoTrack*> RecoToVATracks;
-    std::map<int, STParticle*> RecoToVAParticle;
     if(fVATracks)
     {
       fData.vaMultiplicity = fVATracks->GetEntries();
@@ -102,16 +98,6 @@ void STSmallOutputTask::Exec(Option_t* option)
       {
         auto bdc_track = static_cast<STRecoTrack*>(fVATracks->At(ii));
         RecoToVATracks[bdc_track->GetRecoID()] = bdc_track;
-      }
-    }
-    if(fVAParticle)
-    {
-      fData.vaMultiplicity = fVATracks->GetEntries();
-      for(int ii = 0; ii < fVATracks->GetEntries(); ++ii) 
-      {
-        auto bdc_track = static_cast<STRecoTrack*>(fVATracks->At(ii));
-        auto bdc_particle = static_cast<STParticle*>(fVAParticle->At(ii));
-        RecoToVAParticle[bdc_track->GetRecoID()] = bdc_particle;
       }
     }
  
@@ -129,18 +115,9 @@ void STSmallOutputTask::Exec(Option_t* option)
       fData.recoCharge[ii] = RecoTrack->GetCharge();
       fData.recodpoca[ii] = fData.recoPosPOCA[ii] - fData.tpcVertex;
 
-      if(fSTParticle)
-      {
-        auto particle = static_cast<STParticle*>(fSTParticle -> At(ii));
-        fData.RecoPIDTight[ii] = particle -> GetPIDTight();
-        fData.RecoPIDNormal[ii] = particle -> GetPIDNorm();
-        fData.RecoPIDLoose[ii] = particle -> GetPIDLoose();
-      }
-
       // construct BDC data with identical vector range
       int reco_id = RecoTrack->GetRecoID();
       auto it_track = RecoToVATracks.find(reco_id);
-      auto it_particle = RecoToVAParticle.find(reco_id);
       // fill VA branches if data is found
       if(it_track != RecoToVATracks.end())
       {
@@ -153,14 +130,6 @@ void STSmallOutputTask::Exec(Option_t* option)
         fData.vaPosTargetPlane[ii] = VATrack->GetPosTargetPlane();
         fData.vaCharge[ii] = VATrack->GetCharge();
         fData.vadpoca[ii] = fData.vaPosPOCA[ii] - fData.tpcVertex;
-      }
-
-      if(it_particle != RecoToVAParticle.end())
-      {
-        auto particle = it_particle -> second;
-        fData.VAPIDTight[ii] = particle -> GetPIDTight();
-        fData.VAPIDNormal[ii] = particle -> GetPIDNorm();
-        fData.VAPIDLoose[ii] = particle -> GetPIDLoose();
       }
     }
 

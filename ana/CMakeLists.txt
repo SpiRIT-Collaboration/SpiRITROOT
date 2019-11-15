@@ -13,6 +13,7 @@ ${CMAKE_SOURCE_DIR}/stack
 ${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/par
 ${CMAKE_SOURCE_DIR}/global
+${CMAKE_SOURCE_DIR}/ana/MassCalculator
 #${CMAKE_SOURCE_DIR}/tool
 #${CMAKE_SOURCE_DIR}/reco
 #${CMAKE_SOURCE_DIR}/reco/GETDecoder
@@ -49,7 +50,10 @@ set(SRCS
 ST_TrackCut.cc
 ST_ClusterNum_DB.cc
 ST_ProduceDB_ClusterNum.cc
+STPIDAnalysisTask.cc
 STConcReaderTask.cc
+MassCalculator/STMassCalculator.cc
+MassCalculator/STBBFunction.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

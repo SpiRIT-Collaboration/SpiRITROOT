@@ -45,15 +45,6 @@ struct STData : public TObject
   std::vector<bool> vaEmbedTag;  
   std::vector<double> vadedx;  
 
-  std::vector<int> RecoPIDLoose;
-  std::vector<int> RecoPIDNormal;
-  std::vector<int> RecoPIDTight;
-
-  std::vector<int> VAPIDLoose;
-  std::vector<int> VAPIDNormal;
-  std::vector<int> VAPIDTight;
-
-
   TVector3 embedMom;
   ClassDef(STData, 1);
 };

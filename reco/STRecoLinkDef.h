@@ -112,9 +112,5 @@
 
 #pragma link C++ class std::vector<TVector3>+;
 #pragma link C++ class STSmallOutputTask+;
-#pragma link C++ class STPIDAnalysisTask+;
-
-#pragma link C++ class STMassCalculator+;
-#pragma link C++ class STBBFunction+;
 
 #endif

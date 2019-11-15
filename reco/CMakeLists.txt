@@ -32,7 +32,6 @@ ${CMAKE_SOURCE_DIR}/reco/Task
 ${CMAKE_SOURCE_DIR}/reco/PID
 ${CMAKE_SOURCE_DIR}/reco/BDCMagneticProjection
 ${CMAKE_SOURCE_DIR}/reco/SpaceCharge
-${CMAKE_SOURCE_DIR}/reco/MassCalculator
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -70,14 +69,10 @@ Task/STMCEventTask.cc
 Task/ST_VertexShift.cc
 Task/STSpaceChargeCorrectionTask.cc
 Task/STSmallOutputTask.cc
-Task/STPIDAnalysisTask.cc
 
 Corrections/STCorrection.cc
 
 PID/STPIDTest.cc
-MassCalculator/STMassCalculator.cc
-MassCalculator/STParticle.cc
-MassCalculator/STBBFunction.cc
 
 GETDecoder/GETDecoder.cc
 GETDecoder/GETFrameInfo.cc

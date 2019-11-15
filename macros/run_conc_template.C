@@ -20,7 +20,7 @@ void run_conc_template
 
   TString par = spiritroot+"parameters/"+fParameterFile;
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root"; 
-  TString in1 = fPathToData+fName+".conc.root"; 
+  TString in1 = fPathToData+fName+".conc*.root"; 
   TString out = fPathToData+fOutName+"_ana.root";
   TString log = fPathToData+fOutName+"_ana.log";
 
@@ -41,7 +41,12 @@ void run_conc_template
   auto reader = new STConcReaderTask();
   reader -> SetChain(&chain);
 
+  auto PIDAnalysis = new STPIDAnalysisTask();
+  PIDAnalysis -> SetBeamA(132); 
+  PIDAnalysis -> SetPersistence(true);
+
   run -> AddTask(reader);
+  run -> AddTask(PIDAnalysis);
 
   run -> Init();
   run -> Run(0, chain.GetEntries());

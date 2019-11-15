@@ -1,5 +1,6 @@
 # Create a library called "libSTFormat" which includes the source files given in the array .
 
+
 set(INCLUDE_DIRECTORIES
 ${ROOT_INCLUDE_DIR}
 ${EIGEN3_INCLUDE_DIR}
@@ -43,11 +44,11 @@ STTrackCandidate.cc
 STEventHeader.cc
 STBeamInfo.cc
 STData.cc
+STVector.cc
 STHelixTrack.cc
 STVertex.cc
 STRecoHeader.cc
 STMCRecoMatching.cc
-
 STdEdxPoint.cc
 STRecoTrack.cc
 STRecoTrackCand.cc

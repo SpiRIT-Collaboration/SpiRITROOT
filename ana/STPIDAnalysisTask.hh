@@ -1,15 +1,13 @@
 #ifndef STPIDANALYSISTASK_H
 #define STPIDANALYSISTASK_H
-#include "STMassCalculator.hh"
-#include "STRecoTrack.hh"
-#include "STVertex.hh"
-#include "STParticle.hh"
-#include "STRecoTask.hh"
-#include "STBeamInfo.hh"
+#include "FairTask.h"
 
+#include "STData.hh"
+#include "STMassCalculator.hh"
+#include "STDigiPar.hh"
 #include "TClonesArray.h"
 
-class STPIDAnalysisTask : public STRecoTask
+class STPIDAnalysisTask : public FairTask
 {
 public:
   STPIDAnalysisTask();
@@ -18,18 +16,26 @@ public:
   virtual InitStatus Init();
   virtual void Exec(Option_t* opt);
   void SetVerbose(Bool_t value = kTRUE);
+
+  void SetParContainers();
+  void SetPersistence(Bool_t value);
+
 private:
+  FairLogger *fLogger;                ///< FairLogger singleton
+
+  Bool_t fIsPersistence;              ///< Persistence check variable
+  STDigiPar *fPar;                    ///< Parameter read-out class pointer
+ 
   Bool_t fVerbose;
-  TClonesArray *fRecoTrack = nullptr;
-  TClonesArray *fVATrack = nullptr;
-  TClonesArray *fTPCVertex = nullptr;
-  TClonesArray *fBDCVertex = nullptr;
-  STBeamInfo *fBeamInfo = nullptr;
+  TClonesArray *fData = nullptr;
+  TClonesArray *fRecoPIDTight = nullptr;
+  TClonesArray *fRecoPIDLoose = nullptr;
+  TClonesArray *fRecoPIDNorm = nullptr;
+  TClonesArray *fVAPIDTight = nullptr;
+  TClonesArray *fVAPIDLoose = nullptr;
+  TClonesArray *fVAPIDNorm = nullptr;
 
-  TClonesArray *fSTParticle = nullptr;
-  TClonesArray *fVAParticle = nullptr;
 
-  void SetData(STParticle* aParticle, STRecoTrack *t_track, STVertex* t_vertex, double ProjA, double ProjB);
   STMassCalculator fMassCal;
   Double_t MassRegion[7][4] ={{ 127.2,   21.3,      4.,  4.},            //pi  
 			      { 911.044, 68.4656,   2.,  2.},            //p  685.3 to 1,165.9
