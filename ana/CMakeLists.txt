@@ -49,11 +49,7 @@ set(SRCS
 ST_TrackCut.cc
 ST_ClusterNum_DB.cc
 ST_ProduceDB_ClusterNum.cc
-#STPIDCutTask.cc
-#STConcReaderTask.cc
-#STTransformFrameTask.cc
-#STEfficiencyTask.cc
-#EfficiencyFactory.cc
+STConcReaderTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
