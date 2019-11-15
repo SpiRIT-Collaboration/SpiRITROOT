@@ -4,6 +4,7 @@
 #include "STSmallOutputTask.hh"
 #include "STRecoTrack.hh"
 #include "STVertex.hh"
+#include "STParticle.hh"
 #include "TError.h"
 
 ClassImp(STSmallOutputTask);
