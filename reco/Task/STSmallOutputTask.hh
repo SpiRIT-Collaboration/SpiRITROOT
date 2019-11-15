@@ -34,10 +34,7 @@ protected:
   TClonesArray *fSTVertex = nullptr;
   TClonesArray *fBDCVertex = nullptr;
   TClonesArray *fSTEmbedTrack = nullptr;
-  TClonesArray *fSTParticle = nullptr;
-  TClonesArray *fVAParticle = nullptr;
   STBeamInfo *fBeamInfo = nullptr;
-
   
   STData fData; //!< the class of data itself 
   std::unique_ptr<TFile> fSmallOutput_; //!< File where the tree is stored

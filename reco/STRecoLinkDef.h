@@ -51,7 +51,6 @@
 
 #pragma link C++ class STDecoderTask+;
 #pragma link C++ class STEmbedTask+;
-#pragma link C++ class STParticle+;
 
 #pragma link C++ class STPSATask+;
 #pragma link C++ class STPSA+;
