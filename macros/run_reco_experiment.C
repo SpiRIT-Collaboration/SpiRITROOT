@@ -18,8 +18,8 @@ void run_reco_experiment
   TString fPathToData = "",
   Bool_t fUseMeta = kTRUE,
   double YPedestalOffset = +21.88,  // 132Sn: +21.88, 124Sn: +21.68, 112Sn: +22.98, 108Sn: +23.28, this value will move all the STHit YPedestalOffset, after applying this offset, the PosY of reconstructed TPC vertex will at -205.5mm, same with BDC.
-  double BDC_Xoffset = -1.5,//-0.299, // 132Sn: -0.299, 124Sn: -0.609, 112Sn: -0.757, 108Sn: -0.706, this value will adjust the center of TPC vertex same with the center of BDC.
-  double BDC_Yoffset = -205.5, //this value will transfer the BDC frame to TPC frame along Y direction.
+  double BDC_Xoffset = -1.7,//-0.299, // 132Sn: -0.299, 124Sn: -0.609, 112Sn: -0.757, 108Sn: -0.706, this value will adjust the center of TPC vertex same with the center of BDC.
+  double BDC_Yoffset = -210.0, //this value will transfer the BDC frame to TPC frame along Y direction.
   double BDC_Zoffset = 0,
   double charge_density = -1, // the magnitude of charge density used in space-charge correction
   bool fUseRunInfo = false // if enabled, it will look for run-by-run information in parameters/RunInfo.dat, and charge_density value will be ignored
@@ -83,7 +83,7 @@ void run_reco_experiment
   decoder -> SetDataList(raw);
   //decoder -> SetEventID(start);
   decoder -> SetTbRange(30, 257); 
-  decoder -> SetEmbedFile(fMCFile);
+  //decoder -> SetEmbedFile(fMCFile);
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
   decoder -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
   // Method to select events to reconstruct
@@ -113,6 +113,10 @@ void run_reco_experiment
       decoder -> SetMetaData(dataFileWithPath, iCobo);
     }
   }
+
+  auto embedTask = new STEmbedTask();
+  embedTask -> SetEventID(start);
+  embedTask -> SetEmbedFile(fMCFile);
 
   auto preview = new STEventPreviewTask();
   preview -> SetSkippingEvents(fSkipEventArray);
@@ -176,7 +180,7 @@ void run_reco_experiment
 
   auto genfitPID = new STGenfitPIDTask();
   genfitPID -> SetFieldOffset(-0.1794, -20.5502, 58.0526); //unit: cm, which comes from Jon's measurement. It means the position of magnetic field in the TPC frame.
-  genfitPID -> SetTargetPlane(0,-213.3,-13.2); // unit: mm, in the TPC frame. here the z position is used when Genfit do the extrapolation.
+  genfitPID -> SetTargetPlane(0,-213.3,-13.4); // unit: mm, in the TPC frame. here the z position is used when Genfit do the extrapolation.
   genfitPID -> SetPersistence(true);
   genfitPID -> SetBDCFile("");
   //genfitPID -> SetConstantField();
@@ -198,16 +202,22 @@ void run_reco_experiment
   genfitVA -> SetFieldOffset(-0.1794, -20.5502, 58.0526); //unit: cm, which comes from Jon's measurement. It means the position of magnetic field in the TPC frame.
   genfitVA -> Set_IsOption_BDCCorrection(0); 
   genfitVA -> Set_FileName_BDCCorrection_Theta_TargetPos("./BDCShift_Correction/f1_BDCCorrection_Theta_TargetPos.root");
-  genfitVA -> SetZtoProject(-13.2, 1.7, 3); //(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple), this function will project the BDC on the Target.
+  genfitVA -> SetZtoProject(-13.4, 1.7, 3); //(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple), this function will project the BDC on the Target.
   
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
+
+  auto particleID = new STPIDAnalysisTask();
+  particleID -> SetPersistence(false);
+  particleID -> SetBeamA(132);
 
   auto smallOutput = new STSmallOutputTask();
   smallOutput->SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.conc."+version+".root").Data());
   //smallOutput->SetRun(fRunNo);
     
   run -> AddTask(decoder);
+  if(!fMCFile.IsNull())
+    run -> AddTask(embedTask);
   run -> AddTask(preview);
   run -> AddTask(psa);
   run -> AddTask(helix);
@@ -217,6 +227,7 @@ void run_reco_experiment
   run -> AddTask(genfitVA);
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
+  run -> AddTask(particleID);
   run -> AddTask(smallOutput);
   
   auto outFile = FairRootManager::Instance() -> GetOutFile();
