@@ -203,10 +203,6 @@ void run_reco_experiment
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
 
-  auto particleID = new STPIDAnalysisTask();
-  particleID -> SetPersistence(false);
-  particleID -> SetBeamA(132);
-
   auto smallOutput = new STSmallOutputTask();
   smallOutput->SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.root").Data());
   //smallOutput->SetRun(fRunNo);
@@ -223,7 +219,6 @@ void run_reco_experiment
   run -> AddTask(genfitVA);
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
-  run -> AddTask(particleID);
   run -> AddTask(smallOutput);
   
   auto outFile = FairRootManager::Instance() -> GetOutFile();
