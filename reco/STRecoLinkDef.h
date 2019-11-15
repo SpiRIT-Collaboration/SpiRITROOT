@@ -50,6 +50,8 @@
 #pragma link C++ class STGainMatching+;
 
 #pragma link C++ class STDecoderTask+;
+#pragma link C++ class STEmbedTask+;
+#pragma link C++ class STParticle+;
 
 #pragma link C++ class STPSATask+;
 #pragma link C++ class STPSA+;
@@ -109,7 +111,10 @@
 #pragma link C++ class STBDCProjection+;
 
 #pragma link C++ class std::vector<TVector3>+;
-#pragma link C++ class STData+;
 #pragma link C++ class STSmallOutputTask+;
+#pragma link C++ class STPIDAnalysisTask+;
+
+#pragma link C++ class STMassCalculator+;
+#pragma link C++ class STBBFunction+;
 
 #endif

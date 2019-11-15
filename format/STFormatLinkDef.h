@@ -25,6 +25,7 @@
 #pragma link C++ class STRecoHeader+;
 #pragma link C++ class STMCRecoMatching+;
 #pragma link C++ class STBeamInfo+;
+#pragma link C++ class STData+;
 
 #pragma link C++ class STdEdxPoint+;
 #pragma link C++ class STRecoTrack+;
