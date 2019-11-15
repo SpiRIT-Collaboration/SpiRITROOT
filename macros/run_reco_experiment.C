@@ -99,13 +99,6 @@ void run_reco_experiment
   //cout <<"Number of events " << fNumEventsInSplit << " starting at " << start <<endl;
 
   //decoder -> SetEventList(*events[fRunNo]);
-  decoder -> SetEventID(start);
- 
-  auto embedTask = new STEmbedTask();
-  embedTask -> SetEventID(start);
-  embedTask -> SetEmbedFile(fMCFile);
-  embedTask -> SetPersistence(false);
-  
   if (fUseMeta) 
   {
     std::ifstream metalistFile(metaFile.Data());
@@ -196,8 +189,8 @@ void run_reco_experiment
   //genfitVA -> SetConstantField();
   genfitVA -> SetListPersistence(true);
 //  genfitVA -> SetBeamFile("");
-  genfitVA -> SetBeamFile(Form("/mnt/home/tsangchu/SpiRITROOT_develope/SpiRITROOT/BeamInfo/beam_run%d.ridf.root", fRunNo));
-//  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn108/beam_run%d.ridf.root", fRunNo));
+//  genfitVA -> SetBeamFile(Form("/mnt/home/tsangchu/SpiRITROOT_develope/SpiRITROOT/BeamInfo/beam_run%d.ridf.root", fRunNo));
+  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
 //  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   genfitVA -> SetInformationForBDC(fRunNo,BDC_Xoffset,BDC_Yoffset,BDC_Zoffset);
   // Uncomment if you want to recalculate the vertex using refit tracks.
@@ -215,7 +208,7 @@ void run_reco_experiment
   particleID -> SetBeamA(132);
 
   auto smallOutput = new STSmallOutputTask();
-  smallOutput->SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.conc."+version+".root").Data());
+  smallOutput->SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.root").Data());
   //smallOutput->SetRun(fRunNo);
     
   run -> AddTask(decoder);
