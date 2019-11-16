@@ -9,14 +9,14 @@
 class STGFBField : public TObject, public genfit::AbsBField
 {
   public:
-    static STGFBField *GetInstance(const char* mapName, const char* fileType = "R", Double_t xOffset = 0, Double_t yOffset = -20.43, Double_t zOffset = 58);
+    static STGFBField *GetInstance(const char* mapName, const char* fileType = "A", Double_t xOffset = -0.1794, Double_t yOffset = -20.5502, Double_t zOffset = 58.0526);
 
     TVector3 get(const TVector3& pos) const;
 
     STFieldMap *GetFieldMap() { return fFieldMap; }
 
   private:
-    STGFBField(const char* mapName, const char* fileType = "R", Double_t xOffset = 0, Double_t yOffset = -20.43, Double_t zOffset = 58);
+    STGFBField(const char* mapName, const char* fileType = "A", Double_t xOffset = -0.1794, Double_t yOffset = -20.5502, Double_t zOffset = 58.0526);
     virtual ~STGFBField() {};
 
     static STGFBField *fInstance;

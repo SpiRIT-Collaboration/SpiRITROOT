@@ -80,9 +80,9 @@ class STGenfitVATask : public STRecoTask
     Double_t fFixedVertexY = -9999;
     Double_t fFixedVertexZ = -9999;
 
-    Double_t fFieldXOffset = 0;  //unit: cm
-    Double_t fFieldYOffset = -20.43;  //unit: cm
-    Double_t fFieldZOffset = 58;  //unit: cm
+    Double_t fFieldXOffset = -0.1794;  //unit: cm
+    Double_t fFieldYOffset = -20.5502; //unit: cm
+    Double_t fFieldZOffset = 58.0526;  //unit: cm
 
 public:     
     //the below is related to BDC shift.

@@ -63,14 +63,14 @@ class STGenfitPIDTask : public STRecoTask
     // Target plane position in mm.
     // Default position is set from the dimension measurement.
     Double_t fTargetX = 0;
-    Double_t fTargetY = -213.3;
-    Double_t fTargetZ = -8.9;
+    Double_t fTargetY = -205.5;
+    Double_t fTargetZ = -13.2;
 
     Double_t fMaxDCluster = 9999;
 
-    Double_t fFieldXOffset = 0;
-    Double_t fFieldYOffset = -20.43;
-    Double_t fFieldZOffset = 58;
+    Double_t fFieldXOffset = -0.1794;
+    Double_t fFieldYOffset = -20.5502;
+    Double_t fFieldZOffset = 58.0526;
 
   ClassDef(STGenfitPIDTask, 1)
 };

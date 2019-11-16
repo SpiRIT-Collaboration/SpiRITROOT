@@ -60,7 +60,7 @@ class STPSAETask : public STRecoTask
     TString fYOffsetFileName = "";
     Double_t fYPedestalOffset = 0;
     
-    Double_t fThreshold = 20;
+    Double_t fThreshold = 30;
     Int_t fLayerLowCut  = -1;
     Int_t fLayerHighCut = 112;
 
