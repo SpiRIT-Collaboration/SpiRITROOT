@@ -115,7 +115,6 @@ void run_reco_experiment_auto
   decoder -> SetDataList(fRawDataList);
   //decoder -> SetEventID(start);
   decoder -> SetTbRange(30, 257); 
-  decoder -> SetEmbedFile(fMCFile);
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
   if (fUseGainMatching)
     decoder -> SetGainMatchingData(fSpiRITROOTPath + "parameters/RelativeGain.list");
@@ -146,6 +145,10 @@ void run_reco_experiment_auto
       decoder -> SetMetaData(dataFileWithPath, iCobo);
     }
   }
+
+  auto embedTask = new STEmbedTask();
+  embedTask -> SetEventID(start);
+  embedTask -> SetEmbedFile(fMCFile);
 
   auto preview = new STEventPreviewTask();
   preview -> SetSkippingEvents(fSkipEventArray);
@@ -228,6 +231,9 @@ void run_reco_experiment_auto
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
 
+  auto smallOutput = new STSmallOutputTask();
+  smallOutput -> SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.root").Data());
+
   run -> AddTask(decoder);
   run -> AddTask(preview);
   run -> AddTask(psa);
@@ -238,6 +244,7 @@ void run_reco_experiment_auto
   run -> AddTask(genfitVA);
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
+  run -> AddTask(smallOutput);
   
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
