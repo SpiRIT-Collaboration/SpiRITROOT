@@ -34,7 +34,7 @@ public:
    ** @param name       Name of field map
    ** @param fileType   R = ROOT file, A = ASCII
    **/
-  STFieldMap(const char* mapName, const char* fileType = "R");
+  STFieldMap(const char* mapName, const char* fileType = "A");
 
 
   /** Constructor from STFieldPar **/
