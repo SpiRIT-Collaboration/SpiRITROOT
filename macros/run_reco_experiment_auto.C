@@ -48,8 +48,8 @@ void run_reco_experiment_auto
   auto fBDCOffsetY = fParamSetter -> GetBDCOffsetY();
   auto fGGRunID = fParamSetter -> GetGGRunID();
 
-  auto fIsGGDataSet = ggDataPathWithFormat.IsNull();
-  auto fIsBeamDataSet = beamDataPathWithFormat.IsNull();
+  auto fIsGGDataSet = !ggDataPathWithFormat.IsNull();
+  auto fIsBeamDataSet = !beamDataPathWithFormat.IsNull();
   TString fGGData = "";
   TString fBeamData = "";
   if (fIsGGDataSet)   fGGData = Form(ggDataPathWithFormat.Data(), fGGRunID);
