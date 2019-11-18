@@ -43,7 +43,7 @@ InitStatus STSmallOutputTask::Init()
     fBeamInfo = static_cast<STBeamInfo*>(fRootManager->GetObject("STBeamInfo"));
 
     fSmallOutput_->cd();
-    fSmallTree_ = new TTree("cbmsim", "", 99, fSmallOutput_.get());
+    fSmallTree_ = new TTree("spirit", "", 99, fSmallOutput_.get());
 
     fSmallTree_->Branch("runID", &fRunID);
     fSmallTree_->Branch("EvtData", &fData);
