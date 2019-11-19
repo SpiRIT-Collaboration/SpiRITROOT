@@ -69,7 +69,7 @@ void STSpaceChargeCorrectionTask::Exec(Option_t* option)
       else cluster -> SetX(new_x);
       
       if(new_z < 0) cluster -> SetZ(0);
-      if(new_z > TPCz) cluster -> SetZ(TPCz);
+      if(new_z >= TPCz) cluster -> SetZ(TPCz - 1);
       else cluster -> SetZ(new_z);
     }
     LOG(INFO) << Space() << "Shift Clusters for space-charge effect" << FairLogger::endl;
