@@ -28,6 +28,8 @@ public:
   virtual InitStatus Init();
   virtual void Exec(Option_t* opt);
   virtual void FinishTask();
+
+  void SetOffVerbose(Bool_t verbose = kFALSE) { fIsVerbose = verbose; }
 protected:
   TClonesArray *fSTRecoTrack = nullptr;
   TClonesArray *fVATracks = nullptr;
@@ -43,6 +45,8 @@ protected:
   int fEventID;
   int fRunID;
   int fEventType;
+
+  Bool_t fIsVerbose = kTRUE;
 
   ClassDef(STSmallOutputTask,1);
 };
