@@ -74,6 +74,8 @@ void STSmallOutputTask::Exec(Option_t* option)
       fData.projy = fBeamInfo -> fProjY;
       fData.beamEnergy = fBeamInfo -> fBeamEnergy;
       fData.beta = fBeamInfo -> fBeamVelocity;
+      fData.beamEnergyTargetPlane = fBeamInfo -> fBeamEnergyTargetPlane;
+      fData.betaTargetPlane = fBeamInfo -> fBeamVelocityTargetPlane;
     }
 
     if(fBDCVertex)
