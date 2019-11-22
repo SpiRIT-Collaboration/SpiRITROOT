@@ -2,12 +2,12 @@
 
 void STData::ResetDefaultWithLength(int ntracks)
 {
-  aoq = z = a = b = proja = projb = projx = projy = beamEnergy = beta = 0;
-  multiplicity = 0;
-  vaMultiplicity = 0;
-  tpcVertex.SetXYZ(0,0,0);
-  bdcVertex.SetXYZ(0,0,0);
-  embedMom.SetXYZ(0,0,0);
+  aoq = z = a = b = proja = projb = projx = projy = beamEnergy = beta = -9999;
+  multiplicity = -9999;
+  vaMultiplicity = -9999;
+  tpcVertex.SetXYZ(-9999,-9999,-9999);
+  bdcVertex.SetXYZ(-9999,-9999,-9999);
+  embedMom.SetXYZ(-9999,-9999,-9999);
   
   recoMom.clear();
   recoPosPOCA.clear();
@@ -31,25 +31,25 @@ void STData::ResetDefaultWithLength(int ntracks)
 
   for(int i = 0; i < ntracks; ++i)
   {
-    recoMom.emplace_back(0,0,0);
-    recoPosPOCA.emplace_back(0,0,0);
-    recoPosTargetPlane.emplace_back(0,0,0);
-    recodpoca.emplace_back(0,0,0);
-    recoNRowClusters.push_back(0);
-    recoNLayerClusters.push_back(0);
-    recoCharge.push_back(0);
+    recoMom.emplace_back(-9999,-9999,-9999);
+    recoPosPOCA.emplace_back(-9999,-9999,-9999);
+    recoPosTargetPlane.emplace_back(-9999,-9999,-9999);
+    recodpoca.emplace_back(-9999,-9999,-9999);
+    recoNRowClusters.push_back(-9999);
+    recoNLayerClusters.push_back(-9999);
+    recoCharge.push_back(-9999);
     recoEmbedTag.push_back(false);
-    recodedx.push_back(0);
+    recodedx.push_back(-9999);
 
-    vaMom.emplace_back(0,0,0);
-    vaPosPOCA.emplace_back(0,0,0);
-    vaPosTargetPlane.emplace_back(0,0,0);
-    vadpoca.emplace_back(0,0,0);
-    vaNRowClusters.push_back(0);
-    vaNLayerClusters.push_back(0);
-    vaCharge.push_back(0);
+    vaMom.emplace_back(-9999,-9999,-9999);
+    vaPosPOCA.emplace_back(-9999,-9999,-9999);
+    vaPosTargetPlane.emplace_back(-9999,-9999,-9999);
+    vadpoca.emplace_back(-9999,-9999,-9999);
+    vaNRowClusters.push_back(-9999);
+    vaNLayerClusters.push_back(-9999);
+    vaCharge.push_back(-9999);
     vaEmbedTag.push_back(false);
-    vadedx.push_back(0);
+    vadedx.push_back(-9999);
 
   }
 }
