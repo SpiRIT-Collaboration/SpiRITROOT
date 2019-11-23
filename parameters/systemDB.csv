@@ -1,5 +1,5 @@
-System,Y Pedestal,Drift Velocity,Field Offset X,Field Offset Y,Field Offset Z,Target Z,ParameterFile
-132124,26.04298343,5.54,-0.1794,-20.5502,58.0526,-13.2,ST.parameters.PhysicsRuns_Sn132_201911.par
-124112,25.84298343,5.54,-0.1794,-20.5502,58.0526,-13.2,ST.parameters.PhysicsRuns_Sn124_201911.par
-112124,27.14298343,5.48,-0.1794,-20.5502,58.0526,-13.2,ST.parameters.PhysicsRuns_Sn112_201911.par
-108112,27.44298343,5.5,-0.1794,-20.5502,58.0526,-13.2,ST.parameters.PhysicsRuns_Sn108_201911.par
+System,Drift Velocity,Field Offset X,Field Offset Y,Field Offset Z,Target Z,ParameterFile
+132124,5.54,-0.1794,-20.5502,58.0526,-13.2,ST.parameters.PhysicsRuns_Sn132_201911.par
+124112,5.54,-0.1794,-20.5502,58.0526,-13.2,ST.parameters.PhysicsRuns_Sn124_201911.par
+112124,5.48,-0.1794,-20.5502,58.0526,-13.2,ST.parameters.PhysicsRuns_Sn112_201911.par
+108112,5.5,-0.1794,-20.5502,58.0526,-13.2,ST.parameters.PhysicsRuns_Sn108_201911.par
