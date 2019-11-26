@@ -12,6 +12,7 @@ ${CMAKE_SOURCE_DIR}/ana
 ${CMAKE_SOURCE_DIR}/stack
 ${CMAKE_SOURCE_DIR}/format
 ${CMAKE_SOURCE_DIR}/par
+${CMAKE_SOURCE_DIR}/generators
 ${CMAKE_SOURCE_DIR}/global
 ${CMAKE_SOURCE_DIR}/ana/MassCalculator
 #${CMAKE_SOURCE_DIR}/tool
@@ -52,6 +53,11 @@ ST_ClusterNum_DB.cc
 ST_ProduceDB_ClusterNum.cc
 STPIDAnalysisTask.cc
 STConcReaderTask.cc
+STPIDCutTask.cc
+STTransformFrameTask.cc
+STEfficiencyTask.cc
+EfficiencyFactory.cc
+STMatchImQMDTask.cc
 MassCalculator/STMassCalculator.cc
 MassCalculator/STBBFunction.cc
 )

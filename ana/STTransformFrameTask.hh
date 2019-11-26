@@ -10,8 +10,8 @@
 //   Tommy Tsang     MSU                  (decouple this class from STDecoder class)
 //-----------------------------------------------------------
 
-#ifndef _STCONCREADERTASK_H_
-#define _STCONCREADERTASK_H_
+#ifndef STTRANSFORMFRAMETASK_HH
+#define STTRANSFORMFRAMETASK_HH
 
 // FAIRROOT classes
 #include "FairTask.h"
@@ -24,23 +24,25 @@
 
 // ROOT classes
 #include "TClonesArray.h"
+#include "TLorentzVector.h"
 #include "TString.h"
 #include "TH2.h"
-#include "TTree.h"
 
 // STL
 #include <vector>
 
 using std::vector;
 
-class STConcReaderTask : public FairTask {
+class STTransformFrameTask : public FairTask {
   public:
     /// Constructor
-    STConcReaderTask();
+    STTransformFrameTask();
     /// Destructor
-    ~STConcReaderTask();
+    ~STTransformFrameTask();
 
-  
+    void SetBeamEnergyPerN(double energy);
+    void SetBeamMass(int mass);
+    
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
     /// Setting parameter containers. This will be called inbetween Init() and Run().
@@ -48,20 +50,23 @@ class STConcReaderTask : public FairTask {
     /// Running the task. This will be called when Run() method invoked from FairRun.
     virtual void Exec(Option_t *opt);
     void SetPersistence(Bool_t value);
-    void SetChain(TChain* chain);
+
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
-    STDigiPar* fPar = nullptr;
-    
-    TTree *fChain = nullptr;
-    TClonesArray *fData = nullptr;
-    TClonesArray *fMCEventID = nullptr;
-    int fMCLoadedID;
-    STData *fSTData = nullptr;
-    Int_t  fEventID;
-    Bool_t fIsPersistence;
+    Bool_t fIsPersistence;              ///< Persistence check variable
+  
+    STDigiPar *fPar;                    ///< Parameter read-out class pointer
+    TClonesArray *fData;
+    TClonesArray *fMass;
+    TClonesArray *fPDG;
+    TClonesArray *fCMVector;
 
-  ClassDef(STConcReaderTask, 1);
+    TVector3 fVBeam;
+    Double_t fEnergy = 128;
+    Int_t fMBeam = 124;
+    const Double_t fNucleonMass = 931.5;
+  
+  ClassDef(STTransformFrameTask, 1);
 };
 
 #endif

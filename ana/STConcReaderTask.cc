@@ -13,6 +13,7 @@ STConcReaderTask::STConcReaderTask(): fEventID(0)
 {
   fChain = nullptr; 
   fData = new TClonesArray("STData");
+  fMCEventID = new TClonesArray("STVectorI");
   fSTData = new STData();
 
   fLogger = FairLogger::GetLogger(); 
@@ -36,7 +37,9 @@ InitStatus STConcReaderTask::Init()
   }
 
   fChain -> SetBranchAddress("EvtData", &fSTData);
+  fChain -> SetBranchAddress("eventID", &fMCLoadedID);
   ioMan -> Register("STData", "ST", fData, fIsPersistence);
+  ioMan -> Register("EventID", "ST", fMCEventID, fIsPersistence);
   return kSUCCESS;
 }
 
@@ -66,6 +69,8 @@ void STConcReaderTask::Exec(Option_t *opt)
 
     fData -> Delete();
     new((*fData)[0]) STData(*fSTData);
+    auto id = new((*fMCEventID)[0]) STVectorI();
+    id -> fElements.push_back(fMCLoadedID);
   }else fLogger -> Fatal(MESSAGE_ORIGIN, "Event ID exceeds the length of the TChain");
 }
 

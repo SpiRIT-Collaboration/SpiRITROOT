@@ -10,8 +10,8 @@
 //   Tommy Tsang     MSU                  (decouple this class from STDecoder class)
 //-----------------------------------------------------------
 
-#ifndef _STCONCREADERTASK_H_
-#define _STCONCREADERTASK_H_
+#ifndef _STMATCHIMQMDTASK_H_
+#define _STMATCHIMQMDTASK_H_
 
 // FAIRROOT classes
 #include "FairTask.h"
@@ -20,7 +20,7 @@
 // SPiRITROOT classes
 #include "STData.hh"
 #include "STDigiPar.hh"
-#include "STVector.hh"
+#include "STTransportModelEventGenerator.hh"
 
 // ROOT classes
 #include "TClonesArray.h"
@@ -33,12 +33,12 @@
 
 using std::vector;
 
-class STConcReaderTask : public FairTask {
+class STMatchImQMDTask : public FairTask {
   public:
     /// Constructor
-    STConcReaderTask();
+    STMatchImQMDTask();
     /// Destructor
-    ~STConcReaderTask();
+    ~STMatchImQMDTask();
 
   
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
@@ -48,20 +48,21 @@ class STConcReaderTask : public FairTask {
     /// Running the task. This will be called when Run() method invoked from FairRun.
     virtual void Exec(Option_t *opt);
     void SetPersistence(Bool_t value);
-    void SetChain(TChain* chain);
+    void SetImQMDFile(const std::string& t_qmdFile, const std::string& t_qmdName="ImQMD");
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     STDigiPar* fPar = nullptr;
     
-    TTree *fChain = nullptr;
+    TChain *fChain = nullptr;
+    TClonesArray *fEventID = nullptr;
     TClonesArray *fData = nullptr;
-    TClonesArray *fMCEventID = nullptr;
-    int fMCLoadedID;
-    STData *fSTData = nullptr;
-    Int_t  fEventID;
+    TClonesArray *fQMDPart = nullptr;
+    TClonesArray *fQMDMom = nullptr;
+    TClonesArray *fQMDPDG = nullptr;
+    TClonesArray *fQMDDReco = nullptr;
     Bool_t fIsPersistence;
 
-  ClassDef(STConcReaderTask, 1);
+  ClassDef(STMatchImQMDTask, 1);
 };
 
 #endif
