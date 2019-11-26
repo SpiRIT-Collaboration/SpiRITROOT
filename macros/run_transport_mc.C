@@ -148,6 +148,8 @@ void run_transport_mc
   fEvent->SetStartEvent(start_evt);
   fEvent->SetPrimaryVertex(TVector3(0.04,-20.33,-1.54));
   fEvent->SetVertexXYSigma(TVector2(0.03,0.03)); // random error of BDC vertex from Jon. 
+  fEvent->SetBeamAngle(TVector2(-0.022,0));
+  fEvent->SetBeamAngleSigma(TVector3(0.035,0));
   fEvent->SetMaxZAllowed(2);
   //fEvent->SetMaxMult(60);
 
