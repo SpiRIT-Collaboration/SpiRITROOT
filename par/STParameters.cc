@@ -45,13 +45,12 @@ void STParameters::ReadSystemDB(TString systemDB)
     auto lineArray = line.Tokenize(",");
 
     auto systemID = ((TObjString *) lineArray -> At(0)) -> String().Atoi();
-    fYPedestal[systemID] = ((TObjString *) lineArray -> At(1)) -> String().Atof();
-    fDriftVelocity[systemID] = ((TObjString *) lineArray -> At(2)) -> String().Atof();
-    fFieldOffsetX[systemID] = ((TObjString *) lineArray -> At(3)) -> String().Atof();
-    fFieldOffsetY[systemID] = ((TObjString *) lineArray -> At(4)) -> String().Atof();
-    fFieldOffsetZ[systemID] = ((TObjString *) lineArray -> At(5)) -> String().Atof();
-    fTargetZ[systemID] = ((TObjString *) lineArray -> At(6)) -> String().Atof();
-    fParameterFile[systemID] = ((TObjString *) lineArray -> At(7)) -> String();
+    fDriftVelocity[systemID] = ((TObjString *) lineArray -> At(1)) -> String().Atof();
+    fFieldOffsetX[systemID] = ((TObjString *) lineArray -> At(2)) -> String().Atof();
+    fFieldOffsetY[systemID] = ((TObjString *) lineArray -> At(3)) -> String().Atof();
+    fFieldOffsetZ[systemID] = ((TObjString *) lineArray -> At(4)) -> String().Atof();
+    fTargetZ[systemID] = ((TObjString *) lineArray -> At(5)) -> String().Atof();
+    fParameterFile[systemID] = ((TObjString *) lineArray -> At(6)) -> String();
 
     delete lineArray;
   }
@@ -72,9 +71,10 @@ void STParameters::ReadRunDB(TString runDB)
     fSystem[runID] = ((TObjString *) lineArray -> At(1)) -> String().Atoi();
     fTotalEvents[runID] = ((TObjString *) lineArray -> At(2)) -> String().Atoi();
     fSheetChargeDensity[runID] = ((TObjString *) lineArray -> At(3)) -> String().Atof();
-    fBDCOffsetX[runID] = ((TObjString *) lineArray -> At(4)) -> String().Atof();
-    fBDCOffsetY[runID] = ((TObjString *) lineArray -> At(5)) -> String().Atof();
-    fGGRun[runID] = ((TObjString *) lineArray -> At(6)) -> String().Atoi();
+    fYPedestal[runID] = ((TObjString *) lineArray -> At(4)) -> String().Atof();
+    fBDCOffsetX[runID] = ((TObjString *) lineArray -> At(5)) -> String().Atof();
+    fBDCOffsetY[runID] = ((TObjString *) lineArray -> At(6)) -> String().Atof();
+    fGGRun[runID] = ((TObjString *) lineArray -> At(7)) -> String().Atoi();
 
     delete lineArray;
   }
@@ -149,7 +149,7 @@ Double_t STParameters::GetYPedestal()
 {
   CheckOk();
 
-  return fYPedestal[GetSystemID()];
+  return fYPedestal[fRunID];
 }
 
 Double_t STParameters::GetDriftVelocity()

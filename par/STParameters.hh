@@ -27,11 +27,11 @@ class STParameters
     Int_t GetSystemID();
     Int_t GetNumTotalEvents();
     Double_t GetSheetChargeDensity(); // ??
+    Double_t GetYPedestal(); // mm
     Double_t GetBDCOffsetX(); // mm
     Double_t GetBDCOffsetY(); // mm
     Int_t GetGGRunID();
 
-    Double_t GetYPedestal(); // mm
     Double_t GetDriftVelocity(); // cm/us
     Double_t GetFieldOffsetX(); // cm
     Double_t GetFieldOffsetY(); // cm
@@ -46,13 +46,13 @@ class STParameters
     map<Int_t, Int_t> fSystem;
     map<Int_t, Int_t> fTotalEvents;
     map<Int_t, Double_t> fSheetChargeDensity;
+    map<Int_t, Double_t> fYPedestal;
     map<Int_t, Double_t> fBDCOffsetX;
     map<Int_t, Double_t> fBDCOffsetY;
     map<Int_t, Int_t> fGGRun;
 
     // System-wise : Key = SystemID (132124, 124112, 112124, 108112)
     Bool_t fIsSystemDBSet = kFALSE;
-    map<Int_t, Double_t> fYPedestal;
     map<Int_t, Double_t> fDriftVelocity;
     map<Int_t, Double_t> fFieldOffsetX;
     map<Int_t, Double_t> fFieldOffsetY;
