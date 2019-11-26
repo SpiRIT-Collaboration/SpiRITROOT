@@ -207,6 +207,8 @@ void STGenfitVATask::Exec(Option_t *opt)
       fBeamInfo -> fProjY = fBDCProjection -> getY();
       fBeamInfo -> fRotationAngleTargetPlaneA = fBDCProjection -> getA();
       fBeamInfo -> fRotationAngleTargetPlaneB = fBDCProjection -> getB();
+      fBeamInfo -> fBeamEnergyTargetPlane = fBDCProjection -> getMeVu();
+      fBeamInfo -> fBeamVelocityTargetPlane = fBDCProjection -> getBeta();
 
       vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z()) + fOffsetZ);
 

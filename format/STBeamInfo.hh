@@ -17,7 +17,9 @@ public:
   double fProjX = 0;
   double fProjY = 0;
   double fBeamEnergy = 0;
+  double fBeamEnergyTargetPlane = 0;
   double fBeamVelocity = 0;
+  double fBeamVelocityTargetPlane = 0;
 
   ClassDef(STBeamInfo, 1);
 };
