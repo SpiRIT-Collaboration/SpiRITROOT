@@ -47,6 +47,7 @@ STSpaceChargeTask::Init()
   FairRootManager* ioman = FairRootManager::Instance();
 
   fMCPointArray = (TClonesArray*) ioman->GetObject("STMCPoint");
+  fFairMCEventHeader = (FairMCEventHeader*) ioman->GetObject("MCEventHeader.");
 
   const double TPCHeight = 506.1;
   this -> SetTPCSize(fPar->GetPadPlaneX(), fPar->GetPadPlaneZ(), TPCHeight);
@@ -75,9 +76,10 @@ STSpaceChargeTask::Exec(Option_t* option)
     fMCPoint -> SetXYZ(posx, posy, posz);
   }
 
+  fEventID = fFairMCEventHeader -> GetEventID();
   fLogger->Info(MESSAGE_ORIGIN, 
             Form("Event #%d : MC points (%d) found. They are dispaced due to space charge",
-                 fEventID++, nMCPoints));
+                 fEventID, nMCPoints));
 
   return;
 }

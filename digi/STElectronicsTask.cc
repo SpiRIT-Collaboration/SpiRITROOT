@@ -138,7 +138,8 @@ STElectronicsTask::Exec(Option_t* option)
   Int_t nPads = fPPEvent -> GetNumPads();
 
   fRawEvent -> Clear();
-  fRawEvent -> SetEventID(fPPEvent->GetEventID());
+  fEventID = fPPEvent->GetEventID();
+  fRawEvent -> SetEventID(fEventID);
 
   STPad* padI;
 
@@ -260,7 +261,7 @@ STElectronicsTask::Exec(Option_t* option)
 
   fLogger->Info(MESSAGE_ORIGIN, 
       Form("Event #%d : Raw Event created.",
-	fEventID++));
+	fEventID));
 
   return;
 }

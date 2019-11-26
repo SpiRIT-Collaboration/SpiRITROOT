@@ -20,6 +20,7 @@
 
 // Fair class header
 #include "FairTask.h"
+#include "FairMCEventHeader.h"
 
 // SPiRIT-TPC class headers
 #include "STDriftedElectron.hh"
@@ -74,6 +75,7 @@ class STPadResponseTask : public FairTask
     STDriftedElectron* fElectron;  //!< [INPUT] Electron data in anode wire plane.
 
     TClonesArray *fRawEventArray;  //!< [OUTPUT] Array of STRawEvent.
+    FairMCEventHeader *fFairMCEventHeader; //!<
     STRawEvent* fRawEvent;         //!< [OUTPUT] Event data with array of STPad.
 
     STRawEvent* fRawEventDummy;    //!< Dummy STRawEvent.
