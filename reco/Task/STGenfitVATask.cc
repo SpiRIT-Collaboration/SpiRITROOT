@@ -185,10 +185,8 @@ void STGenfitVATask::Exec(Option_t *opt)
     fBeamInfo -> fBeamZ = fZ;
     fBeamInfo -> fRotationAngleA = fBDCax;
     fBeamInfo -> fRotationAngleB = fBDCby;
-    fBeamInfo -> fBeamVelocity = fBeta37;
 
     Double_t E1 = fBeamEnergy -> getCorrectedEnergy();
-    fBeamInfo -> fBeamEnergy = E1;
 
     if (fZ > 0 && fZ < 75 && fAoQ > 1. && fAoQ < 3 && fBDC1x > -999 && fBDC1y > -999 && fBDC2x > -999 && fBDC2y > -999) {
 //      Double_t ProjectedAtZ = -580.4 + vertex -> GetPos().Z();  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
