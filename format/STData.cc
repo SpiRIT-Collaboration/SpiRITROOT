@@ -2,7 +2,7 @@
 
 void STData::ResetDefaultWithLength(int ntracks)
 {
-  aoq = z = a = b = proja = projb = projx = projy = beamEnergy = beta = beamEnergyTargetPlane = betaTargetPlane = -9999;
+  aoq = z = a = b = proja = projb = projx = projy = beamEnergyTargetPlane = betaTargetPlane = -9999;
   multiplicity = -9999;
   vaMultiplicity = -9999;
   tpcVertex.SetXYZ(-9999,-9999,-9999);

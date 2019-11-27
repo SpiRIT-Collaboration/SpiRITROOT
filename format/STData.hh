@@ -14,7 +14,7 @@ struct STData : public TObject
   void ResetDefaultWithLength(int ntracks);
   
   // beam data
-  double aoq, z, a, b, proja, projb, projx, projy, beamEnergy, beta, beamEnergyTargetPlane, betaTargetPlane;
+  double aoq, z, a, b, proja, projb, projx, projy, beamEnergyTargetPlane, betaTargetPlane;
 
   //Vertex
   TVector3 tpcVertex; 
