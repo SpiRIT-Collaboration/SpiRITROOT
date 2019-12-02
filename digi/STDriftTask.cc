@@ -10,6 +10,7 @@
 // This class & SPiRIT class headers
 #include "STDriftTask.hh"
 #include "STProcessManager.hh"
+#include "STFairMCEventHeader.hh"
 
 // Fair class header
 #include "FairRootManager.h"
@@ -65,6 +66,11 @@ STDriftTask::Init()
   fMCPointArray = (TClonesArray*) ioman->GetObject("STMCPoint");
   fMCTrackArray = (TClonesArray*) ioman->GetObject("PrimaryTrack");  
   fFairMCEventHeader = (FairMCEventHeader*) ioman->GetObject("MCEventHeader.");
+
+  if(auto castedEventHeader = dynamic_cast<STFairMCEventHeader*>(fFairMCEventHeader))
+    ioman->Register("MCEventHeader.", "ST", castedEventHeader, fIsPersistence);
+  else
+    ioman->Register("MCEventHeader.", "ST", fFairMCEventHeader, fIsPersistence);
 
   fElectronArray = new TClonesArray("STDriftedElectron");
   ioman->Register("STDriftedElectron","ST",fElectronArray,fIsPersistence);

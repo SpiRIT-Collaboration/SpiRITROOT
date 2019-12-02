@@ -5,6 +5,8 @@ ${ROOT_INCLUDE_DIR}
 ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/generators
+${CMAKE_SOURCE_DIR}/format
+
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -25,6 +27,7 @@ STSimpleEventGenerator.cc
 STSingleTrackGenerator.cc
 STPHITSEventGenerator.cc
 STTransportModelEventGenerator.cc
+STModelToLabFrameGenerator.cc
 UrQMDParticle.cc
 )
 

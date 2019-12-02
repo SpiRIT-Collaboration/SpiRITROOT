@@ -105,6 +105,7 @@ void run_reco_mc
   genfitVA -> SetFixedVertex(0.,-203.3,-13.2);
   genfitVA -> SetUseRave(true);
   genfitVA -> SetFieldOffset(-0.1794, -20.5502, 58.0526); 
+  genfitVA -> SetPerferMCBeam();
 
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
