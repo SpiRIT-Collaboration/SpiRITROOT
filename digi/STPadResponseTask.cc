@@ -55,6 +55,8 @@ STPadResponseTask::Init()
   FairRootManager* ioman = FairRootManager::Instance();
 
   fElectronArray = (TClonesArray*) ioman->GetObject("STDriftedElectron");
+  fFairMCEventHeader = (FairMCEventHeader*) ioman->GetObject("MCEventHeader.");
+  ioman->Register("MCEventHeader.", "ST", fFairMCEventHeader, fIsPersistence);
   fRawEventArray = new TClonesArray("STRawEvent"); 
   ioman->Register("PPEvent", "ST", fRawEventArray, fIsPersistence);
 
@@ -111,6 +113,7 @@ STPadResponseTask::Exec(Option_t* option)
   if(!fRawEventArray) 
     fLogger->Fatal(MESSAGE_ORIGIN,"No RawEventArray!");
 
+  fEventID = fFairMCEventHeader -> GetEventID();
   fRawEvent->SetEventID(fEventID);
 
   ReInitDummy();
@@ -186,7 +189,7 @@ STPadResponseTask::Exec(Option_t* option)
   Int_t nPads = fRawEvent -> GetNumPads();
   fLogger->Info(MESSAGE_ORIGIN, 
                 Form("Event #%d : Active pads (%d) created.",
-                     fEventID++, nPads));
+                     fEventID, nPads));
 
   return;
 }

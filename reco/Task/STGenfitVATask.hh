@@ -3,6 +3,9 @@
 
 #include "TMatrixTSym.h"
 #include "FairRunAna.h"
+#include "FairMCEventHeader.h"
+
+#include "STFairMCEventHeader.hh"
 #include "STRecoTask.hh"
 #include "STGenfitPIDTask.hh"
 #include "STHelixTrack.hh"
@@ -35,6 +38,7 @@ class STGenfitVATask : public STRecoTask
     virtual void Exec(Option_t *opt);
 
     void SetBeamFile(TString fileName);
+    void SetPerferMCBeam();
     void SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_t offsetY, Double_t offsetZ = 0);
     void SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple);
     void SetFixedVertex(Double_t x, Double_t y, Double_t z);
@@ -49,12 +53,15 @@ class STGenfitVATask : public STRecoTask
     TClonesArray *fVATrackArray = nullptr;
     TClonesArray *fBDCVertexArray = nullptr;
     TClonesArray *fVAVertexArray = nullptr;
-    STBeamInfo *fBeamInfo = nullptr;
+    STBeamInfo   *fBeamInfo = nullptr;
+    FairMCEventHeader *fMCEventHeader = nullptr;
+    STFairMCEventHeader *fSTMCEventHeader = nullptr;
 
     bool fIsListPersistence = false;
     bool fIsSamurai = true;
 
     Bool_t fUseRave = kFALSE;
+    Bool_t fUseMCBeam = kFALSE;
     genfit::GFRaveVertexFactory *fVertexFactory = nullptr;
 
     STGenfitTest2 *fGenfitTest;

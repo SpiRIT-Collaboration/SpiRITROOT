@@ -35,6 +35,7 @@ STGenfitVATask::~STGenfitVATask()
 {
 }
 
+void STGenfitVATask::SetPerferMCBeam()                   { fUseMCBeam = kTRUE; }
 void STGenfitVATask::SetClusteringType(Int_t type) { fClusteringType = type; }
 void STGenfitVATask::SetConstantField() { fIsSamurai = kFALSE; }
 void STGenfitVATask::SetFieldOffset(Double_t xOffset, Double_t yOffset, Double_t zOffset)
@@ -72,6 +73,28 @@ STGenfitVATask::Init()
     return kERROR;
   }
 
+  if(fUseMCBeam)
+  {
+    fMCEventHeader = (FairMCEventHeader *) fRootManager -> GetObject("MCEventHeader.");
+    if(!fMCEventHeader) 
+    {
+      LOG(INFO) << "Cannot find MCEventHeader despite SetPerferMCBeam enabled" << FairLogger::endl;
+      LOG(INFO) << "Will try to obtain vertex via alternative means" << FairLogger::endl;
+      fUseMCBeam = false;
+    }else
+    {
+      // disable alternative vertex sources if MCBeamInfo exist
+      LOG(DEBUG) << "Vertex information is being loaded from MCEventHeader" << FairLogger::endl;
+      if(fSTMCEventHeader = dynamic_cast<STFairMCEventHeader*>(fMCEventHeader))
+        LOG(INFO) << "MCEventHeader can be casted to STFairMCEventHeader. Additional beam information can be loaded" << FairLogger::endl;
+      else
+        LOG(INFO) << "MCEventHeader cannot be casted to STFairMCEventHeader. Only basic information can be loaded" << FairLogger::endl;
+      fBeamFilename = "";
+      fFixedVertexX = fFixedVertexY = fFixedVertexZ = -9999;
+    }
+    
+  }
+
   fVATrackArray = new TClonesArray("STRecoTrack");
   fRootManager -> Register("VATracks", "SpiRIT", fVATrackArray, fIsPersistence);
 
@@ -90,7 +113,7 @@ STGenfitVATask::Init()
   if (fUseRave)
     fVertexFactory = ((STGenfitPIDTask *) FairRunAna::Instance() -> GetTask("GENFIT Task")) -> GetVertexFactoryInstance();
 
-  if (!fBeamFilename.IsNull() || (fFixedVertexX != -9999 && fFixedVertexY != -9999 && fFixedVertexZ != -9999)) {
+  if (!fBeamFilename.IsNull() || (fFixedVertexX != -9999 && fFixedVertexY != -9999 && fFixedVertexZ != -9999) || fUseMCBeam) {
     fBDCVertexArray = new TClonesArray("STVertex");
     fRootManager -> Register("BDCVertex", "SpiRIT", fBDCVertexArray, kTRUE);
   }
@@ -185,10 +208,8 @@ void STGenfitVATask::Exec(Option_t *opt)
     fBeamInfo -> fBeamZ = fZ;
     fBeamInfo -> fRotationAngleA = fBDCax;
     fBeamInfo -> fRotationAngleB = fBDCby;
-    fBeamInfo -> fBeamVelocity = fBeta37;
 
     Double_t E1 = fBeamEnergy -> getCorrectedEnergy();
-    fBeamInfo -> fBeamEnergy = E1;
 
     if (fZ > 0 && fZ < 75 && fAoQ > 1. && fAoQ < 3 && fBDC1x > -999 && fBDC1y > -999 && fBDC2x > -999 && fBDC2y > -999) {
 //      Double_t ProjectedAtZ = -580.4 + vertex -> GetPos().Z();  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
@@ -207,6 +228,8 @@ void STGenfitVATask::Exec(Option_t *opt)
       fBeamInfo -> fProjY = fBDCProjection -> getY();
       fBeamInfo -> fRotationAngleTargetPlaneA = fBDCProjection -> getA();
       fBeamInfo -> fRotationAngleTargetPlaneB = fBDCProjection -> getB();
+      fBeamInfo -> fBeamEnergyTargetPlane = fBDCProjection -> getMeVu();
+      fBeamInfo -> fBeamVelocityTargetPlane = fBDCProjection -> getBeta();
 
       vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z()) + fOffsetZ);
 
@@ -239,6 +262,25 @@ void STGenfitVATask::Exec(Option_t *opt)
       bdcVertex -> SetIsCollisionVertex();
     }
 
+  } else if(fUseMCBeam)
+  {
+    fBeamInfo -> fProjX = fMCEventHeader -> GetX()*10; // cm to mm
+    fBeamInfo -> fProjY = fMCEventHeader -> GetY()*10;
+    fBeamInfo -> fRotationAngleTargetPlaneA = fMCEventHeader -> GetRotX()*1000; // rad to mrad
+    fBeamInfo -> fRotationAngleTargetPlaneB = fMCEventHeader -> GetRotY()*1000;
+    if(fSTMCEventHeader)
+    {
+      fBeamInfo -> fBeamEnergyTargetPlane = fSTMCEventHeader -> GetEnergyPerNucleons()*1000; // GeV to MeV
+      fBeamInfo -> fBeamZ = fSTMCEventHeader -> GetBeamZ();
+      fBeamInfo -> fBeamAoQ = fSTMCEventHeader -> GetBeamAoZ();
+    }
+    vertexPos = TVector3(fMCEventHeader -> GetX(), fMCEventHeader -> GetY(), fMCEventHeader -> GetZ());
+    vertexPos *= 10.; // cm to mm
+
+    auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
+    bdcVertex -> SetIsGoodBDC();
+    bdcVertex -> SetPos(vertexPos);
+    LOG(INFO) << Space() << "STGenfitVATask " << "BDC vertex is loaded from MCBeamInfo" << FairLogger::endl;
   }
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();

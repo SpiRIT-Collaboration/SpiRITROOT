@@ -40,8 +40,6 @@ void rek_mkdir(char* path);
 void recursive_mkdir(const char* t_path);
 //************End of Directory creation function****************
 
-void AddIons(FairRunSim *fRun, TString event);
-
 void run_transport_mc
 (
  TString name  = "Run_2841_mc_low_energy",
@@ -93,11 +91,24 @@ void run_transport_mc
   // -----------------------------------------------------------------
   // Set FairRunSim
   FairRunSim* fRun = new FairRunSim();
+  fRun -> SetMCEventHeader(new STFairMCEventHeader());
   fRun -> SetName("TGeant4");
   fRun -> SetOutputFile(outputFile);
-  fRun -> SetGenerateRunInfo(kFALSE);
+  fRun -> SetGenerateRunInfo(kTRUE);
   fRun -> SetMaterials("media.geo");
 //  AddIons(fRun, event);
+
+  // -----------------------------------------------------------------
+  // Set data base
+  FairParRootFileIo* fMCPar = new FairParRootFileIo(kTRUE);
+  fMCPar -> open(outParFile.Data());
+
+  FairRuntimeDb* fDb = fRun -> GetRuntimeDb();
+  fDb -> setOutput(fMCPar);
+  fDb -> saveOutput();
+  fDb -> print();
+
+
 
 
   // -----------------------------------------------------------------
@@ -137,47 +148,25 @@ void run_transport_mc
 
   // -----------------------------------------------------------------
   // Event generator
-//  STSimpleEventGenerator* fEvent = new STSimpleEventGenerator();
-//  fEvent -> SetPrimaryVertex(0, -21.33, -.89);
-//  fEvent -> SetAngleStep(2212, numevent, 0.5, 0., 85., 180., 180.); // (pid, #evt, p, theta_begin, theta_end, phi_begin, phi_end[deg])
-
-   
-  //TString inputFile = name + ".root";
-  STTransportModelEventGenerator* fEvent = new STTransportModelEventGenerator("imqmd_sn132sn124_RealPionsImpMoreCorTrans.root");
-  fEvent->RegisterHeavyIon();
-  fEvent->SetStartEvent(start_evt);
-  fEvent->SetPrimaryVertex(TVector3(0.04,-20.33,-1.54));
-  fEvent->SetVertexXYSigma(TVector2(0.03,0.03)); // random error of BDC vertex from Jon. 
-  fEvent->SetMaxZAllowed(2);
-  //fEvent->SetMaxMult(60);
-
-
-  //auto fEvent = new STEventGenGenerator("UrQMD_300AMeV_short.egen");
-  //fEvent->SetPrimaryVertex(0.,-21.33,-1.32);
-
-  //auto fEvent = new STSingleTrackGenerator();
-  //fEvent->ReadConfig((parDir + parName).Data());
-  //fEvent->SetVertexBegin(nSplit);
-  //fEvent->SetCocktailEvent(300.);
-  //fEvent->SetUniformRandomDirection(true);
-  //fEvent->SetParticleList({2212, 211, -211, 1000010020, 1000010030});
+  auto fEvent = new STModelToLabFrameGenerator("imqmd_CM.root");
+  fEvent -> RegisterHeavyIon();
+  fEvent -> SetBeamInfo(0.128, 132, 50); 
+  fEvent -> SetPrimaryVertex(TVector3(0.04,-20.55,-1.34));
+  fEvent -> SetVertexXYSigma(TVector2(0.406, 0.362));
+  fEvent -> SetTargetThickness(0.08);
+  fEvent -> SetBeamDetectorVertexSigma(TVector2(0.0708, 0.0265));
+  fEvent -> SetBeamAngle(TVector2(-0.0443, 0.00086));
+  fEvent -> SetBeamAngleSigma(TVector2(0.00224, 0.00382));
+  fEvent -> SetBeamDetectorAngleSigma(TVector2(0.00064, 0.00024));
+  fEvent -> SetMaxZAllowed(2);
+  fEvent -> SetStartEvent(start_evt);
 
   FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();
   fGenerator -> AddGenerator(fEvent);
   fRun -> SetGenerator(fGenerator);  
 
 
-  // -----------------------------------------------------------------
-  // Set data base
-  FairParRootFileIo* fMCPar = new FairParRootFileIo(kTRUE);
-  fMCPar -> open(outParFile.Data());
-
-  FairRuntimeDb* fDb = fRun -> GetRuntimeDb();
-  fDb -> setOutput(fMCPar);
-  fDb -> saveOutput();
-  fDb -> print();
-
-
+  
   // -----------------------------------------------------------------
   // Run initialization
   fRun -> SetStoreTraj(kTRUE);
@@ -198,51 +187,6 @@ void run_transport_mc
   cout << endl << endl;
   cout << "Macro finished succesfully."  << endl << endl;
   cout << "- Output file : " << outputFile << endl << endl;
-}
-
-void AddIons(FairRunSim *fRun, TString event)
-{
-  TString symbol[50] = {"H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
-                        "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca",
-                        "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
-                        "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr",
-                        "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn"};
-
-  TString input_dir = gSystem -> Getenv("VMCWORKDIR");
-  TString fGenFileName = input_dir + "/input/" + event;
-  LOG(INFO) << "Opening EventGen file for adding ions: " << fGenFileName <<FairLogger::endl;
-
-  ifstream fGenFile(fGenFileName.Data());
-  if(!fGenFile.is_open())
-    LOG(FATAL) << "Cannont open EventGen file: " << fGenFileName << FairLogger::endl;
-
-  vector<Int_t> ions;
-  Int_t nEvents, pdg, eventID, nTracks;
-  Double_t tmp, b;
-
-  fGenFile >> nEvents;
-
-  for (Int_t iEvent = 0; iEvent < nEvents; iEvent++) {
-    fGenFile >> eventID >> nTracks >> b;
-
-    for(Int_t iTrack = 0; iTrack < nTracks; iTrack++) {
-      fGenFile >> pdg >> tmp >> tmp >> tmp;
-      if (pdg > 3000)
-        ions.push_back(pdg);
-    }
-  }
-
-  fGenFile.close();
-
-  std::sort(ions.begin(), ions.end());
-  ions.resize(std::distance(ions.begin(), std::unique(ions.begin(), ions.end())));
-
-  for (Int_t iIon = 0; iIon < ions.size(); iIon++) {
-    auto z = (ions.at(iIon)%10000000)/10000;
-    auto a = (ions.at(iIon)%10000)/10;
-
-    fRun -> AddNewIon(new FairIon(Form("%d", a) + symbol[z - 1], z, a, z));
-  }
 }
 
 void rek_mkdir(char* path)

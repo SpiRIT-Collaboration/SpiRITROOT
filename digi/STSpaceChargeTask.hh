@@ -3,6 +3,8 @@
 
 // Fair class header
 #include "FairTask.h"
+#include "FairMCEventHeader.h"
+
 #include <string>
 #include <functional>
 // SPiRIT-TPC class headers
@@ -42,6 +44,7 @@ class STSpaceChargeTask : public FairTask, public STSpaceCharge
     TClonesArray* fMCPointArray;     //!< [INPUT] Array of STMCPoint.
     STMCPoint* fMCPoint;             //!< [INPUT] MC data container (position, time, energyloss etc.)
     STDigiPar* fPar; //!< Base parameter container
+    FairMCEventHeader *fFairMCEventHeader; //!<
 
     STSpaceChargeTask(const STSpaceChargeTask&);
     STSpaceChargeTask operator=(const STSpaceChargeTask&);

@@ -254,6 +254,15 @@ void run_reco_experiment_auto
   recoHeader -> SetPar("parameter", fParameterFile);
   if (fIsGGDataSet)
     recoHeader -> SetPar("GGData", fGGData);
+  recoHeader -> SetPar("yPedestal", fYPedestalOffset);
+  recoHeader -> SetPar("fieldOffsetX", fFieldOffsetX);
+  recoHeader -> SetPar("fieldOffsetY", fFieldOffsetY);
+  recoHeader -> SetPar("fieldOffsetZ", fFieldOffsetZ);
+  recoHeader -> SetPar("sheetChargeDensity", fSheetChargeDensity);
+  recoHeader -> SetPar("BDCOffsetX", fBDCOffsetX);
+  recoHeader -> SetPar("BDCOffsetY", fBDCOffsetY);
+  auto driftVelocityInParameterFile = gSystem -> GetFromPipe("cat " + par + " | grep DriftVelocity | awk '{print $2}'");
+  recoHeader -> SetPar("driftVelocity", driftVelocityInParameterFile);
   recoHeader -> Write("RecoHeader");
 
   run -> Init();

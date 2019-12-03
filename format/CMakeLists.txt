@@ -56,6 +56,7 @@ STRecoTrackCandList.cc
 STMCEventHeader.cc
 STMCScintillatorHit.cc
 STMCTriggerResponse.cc
+STFairMCEventHeader.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

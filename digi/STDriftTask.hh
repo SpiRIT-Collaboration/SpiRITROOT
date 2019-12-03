@@ -26,6 +26,7 @@
 
 // Fair class header
 #include "FairTask.h"
+#include "FairMCEventHeader.h"
 
 // SPiRIT-TPC class headers
 #include "STMCPoint.hh"
@@ -73,6 +74,7 @@ class STDriftTask : public FairTask
     TClonesArray* fMCTrackArray;     //!< [INPUT] Array of PrimaryTrack.  
     STMCPoint* fMCPoint;             //!< [INPUT] MC data container (position, time, energyloss etc.)
     STMCTrack* fMCTrack;             //!< [INPUT] MC data container (momentum)
+    FairMCEventHeader *fFairMCEventHeader; //!<
 
     TClonesArray* fElectronArray;    //!< [OUTPUT] Array of STDriftedElectron.
 

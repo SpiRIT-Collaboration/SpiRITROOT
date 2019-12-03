@@ -17,7 +17,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator()
   fPartArray(NULL),
   fCurrentEvent(0), fNEvents(0),
   fVertex(TVector3()), fVertexXYSigma(TVector2()), fTargetThickness(),
-  fBeamAngle(TVector2(-0.022,0.)), fBeamAngleABSigma(TVector2(0.035,0)), fIsRandomRP(kTRUE)
+  fBeamAngle(TVector2()), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
 }
 
@@ -29,7 +29,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString fileName)
   fPartArray(NULL),
   fCurrentEvent(0), fNEvents(0),
   fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.083),
-  fBeamAngle(TVector2(-0.022,0.)), fBeamAngleABSigma(TVector2(0.035,0)), fIsRandomRP(kTRUE)
+  fBeamAngle(TVector2()), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
 
   TString inputDir = gSystem->Getenv("VMCWORKDIR");
@@ -47,7 +47,7 @@ STTransportModelEventGenerator::STTransportModelEventGenerator(TString filePath,
   fPartArray(NULL),
   fCurrentEvent(0), fNEvents(0),
   fVertex(TVector3()), fVertexXYSigma(TVector2(0.42,0.36)), fTargetThickness(0.043),
-  fBeamAngle(TVector2(-0.022,0.)), fBeamAngleABSigma(TVector2(0.035,0)), fIsRandomRP(kTRUE)
+  fBeamAngle(TVector2()), fBeamAngleABSigma(TVector2()), fIsRandomRP(kTRUE)
 {
 
   fInputFile = new TFile(fInputPath+fileName);

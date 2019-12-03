@@ -72,8 +72,8 @@ void STSmallOutputTask::Exec(Option_t* option)
       fData.projb = fBeamInfo -> fRotationAngleTargetPlaneB;
       fData.projx = fBeamInfo -> fProjX;
       fData.projy = fBeamInfo -> fProjY;
-      fData.beamEnergy = fBeamInfo -> fBeamEnergy;
-      fData.beta = fBeamInfo -> fBeamVelocity;
+      fData.beamEnergyTargetPlane = fBeamInfo -> fBeamEnergyTargetPlane;
+      fData.betaTargetPlane = fBeamInfo -> fBeamVelocityTargetPlane;
     }
 
     if(fBDCVertex)
@@ -106,7 +106,7 @@ void STSmallOutputTask::Exec(Option_t* option)
     for(int ii = 0; ii < fSTRecoTrack->GetEntries(); ++ii)
     {
       auto RecoTrack = static_cast<STRecoTrack*>(fSTRecoTrack->At(ii));
-      fData.recodedx[ii] = RecoTrack->GetdEdxWithCut(0, 0.6);
+      fData.recodedx[ii] = RecoTrack->GetdEdxWithCut(0, 0.7, 0.5);
       fData.recoPosPOCA[ii] = RecoTrack->GetPOCAVertex();
       fData.recoMom[ii] = RecoTrack->GetMomentumTargetPlane();
       fData.recoNRowClusters[ii] = RecoTrack->GetNumRowClusters();
@@ -122,7 +122,7 @@ void STSmallOutputTask::Exec(Option_t* option)
       if(it_track != RecoToVATracks.end())
       {
         auto VATrack = it_track->second;
-        fData.vadedx[ii] = VATrack->GetdEdxWithCut(0, 0.6);
+        fData.vadedx[ii] = VATrack->GetdEdxWithCut(0, 0.7, 0.5);
         fData.vaPosPOCA[ii] = VATrack->GetPOCAVertex();
         fData.vaMom[ii] = VATrack->GetMomentumTargetPlane();
         fData.vaNRowClusters[ii] = VATrack->GetNumRowClusters();
@@ -148,7 +148,9 @@ void STSmallOutputTask::Exec(Option_t* option)
         }
       }
     fSmallTree_->Fill();
-    LOG(INFO) << Space() << "Saving event to file" << FairLogger::endl;
+
+    if (fIsVerbose)
+      LOG(INFO) << Space() << "Saving event to file" << FairLogger::endl;
   }
 }
 

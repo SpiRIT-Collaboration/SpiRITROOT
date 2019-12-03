@@ -40,6 +40,7 @@
 #pragma link C++ class STMCScintillatorHit+;
 #pragma link C++ class STMCTriggerResponse+;
 
+#pragma link C++ class STFairMCEventHeader+;
 #pragma link C++ class STSlimPad+;
 #pragma link C++ class std::vector<Short_t>+;
 #pragma link C++ class std::vector<Float_t>+;

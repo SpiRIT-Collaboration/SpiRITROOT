@@ -10,6 +10,7 @@
 // This class & SPiRIT class headers
 #include "STDriftTask.hh"
 #include "STProcessManager.hh"
+#include "STFairMCEventHeader.hh"
 
 // Fair class header
 #include "FairRootManager.h"
@@ -64,6 +65,13 @@ STDriftTask::Init()
 
   fMCPointArray = (TClonesArray*) ioman->GetObject("STMCPoint");
   fMCTrackArray = (TClonesArray*) ioman->GetObject("PrimaryTrack");  
+  fFairMCEventHeader = (FairMCEventHeader*) ioman->GetObject("MCEventHeader.");
+
+  if(auto castedEventHeader = dynamic_cast<STFairMCEventHeader*>(fFairMCEventHeader))
+    ioman->Register("MCEventHeader.", "ST", castedEventHeader, fIsPersistence);
+  else
+    ioman->Register("MCEventHeader.", "ST", fFairMCEventHeader, fIsPersistence);
+
   fElectronArray = new TClonesArray("STDriftedElectron");
   ioman->Register("STDriftedElectron","ST",fElectronArray,fIsPersistence);
 
@@ -133,7 +141,6 @@ STDriftTask::Exec(Option_t* option)
   Int_t nMCPoints = fMCPointArray->GetEntries();
   if(nMCPoints<10){
     fLogger->Warning(MESSAGE_ORIGIN, "Not enough hits for digitization! (<10)");
-    fEventID++;
     return;
   }
 
@@ -211,9 +218,10 @@ STDriftTask::Exec(Option_t* option)
 
   Int_t nDriftElectrons = fElectronArray->GetEntriesFast();
 
+  fEventID = fFairMCEventHeader -> GetEventID();
   fLogger->Info(MESSAGE_ORIGIN, 
                 Form("Event #%d : MC points (%d) found. Drift electrons (%d) created.",
-                     fEventID++, nMCPoints, nDriftElectrons));
+                     fEventID, nMCPoints, nDriftElectrons));
 
 
   return;
