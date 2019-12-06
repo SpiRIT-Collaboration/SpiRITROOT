@@ -1,12 +1,12 @@
 #ifndef STVECTOR_HH
 #define STVECTOR_HH
 
-#include "TObject.h"
+#include "TNamed.h"
 #include "TVector3.h"
 
 #include <vector>
 
-struct STVectorF : public TObject
+struct STVectorF : public TNamed
 {
   STVectorF();
   std::vector<float> fElements;
@@ -15,7 +15,7 @@ struct STVectorF : public TObject
 };
 
 
-struct STVectorI : public TObject
+struct STVectorI : public TNamed
 {
   STVectorI();
   std::vector<int> fElements;
@@ -23,7 +23,7 @@ struct STVectorI : public TObject
   ClassDef(STVectorI, 1);
 };
 
-struct STVectorVec3 : public TObject
+struct STVectorVec3 : public TNamed
 {
   STVectorVec3();
   std::vector<TVector3> fElements;
