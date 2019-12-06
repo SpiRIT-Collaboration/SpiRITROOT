@@ -174,6 +174,7 @@ void STModelToLabFrameGenerator::Print()
                               "Beam energy per nucleon   :\t%.3g (GeV/c2)\n"
                               "Beam mass                 :\t%d\n"
                               "Beam charge               :\t%d\n"
+                              "Target mass               :\t%d\n"
                               "Target thickness          :\t%.3g (cm)\n"
                               "Vertex mean XY            :\t%.3g\t%.3g (cm)\n"
                               "Vertex sigma XY           :\t%.3g\t%.3g (cm)\n"
@@ -185,6 +186,7 @@ void STModelToLabFrameGenerator::Print()
                               fBeamEnergyPerN,
                               fBeamMass,
                               fBeamCharge,
+                              fTargetMass,
                               fTargetThickness,
                               fVertex.X(), fVertex.Y(),
                               fVertexXYSigma.X(), fVertexXYSigma.Y(),
@@ -225,7 +227,7 @@ Bool_t STModelToLabFrameGenerator::Init()
 
   auto EBeam = fBeamEnergyPerN*fBeamMass + fBeamMass*fNucleonMass;
   auto PBeam = sqrt(EBeam*EBeam - fBeamMass*fBeamMass*fNucleonMass*fNucleonMass);
-  TLorentzVector vBeam(0, 0, PBeam, EBeam);
+  TLorentzVector vBeam(0, 0, PBeam, EBeam + fTargetMass*fNucleonMass);
   fBoostVector = vBeam.BoostVector();
 
   if(!fHeavyIonsRegistered) this -> RegisterHeavyIon();
@@ -311,14 +313,18 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 
   Int_t numDiscarded = 0;
   // set up lorentz vector to transform 
+  Int_t tracksCounter = 0;
   for(const auto& particle : particleList)
   {
+    if(tracksCounter > fMaxMult && fMaxMult > 0) break;
+
     Int_t pdg;
     pdg = particle.pdg;
     Double_t Z = int((pdg%10000000)/10000);
     Double_t A = int((pdg%10000)/10);
-    if(pdg == 2212) Z = A = 1;
-    else if(abs(pdg) == 211) A = 0.150;
+    if(abs(pdg) == 211) A = 0.150;
+    else if(Z == 0 && pdg != 2112) 
+    { Z = A = 1; pdg == 2212; }
     if(pdg == 2112 || (Z > fMaxZ && fMaxZ > 0))
     {
       numDiscarded++;
@@ -336,6 +342,7 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     p.Transform(rotateInRotatedFrame);
 
     primGen -> AddTrack(pdg, p.X(), p.Y(), p.Z(), eventVertex.X(), eventVertex.Y(), eventVertex.Z());
+    ++tracksCounter;
   }
   event -> SetNPrim(nPart - numDiscarded);
   fCurrentEvent++;

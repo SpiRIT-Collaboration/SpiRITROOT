@@ -10,11 +10,13 @@
 #include "FairRootManager.h"
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
+#include "FairMCEventHeader.h"
 
 // ST header
 #include "STElectronicsTask.hh"
 #include "STProcessManager.hh"
 #include "STPulse.hh"
+#include "STFairMCEventHeader.hh"
 
 // C/C++ class headers
 #include <iostream>
@@ -74,6 +76,13 @@ STElectronicsTask::Init()
   fRawEventArray = new TClonesArray("STRawEvent"); 
   ioman->Register("STRawEvent", "ST", fRawEventArray, fIsPersistence);
   ioman->Register("STMCTrack", "ST", fMCTrackArray, fIsPersistence);
+
+  auto fairMCEventHeader = (FairMCEventHeader*) ioman->GetObject("MCEventHeader.");
+  if(auto castedEventHeader = dynamic_cast<STFairMCEventHeader*>(fairMCEventHeader))
+    ioman->Register("MCEventHeader.", "ST", castedEventHeader, fIsPersistence);
+  else
+    ioman->Register("MCEventHeader.", "ST", fairMCEventHeader, fIsPersistence);
+
  
   fNTBs = fPar -> GetNumTbs();
   if(fEndTb == -1)
