@@ -34,9 +34,13 @@ class STModelToLabFrameGenerator : public FairGenerator
  
     virtual Bool_t Init();   
     // energy in GeV
-    void SetBeamInfo(double energyPerN, 
-                     int mass, 
-                     int charge)              { fBeamEnergyPerN = energyPerN; fBeamMass = mass; fBeamCharge = charge; }
+    void SetBeamAndTarget(double energyPerN, 
+                          int beamMass, 
+                          int beamCharge,
+                          int targetMass)     { fBeamEnergyPerN = energyPerN; 
+                                                fBeamMass = beamMass; 
+                                                fBeamCharge = beamCharge; 
+                                                fTargetMass = targetMass; }
     void SetPrimaryVertex(TVector3 vtx)       { fVertex = vtx; }
     void SetVertexXYSigma(TVector2 sig)       { fVertexXYSigma = sig; }
     void SetTargetThickness(Double_t t)       { fTargetThickness = t; }
@@ -48,6 +52,7 @@ class STModelToLabFrameGenerator : public FairGenerator
     void SetRandomRP(Bool_t flag)             { fIsRandomRP = flag; }
     void SetStartEvent(int t_start)           { fCurrentEvent = t_start; }
     void SetMaxZAllowed(int t_z);             
+    void SetMaxMult(int mult)                 { fMaxMult = mult; }
 
     virtual Bool_t ReadEvent(FairPrimaryGenerator* primGen);
     void RegisterHeavyIon();
@@ -64,6 +69,7 @@ class STModelToLabFrameGenerator : public FairGenerator
     Double_t          fBeamEnergyPerN;
     Int_t             fBeamMass;              //<! Atomic mass of the beam particle
     Int_t             fBeamCharge;
+    Int_t             fTargetMass;
     Int_t             fCurrentEvent;          //<! current event ID
     Int_t             fNEvents;               //<! # of events
     TVector3          fVertex;                //<! user set vertex position
@@ -77,6 +83,7 @@ class STModelToLabFrameGenerator : public FairGenerator
     Bool_t            fIsRandomRP;            //<! flag for random reaction plane input
     Bool_t            fHeavyIonsRegistered;
     int               fMaxZ = -1;             //<! Maximum Z of the allowed particles. Geant4 cannot handle heavy ion well so we may as well discard it....
+    int               fMaxMult = -1;
     const double      fNucleonMass = 0.9315;
 
     void RegisterReader();
