@@ -69,9 +69,9 @@ class STEfficiencyTask : public FairTask {
     Bool_t fIsPersistence;              ///< Persistence check variable
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
-    TClonesArray *fPDG;                 ///<
+    STVectorI *fPDG;                 ///<
     TClonesArray *fData;                ///< STData from the conc files
-    TClonesArray *fEff;                 ///< Efficiency of each type of particle
+    STVectorF *fEff;                 ///< Efficiency of each type of particle
 
     const std::vector<std::string> fParticleNameEff = {"pi-", "pi+", "proton", "triton", "he3"};
     const std::vector<int> fSupportedPDG = {-211, 211, 2212, 1000010030, 1000020030};

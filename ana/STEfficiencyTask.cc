@@ -12,7 +12,7 @@ ClassImp(STEfficiencyTask);
 STEfficiencyTask::STEfficiencyTask()
 { 
   fLogger = FairLogger::GetLogger(); 
-  fEff = new TClonesArray("STVectorF");
+  fEff = new STVectorF();
 }
 
 STEfficiencyTask::~STEfficiencyTask()
@@ -52,7 +52,7 @@ InitStatus STEfficiencyTask::Init()
   for(auto& factory : fEfficiencyFactory)
     fEfficiency.push_back(factory -> FinalizeBins(true, false, false, false));
 
-  fPDG = (TClonesArray*) ioMan -> GetObject("PDG");
+  fPDG = (STVectorI*) ioMan -> GetObject("PDG");
   fData = (TClonesArray*) ioMan -> GetObject("STData");
 
   ioMan -> Register("Eff", "ST", fEff, fIsPersistence);
@@ -76,10 +76,8 @@ void STEfficiencyTask::SetParContainers()
 
 void STEfficiencyTask::Exec(Option_t *opt)
 {
-  fEff -> Delete();
+  fEff -> fElements.clear();
   auto data = (STData*) fData -> At(0);
-  auto pdg = (STVectorI*) fPDG -> At(0);
-  auto EffAry = new((*fEff)[0]) STVectorF();
 
   int npart = data -> multiplicity;
   for(int part = 0; part < npart; ++part)
@@ -87,7 +85,7 @@ void STEfficiencyTask::Exec(Option_t *opt)
     auto& mom = data -> vaMom[part];
     int nclusters = data -> vaNRowClusters[part] + data -> vaNLayerClusters[part];
     double dpoca = data -> recodpoca[part].Mag();
-    int ipdg = pdg -> fElements[part];
+    int ipdg = fPDG -> fElements[part];
     double efficiency = 0;
     if(ipdg != 0)
     {
@@ -106,7 +104,7 @@ void STEfficiencyTask::Exec(Option_t *opt)
         }
       }
     }
-    EffAry -> fElements.push_back(efficiency);
+    fEff -> fElements.push_back(efficiency);
   }
 }
 

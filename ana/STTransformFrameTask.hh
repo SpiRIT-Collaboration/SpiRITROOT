@@ -40,9 +40,6 @@ class STTransformFrameTask : public FairTask {
     /// Destructor
     ~STTransformFrameTask();
 
-    void SetBeamEnergyPerN(double energy);
-    void SetBeamMass(int mass);
-    
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
     /// Setting parameter containers. This will be called inbetween Init() and Run().
@@ -51,19 +48,22 @@ class STTransformFrameTask : public FairTask {
     virtual void Exec(Option_t *opt);
     void SetPersistence(Bool_t value);
 
+    void SetTargetMass(int tgMass);
+    void SetDoRotation(bool doRotate = true);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fData;
-    TClonesArray *fMass;
-    TClonesArray *fPDG;
-    TClonesArray *fCMVector;
+    STVectorF *fMass;
+    STVectorI *fPDG;
+    STVectorVec3 *fCMVector;
+    STVectorF *fFragRapidity;
+    STVectorF *fBeamRapidity;
 
-    TVector3 fVBeam;
-    Double_t fEnergy = 128;
-    Int_t fMBeam = 124;
+    int fTargetMass;
+    bool fDoRotation;
     const Double_t fNucleonMass = 931.5;
   
   ClassDef(STTransformFrameTask, 1);

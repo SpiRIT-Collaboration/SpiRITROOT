@@ -7,12 +7,16 @@
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
 
+#include <iostream>
+
 ClassImp(STTransformFrameTask);
 
-STTransformFrameTask::STTransformFrameTask()
+STTransformFrameTask::STTransformFrameTask() : fTargetMass(0), fDoRotation(false)
 { 
   fLogger = FairLogger::GetLogger(); 
-  fCMVector = new TClonesArray("STVectorVec3");
+  fCMVector = new STVectorVec3();
+  fFragRapidity = new STVectorF();
+  fBeamRapidity = new STVectorF();
 }
 
 STTransformFrameTask::~STTransformFrameTask()
@@ -26,20 +30,16 @@ InitStatus STTransformFrameTask::Init()
     return kERROR;
   }
 
-  double EBeam = fEnergy*fMBeam + fMBeam*fNucleonMass;
-  double PBeam = sqrt(EBeam*EBeam - fMBeam*fMBeam*fNucleonMass*fNucleonMass);
-  TLorentzVector LV(0,0,-PBeam,EBeam);
-  fVBeam = LV.BoostVector();
-  fMass = (TClonesArray*) ioMan -> GetObject("Mass");
-  fPDG = (TClonesArray*) ioMan -> GetObject("PDG");
+  fMass = (STVectorF*) ioMan -> GetObject("Mass");
+  fPDG = (STVectorI*) ioMan -> GetObject("PDG");
   fData = (TClonesArray*) ioMan -> GetObject("STData");
 
   ioMan -> Register("CMVector", "ST", fCMVector, fIsPersistence);
+  ioMan -> Register("FragRapidity", "ST", fFragRapidity, fIsPersistence);
+  fBeamRapidity -> fElements.push_back(0);
+  ioMan -> Register("BeamRapidity", "ST", fBeamRapidity, fIsPersistence);
   return kSUCCESS;
 }
-
-void STTransformFrameTask::SetBeamEnergyPerN(double energy) { fEnergy = energy; }
-void STTransformFrameTask::SetBeamMass(int mass) { fMBeam = mass; }
 
 void STTransformFrameTask::SetParContainers()
 {
@@ -58,27 +58,48 @@ void STTransformFrameTask::SetParContainers()
 
 void STTransformFrameTask::Exec(Option_t *opt)
 {
-  fCMVector -> Delete();
+  fCMVector -> fElements.clear();
+  fFragRapidity -> fElements.clear();
+
   auto data = (STData*) fData -> At(0);
-  auto mass = (STVectorF*) fMass -> At(0);
-  auto pdg = (STVectorI*) fPDG -> At(0);
-  auto CMVec = new((*fCMVector)[0]) STVectorVec3();
+
+  int beamMass = (data -> aoq)*(data -> z) + 0.5;
+  double energyPerN = data -> beamEnergyTargetPlane;
+  double EBeam = energyPerN*beamMass + beamMass*fNucleonMass;
+  double PBeam = sqrt(EBeam*EBeam - beamMass*beamMass*fNucleonMass*fNucleonMass);
+  TLorentzVector LV(0,0,PBeam,EBeam);
+  double beta = PBeam/(LV.Gamma()*beamMass*fNucleonMass + fTargetMass*fNucleonMass);
+  auto vBeam = TVector3(0,0,-beta);
+  fBeamRapidity -> fElements[0] = LV.Rapidity();
+
+  // beam rotation
+  TVector3 beamDirection(TMath::Tan(data -> proja/1000.), TMath::Tan(data ->projb/1000.),1.);
+  beamDirection = beamDirection.Unit();
+  auto rotationAxis = beamDirection.Cross(TVector3(0,0,1));
+  auto rotationAngle = beamDirection.Angle(TVector3(0,0,1));
 
   int npart = data -> multiplicity;
   for(int part = 0; part < npart; ++part)
   {
-    auto& mom = data -> vaMom[part];
-    if(mass -> fElements[part] > 0)
+    auto mom = data -> vaMom[part];
+    if(fDoRotation) mom.Rotate(rotationAngle, rotationAxis);
+    if(fMass -> fElements[part] > 0)
     {
       int ParticleZ = 1;
-      if(pdg -> fElements[part] > 1000020000) ParticleZ = 2;
-      TLorentzVector pCM(ParticleZ*mom.x(), ParticleZ*mom.y(), ParticleZ*mom.z(), sqrt(ParticleZ*ParticleZ*mom.Mag2() + fNucleonMass*fNucleonMass*(mass->fElements[part])*(mass->fElements[part])));
-      pCM.Boost(fVBeam);
-      CMVec -> fElements.emplace_back(pCM.Px(), pCM.Py(), pCM.Pz());
+      if(fPDG -> fElements[part] > 1000020000) ParticleZ = 2;
+      TLorentzVector pCM(ParticleZ*mom.x(), ParticleZ*mom.y(), ParticleZ*mom.z(), sqrt(ParticleZ*ParticleZ*mom.Mag2() + fNucleonMass*fNucleonMass*(fMass->fElements[part])*(fMass->fElements[part])));
+      pCM.Boost(vBeam);
+      fCMVector -> fElements.emplace_back(pCM.Px(), pCM.Py(), pCM.Pz());
+      fFragRapidity -> fElements.push_back(pCM.Rapidity()); 
     }
-    else CMVec->fElements.emplace_back(0,0,0);
+    else 
+    {
+      fCMVector -> fElements.emplace_back(0,0,0);
+      fFragRapidity -> fElements.push_back(0);
+    }
   }
 }
 
 void STTransformFrameTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }
-
+void STTransformFrameTask::SetTargetMass(int tgMass)                                                 { fTargetMass = tgMass; }
+void STTransformFrameTask::SetDoRotation(bool doRotate)                                              { fDoRotation = true; }
