@@ -54,6 +54,7 @@ ST_ProduceDB_ClusterNum.cc
 STPIDAnalysisTask.cc
 STConcReaderTask.cc
 STPIDCutTask.cc
+STPIDProbTask.cc
 STTransformFrameTask.cc
 STEfficiencyTask.cc
 EfficiencyFactory.cc

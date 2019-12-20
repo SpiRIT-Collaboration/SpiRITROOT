@@ -9,8 +9,9 @@
 
 ClassImp(STEfficiencyTask);
 
-STEfficiencyTask::STEfficiencyTask()
+STEfficiencyTask::STEfficiencyTask(EfficiencyFactory* t_factory)
 { 
+  fFactory = t_factory;
   fLogger = FairLogger::GetLogger(); 
   fEff = new STVectorF();
 }
@@ -18,28 +19,11 @@ STEfficiencyTask::STEfficiencyTask()
 STEfficiencyTask::~STEfficiencyTask()
 {}
 
-void STEfficiencyTask::EfficiencySettings(int t_num_clusters,
-                                          double t_dist_2_vert,
-                                          int t_min_mult,
-                                          int t_max_mult,
-                                          const std::vector<std::pair<double, double>>& t_phi_cut,
-                                          const std::vector<std::pair<double, double>>& t_phi_range,
-                                          const std::string& t_efficiency_db,
-                                          const std::string& t_cut_db,
-                                          double t_cluster_ratio)
-{
-  for(auto& pname : fParticleNameEff)//int i = Particles::Pim; i < Particles::END; ++i)
-    fEfficiencyFactory.emplace_back(new EfficiencyFactory(t_num_clusters, t_dist_2_vert,
-                                                          t_min_mult, t_max_mult,
-                                                          t_phi_cut, pname, t_phi_range,
-                                                          t_efficiency_db, t_cut_db, t_cluster_ratio));
+void STEfficiencyTask::SetParticleList(const std::vector<int>& t_plist)
+{ 
+  fSupportedPDG = t_plist; 
+  for(int pdg : fSupportedPDG) fEfficiencySettings[pdg] = EfficiencySettings(); 
 }
-
-void STEfficiencyTask::SetMomBins(Particles part, double t_min, double t_max, int t_bins)
-{  fEfficiencyFactory[part] -> SetMomBins(t_min, t_max, t_bins); }
-
-void STEfficiencyTask::SetThetaBins(Particles part, double t_min, double t_max, int t_bins)
-{  fEfficiencyFactory[part] -> SetThetaBins(t_min, t_max, t_bins); }
 
 InitStatus STEfficiencyTask::Init()
 {
@@ -49,8 +33,15 @@ InitStatus STEfficiencyTask::Init()
     return kERROR;
   }
 
-  for(auto& factory : fEfficiencyFactory)
-    fEfficiency.push_back(factory -> FinalizeBins(true, false, false, false));
+  for(int pdg : fSupportedPDG)
+  {
+    auto& settings = fEfficiencySettings[pdg];
+    fFactory -> SetMomBins(settings.MomMin, settings.MomMax, settings.NMomBins);
+    fFactory -> SetThetaBins(settings.ThetaMin, settings.ThetaMax, settings.NThetaBins);
+    fFactory -> SetPhiCut(settings.PhiCuts);
+    fFactory -> SetTrackQuality(settings.NClusters, settings.DPoca);
+    fEfficiency[pdg] = fFactory -> FinalizeBins(pdg, true);
+  }
 
   fPDG = (STVectorI*) ioMan -> GetObject("PDG");
   fData = (TClonesArray*) ioMan -> GetObject("STData");
@@ -89,23 +80,36 @@ void STEfficiencyTask::Exec(Option_t *opt)
     double efficiency = 0;
     if(ipdg != 0)
     {
-      auto it = std::find(fSupportedPDG.begin(), fSupportedPDG.end(), ipdg);
-      if(it != fSupportedPDG.end())
+      auto it = fEfficiency.find(ipdg);
+      if(it != fEfficiency.end())
       {
-        int id = it - fSupportedPDG.begin();
+        const auto& settings = fEfficiencySettings[ipdg];
         double phi = mom.Phi()*TMath::RadToDeg();
         if(phi < 0) phi += 360.;
-        if(nclusters > fEfficiencyFactory[id] -> num_clusters_
-           && dpoca < fEfficiencyFactory[id] -> dist_2_vert_
-           && fEfficiencyFactory[id]->_InsidePhi(phi, fEfficiencyFactory[id]->phi_cut_))
+        bool insidePhi = false;
+        for(const auto& cut : settings.PhiCuts)
+          if(cut.first < phi && phi < cut.second)
+          {
+            insidePhi = true;
+            break;
+          }
+
+        if(nclusters > settings.NClusters && dpoca < settings.DPoca && insidePhi)
         {
-          auto& TEff = fEfficiency[it - fSupportedPDG.begin()];
+          auto& TEff = it -> second;
           efficiency = TEff.GetEfficiency(TEff.FindFixBin(mom.Mag(), mom.Theta()*TMath::RadToDeg(), phi));
         }
       }
     }
     fEff -> fElements.push_back(efficiency);
   }
+}
+
+void STEfficiencyTask::FinishTask()
+{
+  auto outfile = FairRootManager::Instance() -> GetOutFile();
+  outfile -> cd();
+  for(const auto& eff : fEfficiency) eff.second.Write(TString::Format("Efficiency%d", eff.first));
 }
 
 void STEfficiencyTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }

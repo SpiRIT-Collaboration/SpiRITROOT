@@ -150,15 +150,17 @@ void run_transport_mc
   // Event generator
   auto fEvent = new STModelToLabFrameGenerator("imqmd_CM.root");
   fEvent -> RegisterHeavyIon();
-  fEvent -> SetBeamInfo(0.128, 132, 50); 
-  fEvent -> SetPrimaryVertex(TVector3(0.04,-20.55,-1.34));
+  fEvent -> SetBeamAndTarget(0.270, 132, 50, 124); 
+  fEvent -> SetPrimaryVertex(TVector3(0.04,-20.55,-1.32));
   fEvent -> SetVertexXYSigma(TVector2(0.406, 0.362));
   fEvent -> SetTargetThickness(0.08);
   fEvent -> SetBeamDetectorVertexSigma(TVector2(0.0708, 0.0265));
   fEvent -> SetBeamAngle(TVector2(-0.0443, 0.00086));
   fEvent -> SetBeamAngleSigma(TVector2(0.00224, 0.00382));
   fEvent -> SetBeamDetectorAngleSigma(TVector2(0.00064, 0.00024));
+
   fEvent -> SetMaxZAllowed(2);
+  fEvent -> SetMaxMult(50);
   fEvent -> SetStartEvent(start_evt);
 
   FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();
