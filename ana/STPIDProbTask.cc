@@ -141,10 +141,8 @@ void STPIDProbTask::Exec(Option_t *opt)
         auto hist = fMomPriorDistribution[pdg];
         if(hist) yield = hist -> GetBinContent(hist -> GetXaxis() -> FindBin(momMag));
       }
-      double prob = yield*TMath::Gaus(dedx, fBBE[pdg]->Eval(momMag), fSigma[pdg]->Eval(momMag));
+      double prob = yield*TMath::Gaus(dedx, fBBE[pdg]->Eval(momMag), fSigma[pdg]->Eval(momMag), true);
       if(std::isnan(prob)) prob = 0;
-
-      if(fabs(momMag - 1725) < 100 && (pdg == 1000010020 || pdg == 1000010030)) std::cout << prob << " yield " << yield << " mom " << momMag << " dedx " << dedx << " BBE " << fBBE[pdg]->Eval(momMag) << " Sigma " << fSigma[pdg]->Eval(momMag) << std::endl;
 
       sumProb += prob;
       PDGProb[pdg] = prob;
@@ -175,7 +173,7 @@ void STPIDProbTask::Exec(Option_t *opt)
         }
         if(nClus > fMinNClus && poca < fMaxDPOCA)
         {
-          if(prob > 0.99)
+          if(prob > 0.5)
             fMomPosteriorDistribution[pdg].Fill(momMag);
           for(auto& hist : fFlattenHist)
           {

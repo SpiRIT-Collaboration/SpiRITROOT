@@ -93,7 +93,7 @@ class STPIDCutTask : public FairTask {
 
     Int_t fdEdXBins = 1000;
     Int_t fMindEdX = 0;
-    Int_t fMaxdEdX = 3000;
+    Int_t fMaxdEdX = 1000;
 
     Int_t fMinNClus = 15;
     Double_t fMaxDPOCA = 20;
