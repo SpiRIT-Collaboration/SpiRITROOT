@@ -10,7 +10,7 @@
 #pragma link C++ class STPHITSEventGenerator+;
 #pragma link C++ class Particle+;
 
-#pragma link C++ class STTransportParticle+:
+#pragma link C++ class STTransportParticle+;
 #pragma link C++ class STTransportReader+;
 #pragma link C++ class STImQMDReader+;
 
