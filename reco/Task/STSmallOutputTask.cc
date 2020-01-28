@@ -66,12 +66,10 @@ void STSmallOutputTask::Exec(Option_t* option)
     {
       fData.aoq = fBeamInfo -> fBeamAoQ;
       fData.z = fBeamInfo -> fBeamZ;
-      fData.a = fBeamInfo -> fRotationAngleA;
-      fData.b = fBeamInfo -> fRotationAngleB;
-      fData.proja = fBeamInfo -> fRotationAngleTargetPlaneA;
-      fData.projb = fBeamInfo -> fRotationAngleTargetPlaneB;
-      fData.projx = fBeamInfo -> fProjX;
-      fData.projy = fBeamInfo -> fProjY;
+      fData.proja = fBeamInfo -> fRotationAngleATargetPlane;
+      fData.projb = fBeamInfo -> fRotationAngleBTargetPlane;
+      fData.projx = fBeamInfo -> fXTargetPlane;
+      fData.projy = fBeamInfo -> fYTargetPlane;
       fData.beamEnergyTargetPlane = fBeamInfo -> fBeamEnergyTargetPlane;
       fData.betaTargetPlane = fBeamInfo -> fBeamVelocityTargetPlane;
     }

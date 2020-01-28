@@ -47,7 +47,8 @@ void run_transport_mc
  TString inputDir = "",
  TString outputDir = "data/",
  Bool_t  useFieldMapFile = kTRUE,
- Int_t   start_evt=0
+ Int_t   start_evt=0,
+ std::set<int> allowedParticles={}
 )
 {
   //////////////////////////////////////////////////////////
@@ -149,7 +150,7 @@ void run_transport_mc
   // -----------------------------------------------------------------
   // Event generator
   auto fEvent = new STModelToLabFrameGenerator("imqmd_CM.root");
-  fEvent -> RegisterHeavyIon();
+  fEvent -> RegisterHeavyIon(allowedParticles);
   fEvent -> SetBeamAndTarget(0.270, 132, 50, 124); 
   fEvent -> SetPrimaryVertex(TVector3(0.04,-20.55,-1.32));
   fEvent -> SetVertexXYSigma(TVector2(0.406, 0.362));
@@ -159,7 +160,7 @@ void run_transport_mc
   fEvent -> SetBeamAngleSigma(TVector2(0.00224, 0.00382));
   fEvent -> SetBeamDetectorAngleSigma(TVector2(0.00064, 0.00024));
 
-  fEvent -> SetMaxZAllowed(2);
+  fEvent -> SetMaxAllowedZ(2);
   fEvent -> SetMaxMult(50);
   fEvent -> SetStartEvent(start_evt);
 
