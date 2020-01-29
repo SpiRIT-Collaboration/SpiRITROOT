@@ -56,7 +56,6 @@ class STTransformFrameTask : public FairTask {
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fData;
-    STVectorF *fMass;
     STVectorI *fPDG;
     STVectorVec3 *fCMVector;
     STVectorF *fFragRapidity;

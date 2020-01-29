@@ -58,8 +58,12 @@ class STPIDProbTask : public FairTask {
 
     void SetMetaFile(const std::string& t_metafile, bool t_update=false);
     void SetPIDFitFile(const std::string& t_fitfile);
+ 
+    // global function to assist fitting PID lines
+    static void FitPID(const std::string& anaFile, const std::string& fitFile);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
+    static TH1F* ProfileX(TH2F* hist, TCutG* cutg); // custom ProfileX
 
     Bool_t fIsPersistence;              ///< Persistence check variable
   
@@ -71,18 +75,18 @@ class STPIDProbTask : public FairTask {
     TFile *fMetaFile = nullptr;
     TFile *fFitFile = nullptr;
 
+    // condition for tracks that goes in the meta data
     int fMinNClus = 15;
     double fMaxDPOCA = 20;
+
     std::map<int, TF1*> fBBE;            ///<modified Bethe Bloch equation for different particles 
     std::map<int, TF1*> fSigma;
-    //std::function<double(double*,double*)> fBEETemp; ///<
     std::map<int, TH2F> fFlattenHist;
     std::map<int, TH1F> fMomPosteriorDistribution;
     std::map<int, TH1F*> fMomPriorDistribution;
     const std::vector<int> fSupportedPDG{2212, 1000010020, 1000010030, 1000020030, 1000020040};
 
     STVectorI *fPDGLists = nullptr;
-    STVectorF *fMassLists = nullptr;
  
   ClassDef(STPIDProbTask, 1);
 };

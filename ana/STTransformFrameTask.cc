@@ -7,6 +7,9 @@
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
 
+// ROOT classes
+#include "TDatabasePDG.h"
+
 #include <iostream>
 
 ClassImp(STTransformFrameTask);
@@ -30,7 +33,6 @@ InitStatus STTransformFrameTask::Init()
     return kERROR;
   }
 
-  fMass = (STVectorF*) ioMan -> GetObject("Mass");
   fPDG = (STVectorI*) ioMan -> GetObject("PDG");
   fData = (TClonesArray*) ioMan -> GetObject("STData");
 
@@ -81,13 +83,15 @@ void STTransformFrameTask::Exec(Option_t *opt)
   int npart = data -> multiplicity;
   for(int part = 0; part < npart; ++part)
   {
-    auto mom = data -> vaMom[part];
-    if(fDoRotation) mom.Rotate(rotationAngle, rotationAxis);
-    if(fMass -> fElements[part] > 0)
+    if(auto particle = TDatabasePDG::Instance()->GetParticle(fPDG -> fElements[part]))
     {
-      int ParticleZ = 1;
-      if(fPDG -> fElements[part] > 1000020000) ParticleZ = 2;
-      TLorentzVector pCM(ParticleZ*mom.x(), ParticleZ*mom.y(), ParticleZ*mom.z(), sqrt(ParticleZ*ParticleZ*mom.Mag2() + fNucleonMass*fNucleonMass*(fMass->fElements[part])*(fMass->fElements[part])));
+      int ParticleZ = particle -> Charge()/3; // TParticlePDG define charge in units of |e|/3, probably to accomodate quarks
+      double ParticleMass = particle -> Mass()*1000; // GeV to MeV
+
+      auto mom = data -> vaMom[part]*ParticleZ;
+      if(fDoRotation) mom.Rotate(rotationAngle, rotationAxis);
+
+      TLorentzVector pCM(mom.x(), mom.y(), mom.z(), sqrt(mom.Mag2() + ParticleMass*ParticleMass));
       pCM.Boost(vBeam);
       fCMVector -> fElements.emplace_back(pCM.Px(), pCM.Py(), pCM.Pz());
       fFragRapidity -> fElements.push_back(pCM.Rapidity()); 
