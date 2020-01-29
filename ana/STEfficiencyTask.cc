@@ -13,7 +13,7 @@ STEfficiencyTask::STEfficiencyTask(EfficiencyFactory* t_factory)
 { 
   fFactory = t_factory;
   fLogger = FairLogger::GetLogger(); 
-  fEff = new STVectorF();
+  fEff = new TClonesArray("STVectorF");
 }
 
 STEfficiencyTask::~STEfficiencyTask()
@@ -43,7 +43,7 @@ InitStatus STEfficiencyTask::Init()
     fEfficiency[pdg] = fFactory -> FinalizeBins(pdg, true);
   }
 
-  fPDG = (STVectorI*) ioMan -> GetObject("PDG");
+  //fPDG = (STVectorI*) ioMan -> GetObject("PDG");
   fData = (TClonesArray*) ioMan -> GetObject("STData");
 
   ioMan -> Register("Eff", "ST", fEff, fIsPersistence);
@@ -67,41 +67,38 @@ void STEfficiencyTask::SetParContainers()
 
 void STEfficiencyTask::Exec(Option_t *opt)
 {
-  fEff -> fElements.clear();
+  fEff -> Clear();
   auto data = (STData*) fData -> At(0);
 
   int npart = data -> multiplicity;
-  for(int part = 0; part < npart; ++part)
+  for(auto ipdg : fSupportedPDG)
   {
-    auto& mom = data -> vaMom[part];
-    int nclusters = data -> vaNRowClusters[part] + data -> vaNLayerClusters[part];
-    double dpoca = data -> recodpoca[part].Mag();
-    int ipdg = fPDG -> fElements[part];
-    double efficiency = 0;
-    if(ipdg != 0)
-    {
-      auto it = fEfficiency.find(ipdg);
-      if(it != fEfficiency.end())
-      {
-        const auto& settings = fEfficiencySettings[ipdg];
-        double phi = mom.Phi()*TMath::RadToDeg();
-        if(phi < 0) phi += 360.;
-        bool insidePhi = false;
-        for(const auto& cut : settings.PhiCuts)
-          if(cut.first < phi && phi < cut.second)
-          {
-            insidePhi = true;
-            break;
-          }
+    auto& TEff = fEfficiency[ipdg];
+    const auto& settings = fEfficiencySettings[ipdg];
+    auto partEff = new((*fEff)[fEff->GetEntriesFast()]) STVectorF();
 
-        if(nclusters > settings.NClusters && dpoca < settings.DPoca && insidePhi)
+    for(int part = 0; part < npart; ++part)
+    {
+      auto& mom = data -> vaMom[part];
+      int nclusters = data -> vaNRowClusters[part] + data -> vaNLayerClusters[part];
+      double dpoca = data -> recodpoca[part].Mag();
+      double phi = mom.Phi()*TMath::RadToDeg();
+      if(phi < 0) phi += 360.;
+      bool insidePhi = false;
+      for(const auto& cut : settings.PhiCuts)
+        if(cut.first < phi && phi < cut.second)
         {
-          auto& TEff = it -> second;
-          efficiency = TEff.GetEfficiency(TEff.FindFixBin(mom.Mag(), mom.Theta()*TMath::RadToDeg(), phi));
+          insidePhi = true;
+          break;
         }
-      }
+      double momMag = mom.Mag();
+      double efficiency = 0;
+      if(nclusters > settings.NClusters 
+         && dpoca < settings.DPoca && insidePhi
+         && settings.MomMin < momMag && momMag < settings.MomMax)
+        efficiency = TEff.GetEfficiency(TEff.FindFixBin(momMag, mom.Theta()*TMath::RadToDeg(), phi));
+      partEff -> fElements.push_back(efficiency);
     }
-    fEff -> fElements.push_back(efficiency);
   }
 }
 
