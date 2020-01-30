@@ -279,7 +279,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
     bdcVertex -> SetIsGoodBDC();
     bdcVertex -> SetPos(vertexPos);
-    LOG(INFO) << Space() << "STGenfitVATask " << "BDC vertex is loaded from MCBeamInfo" << FairLogger::endl;
+    LOG(INFO) << Space() << "STGenfitVATask " << "BDC vertex is loaded from MCEventHeader" << FairLogger::endl;
   }
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();
