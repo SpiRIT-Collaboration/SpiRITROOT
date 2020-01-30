@@ -67,7 +67,7 @@ class STEfficiencyTask : public FairTask {
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     STVectorI *fPDG;                 ///<
     TClonesArray *fData;                ///< STData from the conc files
-    STVectorF *fEff;                 ///< Efficiency of each type of particle
+    TClonesArray *fEff;                 ///< Efficiency of each type of particle
 
     std::vector<int> fSupportedPDG;
     EfficiencyFactory *fFactory = nullptr;

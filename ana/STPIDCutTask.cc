@@ -1,6 +1,8 @@
 #include "TROOT.h"
 #include "TLatex.h"
 #include "STPIDCutTask.hh"
+#include "STAnaParticleDB.hh"
+#include "STVector.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -9,7 +11,8 @@
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
 
-#include "STVector.hh"
+// ROOT classes
+#include "TDatabasePDG.h"
 
 ClassImp(STPIDCutTask);
 
@@ -17,7 +20,6 @@ STPIDCutTask::STPIDCutTask()
 { 
   fLogger = FairLogger::GetLogger(); 
   fPDGLists = new STVectorI();
-  fMassLists = new STVectorF();
 }
 
 STPIDCutTask::~STPIDCutTask()
@@ -25,6 +27,7 @@ STPIDCutTask::~STPIDCutTask()
 
 InitStatus STPIDCutTask::Init()
 {
+  STAnaParticleDB::FillTDatabasePDG();
   FairRootManager *ioMan = FairRootManager::Instance();
   if (ioMan == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");
@@ -43,7 +46,6 @@ InitStatus STPIDCutTask::Init()
   auto namelist = ioMan -> GetBranchNameList();
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   ioMan -> Register("PDG", "ST", fPDGLists, fIsPersistence);
-  ioMan -> Register("Mass", "ST", fMassLists, fIsPersistence);
   return kSUCCESS;
 }
 
@@ -66,12 +68,10 @@ STPIDCutTask::SetParContainers()
 void STPIDCutTask::Exec(Option_t *opt)
 {
   fPDGLists -> fElements.clear();
-  fMassLists -> fElements.clear();
   auto data = (STData*) fData -> At(0);
   int npart = data -> multiplicity;
 
   auto pdg_ary = fPDGLists;
-  auto mass_ary = fMassLists;
 
   for(int part = 0; part < npart; ++part)
   {
@@ -83,7 +83,6 @@ void STPIDCutTask::Exec(Option_t *opt)
 
     double momMag = mom.Mag()/charge;
     int pdg = 0;
-    double mass = 0;
     int pitchId = this->_ToPitchId(mom);
     int yawId = this->_ToYawId(mom);
 
@@ -92,11 +91,9 @@ void STPIDCutTask::Exec(Option_t *opt)
         if(cut -> IsInside(momMag, dedx))
         { 
           pdg = fPDG[icut];
-          mass = fMass[icut];
           break;
         }
     pdg_ary -> fElements.push_back(pdg); 
-    mass_ary -> fElements.push_back(mass);
  
     if(nClus > fMinNClus && poca < fMaxDPOCA)
       if(pitchId >= 0 && yawId >= 0)
@@ -124,6 +121,7 @@ void STPIDCutTask::SetNYaw(int yaws)                                            
 void STPIDCutTask::SetCutConditions(int minNClus, double maxPOCA)                            { fMinNClus = minNClus; fMaxDPOCA = maxPOCA; }
 void STPIDCutTask::SetCutFile(const std::string& cutfile)
 {
+  STAnaParticleDB::FillTDatabasePDG();
   fCutFile = new TFile(cutfile.c_str());
   if(!fCutFile -> IsOpen())
   {
@@ -132,24 +130,16 @@ void STPIDCutTask::SetCutFile(const std::string& cutfile)
   }
   else fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Loading cuts from file %s", cutfile.c_str()));
 
-  //for(const auto& particle : fParticleNames)
-  //{
-  //  auto cutg = static_cast<TCutG*>(fCutFile -> Get(particle.c_str()));
-  //  if(cutg) 
-  //    fCuts.push_back(static_cast<TCutG*>(fCutFile -> Get(particle.c_str())));
-  //  else
-  //  {
-  //    fCuts.push_back(nullptr);
-  //    fLogger -> Error(MESSAGE_ORIGIN, TString::Format("Particle cut for %s is not found", particle.c_str())); 
-  //  }
-  //}
-  for(const auto& particle : fParticleNames)
+  for(int pdg : fPDG)
   {
+    auto particle = TDatabasePDG::Instance() -> GetParticle(pdg) -> GetName();
     std::map<std::pair<int, int>, TCutG*> cutForParticle;
     for(int pitchId = 0; pitchId < fNPitches; ++pitchId)
       for(int yawId = 0; yawId < fNYaw; ++yawId)
       {
-        auto cutg = static_cast<TCutG*>(fCutFile -> Get(TString::Format("%sPitch%dYaw%d", particle.c_str(), pitchId, yawId)));
+        auto obj = fCutFile -> Get(TString::Format("%sPitch%dYaw%d", particle, pitchId, yawId));
+        if(!obj) fLogger -> Error(MESSAGE_ORIGIN, TString::Format("Particle %s cannot be loaded from the cut file", particle));
+        auto cutg = static_cast<TCutG*>(obj);
         cutForParticle[{pitchId, yawId}] = cutg;
       }
     fCuts.push_back(cutForParticle);
@@ -176,6 +166,106 @@ int STPIDCutTask::_ToYawId(const TVector3& vec)
   else
     return -1;
 }
+
+void STPIDCutTask::DrawPID(const std::string& anaFile, const std::string& cutFile, bool overwrite)
+{
+  STAnaParticleDB::FillTDatabasePDG();
+  struct particleCharacteristic{ int color; TString name; };
+  TFile file(anaFile.c_str());
+  auto db = TDatabasePDG::Instance();
+  const std::vector<particleCharacteristic> particles{{kRed, db->GetParticle(2212)->GetName()},
+                                                      {kBlue, db->GetParticle(1000010020)->GetName()},
+                                                      {kGreen, db->GetParticle(1000010030)->GetName()},
+                                                      {kOrange, db->GetParticle(1000020030)->GetName()},
+                                                      {kBlack, db->GetParticle(1000020040)->GetName()}};
+
+  std::vector<TCutG*> cuts;
+  TCanvas c1;
+  
+  // continue from where we left in the existing files
+  TFile *output = new TFile(cutFile.c_str(), "READ");
+  // if not such file exists, we have to create it
+  if(!output->IsOpen() || overwrite)
+  { 
+    output->Close(); 
+    delete output;
+    // need to write something into the file for it to be read correctly
+    {
+      TFile temp(cutFile.c_str(), "RECREATE"); 
+      TH1F hist("temp", "temp", 10,0,10); 
+      hist.Write(); 
+      temp.Close(); 
+    }
+    output = new TFile(cutFile.c_str(), "READ"); 
+  }
+
+  // scan for number of yaw and pitch id
+  int npitch = 0, nyaw = 0;
+  do{ ++npitch; }while(file.Get(TString::Format("Pitch%dYaw%d", npitch, 0))); 
+  do{ ++nyaw; }while(file.Get(TString::Format("Pitch%dYaw%d", 0, nyaw)));
+
+  auto InstanceSave = [output](TCutG *cut) 
+  {
+    output -> ReOpen("update");
+    output -> cd();
+    cut -> Write();
+    output -> Flush();
+    output -> ReOpen("read");
+    std::cout << "Cut " << cut -> GetName() << " is saved." << std::endl;
+  };
+
+  for(int pitchId = 0; pitchId < npitch; ++pitchId)
+    for(int yawId = 0; yawId < nyaw; ++yawId)
+    {
+      c1.cd();
+      auto PID = (TH2F*) file.Get(TString::Format("Pitch%dYaw%d", pitchId, yawId));
+      if(PID)
+        if(PID -> Integral() > 10) // draw cuts if PID has more than the threshold counts
+        {
+          PID -> Draw("colz");
+          for(const auto& part : particles)
+          {
+            auto cutname = TString::Format("%sPitch%dYaw%d", part.name.Data(), pitchId, yawId);
+            TCutG *cutg = (TCutG*) output->Get(cutname);
+            bool redraw = false;
+            if(cutg)
+            {
+              cutg -> SetLineColor(part.color);
+              cutg -> Draw("L same");
+              std::cout << "Redraw this cut (y/n) ?" << std::endl;
+              c1.Update();
+              c1.Modified();
+              std::string ans;
+              std::cin >> ans;
+              if(ans == "y") 
+              {
+                redraw = true;
+                cutg -> Delete();
+                cutg = nullptr;
+              }
+            }
+            TLatex t(2000, 800, TString::Format("Draw cut for %s", part.name.Data()));
+            if(!cutg)
+            {
+              t.Draw();
+              while(!cutg) cutg = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+              std::cout << "Finished? Press Ctrl-C" << std::endl;
+              c1.WaitPrimitive("temp", "[CUTG]"); //checkpoint to allow user to modify the cutg before pressing Ctrl-C
+              cutg -> SetName(cutname);
+              cuts.push_back(cutg);
+              cutg -> SetLineColor(part.color);
+              cutg -> Draw("L same");
+              InstanceSave(cutg);
+            }
+            t.Delete();
+          }
+        }
+    }
+  std::cout << "All PID cuts are drawn." << std::endl;
+  output -> Delete();
+  delete output;
+}
+
 
 void OrgainzePIDs(TCanvas *c1, std::vector<std::vector<TH2F*>>& hists, int nYaw, int nPitch)
 {
@@ -308,3 +398,4 @@ std::vector<std::vector<TPad*>> CanvasPartition(TCanvas *C,const Int_t Nx,const 
    return pads;
 }
   
+

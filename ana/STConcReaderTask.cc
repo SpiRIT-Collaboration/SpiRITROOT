@@ -35,6 +35,12 @@ InitStatus STConcReaderTask::Init()
     fLogger -> Error(MESSAGE_ORIGIN, "TChain is NULL");
     return kERROR;
   }
+  
+  if(fChain -> GetEntries() == 0)
+  {
+    fLogger -> Error(MESSAGE_ORIGIN, "The TChain is empty");
+    return kERROR;
+  }
 
   fChain -> SetBranchAddress("EvtData", &fSTData);
   fChain -> SetBranchAddress("eventID", &fMCLoadedID);

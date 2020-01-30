@@ -72,7 +72,9 @@ class STPIDCutTask : public FairTask {
     void SetCutConditions(int minNClus, double maxPOCA);
     void SetCutFile(const std::string& cutfile);
 
-    
+    // auxiliary function to draw PID cuts from the ana file
+    // input: name of the ana file, name of the PID cut (that will be used in STPIDCutTask::SetCutFile)
+    static void DrawPID(const std::string& anaFile, const std::string& cutFile, bool overwrite=false);
 
   private:
     int _ToPitchId(const TVector3& vec);
@@ -93,15 +95,13 @@ class STPIDCutTask : public FairTask {
 
     Int_t fdEdXBins = 1000;
     Int_t fMindEdX = 0;
-    Int_t fMaxdEdX = 3000;
+    Int_t fMaxdEdX = 1000;
 
     Int_t fMinNClus = 15;
     Double_t fMaxDPOCA = 20;
 
     TFile *fCutFile = nullptr;
-    const std::vector<std::string> fParticleNames = {/*"Pim", "Pip", */"Proton", "Deuteron", "Triton", "He3", "He4"};
-    const std::vector<int> fPDG = {/*-211, 211, */2212, 1000010020, 1000010030, 1000020030, 1000020040};
-    const std::vector<double> fMass = {/*0.144, 0.144, */1, 2, 3, 3, 4};
+    const std::vector<int> fPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040};
     std::vector<std::map<std::pair<int, int>, TCutG*>> fCuts;
 
     std::vector<std::vector<TH2F*>> fPIDHists;

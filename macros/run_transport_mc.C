@@ -160,7 +160,7 @@ void run_transport_mc
   fEvent -> SetBeamAngleSigma(TVector2(0.00224, 0.00382));
   fEvent -> SetBeamDetectorAngleSigma(TVector2(0.00064, 0.00024));
 
-  fEvent -> SetMaxZAllowed(2);
+  fEvent -> SetMaxAllowedZ(2);
   fEvent -> SetMaxMult(50);
   fEvent -> SetStartEvent(start_evt);
 

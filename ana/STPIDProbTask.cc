@@ -1,6 +1,8 @@
 #include "TROOT.h"
 #include "TLatex.h"
 #include "STPIDProbTask.hh"
+#include "STAnaParticleDB.hh"
+#include "STVector.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -9,7 +11,8 @@
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
 
-#include "STVector.hh"
+// ROOT class
+#include "TDatabasePDG.h"
 
 ClassImp(STPIDProbTask);
 
@@ -17,54 +20,9 @@ STPIDProbTask::STPIDProbTask()
 { 
   fLogger = FairLogger::GetLogger(); 
   fPDGLists = new STVectorI();
-  fMassLists = new STVectorF();
-
-  //fBEETemp = [](double *x, double *par)
-  //{
-  //  double fitval;
-  //  double beta = x[0]/sqrt(x[0]*x[0] + 931.5*par[0]);
-  //  return par[1]/pow(beta, par[4])*(par[2] - pow(beta, par[4]) - log(par[3] + pow(931.5*par[0]/x[0], par[5])));
-  //};
 
   for(int pdg : fSupportedPDG)
-  {
-    //TF1 bbe(TString::Format("Particle%d", pdg), fBEETemp, 0, 3000, 6);
-    //TF1 sigma(TString::Format("ParticleSigma%d", pdg), "[0]/pow(x,[1]) + [2]");
-    //switch(pdg)
-    //{
-    //  case 2212: 
-    //    bbe.SetParameters(1, -718.7, 11.963, 59024.7, -48.037, 5.8289); 
-    //    bbe.FixParameter(0, 1); 
-    //    sigma.SetParameters(6.94034e5, 1.81139, 1.45987);
-    //    break;
-    //  case 1000010020: 
-    //    bbe.SetParameters(2, -808.97, 13.02, 169219, -83.9262, 6.1987); 
-    //    bbe.FixParameter(0, 2); 
-    //    sigma.SetParameters(2.83664e7, 2.1745, 2.29088);
-    //    break;
-    //  case 1000010030: 
-    //    bbe.SetParameters(3, -1233.4, 13.3135, 226629, -79.5201, 5.3072); 
-    //    bbe.FixParameter(0, 3); 
-    //    sigma.SetParameters(6.0944e7, 2.1798, 3.09216);
-    //    break;
-    //  case 1000020030: 
-    //    bbe.SetParameters(3, -739.772, 14.6252, 944669, -188.571,7.8113); 
-    //    bbe.FixParameter(0, 3); 
-    //    sigma.SetParameters(1.70893e6, 1.62724, 2.7622);
-    //    break;
-    //  case 1000020040:
-    //    bbe.SetParameters(4, -748.151, 14.5728, 908830, -247.735, 7.91);
-    //    bbe.FixParameter(0, 4);
-    //    sigma = TF1(TString::Format("ParticleSigma%d", pdg), "[0]*x*x + [1]*x + [2]");
-    //    sigma.SetParameters(3.93471e-5, -1.26e-1, 1.2049e2);
-    //    break;
-    //  default: break;
-    //}
     fFlattenHist[pdg] = TH2F(TString::Format("Part%d", pdg), "PID;momentum;dedx", 40, 0, 3000,100, -100, 100);
-    //fSigma[pdg] = sigma;
-    //
-    //fBBE[pdg] = bbe;
-  }
 }
 
 STPIDProbTask::~STPIDProbTask()
@@ -90,7 +48,6 @@ InitStatus STPIDProbTask::Init()
   }
 
   ioMan -> Register("PDG", "ST", fPDGLists, fIsPersistence);
-  ioMan -> Register("Mass", "ST", fMassLists, fIsPersistence);
   return kSUCCESS;
 }
 
@@ -113,8 +70,6 @@ STPIDProbTask::SetParContainers()
 void STPIDProbTask::Exec(Option_t *opt)
 {
   fPDGLists -> fElements.clear();
-  fMassLists -> fElements.clear();
-
   for(auto& prob : fPDGProb) prob.second->fElements.clear();
 
   auto data = (STData*) fData -> At(0);
@@ -133,18 +88,17 @@ void STPIDProbTask::Exec(Option_t *opt)
 
     std::map<int, double> PDGProb;
     double sumProb = 0;
-    double yield = 1;
     for(int pdg : fSupportedPDG)
     {
+      double yield = 1;
+      // load the prior if it exists
       if(fMomPriorDistribution.size() == fSupportedPDG.size())
       {
         auto hist = fMomPriorDistribution[pdg];
         if(hist) yield = hist -> GetBinContent(hist -> GetXaxis() -> FindBin(momMag));
       }
-      double prob = yield*TMath::Gaus(dedx, fBBE[pdg]->Eval(momMag), fSigma[pdg]->Eval(momMag));
-      if(std::isnan(prob)) prob = 0;
-
-      if(fabs(momMag - 1725) < 100 && (pdg == 1000010020 || pdg == 1000010030)) std::cout << prob << " yield " << yield << " mom " << momMag << " dedx " << dedx << " BBE " << fBBE[pdg]->Eval(momMag) << " Sigma " << fSigma[pdg]->Eval(momMag) << std::endl;
+      double prob = yield*TMath::Gaus(dedx, fBBE[pdg]->Eval(momMag), fSigma[pdg]->Eval(momMag), true);
+      if(std::isnan(prob)) prob = 0; // this is why we cannot use -Ofast
 
       sumProb += prob;
       PDGProb[pdg] = prob;
@@ -152,30 +106,18 @@ void STPIDProbTask::Exec(Option_t *opt)
     if(sumProb == 0) sumProb = 1;
 
     for(int pdg : fSupportedPDG)
-    { 
       fPDGProb[pdg] -> fElements.push_back(PDGProb[pdg]/sumProb);
-    }
  
     int optimumPDG = 0;
-    int optimumMass = 0;
     for(int pdg : fSupportedPDG)
     {
       double prob = PDGProb[pdg]/sumProb;
       if(prob > 0.5)
       {
         optimumPDG = pdg;
-        switch(pdg)
-        {
-          case 2212: optimumMass = 1; break;
-          case 1000010020: optimumMass = 2; break;
-          case 1000010030: optimumMass = 3; break;
-          case 1000020030: optimumMass = 3; break;
-          case 1000020040: optimumMass = 4; break;
-          default: break;
-        }
         if(nClus > fMinNClus && poca < fMaxDPOCA)
         {
-          if(prob > 0.99)
+          if(prob > 0.5)
             fMomPosteriorDistribution[pdg].Fill(momMag);
           for(auto& hist : fFlattenHist)
           {
@@ -187,7 +129,6 @@ void STPIDProbTask::Exec(Option_t *opt)
       }
     }
     fPDGLists -> fElements.push_back(optimumPDG);
-    fMassLists -> fElements.push_back(optimumMass);
   }
 }
 
@@ -223,8 +164,138 @@ void STPIDProbTask::SetPIDFitFile(const std::string& t_fitfile)
   for(int pdg : fSupportedPDG)
   {
     fBBE[pdg] = static_cast<TF1*>(fFitFile -> Get(TString::Format("BEE%d", pdg)));
-    std::cout << fBBE[pdg] << std::endl;
     fBBE[pdg]->FixParameter(0, fBBE[pdg]->GetParameter(0));
     fSigma[pdg] = static_cast<TF1*>(fFitFile -> Get(TString::Format("PIDSigma%d", pdg)));
   }
+}
+
+void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFile)
+{
+  STAnaParticleDB::FillTDatabasePDG();
+  TChain chain("cbmsim");
+  chain.Add(anaFile.c_str());
+  TFile output(fitFile.c_str(), "RECREATE");
+
+  auto BBE = [](double *x, double *par)
+  {
+    double fitval;
+    double beta = x[0]/sqrt(x[0]*x[0] + 931.5*par[0]);
+    return par[1]/pow(beta, par[4])*(par[2] - pow(beta, par[4]) - log(par[3] + pow(931.5*par[0]/x[0], par[5])));
+  };
+
+  TF1 tBBE("BBE", BBE, 0, 3000, 6);
+
+  int nbinsx = 100;
+  int nbinsy = 500;
+  double momMin = 0;
+  double momMax = 3000;
+  double minDeDx = 0;
+  double maxDeDx = 1000;
+
+  TCanvas c1;
+  TH2F PID("PID", "PID", nbinsx, momMin, momMax, nbinsy, minDeDx, maxDeDx);
+  PID.Sumw2();
+  tBBE.SetParameters(1,-800,13,190000,-80,6);
+
+  chain.Draw("STData[0].vadedx:STData[0].vaMom.Mag()>>PID", 
+             "STData[0].vaNRowClusters + STData[0].vaNLayerClusters > 15 && STData[0].recodpoca.Mag() < 20", 
+             "goff");
+
+  for(int pdg : std::vector<int>{2212,1000010020,1000010030,1000020030, 1000020040})
+   {
+    c1.cd();
+    PID.Draw("colz");
+
+    auto particle = TDatabasePDG::Instance() -> GetParticle(pdg);
+    int A = int(particle -> Mass()/STAnaParticleDB::kAu2Gev);
+    std::string pname(particle -> GetName());
+    tBBE.FixParameter(0,A);
+
+    std::cout << "Please draw cut for " << pname << std::endl;
+    TCutG *cutg = nullptr;
+    while(!cutg) cutg = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+    std::cout << "Please modify the cutg if needed. Press Ctrl-C to continue" << std::endl;
+    c1.WaitPrimitive("temp", "[CUTG]");
+
+    auto profile = STPIDProbTask::ProfileX(&PID, cutg);//PID.ProfileX("_px", 1, -1, "s [CUTG]");
+    TH1F PIDMean("PIDMean", "Mean;momentum (MeV/c2);dEdX", nbinsx, momMin, momMax);
+    TH1F PIDStd("PIDStd", "Std;momentum (MeV/c2);Std", nbinsx, momMin, momMax);
+
+    for(int i = 1; i < PID.GetNbinsX(); ++i)
+    {
+      PIDMean.SetBinContent(i, profile->GetBinContent(i));
+      PIDStd.SetBinContent(i, profile->GetBinError(i));
+    }
+
+    tBBE.SetNpx(5000);
+    std::string redraw = "y";
+    while(redraw == "y")
+    {
+      PIDMean.Fit(&tBBE);
+      PID.Draw("colz");
+      c1.Update();
+      PIDMean.Draw("PE same");
+      std::cout << "Please inspect the result of the fit. You may adjust the parameters in the fit panel. Press Ctrl-C to continue" << std::endl;
+      c1.WaitPrimitive("temp", "[CUTG]");
+
+      // Obtain the tf1 after adjustment is made on fit panel
+      auto newBBE = (TF1*) PIDMean.GetFunction("BBE");
+      tBBE.SetParameters(newBBE->GetParameters());
+      std::cout << "Please inspect the fitted lines. Do you want to refit? (y/n)" << std::endl;
+      tBBE.Draw("L same");
+      c1.Update();
+      std::cin >> redraw;
+    }
+    
+    std::string fitname = "ErrorFit" + pname;
+    TF1 fitError(fitname.c_str(), "[0]/pow(x, [1]) + [2]");
+    {
+      fitError.SetParameters(100,2,0);
+
+      TCanvas c2("c2", "c2");
+      PIDStd.GetYaxis()->SetLimits(0, PIDStd.GetMaximum());
+      PIDStd.Fit(&fitError);
+      PIDStd.GetYaxis()->SetRangeUser(0, PIDStd.GetMaximum());
+
+      std::cout << "Please modify the fit with Fit Panel if needed. Then press Ctrl-C" << std::endl;
+      c2.WaitPrimitive("temp", "[CUTG]");
+
+      // Obtain the tf1 after adjustment is made on fit panel
+      auto newfitError = (TF1*) PIDStd.GetFunction(fitname.c_str());
+      fitError.SetParameters(newfitError->GetParameters());
+    }
+
+    output.cd();
+    tBBE.Clone(TString::Format("BEE%d", pdg))->Write();
+    fitError.Clone(TString::Format("PIDSigma%d", pdg))->Write();
+  }
+}
+
+TH1F* STPIDProbTask::ProfileX(TH2F* hist, TCutG* cutg)
+{
+  // don't know why I can't get desirable error from default TH2::ProfileX
+  // reimplement to avoid any probelms
+  int ny = hist -> GetNbinsY();
+  double ymin = hist -> GetYaxis() -> GetBinLowEdge(1);
+  double ymax = hist -> GetYaxis() -> GetBinUpEdge(ny);
+
+  int nx = hist -> GetNbinsX();
+  double xmin = hist -> GetXaxis() -> GetBinLowEdge(1);
+  double xmax = hist -> GetXaxis() -> GetBinUpEdge(nx);
+
+  TH1F *profile = new TH1F(TString::Format("%s_px", hist->GetName()), "", nx, xmin, xmax);
+  for(int i = 1; i < hist->GetNbinsX(); ++i)
+  {
+    TH1F temp("temp", "temp", ny, ymin, ymax);
+    for(int j = 1; j < ny; ++j)
+      if(cutg -> IsInside(hist->GetXaxis()->GetBinCenter(i), hist->GetYaxis()->GetBinCenter(j)))
+        temp.SetBinContent(j, hist->GetBinContent(i, j));
+    TF1 gaus("gaus", "gaus");
+    if(temp.GetEntries() > 0)
+      temp.Fit(&gaus, "Q");
+    else gaus.SetParameters(0,0,0);
+    profile->SetBinContent(i, gaus.GetParameter(1));
+    profile->SetBinError(i, gaus.GetParameter(2));
+  }
+  return profile;
 }

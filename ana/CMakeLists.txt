@@ -48,6 +48,7 @@ link_directories(${LINK_DIRECTORIES})
 
 set(SRCS
 # Add all the source files below this line. Those must have cc for their extension.
+STAnaParticleDB.cc
 ST_TrackCut.cc
 ST_ClusterNum_DB.cc
 ST_ProduceDB_ClusterNum.cc
