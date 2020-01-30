@@ -8,31 +8,21 @@
 #include "TRandom.h"
 
 #include "STFairMCEventHeader.hh"
+#include "TDatabasePDG.h"
+#include "TParticlePDG.h"
 
-std::pair<int, int> Elements::PDGToAZ(int pdg)
+TParticlePDG* Elements::PDGToParticleData(int pdg)
 {
-  int A, Z;
-  if(pdg == 2212) A = Z = 1;
-  else if(pdg == 2112){ A = 1; Z = 0; }
-  else if(pdg == 211) {A = 0; Z = 1; }
-  else if(pdg == -211) { A = 0; Z = -1; }
+  if(auto particle = TDatabasePDG::Instance()->GetParticle(pdg))
+    return particle;
   else
   {
-    Z = (pdg%10000000)/10000;
-    A = (pdg%10000)/10;
+    // heavy ioins. Otherwise TDatabasePDG should already have the information
+    int Z = (pdg%10000000)/10000;
+    int A = (pdg%10000)/10;
+    // add particle to TDatabasePDG so the memory management behavior is identical for light particles or ions.
+    return TDatabasePDG::Instance()->AddParticle(symbol[Z], symbol[Z], A*Elements::kProtonMass, true, 0, 3*Z, "ion", pdg, 0, 0); 
   }
-  return {A, Z};
-}
-
-int Elements::AZToPDG(int A, int Z)
-{
-  int pdg = 0;
-  if(Z == 1 && A == 1) pdg = 2212;
-  else if(Z == 0 && A == 1) pdg = 2122;
-  else if(Z == 1 && A == 0) pdg = 211;
-  else if(Z == -1 && A == 0) pdg = -211;
-  else pdg = 1000000000 + Z*10000 + A*10;
-  return pdg;
 }
 
 /***********************************************
@@ -60,16 +50,16 @@ std::vector<FairIon*> STTransportReader::GetParticleList()
   while(this -> GetNext(particles))
   {
     for(const auto& part : particles) 
-      if(part.pdg > 3000)
+      if(part.pdg > 3000) // if pdg <= 3000 it is consider a regular elements, not heavy ions
         pdgList.insert(part.pdg);
   }
 
   std::vector<FairIon*> particleList;
   for(auto pdg : pdgList)
   {
-    auto AZ = Elements::PDGToAZ(pdg);
-    int a = AZ.first;
-    int z = AZ.second;
+    auto particle = Elements::PDGToParticleData(pdg);
+    int a = int(particle -> Mass()/Elements::kProtonMass + 0.5);
+    int z = int(particle -> Charge()/3. + 0.5);
     if(a > 1) particleList.push_back(new FairIon(Form("%d",a)+Elements::symbol[z-1],z,a,z));
   }
 
@@ -120,7 +110,16 @@ bool STImQMDReader::GetNext(std::vector<STTransportParticle>& particleList)
   if(fEventID >= fEntries) return false;
   while(fTreeEventID == fEventID)
   {
-    int pdg = Elements::AZToPDG(fPartA, fPartZ);
+    int pdg = 0;
+    int Z = fPartZ, A = fPartA;
+    if(Z == 1 && A == 1) pdg = 2212;
+    else if(Z == 0 && A == 1) pdg = 2122;
+    // special case for ImQMD files
+    // When Z = +/- 1 and A = 0, it refers to pions
+    else if(Z == 1 && A == 0) pdg = 211;
+    else if(Z == -1 && A == 0) pdg = -211;
+    else pdg = 1000000000 + Z*10000 + A*10;
+
     particleList.push_back({pdg, fPx, fPy, fPz, fX, fY, fZ});
     ++fLocalID;
     fTree -> GetEntry(fLocalID);
@@ -231,11 +230,6 @@ void STModelToLabFrameGenerator::RegisterReader()
   fNEvents = fReader -> GetEntries();
 
   auto ioMan = FairRootManager::Instance();
-  fBeamInfo = new TClonesArray("STBeamInfo");
-  ioMan -> Register("MCBeamInfo", "Generator", fBeamInfo, kTRUE);
-  LOG(INFO) << " Logging MCBeamInfo " << FairLogger::endl;
-
-
 }
 
 Bool_t STModelToLabFrameGenerator::Init()
@@ -291,17 +285,6 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
   Double_t detectedVertexX = gRandom->Gaus(eventVertex.X(), fBeamDetectorVertexSigma.X());
   Double_t detectedVertexY = gRandom->Gaus(eventVertex.Y(), fBeamDetectorVertexSigma.Y());
 
-  // fill beamInfo
-  fBeamInfo -> Delete();
-  auto beamInfo = new((*fBeamInfo)[0]) STBeamInfo();
-  //beamInfo -> fRotationAngleTargetPlaneA = detectedBeamAngleA*1000; // to mrad
-  //beamInfo -> fRotationAngleTargetPlaneB = detectedBeamAngleB*1000;
-  //beamInfo -> fProjX = detectedVertexX*10;
-  //beamInfo -> fProjY = detectedVertexY*10; // to cm to mm
-  beamInfo -> fBeamZ = fBeamCharge;
-  beamInfo -> fBeamAoQ = double(fBeamMass)/fBeamCharge;
-  beamInfo -> fBeamEnergyTargetPlane = fBeamEnergyPerN;
-
   TRotation rotatedFrame;             // set rotation operator for ta.
   rotatedFrame.RotateY(beamAngleA);   // rotate by angle-A of beam with respect to Y axis
   TVector3 axisX(1,0,0);              // define local X axis
@@ -340,9 +323,9 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
   for(const auto& particle : particleList)
   {
     Int_t pdg = particle.pdg;
-    auto az = Elements::PDGToAZ(pdg);
-    int Z = az.second;
-    if(pdg == 2112 || (Z > fMaxZ && fMaxZ > 0))
+    auto particleData = Elements::PDGToParticleData(pdg);
+    int charge = particleData -> Charge()/3;
+    if(charge == 0 || (charge > fMaxZ && fMaxZ > 0))
       continue;
 
     if(fAllowedPDG.size() > 0)
@@ -355,14 +338,12 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 
   for(const auto& particle : acceptedParticles)
   {
-    Int_t pdg = particle.pdg;
-    double mass = 0;
-    if(abs(pdg) == 211) mass = 0.150;
-    else mass = (double) Elements::PDGToAZ(pdg).first; // mass in atomic mass unit
+    auto particleData = Elements::PDGToParticleData(particle.pdg);
+    auto mass = particleData -> Mass(); // It's already in GeV
 
     // transform the data to CM frame
     TVector3 p(particle.px, particle.py, particle.pz);
-    TLorentzVector pCM(p.x(), p.y(), p.z(), sqrt(p.Mag2() + mass*mass*fNucleonMass*fNucleonMass));
+    TLorentzVector pCM(p.x(), p.y(), p.z(), sqrt(p.Mag2() + mass*mass));
     pCM.Boost(fBoostVector);
     p = pCM.Vect();
 
@@ -370,7 +351,7 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     p.RotateY(beamAngleA);    // rotate w.r.t Y axis
     p.Transform(rotateInRotatedFrame);
 
-    primGen -> AddTrack(pdg, p.X(), p.Y(), p.Z(), eventVertex.X(), eventVertex.Y(), eventVertex.Z());
+    primGen -> AddTrack(particle.pdg, p.X(), p.Y(), p.Z(), eventVertex.X(), eventVertex.Y(), eventVertex.Z());
   }
   // add dummy particles if there are no particles. 
   // it shoot in the wrong direction so it should not leave a signal in the detector
@@ -394,9 +375,9 @@ void STModelToLabFrameGenerator::RegisterHeavyIon(std::set<int> pdgList)
     fAllowedPDG = pdgList;
     for(auto pdg : pdgList)
     {
-      auto az = Elements::PDGToAZ(pdg);
-      auto z = az.second;
-      auto a = az.first;
+      auto particleData = Elements::PDGToParticleData(pdg);
+      auto z = int(particleData -> Charge()/3. + 0.5);
+      auto a = int(particleData -> Mass()/Elements::kProtonMass + 0.5);
       if(a > 1) particleList.push_back(new FairIon(Form("%d",a)+Elements::symbol[z-1],z,a,z));
     }
   }

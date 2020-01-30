@@ -15,6 +15,8 @@
 #include "TLorentzVector.h"
 #include "TString.h"
 
+#include "TDatabasePDG.h"
+
 struct STTransportParticle;
 class STTransportReader;
 class STImQMDReader;
@@ -26,9 +28,9 @@ namespace Elements
                               "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
                               "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr",
                               "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn"};
-  std::pair<int, int> PDGToAZ(int pdg); // convert pdg to A and Z. A = Z = 0 if pdg does not corresponds to heavy-ion (excluding proton and neutron)
+  TParticlePDG* PDGToParticleData(int pdg); // convert pdg code to TParticlePDG. It works even for heavy ions. 
   // if A = 0 and Z = +/- 1, pdg == +/- 211 (pion is assumed in such case)
-  int AZToPDG(int A, int Z); 
+  const double kProtonMass = TDatabasePDG::Instance()->GetParticle(2212)->Mass(); // in GeV
 };
 
 class STModelToLabFrameGenerator : public FairGenerator
