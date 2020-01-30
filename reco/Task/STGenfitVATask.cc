@@ -158,6 +158,7 @@ void STGenfitVATask::Exec(Option_t *opt)
   fCandListArray -> Clear("C");
   fVATrackArray -> Clear("C");
   fVAVertexArray -> Clear("C");
+  fBeamInfo -> Clear();
   if (!fBeamFilename.IsNull() || (fFixedVertexX != -9999 && fFixedVertexY != -9999 && fFixedVertexZ != -9999))
     fBDCVertexArray -> Clear("C");
 
@@ -206,8 +207,6 @@ void STGenfitVATask::Exec(Option_t *opt)
 
     fBeamInfo -> fBeamAoQ = fAoQ;
     fBeamInfo -> fBeamZ = fZ;
-    fBeamInfo -> fRotationAngleA = fBDCax;
-    fBeamInfo -> fRotationAngleB = fBDCby;
 
     Double_t E1 = fBeamEnergy -> getCorrectedEnergy();
 
@@ -224,10 +223,10 @@ void STGenfitVATask::Exec(Option_t *opt)
     if (!goodBDC)
       LOG(INFO) << Space() << "STGenfitVATask " << "Bad BDC!" << FairLogger::endl;
     else {
-      fBeamInfo -> fProjX = fBDCProjection -> getX();
-      fBeamInfo -> fProjY = fBDCProjection -> getY();
-      fBeamInfo -> fRotationAngleTargetPlaneA = fBDCProjection -> getA();
-      fBeamInfo -> fRotationAngleTargetPlaneB = fBDCProjection -> getB();
+      fBeamInfo -> fXTargetPlane = fBDCProjection -> getX();
+      fBeamInfo -> fYTargetPlane = fBDCProjection -> getY();
+      fBeamInfo -> fRotationAngleATargetPlane = fBDCProjection -> getA();
+      fBeamInfo -> fRotationAngleBTargetPlane = fBDCProjection -> getB();
       fBeamInfo -> fBeamEnergyTargetPlane = fBDCProjection -> getMeVu();
       fBeamInfo -> fBeamVelocityTargetPlane = fBDCProjection -> getBeta();
 
@@ -247,8 +246,8 @@ void STGenfitVATask::Exec(Option_t *opt)
     }
   } else if (fFixedVertexX != -9999 && fFixedVertexY != -9999 && fFixedVertexZ != -9999) {
     vertexPos = TVector3(fFixedVertexX, fFixedVertexY, fFixedVertexZ);
-    fBeamInfo -> fProjX = fFixedVertexX;
-    fBeamInfo -> fProjY = fFixedVertexY;
+    fBeamInfo -> fXTargetPlane = fFixedVertexX;
+    fBeamInfo -> fYTargetPlane = fFixedVertexY;
 
     auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
     bdcVertex -> SetIsGoodBDC();
@@ -264,10 +263,10 @@ void STGenfitVATask::Exec(Option_t *opt)
 
   } else if(fUseMCBeam)
   {
-    fBeamInfo -> fProjX = fMCEventHeader -> GetX()*10; // cm to mm
-    fBeamInfo -> fProjY = fMCEventHeader -> GetY()*10;
-    fBeamInfo -> fRotationAngleTargetPlaneA = fMCEventHeader -> GetRotX()*1000; // rad to mrad
-    fBeamInfo -> fRotationAngleTargetPlaneB = fMCEventHeader -> GetRotY()*1000;
+    fBeamInfo -> fXTargetPlane = fMCEventHeader -> GetX()*10; // cm to mm
+    fBeamInfo -> fYTargetPlane = fMCEventHeader -> GetY()*10;
+    fBeamInfo -> fRotationAngleATargetPlane = fMCEventHeader -> GetRotX()*1000; // rad to mrad
+    fBeamInfo -> fRotationAngleBTargetPlane = fMCEventHeader -> GetRotY()*1000;
     if(fSTMCEventHeader)
     {
       fBeamInfo -> fBeamEnergyTargetPlane = fSTMCEventHeader -> GetEnergyPerNucleons()*1000; // GeV to MeV
@@ -280,7 +279,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
     bdcVertex -> SetIsGoodBDC();
     bdcVertex -> SetPos(vertexPos);
-    LOG(INFO) << Space() << "STGenfitVATask " << "BDC vertex is loaded from MCBeamInfo" << FairLogger::endl;
+    LOG(INFO) << Space() << "STGenfitVATask " << "BDC vertex is loaded from MCEventHeader" << FairLogger::endl;
   }
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();

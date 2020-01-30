@@ -144,27 +144,36 @@ STDriftTask::Exec(Option_t* option)
    * [GeV] for energy and [ns] for time.
    */
   
-  fMCTrack = (STMCTrack*) fMCTrackArray->At(0);
-  auto p = fMCTrack->GetP()*1000;
-  if(fVerbose)
-    std::cout<<"[STDriftTask] momentum value: " << p << " MeV/c" << std::endl;
-  if (fSpline)
-    if (p<fPmin || p>fPmax) return;
+  // associate momentum with track ID
+  std::map<int, double> trackIDToMom;
+  for(int i = 0; i < fMCTrackArray -> GetEntries(); ++i)
+  {
+    fMCTrack = (STMCTrack*) fMCTrackArray->At(i);
+    auto p = fMCTrack->GetP()*1000;
+    trackIDToMom[fMCTrack -> GetTrackId()] = p;
+    if(fVerbose)
+      std::cout<<"[STDriftTask] momentum value: " << p << " MeV/c" << std::endl;
+    if (fSpline)
+      if (p<fPmin || p>fPmax) return;
+  }
 
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
     fMCPoint = (STMCPoint*) fMCPointArray->At(iPoint);
     Double_t eLoss = 0.;
     if(fSpline)
-      {
-	eLoss = (fMCPoint->GetEnergyLoss())*1.E9*fInterpolator->Eval(p); // [GeV] to [eV]        
-	//      std::cout<<"[STDriftTask] energy loss GEANT4: " << (fMCPoint->GetEnergyLoss())*1.E9 << " eV" << std::endl;
-	std::cout<<"[STDriftTask] energy loss Bichsel (with spline interpolation): " << eLoss << " eV" << std::endl;      
-      }
+    {
+      TVector3 p(fMCPoint -> GetPx(), fMCPoint -> GetPy(), fMCPoint -> GetPz());
+      eLoss = (fMCPoint->GetEnergyLoss())*1.E9*fInterpolator->Eval(p.Mag()); // [GeV] to [eV]        
+      //      std::cout<<"[STDriftTask] energy loss GEANT4: " << (fMCPoint->GetEnergyLoss())*1.E9 << " eV" << std::endl;
+      std::cout<<"[STDriftTask] energy loss Bichsel (with spline interpolation): " << eLoss << " eV" << std::endl;      
+    }
     else
-      {
-	//        eLoss = (fMCPoint->GetEnergyLoss())*1.E9; // [GeV] to [eV]        
-	eLoss = (fMCPoint->GetEnergyLoss())*1.E9*BichselCorrection(fMCPoint->GetPDG(),p); // [GeV] to [eV]
-      }
+    {
+      Double_t corFactor = 1;
+      auto it = trackIDToMom.find(fMCPoint -> GetTrackID());
+      if(it != trackIDToMom.end()) corFactor = BichselCorrection(fMCPoint->GetPDG(),it->second);
+      eLoss = (fMCPoint->GetEnergyLoss())*1.E9*corFactor; // [GeV] to [eV]
+    }
 
     Double_t lDrift = fYAnodeWirePlane-(fMCPoint->GetY())*10; // drift length [mm]
     Double_t tDrift = lDrift/fVelDrift + fYDriftOffset; // drift time [ns]
@@ -228,14 +237,18 @@ void STDriftTask::SetParticleForCorrection(TString value) { fSpecies = value; }
 void STDriftTask::SetSplineInterpolation(Bool_t value) { fSpline = value; }
 Double_t STDriftTask::BichselCorrection(TString species, Double_t value)
 {
-  if (species == "pi")
-    return 1;
-  else if(species == "p")
-    return 1./(1.0619 -3.82863e-4 * value +1.91538e-7 * pow(value,2));
-  else if(species == "d")
-    return 1;
-  else if(species == "t")
-    return 1;
+  if (species == "pi")                                                                                   
+    return 1;                                                                                            
+  else if(species == "p")                                                                                
+    return 1;//(0.82741 + 0.000138379*value)/TMath::Exp(-.05823-1.7872e-4*value);                                                       
+  else if(species == "d")                                                                                
+    return 0.88899 + 0.000133499*value;                                                    
+  else if(species == "t")                                                                                
+    return 0.921267 + 7.42053e-5*value;///TMath::Exp(-.0715918-1.20368e-4*value);                                                    
+  else if(species == "he3")                                                                              
+    return 0.939307 + 8.19984e-5*value/2.;///TMath::Exp(-.0486119-1.137e-4*(value/2.));                                                 
+  else if(species == "he4")                                                                              
+    return 0.844967 + 0.00014816*value/2.;///TMath::Exp(-.0628344-1.0512e-4*(value/2));     
   else{
     std::cout << "It needs implementation, sorry!" << std::endl;
     exit(0);
@@ -243,12 +256,14 @@ Double_t STDriftTask::BichselCorrection(TString species, Double_t value)
 }
 
 Double_t STDriftTask::BichselCorrection(Int_t pdg, Double_t value)
-{ 
+{
   TString pname;
   if(pdg == 2212) pname = "p";
   else if(fabs(pdg) == 211) pname = "pi";
   else if(pdg == 1000010020) pname = "d";
   else if(pdg == 1000010030) pname = "t";
+  else if(pdg == 1000020030) pname = "he3";
+  else if(pdg == 1000020040) pname = "he4";
   else return 1.; // return 1. for unknown substance (e.g. e-)
   return this->BichselCorrection(pname, value);
 }

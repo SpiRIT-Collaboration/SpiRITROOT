@@ -10,16 +10,14 @@ public:
 
   double fBeamAoQ = 0;
   double fBeamZ = 0;
-  double fRotationAngleA = 0;
-  double fRotationAngleB = 0;
-  double fRotationAngleTargetPlaneA = 0;
-  double fRotationAngleTargetPlaneB = 0;
-  double fProjX = 0;
-  double fProjY = 0;
-  double fBeamEnergy = 0;
+  double fRotationAngleATargetPlane = 0;
+  double fRotationAngleBTargetPlane = 0;
+  double fXTargetPlane = 0;
+  double fYTargetPlane = 0;
   double fBeamEnergyTargetPlane = 0;
-  double fBeamVelocity = 0;
   double fBeamVelocityTargetPlane = 0;
+
+  virtual void Clear(Option_t *option = "");
 
   ClassDef(STBeamInfo, 1);
 };

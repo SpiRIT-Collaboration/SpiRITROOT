@@ -15,9 +15,23 @@
 #include "TLorentzVector.h"
 #include "TString.h"
 
+#include "TDatabasePDG.h"
+
 struct STTransportParticle;
 class STTransportReader;
 class STImQMDReader;
+
+namespace Elements
+{
+  const TString symbol[50] = {"H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
+                              "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca",
+                              "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
+                              "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr",
+                              "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn"};
+  TParticlePDG* PDGToParticleData(int pdg); // convert pdg code to TParticlePDG. It works even for heavy ions. 
+  // if A = 0 and Z = +/- 1, pdg == +/- 211 (pion is assumed in such case)
+  const double kProtonMass = TDatabasePDG::Instance()->GetParticle(2212)->Mass(); // in GeV
+};
 
 class STModelToLabFrameGenerator : public FairGenerator
 {
@@ -51,11 +65,11 @@ class STModelToLabFrameGenerator : public FairGenerator
     void SetBeamDetectorVertexSigma(TVector2 sig)   { fBeamDetectorVertexSigma = sig; }
     void SetRandomRP(Bool_t flag)             { fIsRandomRP = flag; }
     void SetStartEvent(int t_start)           { fCurrentEvent = t_start; }
-    void SetMaxZAllowed(int t_z);             
+    void SetMaxAllowedZ(int t_z);             
     void SetMaxMult(int mult)                 { fMaxMult = mult; }
 
     virtual Bool_t ReadEvent(FairPrimaryGenerator* primGen);
-    void RegisterHeavyIon();
+    void RegisterHeavyIon(std::set<int> pdgList = {}); // if pdgList is supplied, it will only simulate particles inside the list
     Long64_t GetNEvents() { return fNEvents; }
     void Print();
 
@@ -85,6 +99,7 @@ class STModelToLabFrameGenerator : public FairGenerator
     int               fMaxZ = -1;             //<! Maximum Z of the allowed particles. Geant4 cannot handle heavy ion well so we may as well discard it....
     int               fMaxMult = -1;
     const double      fNucleonMass = 0.9315;
+    std::set<int>     fAllowedPDG;
 
     void RegisterReader();
     ClassDef(STModelToLabFrameGenerator,1);
@@ -114,12 +129,6 @@ public:
 protected:
   int fEventID = 0;
   TTree *fTree = nullptr;
-  const TString symbol[50] = {"H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
-                              "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca",
-                              "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
-                              "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr",
-                              "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn"};
-
 };
 
 class STImQMDReader : public STTransportReader
