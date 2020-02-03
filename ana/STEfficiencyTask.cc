@@ -7,6 +7,9 @@
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
 
+#include "TDatabasePDG.h"
+
+
 ClassImp(STEfficiencyTask);
 
 STEfficiencyTask::STEfficiencyTask(EfficiencyFactory* t_factory)
@@ -76,6 +79,7 @@ void STEfficiencyTask::Exec(Option_t *opt)
     auto& TEff = fEfficiency[ipdg];
     const auto& settings = fEfficiencySettings[ipdg];
     auto partEff = new((*fEff)[fEff->GetEntriesFast()]) STVectorF();
+    auto particle = TDatabasePDG::Instance()->GetParticle(ipdg);
 
     for(int part = 0; part < npart; ++part)
     {
@@ -91,7 +95,7 @@ void STEfficiencyTask::Exec(Option_t *opt)
           insidePhi = true;
           break;
         }
-      double momMag = mom.Mag();
+      double momMag = mom.Mag()*(particle->Charge())/3;
       double efficiency = 0;
       if(nclusters > settings.NClusters 
          && dpoca < settings.DPoca && insidePhi
