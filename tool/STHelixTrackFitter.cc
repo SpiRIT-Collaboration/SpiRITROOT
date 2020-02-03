@@ -53,7 +53,7 @@ STHelixTrackFitter::FitPlane(STHelixTrack *track)
 bool
 STHelixTrackFitter::Fit(STHelixTrack *track)
 {
-  if (track -> GetNumHits() < 3)
+  if (track -> GetNumHits() < 4)
     return false;
 
   Double_t scale = 1;
@@ -408,7 +408,7 @@ STHelixTrackFitter::FitCluster(STHelixTrack *track)
   Double_t zC = FCC.Z() + zMean;
   Double_t radius = 0.5 * (louuInvMap - highInvMap).Mag();
 
-  if (radius > 1.e+8) {
+  if (radius > 1.e+8 || std::isnan(radius)) {
     track -> SetIsLine();
     return false;
   }
