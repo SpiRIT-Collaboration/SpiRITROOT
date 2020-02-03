@@ -16,6 +16,8 @@
 #include "TString.h"
 
 #include "TDatabasePDG.h"
+#include "TTreeReader.h"
+#include "TTreeReaderArray.h"
 
 struct STTransportParticle;
 class STTransportReader;
@@ -119,16 +121,11 @@ public:
   STTransportReader();
   virtual ~STTransportReader();
   virtual int GetEntries() = 0;
+  virtual int GetEntry() = 0;
   virtual void SetEntry(int t_entry) = 0;
   virtual bool GetNext(std::vector<STTransportParticle>& particleList) = 0;  
   virtual TString Print() = 0;
   virtual std::vector<FairIon*> GetParticleList();
-
-  int GetCurrentID();
-  TTree *GetTree();
-protected:
-  int fEventID = 0;
-  TTree *fTree = nullptr;
 };
 
 class STImQMDReader : public STTransportReader
@@ -137,11 +134,14 @@ public:
   STImQMDReader(TString fileName);
   virtual ~STImQMDReader();
   virtual void SetEntry(int t_entry);
-  virtual int GetEntries();
+  virtual int GetEntry() { return fEventID; }
+  virtual int GetEntries() { return fEntries; }
   virtual bool GetNext(std::vector<STTransportParticle>& particleList);
   virtual TString Print();
 protected:
   TFile fFile;
+  TTree *fTree = nullptr;
+  int fEventID = 0;
   int fLocalID;
   int fTreeEventID;
   int fEntries;
@@ -149,6 +149,32 @@ protected:
   double fPx, fPy, fPz;
   double fX, fY, fZ;
 };
+
+class STpBUUReader : public STTransportReader
+{
+public: 
+  STpBUUReader(TString fileName);
+  virtual ~STpBUUReader(){};
+  virtual void SetEntry(int t_entry) { fEventID = t_entry; }
+  virtual int GetEntry() { return fEventID; }
+  virtual int GetEntries() { return fEntries; }
+  virtual bool GetNext(std::vector<STTransportParticle>& particleList);
+  virtual TString Print();
+  virtual std::vector<FairIon*> GetParticleList();
+protected:
+  TFile fFile;
+  TTree *fTree = nullptr;
+  int fEntries;
+  int fEventID = 0;
+  const static int maxMulti = 1024;
+  short fMulti;
+  short fPID[maxMulti];
+  short fPx[maxMulti], fPy[maxMulti];
+  float fPz[maxMulti];
+  short fX[maxMulti], fY[maxMulti], fZ[maxMulti];
+};
+
+
 
 
 

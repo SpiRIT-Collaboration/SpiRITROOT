@@ -28,21 +28,15 @@ TParticlePDG* Elements::PDGToParticleData(int pdg)
 /***********************************************
  * Transport Reader base class
  * *********************************************/
-STTransportReader::STTransportReader() : fEventID(0)
+STTransportReader::STTransportReader()
 {}
 
 STTransportReader::~STTransportReader()    
 {}
 
-TTree *STTransportReader::GetTree()
-{ return fTree; }
-
-int STTransportReader::GetCurrentID()
-{ return fEventID; }
-
 std::vector<FairIon*> STTransportReader::GetParticleList()
 {
-  int initEventID = fEventID;
+  int initEventID = this -> GetEntry();
 
   auto n = this -> GetEntries();
   std::set<int> pdgList;
@@ -101,9 +95,6 @@ TString STImQMDReader::Print()
 
 STImQMDReader::~STImQMDReader() {}
 
-int STImQMDReader::GetEntries()
-{ return fEntries; }
-
 bool STImQMDReader::GetNext(std::vector<STTransportParticle>& particleList)
 {
   particleList.clear();
@@ -141,6 +132,74 @@ void STImQMDReader::SetEntry(int t_entry)
   }
   fEventID = t_entry;
 }
+
+/*************************************************
+* STpBUUReader
+**************************************************/
+STpBUUReader::STpBUUReader(TString fileName) : fFile(fileName)
+{
+  if(fFile.IsOpen())
+    LOG(INFO) << "Reading pBUU data from " << fileName << FairLogger::endl;
+  fTree = (TTree*) fFile.Get("tree");
+  if(!fTree)
+    LOG(FATAL) << "Tree is not found in pBUU file " << fileName << "!" << FairLogger::endl;
+
+  fTree -> SetBranchAddress("multi", &fMulti);
+  fTree -> SetBranchAddress("pid", fPID);
+  fTree -> SetBranchAddress("px", fPx);
+  fTree -> SetBranchAddress("py", fPy);
+  fTree -> SetBranchAddress("pzCMS", fPz);
+  fTree -> SetBranchAddress("x", fX);
+  fTree -> SetBranchAddress("y", fY);
+  fTree -> SetBranchAddress("z", fZ);
+  fTree -> SetBranchAddress("multi", &fMulti);
+
+  fEntries = fTree -> GetEntries();
+}
+
+bool STpBUUReader::GetNext(std::vector<STTransportParticle>& particleList)
+{
+  particleList.clear();
+  if(fEventID < fEntries)
+  {
+    fTree -> GetEntry(fEventID);
+    int pdg;
+    for(int i = 0; i < fMulti; ++i)
+    {
+      switch(fPID[i])
+      {
+        case 1: pdg = 2212; break;
+        case 2: pdg = 2122; break;
+        case 3: pdg = 1000010020; break;
+        case 4: pdg = 1000020030; break;
+        case 5: pdg = 1000010030; break;
+        case 6: pdg = 1000020040; break;
+        default: continue;
+      }
+      particleList.push_back({pdg, (double) fPx[i]/1000., (double) fPy[i]/1000., (double) fPz[i]/1000., // convert to GeV 
+                                   (double) fX[i], (double) fY[i], (double) fZ[i]});
+    }
+    ++fEventID;
+    return true;
+  }
+  else return false;
+}
+
+TString STpBUUReader::Print()
+{ return TString::Format("pBUU reader with source %s", fFile.GetName()); }
+
+std::vector<FairIon*> STpBUUReader::GetParticleList()
+{
+  std::vector<FairIon*> particleList;
+  // pBUU only support ions of up to He4
+  for(auto pdg : std::vector<std::pair<int, int>>{{2,1},{3,1},{3,2},{4,2}})
+  {
+    int a = pdg.first, z = pdg.second;
+    particleList.push_back(new FairIon(Form("%d",a)+Elements::symbol[z-1],z,a,z));
+  }
+  return particleList; 
+}
+
 
 /**************************************************
  * Event generator itself
@@ -223,6 +282,7 @@ void STModelToLabFrameGenerator::RegisterReader()
   //else if(fInputName.BeginsWith("urqmd"))  { fReader = new STUrQMDReader(fInputPath + fInputName); } 
   //else if(fInputName.BeginsWith("pBUU"))   { fReader = new STpBUUReader(fInputPath + fInputName); } 
   /*else*/ if(fInputName.BeginsWith("imqmd"))  { fReader = new STImQMDReader(fInputPath + fInputName); } 
+  else if(fInputName.BeginsWith("pbuu")) { fReader = new STpBUUReader(fInputPath + fInputName); }
   else
     LOG(FATAL)<<"STModelToLabFrameGenerator cannot accept event files without specifying generator names."<<FairLogger::endl;
   LOG(INFO)<<"-I Opening file: "<<fInputName<<FairLogger::endl;
