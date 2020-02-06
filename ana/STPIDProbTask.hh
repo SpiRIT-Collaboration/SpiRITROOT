@@ -70,14 +70,16 @@ class STPIDProbTask : public FairTask {
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fData;
     std::map<int, STVectorF*> fPDGProb;
+    std::map<int, STVectorF*> fSDFromLine;
+    TCutG *fPIDRegion = nullptr;
 
     bool fIterateMeta = false;
     TFile *fMetaFile = nullptr;
     TFile *fFitFile = nullptr;
 
     // condition for tracks that goes in the meta data
-    int fMinNClus = 15;
-    double fMaxDPOCA = 20;
+    int fMinNClus = 20;
+    double fMaxDPOCA = 10;
 
     std::map<int, TF1*> fBBE;            ///<modified Bethe Bloch equation for different particles 
     std::map<int, TF1*> fSigma;

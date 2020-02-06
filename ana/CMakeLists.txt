@@ -31,7 +31,7 @@ ${CMAKE_SOURCE_DIR}/ana/MassCalculator
 #${CMAKE_SOURCE_DIR}/reco/HelixTracking
 #${CMAKE_SOURCE_DIR}/reco/Task
 #${CMAKE_SOURCE_DIR}/reco/PID
-#${CMAKE_SOURCE_DIR}/reco/BDCMagneticProjection
+${CMAKE_SOURCE_DIR}/reco/BDCMagneticProjection
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -60,6 +60,9 @@ STTransformFrameTask.cc
 STEfficiencyTask.cc
 EfficiencyFactory.cc
 STMatchImQMDTask.cc
+STFilterTask.cc
+STFilterEventTask.cc
+STAddBDCInfoTask.cc
 MassCalculator/STMassCalculator.cc
 MassCalculator/STBBFunction.cc
 )
@@ -73,6 +76,7 @@ Set(DEPENDENCIES
     Stack
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
+   STReco
    STFormat
    STPar
    STGlobal

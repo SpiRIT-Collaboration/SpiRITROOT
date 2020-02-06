@@ -44,8 +44,15 @@ InitStatus STPIDProbTask::Init()
     auto prob = new STVectorF();
     fPDGProb[pdg] = prob;
     ioMan -> Register(TString::Format("Prob%d", pdg), "ST", prob, fIsPersistence);
+
+    auto sdFromLine = new STVectorF();
+    fSDFromLine[pdg] = sdFromLine;
+    ioMan -> Register(TString::Format("SD%d", pdg), "ST", sdFromLine, fIsPersistence);
+
     fMomPosteriorDistribution[pdg] = TH1F(TString::Format("PartPostMom%d", pdg), ";Momentum;", 40, 0, 3000);
   }
+
+  if(fPIDRegion) fLogger -> Info(MESSAGE_ORIGIN, "Found PID region cut. Will only consider data inside that cut");
 
   ioMan -> Register("PDG", "ST", fPDGLists, fIsPersistence);
   return kSUCCESS;
@@ -71,6 +78,7 @@ void STPIDProbTask::Exec(Option_t *opt)
 {
   fPDGLists -> fElements.clear();
   for(auto& prob : fPDGProb) prob.second->fElements.clear();
+  for(auto& sd : fSDFromLine) sd.second->fElements.clear();
 
   auto data = (STData*) fData -> At(0);
   int npart = data -> multiplicity;
@@ -82,53 +90,69 @@ void STPIDProbTask::Exec(Option_t *opt)
     const auto& mom = data -> vaMom[part];
     const auto& charge = data -> recoCharge[part];
     const auto& dedx = data -> vadedx[part];
-
     double momMag = mom.Mag();
     double mass = 0;
 
-    std::map<int, double> PDGProb;
-    double sumProb = 0;
-    for(int pdg : fSupportedPDG)
-    {
-      double yield = 1;
-      // load the prior if it exists
-      if(fMomPriorDistribution.size() == fSupportedPDG.size())
-      {
-        auto hist = fMomPriorDistribution[pdg];
-        if(hist) yield = hist -> GetBinContent(hist -> GetXaxis() -> FindBin(momMag));
-      }
-      double prob = yield*TMath::Gaus(dedx, fBBE[pdg]->Eval(momMag), fSigma[pdg]->Eval(momMag), true);
-      if(std::isnan(prob)) prob = 0; // this is why we cannot use -Ofast
+    bool considerParticle = true;
+    if(fPIDRegion)
+      if(!fPIDRegion -> IsInside(momMag, dedx)) considerParticle = false;
+      
 
-      sumProb += prob;
-      PDGProb[pdg] = prob;
-    }
-    if(sumProb == 0) sumProb = 1;
-
-    for(int pdg : fSupportedPDG)
-      fPDGProb[pdg] -> fElements.push_back(PDGProb[pdg]/sumProb);
- 
-    int optimumPDG = 0;
-    for(int pdg : fSupportedPDG)
+    if(considerParticle)
     {
-      double prob = PDGProb[pdg]/sumProb;
-      if(prob > 0.5)
+      std::map<int, double> PDGProb;
+      double sumProb = 0;
+      for(int pdg : fSupportedPDG)
       {
-        optimumPDG = pdg;
-        if(nClus > fMinNClus && poca < fMaxDPOCA)
+        double yield = 1;
+        // load the prior if it exists
+        if(fMomPriorDistribution.size() == fSupportedPDG.size())
         {
-          if(prob > 0.5)
-            fMomPosteriorDistribution[pdg].Fill(momMag);
-          for(auto& hist : fFlattenHist)
-          {
-            double expDedx = fBBE[hist.first]->Eval(momMag);
-            hist.second.Fill(momMag, dedx - expDedx);
-          }
+          auto hist = fMomPriorDistribution[pdg];
+          if(hist) yield = hist -> GetBinContent(hist -> GetXaxis() -> FindBin(momMag));
         }
-        break;
+        double mean =  fBBE[pdg]->Eval(momMag);
+        double sd = fSigma[pdg]->Eval(momMag);
+        fSDFromLine[pdg] -> fElements.push_back((dedx - mean)/sd);
+        double prob = yield*TMath::Gaus(dedx, mean, sd, true);
+        if(std::isnan(prob)) prob = 0; // this is why we cannot use -Ofast
+
+        sumProb += prob;
+        PDGProb[pdg] = prob;
       }
+      if(sumProb == 0) sumProb = 1;
+
+      for(int pdg : fSupportedPDG)
+        fPDGProb[pdg] -> fElements.push_back(PDGProb[pdg]/sumProb);
+ 
+      int optimumPDG = 0;
+      for(int pdg : fSupportedPDG)
+      {
+        double prob = PDGProb[pdg]/sumProb;
+        if(prob > 0.5)
+        {
+          optimumPDG = pdg;
+          if(nClus > fMinNClus && poca < fMaxDPOCA)
+          {
+            if(prob > 0.5)
+              fMomPosteriorDistribution[pdg].Fill(momMag);
+            for(auto& hist : fFlattenHist)
+            {
+              double expDedx = fBBE[hist.first]->Eval(momMag);
+              hist.second.Fill(momMag, dedx - expDedx);
+            }
+          }
+          break;
+        }
+      }
+      fPDGLists -> fElements.push_back(optimumPDG);
     }
-    fPDGLists -> fElements.push_back(optimumPDG);
+    else
+    {
+      for(int pdg : fSupportedPDG)
+        fPDGProb[pdg] -> fElements.push_back(0);
+      fPDGLists -> fElements.push_back(0);
+    }
   }
 }
 
@@ -167,6 +191,8 @@ void STPIDProbTask::SetPIDFitFile(const std::string& t_fitfile)
     fBBE[pdg]->FixParameter(0, fBBE[pdg]->GetParameter(0));
     fSigma[pdg] = static_cast<TF1*>(fFitFile -> Get(TString::Format("PIDSigma%d", pdg)));
   }
+
+  fPIDRegion = (TCutG*) fFitFile -> Get("PIDFullRegion");
 }
 
 void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFile)
@@ -185,12 +211,12 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
 
   TF1 tBBE("BBE", BBE, 0, 3000, 6);
 
-  int nbinsx = 100;
+  int nbinsx = 133;
   int nbinsy = 500;
   double momMin = 0;
-  double momMax = 3000;
+  double momMax = 4000;
   double minDeDx = 0;
-  double maxDeDx = 1000;
+  double maxDeDx = 1500;
 
   TCanvas c1;
   TH2F PID("PID", "PID", nbinsx, momMin, momMax, nbinsy, minDeDx, maxDeDx);
@@ -198,7 +224,7 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
   tBBE.SetParameters(1,-800,13,190000,-80,6);
 
   chain.Draw("STData[0].vadedx:STData[0].vaMom.Mag()>>PID", 
-             "STData[0].vaNRowClusters + STData[0].vaNLayerClusters > 15 && STData[0].recodpoca.Mag() < 20", 
+             "STData[0].vaNRowClusters + STData[0].vaNLayerClusters > 20 && STData[0].recodpoca.Mag() < 10", 
              "goff");
 
   for(int pdg : std::vector<int>{2212,1000010020,1000010030,1000020030, 1000020040})
@@ -268,6 +294,19 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
     output.cd();
     tBBE.Clone(TString::Format("BEE%d", pdg))->Write();
     fitError.Clone(TString::Format("PIDSigma%d", pdg))->Write();
+  }
+
+
+  {
+    c1.cd();
+    PID.Draw("colz");
+
+    std::cout << "Please draw cut to enclose region for consideration " << std::endl;
+    TCutG *cutg = nullptr;
+    while(!cutg) cutg = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+
+    output.cd();
+    cutg -> Write("PIDFullRegion");
   }
 }
 

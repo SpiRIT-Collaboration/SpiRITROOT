@@ -42,7 +42,14 @@ InitStatus STConcReaderTask::Init()
     return kERROR;
   }
 
-  fChain -> SetBranchAddress("EvtData", &fSTData);
+  
+  if(fChain -> GetBranch("EvtData"))
+    fChain -> SetBranchAddress("EvtData", &fSTData);
+  else
+  {
+    fChain -> SetBranchAddress("STData", &fSTDataArray);
+    fIsTrimmedFile = true;
+  }
   fChain -> SetBranchAddress("eventID", &fMCLoadedID);
   ioMan -> Register("STData", "ST", fData, fIsPersistence);
   ioMan -> Register("EventID", "ST", fMCEventID, fIsPersistence);
@@ -67,6 +74,7 @@ STConcReaderTask::SetParContainers()
 
 void STConcReaderTask::Exec(Option_t *opt)
 {
+  fMCEventID -> Clear();
   if(fChain -> GetEntries() > fEventID)
   {
     fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Event %d", fEventID));
@@ -74,7 +82,10 @@ void STConcReaderTask::Exec(Option_t *opt)
     ++fEventID;
 
     fData -> Delete();
-    new((*fData)[0]) STData(*fSTData);
+    if(fIsTrimmedFile)
+      new((*fData)[0]) STData(*((STData*)fSTDataArray->At(0)));
+    else
+      new((*fData)[0]) STData(*fSTData);
     auto id = new((*fMCEventID)[0]) STVectorI();
     id -> fElements.push_back(fMCLoadedID);
   }else fLogger -> Fatal(MESSAGE_ORIGIN, "Event ID exceeds the length of the TChain");

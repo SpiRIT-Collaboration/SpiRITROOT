@@ -10,8 +10,8 @@
 //   Tommy Tsang     MSU                  (decouple this class from STDecoder class)
 //-----------------------------------------------------------
 
-#ifndef _STCONCREADERTASK_H_
-#define _STCONCREADERTASK_H_
+#ifndef _STFILTEREVENTTASK_H_
+#define _STFILTEREVENTTASK_H_
 
 // FAIRROOT classes
 #include "FairTask.h"
@@ -21,25 +21,31 @@
 #include "STData.hh"
 #include "STDigiPar.hh"
 #include "STVector.hh"
+#include "EfficiencyFactory.hh"
 
 // ROOT classes
 #include "TClonesArray.h"
+#include "TLorentzVector.h"
 #include "TString.h"
+#include "TCutG.h"
+#include "TFile.h"
 #include "TH2.h"
-#include "TTree.h"
 
 // STL
 #include <vector>
+#include <memory>
 
 using std::vector;
 
-class STConcReaderTask : public FairTask {
+class STFilterEventTask : public FairTask {
   public:
-    /// Constructor
-    STConcReaderTask();
+    STFilterEventTask();
     /// Destructor
-    ~STConcReaderTask();
+    ~STFilterEventTask();
 
+    void SetBeamCut(TString cutFileName, TString cutName);
+    void SetVertexCut(double zMin, double zMax) { fVertexZMin = zMin; fVertexZMax = zMax; fVertexCut = true; } 
+    void SetMultiplicityCut(int multMin, int multMax) { fMultMin = multMin; fMultMax = multMax; fMultCut = true; }
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
     /// Setting parameter containers. This will be called inbetween Init() and Run().
@@ -47,23 +53,23 @@ class STConcReaderTask : public FairTask {
     /// Running the task. This will be called when Run() method invoked from FairRun.
     virtual void Exec(Option_t *opt);
     void SetPersistence(Bool_t value);
-    void SetChain(TChain* chain);
+
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
-    STDigiPar* fPar = nullptr;
+    Bool_t fIsPersistence;              ///< Persistence check variable
+  
+    STDigiPar *fPar;                    ///< Parameter read-out class pointer
+    TClonesArray *fData;                ///< STData from the conc files
+
+    TCutG *fCutG = nullptr;
+    TFile *fCutFile = nullptr;
+
+    bool fVertexCut = false;
+    double fVertexZMin, fVertexZMax;
+    bool fMultCut = false;
+    int fMultMin, fMultMax;
     
-    TTree *fChain = nullptr;
-    TClonesArray *fData = nullptr;
-    TClonesArray *fMCEventID = nullptr;
-    int fMCLoadedID;
-    STData *fSTData = nullptr;
-    Int_t  fEventID;
-    Bool_t fIsPersistence;
-
-    bool fIsTrimmedFile = false;
-    TClonesArray *fSTDataArray = nullptr; // may read from trimmed files
-
-  ClassDef(STConcReaderTask, 1);
+  ClassDef(STFilterEventTask, 1);
 };
 
 #endif
