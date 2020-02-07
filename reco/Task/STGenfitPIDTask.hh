@@ -10,6 +10,7 @@
 #include "STRecoTrackCand.hh"
 #include "STRecoTrackCandList.hh"
 #include "STVertex.hh"
+#include "TF2.h"
 
 class STGenfitPIDTask : public STRecoTask
 {
@@ -35,6 +36,9 @@ class STGenfitPIDTask : public STRecoTask
     void SetMaxDCluster(Double_t val) { fMaxDCluster = val; }
 
     genfit::GFRaveVertexFactory *GetVertexFactoryInstance();
+
+    void SetUseConstCov();
+    void SetVertexMethod(TString method/*="avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5"*/);
 
   private:
     TClonesArray *fHelixTrackArray = nullptr;
@@ -71,6 +75,15 @@ class STGenfitPIDTask : public STRecoTask
     Double_t fFieldXOffset = -0.1794;
     Double_t fFieldYOffset = -20.5502;
     Double_t fFieldZOffset = 58.0526;
+
+    TF2 *fFcSigRowX;
+    TF2 *fFcSigRowY;
+    TF2 *fFcSigRowZ;
+    TF2 *fFcSigLayX;
+    TF2 *fFcSigLayY;
+    TF2 *fFcSigLayZ;
+
+    Bool_t fUseConstCov = false;
 
   ClassDef(STGenfitPIDTask, 1)
 };

@@ -149,7 +149,7 @@ STGenfitVATask::Init()
     Vertex_Shifter = new ST_VertexShift();
     Vertex_Shifter -> Load_BDC_Correction(FileName_BDCCorrection_Theta_TargetPos);
   }
-  
+
   return kSUCCESS;
 }
 
@@ -415,6 +415,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
     vaTrack -> SetChi2(fitStatus -> getChi2());
     vaTrack -> SetNDF(fitStatus -> getNdf());
+    vaTrack -> SetGenfitPValue(fitStatus -> getPVal());
 
     try {
       auto fitState = bestGenfitTrack -> getFittedState();
@@ -528,8 +529,6 @@ void STGenfitVATask::Exec(Option_t *opt)
       Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vertex -> GetPos(), effCurvature1, effCurvature2, effCurvature3, true);
       vaTrack -> SetCharge(charge);
       vaTrack -> SetEffCurvature1(effCurvature1);
-      vaTrack -> SetEffCurvature2(effCurvature2);
-      vaTrack -> SetEffCurvature3(effCurvature3);
     }
   }
 
@@ -576,6 +575,7 @@ void STGenfitVATask::Exec(Option_t *opt)
               momVertex = -momVertex;
             vaTrack -> SetMomentum(momVertex);
             vaTrack -> SetPOCAVertex(pocaVertex);
+            vaTrack -> SetVertexWeight(par -> getWeight());
 
             Double_t effCurvature1;
             Double_t effCurvature2;
@@ -583,8 +583,6 @@ void STGenfitVATask::Exec(Option_t *opt)
             Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vaVertex -> getPos(), effCurvature1, effCurvature2, effCurvature3);
             vaTrack -> SetCharge(charge);
             vaTrack -> SetEffCurvature1(effCurvature1);
-            vaTrack -> SetEffCurvature2(effCurvature2);
-            vaTrack -> SetEffCurvature3(effCurvature3);
           }
         }
       }

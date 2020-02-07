@@ -80,13 +80,23 @@ STGenfitPIDTask::Init()
   }
 
   fVertexFactory = new genfit::GFRaveVertexFactory(/* verbosity */ 2, /* useVacuumPropagator */ false);
-  fGFRaveVertexMethod = "avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5";
+  if (fGFRaveVertexMethod.IsNull())
+    fGFRaveVertexMethod = "avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5";
+  LOG(INFO) << "Vertex Mehod " << fGFRaveVertexMethod << FairLogger::endl;
   fVertexFactory -> setMethod(fGFRaveVertexMethod.Data());
 
   if (fRecoHeader != nullptr) {
     fRecoHeader -> SetPar("genfitpid_loadSamuraiMap", fIsSamurai);
     fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
   }
+
+  auto fileSig = new TFile(TString(gSystem -> Getenv("VMCWORKDIR")) + "/input/hitClusterSigma_2019.root");
+  fFcSigRowX = (TF2 *) fileSig -> Get("sigRowX_xCross_yDip");;
+  fFcSigRowY = (TF2 *) fileSig -> Get("sigRowY_xCross_yDip");;
+  fFcSigRowZ = (TF2 *) fileSig -> Get("sigRowZ_xCross_yDip");;
+  fFcSigLayX = (TF2 *) fileSig -> Get("sigLayX_xCross_yDip");;
+  fFcSigLayY = (TF2 *) fileSig -> Get("sigLayY_xCross_yDip");;
+  fFcSigLayZ = (TF2 *) fileSig -> Get("sigLayZ_xCross_yDip");;
 
   return kSUCCESS;
 }
@@ -123,9 +133,37 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     auto clusterArray = helixTrack -> GetClusterArray();
     vector<STHitCluster *> stableClusters;
     for (auto cluster : *clusterArray) {
+      if (fUseConstCov) {
+        cluster -> SetDx(0.04);
+        cluster -> SetDy(0.01);
+        cluster -> SetDz(0.04);
+        continue;
+      }
+      else {
+        auto chi = cluster -> GetChi();
+        auto dip = cluster -> GetLambda();
+        auto xii = 90 - chi;
+
+        if (cluster -> IsRowCluster())
+        {
+          Double_t sig;
+          sig = fFcSigRowX->Eval(xii,dip); cluster -> SetDx(sig*sig);
+          sig = fFcSigRowY->Eval(xii,dip); cluster -> SetDy(sig*sig);
+          sig = fFcSigRowZ->Eval(xii,dip); cluster -> SetDz(sig*sig);
+        }
+        else if (cluster -> IsLayerCluster())
+        {
+          Double_t sig;
+          sig = fFcSigLayX->Eval(xii,dip); cluster -> SetDx(sig*sig);
+          sig = fFcSigLayY->Eval(xii,dip); cluster -> SetDy(sig*sig);
+          sig = fFcSigLayZ->Eval(xii,dip); cluster -> SetDz(sig*sig);
+        }
+      }
+
       if (cluster -> IsStable())
         stableClusters.push_back(cluster);
     }
+
 
     auto cleanClusters = [](vector<STHitCluster *> *anArray, Double_t dMax) -> Bool_t {
       if (anArray -> size() <= 1)
@@ -243,6 +281,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
     recoTrack -> SetChi2(fitStatus -> getChi2());
     recoTrack -> SetNDF(fitStatus -> getNdf());
+    recoTrack -> SetGenfitPValue(fitStatus -> getPVal());
 
     try {
       auto fitState = bestGenfitTrack -> getFittedState();
@@ -414,6 +453,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
             momVertex = -momVertex;
           recoTrack -> SetMomentum(momVertex);
           recoTrack -> SetPOCAVertex(pocaVertex);
+          recoTrack -> SetVertexWeight(par -> getWeight());
 
           Double_t effCurvature1;
           Double_t effCurvature2;
@@ -421,8 +461,6 @@ void STGenfitPIDTask::Exec(Option_t *opt)
           Double_t charge = fGenfitTest -> DetermineCharge(recoTrack, vertex -> getPos(), effCurvature1, effCurvature2, effCurvature3);
           recoTrack -> SetCharge(charge);
           recoTrack -> SetEffCurvature1(effCurvature1);
-          recoTrack -> SetEffCurvature2(effCurvature2);
-          recoTrack -> SetEffCurvature3(effCurvature3);
         }
       }
     }
@@ -447,3 +485,6 @@ genfit::GFRaveVertexFactory *STGenfitPIDTask::GetVertexFactoryInstance()
 {
   return fVertexFactory;
 }
+
+void STGenfitPIDTask::SetUseConstCov() { fUseConstCov = true; }
+void STGenfitPIDTask::SetVertexMethod(TString method) { fGFRaveVertexMethod = method; }

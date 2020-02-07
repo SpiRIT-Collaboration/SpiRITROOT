@@ -40,8 +40,8 @@ class STRecoTrack : public STRecoTrackCand
     vector<Int_t> fClusterIDArray; ///< Array of cluster-ID
 
     Double_t fEffCurvature1;
-    Double_t fEffCurvature2;
-    Double_t fEffCurvature3;
+    Double_t fGenfitPValue;
+    Double_t fVertexWeight;
 
     Int_t fNumRowClusters;   ///< The number of clusters from helix tracking
     Int_t fNumLayerClusters;   ///< The number of clusters from helix tracking
@@ -103,11 +103,11 @@ class STRecoTrack : public STRecoTrackCand
     vector<Int_t> *GetClusterIDArray() { return &fClusterIDArray; }
 
     void SetEffCurvature1(Double_t val) { fEffCurvature1 = val; }
-    void SetEffCurvature2(Double_t val) { fEffCurvature2 = val; }
-    void SetEffCurvature3(Double_t val) { fEffCurvature3 = val; }
+    void SetGenfitPValue(Double_t val) { fGenfitPValue = val; }
+    void SetVertexWeight(Double_t val) { fVertexWeight = val; }
     Double_t GetEffCurvature1() { return fEffCurvature1; }
-    Double_t GetEffCurvature2() { return fEffCurvature2; }
-    Double_t GetEffCurvature3() { return fEffCurvature3; }
+    Double_t GetGenfitPValue() { return fGenfitPValue; }
+    Double_t GetVertexWeight() { return fVertexWeight; }
 
     void SetRowVec(std::vector<Int_t> val) { fByRowClusters = val; }
     void SetLayerVec(std::vector<Int_t> val) { fByLayerClusters = val; }
