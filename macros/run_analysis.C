@@ -13,7 +13,8 @@ std::vector<std::string> glob(const char *pattern) {
 } 
 
 void run_analysis_core(TString par, TString geo, TString out,
-                       TString log,TChain& chain)
+                       TString log, TChain& chain, int targetMass,
+                       TString meta, TString pidFile, bool iterateMeta=false, bool targetELoss=true)
 {
 
   FairLogger *logger = FairLogger::GetLogger();
@@ -37,7 +38,7 @@ void run_analysis_core(TString par, TString geo, TString out,
   PIDCut -> SetNPitch(2);
   PIDCut -> SetNYaw(5);
   PIDCut -> SetCutConditions(20, 10);
-  PIDCut -> SetCutFile("PIDCuts_emberQMD.root");
+  PIDCut -> SetCutFile("PIDCut_Sn108.root");
 
   //auto unfold = new STUnfoldingTask();
   //unfold -> SetMomBins(100, 3700, 50, 25);
@@ -46,23 +47,28 @@ void run_analysis_core(TString par, TString geo, TString out,
   //unfold -> SetCutConditions(15, 20);
 
   auto PIDProb = new STPIDProbTask();
-  PIDProb -> SetMetaFile("Meta_dEdx05.root", false);
-  PIDProb -> SetPIDFitFile("PIDSigma_dEdx05.root");
+  PIDProb -> SetMetaFile(meta.Data(), iterateMeta);
+  PIDProb -> SetPIDFitFile(pidFile.Data());
 
   auto transform = new STTransformFrameTask();
   transform -> SetDoRotation(true);
   transform -> SetPersistence(true);
-  transform -> SetTargetMass(124);
+  transform -> SetTargetMass(targetMass);
+  if(targetELoss)
+  {
+    transform -> SetTargetThickness(0.8);
+    transform -> SetEnergyLossFile((targetMass == 112)? "../parameters/Sn108Sn112.txt": "../parameters/Sn132Sn124.txt");
+  }
 
   std::vector<int> pdgs{2212,1000010020,1000010030,1000020030,1000020040};
   //auto effFactory = new OrigEfficiencyFactory("/mnt/spirit/analysis/user/tsangc/ForGenie/EfficiencyFactory/MakeDataBase/NewImQMDEff.root");
   //auto effFactory = new EfficiencyFromAnaFactory();
   auto effFactory = new EfficiencyFromConcFactory();
-  effFactory -> SetDataBaseForPDG(2212, "data/embed_dump/Feb2020/ImQMD_embedFebProton/*conc*");
-  effFactory -> SetDataBaseForPDG(1000010020, "data/embed_dump/Feb2020/ImQMD_embedFebDeuteron/*conc*");
-  effFactory -> SetDataBaseForPDG(1000010030, "data/embed_dump/Feb2020/ImQMD_embedFebTriton/*conc*");
-  effFactory -> SetDataBaseForPDG(1000020030, "data/embed_dump/Feb2020/ImQMD_embedNewHe3/*conc*");
-  effFactory -> SetDataBaseForPDG(1000020040, "data/embed_dump/Feb2020/ImQMD_embedFebHe4/*conc*");
+  effFactory -> SetDataBaseForPDG(2212, "data/embed_dump/Feb20202/Run2899_embedNewProton/*conc*");
+  effFactory -> SetDataBaseForPDG(1000010020, "data/embed_dump/Feb20202/Run2899_embedNewDeuteron/*conc*");
+  effFactory -> SetDataBaseForPDG(1000010030, "data/embed_dump/Feb20202/Run2899_embedNewTriton/*conc*");
+  effFactory -> SetDataBaseForPDG(1000020030, "data/embed_dump/Feb20202/Run2899_embedNewHe3/*conc*");
+  effFactory -> SetDataBaseForPDG(1000020040, "data/embed_dump/Feb20202/Run2899_embedNewHe4/*conc*");
 
 
   auto efficiency = new STEfficiencyTask(effFactory);
@@ -73,11 +79,11 @@ void run_analysis_core(TString par, TString geo, TString out,
     settings.NClusters = 20; settings.DPoca = 10;
     settings.PhiCuts = {{0, 20}, {160, 220}, {320, 360}};
     settings.ThetaMin = 0; settings.ThetaMax = 90; settings.NThetaBins = 20;
-    if(pdg == 2212){ settings.NMomBins = 20; settings.MomMin = 100; settings.MomMax = 1300; } 
+    if(pdg == 2212){ settings.NMomBins = 20; settings.MomMin = 100; settings.MomMax = 1500; } 
     if(pdg == 1000010020){ settings.NMomBins = 20; settings.MomMin = 200; settings.MomMax = 2200; } 
-    if(pdg == 1000010030){ settings.NMomBins = 20; settings.MomMin = 500; settings.MomMax = 3000; } 
-    if(pdg == 1000020030){ settings.NMomBins = 20; settings.MomMin = 500; settings.MomMax = 3000; } 
-    if(pdg == 1000020040){ settings.NMomBins = 20; settings.MomMin = 1000; settings.MomMax = 4000; } 
+    if(pdg == 1000010030){ settings.NMomBins = 20; settings.MomMin = 500; settings.MomMax = 4500; } 
+    if(pdg == 1000020030){ settings.NMomBins = 20; settings.MomMin = 500; settings.MomMax = 3200; } 
+    if(pdg == 1000020040){ settings.NMomBins = 20; settings.MomMin = 1000; settings.MomMax = 4200; } 
   }
 
   run -> AddTask(reader);
@@ -85,8 +91,11 @@ void run_analysis_core(TString par, TString geo, TString out,
   run -> AddTask(PIDCut);
   //run -> AddTask(PIDProb);
   //run -> AddTask(unfold);
-  //run -> AddTask(transform);
-  //run -> AddTask(efficiency);
+  if(!iterateMeta)
+  {
+    run -> AddTask(transform);
+    run -> AddTask(efficiency);
+  }
 
   run -> Init();
   run -> Run(0, chain.GetEntries());
@@ -102,7 +111,11 @@ void run_analysis
 (
   int fStartRunNo,
   int fEndRunNo,
-  TString fPathToData = ""
+  TString fPathToData,
+  int targetMass,
+  TString metaFile,
+  TString pidFile,
+  bool iterateMeta = false
 )
 {
 
@@ -134,7 +147,7 @@ void run_analysis
     chain.Add(in.back());
   }
 
-  run_analysis_core(par, geo, out, log, chain);
+  run_analysis_core(par, geo, out, log, chain, targetMass, metaFile, pidFile, iterateMeta);
 }
 
 void run_analysis
@@ -142,7 +155,11 @@ void run_analysis
   TString fName = "he4_lowmom",
   TString fOutName = "",
   TString fParameterFile = "ST.parameters.fullmc.par",
-  TString fPathToData = ""
+  TString fPathToData = "",
+  TString metaFile = "Meta_HalfPD.root",
+  TString pidFile = "PIDSigma_HalfPD.root",
+  bool iterateMeta = false
+
 )
 {
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
@@ -163,12 +180,12 @@ void run_analysis
   TString out = fPathToData+fOutName+"_ana.root";
   TString log = fPathToData+fOutName+"_ana.log";
 
-  TChain chain("cbmsim");
+  TChain chain("spirit");
   for (const auto &filename : glob(in1.Data())) {
     chain.Add(filename.c_str());
   }
 
-  run_analysis_core(par, geo, out, log, chain);
+  run_analysis_core(par, geo, out, log, chain, 124, metaFile, pidFile, iterateMeta, false);
 }
 
 

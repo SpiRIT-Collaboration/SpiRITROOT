@@ -91,11 +91,11 @@ class STPIDCutTask : public FairTask {
 
     Int_t fMomBins = 1000;
     Int_t fMinMom = -700;
-    Int_t fMaxMom = 3000;
+    Int_t fMaxMom = 4500;
 
     Int_t fdEdXBins = 1000;
     Int_t fMindEdX = 0;
-    Int_t fMaxdEdX = 1000;
+    Int_t fMaxdEdX = 1500;
 
     Int_t fMinNClus = 15;
     Double_t fMaxDPOCA = 20;
@@ -105,8 +105,7 @@ class STPIDCutTask : public FairTask {
     std::vector<std::map<std::pair<int, int>, TCutG*>> fCuts;
 
     std::vector<std::vector<TH2F*>> fPIDHists;
-    STVectorI *fPDGLists = nullptr;
-    STVectorF *fMassLists = nullptr;
+    TClonesArray *fPDGProb = nullptr;
   
   ClassDef(STPIDCutTask, 1);
 };

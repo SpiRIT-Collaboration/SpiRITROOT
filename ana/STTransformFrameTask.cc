@@ -17,8 +17,8 @@ ClassImp(STTransformFrameTask);
 STTransformFrameTask::STTransformFrameTask() : fTargetMass(0), fDoRotation(false)
 { 
   fLogger = FairLogger::GetLogger(); 
-  fCMVector = new STVectorVec3();
-  fFragRapidity = new STVectorF();
+  fCMVector = new TClonesArray("STVectorVec3");
+  fFragRapidity = new TClonesArray("STVectorF");
   fBeamRapidity = new STVectorF();
 }
 
@@ -32,14 +32,14 @@ InitStatus STTransformFrameTask::Init()
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");
     return kERROR;
   }
-
-  fPDG = (STVectorI*) ioMan -> GetObject("PDG");
   fData = (TClonesArray*) ioMan -> GetObject("STData");
 
   ioMan -> Register("CMVector", "ST", fCMVector, fIsPersistence);
   ioMan -> Register("FragRapidity", "ST", fFragRapidity, fIsPersistence);
   fBeamRapidity -> fElements.push_back(0);
   ioMan -> Register("BeamRapidity", "ST", fBeamRapidity, fIsPersistence);
+
+  fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Target thickness is %f mm", fTargetThickness));
   return kSUCCESS;
 }
 
@@ -60,13 +60,16 @@ void STTransformFrameTask::SetParContainers()
 
 void STTransformFrameTask::Exec(Option_t *opt)
 {
-  fCMVector -> fElements.clear();
-  fFragRapidity -> fElements.clear();
+  fCMVector -> Clear();
+  fFragRapidity -> Clear();
 
   auto data = (STData*) fData -> At(0);
 
   int beamMass = (data -> aoq)*(data -> z) + 0.5;
-  double energyPerN = data -> beamEnergyTargetPlane;
+
+  double energyLossInTarget = fEnergyLossInTarget.Eval(data -> beamEnergyTargetPlane)*fTargetThickness*1000/2.; // convert mm to microns
+  double energyPerN = (data -> beamEnergyTargetPlane*beamMass - energyLossInTarget)/beamMass;
+  data -> beamEnergy = energyPerN;
   double EBeam = energyPerN*beamMass + beamMass*fNucleonMass;
   double PBeam = sqrt(EBeam*EBeam - beamMass*beamMass*fNucleonMass*fNucleonMass);
   TLorentzVector LV(0,0,PBeam,EBeam);
@@ -81,29 +84,42 @@ void STTransformFrameTask::Exec(Option_t *opt)
   auto rotationAngle = beamDirection.Angle(TVector3(0,0,1));
 
   int npart = data -> multiplicity;
-  for(int part = 0; part < npart; ++part)
+  for(auto pdg : fSupportedPDG)
   {
-    if(auto particle = TDatabasePDG::Instance()->GetParticle(fPDG -> fElements[part]))
-    {
-      int ParticleZ = particle -> Charge()/3; // TParticlePDG define charge in units of |e|/3, probably to accomodate quarks
-      double ParticleMass = particle -> Mass()*1000; // GeV to MeV
+    int entry = fCMVector->GetEntriesFast();
+    auto CMVector = new((*fCMVector)[entry]) STVectorVec3();
+    auto FragRapidity = new((*fFragRapidity)[entry]) STVectorF();
+    for(int part = 0; part < npart; ++part)
+      if(auto particle = TDatabasePDG::Instance()->GetParticle(pdg))
+      {
+        int ParticleZ = particle -> Charge()/3; // TParticlePDG define charge in units of |e|/3, probably to accomodate quarks
+        double ParticleMass = particle -> Mass()*1000; // GeV to MeV
 
-      auto mom = data -> vaMom[part]*ParticleZ;
-      if(fDoRotation) mom.Rotate(rotationAngle, rotationAxis);
+        auto mom = data -> vaMom[part]*ParticleZ;
+        if(fDoRotation) mom.Rotate(rotationAngle, rotationAxis);
 
-      TLorentzVector pCM(mom.x(), mom.y(), mom.z(), sqrt(mom.Mag2() + ParticleMass*ParticleMass));
-      pCM.Boost(vBeam);
-      fCMVector -> fElements.emplace_back(pCM.Px(), pCM.Py(), pCM.Pz());
-      fFragRapidity -> fElements.push_back(pCM.Rapidity()); 
-    }
-    else 
-    {
-      fCMVector -> fElements.emplace_back(0,0,0);
-      fFragRapidity -> fElements.push_back(0);
-    }
+        TLorentzVector pCM(mom.x(), mom.y(), mom.z(), sqrt(mom.Mag2() + ParticleMass*ParticleMass));
+        pCM.Boost(vBeam);
+        CMVector -> fElements.emplace_back(pCM.Px(), pCM.Py(), pCM.Pz());
+        FragRapidity -> fElements.push_back(pCM.Rapidity()); 
+      }
+      else 
+      {
+        CMVector -> fElements.emplace_back(0,0,0);
+        FragRapidity -> fElements.push_back(0);
+      }
   }
 }
 
 void STTransformFrameTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }
 void STTransformFrameTask::SetTargetMass(int tgMass)                                                 { fTargetMass = tgMass; }
 void STTransformFrameTask::SetDoRotation(bool doRotate)                                              { fDoRotation = true; }
+void STTransformFrameTask::SetTargetThickness(double thickness)                                         { fTargetThickness = thickness; }
+
+void STTransformFrameTask::SetEnergyLossFile(TString fileName, int model)
+{
+  TString loadFormat = "%lg ";
+  for(int i = 1; i < model; ++i) loadFormat += "%*lg ";
+  loadFormat += "%lg";
+  fEnergyLossInTarget = TGraph(fileName, loadFormat);
+}

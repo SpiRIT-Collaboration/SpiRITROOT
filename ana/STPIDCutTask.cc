@@ -19,7 +19,7 @@ ClassImp(STPIDCutTask);
 STPIDCutTask::STPIDCutTask()
 { 
   fLogger = FairLogger::GetLogger(); 
-  fPDGLists = new STVectorI();
+  fPDGProb = new TClonesArray("STVectorF");
 }
 
 STPIDCutTask::~STPIDCutTask()
@@ -45,7 +45,7 @@ InitStatus STPIDCutTask::Init()
 
   auto namelist = ioMan -> GetBranchNameList();
   fData = (TClonesArray*) ioMan -> GetObject("STData");
-  ioMan -> Register("PDG", "ST", fPDGLists, fIsPersistence);
+  ioMan -> Register("Prob", "ST", fPDGProb, fIsPersistence);
   return kSUCCESS;
 }
 
@@ -67,11 +67,11 @@ STPIDCutTask::SetParContainers()
 
 void STPIDCutTask::Exec(Option_t *opt)
 {
-  fPDGLists -> fElements.clear();
+  fPDGProb -> Clear();
+  for(int ipdg = 0; ipdg < fPDG.size(); ++ipdg) new((*fPDGProb)[ipdg]) STVectorF(); 
+
   auto data = (STData*) fData -> At(0);
   int npart = data -> multiplicity;
-
-  auto pdg_ary = fPDGLists;
 
   for(int part = 0; part < npart; ++part)
   {
@@ -82,18 +82,20 @@ void STPIDCutTask::Exec(Option_t *opt)
     const auto& dedx = data -> vadedx[part];
 
     double momMag = mom.Mag()/charge;
-    int pdg = 0;
     int pitchId = this->_ToPitchId(mom);
     int yawId = this->_ToYawId(mom);
 
     for(int icut = 0; icut < fCuts.size(); ++icut)
+    {
+      auto pdg = (STVectorF*) fPDGProb -> At(icut);
       if(auto cut = fCuts[icut][{pitchId, yawId}])
+      {
         if(cut -> IsInside(momMag, dedx))
-        { 
-          pdg = fPDG[icut];
-          break;
-        }
-    pdg_ary -> fElements.push_back(pdg); 
+          pdg -> fElements.push_back(1);
+        else pdg -> fElements.push_back(0);
+      }
+      else pdg -> fElements.push_back(0);
+    }
  
     if(nClus > fMinNClus && poca < fMaxDPOCA)
       if(pitchId >= 0 && yawId >= 0)

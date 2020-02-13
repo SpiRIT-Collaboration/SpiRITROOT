@@ -27,6 +27,7 @@
 #include "TLorentzVector.h"
 #include "TString.h"
 #include "TH2.h"
+#include "TGraph.h"
 
 // STL
 #include <vector>
@@ -50,6 +51,8 @@ class STTransformFrameTask : public FairTask {
 
     void SetTargetMass(int tgMass);
     void SetDoRotation(bool doRotate = true);
+    void SetTargetThickness(double thickness); // in mm
+    void SetEnergyLossFile(TString fileName, int model = 2); // location of the LISE file and model used (default is 2, just like LISE)
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
@@ -57,13 +60,16 @@ class STTransformFrameTask : public FairTask {
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fData;
     STVectorI *fPDG;
-    STVectorVec3 *fCMVector;
-    STVectorF *fFragRapidity;
+    TClonesArray *fCMVector;
+    TClonesArray *fFragRapidity;
     STVectorF *fBeamRapidity;
 
+    TGraph fEnergyLossInTarget; // Should link to LISE files for dEdX calculation
+    double fTargetThickness = 0;
     int fTargetMass;
     bool fDoRotation;
     const Double_t fNucleonMass = 931.5;
+    const std::vector<int> fSupportedPDG{2212, 1000010020,1000010030,1000020030,1000020040};
   
   ClassDef(STTransformFrameTask, 1);
 };

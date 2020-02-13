@@ -69,8 +69,9 @@ class STPIDProbTask : public FairTask {
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fData;
-    std::map<int, STVectorF*> fPDGProb;
-    std::map<int, STVectorF*> fSDFromLine;
+    //std::map<int, STVectorF*> fPDGProb;
+    TClonesArray *fPDGProb = nullptr;
+    TClonesArray *fSDFromLine = nullptr;
     TCutG *fPIDRegion = nullptr;
 
     bool fIterateMeta = false;
@@ -83,6 +84,7 @@ class STPIDProbTask : public FairTask {
 
     std::map<int, TF1*> fBBE;            ///<modified Bethe Bloch equation for different particles 
     std::map<int, TF1*> fSigma;
+    std::map<int, TCutG*> fGLimit;
     std::map<int, TH2F> fFlattenHist;
     std::map<int, TH1F> fMomPosteriorDistribution;
     std::map<int, TH1F*> fMomPriorDistribution;

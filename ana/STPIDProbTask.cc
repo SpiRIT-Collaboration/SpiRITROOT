@@ -22,7 +22,10 @@ STPIDProbTask::STPIDProbTask()
   fPDGLists = new STVectorI();
 
   for(int pdg : fSupportedPDG)
-    fFlattenHist[pdg] = TH2F(TString::Format("Part%d", pdg), "PID;momentum;dedx", 40, 0, 3000,100, -100, 100);
+    fFlattenHist[pdg] = TH2F(TString::Format("Part%d", pdg), "PID;momentum;dedx", 60, 0, 4500,100, -100, 100);
+
+  fPDGProb = new TClonesArray("STVectorF");
+  fSDFromLine = new TClonesArray("STVectorF");
 }
 
 STPIDProbTask::~STPIDProbTask()
@@ -40,17 +43,11 @@ InitStatus STPIDProbTask::Init()
   fData = (TClonesArray*) ioMan -> GetObject("STData");
 
   for(auto& pdg : fSupportedPDG)
-  {
-    auto prob = new STVectorF();
-    fPDGProb[pdg] = prob;
-    ioMan -> Register(TString::Format("Prob%d", pdg), "ST", prob, fIsPersistence);
+    fMomPosteriorDistribution[pdg] = TH1F(TString::Format("PartPostMom%d", pdg), ";Momentum;", 60, 0, 4500);
 
-    auto sdFromLine = new STVectorF();
-    fSDFromLine[pdg] = sdFromLine;
-    ioMan -> Register(TString::Format("SD%d", pdg), "ST", sdFromLine, fIsPersistence);
+  ioMan -> Register("Prob", "ST", fPDGProb, fIsPersistence);
+  ioMan -> Register("SD", "ST", fSDFromLine, fIsPersistence);
 
-    fMomPosteriorDistribution[pdg] = TH1F(TString::Format("PartPostMom%d", pdg), ";Momentum;", 40, 0, 3000);
-  }
 
   if(fPIDRegion) fLogger -> Info(MESSAGE_ORIGIN, "Found PID region cut. Will only consider data inside that cut");
 
@@ -76,9 +73,18 @@ STPIDProbTask::SetParContainers()
 
 void STPIDProbTask::Exec(Option_t *opt)
 {
+  fPDGProb -> Clear();
+  fSDFromLine -> Clear();
   fPDGLists -> fElements.clear();
-  for(auto& prob : fPDGProb) prob.second->fElements.clear();
-  for(auto& sd : fSDFromLine) sd.second->fElements.clear();
+
+  std::map<int, STVectorF*> PDGProb;
+  std::map<int, STVectorF*> SDFromLine;
+  for(auto pdg : fSupportedPDG)
+  {
+    auto i = fPDGProb -> GetEntriesFast();
+    PDGProb[pdg] = new((*fPDGProb)[i]) STVectorF();
+    SDFromLine[pdg] = new((*fSDFromLine)[i]) STVectorF();
+  }
 
   auto data = (STData*) fData -> At(0);
   int npart = data -> multiplicity;
@@ -97,38 +103,42 @@ void STPIDProbTask::Exec(Option_t *opt)
     if(fPIDRegion)
       if(!fPIDRegion -> IsInside(momMag, dedx)) considerParticle = false;
       
-
     if(considerParticle)
     {
-      std::map<int, double> PDGProb;
+      std::map<int, double> NotNormPDGProb;
       double sumProb = 0;
       for(int pdg : fSupportedPDG)
       {
-        double yield = 1;
-        // load the prior if it exists
-        if(fMomPriorDistribution.size() == fSupportedPDG.size())
+        double prob = 0;
+        double sdFromLine = 0;
+        if(fGLimit[pdg] -> IsInside(momMag, dedx))         
         {
-          auto hist = fMomPriorDistribution[pdg];
-          if(hist) yield = hist -> GetBinContent(hist -> GetXaxis() -> FindBin(momMag));
+          double yield = 1;
+          // load the prior if it exists
+          if(fMomPriorDistribution.size() == fSupportedPDG.size())
+          {
+            auto hist = fMomPriorDistribution[pdg];
+            if(hist) yield = hist -> GetBinContent(hist -> GetXaxis() -> FindBin(momMag));
+          }
+          double mean =  fBBE[pdg]->Eval(momMag);
+          double sd = fSigma[pdg]->Eval(momMag);
+          sdFromLine = (dedx - mean)/sd;
+          prob = yield*TMath::Gaus(dedx, mean, sd, true);
+          if(std::isnan(prob)) prob = 0; // this is why we cannot use -Ofast
         }
-        double mean =  fBBE[pdg]->Eval(momMag);
-        double sd = fSigma[pdg]->Eval(momMag);
-        fSDFromLine[pdg] -> fElements.push_back((dedx - mean)/sd);
-        double prob = yield*TMath::Gaus(dedx, mean, sd, true);
-        if(std::isnan(prob)) prob = 0; // this is why we cannot use -Ofast
-
+        SDFromLine[pdg] -> fElements.push_back(sdFromLine);
         sumProb += prob;
-        PDGProb[pdg] = prob;
+        NotNormPDGProb[pdg] = prob;
       }
       if(sumProb == 0) sumProb = 1;
 
       for(int pdg : fSupportedPDG)
-        fPDGProb[pdg] -> fElements.push_back(PDGProb[pdg]/sumProb);
+        PDGProb[pdg] -> fElements.push_back(NotNormPDGProb[pdg]/sumProb);
  
       int optimumPDG = 0;
       for(int pdg : fSupportedPDG)
       {
-        double prob = PDGProb[pdg]/sumProb;
+        double prob = NotNormPDGProb[pdg]/sumProb;
         if(prob > 0.5)
         {
           optimumPDG = pdg;
@@ -150,7 +160,10 @@ void STPIDProbTask::Exec(Option_t *opt)
     else
     {
       for(int pdg : fSupportedPDG)
-        fPDGProb[pdg] -> fElements.push_back(0);
+      {
+        SDFromLine[pdg] -> fElements.push_back(0);
+        PDGProb[pdg] -> fElements.push_back(0);
+      }
       fPDGLists -> fElements.push_back(0);
     }
   }
@@ -189,7 +202,10 @@ void STPIDProbTask::SetPIDFitFile(const std::string& t_fitfile)
   {
     fBBE[pdg] = static_cast<TF1*>(fFitFile -> Get(TString::Format("BEE%d", pdg)));
     fBBE[pdg]->FixParameter(0, fBBE[pdg]->GetParameter(0));
+    fBBE[pdg]->SetRange(0, 4500);
     fSigma[pdg] = static_cast<TF1*>(fFitFile -> Get(TString::Format("PIDSigma%d", pdg)));
+    fSigma[pdg]->SetRange(0, 4500);
+    fGLimit[pdg] = static_cast<TCutG*>(fFitFile -> Get(TString::Format("Limit%d", pdg)));
   }
 
   fPIDRegion = (TCutG*) fFitFile -> Get("PIDFullRegion");
@@ -200,19 +216,19 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
   STAnaParticleDB::FillTDatabasePDG();
   TChain chain("cbmsim");
   chain.Add(anaFile.c_str());
-  TFile output(fitFile.c_str(), "RECREATE");
+  TFile output(fitFile.c_str(), "UPDATE");
 
   auto BBE = [](double *x, double *par)
   {
     double fitval;
     double beta = x[0]/sqrt(x[0]*x[0] + 931.5*par[0]);
-    return par[1]/pow(beta, par[4])*(par[2] - pow(beta, par[4]) - log(par[3] + pow(931.5*par[0]/x[0], par[5])));
+    return (par[1] + par[6]*x[0])/pow(beta, par[4])*(par[2] - pow(beta, par[4]) - log(par[3] + pow(931.5*par[0]/x[0], par[5])));
   };
 
-  TF1 tBBE("BBE", BBE, 0, 3000, 6);
+  TF1 tBBE("BBE", BBE, 0, 4500, 7);
 
-  int nbinsx = 133;
-  int nbinsy = 500;
+  int nbinsx = 300;
+  int nbinsy = 300;
   double momMin = 0;
   double momMax = 4000;
   double minDeDx = 0;
@@ -221,11 +237,11 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
   TCanvas c1;
   TH2F PID("PID", "PID", nbinsx, momMin, momMax, nbinsy, minDeDx, maxDeDx);
   PID.Sumw2();
-  tBBE.SetParameters(1,-800,13,190000,-80,6);
+  tBBE.SetParameters(1,-800,13,190000,-80,6, 0);
 
   chain.Draw("STData[0].vadedx:STData[0].vaMom.Mag()>>PID", 
              "STData[0].vaNRowClusters + STData[0].vaNLayerClusters > 20 && STData[0].recodpoca.Mag() < 10", 
-             "goff");
+             "goff",100000);
 
   for(int pdg : std::vector<int>{2212,1000010020,1000010030,1000020030, 1000020040})
    {
@@ -237,63 +253,119 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
     std::string pname(particle -> GetName());
     tBBE.FixParameter(0,A);
 
-    std::cout << "Please draw cut for " << pname << std::endl;
-    TCutG *cutg = nullptr;
-    while(!cutg) cutg = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
-    std::cout << "Please modify the cutg if needed. Press Ctrl-C to continue" << std::endl;
-    c1.WaitPrimitive("temp", "[CUTG]");
-
-    auto profile = STPIDProbTask::ProfileX(&PID, cutg);//PID.ProfileX("_px", 1, -1, "s [CUTG]");
-    TH1F PIDMean("PIDMean", "Mean;momentum (MeV/c2);dEdX", nbinsx, momMin, momMax);
-    TH1F PIDStd("PIDStd", "Std;momentum (MeV/c2);Std", nbinsx, momMin, momMax);
-
-    for(int i = 1; i < PID.GetNbinsX(); ++i)
+    bool drawBEE = true;
+    auto BEEName = TString::Format("BEE%d", pdg);
+    if(auto loadedBEE = (TF1*) output.Get(BEEName))
     {
-      PIDMean.SetBinContent(i, profile->GetBinContent(i));
-      PIDStd.SetBinContent(i, profile->GetBinError(i));
+      std::cout << "BEE line for particle " << pdg << " is found. Do you want to redraw it? (y/n)" << std::endl;
+      c1.cd();
+      loadedBEE -> SetRange(10, momMax);
+      loadedBEE -> Draw("same");
+      c1.Update();
+      c1.Modified();
+
+      std::string temp;
+      std::cin >> temp;
+      if(temp != "y") drawBEE = false;
+      loadedBEE -> Delete();
     }
 
-    tBBE.SetNpx(5000);
-    std::string redraw = "y";
-    while(redraw == "y")
+    if(drawBEE)
     {
-      PIDMean.Fit(&tBBE);
-      PID.Draw("colz");
-      c1.Update();
-      PIDMean.Draw("PE same");
-      std::cout << "Please inspect the result of the fit. You may adjust the parameters in the fit panel. Press Ctrl-C to continue" << std::endl;
+      std::cout << "Please draw cut for " << pname << std::endl;
+      TCutG *cutg = nullptr;
+      while(!cutg) cutg = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+      std::cout << "Please modify the cutg if needed. Press Ctrl-C to continue" << std::endl;
       c1.WaitPrimitive("temp", "[CUTG]");
 
-      // Obtain the tf1 after adjustment is made on fit panel
-      auto newBBE = (TF1*) PIDMean.GetFunction("BBE");
-      tBBE.SetParameters(newBBE->GetParameters());
-      std::cout << "Please inspect the fitted lines. Do you want to refit? (y/n)" << std::endl;
-      tBBE.Draw("L same");
-      c1.Update();
-      std::cin >> redraw;
+      auto profile = STPIDProbTask::ProfileX(&PID, cutg);//PID.ProfileX("_px", 1, -1, "s [CUTG]");
+      TH1F PIDMean("PIDMean", "Mean;momentum (MeV/c2);dEdX", nbinsx, momMin, momMax);
+      TH1F PIDStd("PIDStd", "Std;momentum (MeV/c2);Std", nbinsx, momMin, momMax);
+      cutg -> Delete();
+
+      for(int i = 1; i < PID.GetNbinsX(); ++i)
+      {
+        PIDMean.SetBinContent(i, profile->GetBinContent(i));
+        PIDStd.SetBinContent(i, profile->GetBinError(i));
+      }
+
+      tBBE.SetNpx(5000);
+      std::string redraw = "y";
+      while(redraw == "y")
+      {
+        PIDMean.Fit(&tBBE);
+        PID.Draw("colz");
+        c1.Update();
+        PIDMean.Draw("PE same");
+        std::cout << "Please inspect the result of the fit. You may adjust the parameters in the fit panel. Press Ctrl-C to continue" << std::endl;
+        c1.WaitPrimitive("temp", "[CUTG]");
+
+        // Obtain the tf1 after adjustment is made on fit panel
+        auto newBBE = (TF1*) PIDMean.GetFunction("BBE");
+        tBBE.SetParameters(newBBE->GetParameters());
+        std::cout << "Please inspect the fitted lines. Do you want to refit? (y/n)" << std::endl;
+        tBBE.Draw("L same");
+        c1.Update();
+        std::cin >> redraw;
+      }
+      auto clonedBBE = (TF1*) tBBE.Clone(BEEName);
+      output.cd(); 
+      clonedBBE -> SetRange(0.1, 4500);
+      clonedBBE -> Write();
+
+      std::string fitname = "ErrorFit" + pname;
+      TF1 fitError(fitname.c_str(), [](double *x, double *p){return p[0]/pow(x[0], p[1]) + p[2];}, 0, 4500, 3);
+      {
+        fitError.SetParameters(100,2,0);
+
+        TCanvas c2("c2", "c2");
+        PIDStd.GetYaxis()->SetLimits(0, PIDStd.GetMaximum());
+        PIDStd.Fit(&fitError);
+        PIDStd.GetYaxis()->SetRangeUser(0, PIDStd.GetMaximum());
+
+        std::cout << "Please modify the fit with Fit Panel if needed. Then press Ctrl-C" << std::endl;
+        c2.WaitPrimitive("temp", "[CUTG]");
+
+        // Obtain the tf1 after adjustment is made on fit panel
+        auto newfitError = (TF1*) PIDStd.GetFunction(fitname.c_str());
+        fitError.SetParameters(newfitError->GetParameters());
+      }
+      output.cd();
+      auto clonedFitError = (TF1*) fitError.Clone(TString::Format("PIDSigma%d", pdg));
+      clonedFitError -> SetRange(0.1, 4500);
+      clonedFitError -> Write();
     }
-    
-    std::string fitname = "ErrorFit" + pname;
-    TF1 fitError(fitname.c_str(), "[0]/pow(x, [1]) + [2]");
+
+    // draw the acceptable range for the particle
+    bool drawGLimit = true;
+    auto GLimitName = TString::Format("Limit%d", pdg);
+    if(auto loadedGLimit = (TCutG*) output.Get(GLimitName))
     {
-      fitError.SetParameters(100,2,0);
+      std::cout << "Particle limits for particle " << pdg << " is found. Do you want to redraw it? (y/n)" << std::endl;
+      c1.cd();
+      loadedGLimit -> Draw("L same");
+      c1.Update();
+      c1.Modified();
 
-      TCanvas c2("c2", "c2");
-      PIDStd.GetYaxis()->SetLimits(0, PIDStd.GetMaximum());
-      PIDStd.Fit(&fitError);
-      PIDStd.GetYaxis()->SetRangeUser(0, PIDStd.GetMaximum());
-
-      std::cout << "Please modify the fit with Fit Panel if needed. Then press Ctrl-C" << std::endl;
-      c2.WaitPrimitive("temp", "[CUTG]");
-
-      // Obtain the tf1 after adjustment is made on fit panel
-      auto newfitError = (TF1*) PIDStd.GetFunction(fitname.c_str());
-      fitError.SetParameters(newfitError->GetParameters());
+      std::string temp;
+      std::cin >> temp;
+      if(temp != "y") drawGLimit = false;
+      loadedGLimit -> Delete();
     }
+ 
+    if(drawGLimit)
+    {
+      c1.cd();
+      std::cout << "Please draw the acceptable range for the particle. It can be lax because it only serves as a guild for iterative Bayes." << std::endl;
+      if(auto obj = c1.GetListOfPrimitives()->FindObject("CUTG")) c1.GetListOfPrimitives()->Remove(obj);
+      c1.Modified();
 
-    output.cd();
-    tBBE.Clone(TString::Format("BEE%d", pdg))->Write();
-    fitError.Clone(TString::Format("PIDSigma%d", pdg))->Write();
+      TCutG *gLimit = nullptr;
+      while(!gLimit) gLimit = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+      auto clonedGLimit = gLimit -> Clone(GLimitName);
+      output.cd();
+      clonedGLimit -> Write();
+    }
   }
 
 
@@ -331,7 +403,10 @@ TH1F* STPIDProbTask::ProfileX(TH2F* hist, TCutG* cutg)
         temp.SetBinContent(j, hist->GetBinContent(i, j));
     TF1 gaus("gaus", "gaus");
     if(temp.GetEntries() > 0)
+    {
+      gaus.FixParameter(1, temp.GetMean());
       temp.Fit(&gaus, "Q");
+    }
     else gaus.SetParameters(0,0,0);
     profile->SetBinContent(i, gaus.GetParameter(1));
     profile->SetBinError(i, gaus.GetParameter(2));
