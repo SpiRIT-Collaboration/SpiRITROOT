@@ -58,7 +58,7 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
 
   STSimulateBeamTask* beamTask = new STSimulateBeamTask();
   beamTask -> SetDeadPadOnBeam(workDir + "/input/ProbDeadPad.root", "Sn132");
-  beamTask -> SetHeavyFragments(workDir + "/SpaceCharge/potential/_132Sn_BeamTrack.data", -203.3, 5000000, 4.3);
+  //beamTask -> SetHeavyFragments(workDir + "/SpaceCharge/potential/_132Sn_BeamTrack.data", -203.3, 5000000, 4.3);
   if(simulateBeam) fRun -> AddTask(beamTask);
 
 
@@ -132,4 +132,20 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
   cout << endl << endl;
   cout << "Macro finished succesfully."  << endl << endl;
   cout << "- Output file : " << outputFile << endl << endl;
+}
+
+void run_digi(int fRunNo, TString name)
+{
+  /* ======= This part you need initial configuration ========= */
+  // Parameter database file - files should be in parameters folder.
+  TString systemDB = "systemDB.csv";
+  TString runDB = "runDB.csv";
+  TString fSpiRITROOTPath = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
+  TString fSystemDB = fSpiRITROOTPath + "parameters/" + systemDB;
+  TString fRunDB = fSpiRITROOTPath + "parameters/" + runDB;
+
+  auto fParamSetter = new STParameters(fRunNo, fSystemDB, fRunDB);
+  auto fSheetChargeDensity = fParamSetter -> GetSheetChargeDensity();
+
+  run_digi(name, fSheetChargeDensity);
 }
