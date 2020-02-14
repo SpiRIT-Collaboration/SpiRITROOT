@@ -23,7 +23,7 @@ void run_trim_data
 
   TString par = spiritroot+"parameters/ST.parameters.par";
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root"; 
-  TString in = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.root";
+  TString in = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.*.conc.root";
   TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.trimmed.root";
 
   TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.trimmed.log";
@@ -46,7 +46,12 @@ void run_trim_data
   reader -> SetChain(&chain);
 
   auto eventFilter = new STFilterEventTask();
-  eventFilter -> SetBeamCut("BeamCut.root", "Sn132");
+  {
+    TString beamName = "Sn108";
+    if(fRunNo >= 2542 && fRunNo <= 2623) beamName = "Sn112";
+    else if(fRunNo > 2623) beamName = "Sn132";
+    eventFilter -> SetBeamCut("BeamCut.root", beamName);
+  }
   eventFilter -> SetVertexCut(-18, -12);
   eventFilter -> SetMultiplicityCut(50, 100);
 
