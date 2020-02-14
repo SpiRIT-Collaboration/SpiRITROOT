@@ -145,16 +145,31 @@ STDriftTask::Exec(Option_t* option)
    */
   
   // associate momentum with track ID
-  std::map<int, double> trackIDToMom;
+  std::map<int, STMCTrack*> trackIDToTrack;
   for(int i = 0; i < fMCTrackArray -> GetEntries(); ++i)
   {
     fMCTrack = (STMCTrack*) fMCTrackArray->At(i);
-    auto p = fMCTrack->GetP()*1000;
-    trackIDToMom[fMCTrack -> GetTrackId()] = p;
-    if(fVerbose)
-      std::cout<<"[STDriftTask] momentum value: " << p << " MeV/c" << std::endl;
-    if (fSpline)
-      if (p<fPmin || p>fPmax) return;
+    trackIDToTrack[fMCTrack -> GetTrackId()] = fMCTrack;
+  }
+  
+  std::map<int, std::pair<int, double>> trackIDToPDGMom;
+  for(auto& track : trackIDToTrack)
+  {
+    auto PrimaryTrack = track.second;
+    int motherID = 1;
+    // link the track to its primary. We don't want secondaries.
+    while(motherID >= 0)
+    {
+      auto it = trackIDToTrack.find(motherID);
+      if(it != trackIDToTrack.end()) 
+      { 
+        PrimaryTrack = it->second;
+        motherID = PrimaryTrack -> GetMotherId();
+      } else break;
+    }
+
+    auto p = PrimaryTrack->GetP()*1000;
+    trackIDToPDGMom[track.first] = {PrimaryTrack->GetPdgCode(), p};
   }
 
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
@@ -170,8 +185,8 @@ STDriftTask::Exec(Option_t* option)
     else
     {
       Double_t corFactor = 1;
-      auto it = trackIDToMom.find(fMCPoint -> GetTrackID());
-      if(it != trackIDToMom.end()) corFactor = BichselCorrection(fMCPoint->GetPDG(),it->second);
+      auto it = trackIDToPDGMom.find(fMCPoint -> GetTrackID());
+      if(it != trackIDToPDGMom.end()) corFactor = BichselCorrection(it->second.first,it->second.second);
       eLoss = (fMCPoint->GetEnergyLoss())*1.E9*corFactor; // [GeV] to [eV]
     }
 
