@@ -18,6 +18,7 @@ STTransformFrameTask::STTransformFrameTask() : fTargetMass(0), fDoRotation(false
 { 
   fLogger = FairLogger::GetLogger(); 
   fCMVector = new TClonesArray("STVectorVec3");
+  fCMKE = new TClonesArray("STVectorVec3"); // the three compomenets in order are: transverse, long, total KE
   fFragRapidity = new TClonesArray("STVectorF");
   fBeamRapidity = new STVectorF();
 }
@@ -35,6 +36,7 @@ InitStatus STTransformFrameTask::Init()
   fData = (TClonesArray*) ioMan -> GetObject("STData");
 
   ioMan -> Register("CMVector", "ST", fCMVector, fIsPersistence);
+  ioMan -> Register("CMKE", "ST", fCMKE, fIsPersistence);
   ioMan -> Register("FragRapidity", "ST", fFragRapidity, fIsPersistence);
   fBeamRapidity -> fElements.push_back(0);
   ioMan -> Register("BeamRapidity", "ST", fBeamRapidity, fIsPersistence);
@@ -61,6 +63,7 @@ void STTransformFrameTask::SetParContainers()
 void STTransformFrameTask::Exec(Option_t *opt)
 {
   fCMVector -> Clear();
+  fCMKE -> Clear();
   fFragRapidity -> Clear();
 
   auto data = (STData*) fData -> At(0);
@@ -88,6 +91,7 @@ void STTransformFrameTask::Exec(Option_t *opt)
   {
     int entry = fCMVector->GetEntriesFast();
     auto CMVector = new((*fCMVector)[entry]) STVectorVec3();
+    auto CMKE = new((*fCMKE)[entry]) STVectorVec3();
     auto FragRapidity = new((*fFragRapidity)[entry]) STVectorF();
     for(int part = 0; part < npart; ++part)
       if(auto particle = TDatabasePDG::Instance()->GetParticle(pdg))
@@ -101,11 +105,17 @@ void STTransformFrameTask::Exec(Option_t *opt)
         TLorentzVector pCM(mom.x(), mom.y(), mom.z(), sqrt(mom.Mag2() + ParticleMass*ParticleMass));
         pCM.Boost(vBeam);
         CMVector -> fElements.emplace_back(pCM.Px(), pCM.Py(), pCM.Pz());
+
+        double totKE = pCM.Energy() - ParticleMass;
+        double transKE = pCM.Et() - ParticleMass;
+        double longKE = totKE - transKE;
+        CMKE -> fElements.emplace_back(transKE, longKE, totKE); 
         FragRapidity -> fElements.push_back(pCM.Rapidity()); 
       }
       else 
       {
         CMVector -> fElements.emplace_back(0,0,0);
+        CMKE -> fElements.emplace_back(0,0,0);
         FragRapidity -> fElements.push_back(0);
       }
   }

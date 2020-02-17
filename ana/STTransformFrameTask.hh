@@ -61,6 +61,7 @@ class STTransformFrameTask : public FairTask {
     TClonesArray *fData;
     STVectorI *fPDG;
     TClonesArray *fCMVector;
+    TClonesArray *fCMKE;                /// It will contains 3 elements: Tranverse KE, Longitudinal KE and total KE
     TClonesArray *fFragRapidity;
     STVectorF *fBeamRapidity;
 
