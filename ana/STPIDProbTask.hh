@@ -88,6 +88,8 @@ class STPIDProbTask : public FairTask {
     std::map<int, TH2F> fFlattenHist;
     std::map<int, TH1F> fMomPosteriorDistribution;
     std::map<int, TH1F*> fMomPriorDistribution;
+    std::map<int, STVectorF*> fPDGProbMap;
+    std::map<int, STVectorF*> fSDFromLineMap;
     const std::vector<int> fSupportedPDG{2212, 1000010020, 1000010030, 1000020030, 1000020040};
 
     STVectorI *fPDGLists = nullptr;

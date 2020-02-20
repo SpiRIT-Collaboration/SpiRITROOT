@@ -46,6 +46,9 @@ InitStatus STEfficiencyTask::Init()
     fEfficiency[pdg] = fFactory -> FinalizeBins(pdg, true);
   }
 
+  for(int i = 0; i < fSupportedPDG.size(); ++i)
+    new((*fEff)[i]) STVectorF();
+
   //fPDG = (STVectorI*) ioMan -> GetObject("PDG");
   fData = (TClonesArray*) ioMan -> GetObject("STData");
 
@@ -70,16 +73,18 @@ void STEfficiencyTask::SetParContainers()
 
 void STEfficiencyTask::Exec(Option_t *opt)
 {
-  fEff -> Clear();
   auto data = (STData*) fData -> At(0);
 
   int npart = data -> multiplicity;
-  for(auto ipdg : fSupportedPDG)
+  for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
+    int ipdg = fSupportedPDG[i];
     auto& TEff = fEfficiency[ipdg];
     const auto& settings = fEfficiencySettings[ipdg];
-    auto partEff = new((*fEff)[fEff->GetEntriesFast()]) STVectorF();
     auto particle = TDatabasePDG::Instance()->GetParticle(ipdg);
+
+    auto partEff = static_cast<STVectorF*>(fEff -> At(i));
+    partEff -> fElements.clear();
 
     for(int part = 0; part < npart; ++part)
     {

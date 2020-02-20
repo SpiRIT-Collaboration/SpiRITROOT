@@ -38,8 +38,15 @@ InitStatus STTransformFrameTask::Init()
   ioMan -> Register("CMVector", "ST", fCMVector, fIsPersistence);
   ioMan -> Register("CMKE", "ST", fCMKE, fIsPersistence);
   ioMan -> Register("FragRapidity", "ST", fFragRapidity, fIsPersistence);
-  fBeamRapidity -> fElements.push_back(0);
   ioMan -> Register("BeamRapidity", "ST", fBeamRapidity, fIsPersistence);
+
+  fBeamRapidity -> fElements.push_back(0);
+  for(int i = 0; i < fSupportedPDG.size(); ++i)
+  {
+    fCMVector -> ConstructedAt(i);
+    fCMKE -> ConstructedAt(i);
+    fFragRapidity -> ConstructedAt(i);
+  }
 
   fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Target thickness is %f mm", fTargetThickness));
   return kSUCCESS;
@@ -62,12 +69,7 @@ void STTransformFrameTask::SetParContainers()
 
 void STTransformFrameTask::Exec(Option_t *opt)
 {
-  fCMVector -> Clear();
-  fCMKE -> Clear();
-  fFragRapidity -> Clear();
-
   auto data = (STData*) fData -> At(0);
-
   int beamMass = (data -> aoq)*(data -> z) + 0.5;
 
   double energyLossInTarget = fEnergyLossInTarget.Eval(data -> beamEnergyTargetPlane)*fTargetThickness*1000/2.; // convert mm to microns
@@ -87,12 +89,17 @@ void STTransformFrameTask::Exec(Option_t *opt)
   auto rotationAngle = beamDirection.Angle(TVector3(0,0,1));
 
   int npart = data -> multiplicity;
-  for(auto pdg : fSupportedPDG)
+  for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
+    int pdg = fSupportedPDG[i];
     int entry = fCMVector->GetEntriesFast();
-    auto CMVector = new((*fCMVector)[entry]) STVectorVec3();
-    auto CMKE = new((*fCMKE)[entry]) STVectorVec3();
-    auto FragRapidity = new((*fFragRapidity)[entry]) STVectorF();
+    auto CMVector = static_cast<STVectorVec3*>(fCMVector -> At(i));
+    auto CMKE = static_cast<STVectorVec3*>(fCMKE -> At(i));;
+    auto FragRapidity = static_cast<STVectorF*>(fFragRapidity -> At(i));
+    CMVector -> fElements.clear();
+    CMKE -> fElements.clear();
+    FragRapidity -> fElements.clear();
+
     for(int part = 0; part < npart; ++part)
       if(auto particle = TDatabasePDG::Instance()->GetParticle(pdg))
       {

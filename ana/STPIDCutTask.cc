@@ -45,6 +45,7 @@ InitStatus STPIDCutTask::Init()
 
   auto namelist = ioMan -> GetBranchNameList();
   fData = (TClonesArray*) ioMan -> GetObject("STData");
+  for(int ipdg = 0; ipdg < fPDG.size(); ++ipdg) new((*fPDGProb)[ipdg]) STVectorF(); 
   ioMan -> Register("Prob", "ST", fPDGProb, fIsPersistence);
   return kSUCCESS;
 }
@@ -67,8 +68,9 @@ STPIDCutTask::SetParContainers()
 
 void STPIDCutTask::Exec(Option_t *opt)
 {
-  fPDGProb -> Clear();
-  for(int ipdg = 0; ipdg < fPDG.size(); ++ipdg) new((*fPDGProb)[ipdg]) STVectorF(); 
+  for(int icut = 0; icut < fCuts.size(); ++icut)
+    static_cast<STVectorF*>(fPDGProb -> At(icut)) -> fElements.clear();
+
 
   auto data = (STData*) fData -> At(0);
   int npart = data -> multiplicity;
