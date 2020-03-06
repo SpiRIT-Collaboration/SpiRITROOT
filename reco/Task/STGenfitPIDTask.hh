@@ -11,6 +11,10 @@
 #include "STRecoTrackCandList.hh"
 #include "STVertex.hh"
 #include "TF2.h"
+#include "TF1.h"
+
+#include <fstream>
+using namespace std;
 
 class STGenfitPIDTask : public STRecoTask
 {
@@ -37,8 +41,19 @@ class STGenfitPIDTask : public STRecoTask
 
     genfit::GFRaveVertexFactory *GetVertexFactoryInstance();
 
-    void SetUseConstCov();
+    void SetClusterSigmaFile(TString fileName);
+    void SetUseConstCov(Double_t x, Double_t y, Double_t z);
     void SetVertexMethod(TString method/*="avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5"*/);
+
+    void SelectPID(Int_t pid);
+
+    void SetTrackFileName(TString name);
+    void SetClusterFileName(TString name);
+
+    void FinishTask();
+
+    void SetPrintFittedPoints(bool val) { fPrintFittedPoints = val; }
+    void SetDebugVertex(TString fileName) { fDebugVertexFileName = fileName; }
 
   private:
     TClonesArray *fHelixTrackArray = nullptr;
@@ -76,14 +91,51 @@ class STGenfitPIDTask : public STRecoTask
     Double_t fFieldYOffset = -20.5502;
     Double_t fFieldZOffset = 58.0526;
 
-    TF2 *fFcSigRowX;
-    TF2 *fFcSigRowY;
-    TF2 *fFcSigRowZ;
-    TF2 *fFcSigLayX;
-    TF2 *fFcSigLayY;
-    TF2 *fFcSigLayZ;
+    TString fSigFileName = "";
+    TF1 *fHitClusterSigma[2][3][3];
 
     Bool_t fUseConstCov = false;
+    Double_t fCovX = 1.; // mm
+    Double_t fCovY = 1.; // mm
+    Double_t fCovZ = 1.; // mm
+
+    Int_t fSelectPID = -1;
+
+    TString fNameTrack;
+    TFile *fFileTrack;
+    TTree *fTreeTrack;
+    Float_t fTrackPValue;
+    Float_t fTrackWeight;
+    Float_t fTrackP;
+    Float_t fTrackTheta;
+    Float_t fTrackPhi;
+    Float_t fTrackdEdx;
+    Float_t fTrackChi2;
+    Float_t fTrackNDF;
+    Float_t fTrackDist;
+    Float_t fTrackVertexZ;
+    Float_t fTrackNumClusters;
+
+    TString fNameCluster;
+    TFile *fFileCluster;
+    TTree *fTreeCluster;
+    TH1D *fHistRawResiduals[2][3][3];
+    TH1D *fHistStdResiduals[2][3][3];
+    Bool_t fClusterIsLayerOrRow;
+    Float_t fClusterResidualX;
+    Float_t fClusterResidualY;
+    Float_t fClusterResidualZ;
+    Float_t fClusterChi;
+    Float_t fClusterDip;
+    Int_t fClusterNumHits;
+    Float_t fClusterX;
+    Float_t fClusterZ;
+    Int_t fCountFilledEvents = 0;
+
+    bool fPrintFittedPoints = 0;
+
+    TString fDebugVertexFileName ="";
+    ofstream fDebugVertexFile;
 
   ClassDef(STGenfitPIDTask, 1)
 };

@@ -8,10 +8,16 @@
 #include "FairRootManager.h"
 
 #include "Track.h"
+#include "TParameter.h"
 
 #include <vector>
 #include <iostream>
 using namespace std;
+
+#include "KalmanFitterInfo.h"
+#include "KalmanFittedStateOnPlane.h"
+#include "MeasuredStateOnPlane.h"
+#include "AbsMeasurement.h"
 
 ClassImp(STGenfitVATask)
 
@@ -148,6 +154,80 @@ STGenfitVATask::Init()
   {
     Vertex_Shifter = new ST_VertexShift();
     Vertex_Shifter -> Load_BDC_Correction(FileName_BDCCorrection_Theta_TargetPos);
+  }
+
+  if (!fSigFileName.IsNull()) {
+    auto fileSigma = new TFile(TString(gSystem -> Getenv("VMCWORKDIR")) + "/input/" + fSigFileName);
+    for (auto isLR : {0,1})
+      for (auto ixyz : {0,1,2})
+        for (auto idxN : {0,1,2})
+          fHitClusterSigma[isLR][ixyz][idxN] = (TF1 *) fileSigma -> Get(Form("fit_%s_%s_n%d",(isLR?"lay":"row"),(ixyz==0?"x":(ixyz==1?"y":"z")),idxN+2));
+  }
+
+  if (!fNameCluster.IsNull())
+  {
+    fFileCluster = new TFile(fNameCluster,"recreate");
+    fTreeCluster = new TTree("data","");
+    TString header1 = TString("residual_");
+    for (auto isLR : {0,1}) {
+      TString nameLR = isLR?"layer_cluster":"row_cluster";
+      for (auto ixyz : {0,1,2}) {
+        TString nameXYZ = ixyz==0?"x":(ixyz==1?"y":"z");
+        double max = 4.;
+        if ((isLR==0&&ixyz==0) || (isLR==1&&ixyz==2))
+          max = .04;
+        for (auto idxNH : {0,1,2}) {
+          TString nameN = Form("n%d",idxNH);
+          for (auto idxAngle=0; idxAngle<18; ++idxAngle)
+          {
+            TString nameAngle = Form("a%d",idxAngle);
+            TString name1 = header1 + nameLR + "_" + nameXYZ + "_" + nameN + "_" + nameAngle;
+            fHistRawResiduals[isLR][ixyz][idxNH][idxAngle] = new TH1D(name1,name1+";"+header1+nameXYZ,200,-max,max);
+          }
+        }
+      }
+    }
+
+    TString header2 = TString("standardized_residual_");
+    for (auto ixyz : {0,1,2}) {
+      TString nameXYZ = ixyz==0?"x":(ixyz==1?"y":"z");
+      TString name2 = header2 + "_" + nameXYZ;
+      fHistStdResiduals[ixyz] = new TH1D(name2,name2+";"+header2+nameXYZ,200,-4,4);
+    }
+
+    fTreeCluster -> Branch("isLR",&fClusterIsLayerOrRow);
+    fTreeCluster -> Branch("rx",&fClusterResidualX);
+    fTreeCluster -> Branch("ry",&fClusterResidualY);
+    fTreeCluster -> Branch("rz",&fClusterResidualZ);
+    //fTreeCluster -> Branch("theta",&fTrackTheta);
+    fTreeCluster -> Branch("chi",&fClusterChi);
+    fTreeCluster -> Branch("dip",&fClusterDip);
+    fTreeCluster -> Branch("n",&fClusterNumHits);
+    fTreeCluster -> Branch("x",&fClusterX);
+    fTreeCluster -> Branch("z",&fClusterZ);
+    fTreeCluster -> Branch("p",&fTrackP);
+    fTreeCluster -> Branch("dedx",&fTrackdEdx);
+  }
+
+  if (!fNameTrack.IsNull())
+  {
+    fFileTrack = new TFile(fNameTrack,"recreate");
+    fTreeTrack = new TTree("data","");
+    fTreeTrack -> Branch("pvalue",&fTrackPValue);
+    fTreeTrack -> Branch("weight",&fTrackWeight);
+    fTreeTrack -> Branch("p",&fTrackP);
+    fTreeTrack -> Branch("theta",&fTrackTheta);
+    fTreeTrack -> Branch("phi",&fTrackPhi);
+    fTreeTrack -> Branch("dedx",&fTrackdEdx);
+    fTreeTrack -> Branch("chi2",&fTrackChi2);
+    fTreeTrack -> Branch("ndf",&fTrackNDF);
+    fTreeTrack -> Branch("d",&fTrackDist);
+    fTreeTrack -> Branch("z",&fTrackVertexZ);
+    fTreeTrack -> Branch("n",&fTrackNumClusters);
+  }
+
+  if (!fDebugVertexFileName.IsNull()) {
+    fDebugVertexFile.open(fDebugVertexFileName.Data());
   }
 
   return kSUCCESS;
@@ -331,12 +411,16 @@ void STGenfitVATask::Exec(Option_t *opt)
     vaTrack -> SetHelixTrack(helixTrack);
 
     auto clusterArray = helixTrack -> GetClusterArray();
+    vector<STHitCluster *> stableClusters;
     clusterArray -> insert(clusterArray -> begin(), vertexCluster);
     for (auto cluster : *clusterArray) {
       if (cluster -> IsStable()) {
         candList -> AddHitID(cluster -> GetClusterID());
         vaTrack -> AddClusterID(cluster -> GetClusterID());
       }
+
+      if (cluster -> IsStable())
+        stableClusters.push_back(cluster);
     }
 
     STPID::PID bestPID = STPID::kNon;
@@ -347,13 +431,17 @@ void STGenfitVATask::Exec(Option_t *opt)
       STPID::PID pid = static_cast<STPID::PID>(iPID);
 
       Int_t pdg;
-           if (pid == STPID::kPion)     pdg = 211; 
-//      else if (pid == STPID::kProton)   pdg = 2212; 
+           if (pid == STPID::kPion)     pdg = 211;
+      else if (pid == STPID::kProton)   pdg = 2212;
 //      else if (pid == STPID::kDeuteron) pdg = 1000010020;
 //      else if (pid == STPID::kTriton)   pdg = 1000010030;
       //else if (pid == STPID::k3He)      pdg = 1000020030;
       //else if (pid == STPID::k4He)      pdg = 1000020040;
       else continue;
+
+      if (fSelectPID<0) {}
+      else if (fSelectPID!=pdg) continue;
+
 
       auto vaTrackCand = candList -> GetRecoTrackCand(iPID);
 
@@ -416,6 +504,56 @@ void STGenfitVATask::Exec(Option_t *opt)
     vaTrack -> SetChi2(fitStatus -> getChi2());
     vaTrack -> SetNDF(fitStatus -> getNdf());
     vaTrack -> SetGenfitPValue(fitStatus -> getPVal());
+
+    if (fPrintFittedPoints) {
+      auto numPoints = bestGenfitTrack -> getNumPoints();
+      auto numClusters = stableClusters.size();
+      cout << 999999999 << endl;
+      cout << helixTrack -> GetTrackID() << " " << numPoints << " " << numClusters << endl;
+
+
+      if (numPoints == numClusters)
+        for (auto iPoint=0; iPoint<numPoints; ++iPoint)
+        {
+          auto gfPoint = bestGenfitTrack -> getPoint(iPoint);
+          auto fitterInfo = (genfit::KalmanFitterInfo*) gfPoint -> getFitterInfo();
+
+          // genfit::KalmanFittedStateOnPlane *
+          auto kalOnPlane = fitterInfo -> getBackwardUpdate();
+          auto chi2KOP = kalOnPlane -> getChiSquareIncrement();
+          auto ndfKOP = kalOnPlane -> getNdf();
+          auto covKOP = kalOnPlane -> getCov();
+
+          //genfit::MeasuredStateOnPlane
+          auto fittedState = fitterInfo -> getFittedState();
+          auto posFit = fittedState.getPos();
+          auto covFit = fittedState.getCov();
+
+          // genfit::AbsMeasurement
+          auto rawMeasurement = gfPoint -> getRawMeasurement();
+          auto posRaw = rawMeasurement -> getRawHitCoords(); // TVectorD
+          auto covRaw = rawMeasurement -> getRawHitCov();      // TMatrixDSym
+
+          // STHitCluster Extrapolate to plane
+          auto cluster = stableClusters.at(iPoint);
+          auto posExt = .1* cluster -> GetPOCA();
+
+          cout << setw(15) << posRaw[0] << setw(15) << posRaw[1] << setw(15) << posRaw[2] << endl;
+          cout << setw(15) << posFit.X() << setw(15) << posFit.Y() << setw(15) << posFit.Z() << endl;
+          cout << setw(15) << posExt.X() << setw(15) << posExt.Y() << setw(15) << posExt.Z() << endl;
+
+          cout << setw(15) << covRaw[0][0] << setw(15) << covRaw[1][1] << setw(15) << covRaw[2][2]
+               << setw(15) << covRaw[0][1] << setw(15) << covRaw[0][2] << setw(15) << covRaw[2][1] << endl;
+          cout << setw(15) << covFit[0][0] << setw(15) << covFit[1][1] << setw(15) << covFit[2][2]
+               << setw(15) << covFit[0][1] << setw(15) << covFit[0][2] << setw(15) << covFit[2][1] << endl;
+          cout << setw(15) << covKOP[0][0] << setw(15) << covKOP[1][1] << setw(15) << covKOP[2][2]
+               << setw(15) << covKOP[0][1] << setw(15) << covKOP[0][2] << setw(15) << covKOP[2][1] << endl;
+
+          cout << setw(15) << chi2KOP << setw(15) << ndfKOP << endl;
+        }
+
+      cout << fitStatus -> getChi2() << " " << fitStatus -> getNdf() << " " << fitStatus -> getPVal() << endl;
+    }
 
     try {
       auto fitState = bestGenfitTrack -> getFittedState();
@@ -554,6 +692,13 @@ void STGenfitVATask::Exec(Option_t *opt)
       genfit::GFRaveVertex* vaVertex = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
 
       auto vaNumTracks = vaVertex -> getNTracks();
+      if (!fDebugVertexFileName.IsNull()) {
+        auto posv = 10 * vaVertex -> getPos();
+        auto eventID = fEventHeader -> GetEventID();
+        fDebugVertexFile << eventID << " " << posv.x() << " " << posv.y() << " " << posv.z() << endl;
+        fDebugVertexFile << vaNumTracks << endl;
+      }
+
       for (Int_t iTrack = 0; iTrack < vaNumTracks; iTrack++) {
         genfit::GFRaveTrackParameters *par = vaVertex -> getParameters(iTrack);
         const genfit::Track *track = par -> getTrack();
@@ -583,6 +728,137 @@ void STGenfitVATask::Exec(Option_t *opt)
             Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vaVertex -> getPos(), effCurvature1, effCurvature2, effCurvature3);
             vaTrack -> SetCharge(charge);
             vaTrack -> SetEffCurvature1(effCurvature1);
+
+            {
+              auto mom = vaTrack -> GetMomentum();
+              auto posv = 10 * vaVertex -> getPos();
+              auto poca = vaTrack -> GetPOCAVertex();
+
+              fTrackPValue = vaTrack -> GetGenfitPValue();
+              fTrackWeight = vaTrack -> GetVertexWeight();
+              fTrackP = mom.Mag();
+              fTrackTheta = mom.Theta();
+              fTrackPhi = mom.Phi();
+              fTrackdEdx = vaTrack -> GetdEdxWithCut(0,0.7);
+              fTrackChi2 = vaTrack -> GetChi2();
+              fTrackNDF  = vaTrack -> GetNDF();
+              fTrackDist = (poca - posv).Mag();
+              fTrackVertexZ = posv.Z();
+              fTrackNumClusters = vaTrack -> GetNumLayerClusters() + vaTrack -> GetNumRowClusters();
+
+              auto postv = par -> getPos();
+
+              if (!fNameTrack.IsNull())
+                fTreeTrack -> Fill();
+
+              if (!fDebugVertexFileName.IsNull() ||
+                  (!fNameCluster.IsNull()
+                   && fTrackNumClusters > 20
+                   && fTrackDist < 4
+                   && fTrackP > 2
+                   && fTrackP < 3000
+                   && fTrackdEdx > 1
+                   && fTrackdEdx < 2000
+                   && fTrackVertexZ < 0
+                   && fTrackVertexZ > -20)
+                 )
+              {
+                auto helixTrack = vaTrack -> GetHelixTrack();
+                auto clusterArray = helixTrack -> GetClusterArray();
+
+                auto numClusters = clusterArray -> size();
+                Int_t idxStable = -1;
+                for (auto iCluster=0; iCluster<numClusters; ++iCluster)
+                // iCluster = 0 is vertex hit cluster
+                {
+                  auto cluster = clusterArray -> at(iCluster);
+                  if (!cluster -> IsStable())
+                    continue;
+                  idxStable++;
+                  if (iCluster==0)
+                    continue;
+
+                  auto pos = cluster -> GetPosition();
+                  auto gfPoint = gfTrack -> getPoint(idxStable);
+                  auto fitterInfo = (genfit::KalmanFitterInfo*) gfPoint -> getFitterInfo();
+                  auto fittedState = fitterInfo -> getFittedState(); //genfit::MeasuredStateOnPlane
+                  auto posFittedMat = fittedState.getPos();
+                  auto posFitted = 10*TVector3(posFittedMat[0], posFittedMat[1], posFittedMat[2]);
+                  auto residual = pos - posFitted;
+
+                  if (!fNameCluster.IsNull()) {
+                    fClusterIsLayerOrRow = cluster -> IsLayerCluster();
+                    fClusterResidualX = residual.X();
+                    fClusterResidualY = residual.Y();
+                    fClusterResidualZ = residual.Z();
+                    fClusterChi = cluster -> GetChi();
+                    fClusterDip = cluster -> GetLambda();
+                    fClusterNumHits = cluster -> GetNumHits();
+                    fClusterX = pos.X();
+                    fClusterZ = pos.Z();
+
+                    double residuals[3] = {fClusterResidualX, fClusterResidualY, fClusterResidualZ};
+
+                    int idxN;
+                    /**/ if (fClusterNumHits<=2) idxN = 0;
+                    else if (fClusterNumHits==3) idxN = 1;
+                    else /* fClusterNumHits>=4*/ idxN = 2;
+
+                    Double_t sigma[3];
+                    if (cluster -> IsLayerCluster()) {
+                      sigma[0] = fHitClusterSigma[1][0][idxN] -> Eval(fClusterChi);
+                      sigma[1] = fHitClusterSigma[1][1][idxN] -> Eval(fClusterDip);
+                      sigma[2] = fHitClusterSigma[1][2][idxN] -> Eval(fClusterChi);
+                    }
+                    else {
+                      sigma[0] = fHitClusterSigma[0][0][idxN] -> Eval(fClusterChi);
+                      sigma[1] = fHitClusterSigma[0][1][idxN] -> Eval(fClusterDip);
+                      sigma[2] = fHitClusterSigma[0][2][idxN] -> Eval(fClusterChi);
+                    }
+
+                    int isLR = fClusterIsLayerOrRow?1:0;
+                    for (auto ixyz : {0,1,2})
+                    {
+                      int idxAngle;
+                      if (ixyz==1) idxAngle = int((fClusterDip+45)/5);
+                      else /*****/ idxAngle = int(fClusterChi/5);
+                      if (idxAngle>17||idxAngle<0)
+                        continue;
+
+                      fHistRawResiduals[isLR][ixyz][idxN][idxAngle] -> Fill(residuals[ixyz]);
+                      fHistStdResiduals[ixyz] -> Fill(residuals[ixyz]/sigma[ixyz]);
+                    }
+
+                    fTreeCluster -> Fill();
+                  }
+                }
+                auto numClustersStable = idxStable+1;
+
+                if (!fDebugVertexFileName.IsNull()) {
+                  fDebugVertexFile << iTrack << " " << numClustersStable << " " << poca.x() << " " << poca.y() << " " << poca.z() << " " << vaTrack -> GetVertexWeight() << endl;
+                  idxStable = -1;
+                  for (auto iCluster=0; iCluster<numClusters; ++iCluster)
+                  {
+                    auto cluster = clusterArray -> at(iCluster);
+                    if (!cluster -> IsStable())
+                      continue;
+                    idxStable++;
+                    if (iCluster==0)
+                      continue;
+
+                    auto gfPoint = gfTrack -> getPoint(idxStable);
+                    auto fitterInfo = (genfit::KalmanFitterInfo*) gfPoint -> getFitterInfo();
+                    auto fittedState = fitterInfo -> getFittedState(); //genfit::MeasuredStateOnPlane
+                    auto posFit = fittedState.getPos();
+                    auto posFitted = 10*TVector3(posFit[0], posFit[1], posFit[2]);
+
+                    fDebugVertexFile << posFitted.x() << " " << posFitted.y() << " " << posFitted.z() << endl;
+                  }
+                }
+
+                fCountFilledEvents++;
+              }
+            }
           }
         }
       }
@@ -627,4 +903,29 @@ void STGenfitVATask::SetFixedVertex(Double_t x, Double_t y, Double_t z)
 void STGenfitVATask::SetUseRave(Bool_t val)
 {
   fUseRave = val;
+}
+
+void STGenfitVATask::SelectPID(Int_t pid) { fSelectPID = pid; }
+
+void STGenfitVATask::SetTrackFileName(TString name) { fNameTrack = name; }
+void STGenfitVATask::SetClusterFileName(TString name) { fNameCluster = name; }
+
+void STGenfitVATask::FinishTask()
+{
+  if (!fNameCluster.IsNull()) {
+    fFileCluster -> cd();
+    fTreeCluster -> Write();
+    (new TParameter<Int_t>("numFilledEvents",fCountFilledEvents)) -> Write();;
+    for (auto isLR : {0,1})
+      for (auto ixyz : {0,1,2})
+        for (auto idxNH : {0,1,2})
+          for (auto idxAngle=0; idxAngle<18; ++idxAngle)
+            fHistRawResiduals[isLR][ixyz][idxNH][idxAngle] -> Write();
+    for (auto ixyz : {0,1,2})
+      fHistStdResiduals[ixyz] -> Write();
+  }
+  if (!fNameTrack.IsNull()) {
+    fFileTrack -> cd();
+    fTreeTrack -> Write();
+  }
 }

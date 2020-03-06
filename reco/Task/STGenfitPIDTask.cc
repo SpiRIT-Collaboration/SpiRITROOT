@@ -7,10 +7,16 @@
 #include "FairRootManager.h"
 
 #include "Track.h"
+#include "TParameter.h"
 
 #include <vector>
 #include <iostream>
 using namespace std;
+
+#include "KalmanFitterInfo.h"
+#include "KalmanFittedStateOnPlane.h"
+#include "MeasuredStateOnPlane.h"
+#include "AbsMeasurement.h"
 
 ClassImp(STGenfitPIDTask)
 
@@ -90,13 +96,70 @@ STGenfitPIDTask::Init()
     fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
   }
 
-  auto fileSig = new TFile(TString(gSystem -> Getenv("VMCWORKDIR")) + "/input/hitClusterSigma_2019.root");
-  fFcSigRowX = (TF2 *) fileSig -> Get("sigRowX_xCross_yDip");;
-  fFcSigRowY = (TF2 *) fileSig -> Get("sigRowY_xCross_yDip");;
-  fFcSigRowZ = (TF2 *) fileSig -> Get("sigRowZ_xCross_yDip");;
-  fFcSigLayX = (TF2 *) fileSig -> Get("sigLayX_xCross_yDip");;
-  fFcSigLayY = (TF2 *) fileSig -> Get("sigLayY_xCross_yDip");;
-  fFcSigLayZ = (TF2 *) fileSig -> Get("sigLayZ_xCross_yDip");;
+  if (!fSigFileName.IsNull()) {
+    auto fileSigma = new TFile(TString(gSystem -> Getenv("VMCWORKDIR")) + "/input/" + fSigFileName);
+    for (auto isLR : {0,1})
+      for (auto ixyz : {0,1,2})
+        for (auto idxN : {0,1,2})
+          fHitClusterSigma[isLR][ixyz][idxN] = (TF1 *) fileSigma -> Get(Form("fit_%s_%s_n%d",(isLR?"lay":"row"),(ixyz==0?"x":(ixyz==1?"y":"z")),idxN+2));
+  }
+
+  if (!fNameCluster.IsNull())
+  {
+    fFileCluster = new TFile(fNameCluster,"recreate");
+    fTreeCluster = new TTree("data","");
+    TString header1 = TString("residual_");
+    TString header2 = TString("standardized_residual_");
+    for (auto isLR : {0,1}) {
+      TString nameLR = isLR?"layer_cluster":"row_cluster";
+      for (auto ixyz : {0,1,2}) {
+        TString nameXYZ = ixyz==0?"x":(ixyz==1?"y":"z");
+        double max = 4.;
+        if ((isLR==0&&ixyz==0) || (isLR==1&&ixyz==2))
+          max = .04;
+        for (auto idxNH : {0,1,2}) {
+          TString nameN = Form("n%d",idxNH);
+          TString name1 = header1 + nameLR + "_" + nameXYZ + "_" + nameN;
+          TString name2 = header2 + nameLR + "_" + nameXYZ + "_" + nameN;
+          fHistRawResiduals[isLR][ixyz][idxNH] = new TH1D(name1,name1+";"+header1+nameXYZ,200,-max,max);
+          fHistStdResiduals[isLR][ixyz][idxNH] = new TH1D(name2,name1+";"+header2+nameXYZ,200,-max,max);
+        }
+      }
+    }
+    fTreeCluster -> Branch("isLR",&fClusterIsLayerOrRow);
+    fTreeCluster -> Branch("rx",&fClusterResidualX);
+    fTreeCluster -> Branch("ry",&fClusterResidualY);
+    fTreeCluster -> Branch("rz",&fClusterResidualZ);
+    //fTreeCluster -> Branch("theta",&fTrackTheta);
+    fTreeCluster -> Branch("chi",&fClusterChi);
+    fTreeCluster -> Branch("dip",&fClusterDip);
+    fTreeCluster -> Branch("n",&fClusterNumHits);
+    fTreeCluster -> Branch("x",&fClusterX);
+    fTreeCluster -> Branch("z",&fClusterZ);
+    //fTreeCluster -> Branch("p",&fTrackP);
+    //fTreeCluster -> Branch("dedx",&fTrackdEdx);
+  }
+
+  if (!fNameTrack.IsNull())
+  {
+    fFileTrack = new TFile(fNameTrack,"recreate");
+    fTreeTrack = new TTree("data","");
+    fTreeTrack -> Branch("pvalue",&fTrackPValue);
+    fTreeTrack -> Branch("weight",&fTrackWeight);
+    fTreeTrack -> Branch("p",&fTrackP);
+    fTreeTrack -> Branch("theta",&fTrackTheta);
+    fTreeTrack -> Branch("phi",&fTrackPhi);
+    fTreeTrack -> Branch("dedx",&fTrackdEdx);
+    fTreeTrack -> Branch("chi2",&fTrackChi2);
+    fTreeTrack -> Branch("ndf",&fTrackNDF);
+    fTreeTrack -> Branch("d",&fTrackDist);
+    fTreeTrack -> Branch("z",&fTrackVertexZ);
+    fTreeTrack -> Branch("n",&fTrackNumClusters);
+  }
+
+  if (!fDebugVertexFileName.IsNull()) {
+    fDebugVertexFile.open(fDebugVertexFileName.Data());
+  }
 
   return kSUCCESS;
 }
@@ -133,30 +196,32 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     auto clusterArray = helixTrack -> GetClusterArray();
     vector<STHitCluster *> stableClusters;
     for (auto cluster : *clusterArray) {
+
       if (fUseConstCov) {
-        cluster -> SetDx(0.04);
-        cluster -> SetDy(0.01);
-        cluster -> SetDz(0.04);
-        continue;
+        cluster -> SetDx(fCovX);
+        cluster -> SetDy(fCovY);
+        cluster -> SetDz(fCovZ);
       }
       else {
-        auto chi = cluster -> GetChi();
-        auto dip = cluster -> GetLambda();
-        auto xii = 90 - chi;
+        auto chi = cluster -> GetChi() * TMath::RadToDeg();
+        auto dip = cluster -> GetLambda() * TMath::RadToDeg();
+        auto numHits = cluster -> GetNumHits();
 
-        if (cluster -> IsRowCluster())
-        {
-          Double_t sig;
-          sig = fFcSigRowX->Eval(xii,dip); cluster -> SetDx(sig*sig);
-          sig = fFcSigRowY->Eval(xii,dip); cluster -> SetDy(sig*sig);
-          sig = fFcSigRowZ->Eval(xii,dip); cluster -> SetDz(sig*sig);
+        int idxN;
+        /**/ if (numHits<=2) idxN = 0;
+        else if (numHits==3) idxN = 1;
+        else /* numHits>=4*/ idxN = 2;
+
+        Double_t sig;
+        if (cluster -> IsLayerCluster()) {
+          sig = fHitClusterSigma[1][0][idxN] -> Eval(chi); cluster->SetDx(sig*sig);
+          sig = fHitClusterSigma[1][1][idxN] -> Eval(dip); cluster->SetDy(sig*sig);
+          sig = fHitClusterSigma[1][2][idxN] -> Eval(chi); cluster->SetDz(sig*sig);
         }
-        else if (cluster -> IsLayerCluster())
-        {
-          Double_t sig;
-          sig = fFcSigLayX->Eval(xii,dip); cluster -> SetDx(sig*sig);
-          sig = fFcSigLayY->Eval(xii,dip); cluster -> SetDy(sig*sig);
-          sig = fFcSigLayZ->Eval(xii,dip); cluster -> SetDz(sig*sig);
+        else {
+          sig = fHitClusterSigma[0][0][idxN] -> Eval(chi); cluster->SetDx(sig*sig);
+          sig = fHitClusterSigma[0][1][idxN] -> Eval(dip); cluster->SetDy(sig*sig);
+          sig = fHitClusterSigma[0][2][idxN] -> Eval(chi); cluster->SetDz(sig*sig);
         }
       }
 
@@ -220,13 +285,16 @@ void STGenfitPIDTask::Exec(Option_t *opt)
       STPID::PID pid = static_cast<STPID::PID>(iPID);
 
       Int_t pdg;
-           if (pid == STPID::kPion)     pdg = 211; 
-//      else if (pid == STPID::kProton)   pdg = 2212; 
+           if (pid == STPID::kPion)     pdg = 211;
+      else if (pid == STPID::kProton)   pdg = 2212;
 //      else if (pid == STPID::kDeuteron) pdg = 1000010020;
 //      else if (pid == STPID::kTriton)   pdg = 1000010030;
       //else if (pid == STPID::k3He)      pdg = 1000020030;
       //else if (pid == STPID::k4He)      pdg = 1000020040;
       else continue;
+
+      if (fSelectPID<0) {}
+      else if (fSelectPID!=pdg) continue;
 
       auto recoTrackCand = candList -> GetRecoTrackCand(iPID);
 
@@ -262,7 +330,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
     candList -> SetBestPID(bestPID);
     auto bestRecoTrackCand = candList -> GetRecoTrackCand(candList -> GetBestPID());
-    auto bestGenfitTrack = bestRecoTrackCand -> GetGenfitTrack();
+    auto bestGenfitTrack = bestRecoTrackCand -> GetGenfitTrack(); // genfit::Track
     gfTrackArrayToVertex.push_back(bestGenfitTrack);
     recoTrackArrayToVertex.push_back(recoTrack);
 
@@ -278,10 +346,60 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     recoTrack -> SetPosKatana(katana);
     recoTrack -> SetPosNeuland(neuland);
 
-    auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
+    auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0)); // genfit::FitStatus
     recoTrack -> SetChi2(fitStatus -> getChi2());
     recoTrack -> SetNDF(fitStatus -> getNdf());
     recoTrack -> SetGenfitPValue(fitStatus -> getPVal());
+
+    if (fPrintFittedPoints) {
+      auto numPoints = bestGenfitTrack -> getNumPoints();
+      auto numClusters = stableClusters.size();
+      cout << 999999999 << endl;
+      cout << helixTrack -> GetTrackID() << " " << numPoints << " " << numClusters << endl;
+
+
+      if (numPoints == numClusters)
+        for (auto iPoint=0; iPoint<numPoints; ++iPoint)
+        {
+          auto gfPoint = bestGenfitTrack -> getPoint(iPoint);
+          auto fitterInfo = (genfit::KalmanFitterInfo*) gfPoint -> getFitterInfo();
+
+          // genfit::KalmanFittedStateOnPlane *
+          auto kalOnPlane = fitterInfo -> getBackwardUpdate();
+          auto chi2KOP = kalOnPlane -> getChiSquareIncrement();
+          auto ndfKOP = kalOnPlane -> getNdf();
+          auto covKOP = kalOnPlane -> getCov();
+
+          //genfit::MeasuredStateOnPlane
+          auto fittedState = fitterInfo -> getFittedState();
+          auto posFit = fittedState.getPos();
+          auto covFit = fittedState.getCov();
+
+          // genfit::AbsMeasurement
+          auto rawMeasurement = gfPoint -> getRawMeasurement();
+          auto posRaw = rawMeasurement -> getRawHitCoords(); // TVectorD
+          auto covRaw = rawMeasurement -> getRawHitCov();      // TMatrixDSym
+
+          // STHitCluster Extrapolate to plane
+          auto cluster = stableClusters.at(iPoint);
+          auto posExt = .1* cluster -> GetPOCA();
+
+          cout << setw(15) << posRaw[0] << setw(15) << posRaw[1] << setw(15) << posRaw[2] << endl;
+          cout << setw(15) << posFit.X() << setw(15) << posFit.Y() << setw(15) << posFit.Z() << endl;
+          cout << setw(15) << posExt.X() << setw(15) << posExt.Y() << setw(15) << posExt.Z() << endl;
+
+          cout << setw(15) << covRaw[0][0] << setw(15) << covRaw[1][1] << setw(15) << covRaw[2][2]
+               << setw(15) << covRaw[0][1] << setw(15) << covRaw[0][2] << setw(15) << covRaw[2][1] << endl;
+          cout << setw(15) << covFit[0][0] << setw(15) << covFit[1][1] << setw(15) << covFit[2][2]
+               << setw(15) << covFit[0][1] << setw(15) << covFit[0][2] << setw(15) << covFit[2][1] << endl;
+          cout << setw(15) << covKOP[0][0] << setw(15) << covKOP[1][1] << setw(15) << covKOP[2][2]
+               << setw(15) << covKOP[0][1] << setw(15) << covKOP[0][2] << setw(15) << covKOP[2][1] << endl;
+
+          cout << setw(15) << chi2KOP << setw(15) << ndfKOP << endl;
+        }
+
+      cout << fitStatus -> getChi2() << " " << fitStatus -> getNdf() << " " << fitStatus -> getPVal() << endl;
+    }
 
     try {
       auto fitState = bestGenfitTrack -> getFittedState();
@@ -432,6 +550,13 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     genfit::GFRaveVertex* vertex = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
 
     Int_t numTracks = vertex -> getNTracks();
+    if (!fDebugVertexFileName.IsNull()) {
+      auto posv = 10 * vertex -> getPos();
+      auto eventID = fEventHeader -> GetEventID();
+      fDebugVertexFile << eventID << " " << posv.x() << " " << posv.y() << " " << posv.z() << endl;
+      fDebugVertexFile << numTracks << endl;
+    }
+
     for (Int_t iTrack = 0; iTrack < numTracks; iTrack++) {
       genfit::GFRaveTrackParameters *par = vertex -> getParameters(iTrack);
       const genfit::Track *track = par -> getTrack();
@@ -461,6 +586,130 @@ void STGenfitPIDTask::Exec(Option_t *opt)
           Double_t charge = fGenfitTest -> DetermineCharge(recoTrack, vertex -> getPos(), effCurvature1, effCurvature2, effCurvature3);
           recoTrack -> SetCharge(charge);
           recoTrack -> SetEffCurvature1(effCurvature1);
+
+          {
+            auto mom = recoTrack -> GetMomentum();
+            auto posv = 10 * vertex -> getPos();
+            auto poca = recoTrack -> GetPOCAVertex();
+
+            fTrackPValue = recoTrack -> GetGenfitPValue();
+            fTrackWeight = recoTrack -> GetVertexWeight();
+            fTrackP = mom.Mag();
+            fTrackTheta = mom.Theta();
+            fTrackPhi = mom.Phi();
+            fTrackdEdx = recoTrack -> GetdEdxWithCut(0,0.7);
+            fTrackChi2 = recoTrack -> GetChi2();
+            fTrackNDF  = recoTrack -> GetNDF();
+            fTrackDist = (poca - posv).Mag();
+            fTrackVertexZ = posv.Z();
+            fTrackNumClusters = recoTrack -> GetNumLayerClusters() + recoTrack -> GetNumRowClusters();
+
+            auto postv = par -> getPos();
+
+            if (!fNameTrack.IsNull())
+              fTreeTrack -> Fill();
+
+            if (!fDebugVertexFileName.IsNull() ||
+              (!fNameCluster.IsNull()
+              && fTrackNumClusters > 20
+              && fTrackDist < 10
+              && fTrackP > 2
+              && fTrackP < 3000
+              && fTrackdEdx > 1
+              && fTrackdEdx < 2000
+              && fTrackVertexZ < 0
+              && fTrackVertexZ > -20)
+              )
+            {
+              auto helixTrack = recoTrack -> GetHelixTrack();
+              auto clusterArray = helixTrack -> GetClusterArray();
+
+              auto numClusters = clusterArray -> size();
+              Int_t idxStable = 0;
+              for (auto iCluster=0; iCluster<numClusters; ++iCluster)
+              {
+                auto cluster = clusterArray -> at(iCluster);
+                if (!cluster -> IsStable())
+                  continue;
+
+                auto pos = cluster -> GetPosition();
+
+                auto gfPoint = gfTrack -> getPoint(idxStable);
+                auto fitterInfo = (genfit::KalmanFitterInfo*) gfPoint -> getFitterInfo();
+                auto fittedState = fitterInfo -> getFittedState(); //genfit::MeasuredStateOnPlane
+                //auto posFittedM = fittedState.getPos();
+                //auto posFitted = 10*TVector3(posFittedM[0], posFittedM[1], posFittedM[2]);
+                auto posFitted = 10*fittedState.getPos();
+
+                auto residual = pos - posFitted;
+
+                if (!fNameCluster.IsNull()) {
+                  fClusterIsLayerOrRow = cluster -> IsLayerCluster();
+                  fClusterResidualX = residual.X();
+                  fClusterResidualY = residual.Y();
+                  fClusterResidualZ = residual.Z();
+                  fClusterChi = cluster -> GetChi();
+                  fClusterDip = cluster -> GetLambda();
+                  fClusterNumHits = cluster -> GetNumHits();
+                  fClusterX = pos.X();
+                  fClusterZ = pos.Z();
+
+                  double residuals[] = {fClusterResidualX, fClusterResidualY, fClusterResidualZ};
+
+                  int idxN;
+                  /**/ if (fClusterNumHits<=2) idxN = 0;
+                  else if (fClusterNumHits==3) idxN = 1;
+                  else   /*fClusterNumHits>=4*/idxN = 2;
+
+                  Double_t sigma[3];
+                  if (cluster -> IsLayerCluster()) {
+                    sigma[0] = fHitClusterSigma[1][0][idxN] -> Eval(fClusterChi);
+                    sigma[1] = fHitClusterSigma[1][1][idxN] -> Eval(fClusterDip);
+                    sigma[2] = fHitClusterSigma[1][2][idxN] -> Eval(fClusterChi);
+                  }
+                  else {
+                    sigma[0] = fHitClusterSigma[0][0][idxN] -> Eval(fClusterChi);
+                    sigma[1] = fHitClusterSigma[0][1][idxN] -> Eval(fClusterDip);
+                    sigma[2] = fHitClusterSigma[0][2][idxN] -> Eval(fClusterChi);
+                  }
+
+                  int isLR = fClusterIsLayerOrRow?1:0;
+                  for (auto ixyz : {0,1,2}) {
+                    fHistRawResiduals[isLR][ixyz][idxN] -> Fill(residuals[ixyz]);
+                    fHistStdResiduals[isLR][ixyz][idxN] -> Fill(residuals[ixyz]/sigma[ixyz]);
+                  }
+
+                  fTreeCluster -> Fill();
+                }
+
+                idxStable++;
+              }
+              auto numClustersStable = idxStable;
+
+              if (!fDebugVertexFileName.IsNull()) {
+                fDebugVertexFile << iTrack << " " << numClustersStable << " " << poca.x() << " " << poca.y() << " " << poca.z() << " " << recoTrack -> GetVertexWeight() << endl;
+                idxStable = 0;
+                for (auto iCluster=0; iCluster<numClusters; ++iCluster)
+                {
+                  auto cluster = clusterArray -> at(iCluster);
+                  if (!cluster -> IsStable())
+                    continue;
+
+                  auto gfPoint = gfTrack -> getPoint(idxStable);
+                  auto fitterInfo = (genfit::KalmanFitterInfo*) gfPoint -> getFitterInfo();
+                  auto fittedState = fitterInfo -> getFittedState(); //genfit::MeasuredStateOnPlane
+                  //auto posFit = fittedState.getPos();
+                  //auto posFitted = 10*TVector3(posFit[0], posFit[1], posFit[2]);
+                  auto posFitted = 10*fittedState.getPos();
+
+                  fDebugVertexFile << posFitted.x() << " " << posFitted.y() << " " << posFitted.z() << endl;
+                  idxStable++;
+                }
+              }
+
+              fCountFilledEvents++;
+            }
+          }
         }
       }
     }
@@ -486,5 +735,41 @@ genfit::GFRaveVertexFactory *STGenfitPIDTask::GetVertexFactoryInstance()
   return fVertexFactory;
 }
 
-void STGenfitPIDTask::SetUseConstCov() { fUseConstCov = true; }
+void STGenfitPIDTask::SetClusterSigmaFile(TString fileName) {
+  fUseConstCov = false;
+  fSigFileName = fileName;
+}
+void STGenfitPIDTask::SetUseConstCov(Double_t x, Double_t y, Double_t z) {
+  fUseConstCov = true;
+  fCovX = x;
+  fCovY = y;
+  fCovZ = z;
+}
 void STGenfitPIDTask::SetVertexMethod(TString method) { fGFRaveVertexMethod = method; }
+
+void STGenfitPIDTask::SelectPID(Int_t pid) { fSelectPID = pid; }
+
+void STGenfitPIDTask::SetTrackFileName(TString name) { fNameTrack = name; }
+void STGenfitPIDTask::SetClusterFileName(TString name) { fNameCluster = name; }
+
+void STGenfitPIDTask::FinishTask()
+{
+  if (!fNameCluster.IsNull()) {
+    fFileCluster -> cd();
+    fTreeCluster -> Write();
+    (new TParameter<Int_t>("numFilledEvents",fCountFilledEvents)) -> Write();;
+    for (auto isLR : {0,1})
+      for (auto ixyz : {0,1,2})
+        for (auto idxNH : {0,1,2})
+          fHistRawResiduals[isLR][ixyz][idxNH] -> Write();
+    for (auto isLR : {0,1})
+      for (auto ixyz : {0,1,2})
+        for (auto idxNH : {0,1,2})
+          fHistStdResiduals[isLR][ixyz][idxNH] -> Write();
+  }
+
+  if (!fNameTrack.IsNull()) {
+    fFileTrack -> cd();
+    fTreeTrack -> Write();
+  }
+}

@@ -19,6 +19,10 @@
 #include "STBDCProjection.hh"
 #include "ST_VertexShift.hh"
 #include "STBeamInfo.hh"
+#include "TGraph.h"
+
+#include <fstream>
+using namespace std;
 
 class STGenfitVATask : public STRecoTask
 {
@@ -43,7 +47,18 @@ class STGenfitVATask : public STRecoTask
     void SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple);
     void SetFixedVertex(Double_t x, Double_t y, Double_t z);
 
+    void SetClusterSigmaFile(TString fileName) { fSigFileName = fileName; }
+
     void SetUseRave(Bool_t val = kTRUE);
+    void SelectPID(Int_t pid);
+
+    void SetTrackFileName(TString name);
+    void SetClusterFileName(TString name);
+
+    void FinishTask();
+
+    void SetPrintFittedPoints(bool val) { fPrintFittedPoints = val; }
+    void SetDebugVertex(TString fileName) { fDebugVertexFileName = fileName; }
 
   private:
     TClonesArray *fHelixTrackArray = nullptr;
@@ -93,6 +108,47 @@ class STGenfitVATask : public STRecoTask
     Double_t fFieldYOffset = -20.5502; //unit: cm
     Double_t fFieldZOffset = 58.0526;  //unit: cm
 
+    Int_t fSelectPID = -1;
+
+    TString fNameTrack;
+    TFile *fFileTrack;
+    TTree *fTreeTrack;
+    Float_t fTrackPValue;
+    Float_t fTrackWeight;
+    Float_t fTrackP;
+    Float_t fTrackTheta;
+    Float_t fTrackPhi;
+    Float_t fTrackdEdx;
+    Float_t fTrackChi2;
+    Float_t fTrackNDF;
+    Float_t fTrackDist;
+    Float_t fTrackVertexZ;
+    Float_t fTrackNumClusters;
+
+    TString fSigFileName = "";
+    TF1 *fHitClusterSigma[2][3][3];
+
+    TString fNameCluster;
+    TFile *fFileCluster;
+    TTree *fTreeCluster;
+    TH1D *fHistRawResiduals[2][3][3][18];
+    TH1D *fHistStdResiduals[3];
+    Bool_t fClusterIsLayerOrRow;
+    Float_t fClusterResidualX;
+    Float_t fClusterResidualY;
+    Float_t fClusterResidualZ;
+    Float_t fClusterChi;
+    Float_t fClusterDip;
+    Int_t fClusterNumHits;
+    Float_t fClusterX;
+    Float_t fClusterZ;
+    Int_t fCountFilledEvents = 0;
+
+    bool fPrintFittedPoints = 0;
+
+    TString fDebugVertexFileName ="";
+    ofstream fDebugVertexFile;
+
 public:     
     //the below is related to BDC shift.
     ST_VertexShift* Vertex_Shifter; 
@@ -103,7 +159,7 @@ public:
     
     
 
-  ClassDef(STGenfitVATask, 1)
+
 };
 
 #endif

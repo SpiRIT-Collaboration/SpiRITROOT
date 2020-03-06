@@ -12,6 +12,7 @@
 #include "Track.h"
 #include "TrackCand.h"
 #include "RKTrackRep.h"
+#include "AbsTrackRep.h"
 #include "Exception.h"
 
 // STL
@@ -130,11 +131,19 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
   posSeed.SetMag(posSeed.Mag()/10.);
 
   TMatrixDSym covSeed(6);
+  covSeed(0,0) = refCluster -> GetDx()/100.;
+  covSeed(1,1) = refCluster -> GetDy()/100.;
+  covSeed(2,2) = refCluster -> GetDz()/100.;
+  covSeed(3,3) = refCluster -> GetDx()/100.;
+  covSeed(4,4) = refCluster -> GetDy()/100.;
+  covSeed(5,5) = refCluster -> GetDz()/100.;
+  /*
   TMatrixD covMatrix = refCluster -> GetCovMatrix();
   for (Int_t iComp = 0; iComp < 3; iComp++)
     covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
   for (Int_t iComp = 3; iComp < 6; iComp++)
     covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
+    */
 
   Double_t dip = helixTrack -> DipAngle();
   Double_t momSeedMag = helixTrack -> Momentum();
@@ -226,11 +235,19 @@ genfit::Track* STGenfitTest2::FitTrackWithVertex(STHelixTrack *helixTrack, STHit
   posSeed.SetMag(posSeed.Mag()/10.);
 
   TMatrixDSym covSeed(6);
+  covSeed(0,0) = refCluster -> GetDx()/100.;
+  covSeed(1,1) = refCluster -> GetDy()/100.;
+  covSeed(2,2) = refCluster -> GetDz()/100.;
+  covSeed(3,3) = refCluster -> GetDx()/100.;
+  covSeed(4,4) = refCluster -> GetDy()/100.;
+  covSeed(5,5) = refCluster -> GetDz()/100.;
+  /*
   TMatrixD covMatrix = refCluster -> GetCovMatrix();
   for (Int_t iComp = 0; iComp < 3; iComp++)
     covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
   for (Int_t iComp = 3; iComp < 6; iComp++)
     covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
+    */
 
   Double_t dip = helixTrack -> DipAngle();
   Double_t momSeedMag = helixTrack -> Momentum();
@@ -313,11 +330,19 @@ genfit::Track* STGenfitTest2::SetTrack(STRecoTrack *recoTrack, TClonesArray *clu
   posSeed.SetMag(posSeed.Mag()/10.);
 
   TMatrixDSym covSeed(6);
+  covSeed(0,0) = refCluster -> GetDx()/100.;
+  covSeed(1,1) = refCluster -> GetDy()/100.;
+  covSeed(2,2) = refCluster -> GetDz()/100.;
+  covSeed(3,3) = refCluster -> GetDx()/100.;
+  covSeed(4,4) = refCluster -> GetDy()/100.;
+  covSeed(5,5) = refCluster -> GetDz()/100.;
+  /*
   TMatrixD covMatrix = refCluster -> GetCovMatrix();
   for (Int_t iComp = 0; iComp < 3; iComp++)
     covSeed(iComp, iComp) = covMatrix(iComp, iComp)/100.;
   for (Int_t iComp = 3; iComp < 6; iComp++)
     covSeed(iComp, iComp) = covSeed(iComp - 3, iComp - 3);
+    */
 
   auto momReco = recoTrack -> GetMomentum();
 
