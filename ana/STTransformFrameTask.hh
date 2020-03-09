@@ -21,6 +21,7 @@
 #include "STData.hh"
 #include "STDigiPar.hh"
 #include "STVector.hh"
+#include "STAnaParticleDB.hh"
 
 // ROOT classes
 #include "TClonesArray.h"
@@ -70,7 +71,7 @@ class STTransformFrameTask : public FairTask {
     int fTargetMass;
     bool fDoRotation;
     const Double_t fNucleonMass = 931.5;
-    const std::vector<int> fSupportedPDG{2212, 1000010020,1000010030,1000020030,1000020040};
+    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
   
   ClassDef(STTransformFrameTask, 1);
 };

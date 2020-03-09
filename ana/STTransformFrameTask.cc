@@ -80,6 +80,7 @@ void STTransformFrameTask::Exec(Option_t *opt)
   TLorentzVector LV(0,0,PBeam,EBeam);
   double beta = PBeam/(LV.Gamma()*beamMass*fNucleonMass + fTargetMass*fNucleonMass);
   auto vBeam = TVector3(0,0,-beta);
+  LV.Boost(vBeam);
   fBeamRapidity -> fElements[0] = LV.Rapidity();
 
   // beam rotation

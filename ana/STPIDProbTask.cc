@@ -12,7 +12,11 @@
 #include "FairRuntimeDb.h"
 
 // ROOT class
+#include "TTimer.h"
 #include "TDatabasePDG.h"
+#include "TGInputDialog.h"
+#include "TButton.h"
+#include "TDialogCanvas.h"
 
 ClassImp(STPIDProbTask);
 
@@ -187,9 +191,30 @@ void STPIDProbTask::SetPIDFitFile(const std::string& t_fitfile)
 void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFile)
 {
   STAnaParticleDB::FillTDatabasePDG();
+  std::string treeName = "cbmsim";
+
   TChain chain("cbmsim");
-  chain.Add(anaFile.c_str());
+  auto has_suffix = [](const std::string &str, const std::string &suffix)
+    {
+        return str.size() >= suffix.size() &&
+               str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+    };
+  std::string anaFileWithSuffix = anaFile;
+  if(!has_suffix(anaFile, ".root")) anaFileWithSuffix += ".root";
+  // the tree name could be cbmsim or spirit
+  // need to add both
+  {
+    chain.Add((anaFileWithSuffix + "/spirit").c_str());
+    chain.Add((anaFileWithSuffix + "/cbmsim").c_str());
+    // suppress all the error due to not able to read from one of those trees
+    auto origVerbosity = gErrorIgnoreLevel;
+    gErrorIgnoreLevel = kFatal;
+    if(chain.GetEntries() == 0) throw std::runtime_error("No entries is being read from the file!");
+    gErrorIgnoreLevel = origVerbosity;
+  }
+
   TFile output(fitFile.c_str(), "UPDATE");
+  if(output.IsZombie()) throw std::runtime_error("The designated output fit file " + fitFile + " is not writable!");
 
   auto BBE = [](double *x, double *par)
   {
@@ -212,13 +237,14 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
   PID.Sumw2();
   tBBE.SetParameters(1,-800,13,190000,-80,6, 0);
 
-  chain.Draw("STData[0].vadedx:STData[0].vaMom.Mag()>>PID", 
-             "STData[0].vaNRowClusters + STData[0].vaNLayerClusters > 20 && STData[0].recodpoca.Mag() < 10", 
+  chain.Draw("vadedx:vaMom.Mag()>>PID", 
+             "vaNRowClusters + vaNLayerClusters > 20 && recodpoca.Mag() < 10", 
              "goff",100000);
 
-  for(int pdg : std::vector<int>{2212,1000010020,1000010030,1000020030, 1000020040})
+  for(const int pdg : STAnaParticleDB::SupportedPDG)
    {
     c1.cd();
+    c1.SetLogz();
     PID.Draw("colz");
 
     auto particle = TDatabasePDG::Instance() -> GetParticle(pdg);
@@ -228,28 +254,62 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
 
     bool drawBEE = true;
     auto BEEName = TString::Format("BEE%d", pdg);
+    auto tightCutName = TString::Format("TightCut%d", pdg);
     if(auto loadedBEE = (TF1*) output.Get(BEEName))
     {
-      std::cout << "BEE line for particle " << pdg << " is found. Do you want to redraw it? (y/n)" << std::endl;
       c1.cd();
       loadedBEE -> SetRange(10, momMax);
       loadedBEE -> Draw("same");
       c1.Update();
       c1.Modified();
 
-      std::string temp;
-      std::cin >> temp;
+      char response[] = "nnnnnnnnnnnnnnnnnnnnnnn";
+      new TGInputDialog(gClient->GetDefaultRoot(), gClient->GetDefaultRoot(), TString::Format("BEE line for %s is found. Redraw? (y/n)", pname.c_str()), "n", response);
+      std::string temp(response);
       if(temp != "y") drawBEE = false;
       loadedBEE -> Delete();
     }
 
     if(drawBEE)
     {
-      std::cout << "Please draw cut for " << pname << std::endl;
-      TCutG *cutg = nullptr;
-      while(!cutg) cutg = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
-      std::cout << "Please modify the cutg if needed. Press Ctrl-C to continue" << std::endl;
-      c1.WaitPrimitive("temp", "[CUTG]");
+      TCutG *cutg = (TCutG*) output.Get(tightCutName);
+      bool drawTightCut = true;
+      if(cutg)
+      {
+        cutg -> Draw("l same");
+        c1.Update();
+        c1.Modified();
+        char response[] = "nnnnnnnnnnnnnnnnnnnnnnn";
+        new TGInputDialog(gClient->GetDefaultRoot(), gClient->GetDefaultRoot(), TString::Format("Tight cut for %s is found. Redraw? (y/n)", pname.c_str()), "n", response);
+        std::string temp(response);
+        if(temp != "y") drawTightCut = false;
+        else 
+        {
+          cutg -> Delete();
+          cutg = nullptr;
+        }
+      }
+      
+      if(drawTightCut)
+      {
+        TPaveText text(0.5, 0.7, .85, .8, "brNDC");
+        text.AddText(TString::Format("Please draw cut for %s", pname.c_str()));
+        text.Draw();
+        while(!cutg) cutg = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+      }
+      {
+        TPaveText text(0.5, 0.5, .85, .8, "brNDC");
+        text.AddText("Please modify the cutg if needed.");
+        text.AddText("Press Ctrl-C to continue");
+        text.Draw(); 
+
+        c1.Update();
+        c1.Modified();
+        c1.WaitPrimitive("temp", "[CUTG]");
+      }
+
+      output.cd();
+      cutg -> Write(tightCutName);
 
       auto profile = STPIDProbTask::ProfileX(&PID, cutg);//PID.ProfileX("_px", 1, -1, "s [CUTG]");
       TH1F PIDMean("PIDMean", "Mean;momentum (MeV/c2);dEdX", nbinsx, momMin, momMax);
@@ -264,22 +324,33 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
 
       tBBE.SetNpx(5000);
       std::string redraw = "y";
-      while(redraw == "y")
+      PIDMean.Fit(&tBBE, "Q");
+      PID.Draw("colz");
+      PIDMean.Draw("PE same");
+
+      while(redraw != "n")
       {
-        PIDMean.Fit(&tBBE);
-        PID.Draw("colz");
         c1.Update();
-        PIDMean.Draw("PE same");
-        std::cout << "Please inspect the result of the fit. You may adjust the parameters in the fit panel. Press Ctrl-C to continue" << std::endl;
+        c1.Modified();
+
+        TPaveText text(0.5, 0.5, .85, .8, "brNDC");
+        text.AddText("Please inspect the result of the fit.");
+        text.AddText("You may adjust the parameters in the fit panel.");
+        text.AddText("Press Ctrl-C to continue");
+        text.Draw(); 
+
         c1.WaitPrimitive("temp", "[CUTG]");
 
         // Obtain the tf1 after adjustment is made on fit panel
         auto newBBE = (TF1*) PIDMean.GetFunction("BBE");
         tBBE.SetParameters(newBBE->GetParameters());
-        std::cout << "Please inspect the fitted lines. Do you want to refit? (y/n)" << std::endl;
         tBBE.Draw("L same");
+
         c1.Update();
-        std::cin >> redraw;
+        c1.Modified();
+        char response[] = "nnnnnnnnnnnnnnnnnnnnnnn";
+        new TGInputDialog(gClient->GetDefaultRoot(), gClient->GetDefaultRoot(), "Please inspect the fitted lines. Do you want to refit? (y/n)", "y", response);
+        redraw = response;
       }
 
       output.cd(); 
@@ -300,7 +371,10 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
         PIDStd.Fit(&fitError);
         PIDStd.GetYaxis()->SetRangeUser(0, PIDStd.GetMaximum());
 
-        std::cout << "Please modify the fit with Fit Panel if needed. Then press Ctrl-C" << std::endl;
+        TPaveText text(0.5,0.5,0.85,0.8, "brNDC");
+        text.AddText("Please modify the fit with Fit Panel if needed.");
+        text.AddText("Then press Ctrl-C");
+        text.Draw();
         c2.WaitPrimitive("temp", "[CUTG]");
 
         // Obtain the tf1 after adjustment is made on fit panel
@@ -318,14 +392,14 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
     auto GLimitName = TString::Format("Limit%d", pdg);
     if(auto loadedGLimit = (TCutG*) output.Get(GLimitName))
     {
-      std::cout << "Particle limits for particle " << pdg << " is found. Do you want to redraw it? (y/n)" << std::endl;
       c1.cd();
       loadedGLimit -> Draw("L same");
       c1.Update();
       c1.Modified();
 
-      std::string temp;
-      std::cin >> temp;
+      char response[] = "nnnnnnnnnnnnnnnnnnnnnnn";
+      new TGInputDialog(gClient->GetDefaultRoot(), gClient->GetDefaultRoot(), TString::Format("PID Limits for %s is found. Redraw? (y/n)", pname.c_str()), "n", response);
+      std::string temp(response);
       if(temp != "y") drawGLimit = false;
       loadedGLimit -> Delete();
     }
@@ -333,12 +407,26 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
     if(drawGLimit)
     {
       c1.cd();
-      std::cout << "Please draw the acceptable range for the particle. It can be lax because it only serves as a guild for iterative Bayes." << std::endl;
-      if(auto obj = c1.GetListOfPrimitives()->FindObject("CUTG")) c1.GetListOfPrimitives()->Remove(obj);
-      c1.Modified();
-
       TCutG *gLimit = nullptr;
-      while(!gLimit) gLimit = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+      {
+        TPaveText text(0.5,0.5,0.85,0.8, "brNDC");
+        text.AddText("Please draw the acceptable range for the particle.");
+        text.AddText("It can be lax because it only serves as a guild for iterative Bayes.");
+        text.Draw();
+
+        if(auto obj = c1.GetListOfPrimitives()->FindObject("CUTG")) c1.GetListOfPrimitives()->Remove(obj);
+        c1.Modified();
+
+        while(!gLimit) gLimit = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+      }
+      {
+        TPaveText text(0.5,0.5,0.85,0.8, "brNDC");
+        text.AddText("You may adjust the graphical cut.");
+        text.AddText("Press Ctrl-C to continue");
+        text.Draw(); 
+        c1.WaitPrimitive("temp", "[CUTG]");
+      }
+
       auto clonedGLimit = gLimit -> Clone(GLimitName);
       output.cd();
       clonedGLimit -> Write();

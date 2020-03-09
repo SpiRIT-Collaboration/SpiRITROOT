@@ -14,6 +14,7 @@ ClassImp(STEfficiencyTask);
 
 STEfficiencyTask::STEfficiencyTask(EfficiencyFactory* t_factory)
 { 
+  for(int pdg : fSupportedPDG) fEfficiencySettings[pdg] = EfficiencySettings(); 
   fFactory = t_factory;
   fLogger = FairLogger::GetLogger(); 
   fEff = new TClonesArray("STVectorF");
@@ -21,12 +22,6 @@ STEfficiencyTask::STEfficiencyTask(EfficiencyFactory* t_factory)
 
 STEfficiencyTask::~STEfficiencyTask()
 {}
-
-void STEfficiencyTask::SetParticleList(const std::vector<int>& t_plist)
-{ 
-  fSupportedPDG = t_plist; 
-  for(int pdg : fSupportedPDG) fEfficiencySettings[pdg] = EfficiencySettings(); 
-}
 
 InitStatus STEfficiencyTask::Init()
 {

@@ -1,6 +1,7 @@
 #include "TH2.h"
 #include "TChain.h"
 #include "EfficiencyFactory.hh"
+#include "TDatabasePDG.h"
 #include <glob.h>
 
 std::vector<std::string> glob(const char *pattern) {
@@ -173,22 +174,30 @@ TEfficiency EfficiencyFromConcFactory::FinalizeBins(int t_pdg,
   TH2F *det = new TH2F("det", "det", mom_bin_.nbins, mom_bin_.min, mom_bin_.max, theta_bin_.nbins, theta_bin_.min, theta_bin_.max);
   TH2F *truth = new TH2F("truth", "truth", mom_bin_.nbins, mom_bin_.min, mom_bin_.max, theta_bin_.nbins, theta_bin_.min, theta_bin_.max);
   
-  TString condition = TString::Format("vaEmbedTag && ");
-  TString wrappedPhi = "((vaMom.Phi() < 0)? vaMom.Phi()*TMath::RadToDeg() + 360:vaMom.Phi()*TMath::RadToDeg())";
-  condition += "(";
-  for(int i = 0; i < phi_cut_.size(); ++i)
-  {  
-    if(i > 0) condition += ") || ";
-    condition += TString::Format("(%s > %f && %f > %s",
-                                 wrappedPhi.Data(), phi_cut_[i].first, phi_cut_[i].second, wrappedPhi.Data());
-  }
-  condition += "))";
+  if(tree.GetEntries() > 0)
+  {
+    TString condition = TString::Format("vaEmbedTag && ");
+    //TString wrappedPhi = "((vaMom.Phi() < 0)? vaMom.Phi()*TMath::RadToDeg() + 360:vaMom.Phi()*TMath::RadToDeg())";
+    TString wrappedPhi = "((embedMom.Phi() < 0)? embedMom.Phi()*TMath::RadToDeg() + 360:embedMom.Phi()*TMath::RadToDeg())";
+    condition += "(";
+    for(int i = 0; i < phi_cut_.size(); ++i)
+    {  
+      if(i > 0) condition += ") || ";
+      condition += TString::Format("(%s > %f && %f > %s",
+                                   wrappedPhi.Data(), phi_cut_[i].first, phi_cut_[i].second, wrappedPhi.Data());
+    }
+    condition += "))";
 
-  condition += TString::Format(" && vaNRowClusters + vaNLayerClusters > %d && recodpoca.Mag() < %f",
-                               num_clusters_, dist_2_vert_);
+    condition += TString::Format(" && vaNRowClusters + vaNLayerClusters > %d && recodpoca.Mag() < %f",
+                                 num_clusters_, dist_2_vert_);
 
-  tree.Project("det", "embedMom.Theta()*TMath::RadToDeg():embedMom.Mag()", condition);
-  tree.Project("truth", "embedMom.Theta()*TMath::RadToDeg():embedMom.Mag()");
+    tree.Project("det", "embedMom.Theta()*TMath::RadToDeg():embedMom.Mag()", condition);
+    tree.Project("truth", "embedMom.Theta()*TMath::RadToDeg():embedMom.Mag()");
+
+    det -> Smooth();
+    truth -> Smooth();
+  } else  
+    std::cout << "No data is loaded for particle " << TDatabasePDG::Instance()->GetParticle(t_pdg)->GetName() << ". Will return an empty efficiency instead." << std::endl; 
  
   TEfficiency efficiency(*det, *truth);
   det -> SetDirectory(0);

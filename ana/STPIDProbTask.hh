@@ -32,12 +32,13 @@
 #include "TF1.h"
 #include "TPaveText.h"
 
+#include "STAnaParticleDB.hh"
+
 // STL
 #include <vector>
 #include <functional>
 #include <string>
 
-using std::vector;
 
 class STPIDProbTask : public FairTask {
   public:
@@ -90,7 +91,7 @@ class STPIDProbTask : public FairTask {
     std::map<int, TH1F*> fMomPriorDistribution;
     std::map<int, STVectorF*> fPDGProbMap;
     std::map<int, STVectorF*> fSDFromLineMap;
-    const std::vector<int> fSupportedPDG{2212, 1000010020, 1000010030, 1000020030, 1000020040};
+    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
 
     STVectorI *fPDGLists = nullptr;
  

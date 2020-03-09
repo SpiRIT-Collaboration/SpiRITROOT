@@ -22,6 +22,7 @@
 #include "STDigiPar.hh"
 #include "STVector.hh"
 #include "EfficiencyFactory.hh"
+#include "STAnaParticleDB.hh"
 
 // ROOT classes
 #include "TClonesArray.h"
@@ -48,8 +49,6 @@ class STEfficiencyTask : public FairTask {
     /// Destructor
     ~STEfficiencyTask();
 
-    void SetParticleList(const std::vector<int>& t_plist);
-    std::vector<int> GetParticleList() { return fSupportedPDG; };
     EfficiencySettings& AccessSettings(int t_pdg) { return fEfficiencySettings[t_pdg]; }
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
@@ -69,7 +68,7 @@ class STEfficiencyTask : public FairTask {
     TClonesArray *fData;                ///< STData from the conc files
     TClonesArray *fEff;                 ///< Efficiency of each type of particle
 
-    std::vector<int> fSupportedPDG;
+    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
     EfficiencyFactory *fFactory = nullptr;
     std::map<int, TEfficiency> fEfficiency; ///<
     std::map<int, EfficiencySettings> fEfficiencySettings; ///<

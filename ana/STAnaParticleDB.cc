@@ -26,4 +26,10 @@ void STAnaParticleDB::FillTDatabasePDG()
   if ( !pdgDB->GetParticle(1000020030) )
     pdgDB->AddParticle("He3","He3",3*kAu2Gev+14.931e-3,kFALSE,
                        0,6,"Ion",1000020030); 
+
+  if ( !pdgDB->GetParticle(1000020060) )
+    pdgDB->AddParticle("He6","He6",6*kAu2Gev+2.424e-3,kTRUE,
+                       0,6,"Ion",1000020060);
+
+
 }
