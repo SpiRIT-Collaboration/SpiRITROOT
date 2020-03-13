@@ -68,7 +68,7 @@ public:
     EfficiencyFromConcFactory();
     virtual ~EfficiencyFromConcFactory(){};
     void SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db);
-    
+    static void CompressFile(const std::string& t_efficiency_db, const std::string& t_compressed_db);  
     virtual TEfficiency FinalizeBins(int t_pdg,
                                      bool t_verbose=false); 
 

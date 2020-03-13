@@ -20,6 +20,7 @@ STTransformFrameTask::STTransformFrameTask() : fTargetMass(0), fDoRotation(false
   fCMVector = new TClonesArray("STVectorVec3");
   fCMKE = new TClonesArray("STVectorVec3"); // the three compomenets in order are: transverse, long, total KE
   fFragRapidity = new TClonesArray("STVectorF");
+  fLabRapidity = new TClonesArray("STVectorF");
   fBeamRapidity = new STVectorF();
 }
 
@@ -38,6 +39,7 @@ InitStatus STTransformFrameTask::Init()
   ioMan -> Register("CMVector", "ST", fCMVector, fIsPersistence);
   ioMan -> Register("CMKE", "ST", fCMKE, fIsPersistence);
   ioMan -> Register("FragRapidity", "ST", fFragRapidity, fIsPersistence);
+  ioMan -> Register("LabRapidity", "ST", fLabRapidity, fIsPersistence);
   ioMan -> Register("BeamRapidity", "ST", fBeamRapidity, fIsPersistence);
 
   fBeamRapidity -> fElements.push_back(0);
@@ -46,6 +48,7 @@ InitStatus STTransformFrameTask::Init()
     fCMVector -> ConstructedAt(i);
     fCMKE -> ConstructedAt(i);
     fFragRapidity -> ConstructedAt(i);
+    fLabRapidity -> ConstructedAt(i);
   }
 
   fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Target thickness is %f mm", fTargetThickness));
@@ -97,9 +100,11 @@ void STTransformFrameTask::Exec(Option_t *opt)
     auto CMVector = static_cast<STVectorVec3*>(fCMVector -> At(i));
     auto CMKE = static_cast<STVectorVec3*>(fCMKE -> At(i));;
     auto FragRapidity = static_cast<STVectorF*>(fFragRapidity -> At(i));
+    auto LabRapidity = static_cast<STVectorF*>(fLabRapidity -> At(i));
     CMVector -> fElements.clear();
     CMKE -> fElements.clear();
     FragRapidity -> fElements.clear();
+    LabRapidity -> fElements.clear();
 
     for(int part = 0; part < npart; ++part)
       if(auto particle = TDatabasePDG::Instance()->GetParticle(pdg))
@@ -111,6 +116,7 @@ void STTransformFrameTask::Exec(Option_t *opt)
         if(fDoRotation) mom.Rotate(rotationAngle, rotationAxis);
 
         TLorentzVector pCM(mom.x(), mom.y(), mom.z(), sqrt(mom.Mag2() + ParticleMass*ParticleMass));
+        LabRapidity -> fElements.push_back(pCM.Rapidity());
         pCM.Boost(vBeam);
         CMVector -> fElements.emplace_back(pCM.Px(), pCM.Py(), pCM.Pz());
 

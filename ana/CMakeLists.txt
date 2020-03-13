@@ -56,6 +56,7 @@ STPIDAnalysisTask.cc
 STConcReaderTask.cc
 STPIDCutTask.cc
 STPIDProbTask.cc
+STPIDMachineLearningTask.cc
 STTransformFrameTask.cc
 STEfficiencyTask.cc
 EfficiencyFactory.cc

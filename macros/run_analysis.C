@@ -14,7 +14,8 @@ std::vector<std::string> glob(const char *pattern) {
 
 void run_analysis_core(TString par, TString geo, TString out,
                        TString log, TChain& chain, int targetMass,
-                       TString meta, TString pidFile, bool iterateMeta=false, bool targetELoss=true)
+                       TString meta, TString pidFile, bool iterateMeta, 
+                       EfficiencyFactory *effFactory, bool targetELoss=true)
 {
 
   FairLogger *logger = FairLogger::GetLogger();
@@ -31,20 +32,25 @@ void run_analysis_core(TString par, TString geo, TString out,
   auto reader = new STConcReaderTask();
   reader -> SetChain(&chain);
 
-  auto filter = new STFilterTask();
-  filter -> SetThetaCut(10);
+  //auto filter = new STFilterTask();
+  //filter -> SetThetaCut(10);
 
-  auto PIDCut = new STPIDCutTask();
-  PIDCut -> SetNPitch(2);
-  PIDCut -> SetNYaw(5);
-  PIDCut -> SetCutConditions(20, 10);
-  PIDCut -> SetCutFile("PIDCut_Sn108.root");
+  //auto PIDCut = new STPIDCutTask();
+  //PIDCut -> SetNPitch(1);
+  //PIDCut -> SetNYaw(1);
+  //PIDCut -> SetCutConditions(15, 15);
+  //PIDCut -> SetCutFile("PIDCut_SimSn108.root");
 
   //auto unfold = new STUnfoldingTask();
   //unfold -> SetMomBins(100, 3700, 50, 25);
   //unfold -> SetThetaBins(0, 1.57, 30, 25);
   //unfold -> LoadMCData("cbmsim", "data/embed_dump/ImQMD_embedCorTriton2/*");
   //unfold -> SetCutConditions(15, 20);
+  
+  //auto PIDProb = new STPIDMachineLearningTask();
+  //PIDProb -> SetChain(&chain);
+  //PIDProb -> SetBufferSize(25000);
+  //PIDProb -> SetModel("MLForestCut", STAlgorithms::RandomForest);
 
   auto PIDProb = new STPIDProbTask();
   PIDProb -> SetMetaFile(meta.Data(), iterateMeta);
@@ -60,36 +66,25 @@ void run_analysis_core(TString par, TString geo, TString out,
     transform -> SetEnergyLossFile((targetMass == 112)? "../parameters/Sn108Sn112.txt": "../parameters/Sn132Sn124.txt");
   }
 
-  std::vector<int> pdgs{2212,1000010020,1000010030,1000020030,1000020040};
-  //auto effFactory = new OrigEfficiencyFactory("/mnt/spirit/analysis/user/tsangc/ForGenie/EfficiencyFactory/MakeDataBase/NewImQMDEff.root");
-  //auto effFactory = new EfficiencyFromAnaFactory();
-  auto effFactory = new EfficiencyFromConcFactory();
-  effFactory -> SetDataBaseForPDG(2212, "data/embed_dump/Feb20202/Run2899_embedNewProton/*conc*");
-  effFactory -> SetDataBaseForPDG(1000010020, "data/embed_dump/Feb20202/Run2899_embedNewDeuteron/*conc*");
-  effFactory -> SetDataBaseForPDG(1000010030, "data/embed_dump/Feb20202/Run2899_embedNewTriton/*conc*");
-  effFactory -> SetDataBaseForPDG(1000020030, "data/embed_dump/Feb20202/Run2899_embedNewHe3/*conc*");
-  effFactory -> SetDataBaseForPDG(1000020040, "data/embed_dump/Feb20202/Run2899_embedNewHe4/*conc*");
-
-
   auto efficiency = new STEfficiencyTask(effFactory);
-  efficiency -> SetParticleList(pdgs);
-  for(int pdg : pdgs)
+  for(int pdg : STAnaParticleDB::SupportedPDG)
   {
     auto& settings = efficiency -> AccessSettings(pdg);
-    settings.NClusters = 20; settings.DPoca = 10;
+    settings.NClusters = 15; settings.DPoca = 15;
     settings.PhiCuts = {{0, 20}, {160, 220}, {320, 360}};
-    settings.ThetaMin = 0; settings.ThetaMax = 90; settings.NThetaBins = 20;
-    if(pdg == 2212){ settings.NMomBins = 20; settings.MomMin = 100; settings.MomMax = 1500; } 
-    if(pdg == 1000010020){ settings.NMomBins = 20; settings.MomMin = 200; settings.MomMax = 2200; } 
-    if(pdg == 1000010030){ settings.NMomBins = 20; settings.MomMin = 500; settings.MomMax = 4500; } 
-    if(pdg == 1000020030){ settings.NMomBins = 20; settings.MomMin = 500; settings.MomMax = 3200; } 
-    if(pdg == 1000020040){ settings.NMomBins = 20; settings.MomMin = 1000; settings.MomMax = 4200; } 
+    settings.ThetaMin = 0; settings.ThetaMax = 90; settings.NThetaBins = 15;
+    if(pdg == 2212)      { settings.NMomBins = 15; settings.MomMin = 100; settings.MomMax = 1500; } 
+    if(pdg == 1000010020){ settings.NMomBins = 15; settings.MomMin = 200; settings.MomMax = 2200; } 
+    if(pdg == 1000010030){ settings.NMomBins = 15; settings.MomMin = 500; settings.MomMax = 4500; } 
+    if(pdg == 1000020030){ settings.NMomBins = 15; settings.MomMin = 500; settings.MomMax = 3200; } 
+    if(pdg == 1000020040){ settings.NMomBins = 15; settings.MomMin = 1000; settings.MomMax = 4200; } 
+    if(pdg == 1000020060){ settings.NMomBins = 10; settings.MomMin = 2000; settings.MomMax = 6000; } 
   }
 
   run -> AddTask(reader);
   //run -> AddTask(filter);
-  run -> AddTask(PIDCut);
-  //run -> AddTask(PIDProb);
+  //run -> AddTask(PIDCut);
+  run -> AddTask(PIDProb);
   //run -> AddTask(unfold);
   if(!iterateMeta)
   {
@@ -147,15 +142,23 @@ void run_analysis
     chain.Add(in.back());
   }
 
-  run_analysis_core(par, geo, out, log, chain, targetMass, metaFile, pidFile, iterateMeta);
+  auto effFactory = new EfficiencyFromConcFactory();
+  effFactory -> SetDataBaseForPDG(2212, "data/embed_dump/Feb20203/Run2899_embedNewProton/*conc*");
+  effFactory -> SetDataBaseForPDG(1000010020, "data/embed_dump/Feb20203/Run2899_embedNewDeuteron/*conc*");
+  effFactory -> SetDataBaseForPDG(1000010030, "data/embed_dump/Feb20203/Run2899_embedNewTriton/*conc*");
+  effFactory -> SetDataBaseForPDG(1000020030, "data/embed_dump/Feb20203/Run2899_embedNewHe3/*conc*");
+  effFactory -> SetDataBaseForPDG(1000020040, "data/embed_dump/Feb20203/Run2899_embedNewHe4/*conc*");
+  effFactory -> SetDataBaseForPDG(1000020060, "data/embed_dump/Feb20203/Run2899_embedNewHe6/*conc*");
+
+  run_analysis_core(par, geo, out, log, chain, targetMass, metaFile, pidFile, iterateMeta, effFactory);
 }
 
 void run_analysis
 (
   TString fName = "he4_lowmom",
   TString fOutName = "",
-  TString fParameterFile = "ST.parameters.fullmc.par",
   TString fPathToData = "",
+  int targetMass = 112,
   TString metaFile = "Meta_HalfPD.root",
   TString pidFile = "PIDSigma_HalfPD.root",
   bool iterateMeta = false
@@ -174,7 +177,7 @@ void run_analysis
 
   if(fOutName.IsNull()) fOutName = fName;
 
-  TString par = spiritroot+"parameters/"+fParameterFile;
+  TString par = spiritroot+"parameters/ST.parameters.fullmc.par";
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root"; 
   TString in1 = fPathToData+fName+".conc.root"; 
   TString out = fPathToData+fOutName+"_ana.root";
@@ -185,7 +188,15 @@ void run_analysis
     chain.Add(filename.c_str());
   }
 
-  run_analysis_core(par, geo, out, log, chain, 124, metaFile, pidFile, iterateMeta, false);
+  auto effFactory = new EfficiencyFromConcFactory();
+  effFactory -> SetDataBaseForPDG(2212, "data/embed_dump/Feb20203/SimSn108ProtonCompressed.root");
+  effFactory -> SetDataBaseForPDG(1000010020, "data/embed_dump/Feb20203/SimSn108DeuteronCompressed.root");
+  effFactory -> SetDataBaseForPDG(1000010030, "data/embed_dump/Feb20203/SimSn108TritonCompressed.root");
+  effFactory -> SetDataBaseForPDG(1000020030, "data/embed_dump/Feb20203/SimSn108He3Compressed.root");
+  effFactory -> SetDataBaseForPDG(1000020040, "data/embed_dump/Feb20203/SimSn108He4Compressed.root");
+  effFactory -> SetDataBaseForPDG(1000020060, "data/embed_dump/Feb20203/Run2899He6Compressed.root");
+
+  run_analysis_core(par, geo, out, log, chain, targetMass, metaFile, pidFile, iterateMeta, effFactory, false);
 }
 
 

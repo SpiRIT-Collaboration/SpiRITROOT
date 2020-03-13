@@ -46,6 +46,8 @@ void run_trim_data
   reader -> SetChain(&chain);
 
   auto eventFilter = new STFilterEventTask();
+  if(fRunNo > 3058) eventFilter -> SetBeamFor124Star("../parameters/isotopesCutG124.root");
+  else
   {
     TString beamName = "Sn108";
     if(fRunNo >= 2542 && fRunNo <= 2623) beamName = "Sn112";

@@ -1,7 +1,9 @@
+#include "STData.hh"
 #include "TH2.h"
 #include "TChain.h"
 #include "EfficiencyFactory.hh"
 #include "TDatabasePDG.h"
+#include "STAnaParticleDB.hh"
 #include <glob.h>
 
 std::vector<std::string> glob(const char *pattern) {
@@ -164,6 +166,77 @@ void EfficiencyFromConcFactory::SetDataBaseForPDG(int t_pdg, const std::string& 
   fEfficiencyDB[t_pdg] = t_efficiency_db;
 }
 
+void EfficiencyFromConcFactory::CompressFile(const std::string& t_efficiency_db, const std::string& t_compressed_db)
+{
+  TChain tree("spirit");
+  for(const auto& filename : glob(t_efficiency_db.c_str()))
+    tree.Add(filename.c_str());
+
+  TFile output(t_compressed_db.c_str(), "RECREATE");
+  TTree compressed("spirit", "spirit");
+
+  STData *data = new STData;
+  STData *singles = new STData;
+  tree.SetBranchAddress("EvtData", &data);
+  compressed.Branch("EvtData", singles);
+
+  int n = tree.GetEntries();
+  for(int i = 0; i < n; ++i)
+  {
+    std::cout << "Working on entry " << i << " out of " << n << "\r" << std::flush;
+    tree.GetEntry(i);
+    singles -> ResetDefaultWithLength(1);
+    singles -> multiplicity = data -> multiplicity;
+    singles -> vaMultiplicity = data -> vaMultiplicity;
+    singles -> tpcVertex = data -> tpcVertex;
+    singles -> bdcVertex = data -> bdcVertex;
+    singles -> embedMom = data -> embedMom;
+
+    singles -> aoq = data -> aoq;
+    singles -> z = singles -> z;
+    singles -> a = data -> a;
+    singles -> b = data -> b;
+    singles -> proja = data -> proja;
+    singles -> projb = data -> projb;
+    singles -> projx = data -> projx;
+    singles -> projy = data -> projy;
+    singles -> beamEnergy = data -> beamEnergy;
+    singles -> beta = data -> beta;
+
+    singles -> beamEnergyTargetPlane = data -> beamEnergyTargetPlane;
+    singles -> betaTargetPlane = data -> betaTargetPlane;
+
+    for(int part = 0; part < data -> multiplicity; ++part)
+      if(data -> vaEmbedTag[part])
+      {
+        singles -> recoMom[0] = data -> recoMom[part];
+        singles -> recoPosPOCA[0] = data -> recoPosPOCA[part];
+        singles -> recoPosTargetPlane[0] = data -> recoPosTargetPlane[part];
+        singles -> recodpoca[0] = data -> recodpoca[part];
+        singles -> recoNRowClusters[0] = data -> recoNRowClusters[part];
+        singles -> recoNLayerClusters[0] = data -> recoNLayerClusters[part];
+        singles -> recoCharge[0] = data -> recoCharge[part];
+        singles -> recoEmbedTag[0] = data -> recoEmbedTag[part];
+        singles -> recodedx[0] = data -> recodedx[part];
+
+        singles -> vaMom[0] = data -> vaMom[part];
+        singles -> vaPosPOCA[0] = data -> vaPosPOCA[part];
+        singles -> vaPosTargetPlane[0] = data -> vaPosTargetPlane[part];
+        singles -> vadpoca[0] = data -> vadpoca[part];
+        singles -> vaNRowClusters[0] = data -> vaNRowClusters[part];
+        singles -> vaNLayerClusters[0] = data -> vaNLayerClusters[part];
+        singles -> vaCharge[0] = data -> vaCharge[part];
+        singles -> vaEmbedTag[0] = data -> vaEmbedTag[part];
+        singles -> vadedx[0] = data -> vadedx[part];
+      }
+    compressed.Fill();
+  }
+
+  output.cd();
+  compressed.Write();
+  std::cout << std::endl;
+}
+
 TEfficiency EfficiencyFromConcFactory::FinalizeBins(int t_pdg,
                                                     bool t_verbose)
 {
@@ -174,17 +247,18 @@ TEfficiency EfficiencyFromConcFactory::FinalizeBins(int t_pdg,
   TH2F *det = new TH2F("det", "det", mom_bin_.nbins, mom_bin_.min, mom_bin_.max, theta_bin_.nbins, theta_bin_.min, theta_bin_.max);
   TH2F *truth = new TH2F("truth", "truth", mom_bin_.nbins, mom_bin_.min, mom_bin_.max, theta_bin_.nbins, theta_bin_.min, theta_bin_.max);
   
+  STAnaParticleDB::FillTDatabasePDG();
+  int Z = TDatabasePDG::Instance() -> GetParticle(t_pdg) -> Charge()/3;
   if(tree.GetEntries() > 0)
   {
-    TString condition = TString::Format("vaEmbedTag && ");
+    TString condition = TString::Format("vaEmbedTag && ((embedMom.Mag() - %d*vaMom.Mag())/embedMom.Mag()) < 0.2 && ", Z);
     //TString wrappedPhi = "((vaMom.Phi() < 0)? vaMom.Phi()*TMath::RadToDeg() + 360:vaMom.Phi()*TMath::RadToDeg())";
-    TString wrappedPhi = "((embedMom.Phi() < 0)? embedMom.Phi()*TMath::RadToDeg() + 360:embedMom.Phi()*TMath::RadToDeg())";
+    tree.SetAlias("phi", "((embedMom.Phi() < 0)? embedMom.Phi()*TMath::RadToDeg() + 360:embedMom.Phi()*TMath::RadToDeg())");
     condition += "(";
     for(int i = 0; i < phi_cut_.size(); ++i)
     {  
       if(i > 0) condition += ") || ";
-      condition += TString::Format("(%s > %f && %f > %s",
-                                   wrappedPhi.Data(), phi_cut_[i].first, phi_cut_[i].second, wrappedPhi.Data());
+      condition += TString::Format("(phi > %f && %f > phi", phi_cut_[i].first, phi_cut_[i].second);
     }
     condition += "))";
 

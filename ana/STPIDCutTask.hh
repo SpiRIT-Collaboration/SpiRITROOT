@@ -21,6 +21,7 @@
 #include "STData.hh"
 #include "STDigiPar.hh"
 #include "STVector.hh"
+#include "STAnaParticleDB.hh"
 
 // ROOT classes
 #include "TClonesArray.h"
@@ -86,8 +87,8 @@ class STPIDCutTask : public FairTask {
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fData;
 
-    Int_t fNPitches = 5;
-    Int_t fNYaw = 4;
+    Int_t fNPitches = 1;
+    Int_t fNYaw = 1;
 
     Int_t fMomBins = 1000;
     Int_t fMinMom = -700;
@@ -101,7 +102,7 @@ class STPIDCutTask : public FairTask {
     Double_t fMaxDPOCA = 20;
 
     TFile *fCutFile = nullptr;
-    const std::vector<int> fPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040};
+    const std::vector<int> fPDG = STAnaParticleDB::SupportedPDG;
     std::vector<std::map<std::pair<int, int>, TCutG*>> fCuts;
 
     std::vector<std::vector<TH2F*>> fPIDHists;

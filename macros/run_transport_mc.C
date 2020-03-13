@@ -149,20 +149,31 @@ void run_transport_mc
 
   // -----------------------------------------------------------------
   // Event generator
-  auto fEvent = new STModelToLabFrameGenerator("imqmd_CM.root");
-  fEvent -> RegisterHeavyIon(allowedParticles);
+  // ONLY FOR SN108!!!!
+  //auto fEvent = new STModelToLabFrameGenerator("approx_Sn108.root");
+  //fEvent -> SetBeamAndTarget(0.270, 108, 50, 112); 
+  //fEvent -> SetPrimaryVertex(TVector3(-0.15,-20.55,-1.32));
+  //fEvent -> SetVertexXYSigma(TVector2(0.356, 0.323));
+  //fEvent -> SetBeamAngle(TVector2(-0.0549, 0.000112));
+  //fEvent -> SetBeamAngleSigma(TVector2(0.0007095, 0.00184));
+
+  // ONLY FOPR SN132
+  auto fEvent = new STModelToLabFrameGenerator("approx_Sn132.root");
   fEvent -> SetBeamAndTarget(0.270, 132, 50, 124); 
   fEvent -> SetPrimaryVertex(TVector3(0.04,-20.55,-1.32));
   fEvent -> SetVertexXYSigma(TVector2(0.406, 0.362));
-  fEvent -> SetTargetThickness(0.08);
-  fEvent -> SetBeamDetectorVertexSigma(TVector2(0.0708, 0.0265));
-  fEvent -> SetBeamAngle(TVector2(-0.0443, 0.00086));
-  fEvent -> SetBeamAngleSigma(TVector2(0.00224, 0.00382));
-  fEvent -> SetBeamDetectorAngleSigma(TVector2(0.00064, 0.00024));
+  fEvent -> SetBeamAngle(TVector2(-0.0443, 0.00066));
+  fEvent -> SetBeamAngleSigma(TVector2(0.00224, 0.00291));
 
   fEvent -> SetMaxAllowedZ(2);
-  fEvent -> SetMaxMult(50);
+  //fEvent -> SetMaxMult(50);
   fEvent -> SetStartEvent(start_evt);
+  fEvent -> RegisterHeavyIon(allowedParticles);
+  fEvent -> SetTargetThickness(0.08);
+  fEvent -> SetBeamDetectorVertexSigma(TVector2(0.0708, 0.0265));
+  fEvent -> SetBeamDetectorAngleSigma(TVector2(0.00064, 0.00024));
+
+
 
   FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();
   fGenerator -> AddGenerator(fEvent);

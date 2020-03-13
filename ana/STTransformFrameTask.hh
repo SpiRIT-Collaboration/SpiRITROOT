@@ -64,6 +64,7 @@ class STTransformFrameTask : public FairTask {
     TClonesArray *fCMVector;
     TClonesArray *fCMKE;                /// It will contains 3 elements: Tranverse KE, Longitudinal KE and total KE
     TClonesArray *fFragRapidity;
+    TClonesArray *fLabRapidity;
     STVectorF *fBeamRapidity;
 
     TGraph fEnergyLossInTarget; // Should link to LISE files for dEdX calculation

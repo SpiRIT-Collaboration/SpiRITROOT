@@ -35,7 +35,7 @@
 #include <vector>
 #include <memory>
 
-using std::vector;
+
 
 class STFilterEventTask : public FairTask {
   public:
@@ -43,7 +43,8 @@ class STFilterEventTask : public FairTask {
     /// Destructor
     ~STFilterEventTask();
 
-    void SetBeamCut(TString cutFileName, TString cutName);
+    void SetBeamCut(TString cutFileName, TString cutName, double acceptance=1);
+    void SetBeamFor124Star(TString cutFileName); // this beam type is so special that it needs to be treated differently
     void SetVertexCut(double zMin, double zMax) { fVertexZMin = zMin; fVertexZMax = zMax; fVertexCut = true; } 
     void SetMultiplicityCut(int multMin, int multMax) { fMultMin = multMin; fMultMax = multMax; fMultCut = true; }
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
@@ -61,13 +62,16 @@ class STFilterEventTask : public FairTask {
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fData;                ///< STData from the conc files
 
-    TCutG *fCutG = nullptr;
-    TFile *fCutFile = nullptr;
+    std::vector<TCutG*> fCutG;
+    std::vector<double> fAcceptance;
+    std::vector<TFile*> fCutFile;
 
     bool fVertexCut = false;
     double fVertexZMin, fVertexZMax;
     bool fMultCut = false;
     int fMultMin, fMultMax;
+
+    
     
   ClassDef(STFilterEventTask, 1);
 };
