@@ -263,6 +263,7 @@ STElectronicsTask::Exec(Option_t* option)
     {
       padO -> SetIsSaturated(is_sat);
       padO -> SetSaturatedTb(satTB);
+      padO -> SetSaturatedTbMC(satTB);
     }
     fRawEvent -> SetPad(padO);
     delete padO;

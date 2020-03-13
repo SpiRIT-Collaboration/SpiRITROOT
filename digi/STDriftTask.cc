@@ -145,31 +145,12 @@ STDriftTask::Exec(Option_t* option)
    */
   
   // associate momentum with track ID
-  std::map<int, STMCTrack*> trackIDToTrack;
+  std::map<int, std::pair<int, double>> trackIDToPDGMom;
   for(int i = 0; i < fMCTrackArray -> GetEntries(); ++i)
   {
     fMCTrack = (STMCTrack*) fMCTrackArray->At(i);
-    trackIDToTrack[fMCTrack -> GetTrackId()] = fMCTrack;
-  }
-  
-  std::map<int, std::pair<int, double>> trackIDToPDGMom;
-  for(auto& track : trackIDToTrack)
-  {
-    auto PrimaryTrack = track.second;
-    int motherID = 1;
-    // link the track to its primary. We don't want secondaries.
-    while(motherID >= 0)
-    {
-      auto it = trackIDToTrack.find(motherID);
-      if(it != trackIDToTrack.end()) 
-      { 
-        PrimaryTrack = it->second;
-        motherID = PrimaryTrack -> GetMotherId();
-      } else break;
-    }
-
-    auto p = PrimaryTrack->GetP()*1000;
-    trackIDToPDGMom[track.first] = {PrimaryTrack->GetPdgCode(), p};
+    auto p = fMCTrack -> GetP()*1000;
+    trackIDToPDGMom[fMCTrack -> GetTrackId()] = {fMCTrack -> GetPdgCode(),p};
   }
 
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
@@ -252,18 +233,38 @@ void STDriftTask::SetParticleForCorrection(TString value) { fSpecies = value; }
 void STDriftTask::SetSplineInterpolation(Bool_t value) { fSpline = value; }
 Double_t STDriftTask::BichselCorrection(TString species, Double_t value)
 {
+  double value2 = value*value;
+  double value3 = value2*value;
+  double value4 = value3*value;
+
   if (species == "pi")                                                                                   
     return 1;                                                                                            
   else if(species == "p")                                                                                
-    return 1;//(0.82741 + 0.000138379*value)/TMath::Exp(-.05823-1.7872e-4*value);                                                       
+  { return 0.907872 + 0.000539408*value - 5.45602e-7*value2 + 2.32446e-10*value3 - 1.50572e-14*value4; }
   else if(species == "d")                                                                                
-    return 0.88899 + 0.000133499*value;                                                    
+  { 
+    if(value > 336) return (0.264173 - 60.1493*exp(-0.0260451*value))*(3.80426 + 0.000273719*value + 3.22777e-8*value2);
+    else return 0.993113;//4.289173 - 0.015664*value + 1.74247e-5*value2; 
+  }
   else if(species == "t")                                                                                
-    return 0.921267 + 7.42053e-5*value;///TMath::Exp(-.0715918-1.20368e-4*value);                                                    
+  { 
+    double factor = (660.941 < value && value < 885.039)? -1.2083 + 0.00583629*value - 3.77514e-6*value2: 1;
+    return factor*(0.695761 + 0.000670917*value - 3.48589e-7*value2 + 6.06975e-11*value3 + 7.63133e-16*value4); 
+  }
   else if(species == "he3")                                                                              
-    return 0.939307 + 8.19984e-5*value/2.;///TMath::Exp(-.0486119-1.137e-4*(value/2.));                                                 
+  { 
+    double factor = (516.329 < value/2 && value/2 < 820.706)? (0.21386 + 0.00248044*value/2. - 1.85518e-6*value2/4)*(0.886278 + 0.000136209*value/2) : 1;
+    return factor*(1.8109 - 0.0018949*value + 1.5737e-6*value2 - 5.38819e-10*value3 + 6.67678e-14*value4); 
+  }
   else if(species == "he4")                                                                              
-    return 0.844967 + 0.00014816*value/2.;///TMath::Exp(-.0628344-1.0512e-4*(value/2));     
+  {
+    if(value > 3600) return 1.20753*0.976371;
+    else
+    {
+      double factor = (value/2 < 1317.8)? 0.703 + 0.0007266*value/2 - 3.80084e-7*value2/4. : 1;
+      return factor*(6.34187 - 0.0110978*value + 8.84578e-6*value2 - 3.42063e-9*value3 + 6.5104e-13*value4 - 4.90277e-17*value4*value)*0.976371;
+    }
+  }
   else{
     std::cout << "It needs implementation, sorry!" << std::endl;
     exit(0);
@@ -280,6 +281,7 @@ Double_t STDriftTask::BichselCorrection(Int_t pdg, Double_t value)
   else if(pdg == 1000020030) pname = "he3";
   else if(pdg == 1000020040) pname = "he4";
   else return 1.; // return 1. for unknown substance (e.g. e-)
+
   return this->BichselCorrection(pname, value);
 }
 

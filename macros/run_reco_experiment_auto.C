@@ -21,6 +21,7 @@ void run_reco_experiment_auto
   // If you don't need either of them, pass it blank.
   TString ggDataPathWithFormat = "/mnt/spirit/rawdata/misc/Frozen_Information_For_SpiRIT_Analysis/Aug2019/ggNoise/ggNoise_%d.root";
   TString beamDataPathWithFormat = "/mnt/spirit/rawdata/misc/Frozen_Information_For_SpiRIT_Analysis/Aug2019/BeamData/beam/beam_run%d.ridf.root";
+  TString gainMatchingFileWithFormat = "parameters/RelativeGain%dV.list";
 
   // Meta data path
   Bool_t fUseMeta = kTRUE;
@@ -47,6 +48,7 @@ void run_reco_experiment_auto
   auto fBDCOffsetX = fParamSetter -> GetBDCOffsetX();
   auto fBDCOffsetY = fParamSetter -> GetBDCOffsetY();
   auto fGGRunID = fParamSetter -> GetGGRunID();
+  auto fAnode12Voltage = fParamSetter -> GetAnode12Voltage();
 
   auto fIsGGDataSet = !ggDataPathWithFormat.IsNull();
   auto fIsBeamDataSet = !beamDataPathWithFormat.IsNull();
@@ -54,6 +56,7 @@ void run_reco_experiment_auto
   TString fBeamData = "";
   if (fIsGGDataSet)   fGGData = Form(ggDataPathWithFormat.Data(), fGGRunID);
   if (fIsBeamDataSet) fBeamData = Form(beamDataPathWithFormat.Data(), fRunNo);
+  TString fGainMatchingFile = fSpiRITROOTPath + Form(gainMatchingFileWithFormat, fAnode12Voltage);
 
   Int_t start = fSplitNo * fNumEventsInSplit;
   if (start >= fNumEventsInRun) return;
@@ -117,7 +120,7 @@ void run_reco_experiment_auto
   decoder -> SetTbRange(30, 257); 
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
   if (fUseGainMatching)
-    decoder -> SetGainMatchingData(fSpiRITROOTPath + "parameters/RelativeGain.list");
+    decoder -> SetGainMatchingData(fGainMatchingFile);
   // Method to select events to reconstruct
   // Format of the input file:
   //        runid eventid
@@ -167,7 +170,7 @@ void run_reco_experiment_auto
   // psa -> SetPSAPeakFindingOption(0);
   // Low gain calibration. Don't forget you need to uncomment decoder part, too.
   if (fUseGainMatching)
-    psa -> SetGainMatchingData(fSpiRITROOTPath + "parameters/RelativeGain.list");
+    psa -> SetGainMatchingData(fGainMatchingFile);
   // Statistically matching time jitter in different CoBos
   psa -> SetYOffsets(fSpiRITROOTPath + "parameters/yOffsetCalibration.dat");
   // This is used to match the TPC-Vertex_Y with the BDC_Y.

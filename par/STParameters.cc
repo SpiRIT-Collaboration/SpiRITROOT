@@ -75,6 +75,7 @@ void STParameters::ReadRunDB(TString runDB)
     fBDCOffsetX[runID] = ((TObjString *) lineArray -> At(5)) -> String().Atof();
     fBDCOffsetY[runID] = ((TObjString *) lineArray -> At(6)) -> String().Atof();
     fGGRun[runID] = ((TObjString *) lineArray -> At(7)) -> String().Atoi();
+    fAnode12Voltage[runID] = ((TObjString *) lineArray -> At(8)) -> String().Atoi();
 
     delete lineArray;
   }
@@ -143,6 +144,13 @@ Int_t STParameters::GetGGRunID()
   CheckOk();
 
   return fGGRun[fRunID];
+}
+
+Int_t STParameters::GetAnode12Voltage()
+{
+  CheckOk();
+
+  return fAnode12Voltage[fRunID];
 }
 
 Double_t STParameters::GetYPedestal()
