@@ -12,6 +12,7 @@
 #include "STVertex.hh"
 #include "TF2.h"
 #include "TF1.h"
+#include "TGraph.h"
 
 #include <fstream>
 using namespace std;
@@ -42,6 +43,7 @@ class STGenfitPIDTask : public STRecoTask
     genfit::GFRaveVertexFactory *GetVertexFactoryInstance();
 
     void SetClusterSigmaFile(TString fileName);
+    void SetClusterXZOffsetFile(TString fileName = "xzoffsets.diffN_v5.3runs.root");
     void SetUseConstCov(Double_t x, Double_t y, Double_t z);
     void SetVertexMethod(TString method/*="avf-smoothing:1-Tini:256-ratio:0.25-sigmacut:5"*/);
 
@@ -91,13 +93,19 @@ class STGenfitPIDTask : public STRecoTask
     Double_t fFieldYOffset = -20.5502;
     Double_t fFieldZOffset = 58.0526;
 
+    Bool_t fUseConstCov = false;
     TString fSigFileName = "";
     TF1 *fHitClusterSigma[2][3][3];
-
-    Bool_t fUseConstCov = false;
     Double_t fCovX = 1.; // mm
     Double_t fCovY = 1.; // mm
     Double_t fCovZ = 1.; // mm
+
+    Bool_t fUseXZCorrection = false;
+    TString fXZOffFileName = "xzoffsets.diffN_v5.3runs.root";
+    //TF1 *fHitClusterXOffset[3][9];
+    //TF1 *fHitClusterZOffset[3][9];
+    TGraph *fHitClusterXOffset[4][9];
+    TGraph *fHitClusterZOffset[4][9];
 
     Int_t fSelectPID = -1;
 

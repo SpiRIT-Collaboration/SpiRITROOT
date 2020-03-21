@@ -173,6 +173,8 @@ STGenfitVATask::Init()
       TString nameLR = isLR?"layer_cluster":"row_cluster";
       for (auto ixyz : {0,1,2}) {
         TString nameXYZ = ixyz==0?"x":(ixyz==1?"y":"z");
+        double rangeMin = ixyz==0?0:(ixyz==1?-500:0);
+        double rangeMax = ixyz==0?8:(ixyz==1?0:12);
         double max = 4.;
         if ((isLR==0&&ixyz==0) || (isLR==1&&ixyz==2))
           max = .04;
@@ -182,7 +184,7 @@ STGenfitVATask::Init()
           {
             TString nameAngle = Form("a%d",idxAngle);
             TString name1 = header1 + nameLR + "_" + nameXYZ + "_" + nameN + "_" + nameAngle;
-            fHistRawResiduals[isLR][ixyz][idxNH][idxAngle] = new TH1D(name1,name1+";"+header1+nameXYZ,200,-max,max);
+            fHistRawResiduals[isLR][ixyz][idxNH][idxAngle] = new TH2D(name1,name1+";"+header1+nameXYZ,200,-max,max,200,rangeMin,rangeMax);
           }
         }
       }
@@ -699,6 +701,7 @@ void STGenfitVATask::Exec(Option_t *opt)
         fDebugVertexFile << vaNumTracks << endl;
       }
 
+      bool fillevent = false;
       for (Int_t iTrack = 0; iTrack < vaNumTracks; iTrack++) {
         genfit::GFRaveTrackParameters *par = vaVertex -> getParameters(iTrack);
         const genfit::Track *track = par -> getTrack();
@@ -712,6 +715,8 @@ void STGenfitVATask::Exec(Option_t *opt)
 
           if (vaTrack -> GetVertexID() < 0) {
             vaTrack -> SetVertexID(iVert);
+
+            fillevent = true;
 
             TVector3 momVertex;
             TVector3 pocaVertex;
@@ -763,6 +768,7 @@ void STGenfitVATask::Exec(Option_t *opt)
                    && fTrackVertexZ > -20)
                  )
               {
+                fCountFilledTracks++;
                 auto helixTrack = vaTrack -> GetHelixTrack();
                 auto clusterArray = helixTrack -> GetClusterArray();
 
@@ -798,6 +804,12 @@ void STGenfitVATask::Exec(Option_t *opt)
                     fClusterZ = pos.Z();
 
                     double residuals[3] = {fClusterResidualX, fClusterResidualY, fClusterResidualZ};
+                    double position_in_pad[3] = {
+                      (cluster->GetX()+432)-8*floor((cluster->GetX()+432)/8),
+                      cluster -> GetY(),
+                      cluster->GetZ()-12*floor(cluster->GetZ()/12)
+                    };
+
 
                     int idxN;
                     /**/ if (fClusterNumHits<=2) idxN = 0;
@@ -825,7 +837,7 @@ void STGenfitVATask::Exec(Option_t *opt)
                       if (idxAngle>17||idxAngle<0)
                         continue;
 
-                      fHistRawResiduals[isLR][ixyz][idxN][idxAngle] -> Fill(residuals[ixyz]);
+                      fHistRawResiduals[isLR][ixyz][idxN][idxAngle] -> Fill(residuals[ixyz],position_in_pad[ixyz]);
                       fHistStdResiduals[ixyz] -> Fill(residuals[ixyz]/sigma[ixyz]);
                     }
 
@@ -856,12 +868,13 @@ void STGenfitVATask::Exec(Option_t *opt)
                   }
                 }
 
-                fCountFilledEvents++;
               }
             }
           }
         }
       }
+      if (fillevent)
+        fCountFilledEvents++;
 
       new ((*fVAVertexArray)[iVert]) STVertex(*vaVertex);
       delete vaVertex;
@@ -912,10 +925,16 @@ void STGenfitVATask::SetClusterFileName(TString name) { fNameCluster = name; }
 
 void STGenfitVATask::FinishTask()
 {
+  if (!fNameTrack.IsNull()) {
+    fFileTrack -> cd();
+    fTreeTrack -> Write();
+    (new TParameter<Int_t>("numFilledEvents",fCountFilledEvents)) -> Write();;
+  }
   if (!fNameCluster.IsNull()) {
     fFileCluster -> cd();
     fTreeCluster -> Write();
     (new TParameter<Int_t>("numFilledEvents",fCountFilledEvents)) -> Write();;
+    (new TParameter<Int_t>("numFilledTracks",fCountFilledTracks)) -> Write();;
     for (auto isLR : {0,1})
       for (auto ixyz : {0,1,2})
         for (auto idxNH : {0,1,2})
@@ -923,9 +942,5 @@ void STGenfitVATask::FinishTask()
             fHistRawResiduals[isLR][ixyz][idxNH][idxAngle] -> Write();
     for (auto ixyz : {0,1,2})
       fHistStdResiduals[ixyz] -> Write();
-  }
-  if (!fNameTrack.IsNull()) {
-    fFileTrack -> cd();
-    fTreeTrack -> Write();
   }
 }

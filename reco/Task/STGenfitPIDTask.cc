@@ -96,12 +96,45 @@ STGenfitPIDTask::Init()
     fRecoHeader -> Write("RecoHeader", TObject::kWriteDelete);
   }
 
-  if (!fSigFileName.IsNull()) {
+   if (fUseXZCorrection)
+  {
+    auto fileoffset = new TFile(TString(gSystem -> Getenv("VMCWORKDIR")) + "/input/" + fXZOffFileName);
+    fileoffset -> ls();
+
+    //for (auto idxN : {0,1,2}) {
+    for (auto idxN : {0,1,2,3}) {
+      for (auto idxA : {0,1,2,3,4,5,6,7,8}) {
+        int angle = 5*(idxA+9);
+        //TString name = Form("offsetx_n%d_chi%d",idxN+2,angle);
+        //fHitClusterXOffset[idxN][idxA] = (TF1 *) fileoffset -> Get(name);
+        TString name = Form("g_offsetx_n%d_chi%d",idxN+2,angle);
+        fHitClusterXOffset[idxN][idxA] = (TGraph *) fileoffset -> Get(name);
+        cout << fHitClusterXOffset[idxN][idxA] -> GetName() << " " << idxN << " " << idxA << endl;
+      }
+    }
+
+    //for (auto idxN : {0,1,2}) {
+    for (auto idxN : {0,1,2,3}) {
+      for (auto idxA : {0,1,2,3,4,5,6,7,8}) {
+        int angle = 5*idxA;
+        //TString name = Form("offsetz_n%d_chi%d",idxN+2,angle);
+        //fHitClusterZOffset[idxN][idxA] = (TF1 *) fileoffset -> Get(name);
+        TString name = Form("g_offsetz_n%d_chi%d",idxN+2,angle);
+        fHitClusterZOffset[idxN][idxA] = (TGraph *) fileoffset -> Get(name);
+        cout << fHitClusterZOffset[idxN][idxA] -> GetName() << " " << idxN << " " << idxA << endl;
+      }
+    }
+  }
+
+  if (!fUseConstCov) {
     auto fileSigma = new TFile(TString(gSystem -> Getenv("VMCWORKDIR")) + "/input/" + fSigFileName);
+    fileSigma -> ls();
     for (auto isLR : {0,1})
       for (auto ixyz : {0,1,2})
-        for (auto idxN : {0,1,2})
+        for (auto idxN : {0,1,2}) {
           fHitClusterSigma[isLR][ixyz][idxN] = (TF1 *) fileSigma -> Get(Form("fit_%s_%s_n%d",(isLR?"lay":"row"),(ixyz==0?"x":(ixyz==1?"y":"z")),idxN+2));
+          cout << fHitClusterSigma[isLR][ixyz][idxN] -> GetName() << " " << isLR << " " << ixyz << " " << idxN << endl;
+        }
   }
 
   if (!fNameCluster.IsNull())
@@ -225,10 +258,54 @@ void STGenfitPIDTask::Exec(Option_t *opt)
         }
       }
 
+      if (fUseXZCorrection) { //correct_xzoffset
+        auto chi = cluster -> GetChi() * TMath::RadToDeg();
+        auto numHits = cluster -> GetNumHits();
+
+        int idxN;
+        /**/ if (numHits<=2) idxN = 0;
+        else if (numHits==3) idxN = 1;
+        else if (numHits==4) idxN = 2;
+        else /* numHits>=5*/ idxN = 3;
+
+        if (cluster->IsLayerCluster() && chi>=45) {
+          int idxA = floor((chi-45)/5);
+          if (idxA>=0&&idxA<9) {
+            auto recox = cluster -> GetX();
+            auto xinpad = (recox+432) - 8*floor((recox+432)/8);
+            if (xinpad>4) {
+              xinpad = 8-xinpad;
+              auto offx = fHitClusterXOffset[idxN][idxA]->Eval(xinpad);
+              cluster -> SetX(recox+offx);
+            }
+            else {
+              auto offx = fHitClusterXOffset[idxN][idxA]->Eval(xinpad);
+              cluster -> SetX(recox-offx);
+            }
+          }
+        }
+        else if (cluster->IsRowCluster() && chi<45) {
+          int idxA = floor(chi/5);
+          if (idxA>=0&&idxA<9){
+            auto recoz = cluster -> GetZ();
+            auto zinpad = recoz - 12*floor(recoz/12);
+            if (zinpad>6) {
+              zinpad = 12-zinpad;
+              auto offz = fHitClusterZOffset[idxN][idxA]->Eval(zinpad);
+              cluster -> SetZ(recoz+offz);
+            }
+            else {
+              auto offz = fHitClusterZOffset[idxN][idxA]->Eval(zinpad);
+              cluster -> SetZ(recoz-offz);
+            }
+          }
+        }
+      }
+
+
       if (cluster -> IsStable())
         stableClusters.push_back(cluster);
     }
-
 
     auto cleanClusters = [](vector<STHitCluster *> *anArray, Double_t dMax) -> Bool_t {
       if (anArray -> size() <= 1)
@@ -516,6 +593,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     recoTrack -> SetChi2Z(genfitChi2Z);
   }
 
+
   LOG(INFO) << Space() << "STRecoTrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
 
   if (gfTrackArrayToVertex.size() < 2) {
@@ -738,6 +816,10 @@ genfit::GFRaveVertexFactory *STGenfitPIDTask::GetVertexFactoryInstance()
 void STGenfitPIDTask::SetClusterSigmaFile(TString fileName) {
   fUseConstCov = false;
   fSigFileName = fileName;
+}
+void STGenfitPIDTask::SetClusterXZOffsetFile(TString fileName) {
+   fUseXZCorrection = true;
+   fXZOffFileName = fileName;
 }
 void STGenfitPIDTask::SetUseConstCov(Double_t x, Double_t y, Double_t z) {
   fUseConstCov = true;

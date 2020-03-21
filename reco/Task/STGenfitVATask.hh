@@ -124,6 +124,7 @@ class STGenfitVATask : public STRecoTask
     Float_t fTrackDist;
     Float_t fTrackVertexZ;
     Float_t fTrackNumClusters;
+    Int_t fCountFilledTracks = 0;
 
     TString fSigFileName = "";
     TF1 *fHitClusterSigma[2][3][3];
@@ -131,7 +132,7 @@ class STGenfitVATask : public STRecoTask
     TString fNameCluster;
     TFile *fFileCluster;
     TTree *fTreeCluster;
-    TH1D *fHistRawResiduals[2][3][3][18];
+    TH2D *fHistRawResiduals[2][3][3][18];
     TH1D *fHistStdResiduals[3];
     Bool_t fClusterIsLayerOrRow;
     Float_t fClusterResidualX;
