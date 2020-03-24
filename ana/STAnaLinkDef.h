@@ -25,5 +25,6 @@
 
 #pragma link C++ class EfficiencyFactory+;
 #pragma link C++ class EfficiencyFromConcFactory+;
+#pragma link C++ class EfficiencyInCMFactory+;
 
 #endif

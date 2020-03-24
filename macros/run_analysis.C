@@ -32,6 +32,11 @@ void run_analysis_core(TString par, TString geo, TString out,
   auto reader = new STConcReaderTask();
   reader -> SetChain(&chain);
 
+  auto eventFilter = new STFilterEventTask();
+  eventFilter -> SetBeamCut("BeamCut.root", "Sn108");
+  eventFilter -> SetVertexCut(-18.480, -11.165);
+  eventFilter -> SetMultiplicityCut(54, 100);
+
   //auto filter = new STFilterTask();
   //filter -> SetThetaCut(10);
 
@@ -71,14 +76,18 @@ void run_analysis_core(TString par, TString geo, TString out,
   {
     auto& settings = efficiency -> AccessSettings(pdg);
     settings.NClusters = 15; settings.DPoca = 15;
-    settings.PhiCuts = {{0, 20}, {160, 220}, {320, 360}};
+    settings.PhiCuts = {{160, 220}/*,{0, 20}, {320, 360}*/};
     settings.ThetaMin = 0; settings.ThetaMax = 90; settings.NThetaBins = 15;
-    if(pdg == 2212)      { settings.NMomBins = 15; settings.MomMin = 100; settings.MomMax = 1500; } 
-    if(pdg == 1000010020){ settings.NMomBins = 15; settings.MomMin = 200; settings.MomMax = 2200; } 
-    if(pdg == 1000010030){ settings.NMomBins = 15; settings.MomMin = 500; settings.MomMax = 4500; } 
-    if(pdg == 1000020030){ settings.NMomBins = 15; settings.MomMin = 500; settings.MomMax = 3200; } 
-    if(pdg == 1000020040){ settings.NMomBins = 15; settings.MomMin = 1000; settings.MomMax = 4200; } 
-    if(pdg == 1000020060){ settings.NMomBins = 10; settings.MomMin = 2000; settings.MomMax = 6000; } 
+    auto &mBins = settings.NMomBins; auto &mMin = settings.MomMin; auto &mMax = settings.MomMax;
+    auto &ptBins = settings.NPtBins; auto &ptMin = settings.PtMin; auto &ptMax = settings.PtMax;
+    auto &CMzBins = settings.NCMzBins; auto &CMzMin = settings.CMzMin; auto &CMzMax = settings.CMzMax;
+    mBins = 15; ptBins = 20; CMzBins = 20;
+    if(pdg == 2212)      { mMin = 100;  mMax = 1500; ptMin = 0; ptMax = 1300; CMzMin = -1000; CMzMax = 1000; }
+    if(pdg == 1000010020){ mMin = 200;  mMax = 2200; ptMin = 0; ptMax = 2000; CMzMin = -1300; CMzMax = 1300; }
+    if(pdg == 1000010030){ mMin = 500;  mMax = 4500; ptMin = 0; ptMax = 2500; CMzMin = -2500; CMzMax = 2500; }
+    if(pdg == 1000020030){ mMin = 500;  mMax = 3200; ptMin = 0; ptMax = 1900; CMzMin = -1900; CMzMax = 1900; }
+    if(pdg == 1000020040){ mMin = 1000; mMax = 4200; ptMin = 0; ptMax = 2500; CMzMin = -2500; CMzMax = 2500; }
+    if(pdg == 1000020060){ mMin = 2000; mMax = 6000; ptMin = 0; ptMax = 1300; CMzMin = -1000; CMzMax = 1000; }
   }
 
   run -> AddTask(reader);
@@ -106,6 +115,7 @@ void run_analysis
 (
   int fStartRunNo,
   int fEndRunNo,
+  TString fOutName,
   TString fPathToData,
   int targetMass,
   TString metaFile,
@@ -126,10 +136,16 @@ void run_analysis
 
   TString par = spiritroot+"parameters/ST.parameters.par";
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root"; 
-  TString out = fPathToData + "run";
-  if(fEndRunNo > fStartRunNo)
-    out += TString::Format("%d_%d", fStartRunNo, fEndRunNo);
-  else out += TString::Format("%d", fStartRunNo);
+  TString out;
+  if(fOutName.IsNull())
+  {
+    out = fPathToData + "run";
+    if(fEndRunNo > fStartRunNo)
+      out += TString::Format("%d_%d", fStartRunNo, fEndRunNo);
+    else out += TString::Format("%d", fStartRunNo);
+  }
+  else out = fOutName;
+
   TString log = out+"_ana.log";
   out += "_ana.root";
 
@@ -142,13 +158,20 @@ void run_analysis
     chain.Add(in.back());
   }
 
-  auto effFactory = new EfficiencyFromConcFactory();
-  effFactory -> SetDataBaseForPDG(2212, "data/embed_dump/Feb20203/Run2899_embedNewProton/*conc*");
-  effFactory -> SetDataBaseForPDG(1000010020, "data/embed_dump/Feb20203/Run2899_embedNewDeuteron/*conc*");
-  effFactory -> SetDataBaseForPDG(1000010030, "data/embed_dump/Feb20203/Run2899_embedNewTriton/*conc*");
-  effFactory -> SetDataBaseForPDG(1000020030, "data/embed_dump/Feb20203/Run2899_embedNewHe3/*conc*");
-  effFactory -> SetDataBaseForPDG(1000020040, "data/embed_dump/Feb20203/Run2899_embedNewHe4/*conc*");
-  effFactory -> SetDataBaseForPDG(1000020060, "data/embed_dump/Feb20203/Run2899_embedNewHe6/*conc*");
+  auto effFactory = new EfficiencyInCMFactory();
+  //effFactory -> SetDataBaseForPDG(2212, "data/embed_dump/Feb20203/Run2899_embedNewProton/*conc*");
+  //effFactory -> SetDataBaseForPDG(1000010020, "data/embed_dump/Feb20203/Run2899_embedNewDeuteron/*conc*");
+  //effFactory -> SetDataBaseForPDG(1000010030, "data/embed_dump/Feb20203/Run2899_embedNewTriton/*conc*");
+  //effFactory -> SetDataBaseForPDG(1000020030, "data/embed_dump/Feb20203/Run2899_embedNewHe3/*conc*");
+  //effFactory -> SetDataBaseForPDG(1000020040, "data/embed_dump/Feb20203/Run2899_embedNewHe4/*conc*");
+  //effFactory -> SetDataBaseForPDG(1000020060, "data/embed_dump/Feb20203/Run2899_embedNewHe6/*conc*");
+  effFactory -> SetDataBaseForPDG(2212, "data/embed_dump/MarchCM/Run2272_CMProton.root");
+  effFactory -> SetDataBaseForPDG(1000010020, "data/embed_dump/MarchCM/Run2272_CMDeuteron.root");
+  effFactory -> SetDataBaseForPDG(1000010030, "data/embed_dump/MarchCM/Run2272_CMTriton.root");
+  effFactory -> SetDataBaseForPDG(1000020030, "data/embed_dump/MarchCM/Run2272_CMHe3.root");
+  effFactory -> SetDataBaseForPDG(1000020040, "data/embed_dump/MarchCM/Run2272_CMHe4.root");
+  effFactory -> SetDataBaseForPDG(1000020060, "data/embed_dump/MarchCM/Run2272_CMHe6.root");
+
 
   run_analysis_core(par, geo, out, log, chain, targetMass, metaFile, pidFile, iterateMeta, effFactory);
 }
@@ -188,13 +211,19 @@ void run_analysis
     chain.Add(filename.c_str());
   }
 
-  auto effFactory = new EfficiencyFromConcFactory();
-  effFactory -> SetDataBaseForPDG(2212, "data/embed_dump/Feb20203/SimSn108ProtonCompressed.root");
-  effFactory -> SetDataBaseForPDG(1000010020, "data/embed_dump/Feb20203/SimSn108DeuteronCompressed.root");
-  effFactory -> SetDataBaseForPDG(1000010030, "data/embed_dump/Feb20203/SimSn108TritonCompressed.root");
-  effFactory -> SetDataBaseForPDG(1000020030, "data/embed_dump/Feb20203/SimSn108He3Compressed.root");
-  effFactory -> SetDataBaseForPDG(1000020040, "data/embed_dump/Feb20203/SimSn108He4Compressed.root");
-  effFactory -> SetDataBaseForPDG(1000020060, "data/embed_dump/Feb20203/Run2899He6Compressed.root");
+  auto effFactory = new EfficiencyInCMFactory();
+  //effFactory -> SetDataBaseForPDG(2212, "data/embed_dump/Feb20203/SimSn108ProtonCompressed.root");
+  //effFactory -> SetDataBaseForPDG(1000010020, "data/embed_dump/Feb20203/SimSn108DeuteronCompressed.root");
+  //effFactory -> SetDataBaseForPDG(1000010030, "data/embed_dump/Feb20203/SimSn108TritonCompressed.root");
+  //effFactory -> SetDataBaseForPDG(1000020030, "data/embed_dump/Feb20203/SimSn108He3Compressed.root");
+  //effFactory -> SetDataBaseForPDG(1000020040, "data/embed_dump/Feb20203/SimSn108He4Compressed.root");
+  //effFactory -> SetDataBaseForPDG(1000020060, "data/embed_dump/Feb20203/Run2899He6Compressed.root");
+  effFactory -> SetDataBaseForPDG(2212, "data/embed_dump/MarchCM/SimSn108_CMProton.root");
+  effFactory -> SetDataBaseForPDG(1000010020, "data/embed_dump/MarchCM/SimSn108_CMDeuteron.root");
+  effFactory -> SetDataBaseForPDG(1000010030, "data/embed_dump/MarchCM/SimSn108_CMTriton.root");
+  effFactory -> SetDataBaseForPDG(1000020030, "data/embed_dump/MarchCM/SimSn108_CMHe3.root");
+  effFactory -> SetDataBaseForPDG(1000020040, "data/embed_dump/MarchCM/SimSn108_CMHe4.root");
+  effFactory -> SetDataBaseForPDG(1000020060, "data/embed_dump/MarchCM/SimSn108_CMHe6.root");
 
   run_analysis_core(par, geo, out, log, chain, targetMass, metaFile, pidFile, iterateMeta, effFactory, false);
 }

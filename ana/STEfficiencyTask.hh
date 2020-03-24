@@ -42,6 +42,8 @@ class STEfficiencyTask : public FairTask {
     {int NClusters = 15; double DPoca = 20; 
      int NThetaBins = 20; double ThetaMin = 0; double ThetaMax = 90;
      int NMomBins = 20; double MomMin = 0; double MomMax = 3000;
+     int NCMzBins = 20; double CMzMin = -1000; double CMzMax = 1000;
+     int NPtBins = 20; double PtMin = 0; double PtMax = 1500; 
      std::vector<std::pair<double, double>> PhiCuts = {{0,360}};};
 
     /// Constructor
@@ -66,6 +68,7 @@ class STEfficiencyTask : public FairTask {
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     STVectorI *fPDG;                 ///<
     TClonesArray *fData;                ///< STData from the conc files
+    TClonesArray *fCMVec;               ///< vector in CM frame
     TClonesArray *fEff;                 ///< Efficiency of each type of particle
 
     const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;

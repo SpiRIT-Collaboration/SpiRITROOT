@@ -1,4 +1,5 @@
 #include "STEfficiencyTask.hh"
+#include "STVector.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -34,8 +35,16 @@ InitStatus STEfficiencyTask::Init()
   for(int pdg : fSupportedPDG)
   {
     auto& settings = fEfficiencySettings[pdg];
-    fFactory -> SetMomBins(settings.MomMin, settings.MomMax, settings.NMomBins);
-    fFactory -> SetThetaBins(settings.ThetaMin, settings.ThetaMax, settings.NThetaBins);
+    if(fFactory -> IsInCM())
+    {
+      fFactory -> SetPtBins(settings.PtMin, settings.PtMax, settings.NPtBins);
+      fFactory -> SetCMzBins(settings.CMzMin, settings.CMzMax, settings.NCMzBins);
+    }
+    else
+    {
+      fFactory -> SetMomBins(settings.MomMin, settings.MomMax, settings.NMomBins);
+      fFactory -> SetThetaBins(settings.ThetaMin, settings.ThetaMax, settings.NThetaBins);
+    }
     fFactory -> SetPhiCut(settings.PhiCuts);
     fFactory -> SetTrackQuality(settings.NClusters, settings.DPoca);
     fEfficiency[pdg] = fFactory -> FinalizeBins(pdg, true);
@@ -46,6 +55,12 @@ InitStatus STEfficiencyTask::Init()
 
   //fPDG = (STVectorI*) ioMan -> GetObject("PDG");
   fData = (TClonesArray*) ioMan -> GetObject("STData");
+  if(fFactory -> IsInCM())
+  {
+    fCMVec = (TClonesArray*) ioMan -> GetObject("CMVector");
+    if(!fCMVec) 
+      fLogger -> Fatal(MESSAGE_ORIGIN, "You muct add transform task before if you want to use efficiency factory in CM frame.");
+  }
 
   ioMan -> Register("Eff", "ST", fEff, fIsPersistence);
   return kSUCCESS;
@@ -83,7 +98,7 @@ void STEfficiencyTask::Exec(Option_t *opt)
 
     for(int part = 0; part < npart; ++part)
     {
-      auto& mom = data -> vaMom[part];
+      auto& mom = (fFactory -> IsInCM())? static_cast<STVectorVec3*>(fCMVec->At(i))->fElements[part] : data -> vaMom[part];
       int nclusters = data -> vaNRowClusters[part] + data -> vaNLayerClusters[part];
       double dpoca = data -> recodpoca[part].Mag();
       double phi = mom.Phi()*TMath::RadToDeg();
@@ -98,9 +113,22 @@ void STEfficiencyTask::Exec(Option_t *opt)
       double momMag = mom.Mag()*(particle->Charge())/3;
       double efficiency = 0;
       if(nclusters > settings.NClusters 
-         && dpoca < settings.DPoca && insidePhi
-         && settings.MomMin < momMag && momMag < settings.MomMax)
-        efficiency = TEff.GetEfficiency(TEff.FindFixBin(momMag, mom.Theta()*TMath::RadToDeg(), phi));
+         && dpoca < settings.DPoca && insidePhi)
+      {
+         if(fFactory -> IsInCM())
+         {
+           double pt = mom.Perp();
+           double z = mom.z();
+           if(settings.PtMin < pt && pt < settings.PtMax && 
+              settings.CMzMin < z && z < settings.CMzMax)
+             efficiency = TEff.GetEfficiency(TEff.FindFixBin(z, pt, phi));
+         }
+         else
+         {
+           if(settings.MomMin < momMag && momMag < settings.MomMax)
+             efficiency = TEff.GetEfficiency(TEff.FindFixBin(momMag, mom.Theta()*TMath::RadToDeg(), phi));
+         }
+      }
       partEff -> fElements.push_back(efficiency);
     }
   }

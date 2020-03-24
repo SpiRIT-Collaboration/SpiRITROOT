@@ -62,6 +62,7 @@ class STPIDProbTask : public FairTask {
  
     // global function to assist fitting PID lines
     static void FitPID(const std::string& anaFile, const std::string& fitFile);
+    static void CreatePriorFromCut(const std::string& anaFile, const std::string& priorFile);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     static TH1F* ProfileX(TH2F* hist, TCutG* cutg); // custom ProfileX

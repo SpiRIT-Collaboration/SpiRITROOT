@@ -43,6 +43,7 @@ InitStatus STFilterEventTask::Init()
   if(fMultCut) fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Only vertex from %d < z < %d are accepted", fMultMin, fMultMax));
 
   fData = (TClonesArray*) ioMan -> GetObject("STData");
+  fEventType = (TClonesArray*) ioMan -> GetObject("EventType");
   return kSUCCESS;
 }
 
@@ -64,8 +65,9 @@ void STFilterEventTask::SetParContainers()
 void STFilterEventTask::Exec(Option_t *opt)
 {
   auto data = (STData*) fData -> At(0);
-  auto vertexz = data -> tpcVertex.z();
-  auto mult = data -> multiplicity;
+  const auto& tpcVertex = data -> tpcVertex;
+  const auto& bdcVertex = data -> bdcVertex;
+  auto vertexz = tpcVertex.z();
   
   bool fill = false;
   for(int i = 0; i < fCutG.size(); ++i)
@@ -78,7 +80,25 @@ void STFilterEventTask::Exec(Option_t *opt)
   if(fVertexCut)
     if(!(fVertexZMin < vertexz && vertexz < fVertexZMax)) fill = false;
   if(fMultCut)
+  {
+    auto mult = data -> multiplicity;
+    if(fDPoca > 0) 
+    {
+      mult = 0;
+      for(const auto recodpoca : data -> recodpoca) 
+        if(recodpoca.Mag() < fDPoca) ++mult;
+    }
     if(!(fMultMin < mult && mult < fMultMax)) fill = false;
+  }
+  if(fPosCut)
+    if(!(fXmin < bdcVertex.x() && bdcVertex.x() < fXmax && fYmin < bdcVertex.y() && bdcVertex.y() < fYmax)) fill = false;
+  if(fVertexBDCCut)
+    if(!(fabs(bdcVertex.x() - tpcVertex.x() - fXMean) < fXDiff && fabs(bdcVertex.y() - tpcVertex.y() - fYMean) < fYDiff)) fill = false;
+  if(fRejectFastClose)
+  {
+    int type = static_cast<STVectorI*>(fEventType -> At(0)) -> fElements[0];
+    if(type == 6 || type == 7) fill = false;
+  }
 
   FairRunAna::Instance() -> MarkFill(fill);
 }

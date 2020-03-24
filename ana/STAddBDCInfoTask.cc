@@ -24,7 +24,6 @@ void STAddBDCInfoTask::Register()
 {
   auto tree = FairRootManager::Instance()->GetOutTree();
   tree -> Branch("runID", &fRunNo);
-  tree -> Branch("eventID", &fEventID);
 }
 
 

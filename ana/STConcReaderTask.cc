@@ -15,8 +15,9 @@ STConcReaderTask::STConcReaderTask(): fEventID(0)
   fChain = nullptr; 
   fData = new TClonesArray("STData");
   fMCEventID = new TClonesArray("STVectorI");
-  fSTData = new STData();
+  fEventTypeArr = new TClonesArray("STVectorI");
 
+  fSTData = new STData();
   fLogger = FairLogger::GetLogger(); 
 }
 
@@ -53,11 +54,26 @@ InitStatus STConcReaderTask::Init()
     fChain -> SetBranchAddress("STData", &fSTDataArray);
     fIsTrimmedFile = true;
   }
+  fChain -> SetBranchAddress("eventType", &fEventType);
   fChain -> SetBranchAddress("eventID", &fMCLoadedID);
   ioMan -> Register("STData", "ST", fData, fIsPersistence);
   ioMan -> Register("EventID", "ST", fMCEventID, fIsPersistence);
+  ioMan -> Register("EventType", "ST", fEventTypeArr, fIsPersistence);
+
+  (new ((*fMCEventID)[0]) STVectorI()) -> fElements.push_back(0);
+  (new ((*fEventTypeArr)[0]) STVectorI()) -> fElements.push_back(0);
+  
   return kSUCCESS;
 }
+
+void STConcReaderTask::Register()
+{
+  auto tree = FairRootManager::Instance()->GetOutTree();
+  tree -> Branch("eventID", &fMCLoadedID);
+  tree -> Branch("eventType", &fEventType);
+}
+
+
 
 void
 STConcReaderTask::SetParContainers()
@@ -77,7 +93,6 @@ STConcReaderTask::SetParContainers()
 
 void STConcReaderTask::Exec(Option_t *opt)
 {
-  fMCEventID -> Clear();
   if(fIsTrimmedFile) fChain -> SetBranchAddress("STData", &fSTDataArray);
   else fChain -> SetBranchAddress("EvtData", &fSTData);
   if(fChain -> GetEntries() > fEventID)
@@ -91,8 +106,8 @@ void STConcReaderTask::Exec(Option_t *opt)
       new((*fData)[0]) STData(*((STData*)fSTDataArray->At(0)));
     else
       new((*fData)[0]) STData(*fSTData);
-    auto id = new((*fMCEventID)[0]) STVectorI();
-    id -> fElements.push_back(fMCLoadedID);
+    static_cast<STVectorI*>(fMCEventID -> At(0)) -> fElements[0] = fMCLoadedID;
+    static_cast<STVectorI*>(fEventTypeArr -> At(0)) -> fElements[0] = fEventType;
   }else fLogger -> Fatal(MESSAGE_ORIGIN, "Event ID exceeds the length of the TChain");
 }
 

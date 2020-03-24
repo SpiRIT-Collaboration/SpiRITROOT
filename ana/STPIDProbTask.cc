@@ -188,17 +188,19 @@ void STPIDProbTask::SetPIDFitFile(const std::string& t_fitfile)
   fPIDRegion = (TCutG*) fFitFile -> Get("PIDFullRegion");
 }
 
+auto has_suffix = [](const std::string &str, const std::string &suffix)
+  {
+      return str.size() >= suffix.size() &&
+             str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+  };
+
+
 void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFile)
 {
   STAnaParticleDB::FillTDatabasePDG();
   std::string treeName = "cbmsim";
 
   TChain chain("cbmsim");
-  auto has_suffix = [](const std::string &str, const std::string &suffix)
-    {
-        return str.size() >= suffix.size() &&
-               str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
-    };
   std::string anaFileWithSuffix = anaFile;
   if(!has_suffix(anaFile, ".root")) anaFileWithSuffix += ".root";
   // the tree name could be cbmsim or spirit
@@ -464,4 +466,73 @@ TH1F* STPIDProbTask::ProfileX(TH2F* hist, TCutG* cutg)
     profile->SetBinError(i, gaus.GetParameter(2));
   }
   return profile;
+}
+
+void STPIDProbTask::CreatePriorFromCut(const std::string& anaFile, const std::string& priorFile)
+{
+  STAnaParticleDB::FillTDatabasePDG();
+  struct particleCharacteristic{ int color; int pdg; TString name; };
+  std::vector<particleCharacteristic> particles;
+  auto db = TDatabasePDG::Instance();
+  for(int i = 0; i < STAnaParticleDB::SupportedPDG.size(); ++i)
+    particles.push_back({i + 1, 
+                         STAnaParticleDB::SupportedPDG[i], 
+                         db->GetParticle(STAnaParticleDB::SupportedPDG[i])->GetName()});
+
+  TCanvas c1;
+  // continue from where we left in the existing files
+  TFile output(priorFile.c_str(), "UPDATE");
+  
+  c1.cd();
+  int nbinsx = 1000;
+  int nbinsy = 1000;
+  double momMin = 0;
+  double momMax = 4500;
+  double minDeDx = 0;
+  double maxDeDx = 2000;
+
+  TH2F PID("PID", "PID", nbinsx, momMin, momMax, nbinsy, minDeDx, maxDeDx);
+  PID.Sumw2();
+
+  TChain chain("cbmsim");
+  std::string anaFileWithSuffix = anaFile;
+  if(!has_suffix(anaFile, ".root")) anaFileWithSuffix += ".root";
+  // the tree name could be cbmsim or spirit
+  // need to add both
+  {
+    chain.Add((anaFileWithSuffix + "/spirit").c_str());
+    chain.Add((anaFileWithSuffix + "/cbmsim").c_str());
+    // suppress all the error due to not able to read from one of those trees
+    auto origVerbosity = gErrorIgnoreLevel;
+    gErrorIgnoreLevel = kFatal;
+    if(chain.GetEntries() == 0) throw std::runtime_error("No entries is being read from the file!");
+    gErrorIgnoreLevel = origVerbosity;
+  }
+
+  chain.Draw("vadedx:vaMom.Mag()>>PID", 
+             "vaNRowClusters + vaNLayerClusters > 20 && recodpoca.Mag() < 10", 
+             "colz",100000);
+
+  for(const auto& part : particles)
+  {
+    PID.Draw("colz");
+    TLatex t(2000, 800, TString::Format("Draw cut for %s", part.name.Data()));
+    
+    t.Draw();
+    TCutG *cutg = nullptr;
+    while(!cutg) cutg = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+    std::cout << "Finished? Press Ctrl-C" << std::endl;
+    c1.WaitPrimitive("temp", "[CUTG]"); //checkpoint to allow user to modify the cutg before pressing Ctrl-C
+    
+    auto cutName = part.name + "Cut";
+    cutg -> SetName(cutName);
+    auto proj = PID.ProjectionX("",0,-1,"[" + cutName + "]");
+    output.cd();
+    proj -> Write(TString::Format("Distribution%d", part.pdg)); 
+
+    t.Delete();
+  }
+  
+  
+  std::cout << "All PID cuts are drawn." << std::endl;
 }

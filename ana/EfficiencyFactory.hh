@@ -20,21 +20,30 @@ public:
     /*
     * Assorted Setters to change cut conditions
     */
-    EfficiencyFactory& SetMomBins(double t_min, double t_max, int t_bins);
-    EfficiencyFactory& SetThetaBins(double t_min, double t_max, int t_bins); 
     EfficiencyFactory& SetPhiBins(double t_min, double t_max, int t_bins); 
     EfficiencyFactory& SetPhiCut(const std::vector<std::pair<double, double>>& t_phi_cut);
     EfficiencyFactory& SetTrackQuality(int t_nclus, double t_dpoca);
 
+    // range setters for Lab frame
+    EfficiencyFactory& SetMomBins(double t_min, double t_max, int t_bins);
+    EfficiencyFactory& SetThetaBins(double t_min, double t_max, int t_bins); 
+
+    // range setters that are only used when the efficiency is in CM frame
+    EfficiencyFactory& SetPtBins(double t_min, double t_max, int t_bins); 
+    EfficiencyFactory& SetCMzBins(double t_min, double t_max, int t_bins);
+
+
     virtual TEfficiency FinalizeBins(int t_pdg,
                                      bool t_verbose=false) = 0;
-
+    virtual bool IsInCM() { return false; };
 protected:
     double dist_2_vert_;
     int num_clusters_;
     std::vector<std::pair<double, double>> phi_cut_;
     Binning mom_bin_{50, 600, 30};
     Binning theta_bin_{0, 90, 45};
+    Binning pt_bin_{0, 2500, 10};
+    Binning CMz_bin_{-1500, 1500, 10};
 };
 
 class OrigEfficiencyFactory : public EfficiencyFactory
@@ -72,6 +81,21 @@ public:
     virtual TEfficiency FinalizeBins(int t_pdg,
                                      bool t_verbose=false); 
 
+protected:
+    std::map<int, std::string> fEfficiencyDB;
+};
+
+class EfficiencyInCMFactory : public EfficiencyFactory
+{
+public:
+    EfficiencyInCMFactory();
+    virtual ~EfficiencyInCMFactory(){};
+    void SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db);
+    virtual TEfficiency FinalizeBins(int t_pdg,
+                                     bool t_verbose=false); 
+
+    static void TransformBackToCM(const std::string& t_efficiency_db, const std::string& t_cm_db, int fragMass, int targetMass, double energyPerN);
+    virtual bool IsInCM() { return true; }
 protected:
     std::map<int, std::string> fEfficiencyDB;
 };

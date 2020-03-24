@@ -4,6 +4,7 @@
 #include "EfficiencyFactory.hh"
 #include "TDatabasePDG.h"
 #include "STAnaParticleDB.hh"
+#include "TLorentzVector.h"
 #include <glob.h>
 
 std::vector<std::string> glob(const char *pattern) {
@@ -23,6 +24,12 @@ EfficiencyFactory& EfficiencyFactory::SetMomBins(double t_min, double t_max, int
 { mom_bin_ = {t_min, t_max, t_bins}; return *this;};
 EfficiencyFactory& EfficiencyFactory::SetThetaBins(double t_min, double t_max, int t_bins) 
 { theta_bin_ = {t_min, t_max, t_bins}; return *this;};
+
+EfficiencyFactory& EfficiencyFactory::SetPtBins(double t_min, double t_max, int t_bins) 
+{ pt_bin_ = {t_min, t_max, t_bins}; return *this;};
+EfficiencyFactory& EfficiencyFactory::SetCMzBins(double t_min, double t_max, int t_bins) 
+{ CMz_bin_ = {t_min, t_max, t_bins}; return *this;};
+
 EfficiencyFactory& EfficiencyFactory::SetPhiCut(const std::vector<std::pair<double, double>>& t_phi_cut)
 { phi_cut_ = t_phi_cut; return *this;}
 EfficiencyFactory& EfficiencyFactory::SetTrackQuality(int t_nclus, double t_poca)
@@ -267,6 +274,159 @@ TEfficiency EfficiencyFromConcFactory::FinalizeBins(int t_pdg,
 
     tree.Project("det", "embedMom.Theta()*TMath::RadToDeg():embedMom.Mag()", condition);
     tree.Project("truth", "embedMom.Theta()*TMath::RadToDeg():embedMom.Mag()");
+
+    det -> Smooth();
+    truth -> Smooth();
+  } else  
+    std::cout << "No data is loaded for particle " << TDatabasePDG::Instance()->GetParticle(t_pdg)->GetName() << ". Will return an empty efficiency instead." << std::endl; 
+ 
+  TEfficiency efficiency(*det, *truth);
+  det -> SetDirectory(0);
+  truth -> SetDirectory(0);
+  efficiency.SetDirectory(0);
+  return efficiency;
+};
+
+/********************************************************
+* Efficiency from conc
+*********************************************************/
+
+EfficiencyInCMFactory::EfficiencyInCMFactory(){}
+
+void EfficiencyInCMFactory::SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db)
+{
+  fEfficiencyDB[t_pdg] = t_efficiency_db;
+}
+
+void EfficiencyInCMFactory::TransformBackToCM(const std::string& t_efficiency_db, const std::string& t_cm_db, int fragMass, int targetMass, double energyPerN)
+{
+  const Double_t fNucleonMass = 931.5;
+  TChain tree("spirit");
+  for(const auto& filename : glob(t_efficiency_db.c_str()))
+    tree.Add(filename.c_str());
+
+  TFile output(t_cm_db.c_str(), "RECREATE");
+  TTree compressed("spirit", "spirit");
+
+  STData *data = new STData;
+  STData *singles = new STData;
+  tree.SetBranchAddress("EvtData", &data);
+  compressed.Branch("EvtData", singles);
+
+  double mass = fragMass*fNucleonMass;
+  double mass2 = mass*mass;
+
+  int n = tree.GetEntries();
+  for(int i = 0; i < n; ++i)
+  {
+    std::cout << "Working on entry " << i << " out of " << n << "\r" << std::flush;
+    tree.GetEntry(i);
+    singles -> ResetDefaultWithLength(1);
+    singles -> multiplicity = data -> multiplicity;
+    singles -> vaMultiplicity = data -> vaMultiplicity;
+    singles -> tpcVertex = data -> tpcVertex;
+    singles -> bdcVertex = data -> bdcVertex;
+
+    singles -> aoq = data -> aoq;
+    singles -> z = singles -> z;
+    singles -> a = data -> a;
+    singles -> b = data -> b;
+    singles -> proja = data -> proja;
+    singles -> projb = data -> projb;
+    singles -> projx = data -> projx;
+    singles -> projy = data -> projy;
+    singles -> beamEnergy = data -> beamEnergy;
+    singles -> beta = data -> beta;
+
+    singles -> beamEnergyTargetPlane = data -> beamEnergyTargetPlane;
+    singles -> betaTargetPlane = data -> betaTargetPlane;
+
+    // rotate embed mom
+    TVector3 beamDirection(TMath::Tan(data -> proja/1000.), TMath::Tan(data ->projb/1000.),1.);
+    beamDirection = beamDirection.Unit();
+    auto rotationAxis = beamDirection.Cross(TVector3(0,0,1));
+    auto rotationAngle = beamDirection.Angle(TVector3(0,0,1));
+
+    int beamMass = (data -> aoq)*(data -> z) + 0.5;
+    double EBeam = energyPerN*beamMass + beamMass*fNucleonMass;
+    double PBeam = sqrt(EBeam*EBeam - beamMass*beamMass*fNucleonMass*fNucleonMass);
+    TLorentzVector LV(0,0,PBeam,EBeam);
+    double beta = PBeam/(LV.Gamma()*beamMass*fNucleonMass + targetMass*fNucleonMass);
+    auto vBeam = TVector3(0,0,-beta);
+
+    auto TransformVec = [&vBeam, &rotationAngle, &rotationAxis, mass2](TVector3& vec)
+    {
+      vec.Rotate(rotationAngle, rotationAxis);
+      TLorentzVector momLV(vec.x(), vec.y(), vec.z(), sqrt(vec.Mag2() + mass2));
+      momLV.Boost(vBeam);
+      vec.SetXYZ(momLV.Px(), momLV.Py(), momLV.Pz());
+    };
+ 
+    singles -> embedMom = data -> embedMom;
+    TransformVec(singles -> embedMom);
+
+    for(int part = 0; part < data -> multiplicity; ++part)
+      if(data -> vaEmbedTag[part])
+      {
+        singles -> recoMom[0] = data -> recoMom[part];
+        TransformVec(singles -> recoMom[0]);
+        singles -> recoPosPOCA[0] = data -> recoPosPOCA[part];
+        singles -> recoPosTargetPlane[0] = data -> recoPosTargetPlane[part];
+        singles -> recodpoca[0] = data -> recodpoca[part];
+        singles -> recoNRowClusters[0] = data -> recoNRowClusters[part];
+        singles -> recoNLayerClusters[0] = data -> recoNLayerClusters[part];
+        singles -> recoCharge[0] = data -> recoCharge[part];
+        singles -> recoEmbedTag[0] = data -> recoEmbedTag[part];
+        singles -> recodedx[0] = data -> recodedx[part];
+
+        singles -> vaMom[0] = data -> vaMom[part];
+        TransformVec(singles -> vaMom[0]);
+        singles -> vaPosPOCA[0] = data -> vaPosPOCA[part];
+        singles -> vaPosTargetPlane[0] = data -> vaPosTargetPlane[part];
+        singles -> vadpoca[0] = data -> vadpoca[part];
+        singles -> vaNRowClusters[0] = data -> vaNRowClusters[part];
+        singles -> vaNLayerClusters[0] = data -> vaNLayerClusters[part];
+        singles -> vaCharge[0] = data -> vaCharge[part];
+        singles -> vaEmbedTag[0] = data -> vaEmbedTag[part];
+        singles -> vadedx[0] = data -> vadedx[part];
+      }
+    compressed.Fill();
+  }
+
+  output.cd();
+  compressed.Write();
+}
+
+TEfficiency EfficiencyInCMFactory::FinalizeBins(int t_pdg,
+                                                bool t_verbose)
+{
+  TChain tree("spirit");
+  for(const auto& filename : glob(fEfficiencyDB[t_pdg].c_str()))
+    tree.Add(filename.c_str());
+
+  TH2F *det = new TH2F("det", "det", CMz_bin_.nbins, CMz_bin_.min, CMz_bin_.max, pt_bin_.nbins, pt_bin_.min, pt_bin_.max);
+  TH2F *truth = new TH2F("truth", "truth", CMz_bin_.nbins, CMz_bin_.min, CMz_bin_.max, pt_bin_.nbins, pt_bin_.min, pt_bin_.max);
+  
+  STAnaParticleDB::FillTDatabasePDG();
+  int Z = TDatabasePDG::Instance() -> GetParticle(t_pdg) -> Charge()/3;
+  if(tree.GetEntries() > 0)
+  {
+    TString condition = TString::Format("vaEmbedTag && ");
+    //TString wrappedPhi = "((vaMom.Phi() < 0)? vaMom.Phi()*TMath::RadToDeg() + 360:vaMom.Phi()*TMath::RadToDeg())";
+    tree.SetAlias("phi", "((embedMom.Phi() < 0)? embedMom.Phi()*TMath::RadToDeg() + 360:embedMom.Phi()*TMath::RadToDeg())");
+    condition += "(";
+    for(int i = 0; i < phi_cut_.size(); ++i)
+    {  
+      if(i > 0) condition += ") || ";
+      condition += TString::Format("(phi > %f && %f > phi", phi_cut_[i].first, phi_cut_[i].second);
+    }
+    condition += "))";
+
+    condition += TString::Format(" && vaNRowClusters + vaNLayerClusters > %d && recodpoca.Mag() < %f",
+                                 num_clusters_, dist_2_vert_);
+
+    tree.Project("det", "embedMom.Perp():embedMom.z()", condition);
+    tree.Project("truth", "embedMom.Perp():embedMom.z()");
 
     det -> Smooth();
     truth -> Smooth();

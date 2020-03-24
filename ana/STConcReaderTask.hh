@@ -47,6 +47,8 @@ class STConcReaderTask : public FairTask {
     /// Running the task. This will be called when Run() method invoked from FairRun.
     virtual void Exec(Option_t *opt);
     void SetPersistence(Bool_t value);
+
+    void Register();
     void SetChain(TChain* chain);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
@@ -55,6 +57,8 @@ class STConcReaderTask : public FairTask {
     TTree *fChain = nullptr;
     TClonesArray *fData = nullptr;
     TClonesArray *fMCEventID = nullptr;
+    TClonesArray *fEventTypeArr = nullptr;
+    int fEventType;
     int fMCLoadedID;
     STData *fSTData = nullptr;
     Int_t  fEventID;

@@ -21,6 +21,16 @@ void run_trim_data
     vfile.close();
   }
 
+  TString systemDB = "systemDB.csv";
+  TString runDB = "runDB.csv";
+  TString fSystemDB = spiritroot + "parameters/" + systemDB;
+  TString fRunDB = spiritroot + "parameters/" + runDB;
+
+  auto fParamSetter = new STParameters(fRunNo, fSystemDB, fRunDB);
+  auto fParameterFile = fParamSetter -> GetParameterFile();
+  auto fSystemID = fParamSetter -> GetSystemID();
+
+
   TString par = spiritroot+"parameters/ST.parameters.par";
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root"; 
   TString in = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.*.conc.root";
@@ -46,16 +56,31 @@ void run_trim_data
   reader -> SetChain(&chain);
 
   auto eventFilter = new STFilterEventTask();
-  if(fRunNo > 3058) eventFilter -> SetBeamFor124Star("../parameters/isotopesCutG124.root");
-  else
+  switch(fSystemID)
   {
-    TString beamName = "Sn108";
-    if(fRunNo >= 2542 && fRunNo <= 2623) beamName = "Sn112";
-    else if(fRunNo > 2623) beamName = "Sn132";
-    eventFilter -> SetBeamCut("BeamCut.root", beamName);
+    case 124112: 
+      eventFilter -> SetBeamFor124Star("../parameters/isotopesCutG124.root");
+      eventFilter -> SetMultiplicityCut(50, 100);
+      break;
+    case 132124: 
+      eventFilter -> SetBeamCut("BeamCut.root", "Sn132"); 
+      eventFilter -> SetVertexCut(-18.480, -11.165);
+      eventFilter -> SetVertexBDCCut(2.69e-1, 3*0.988, 3.71e-1, 3*0.7532);
+      eventFilter -> SetMultiplicityCut(50, 100, 20);
+      break;
+    case 112124: 
+      eventFilter -> SetBeamCut("BeamCut.root", "Sn112"); 
+      eventFilter -> SetMultiplicityCut(50, 100);
+      break;
+    case 108112: 
+      eventFilter -> SetBeamCut("BeamCut.root", "Sn108");
+      eventFilter -> SetVertexCut(-18.480, -11.165);
+      eventFilter -> SetVertexBDCCut(-9.25e-3, 3*0.933, -2.80478, 3*0.8424);
+      eventFilter -> SetMultiplicityCut(50, 100, 20);
+      break;
   }
-  eventFilter -> SetVertexCut(-18, -12);
-  eventFilter -> SetMultiplicityCut(50, 100);
+  eventFilter -> SetVertexXYCut(-15, 15, -225, -185);
+  eventFilter -> SetRejectBadEvents();
 
   auto bdcInfo = new STAddBDCInfoTask();
   bdcInfo -> SetRunNo(fRunNo);
@@ -66,6 +91,7 @@ void run_trim_data
   run -> AddTask(bdcInfo);
 
   run -> Init();
+  reader -> Register();
   bdcInfo -> Register();
   run -> Run(0, chain.GetEntries());
 
