@@ -49,13 +49,9 @@ class STGenfitPIDTask : public STRecoTask
 
     void SelectPID(Int_t pid);
 
-    void SetTrackFileName(TString name);
-    void SetClusterFileName(TString name);
-
     void FinishTask();
 
-    void SetPrintFittedPoints(bool val) { fPrintFittedPoints = val; }
-    void SetDebugVertex(TString fileName) { fDebugVertexFileName = fileName; }
+    void SetStdResidualsCut(Double_t value) { fStdResidualsCut = value; }
 
   private:
     TClonesArray *fHelixTrackArray = nullptr;
@@ -109,9 +105,6 @@ class STGenfitPIDTask : public STRecoTask
 
     Int_t fSelectPID = -1;
 
-    TString fNameTrack;
-    TFile *fFileTrack;
-    TTree *fTreeTrack;
     Float_t fTrackPValue;
     Float_t fTrackWeight;
     Float_t fTrackP;
@@ -124,11 +117,6 @@ class STGenfitPIDTask : public STRecoTask
     Float_t fTrackVertexZ;
     Float_t fTrackNumClusters;
 
-    TString fNameCluster;
-    TFile *fFileCluster;
-    TTree *fTreeCluster;
-    TH1D *fHistRawResiduals[2][3][3];
-    TH1D *fHistStdResiduals[2][3][3];
     Bool_t fClusterIsLayerOrRow;
     Float_t fClusterResidualX;
     Float_t fClusterResidualY;
@@ -138,12 +126,8 @@ class STGenfitPIDTask : public STRecoTask
     Int_t fClusterNumHits;
     Float_t fClusterX;
     Float_t fClusterZ;
-    Int_t fCountFilledEvents = 0;
 
-    bool fPrintFittedPoints = 0;
-
-    TString fDebugVertexFileName ="";
-    ofstream fDebugVertexFile;
+    Double_t fStdResidualsCut = -1;
 
   ClassDef(STGenfitPIDTask, 1)
 };

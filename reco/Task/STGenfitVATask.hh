@@ -57,9 +57,6 @@ class STGenfitVATask : public STRecoTask
 
     void FinishTask();
 
-    void SetPrintFittedPoints(bool val) { fPrintFittedPoints = val; }
-    void SetDebugVertex(TString fileName) { fDebugVertexFileName = fileName; }
-
   private:
     TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fRecoTrackArray = nullptr;
@@ -134,6 +131,7 @@ class STGenfitVATask : public STRecoTask
     TTree *fTreeCluster;
     TH2D *fHistRawResiduals[2][3][3][18];
     TH1D *fHistStdResiduals[3];
+    TH1D *fHistStdResidualsTotal;
     Bool_t fClusterIsLayerOrRow;
     Float_t fClusterResidualX;
     Float_t fClusterResidualY;
@@ -144,11 +142,6 @@ class STGenfitVATask : public STRecoTask
     Float_t fClusterX;
     Float_t fClusterZ;
     Int_t fCountFilledEvents = 0;
-
-    bool fPrintFittedPoints = 0;
-
-    TString fDebugVertexFileName ="";
-    ofstream fDebugVertexFile;
 
 public:     
     //the below is related to BDC shift.
