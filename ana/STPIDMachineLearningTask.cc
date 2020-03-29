@@ -74,13 +74,8 @@ InitStatus STPIDMachineLearningTask::Init()
   if(fMLType == STAlgorithms::RandomForest) MLType = "Random Forest";
   fLogger -> Info(MESSAGE_ORIGIN, (MLType + " is selected").c_str());
   
-  if(fChain -> GetBranch("EvtData"))
-    fChain -> SetBranchAddress("EvtData", &fSTData);
-  else
-  {
-    fChain -> SetBranchAddress("STData", &fSTDataArray);
+  if(!fChain -> GetBranch("EvtData"))
     fIsTrimmedFile = true;
-  }
   ioMan -> Register("Prob", "ST", fPDGProb, fIsPersistence);
   for(int pdg : fSupportedPDG)
     fPDGProbVec[pdg] = static_cast<STVectorF*>(fPDGProb -> ConstructedAt(fPDGProb -> GetEntriesFast()));
@@ -123,8 +118,21 @@ void STPIDMachineLearningTask::LoadDataFromPython(int startID, int endID)
   // create temprary file for python to read
   STTmpFile input, output;
   fPDGFromPython.clear();
-  if(fIsTrimmedFile) fChain -> SetBranchAddress("STData", &fSTDataArray);
-  else fChain -> SetBranchAddress("EvtData", &fSTData);
+
+  char *origAddress;
+  TBranch *branch;
+  if(fIsTrimmedFile) 
+  {
+    branch = fChain -> GetBranch("STData");
+    origAddress = branch -> GetAddress();
+    branch -> SetAddress(&fSTDataArray);
+  }
+  else
+  {
+    branch = fChain -> GetBranch("EvtData");
+    origAddress = branch -> GetAddress();
+    branch -> SetAddress(&fSTData);
+  }
 
   // write dat to buffer
   output.fFile << "dedx\tpx\tpy\tpz\teventid\n";
@@ -170,6 +178,10 @@ void STPIDMachineLearningTask::LoadDataFromPython(int startID, int endID)
     vec.push_back(type);
   }
   
+  // return branch to original address
+  if(fIsTrimmedFile) fChain -> SetBranchAddress("STData", (TClonesArray**) origAddress);
+  else fChain -> SetBranchAddress("EvtData", (STData**) origAddress);
+  //branch -> SetAddress((void*)origAddress);
 }
 
 void STPIDMachineLearningTask::SetPersistence(Bool_t value)                                              
