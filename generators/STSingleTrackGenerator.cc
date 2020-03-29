@@ -24,15 +24,11 @@ void VertexReader::OpenFile(const std::string& t_filename)
   while(std::getline(file, line))
   {
     std::stringstream ss(line);
-    int temp;
+    int id;
     double x, y, z;
-    if(!(ss >> temp >> temp >> x >> y >> z))
-    {
-      std::stringstream newss(line);
-      if(!(newss >> x >> y >> z)) // load file without run number and event number
-        LOG(FATAL) << "Vertex file cannot be read properly this line: " << line << FairLogger::endl;
-    }
-    vectors_.push_back(TVector3(x, y, z));
+    if(!(ss >> fRunNo >> id >> x >> y >> z))
+      LOG(FATAL) << "Vertex file cannot be read properly this line: " << line << FairLogger::endl;
+    vectors_.push_back({id, TVector3(x, y, z)});
   }
 
   it_ = vectors_.begin();

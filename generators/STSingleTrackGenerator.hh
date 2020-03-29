@@ -35,10 +35,13 @@ public:
 	inline void Next() {++it_;};
 	void LoopOver() {it_ = vectors_.begin();};	
 	int GetNumEvent() { int num = vectors_.size(); LOG(INFO) << " Number of events: " << num << FairLogger::endl; return num;};
-	TVector3 GetVertex() { return *it_;};
+	TVector3 GetVertex() { return it_->second;};
+        int GetEventID() { return it_->first;};
+        int GetRunNo() { return fRunNo; };
 private:
-	std::vector<TVector3> vectors_;
-	std::vector<TVector3>::iterator it_;
+	std::vector<std::pair<int, TVector3>> vectors_;
+	std::vector<std::pair<int, TVector3>>::iterator it_;
+	int fRunNo;
 };
 
 class TrackParser
