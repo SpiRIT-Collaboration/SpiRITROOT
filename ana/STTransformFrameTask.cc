@@ -41,7 +41,9 @@ InitStatus STTransformFrameTask::Init()
   ioMan -> Register("FragRapidity", "ST", fFragRapidity, fIsPersistence);
   ioMan -> Register("LabRapidity", "ST", fLabRapidity, fIsPersistence);
   ioMan -> Register("BeamRapidity", "ST", fBeamRapidity, fIsPersistence);
+  // 0 of fElements is CM, 1 of fElements is Lab
 
+  fBeamRapidity -> fElements.push_back(0);
   fBeamRapidity -> fElements.push_back(0);
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
@@ -83,6 +85,7 @@ void STTransformFrameTask::Exec(Option_t *opt)
   TLorentzVector LV(0,0,PBeam,EBeam);
   double beta = PBeam/(LV.Gamma()*beamMass*fNucleonMass + fTargetMass*fNucleonMass);
   auto vBeam = TVector3(0,0,-beta);
+  fBeamRapidity -> fElements[1] = LV.Rapidity();
   LV.Boost(vBeam);
   fBeamRapidity -> fElements[0] = LV.Rapidity();
 
