@@ -67,13 +67,13 @@ void run_create_trimmed_conc
   auto bdcInfo = new STAddBDCInfoTask();
   bdcInfo -> SetRunNo(fRunNo);
   bdcInfo -> SetBeamFile(fBeamData);
+  bdcInfo -> Register();
 
   run -> AddTask(smallOutput);
   run -> AddTask(eventFilter);
   run -> AddTask(bdcInfo);
 
   run -> Init();
-  bdcInfo -> Register();
   run -> Run();
 
   cout << "Input : " << in1 << endl;

@@ -85,14 +85,13 @@ void run_trim_data
   auto bdcInfo = new STAddBDCInfoTask();
   bdcInfo -> SetRunNo(fRunNo);
   bdcInfo -> SetBeamFile(fBeamData);
+  bdcInfo -> Register();
 
   run -> AddTask(reader);
   run -> AddTask(eventFilter);
   run -> AddTask(bdcInfo);
 
   run -> Init();
-  reader -> Register();
-  bdcInfo -> Register();
   run -> Run(0, chain.GetEntries());
 
   cout << "Log    : " << log << endl;
