@@ -31,8 +31,6 @@
 // STL
 #include <vector>
 
-using std::vector;
-
 class STConcReaderTask : public FairTask {
   public:
     /// Constructor
@@ -48,7 +46,6 @@ class STConcReaderTask : public FairTask {
     virtual void Exec(Option_t *opt);
     void SetPersistence(Bool_t value);
 
-    void Register();
     void SetChain(TChain* chain);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
@@ -58,14 +55,16 @@ class STConcReaderTask : public FairTask {
     TClonesArray *fData = nullptr;
     TClonesArray *fMCEventID = nullptr;
     TClonesArray *fEventTypeArr = nullptr;
+    TClonesArray *fRunIDArr = nullptr;
     int fEventType;
     int fMCLoadedID;
+    int fRunID;
     STData *fSTData = nullptr;
     Int_t  fEventID;
     Bool_t fIsPersistence;
 
     bool fIsTrimmedFile = false;
-    TClonesArray *fSTDataArray = nullptr; // may read from trimmed files
+    bool fHasRegistered = false;
 
   ClassDef(STConcReaderTask, 1);
 };

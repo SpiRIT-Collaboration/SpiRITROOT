@@ -43,6 +43,8 @@ protected:
   STData *fData = nullptr; //!< the class of data itself 
   TClonesArray *fArrData = nullptr; //!< array of data incase data need to be stored in place
   TClonesArray *fMCEventID = nullptr;
+  TClonesArray *fEventTypeArr = nullptr;
+  TClonesArray *fRunIDArr = nullptr;
   std::unique_ptr<TFile> fSmallOutput_; //!< File where the tree is stored
   TTree *fSmallTree_; //!< Tree itself
 

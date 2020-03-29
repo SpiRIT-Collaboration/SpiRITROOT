@@ -13,7 +13,9 @@ STSmallOutputTask::STSmallOutputTask()
   LOG(DEBUG) << "Default Constructor of STSmallOutputTask" << FairLogger::endl;
   gInterpreter->GenerateDictionary("vector<TVector3>","TVector3.h");
   fArrData = new TClonesArray("STData");
+  fEventTypeArr = new TClonesArray("STVectorI");
   fMCEventID = new TClonesArray("STVectorI");
+  fRunIDArr = new TClonesArray("STVectorI");
 }
 
 STSmallOutputTask::~STSmallOutputTask()
@@ -45,12 +47,16 @@ InitStatus STSmallOutputTask::Init()
   // initialize the tclonesArray
   fData = new((*fArrData)[0]) STData();
   (new((*fMCEventID)[0]) STVectorI) -> fElements.push_back(0);
+  (new((*fEventTypeArr)[0]) STVectorI()) -> fElements.push_back(0);
+  (new((*fRunIDArr)[0]) STVectorI()) -> fElements.push_back(0);
 
   if(fInPlace)
   {
     LOG(INFO) << "Ouput will be stored in the main file" << FairLogger::endl;
     fRootManager -> Register("STData", "ST", fArrData, fIsPersistence);
     fRootManager -> Register("EventID", "ST", fMCEventID, fIsPersistence);
+    fRootManager -> Register("EventType", "ST", fEventTypeArr, fIsPersistence);
+    fRootManager -> Register("RunID", "ST", fRunIDArr, fIsPersistence);
   }
 
   else
@@ -81,6 +87,8 @@ void STSmallOutputTask::Exec(Option_t* option)
   {
     fEventID = fEventHeader -> GetEventID();
     static_cast<STVectorI*>(fMCEventID -> At(0)) -> fElements[0] = fEventID;
+    static_cast<STVectorI*>(fEventTypeArr -> At(0)) -> fElements[0] = fEventType;
+    static_cast<STVectorI*>(fRunIDArr -> At(0)) -> fElements[0] = fRunID;
     fEventType = fEventHeader -> GetStatus();
   }
   if(fBeamInfo)

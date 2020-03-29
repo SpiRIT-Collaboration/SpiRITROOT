@@ -357,7 +357,7 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
   auto nPart = particleList.size();
   auto event = (FairMCEventHeader*) primGen->GetEvent();
   if( event && !(event->IsSet()) ){
-    event->SetEventID(fCurrentEvent);
+    event->SetEventID(fCurrentEvent + 1);
     event->MarkSet(kTRUE);
     event->SetVertex(TVector3(detectedVertexX, detectedVertexY, fVertex.Z()));
     event->SetRotX(detectedBeamAngleA);
@@ -403,11 +403,12 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 
     // transform the data to CM frame
     TVector3 p(particle.px, particle.py, particle.pz);
+    p.SetPhi(p.Phi()+phiRP);  // random reaction plane orientation.
+
     TLorentzVector pCM(p.x(), p.y(), p.z(), sqrt(p.Mag2() + mass*mass));
     pCM.Boost(fBoostVector);
     p = pCM.Vect();
 
-    p.SetPhi(p.Phi()+phiRP);  // random reaction plane orientation.
     p.RotateY(beamAngleA);    // rotate w.r.t Y axis
     p.Transform(rotateInRotatedFrame);
 
