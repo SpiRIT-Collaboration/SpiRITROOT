@@ -1,4 +1,3 @@
-#include "STAnaParticleDB.hh"
 #include "STConcReaderTask.hh"
 
 // FAIRROOT classes
@@ -27,8 +26,6 @@ STConcReaderTask::~STConcReaderTask()
 
 InitStatus STConcReaderTask::Init()
 {
-  STAnaParticleDB::FillTDatabasePDG();
-
   FairRootManager *ioMan = FairRootManager::Instance();
   if (ioMan == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");
@@ -79,15 +76,6 @@ InitStatus STConcReaderTask::Init()
   return kSUCCESS;
 }
 
-void STConcReaderTask::Register()
-{
-  auto tree = FairRootManager::Instance()->GetOutTree();
-  tree -> Branch("eventID", &fMCLoadedID);
-  tree -> Branch("eventType", &fEventType);
-}
-
-
-
 void
 STConcReaderTask::SetParContainers()
 {
@@ -106,8 +94,6 @@ STConcReaderTask::SetParContainers()
 
 void STConcReaderTask::Exec(Option_t *opt)
 {
-  if(fIsTrimmedFile) fChain -> SetBranchAddress("STData", &fSTDataArray);
-  else fChain -> SetBranchAddress("EvtData", &fSTData);
   if(fChain -> GetEntries() > fEventID)
   {
     fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Event %d", fEventID));
