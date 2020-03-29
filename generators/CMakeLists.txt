@@ -6,7 +6,7 @@ ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/generators
 ${CMAKE_SOURCE_DIR}/format
-
+${CMAKE_SOURCE_DIR}/reco/BDCMagneticProjection
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -15,6 +15,7 @@ include_directories(SYSTEM ${SYSTEM_INCLUDE_DIRECTORIES})
 
 set(LINK_DIRECTORIES
 ${ROOT_LIBRARY_DIR}
+${GENFIT2_LIBRARY_DIR}
 ${FAIRROOT_LIBRARY_DIR}
 ) 
 
@@ -25,6 +26,7 @@ set(SRCS
 STEventGenGenerator.cc
 STSimpleEventGenerator.cc
 STSingleTrackGenerator.cc
+STSingleTrackInCMGenerator.cc
 STPHITSEventGenerator.cc
 STTransportModelEventGenerator.cc
 STModelToLabFrameGenerator.cc
@@ -38,6 +40,7 @@ Set(LIBRARY_NAME STGen)
 Set(DEPENDENCIES
   Base
   Stack
+  STReco
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
   Gen

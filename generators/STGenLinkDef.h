@@ -15,6 +15,7 @@
 #pragma link C++ class STImQMDReader+;
 
 #pragma link C++ class STSingleTrackGenerator+;
+#pragma link C++ class STSingleTrackInCMGenerator+;
 #pragma link C++ class STTransportModelEventGenerator+;
 #pragma link C++ class STModelToLabFrameGenerator+;
 #pragma link C++ class UrQMDParticle+;
