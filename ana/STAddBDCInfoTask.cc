@@ -20,11 +20,8 @@ STAddBDCInfoTask::STAddBDCInfoTask()
 STAddBDCInfoTask::~STAddBDCInfoTask()
 {}
 
-void STAddBDCInfoTask::Register()
-{
-  auto tree = FairRootManager::Instance()->GetOutTree();
-  tree -> Branch("runID", &fRunNo);
-}
+void STAddBDCInfoTask::Register(bool registerID)
+{ fRegisterID = registerID; }
 
 
 InitStatus STAddBDCInfoTask::Init()
@@ -38,6 +35,7 @@ InitStatus STAddBDCInfoTask::Init()
 
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   fEventIDArr = (TClonesArray*) ioMan -> GetObject("EventID");
+  fRunIDArr = (TClonesArray*) ioMan -> GetObject("RunID");
 
   fLogger -> Info(MESSAGE_ORIGIN, TString("Loading beam data from file") + fBeamFilename);
   fBeamFile = new TFile(fBeamFilename);
@@ -86,6 +84,7 @@ void STAddBDCInfoTask::SetZtoProject(double peakZ, double sigma, double sigmaMul
 void STAddBDCInfoTask::Exec(Option_t *opt)
 {
   fEventID = (((STVectorI*) fEventIDArr -> At(0))->fElements)[0];
+  if(fRegisterID) static_cast<STVectorI*>(fRunIDArr -> At(0)) -> fElements[0] = fRunNo;
   auto data = (STData*) fData -> At(0);
   
   // code copied from GenfitVATask

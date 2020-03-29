@@ -47,7 +47,7 @@ class STAddBDCInfoTask : public FairTask {
     void SetZtoProject(double peakZ, double sigma, double sigmaMultiple);
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
-    void Register();
+    void Register(bool registerID = true);
     /// Setting parameter containers. This will be called inbetween Init() and Run().
     virtual void SetParContainers();
     /// Running the task. This will be called when Run() method invoked from FairRun.
@@ -75,8 +75,10 @@ class STAddBDCInfoTask : public FairTask {
 
     int fRunNo = -1;
     TClonesArray *fEventIDArr = nullptr;
+    TClonesArray *fRunIDArr = nullptr;
     int fEventID = 0;
     STBDCProjection *fBDCProjection = nullptr;
+    bool fRegisterID = false;
   ClassDef(STAddBDCInfoTask, 1);
 };
 
