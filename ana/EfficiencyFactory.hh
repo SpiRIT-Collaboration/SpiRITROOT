@@ -9,6 +9,7 @@
 #include "TEfficiency.h"
 #include "TFile.h"
 #include "TTree.h"
+#include "TH2.h"
 #include "TTreeReader.h"
 
 class EfficiencyFactory
@@ -36,6 +37,7 @@ public:
     virtual TEfficiency FinalizeBins(int t_pdg,
                                      bool t_verbose=false) = 0;
     virtual bool IsInCM() { return false; };
+    virtual void SetUnfoldingDist(TH2F* dist) {};
 protected:
     double dist_2_vert_;
     int num_clusters_;
@@ -94,9 +96,11 @@ public:
     virtual TEfficiency FinalizeBins(int t_pdg,
                                      bool t_verbose=false); 
 
-    static void TransformBackToCM(const std::string& t_efficiency_db, const std::string& t_cm_db, int fragMass, int targetMass, double energyPerN);
+    static void TransformBackToCM(const std::string& t_efficiency_db, const std::string& t_cm_db, int fragMass, int targetMass, int charge, double energyPerN);
     virtual bool IsInCM() { return true; }
+    virtual void SetUnfoldingDist(TH2F* dist);
 protected:
     std::map<int, std::string> fEfficiencyDB;
+    TH2F *fUnfoldingDist = nullptr;
 };
 #endif

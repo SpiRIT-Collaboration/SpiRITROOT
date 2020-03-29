@@ -51,6 +51,7 @@ class STEfficiencyTask : public FairTask {
     /// Destructor
     ~STEfficiencyTask();
 
+    void SetUnfoldingFile(TString fileName) { fUnfoldingFileName = fileName; }
     EfficiencySettings& AccessSettings(int t_pdg) { return fEfficiencySettings[t_pdg]; }
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
@@ -65,16 +66,20 @@ class STEfficiencyTask : public FairTask {
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
   
-    STDigiPar *fPar;                    ///< Parameter read-out class pointer
-    STVectorI *fPDG;                 ///<
-    TClonesArray *fData;                ///< STData from the conc files
-    TClonesArray *fCMVec;               ///< vector in CM frame
-    TClonesArray *fEff;                 ///< Efficiency of each type of particle
+    STDigiPar *fPar      = nullptr;                 ///< Parameter read-out class pointer
+    STVectorI *fPDG      = nullptr;                 ///<
+    TClonesArray *fData  = nullptr;                 ///< STData from the conc files
+    TClonesArray *fCMVec = nullptr;                 ///< vector in CM frame
+    TClonesArray *fEff   = nullptr;                 ///< Efficiency of each type of particle
+    TClonesArray *fProb  = nullptr;                 ///< Particle PID from any of the PID Task
 
     const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
     EfficiencyFactory *fFactory = nullptr;
     std::map<int, TEfficiency> fEfficiency; ///<
     std::map<int, EfficiencySettings> fEfficiencySettings; ///<
+    std::map<int, TH2F> fDistributionForUnfolding; //<
+    TString fUnfoldingFileName;
+    std::unique_ptr<TFile> fUnfoldingFile;
   
   ClassDef(STEfficiencyTask, 1);
 };

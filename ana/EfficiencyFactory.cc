@@ -5,6 +5,7 @@
 #include "TDatabasePDG.h"
 #include "STAnaParticleDB.hh"
 #include "TLorentzVector.h"
+#include "TPad.h"
 #include <glob.h>
 
 std::vector<std::string> glob(const char *pattern) {
@@ -298,7 +299,7 @@ void EfficiencyInCMFactory::SetDataBaseForPDG(int t_pdg, const std::string& t_ef
   fEfficiencyDB[t_pdg] = t_efficiency_db;
 }
 
-void EfficiencyInCMFactory::TransformBackToCM(const std::string& t_efficiency_db, const std::string& t_cm_db, int fragMass, int targetMass, double energyPerN)
+void EfficiencyInCMFactory::TransformBackToCM(const std::string& t_efficiency_db, const std::string& t_cm_db, int fragMass, int targetMass, int charge, double energyPerN)
 {
   const Double_t fNucleonMass = 931.5;
   TChain tree("spirit");
@@ -368,7 +369,7 @@ void EfficiencyInCMFactory::TransformBackToCM(const std::string& t_efficiency_db
     for(int part = 0; part < data -> multiplicity; ++part)
       if(data -> vaEmbedTag[part])
       {
-        singles -> recoMom[0] = data -> recoMom[part];
+        singles -> recoMom[0] = data -> recoMom[part]*charge;
         TransformVec(singles -> recoMom[0]);
         singles -> recoPosPOCA[0] = data -> recoPosPOCA[part];
         singles -> recoPosTargetPlane[0] = data -> recoPosTargetPlane[part];
@@ -379,7 +380,7 @@ void EfficiencyInCMFactory::TransformBackToCM(const std::string& t_efficiency_db
         singles -> recoEmbedTag[0] = data -> recoEmbedTag[part];
         singles -> recodedx[0] = data -> recodedx[part];
 
-        singles -> vaMom[0] = data -> vaMom[part];
+        singles -> vaMom[0] = data -> vaMom[part]*charge;
         TransformVec(singles -> vaMom[0]);
         singles -> vaPosPOCA[0] = data -> vaPosPOCA[part];
         singles -> vaPosTargetPlane[0] = data -> vaPosTargetPlane[part];
@@ -397,6 +398,11 @@ void EfficiencyInCMFactory::TransformBackToCM(const std::string& t_efficiency_db
   compressed.Write();
 }
 
+void EfficiencyInCMFactory::SetUnfoldingDist(TH2F *dist)
+{
+  if(dist) fUnfoldingDist = (TH2F*) dist -> Clone(TString::Format("%s_cloned", dist->GetName()));
+}
+
 TEfficiency EfficiencyInCMFactory::FinalizeBins(int t_pdg,
                                                 bool t_verbose)
 {
@@ -406,31 +412,61 @@ TEfficiency EfficiencyInCMFactory::FinalizeBins(int t_pdg,
 
   TH2F *det = new TH2F("det", "det", CMz_bin_.nbins, CMz_bin_.min, CMz_bin_.max, pt_bin_.nbins, pt_bin_.min, pt_bin_.max);
   TH2F *truth = new TH2F("truth", "truth", CMz_bin_.nbins, CMz_bin_.min, CMz_bin_.max, pt_bin_.nbins, pt_bin_.min, pt_bin_.max);
+  det -> SetStatOverflows(TH1::EStatOverflows::kIgnore);
+  truth -> SetStatOverflows(TH1::EStatOverflows::kIgnore);
+
   
   STAnaParticleDB::FillTDatabasePDG();
   int Z = TDatabasePDG::Instance() -> GetParticle(t_pdg) -> Charge()/3;
-  if(tree.GetEntries() > 0)
+  STData *fData = new STData;
+  tree.SetBranchAddress("EvtData", &fData);
+  int n = tree.GetEntries();
+  for(int i = 0; i < n; ++i)
   {
-    TString condition = TString::Format("vaEmbedTag && ");
-    //TString wrappedPhi = "((vaMom.Phi() < 0)? vaMom.Phi()*TMath::RadToDeg() + 360:vaMom.Phi()*TMath::RadToDeg())";
-    tree.SetAlias("phi", "((embedMom.Phi() < 0)? embedMom.Phi()*TMath::RadToDeg() + 360:embedMom.Phi()*TMath::RadToDeg())");
-    condition += "(";
-    for(int i = 0; i < phi_cut_.size(); ++i)
-    {  
-      if(i > 0) condition += ") || ";
-      condition += TString::Format("(phi > %f && %f > phi", phi_cut_[i].first, phi_cut_[i].second);
-    }
-    condition += "))";
+    tree.GetEntry(i);
+    const auto& mom = fData -> embedMom;
+    double pt = mom.Perp();
+    double z = mom.z();
+    double phi = mom.Phi()*TMath::RadToDeg();
+    double weight = 1;
+    if(CMz_bin_.min < z && z < CMz_bin_.max && pt_bin_.min < pt && pt < pt_bin_.max)
+      if(fUnfoldingDist) weight = fUnfoldingDist -> Interpolate((z < 0)? -z : z, pt);
+    if(phi < 0) phi += 360;
+    
+    // fill numerator
+    for(int part = 0; part < fData -> vaEmbedTag.size(); ++part)
+      if(fData -> vaEmbedTag[part])
+        if(fData -> vaNRowClusters[part] + fData -> vaNLayerClusters[part] > num_clusters_ && 
+           fData -> recodpoca[part].Mag() < dist_2_vert_)
+          for(const auto& phi_range : phi_cut_) // see if the particle is within phi range
+            if(phi_range.first < phi && phi < phi_range.second)
+            {
+              if(fUnfoldingDist)
+              {
+                double vaZ = fData -> vaMom[part].z();
+                double vaPt = fData -> vaMom[part].Perp();
+                if(CMz_bin_.min < vaZ && vaZ < CMz_bin_.max && pt_bin_.min < vaPt && vaPt < pt_bin_.max)
+                  det -> Fill(vaZ, vaPt, weight);
+              }
+              else det -> Fill(z, pt, weight);
+              break;
+            }
 
-    condition += TString::Format(" && vaNRowClusters + vaNLayerClusters > %d && recodpoca.Mag() < %f",
-                                 num_clusters_, dist_2_vert_);
+    truth -> Fill(z, pt, weight);
+    std::cout << "Processing entry " << i << " out of " << n << "\r" << std::flush;
+  }
 
-    tree.Project("det", "embedMom.Perp():embedMom.z()", condition);
-    tree.Project("truth", "embedMom.Perp():embedMom.z()");
+  std::cout << std::endl;
+  det -> Smooth();
+  truth -> Smooth();
 
-    det -> Smooth();
-    truth -> Smooth();
-  } else  
+  for(int i = 0; i < det -> GetNbinsX() + 2; ++i)
+    for(int j = 0; j < det -> GetNbinsY() + 2; ++j)
+      if(det -> GetBinContent(i, j) > truth -> GetBinContent(i, j))
+        det -> SetBinContent(i, j, truth -> GetBinContent(i, j));
+        //std::cout << "Inc " << det -> GetXaxis() -> GetBinCenter(i) << " " << det -> GetYaxis() -> GetBinCenter(i) << " " << det -> GetBinContent(i, j)  << " " << truth -> GetBinContent(i, j) << std::endl;
+
+  if(n == 0)
     std::cout << "No data is loaded for particle " << TDatabasePDG::Instance()->GetParticle(t_pdg)->GetName() << ". Will return an empty efficiency instead." << std::endl; 
  
   TEfficiency efficiency(*det, *truth);

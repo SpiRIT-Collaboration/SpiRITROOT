@@ -32,6 +32,17 @@ InitStatus STEfficiencyTask::Init()
     return kERROR;
   }
 
+  if(!fUnfoldingFileName.IsNull())
+  {
+    fLogger -> Info(MESSAGE_ORIGIN, "Setting up unfolding with distribution from " + fUnfoldingFileName);
+    fUnfoldingFile = std::unique_ptr<TFile>(new TFile(fUnfoldingFileName, "UPDATE"));
+    if(!fUnfoldingFile -> IsOpen())
+    {   
+      fLogger -> Info(MESSAGE_ORIGIN, "Cannot load unfolding file! Will disable unfolding");
+      fUnfoldingFile.reset();
+    }
+  }
+
   for(int pdg : fSupportedPDG)
   {
     auto& settings = fEfficiencySettings[pdg];
@@ -47,6 +58,9 @@ InitStatus STEfficiencyTask::Init()
     }
     fFactory -> SetPhiCut(settings.PhiCuts);
     fFactory -> SetTrackQuality(settings.NClusters, settings.DPoca);
+    if(fUnfoldingFile)
+      if(auto dist = static_cast<TH2F*>(fUnfoldingFile -> Get(TString::Format("DistUnfolding%d", pdg))))
+        fFactory -> SetUnfoldingDist(dist);
     fEfficiency[pdg] = fFactory -> FinalizeBins(pdg, true);
   }
 
@@ -60,6 +74,17 @@ InitStatus STEfficiencyTask::Init()
     fCMVec = (TClonesArray*) ioMan -> GetObject("CMVector");
     if(!fCMVec) 
       fLogger -> Fatal(MESSAGE_ORIGIN, "You muct add transform task before if you want to use efficiency factory in CM frame.");
+
+    // create histogram for unfolding
+    for(auto pdg : fSupportedPDG)
+    {
+      auto& settings = fEfficiencySettings[pdg];
+      fDistributionForUnfolding[pdg] = TH2F(TString::Format("PtCMz%d", pdg), TString::Format("Pt vs Pz for %d;Pz (MeV/c);Pt(MeV/c)", pdg),
+                                            settings.NCMzBins, settings.CMzMin, settings.CMzMax,
+                                            settings.NPtBins, settings.PtMin, settings.PtMax);
+
+      fProb = (TClonesArray*) ioMan -> GetObject("Prob");
+    }
   }
 
   ioMan -> Register("Eff", "ST", fEff, fIsPersistence);
@@ -96,6 +121,9 @@ void STEfficiencyTask::Exec(Option_t *opt)
     auto partEff = static_cast<STVectorF*>(fEff -> At(i));
     partEff -> fElements.clear();
 
+    auto unfoldIt = fDistributionForUnfolding.find(ipdg);
+    STVectorF* probArr = nullptr;
+    if(fProb) probArr = static_cast<STVectorF*>(fProb -> At(i));
     for(int part = 0; part < npart; ++part)
     {
       auto& mom = (fFactory -> IsInCM())? static_cast<STVectorVec3*>(fCMVec->At(i))->fElements[part] : data -> vaMom[part];
@@ -122,6 +150,9 @@ void STEfficiencyTask::Exec(Option_t *opt)
            if(settings.PtMin < pt && pt < settings.PtMax && 
               settings.CMzMin < z && z < settings.CMzMax)
              efficiency = TEff.GetEfficiency(TEff.FindFixBin(z, pt, phi));
+
+           double prob = probArr -> fElements[part];
+           if(efficiency > 0.05 && prob > 0.2) unfoldIt -> second.Fill(z, pt, prob/efficiency);
          }
          else
          {
@@ -139,6 +170,8 @@ void STEfficiencyTask::FinishTask()
   auto outfile = FairRootManager::Instance() -> GetOutFile();
   outfile -> cd();
   for(const auto& eff : fEfficiency) eff.second.Write(TString::Format("Efficiency%d", eff.first));
+  if(fUnfoldingFile) fUnfoldingFile -> cd();
+  for(const auto& dist : fDistributionForUnfolding) dist.second.Write(TString::Format("DistUnfolding%d", dist.first));
 }
 
 void STEfficiencyTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }
