@@ -16,6 +16,7 @@
 #include "TDatabasePDG.h"
 #include "TGInputDialog.h"
 #include "TButton.h"
+#include "TGMsgBox.h"
 #include "TDialogCanvas.h"
 
 ClassImp(STPIDProbTask);
@@ -228,19 +229,20 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
   TF1 tBBE("BBE", BBE, 0, 4500, 7);
 
   int nbinsx = 150;
-  int nbinsy = 500;
+  int nbinsy = 1000;
   double momMin = 0;
   double momMax = 4000;
   double minDeDx = 0;
-  double maxDeDx = 1500;
+  double maxDeDx = 5000;
 
   TCanvas c1;
   TH2F PID("PID", "PID", nbinsx, momMin, momMax, nbinsy, minDeDx, maxDeDx);
   PID.Sumw2();
   tBBE.SetParameters(1,-800,13,190000,-80,6, 0);
 
+  chain.SetAlias("phi", "(vaMom.Phi() > 0)? vaMom.Phi()*TMath::RadToDeg() : vaMom.Phi()*TMath::RadToDeg() + 360");
   chain.Draw("vadedx:vaMom.Mag()>>PID", 
-             "vaNRowClusters + vaNLayerClusters > 20 && recodpoca.Mag() < 10", 
+             "vaNRowClusters + vaNLayerClusters > 15 && recodpoca.Mag() < 15 && (fabs(vaMom.Phi()*TMath::RadToDeg()) < 30 || fabs(phi - 180) < 30) ", 
              "goff",100000);
 
   for(const int pdg : STAnaParticleDB::SupportedPDG)
@@ -254,50 +256,55 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
     std::string pname(particle -> GetName());
     tBBE.FixParameter(0,A);
 
-    bool drawBEE = true;
-    auto BEEName = TString::Format("BEE%d", pdg);
+    // required output
     auto tightCutName = TString::Format("TightCut%d", pdg);
-    if(auto loadedBEE = (TF1*) output.Get(BEEName))
-    {
-      c1.cd();
-      loadedBEE -> SetRange(10, momMax);
-      loadedBEE -> Draw("same");
-      c1.Update();
-      c1.Modified();
+    auto tightCut = (TCutG*) output.Get(tightCutName);;
+    auto BEEName = TString::Format("BEE%d", pdg);
+    auto BEE = (TF1*) output.Get(BEEName);
+    auto PIDSigmaName = TString::Format("PIDSigma%d", pdg);
+    auto PIDSigma = (TF1*) output.Get(PIDSigmaName);
+    auto GLimitName = TString::Format("Limit%d", pdg);
+    auto *GLimit = (TCutG*) output.Get(GLimitName);;
 
-      char response[] = "nnnnnnnnnnnnnnnnnnnnnnn";
-      new TGInputDialog(gClient->GetDefaultRoot(), gClient->GetDefaultRoot(), TString::Format("BEE line for %s is found. Redraw? (y/n)", pname.c_str()), "n", response);
-      std::string temp(response);
-      if(temp != "y") drawBEE = false;
-      loadedBEE -> Delete();
-    }
-
-    if(drawBEE)
+    auto AskRedrawIfExist = [](TObject *obj, const char *drawOpt, TCanvas *c2, const char *question)
     {
-      TCutG *cutg = (TCutG*) output.Get(tightCutName);
-      bool drawTightCut = true;
-      if(cutg)
+      if(obj)
       {
-        cutg -> Draw("l same");
-        c1.Update();
-        c1.Modified();
-        char response[] = "nnnnnnnnnnnnnnnnnnnnnnn";
-        new TGInputDialog(gClient->GetDefaultRoot(), gClient->GetDefaultRoot(), TString::Format("Tight cut for %s is found. Redraw? (y/n)", pname.c_str()), "n", response);
-        std::string temp(response);
-        if(temp != "y") drawTightCut = false;
-        else 
+        if(c2)
         {
-          cutg -> Delete();
-          cutg = nullptr;
+          c2 -> cd();
+          obj -> Draw(drawOpt);
+          c2 -> Update();
+          c2 -> Modified();
+        }
+        int response;
+        new TGMsgBox(
+          gClient->GetDefaultRoot(),
+          gClient->GetDefaultRoot(),
+          "",
+          question,
+          kMBIconQuestion,
+          kMBYes+kMBNo,
+          &response,  0, 0);
+        if(response == kMBYes) 
+        {
+          obj -> Delete();
+          obj = nullptr;
         }
       }
-      
-      if(drawTightCut)
+      return obj;
+    };
+
+    // need to redraw
+    tightCut = (TCutG*) AskRedrawIfExist(tightCut, "l same", &c1, TString::Format("Tight cut for %s is found. Redraw?", pname.c_str()));
+    
+    if(!tightCut)
+    {
       {
         TPaveText text(0.5, 0.7, .85, .8, "brNDC");
         text.AddText(TString::Format("Please draw cut for %s", pname.c_str()));
         text.Draw();
-        while(!cutg) cutg = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+        while(!tightCut) tightCut = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
       }
       {
         TPaveText text(0.5, 0.5, .85, .8, "brNDC");
@@ -311,105 +318,105 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
       }
 
       output.cd();
-      cutg -> Write(tightCutName);
+      tightCut -> Write(tightCutName);
 
-      auto profile = STPIDProbTask::ProfileX(&PID, cutg);//PID.ProfileX("_px", 1, -1, "s [CUTG]");
-      TH1F PIDMean("PIDMean", "Mean;momentum (MeV/c2);dEdX", nbinsx, momMin, momMax);
-      TH1F PIDStd("PIDStd", "Std;momentum (MeV/c2);Std", nbinsx, momMin, momMax);
-      cutg -> Delete();
-
-      for(int i = 1; i < PID.GetNbinsX(); ++i)
+      if(BEE)
       {
-        PIDMean.SetBinContent(i, profile->GetBinContent(i));
-        PIDStd.SetBinContent(i, profile->GetBinError(i));
+        BEE -> Delete();
+        BEE = nullptr;
       }
-
-      tBBE.SetNpx(5000);
-      std::string redraw = "y";
-      PIDMean.Fit(&tBBE, "Q");
-      PID.Draw("colz");
-      PIDMean.Draw("PE same");
-
-      while(redraw != "n")
-      {
-        c1.Update();
-        c1.Modified();
-
-        TPaveText text(0.5, 0.5, .85, .8, "brNDC");
-        text.AddText("Please inspect the result of the fit.");
-        text.AddText("You may adjust the parameters in the fit panel.");
-        text.AddText("Press Ctrl-C to continue");
-        text.Draw(); 
-
-        c1.WaitPrimitive("temp", "[CUTG]");
-
-        // Obtain the tf1 after adjustment is made on fit panel
-        auto newBBE = (TF1*) PIDMean.GetFunction("BBE");
-        tBBE.SetParameters(newBBE->GetParameters());
-        tBBE.Draw("L same");
-
-        c1.Update();
-        c1.Modified();
-        char response[] = "nnnnnnnnnnnnnnnnnnnnnnn";
-        new TGInputDialog(gClient->GetDefaultRoot(), gClient->GetDefaultRoot(), "Please inspect the fitted lines. Do you want to refit? (y/n)", "y", response);
-        redraw = response;
-      }
-
-      output.cd(); 
-      auto clonedMean = (TH1F*) PIDMean.Clone(TString::Format("PIDMean%d", pdg));
-      clonedMean -> Write();
-
-      auto clonedBBE = (TF1*) tBBE.Clone(BEEName);
-      clonedBBE -> SetRange(0.1, 4500);
-      clonedBBE -> Write();
-
-      std::string fitname = "ErrorFit" + pname;
-      TF1 fitError(fitname.c_str(), [](double *x, double *p){return p[0]/pow(x[0], p[1]) + p[2];}, 0, 4500, 3);
-      {
-        fitError.SetParameters(100,2,0);
-
-        TCanvas c2("c2", "c2");
-        PIDStd.GetYaxis()->SetLimits(0, PIDStd.GetMaximum());
-        PIDStd.Fit(&fitError);
-        PIDStd.GetYaxis()->SetRangeUser(0, PIDStd.GetMaximum());
-
-        TPaveText text(0.5,0.5,0.85,0.8, "brNDC");
-        text.AddText("Please modify the fit with Fit Panel if needed.");
-        text.AddText("Then press Ctrl-C");
-        text.Draw();
-        c2.WaitPrimitive("temp", "[CUTG]");
-
-        // Obtain the tf1 after adjustment is made on fit panel
-        auto newfitError = (TF1*) PIDStd.GetFunction(fitname.c_str());
-        fitError.SetParameters(newfitError->GetParameters());
-      }
-      output.cd();
-      auto clonedFitError = (TF1*) fitError.Clone(TString::Format("PIDSigma%d", pdg));
-      clonedFitError -> SetRange(0.1, 4500);
-      clonedFitError -> Write();
     }
 
-    // draw the acceptable range for the particle
-    bool drawGLimit = true;
-    auto GLimitName = TString::Format("Limit%d", pdg);
-    if(auto loadedGLimit = (TCutG*) output.Get(GLimitName))
+    auto profile = STPIDProbTask::ProfileX(&PID, tightCut);//PID.ProfileX("_px", 1, -1, "s [CUTG]");
+    //TH1F PIDMean("PIDMean", "Mean;momentum (MeV/c2);dEdX", nbinsx, momMin, momMax);
+    auto PIDMean = new TGraph;
+    auto PIDStd = new TGraph;
+
+    for(int i = 1; i < PID.GetNbinsX(); ++i)
+      if(profile -> GetBinContent(i) > 0) 
+      {
+        PIDMean -> SetPoint(PIDMean -> GetN(), profile->GetXaxis()->GetBinCenter(i), profile->GetBinContent(i));
+        PIDStd -> SetPoint(PIDStd -> GetN(),  profile->GetXaxis()->GetBinCenter(i), profile->GetBinError(i));
+      }
+    profile -> Delete();
+    profile = nullptr;
+
+    // first check and see if there are BEE functions in the file
+    c1.cd(); PID.Draw("colz");
+    if(BEE) BEE -> SetRange(10, momMax);
+    BEE = (TF1 *) AskRedrawIfExist(BEE, "same", &c1, TString::Format("BEE line for %s is found. Redraw? (y/n)", pname.c_str()));
+
+    if(!BEE)
     {
-      c1.cd();
-      loadedGLimit -> Draw("L same");
+      tBBE.SetNpx(5000);
+      bool redraw = true;
+      PIDMean -> Fit(&tBBE, "Q");
+      PID.Draw("colz");
+      PIDMean -> Draw("PE same");
+
+      //while(redraw)
+      TPaveText text(0.5, 0.5, .85, .8, "brNDC");
+      text.AddText("Please inspect the result of the fit.");
+      text.AddText("You may adjust the parameters in the fit panel.");
+      text.AddText("Press Ctrl-C to continue");
+      text.Draw(); 
+
+      c1.Update();
+      c1.Modified();
+      c1.WaitPrimitive("temp", "[CUTG]");
+
+      // Obtain the tf1 after adjustment is made on fit panel
+      auto newBBE = (TF1*) PIDMean -> GetFunction("BBE");
+      tBBE.SetParameters(newBBE->GetParameters());
+      tBBE.Draw("L same");
+
       c1.Update();
       c1.Modified();
 
-      char response[] = "nnnnnnnnnnnnnnnnnnnnnnn";
-      new TGInputDialog(gClient->GetDefaultRoot(), gClient->GetDefaultRoot(), TString::Format("PID Limits for %s is found. Redraw? (y/n)", pname.c_str()), "n", response);
-      std::string temp(response);
-      if(temp != "y") drawGLimit = false;
-      loadedGLimit -> Delete();
+      output.cd(); 
+      BEE = (TF1*) tBBE.Clone(BEEName);
+      BEE -> SetRange(0.1, 4500);
+      BEE -> Write();
+      
+      if(PIDSigma) PIDSigma -> Delete();
+      PIDSigma = nullptr;
     }
+
+    PIDSigma = (TF1 *) AskRedrawIfExist(PIDSigma, "", nullptr, "PID line is found. Do you want to discard it and refit error?");
+
+    if(!PIDSigma)
+    {
+      std::string fitname = "ErrorFit" + pname;
+      PIDSigma = new TF1(fitname.c_str(), [](double *x, double *p){return p[0]/pow(x[0], p[1]) + p[2];}, 0, 4500, 3);
+      PIDSigma -> SetParameters(100,2,0);
+
+      TCanvas c2("c2", "c2");
+      PIDStd -> Draw("AP");
+      PIDStd -> Fit(PIDSigma);
+
+      TPaveText text(0.5,0.5,0.85,0.8, "brNDC");
+      text.AddText("Please modify the fit with Fit Panel if needed.");
+      text.AddText("Then press Ctrl-C");
+      text.Draw();
+      c2.WaitPrimitive("temp", "[CUTG]");
+
+      // Obtain the tf1 after adjustment is made on fit panel
+      auto newfitError = (TF1*) PIDStd -> GetFunction(fitname.c_str());
+      PIDSigma -> SetParameters(newfitError->GetParameters());
+      
+      output.cd();
+      auto clonedPIDSigma = (TF1*) PIDSigma -> Clone(PIDSigmaName);
+      clonedPIDSigma -> SetRange(0.1, 4500);
+      clonedPIDSigma -> Write();
+    }
+
+    // draw the acceptable range for the particle
+    GLimit = (TCutG *) AskRedrawIfExist(GLimit, "L same", &c1, TString::Format("PID Limits for %s is found. Redraw? (y/n)", pname.c_str()));
  
-    if(drawGLimit)
+    c1.cd(); PID.Draw("colz");
+    if(!GLimit)
     {
       c1.cd();
-      TCutG *gLimit = nullptr;
       {
         TPaveText text(0.5,0.5,0.85,0.8, "brNDC");
         text.AddText("Please draw the acceptable range for the particle.");
@@ -419,7 +426,7 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
         if(auto obj = c1.GetListOfPrimitives()->FindObject("CUTG")) c1.GetListOfPrimitives()->Remove(obj);
         c1.Modified();
 
-        while(!gLimit) gLimit = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+        while(!GLimit) GLimit = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
       }
       {
         TPaveText text(0.5,0.5,0.85,0.8, "brNDC");
@@ -429,7 +436,7 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
         c1.WaitPrimitive("temp", "[CUTG]");
       }
 
-      auto clonedGLimit = gLimit -> Clone(GLimitName);
+      auto clonedGLimit = (TCutG*) GLimit -> Clone(GLimitName);
       output.cd();
       clonedGLimit -> Write();
     }
@@ -458,7 +465,7 @@ TH1F* STPIDProbTask::ProfileX(TH2F* hist, TCutG* cutg)
     TF1 gaus("gaus", "gaus");
     if(temp.GetEntries() > 0)
     {
-      gaus.FixParameter(1, temp.GetMean());
+      //gaus.FixParameter(1, temp.GetMean());
       temp.Fit(&gaus, "Q");
     }
     else gaus.SetParameters(0,0,0);
@@ -489,7 +496,7 @@ void STPIDProbTask::CreatePriorFromCut(const std::string& anaFile, const std::st
   double momMin = 0;
   double momMax = 4500;
   double minDeDx = 0;
-  double maxDeDx = 2000;
+  double maxDeDx = 5000;
 
   TH2F PID("PID", "PID", nbinsx, momMin, momMax, nbinsy, minDeDx, maxDeDx);
   PID.Sumw2();
@@ -509,9 +516,10 @@ void STPIDProbTask::CreatePriorFromCut(const std::string& anaFile, const std::st
     gErrorIgnoreLevel = origVerbosity;
   }
 
+  chain.SetAlias("phi", "(vaMom.Phi() > 0)? vaMom.Phi()*TMath::RadToDeg() : vaMom.Phi()*TMath::RadToDeg() + 360");
   chain.Draw("vadedx:vaMom.Mag()>>PID", 
-             "vaNRowClusters + vaNLayerClusters > 20 && recodpoca.Mag() < 10", 
-             "colz",100000);
+             "vaNRowClusters + vaNLayerClusters > 15 && recodpoca.Mag() < 15 && (fabs(vaMom.Phi()*TMath::RadToDeg()) < 30 || fabs(phi - 180) < 30) ", 
+             "goff",100000);
 
   for(const auto& part : particles)
   {
