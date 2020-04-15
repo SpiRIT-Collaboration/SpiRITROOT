@@ -155,6 +155,7 @@ TEfficiency EfficiencyFromAnaFactory::FinalizeBins(int t_pdg,
 
   tree.Project("det", "STData[0].embedMom.Theta()*TMath::RadToDeg():STData[0].embedMom.Mag()", condition);
   tree.Project("truth", "STData[0].embedMom.Theta()*TMath::RadToDeg():STData[0].embedMom.Mag()");
+  truth -> Scale(phase_space_factor);
  
   TEfficiency efficiency(*det, *truth);
   det -> SetDirectory(0);
@@ -245,6 +246,7 @@ void EfficiencyFromConcFactory::CompressFile(const std::string& t_efficiency_db,
   std::cout << std::endl;
 }
 
+/*
 TEfficiency EfficiencyFromConcFactory::FinalizeBins(int t_pdg,
                                                     bool t_verbose)
 {
@@ -277,8 +279,101 @@ TEfficiency EfficiencyFromConcFactory::FinalizeBins(int t_pdg,
     tree.Project("truth", "embedMom.Theta()*TMath::RadToDeg():embedMom.Mag()");
 
     det -> Smooth();
+    truth -> Scale(phase_space_factor);
     truth -> Smooth();
   } else  
+    std::cout << "No data is loaded for particle " << TDatabasePDG::Instance()->GetParticle(t_pdg)->GetName() << ". Will return an empty efficiency instead." << std::endl; 
+ 
+  TEfficiency efficiency(*det, *truth);
+  det -> SetDirectory(0);
+  truth -> SetDirectory(0);
+  efficiency.SetDirectory(0);
+  return efficiency;
+};*/
+
+void EfficiencyFromConcFactory::SetUnfoldingDist(TH2F *dist)
+{
+  if(dist) fUnfoldingDist = (TH2F*) dist -> Clone(TString::Format("%s_cloned", dist->GetName()));
+}
+
+TEfficiency EfficiencyFromConcFactory::FinalizeBins(int t_pdg,
+                                                    bool t_verbose)
+{
+  TChain tree("spirit");
+  for(const auto& filename : glob(fEfficiencyDB[t_pdg].c_str()))
+    tree.Add(filename.c_str());
+
+  TH2F *det = new TH2F("det", "det", mom_bin_.nbins, mom_bin_.min, mom_bin_.max, theta_bin_.nbins, theta_bin_.min, theta_bin_.max);
+  TH2F *truth = new TH2F("truth", "truth", mom_bin_.nbins, mom_bin_.min, mom_bin_.max, theta_bin_.nbins, theta_bin_.min, theta_bin_.max);
+  det -> SetStatOverflows(TH1::EStatOverflows::kIgnore);
+  truth -> SetStatOverflows(TH1::EStatOverflows::kIgnore);
+
+  
+  STAnaParticleDB::FillTDatabasePDG();
+  int Z = TDatabasePDG::Instance() -> GetParticle(t_pdg) -> Charge()/3;
+  STData *fData = new STData;
+  tree.SetBranchAddress("EvtData", &fData);
+  int n = tree.GetEntries();
+  for(int i = 0; i < n; ++i)
+  {
+    tree.GetEntry(i);
+    const auto& mom = fData -> embedMom;
+    double mag = mom.Mag();
+    double theta = mom.Theta()*TMath::RadToDeg();
+    double phi = mom.Phi()*TMath::RadToDeg();
+    double weight = 1;
+    if(mom_bin_.min < mag && mag < mom_bin_.max && theta_bin_.min < theta && theta < theta_bin_.max)
+      if(fUnfoldingDist) weight = fUnfoldingDist -> Interpolate(mag, theta);
+    if(weight == 0) weight = 1;
+    if(phi < 0) phi += 360;
+    
+    // fill numerator
+    for(int part = 0; part < fData -> vaEmbedTag.size(); ++part)
+      if(fData -> vaEmbedTag[part])
+        if(fData -> vaNRowClusters[part] + fData -> vaNLayerClusters[part] > num_clusters_ && 
+           fData -> recodpoca[part].Mag() < dist_2_vert_)
+        {
+          auto& vaMom = fData -> vaMom[part];
+          double vaMag = vaMom.Mag()*Z;
+          if((vaMag - mag)/mag < 0.2)
+            for(const auto& phi_range : phi_cut_) // see if the particle is within phi range
+              if(fUnfoldingDist)
+              {
+                double vaPhi = vaMom.Phi()*TMath::RadToDeg();
+                if(vaPhi < 0) vaPhi += 360;
+                if(phi_range.first < vaPhi && vaPhi < phi_range.second)
+                {
+                  {
+                    double vaTheta = vaMom.Theta()*TMath::RadToDeg();
+                    if(mom_bin_.min < vaMag && vaMag < mom_bin_.max && theta_bin_.min < vaTheta && vaTheta < theta_bin_.max)
+                      det -> Fill(vaMag, vaTheta, weight);
+                  }
+                  break;
+                }
+              }
+              else if(phi_range.first < phi && phi < phi_range.second) 
+              {
+                det -> Fill(mag, theta, weight);
+                break;
+              }
+        }
+
+    truth -> Fill(mag, theta, weight);
+    std::cout << "Processing entry " << i << " out of " << n << "\r" << std::flush;
+  }
+
+  std::cout << std::endl;
+  det -> Smooth();
+  truth -> Scale(phase_space_factor);
+  truth -> Smooth();
+
+  for(int i = 0; i < det -> GetNbinsX() + 2; ++i)
+    for(int j = 0; j < det -> GetNbinsY() + 2; ++j)
+      if(det -> GetBinContent(i, j) > truth -> GetBinContent(i, j))
+        det -> SetBinContent(i, j, truth -> GetBinContent(i, j));
+        //std::cout << "Inc " << det -> GetXaxis() -> GetBinCenter(i) << " " << det -> GetYaxis() -> GetBinCenter(i) << " " << det -> GetBinContent(i, j)  << " " << truth -> GetBinContent(i, j) << std::endl;
+
+  if(n == 0)
     std::cout << "No data is loaded for particle " << TDatabasePDG::Instance()->GetParticle(t_pdg)->GetName() << ". Will return an empty efficiency instead." << std::endl; 
  
   TEfficiency efficiency(*det, *truth);
@@ -431,6 +526,7 @@ TEfficiency EfficiencyInCMFactory::FinalizeBins(int t_pdg,
     double weight = 1;
     if(CMz_bin_.min < z && z < CMz_bin_.max && pt_bin_.min < pt && pt < pt_bin_.max)
       if(fUnfoldingDist) weight = fUnfoldingDist -> Interpolate((z < 0)? -z : z, pt);
+    if(weight == 0) weight = 1;
     if(phi < 0) phi += 360;
     
     // fill numerator
@@ -439,16 +535,25 @@ TEfficiency EfficiencyInCMFactory::FinalizeBins(int t_pdg,
         if(fData -> vaNRowClusters[part] + fData -> vaNLayerClusters[part] > num_clusters_ && 
            fData -> recodpoca[part].Mag() < dist_2_vert_)
           for(const auto& phi_range : phi_cut_) // see if the particle is within phi range
-            if(phi_range.first < phi && phi < phi_range.second)
+            if(fUnfoldingDist)
             {
-              if(fUnfoldingDist)
+              auto& vaMom = fData -> vaMom[part];
+              double vaPhi = vaMom.Phi()*TMath::RadToDeg();
+              if(vaPhi < 0) vaPhi += 360;
+              if(phi_range.first < vaPhi && vaPhi < phi_range.second)
               {
-                double vaZ = fData -> vaMom[part].z();
-                double vaPt = fData -> vaMom[part].Perp();
-                if(CMz_bin_.min < vaZ && vaZ < CMz_bin_.max && pt_bin_.min < vaPt && vaPt < pt_bin_.max)
-                  det -> Fill(vaZ, vaPt, weight);
+                {
+                  double vaZ = vaMom.z();
+                  double vaPt = vaMom.Perp();
+                  if(CMz_bin_.min < vaZ && vaZ < CMz_bin_.max && pt_bin_.min < vaPt && vaPt < pt_bin_.max)
+                    det -> Fill(vaZ, vaPt, weight);
+                }
+                break;
               }
-              else det -> Fill(z, pt, weight);
+            }
+            else if(phi_range.first < phi && phi < phi_range.second) 
+            {
+              det -> Fill(z, pt, weight);
               break;
             }
 
@@ -458,6 +563,7 @@ TEfficiency EfficiencyInCMFactory::FinalizeBins(int t_pdg,
 
   std::cout << std::endl;
   det -> Smooth();
+  truth -> Scale(phase_space_factor);
   truth -> Smooth();
 
   for(int i = 0; i < det -> GetNbinsX() + 2; ++i)

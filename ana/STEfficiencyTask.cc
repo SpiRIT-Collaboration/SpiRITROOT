@@ -74,19 +74,25 @@ InitStatus STEfficiencyTask::Init()
     fCMVec = (TClonesArray*) ioMan -> GetObject("CMVector");
     if(!fCMVec) 
       fLogger -> Fatal(MESSAGE_ORIGIN, "You muct add transform task before if you want to use efficiency factory in CM frame.");
-
-    // create histogram for unfolding
-    for(auto pdg : fSupportedPDG)
-    {
-      auto& settings = fEfficiencySettings[pdg];
-      fDistributionForUnfolding[pdg] = TH2F(TString::Format("PtCMz%d", pdg), TString::Format("Pt vs Pz for %d;Pz (MeV/c);Pt(MeV/c)", pdg),
-                                            settings.NCMzBins, settings.CMzMin, settings.CMzMax,
-                                            settings.NPtBins, settings.PtMin, settings.PtMax);
-
-      fProb = (TClonesArray*) ioMan -> GetObject("Prob");
-    }
   }
 
+  // create histogram for unfolding
+  for(auto pdg : fSupportedPDG)
+  {
+    auto& settings = fEfficiencySettings[pdg];
+    if(fFactory -> IsInCM())
+      fDistributionForUnfolding[pdg] = TH2F(TString::Format("PtCMz%d", pdg), TString::Format("Pt vs Pz for %d;Pz (MeV/c);Pt(MeV/c)", pdg),
+                                            3*settings.NCMzBins, settings.CMzMin, settings.CMzMax,
+                                            3*settings.NPtBins, settings.PtMin, settings.PtMax);
+    else
+      fDistributionForUnfolding[pdg] = TH2F(TString::Format("PTheta%d", pdg), TString::Format("Pt vs Pz for %d;Pz (MeV/c);Pt(MeV/c)", pdg),
+                                            3*settings.NMomBins, settings.MomMin, settings.MomMax,
+                                            3*settings.NThetaBins, settings.ThetaMin, settings.ThetaMax);
+
+
+  }
+
+  fProb = (TClonesArray*) ioMan -> GetObject("Prob");
   ioMan -> Register("Eff", "ST", fEff, fIsPersistence);
   return kSUCCESS;
 }
@@ -138,11 +144,11 @@ void STEfficiencyTask::Exec(Option_t *opt)
           insidePhi = true;
           break;
         }
-      double momMag = mom.Mag()*(particle->Charge())/3;
       double efficiency = 0;
       if(nclusters > settings.NClusters 
          && dpoca < settings.DPoca && insidePhi)
       {
+         double prob = probArr -> fElements[part];
          if(fFactory -> IsInCM())
          {
            double pt = mom.Perp();
@@ -150,14 +156,14 @@ void STEfficiencyTask::Exec(Option_t *opt)
            if(settings.PtMin < pt && pt < settings.PtMax && 
               settings.CMzMin < z && z < settings.CMzMax)
              efficiency = TEff.GetEfficiency(TEff.FindFixBin(z, pt, phi));
-
-           double prob = probArr -> fElements[part];
            if(efficiency > 0.05 && prob > 0.2) unfoldIt -> second.Fill(z, pt, prob/efficiency);
          }
          else
          {
-           if(settings.MomMin < momMag && momMag < settings.MomMax)
-             efficiency = TEff.GetEfficiency(TEff.FindFixBin(momMag, mom.Theta()*TMath::RadToDeg(), phi));
+           double momMag = mom.Mag()*(particle->Charge())/3;
+           double theta = mom.Theta()*TMath::RadToDeg();
+           if(settings.MomMin < momMag && momMag < settings.MomMax) efficiency = TEff.GetEfficiency(TEff.FindFixBin(momMag, theta, phi));
+           if(efficiency > 0.05 && prob > 0.2) unfoldIt -> second.Fill(momMag, theta, prob/efficiency);
          }
       }
       partEff -> fElements.push_back(efficiency);

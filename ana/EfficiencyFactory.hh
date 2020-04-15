@@ -38,6 +38,9 @@ public:
                                      bool t_verbose=false) = 0;
     virtual bool IsInCM() { return false; };
     virtual void SetUnfoldingDist(TH2F* dist) {};
+
+    // additional factor for phi phase space coverage
+    void SetPhaseSpaceFactor(double t_factor) { phase_space_factor = t_factor; };
 protected:
     double dist_2_vert_;
     int num_clusters_;
@@ -46,6 +49,7 @@ protected:
     Binning theta_bin_{0, 90, 45};
     Binning pt_bin_{0, 2500, 10};
     Binning CMz_bin_{-1500, 1500, 10};
+    double phase_space_factor = 1;
 };
 
 class OrigEfficiencyFactory : public EfficiencyFactory
@@ -82,9 +86,10 @@ public:
     static void CompressFile(const std::string& t_efficiency_db, const std::string& t_compressed_db);  
     virtual TEfficiency FinalizeBins(int t_pdg,
                                      bool t_verbose=false); 
-
+    virtual void SetUnfoldingDist(TH2F* dist);
 protected:
     std::map<int, std::string> fEfficiencyDB;
+    TH2F *fUnfoldingDist = nullptr;
 };
 
 class EfficiencyInCMFactory : public EfficiencyFactory
