@@ -31,7 +31,7 @@ class STParameters
     Double_t GetBDCOffsetX(); // mm
     Double_t GetBDCOffsetY(); // mm
     Int_t GetGGRunID();
-    Int_t GetAnode12Voltage(); // V
+    Int_t GetRelativeGainRunID(); // V
 
     Double_t GetDriftVelocity(); // cm/us
     Double_t GetFieldOffsetX(); // cm
@@ -50,7 +50,7 @@ class STParameters
     map<Int_t, Double_t> fYPedestal;
     map<Int_t, Double_t> fBDCOffsetX;
     map<Int_t, Double_t> fBDCOffsetY;
-    map<Int_t, Int_t> fAnode12Voltage;
+    map<Int_t, Int_t> fRelativeGainRun;
     map<Int_t, Int_t> fGGRun;
 
     // System-wise : Key = SystemID (132124, 124112, 112124, 108112)

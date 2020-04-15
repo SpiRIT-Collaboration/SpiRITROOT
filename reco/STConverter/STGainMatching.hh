@@ -28,14 +28,14 @@ class STGainMatching {
 
     Bool_t Init();
     void SetDatafile(TString datafile);
-    Bool_t CalibrateADC(Int_t layer, Int_t numTbs, Double_t *adc);
+    Bool_t CalibrateADC(Int_t layer, Int_t row, Int_t numTbs, Double_t *adc);
 
   private:
     void ClassInit();
 
     Bool_t fIsInitialized;
     TString fDatafile;
-    Double_t fRelativeGain[112];
+    Double_t fRelativeGain[112][108];
 
   ClassDef(STGainMatching, 1)
 };

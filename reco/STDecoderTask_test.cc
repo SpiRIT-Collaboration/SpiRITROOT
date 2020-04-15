@@ -51,10 +51,15 @@ STDecoderTask::STDecoderTask()
   fEndTb = -1;
 
   fIsPersistence = kFALSE;
+  fIsEmbedding = kFALSE;
+  fEmbedFile = "";
   
   fPar = NULL;
+  fEmbedTrackArray = new TClonesArray("STMCTrack");
   fRawEventArray = new TClonesArray("STRawEvent");
+  fRawEmbedEventArray = new TClonesArray("STRawEvent");
   fRawDataEventArray = new TClonesArray("STRawEvent");
+  fRawEventMC = NULL;
   fRawEventData = new STRawEvent();
   fRawEvent = NULL;
   fChain = NULL;
@@ -83,8 +88,9 @@ void STDecoderTask::SetGainMatchingData(TString filename)                       
 void STDecoderTask::SetTbRange(Int_t startTb, Int_t endTb)                                    { fStartTb = startTb; fEndTb = endTb; }
 void STDecoderTask::SetUseSeparatedData(Bool_t value)                                         { fIsSeparatedData = value; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
-void STDecoderTask::SetEventList(const std::vector<int>& eventlist)                           { fEventIDList = eventlist; }
-void STDecoderTask::ClearEventList()                                                          { fEventIDList.clear(); }
+void STDecoderTask::SetEmbedding(Bool_t value)                                                { fIsEmbedding = value; }
+void STDecoderTask::SetEmbedFile(TString filename)                                            { fEmbedFile = filename; }
+
 void STDecoderTask::SetDataList(TString list)
 {
   std::ifstream listFile(list.Data());
@@ -112,7 +118,25 @@ STDecoderTask::Init()
     return kERROR;
   }
 
+  //Check if embedding is turned on
+  if (!fEmbedFile.EqualTo("") && fIsEmbedding)
+    {
+      LOG(INFO) <<"Embed is true and settingup branch adress " << FairLogger::endl;
+      fChain = new TChain("cbmsim");
+      fChain -> AddFile(fEmbedFile);
+      fChain -> SetBranchAddress("STRawEvent", &fEventArray);
+      fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
+
+      ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
+      ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
+      ioMan -> Register("STMCTrack", "SPiRIT", fEmbedTrackArray, fIsPersistence);
+    }
+
+
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
+  //  ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
+  //  ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
+  //  ioMan -> Register("STMCTrack", "SPiRIT", fEmbedTrackArray, fIsPersistence);
   
   fDecoder = new STCore();
   fDecoder -> SetUseSeparatedData(fIsSeparatedData);
@@ -184,44 +208,14 @@ STDecoderTask::Init()
     fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set!");
   }
 
-  for (auto iLayer = 0; iLayer < 112; iLayer++)
-    for(auto iRow = 0; iRow < 108; iRow++)
-      fGainMatchingDataScale[iLayer][iRow] = 1;
-
   if (fGainMatchingData.EqualTo(""))
     fLogger -> Info(MESSAGE_ORIGIN, "Relative gain maching is not done!");
   else
-  {
-    //    cout<< "== [STDecoderTask] Low anode gain file set!" <<endl;
-    std::ifstream matchList(fGainMatchingData.Data());
-    Int_t layer = 0;
-    Int_t row = 0;
-    Double_t relativeGain = 0;
-    std::string line;
-    while(std::getline(matchList, line))
-    {
-      double col1, col2, col3;
-      std::stringstream ss(line);
-      ss >> col1 >> col2;
-      layer = int(col1 + 0.5);
-      if(ss >> col3)
-      {
-        row = int(col2 + 0.5);
-        fGainMatchingDataScale[layer][row] = col3;
-      }
-      else
-        for(int iRow = 0; iRow < 108; ++iRow)
-          fGainMatchingDataScale[layer][iRow] = col2;
-
-    }
     fDecoder -> SetGainMatchingData(fGainMatchingData);
-  }
 
   if (fEndTb == -1)
     fEndTb = fPar -> GetNumTbs();
   fDecoder -> SetTbRange(fStartTb, fEndTb);
-
-  if(fEventIDList.size() > 0) fLogger -> Info(MESSAGE_ORIGIN, "EventID list is supplied. Will only run those events");
 
   return kSUCCESS;
 }
@@ -248,150 +242,120 @@ STDecoderTask::Exec(Option_t *opt)
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStart("DecoderTask");
 #endif
+  fEmbedTrackArray -> Delete();
   fRawEventArray -> Delete();
+  fRawEmbedEventArray -> Delete();
   fRawDataEventArray -> Delete();
-  int EventID = fEventID;
-  if(fEventIDList.size() > 0) 
-  {
-    if(fEventIDList.size() > fEventID) EventID = fEventIDList[fEventID] - 1; // Run number starts at 1
-    else fLogger -> Fatal(MESSAGE_ORIGIN, "fEventID is larger than the size of fEventIDList");
-  }
-  if(EventID < 0) fLogger -> Fatal(MESSAGE_ORIGIN, "EventID < 0");
   
   if (fRawEvent == NULL)
     {
-      fRawEvent = fDecoder -> GetRawEvent(EventID);
+      fRawEvent = fDecoder -> GetRawEvent(fEventID++);
       *fRawEventData = *fRawEvent;
     }
+  if (fEmbedFile.EqualTo("") && fIsEmbedding){
+    std::cout << cRED << "== [STDecoderTask] MC file for embedding not set!" << std::endl;
+    exit(0);
+  }
+  else if (!fEmbedFile.EqualTo("") && fIsEmbedding){
+    if (fEventID<2)
+      std::cout << "== [STDecoderTask] Setting up embed mode" << std::endl;
 
-  CheckSaturation(fRawEvent);
-    
+    if((fEventID-1) < fChain->GetEntries())
+    {
+      fChain -> GetEntry(fEventID-1);
+      fRawEventMC = (STRawEvent *) fEventArray -> At(0);
+    }
+
+    if(fRawEventMC != NULL)
+      {
+	Int_t numPads = fRawEvent -> GetNumPads();
+	Int_t numPadsMC = fRawEventMC -> GetNumPads();  
+
+	for (Int_t iPad = 0; iPad < numPads; iPad++) {
+	  STPad *pad = fRawEvent -> GetPad(iPad);
+	  Double_t *adc = pad -> GetADC();
+
+	  for (Int_t iPadMC = 0; iPadMC < numPadsMC; iPadMC++){
+	    STPad *padMC = fRawEventMC -> GetPad(iPadMC);
+	    Double_t *adcMC = padMC -> GetADC();
+
+	    if ((padMC -> GetRow() == pad -> GetRow()) &&
+		(padMC -> GetLayer() == pad -> GetLayer()))
+	      {
+		for (Int_t iTb = 0; iTb < fPar -> GetNumTbs(); iTb++)
+		  {
+		    pad -> SetADC(iTb, adc[iTb]+adcMC[iTb]);
+
+		  }
+	      }
+	  }
+	}
+      }
+  }
+  else {
+    if (fEventID<2)
+      std::cout << "== [STDecoderTask] Embedding mode DISABLED" << std::endl; 
+  }
+  
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
   new ((*fRawDataEventArray)[0]) STRawEvent(fRawEventData);
+  if(fRawEventMC != NULL)
+    new ((*fRawEmbedEventArray)[0]) STRawEvent(fRawEventMC);
 
   fRawEvent = NULL;
-  fEventID++;
-
+  fRawEventMC = NULL;
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStop("DecoderTask");
 #endif
+ 
+  //    LOG(INFO) <<"STDEcoder task finished " << FairLogger::endl;
+
+
 }
 
-void
-STDecoderTask::CheckSaturation(STRawEvent *event)
-{ 
-  //Find if a pad is saturated using Bill's pole zero technique 
-  //Returns Time bucket (tb) position of begining of final saturating pulse
-  //From this tb position we should not embed any hits also the pad is flagged saturated 
-  int tb_pos_ofsat = 9999;
-  int tb_offset    = 30;   //offset from minimum of bill's method to begining of saturated pulse 
-  //Setting A from Bill's presentation
-  //gives undershoot for saturated pules
-  //exponential tail for nomal pules die off
-  double a_o = .9723;
-  double a_1 = -.9453;
-  double b_o = .9545;
-  double b_1 = -.9203;
+/*
+STRawEvent*
+STDecoderTask::Embedding(TString dataFile, Int_t eventId)
+{
+  TChain *fChain = NULL;
+  TClonesArray *fEventArray = nullptr;
+  STRawEvent * rawEvent = nullptr;
 
+  fChain = new TChain("cbmsim");
+  fChain -> AddFile(dataFile);
+  fChain -> SetBranchAddress("STRawEvent", &fEventArray);
 
-  for(int iPad = 0; iPad < event -> GetNumPads(); iPad++)
+  if(eventId < fChain->GetEntries())
     {
-      auto pad = event -> GetPad(iPad);
-
-      Double_t *adc = pad -> GetADC();
-
-      int num_adc = fEndTb;
-      if(fEndTb == -1)
-	num_adc = fPar -> GetNumTbs();
-
-      double pulse_prev   = adc[0];
-      double correct_prev = 0;
-      
-
-      //CHECK FOR GG fast close which also has low signal
-      
-      
-      
-      double max_value = 0;
-      double min_value = 0;
-      int min_tb = 0;
-      double thresh = -20;
-      
-      //lower vector store the first bin under threshold
-      //upper stores the first bin over threshold if there is a lower entry
-      //mintb stores local minimum tb value
-      //minval stores local minimum ADC value
-      vector<int>lower, upper, mintb,minval; 
-      
-      //To prevent wasted time loopoing over adc spectrum many times
-      //We loop over once and find all the points below threshold
-      //We store the tb of the local minimum points
-      //also the tb position the spectra went over the threhsold for positive and negative slope
-      //searching these smaller arrays we can get time over threshold for all local minimum
-      // insead of looping over adc spectrum many times
-
-      for (int tb = 1; tb < num_adc; ++tb)
-	{
-	  double pul   = adc[tb];
-	  double correct = (-b_1 * correct_prev + a_o * pul + a_1 * pulse_prev)/b_o;
-	  pulse_prev = pul;
-	  correct_prev = correct;
-	  
-	  if(adc[tb] > max_value)
-	    max_value = adc[tb];
-	  
-	  if(correct < min_value)
-	    {
-	      min_value = correct;
-	      min_tb = tb;
-	    }
-	  
-	  if(correct <= thresh && lower.size() == upper.size())
-	    lower.push_back(tb);
-	  
-	  if( (correct >= thresh && lower.size()-1 == upper.size()) ||
-	  ( lower.size()-1 == upper.size() &&  tb == num_adc-1))
-	    {
-	      upper.push_back(tb);
-	      mintb.push_back(min_tb);
-	      minval.push_back(min_value);
-	      min_value = 0;
-	    }
-	}
-      
-      if(lower.size() != upper.size())
-	cout<<"[STDecoderTask] SIZE of lower and upper array not same  "<<endl;
-      int time_over_thresh = -1;
-      int max_tb = -1;
-      double value_min = -1.; // min ADC value of tb position with max time over threshold 
-      
-      //there are several local minimums find the one with largest time over threshold 
-      for(int l = 0; l < lower.size(); l++)
-	{
-	  if(time_over_thresh < (upper.at(l) - lower.at(l)))
-	    {
-	      time_over_thresh = upper.at(l) - lower.at(l);
-	      max_tb = mintb.at(l);
-	      value_min = minval.at(l);
-	    }
-	}
-
-      double gain = fGainMatchingDataScale[pad->GetLayer()][pad->GetRow()];
-
-      if(time_over_thresh > 8 &&  value_min < (thresh*gain) && max_value > (gain*500) )
-	{
-	  pad -> SetIsSaturated(true);
-	  pad -> SetSaturatedTb(max_tb - 5);
-	  pad -> SetSaturatedTbMC(max_tb - tb_offset);
-	}
-
-    }
-
-      return;
+      fChain -> GetEntry(eventId);
+      rawEvent = (STRawEvent *) fEventArray -> At(0);
     }
   
-  Int_t
-    STDecoderTask::ReadEvent(Int_t eventID)
+  return rawEvent;
+
+}
+
+TClonesArray*
+STDecoderTask::GetEmbedTrack(TString dataFile, Int_t eventId)
+{
+  TChain *fChain = NULL;
+  TClonesArray MCTrackArray;// = nullptr;
+
+  fChain = new TChain("cbmsim");
+  fChain -> AddFile(dataFile);
+  fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
+
+  if(eventId < fChain->GetEntries())
+    {
+      fChain -> GetEntry(eventId);
+      //      new ((*fEmbedTrackArray)[eventId]) STMCTrack();
+    }
+  
+  //  return MCTrackArray;
+}
+*/
+Int_t
+STDecoderTask::ReadEvent(Int_t eventID)
 {
   fRawEventArray -> Delete();
 

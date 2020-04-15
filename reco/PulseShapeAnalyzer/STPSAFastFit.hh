@@ -47,7 +47,7 @@ class STPSAFastFit : public STPSA, public STPulse
      * Find the first peak from adc time-bucket starting from input tbCurrent
      * tbCurrent and tbStart becomes time-bucket of the peak and starting point
      */
-    Bool_t FindPeak(Int_t layer, Double_t *adc, Int_t &tbCurrent, Int_t &tbStart);
+    Bool_t FindPeak(Int_t layer, Int_t row, Double_t *adc, Int_t &tbCurrent, Int_t &tbStart);
 
     /**
      * Perform least square fitting with the the pulse around tbStart ~ tbPeak.
@@ -74,7 +74,7 @@ class STPSAFastFit : public STPSA, public STPulse
      * Test pulse with previous pulse and currently found pulse.
      * Returns true is current pulse is distinguished to be real pulse
      */
-    Bool_t TestPulse(Int_t layer, Double_t *adc, Double_t tbHitPre, Double_t amplitudePre, 
+    Bool_t TestPulse(Int_t layer, Int_t row, Double_t *adc, Double_t tbHitPre, Double_t amplitudePre, 
                      Double_t tbHit, Double_t amplitude);
 
     void SetGainMatchingScale(Double_t val);
@@ -137,7 +137,7 @@ class STPSAFastFit : public STPSA, public STPulse
 
     Double_t fGainMatchingScale = 1;
     TString fGainMatchingData = "";
-    Double_t fGainMatchingDataScale[112] = {0};
+    Double_t fGainMatchingDataScale[112][108] = {{0}};
     
     // the below is for setting the different PSA method.
   Int_t fPSAPeakFindingOption = 1; //defualt is High efficiency = 1; 0 = Jung Woo original method 

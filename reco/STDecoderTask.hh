@@ -146,6 +146,8 @@ class STDecoderTask : public FairTask {
     Long64_t fEventID;                  ///< Event ID for STSource
     std::vector<int> fEventIDList;      ///< List of events to be ran
 
+    Double_t fGainMatchingDataScale[112][108] = {{0}};
+
 
   ClassDef(STDecoderTask, 1);
 };

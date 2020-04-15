@@ -9,7 +9,8 @@ void run_reco_experiment_auto
   Int_t fNumEventsInSplit = 500,
   std::vector<Int_t> fSkipEventArray = {},
   TString fMCFile = "",
-  TString fPathToData = ""
+  TString fPathToData = "", 
+  TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement"
 )
 {
   /* ======= This part you need initial configuration ========= */
@@ -21,11 +22,10 @@ void run_reco_experiment_auto
   // If you don't need either of them, pass it blank.
   TString ggDataPathWithFormat = "/mnt/spirit/rawdata/misc/Frozen_Information_For_SpiRIT_Analysis/Aug2019/ggNoise/ggNoise_%d.root";
   TString beamDataPathWithFormat = "/mnt/spirit/rawdata/misc/Frozen_Information_For_SpiRIT_Analysis/Aug2019/BeamData/beam/beam_run%d.ridf.root";
-  TString gainMatchingFileWithFormat = "parameters/RelativeGain%dV.list";
 
   // Meta data path
   Bool_t fUseMeta = kTRUE;
-  TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement";
+  //TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement";
 
   // Use relative gain matching - Amplify low gain section
   Bool_t fUseGainMatching = kTRUE;
@@ -48,7 +48,7 @@ void run_reco_experiment_auto
   auto fBDCOffsetX = fParamSetter -> GetBDCOffsetX();
   auto fBDCOffsetY = fParamSetter -> GetBDCOffsetY();
   auto fGGRunID = fParamSetter -> GetGGRunID();
-  auto fAnode12Voltage = fParamSetter -> GetAnode12Voltage();
+  auto fRelativeGainRunID = fParamSetter -> GetRelativeGainRunID();
 
   auto fIsGGDataSet = !ggDataPathWithFormat.IsNull();
   auto fIsBeamDataSet = !beamDataPathWithFormat.IsNull();
@@ -56,7 +56,7 @@ void run_reco_experiment_auto
   TString fBeamData = "";
   if (fIsGGDataSet)   fGGData = Form(ggDataPathWithFormat.Data(), fGGRunID);
   if (fIsBeamDataSet) fBeamData = Form(beamDataPathWithFormat.Data(), fRunNo);
-  TString fGainMatchingFile = fSpiRITROOTPath + Form(gainMatchingFileWithFormat, fAnode12Voltage);
+  TString fGainMatchingFile = fSpiRITROOTPath + Form("parameters/RelativeGainRun%d.list", fRelativeGainRunID);
 
   Int_t start = fSplitNo * fNumEventsInSplit;
   if (start >= fNumEventsInRun) return;
@@ -236,8 +236,11 @@ void run_reco_experiment_auto
 
   auto smallOutput = new STSmallOutputTask();
   smallOutput -> SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.root").Data());
+  smallOutput -> SetRun(fRunNo);
 
   run -> AddTask(decoder);
+  if(!fMCFile.IsNull())
+    run -> AddTask(embedTask);
   run -> AddTask(preview);
   run -> AddTask(psa);
   run -> AddTask(helix);
