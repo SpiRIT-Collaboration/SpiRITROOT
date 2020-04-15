@@ -12,6 +12,7 @@
 // =================================================
 
 #include "STGainMatching.hh"
+#include <sstream>
 
 ClassImp(STGainMatching)
 
@@ -33,19 +34,30 @@ Bool_t STGainMatching::Init() {
     return fIsInitialized;
   }
 
-  Int_t layer;
-  Double_t relativeGain;
+  Int_t layer, row;
   std::ifstream matchList(fDatafile.Data());
-  for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
-    matchList >> layer >> relativeGain;
-    fRelativeGain[layer] = relativeGain;
+  std::string line;
+  while(std::getline(matchList, line))
+  {
+    double col1, col2, col3;
+    std::stringstream ss(line);
+    ss >> col1 >> col2;
+    layer = int(col1 + 0.5);
+    if(ss >> col3)
+    {
+      row = int(col2 + 0.5);
+      fRelativeGain[layer][row] = col3;
+    }
+    else
+      for(int iRow = 0; iRow < 108; ++iRow)
+        fRelativeGain[layer][iRow] = col2;
   }
 
   fIsInitialized = kTRUE;
   return fIsInitialized;
 }
 
-Bool_t STGainMatching::CalibrateADC(Int_t layer, Int_t numTbs, Double_t *adc) {
+Bool_t STGainMatching::CalibrateADC(Int_t layer, Int_t row, Int_t numTbs, Double_t *adc) {
   if (!fIsInitialized) {
     std::cout << "= [STGainMatching] Class is not initialized properly!" << std::endl;
 
@@ -53,7 +65,7 @@ Bool_t STGainMatching::CalibrateADC(Int_t layer, Int_t numTbs, Double_t *adc) {
   }
 
   for (Int_t iTb = 0; iTb < numTbs; iTb++)
-    adc[iTb] = adc[iTb]*fRelativeGain[layer];
+    adc[iTb] = adc[iTb]*fRelativeGain[layer][row];
 
   return fIsInitialized;
 }
@@ -61,7 +73,8 @@ Bool_t STGainMatching::CalibrateADC(Int_t layer, Int_t numTbs, Double_t *adc) {
 void STGainMatching::ClassInit() {
   fDatafile = "";
   for (Int_t iLayer = 0; iLayer < 112; iLayer++)
-    fRelativeGain[iLayer] = 1;
+    for (Int_t iRow = 0; iRow < 108; iRow++)
+      fRelativeGain[iLayer][iRow] = 1;
 }
 
 void STGainMatching::SetDatafile(TString datafile) {

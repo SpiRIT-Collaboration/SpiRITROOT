@@ -315,7 +315,7 @@ void STCore::ProcessCobo(Int_t coboIdx)
           fGainCalibrationPtr[coboIdx] -> CalibrateADC(row, layer, fNumTbs, adc);
 
         if (fIsGainMatchingData)
-          fGainMatchingPtr[coboIdx] -> CalibrateADC(layer, fNumTbs, adc);
+          fGainMatchingPtr[coboIdx] -> CalibrateADC(layer, row, fNumTbs, adc);
 
 	//mean and std devitation for finding dead pads. dead from saturation of beam
 	double mean  = 0.;
@@ -490,7 +490,7 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
             fGainCalibrationPtr[0] -> CalibrateADC(row, layer, fNumTbs, adc);
 
           if (fIsGainMatchingData)
-            fGainMatchingPtr[0] -> CalibrateADC(layer, fNumTbs, adc);
+            fGainMatchingPtr[0] -> CalibrateADC(layer, row, fNumTbs, adc);
 
           for (Int_t iTb = fStartTb; iTb < fEndTb; iTb++)
             pad -> SetADC(iTb, adc[iTb]);

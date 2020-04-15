@@ -56,7 +56,8 @@ STPSAFastFit::Init()
   fThresholdOneTbStep = fThresholdTbStep * fThreshold;
 
   for (auto iLayer = 0; iLayer < 112; iLayer++)
-    fGainMatchingDataScale[iLayer] = 1;
+    for (auto iRow = 0; iRow < 108; iRow++)
+      fGainMatchingDataScale[iLayer][iRow] = 1;
   
   if (fPSAPeakFindingOption != 1 ||fPSAPeakFindingOption != 0)
     {
@@ -250,7 +251,7 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
   Double_t adcHighLimit = 3500;
   if( !(fGainMatchingData.IsNull()) )
     {
-      adcHighLimit *= fGainMatchingDataScale[layer];
+      adcHighLimit *= fGainMatchingDataScale[layer][row];
       if(adcHighLimit < 1e-2)
 	cout<< "[==STPSAFastFit] adcHighLimit is 0 and anode gain matching file was set! Check file is read in properly"<<endl;
     }
@@ -258,7 +259,7 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
 #ifdef DEBUG_WHERE
   LOG(INFO) << "Start" << FairLogger::endl;
 #endif
-  while (FindPeak(layer, adc, tbCurrent, tbStart)) 
+  while (FindPeak(layer, row, adc, tbCurrent, tbStart)) 
   {
     if (tbStart > fTbStartCut - 1)
       break;
@@ -277,7 +278,7 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
       << FairLogger::endl;
 #endif
 
-    if (TestPulse(layer, adc, tbHitPre, amplitudePre, tbHit, amplitude)) 
+    if (TestPulse(layer, row, adc, tbHitPre, amplitudePre, tbHit, amplitude)) 
     {
 #ifdef DEBUG_PEAKFINDING
       LOG(INFO) 
@@ -328,6 +329,7 @@ STPSAFastFit::FindHits(STPad *pad, TClonesArray *hitArray, Int_t &hitNum)
 
 Bool_t
 STPSAFastFit::FindPeak(   Int_t layer,
+                          Int_t row,
                        Double_t *adc, 
                           Int_t &tbCurrent, 
                           Int_t &tbStart)
@@ -346,9 +348,9 @@ STPSAFastFit::FindPeak(   Int_t layer,
       Double_t diff = adc[tbCurrent] - adc[tbCurrent - 1];
 
       // If adc difference of step is above threshold
-      if (diff > fThresholdOneTbStep*fGainMatchingDataScale[layer]) 
+      if (diff > fThresholdOneTbStep*fGainMatchingDataScale[layer][row]) 
       {
-        if (adc[tbCurrent] > fThreshold*fGainMatchingDataScale[layer]) countAscending++;
+        if (adc[tbCurrent] > fThreshold*fGainMatchingDataScale[layer][row]) countAscending++;
         else countAscendingBelow++;
       }
       else 
@@ -363,7 +365,7 @@ STPSAFastFit::FindPeak(   Int_t layer,
         }
 
         tbCurrent -= 1;
-        if (adc[tbCurrent] < fThreshold*fGainMatchingDataScale[layer])
+        if (adc[tbCurrent] < fThreshold*fGainMatchingDataScale[layer][row])
         continue;
 
         // Peak is found!
@@ -395,7 +397,7 @@ STPSAFastFit::FindPeak(   Int_t layer,
     {
       Double_t diff = adc[tbCurrent] - adc[tbCurrent - 1];
       // If adc difference of step is above threshold
-      if (diff > fThresholdOneTbStep*fGainMatchingDataScale[layer])
+      if (diff > fThresholdOneTbStep*fGainMatchingDataScale[layer][row])
       {
         if (adc[tbCurrent] > 0) countAscending++;
         else countAscendingBelow++;
@@ -414,7 +416,7 @@ STPSAFastFit::FindPeak(   Int_t layer,
         }
       
         tbCurrent -= 1;
-        if (adc[tbCurrent] < fThreshold*fGainMatchingDataScale[layer] || adc[tbCurrent]-adc[tbCurrent-countAscending - countAscendingBelow]<fThreshold*fGainMatchingDataScale[layer]) // the largest pulse should be large then 30, the absolute pulse height should be larger than 30.
+        if (adc[tbCurrent] < fThreshold*fGainMatchingDataScale[layer][row] || adc[tbCurrent]-adc[tbCurrent-countAscending - countAscendingBelow]<fThreshold*fGainMatchingDataScale[layer][row]) // the largest pulse should be large then 30, the absolute pulse height should be larger than 30.
         {
           countAscending = 0;
           countAscendingBelow = 0;
@@ -714,6 +716,7 @@ STPSAFastFit::LSFitPulse(Double_t *buffer, Double_t tbStart, Int_t ndf, Double_t
 
 Bool_t
 STPSAFastFit::TestPulse(   Int_t layer,
+                           Int_t row,
                         Double_t *adc, 
                         Double_t tbHitPre,
                         Double_t amplitudePre, 
@@ -728,12 +731,12 @@ STPSAFastFit::TestPulse(   Int_t layer,
   if (numTbsCorrection + Int_t(tbHit) >= 512)
     numTbsCorrection = 512 - Int_t(tbHit);
 
-  if (amplitude < fThreshold*fGainMatchingDataScale[layer]) 
+  if (amplitude < fThreshold*fGainMatchingDataScale[layer][row]) 
   {
 #ifdef DEBUG_PEAKFINDING
     LOG(INFO) 
       << "Amplitude smaller than threshold, "
-      << amplitude << " < " << fThreshold*fGainMatchingDataScale[layer]
+      << amplitude << " < " << fThreshold*fGainMatchingDataScale[layer][row]
       << FairLogger::endl;
 #endif
 
@@ -777,10 +780,24 @@ void STPSAFastFit::SetGainMatchingData(TString filename)
     cout<< "== [STPSAFastFit] Low anode gain file set!" <<endl;  
     std::ifstream matchList(fGainMatchingData.Data());
     Int_t layer = 0;
+    Int_t row = 0;
     Double_t relativeGain = 0;
-    for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
-      matchList >> layer >> relativeGain;
-      fGainMatchingDataScale[layer] = relativeGain;
+    std::string line;
+    while(std::getline(matchList, line))
+    {
+      double col1, col2, col3;
+      std::stringstream ss(line);
+      ss >> col1 >> col2;
+      layer = int(col1 + 0.5);
+      if(ss >> col3)
+      {
+        row = int(col2 + 0.5);
+        fGainMatchingDataScale[layer][row] = col3;
+      }
+      else 
+        for(int iRow = 0; iRow < 108; ++iRow)
+          fGainMatchingDataScale[layer][iRow] = col2;
+
     }
   }
   

@@ -184,10 +184,38 @@ STDecoderTask::Init()
     fLogger -> Info(MESSAGE_ORIGIN, "Gain calibration data is set!");
   }
 
+  for (auto iLayer = 0; iLayer < 112; iLayer++)
+    for(auto iRow = 0; iRow < 108; iRow++)
+      fGainMatchingDataScale[iLayer][iRow] = 1;
+
   if (fGainMatchingData.EqualTo(""))
     fLogger -> Info(MESSAGE_ORIGIN, "Relative gain maching is not done!");
   else
+  {
+    //    cout<< "== [STDecoderTask] Low anode gain file set!" <<endl;
+    std::ifstream matchList(fGainMatchingData.Data());
+    Int_t layer = 0;
+    Int_t row = 0;
+    Double_t relativeGain = 0;
+    std::string line;
+    while(std::getline(matchList, line))
+    {
+      double col1, col2, col3;
+      std::stringstream ss(line);
+      ss >> col1 >> col2;
+      layer = int(col1 + 0.5);
+      if(ss >> col3)
+      {
+        row = int(col2 + 0.5);
+        fGainMatchingDataScale[layer][row] = col3;
+      }
+      else
+        for(int iRow = 0; iRow < 108; ++iRow)
+          fGainMatchingDataScale[layer][iRow] = col2;
+
+    }
     fDecoder -> SetGainMatchingData(fGainMatchingData);
+  }
 
   if (fEndTb == -1)
     fEndTb = fPar -> GetNumTbs();
@@ -251,24 +279,7 @@ STDecoderTask::Exec(Option_t *opt)
 
 void
 STDecoderTask::CheckSaturation(STRawEvent *event)
-{
-
-  Double_t fGainMatchingDataScale[112];
-  for (auto iLayer = 0; iLayer < 112; iLayer++)
-    fGainMatchingDataScale[iLayer] = 1;
-  
-  if (!(fGainMatchingData.IsNull()))
-    {
-      //    cout<< "== [STDecoderTask] Low anode gain file set!" <<endl;
-      std::ifstream matchList(fGainMatchingData.Data());
-      Int_t layer = 0;
-      Double_t relativeGain = 0;
-      for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
-	matchList >> layer >> relativeGain;
-	fGainMatchingDataScale[layer] = relativeGain;
-      }
-    }
-  
+{ 
   //Find if a pad is saturated using Bill's pole zero technique 
   //Returns Time bucket (tb) position of begining of final saturating pulse
   //From this tb position we should not embed any hits also the pad is flagged saturated 
@@ -365,7 +376,7 @@ STDecoderTask::CheckSaturation(STRawEvent *event)
 	    }
 	}
 
-      double gain = fGainMatchingDataScale[pad->GetLayer()];
+      double gain = fGainMatchingDataScale[pad->GetLayer()][pad->GetRow()];
 
       if(time_over_thresh > 8 &&  value_min < (thresh*gain) && max_value > (gain*500) )
 	{
