@@ -41,7 +41,10 @@ public:
 
     // additional factor for phi phase space coverage
     void SetPhaseSpaceFactor(double t_factor) { phase_space_factor = t_factor; };
+    void SetUpScalingFactor(double t_factor) { upscale_factor = t_factor; };
 protected:
+    TH2F* UpScaling(TH2F* t_hist, double t_xfactor, double t_yfactor);
+
     double dist_2_vert_;
     int num_clusters_;
     std::vector<std::pair<double, double>> phi_cut_;
@@ -50,6 +53,8 @@ protected:
     Binning pt_bin_{0, 2500, 10};
     Binning CMz_bin_{-1500, 1500, 10};
     double phase_space_factor = 1;
+    double upscale_factor = 1;
+
 };
 
 class OrigEfficiencyFactory : public EfficiencyFactory

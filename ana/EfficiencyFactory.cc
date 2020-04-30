@@ -36,6 +36,22 @@ EfficiencyFactory& EfficiencyFactory::SetPhiCut(const std::vector<std::pair<doub
 EfficiencyFactory& EfficiencyFactory::SetTrackQuality(int t_nclus, double t_poca)
 { dist_2_vert_ = t_poca; num_clusters_ = t_nclus; return *this;}
 
+TH2F* EfficiencyFactory::UpScaling(TH2F* t_hist, double t_xfactor, double t_yfactor)
+{
+  auto xaxis = t_hist -> GetXaxis();
+  auto yaxis = t_hist -> GetYaxis();
+  auto scaledHist = new TH2F(TString::Format("%s_Scaled", t_hist->GetName()), t_hist->GetName(), 
+                             t_xfactor*xaxis -> GetNbins(), xaxis -> GetXmin(), xaxis -> GetXmax(),
+                             t_yfactor*yaxis -> GetNbins(), yaxis -> GetXmin(), yaxis -> GetXmax());
+  for(int i = 1; i < scaledHist -> GetNbinsX(); ++i)
+    for(int j = 1; j < scaledHist -> GetNbinsY(); ++j)
+    {
+      double x = scaledHist -> GetXaxis() -> GetBinCenter(i);
+      double y = scaledHist -> GetYaxis() -> GetBinCenter(j);
+      scaledHist -> SetBinContent(i, j, t_hist -> Interpolate(x, y));
+    }
+  return scaledHist;
+}
 
 /*********************************************
 *  OrigEfficiency
@@ -364,8 +380,14 @@ TEfficiency EfficiencyFromConcFactory::FinalizeBins(int t_pdg,
 
   std::cout << std::endl;
   det -> Smooth();
+  auto temp = this -> UpScaling(det, upscale_factor, upscale_factor);
+  det -> Delete();
+  det = temp;
   truth -> Scale(phase_space_factor);
   truth -> Smooth();
+  temp = this -> UpScaling(truth, upscale_factor, upscale_factor);
+  truth -> Delete();
+  truth = temp;
 
   for(int i = 0; i < det -> GetNbinsX() + 2; ++i)
     for(int j = 0; j < det -> GetNbinsY() + 2; ++j)
@@ -563,14 +585,19 @@ TEfficiency EfficiencyInCMFactory::FinalizeBins(int t_pdg,
 
   std::cout << std::endl;
   det -> Smooth();
+  auto temp = this -> UpScaling(det, upscale_factor, upscale_factor);
+  det -> Delete();
+  det = temp;
   truth -> Scale(phase_space_factor);
   truth -> Smooth();
+  temp = this -> UpScaling(truth, upscale_factor, upscale_factor);
+  truth -> Delete();
+  truth = temp;
 
   for(int i = 0; i < det -> GetNbinsX() + 2; ++i)
     for(int j = 0; j < det -> GetNbinsY() + 2; ++j)
       if(det -> GetBinContent(i, j) > truth -> GetBinContent(i, j))
         det -> SetBinContent(i, j, truth -> GetBinContent(i, j));
-        //std::cout << "Inc " << det -> GetXaxis() -> GetBinCenter(i) << " " << det -> GetYaxis() -> GetBinCenter(i) << " " << det -> GetBinContent(i, j)  << " " << truth -> GetBinContent(i, j) << std::endl;
 
   if(n == 0)
     std::cout << "No data is loaded for particle " << TDatabasePDG::Instance()->GetParticle(t_pdg)->GetName() << ". Will return an empty efficiency instead." << std::endl; 
