@@ -85,7 +85,7 @@ InitStatus STEfficiencyTask::Init()
                                             3*settings.NCMzBins, settings.CMzMin, settings.CMzMax,
                                             3*settings.NPtBins, settings.PtMin, settings.PtMax);
     else
-      fDistributionForUnfolding[pdg] = TH2F(TString::Format("PTheta%d", pdg), TString::Format("Pt vs Pz for %d;Pz (MeV/c);Pt(MeV/c)", pdg),
+      fDistributionForUnfolding[pdg] = TH2F(TString::Format("PTheta%d", pdg), TString::Format("Lab theta vs lab mom for %d;mom (MeV/c);theta (deg)", pdg),
                                             3*settings.NMomBins, settings.MomMin, settings.MomMax,
                                             3*settings.NThetaBins, settings.ThetaMin, settings.ThetaMax);
 

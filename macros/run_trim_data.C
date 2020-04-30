@@ -45,7 +45,9 @@ void run_trim_data
   parReader -> open(par);
 
   TChain chain("spirit");
-  chain.Add(in);
+  // same file is added twice because the conc files may have either of those tree name
+  chain.Add(in + "/cbmsim");
+  chain.Add(in + "/spirit");
  
   FairRunAna* run = new FairRunAna();
   run -> SetGeomFile(geo);
@@ -60,20 +62,24 @@ void run_trim_data
   {
     case 124112: 
       eventFilter -> SetBeamFor124Star("../parameters/isotopesCutG124.root");
-      eventFilter -> SetMultiplicityCut(50, 100);
+      eventFilter -> SetVertexCut(-17.84, -11.69);
+      eventFilter -> SetVertexBDCCut(0.0974, 0.848*3, 0.689, 3*0.803);
+      eventFilter -> SetMultiplicityCut(50, 100, 20);
       break;
     case 132124: 
-      eventFilter -> SetBeamCut("BeamCut.root", "Sn132"); 
+      eventFilter -> SetBeamCut("../parameters/BeamCut.root", "Sn132"); 
       eventFilter -> SetVertexCut(-18.480, -11.165);
       eventFilter -> SetVertexBDCCut(2.69e-1, 3*0.988, 3.71e-1, 3*0.7532);
       eventFilter -> SetMultiplicityCut(50, 100, 20);
       break;
     case 112124: 
-      eventFilter -> SetBeamCut("BeamCut.root", "Sn112"); 
-      eventFilter -> SetMultiplicityCut(50, 100);
+      eventFilter -> SetBeamCut("../parameters/BeamCut.root", "Sn112"); 
+      eventFilter -> SetVertexCut(-16.944, -11.727);
+      eventFilter -> SetVertexBDCCut(-1.55e-1, 3*0.832, -3.18, 3*0.997);
+      eventFilter -> SetMultiplicityCut(50, 100, 20);
       break;
     case 108112: 
-      eventFilter -> SetBeamCut("BeamCut.root", "Sn108");
+      eventFilter -> SetBeamCut("../parameters/BeamCut.root", "Sn108");
       eventFilter -> SetVertexCut(-18.480, -11.165);
       eventFilter -> SetVertexBDCCut(-9.25e-3, 3*0.933, -2.80478, 3*0.8424);
       eventFilter -> SetMultiplicityCut(50, 100, 20);
@@ -85,7 +91,6 @@ void run_trim_data
   auto bdcInfo = new STAddBDCInfoTask();
   bdcInfo -> SetRunNo(fRunNo);
   bdcInfo -> SetBeamFile(fBeamData);
-  bdcInfo -> Register();
 
   run -> AddTask(reader);
   run -> AddTask(eventFilter);

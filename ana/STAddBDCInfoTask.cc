@@ -20,10 +20,6 @@ STAddBDCInfoTask::STAddBDCInfoTask()
 STAddBDCInfoTask::~STAddBDCInfoTask()
 {}
 
-void STAddBDCInfoTask::Register(bool registerID)
-{ fRegisterID = registerID; }
-
-
 InitStatus STAddBDCInfoTask::Init()
 {
   FairRootManager *ioMan = FairRootManager::Instance();

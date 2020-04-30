@@ -69,14 +69,21 @@ void STFilterEventTask::Exec(Option_t *opt)
   const auto& bdcVertex = data -> bdcVertex;
   auto vertexz = tpcVertex.z();
   
-  bool fill = false;
-  for(int i = 0; i < fCutG.size(); ++i)
-    if(fCutG[i] -> IsInside(data -> aoq, data -> z))
-    {
-      if(fAcceptance[i] > gRandom->Uniform(0, 1)) fill = true;
-      else fill = false;
-      break;
-    }
+  bool fill = true;
+  
+  if(fCutG.size() > 0)
+  {
+    bool insideAnyCut = false;
+    for(int i = 0; i < fCutG.size(); ++i)
+      if(fCutG[i] -> IsInside(data -> aoq, data -> z))
+      {
+        if(fAcceptance[i] > gRandom->Uniform(0, 1)) fill = true;
+        else fill = false;
+        insideAnyCut = true;
+        break;
+      }
+    if(!insideAnyCut) fill = false;
+  }
   if(fVertexCut)
     if(!(fVertexZMin < vertexz && vertexz < fVertexZMax)) fill = false;
   if(fMultCut)
