@@ -3,7 +3,7 @@
 #include "FairTask.h"
 
 #include "STData.hh"
-#include "STMassCalculator.hh"
+#include "STMassCalSimpleBB.hh"
 #include "STDigiPar.hh"
 #include "TClonesArray.h"
 
@@ -36,7 +36,8 @@ private:
   TClonesArray *fVAPIDNorm = nullptr;
 
 
-  STMassCalculator fMassCal;
+  STMassCalSimpleBB fMassCalH;
+  STMassCalSimpleBB fMassCalHe;
   Double_t MassRegion[7][4] ={{ 127.2,   21.3,      4.,  4.},            //pi  
 			      { 911.044, 68.4656,   2.,  2.},            //p  685.3 to 1,165.9
 			      { 1874.76, 129.962,   1.5, 1.5},           //d  1,552.3 to 

@@ -31,7 +31,8 @@ void run_conc_template
   parReader -> open(par);
 
   TChain chain("cbmsim");
-  chain.Add(in1);
+  chain.Add(in1 + "/spirit");
+  chain.Add(in1 + "/cbmsim");
  
   FairRunAna* run = new FairRunAna();
   run -> SetGeomFile(geo);
@@ -51,6 +52,7 @@ void run_conc_template
   run -> Init();
   run -> Run(0, chain.GetEntries());
 
+  cout << chain.GetEntries() << endl;
   cout << "Log    : " << log << endl;
   cout << "Input : " << in1 << endl;
   cout << "Output : " << out << endl;

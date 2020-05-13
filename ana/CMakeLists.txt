@@ -52,7 +52,7 @@ ST_ClusterNum_DB.cc
 ST_ProduceDB_ClusterNum.cc
 STPIDAnalysisTask.cc
 STConcReaderTask.cc
-MassCalculator/STMassCalculator.cc
+MassCalculator/STMassCalSimpleBB.cc
 MassCalculator/STBBFunction.cc
 )
 

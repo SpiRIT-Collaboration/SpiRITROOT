@@ -10,19 +10,18 @@ class STBBFunction
 		STBBFunction();
 		~STBBFunction();
 
-		Double_t fBBdedx     (Double_t z, Double_t m, Double_t *x, Double_t *p);
-		Double_t fBBdedx_pi  (Double_t *x, Double_t *p);
-		Double_t fBBdedx_p   (Double_t *x, Double_t *p);
-		Double_t fBBdedx_d   (Double_t *x, Double_t *p);
-		Double_t fBBdedx_t   (Double_t *x, Double_t *p);
-		Double_t fBBdedx_3he (Double_t *x, Double_t *p);
-		Double_t fBBdedx_4he (Double_t *x, Double_t *p);
-		Double_t fBBdedx_6he (Double_t *x, Double_t *p);
-		Double_t fBBdedx_6li (Double_t *x, Double_t *p);
-		Double_t fBBdedx_7li (Double_t *x, Double_t *p);
+		Double_t fBBdedx      (Double_t z, Double_t m, Double_t *x, Double_t *p);
+		Double_t fSimpleBB    (Double_t z, Double_t m, Double_t *x, Double_t *p);
+		Double_t fEmpiricalBB (Double_t z, Double_t m, Double_t *x, Double_t *p);
 
 		Double_t fBBMassFinderEq(Double_t *x, Double_t *p);
 		Double_t fBBMassFinderDeriv(Double_t *x, Double_t *p);
+		
+		Double_t fSimpleBBMassFinderEq(Double_t *x, Double_t *p);
+		Double_t fSimpleBBMassFinderDeriv(Double_t *x, Double_t *p);
+		
+		Double_t fEmpiricalBBMassFinderEq(Double_t *x, Double_t *p);
+		Double_t fEmpiricalBBMassFinderDeriv(Double_t *x, Double_t *p);
 
 	private:
 		// particle masses in MeV
@@ -81,6 +80,39 @@ class STBBFunction
 		// Bloch correction
 		Double_t BlochCor(Double_t y);
 		static constexpr Double_t alpha = 1./137.;
+		
+	public:
+		Double_t fBBdedx_pi  (Double_t *x, Double_t *p);
+		Double_t fBBdedx_p   (Double_t *x, Double_t *p);
+		Double_t fBBdedx_d   (Double_t *x, Double_t *p);
+		Double_t fBBdedx_t   (Double_t *x, Double_t *p);
+		Double_t fBBdedx_3he (Double_t *x, Double_t *p);
+		Double_t fBBdedx_4he (Double_t *x, Double_t *p);
+		Double_t fBBdedx_6he (Double_t *x, Double_t *p);
+		Double_t fBBdedx_6li (Double_t *x, Double_t *p);
+		Double_t fBBdedx_7li (Double_t *x, Double_t *p);
+		
+		Double_t fSimpleBB_pi  (Double_t *x, Double_t *p);
+		Double_t fSimpleBB_p   (Double_t *x, Double_t *p);
+		Double_t fSimpleBB_d   (Double_t *x, Double_t *p);
+		Double_t fSimpleBB_t   (Double_t *x, Double_t *p);
+		Double_t fSimpleBB_3he (Double_t *x, Double_t *p);
+		Double_t fSimpleBB_4he (Double_t *x, Double_t *p);
+		Double_t fSimpleBB_6he (Double_t *x, Double_t *p);
+		Double_t fSimpleBB_6li (Double_t *x, Double_t *p);
+		Double_t fSimpleBB_7li (Double_t *x, Double_t *p);
+		
+		Double_t fEmpiricalBB_pi  (Double_t *x, Double_t *p);
+		Double_t fEmpiricalBB_p   (Double_t *x, Double_t *p);
+		Double_t fEmpiricalBB_d   (Double_t *x, Double_t *p);
+		Double_t fEmpiricalBB_t   (Double_t *x, Double_t *p);
+		Double_t fEmpiricalBB_3he (Double_t *x, Double_t *p);
+		Double_t fEmpiricalBB_4he (Double_t *x, Double_t *p);
+		Double_t fEmpiricalBB_6he (Double_t *x, Double_t *p);
+		Double_t fEmpiricalBB_6li (Double_t *x, Double_t *p);
+		Double_t fEmpiricalBB_7li (Double_t *x, Double_t *p);
+		
+		Double_t fEmpiricalBB_PID (int pid, Double_t *x, Double_t *p);
 
 };
 
