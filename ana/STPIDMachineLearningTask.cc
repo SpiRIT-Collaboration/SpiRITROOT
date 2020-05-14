@@ -16,7 +16,6 @@ STTmpFile::STTmpFile(std::ios_base::openmode mode) : buffer{'/','t','m','p','/',
 STTmpFile::~STTmpFile()
 {
   fFile.close();
-  //std::cout << buffer << std::endl;
   unlink(buffer);
 }
 
@@ -38,6 +37,40 @@ STPIDMachineLearningTask::STPIDMachineLearningTask(): fEventID(0)
   fSTData = new STData();
 
   fLogger = FairLogger::GetLogger(); 
+  fAcceptRegion.SetPoint(0,414.268,5427.74);
+  fAcceptRegion.SetPoint(1,439.299,4325.7);
+  fAcceptRegion.SetPoint(2,476.846,3414.97);
+  fAcceptRegion.SetPoint(3,514.393,2384.13);
+  fAcceptRegion.SetPoint(4,564.456,1778.36);
+  fAcceptRegion.SetPoint(5,664.581,1140.25);
+  fAcceptRegion.SetPoint(6,722.987,900.185);
+  fAcceptRegion.SetPoint(7,827.284,652.682);
+  fAcceptRegion.SetPoint(8,952.441,525.104);
+  fAcceptRegion.SetPoint(9,1073.43,422.464);
+  fAcceptRegion.SetPoint(10,1215.27,363.146);
+  fAcceptRegion.SetPoint(11,1419.69,309.219);
+  fAcceptRegion.SetPoint(12,1594.91,276.048);
+  fAcceptRegion.SetPoint(13,1841.05,230.651);
+  fAcceptRegion.SetPoint(14,2133.08,196.4);
+  fAcceptRegion.SetPoint(15,2362.54,172.047);
+  fAcceptRegion.SetPoint(16,2671.26,155.05);
+  fAcceptRegion.SetPoint(17,5570.71,152.145);
+  fAcceptRegion.SetPoint(18,5570.71,18.8218);
+  fAcceptRegion.SetPoint(19,5558.2,9.08738);
+  fAcceptRegion.SetPoint(20,843.972,9.80151);
+  fAcceptRegion.SetPoint(21,731.331,14.3075);
+  fAcceptRegion.SetPoint(22,593.659,21.8962);
+  fAcceptRegion.SetPoint(23,460.159,30.1995);
+  fAcceptRegion.SetPoint(24,314.143,48.9153);
+  fAcceptRegion.SetPoint(25,197.33,81.51);
+  fAcceptRegion.SetPoint(26,134.752,147.89);
+  fAcceptRegion.SetPoint(27,93.0329,260.822);
+  fAcceptRegion.SetPoint(28,55.486,438.75);
+  fAcceptRegion.SetPoint(29,30.4547,671.463);
+  fAcceptRegion.SetPoint(30,17.9391,1430.75);
+  fAcceptRegion.SetPoint(31,22.1109,5909.9);
+  fAcceptRegion.SetPoint(32,405.924,5966.05);
+  fAcceptRegion.SetPoint(33,414.268,5427.74);
 }
 
 STPIDMachineLearningTask::~STPIDMachineLearningTask()
@@ -72,6 +105,7 @@ InitStatus STPIDMachineLearningTask::Init()
   std::string MLType;
   if(fMLType == STAlgorithms::NeuralNetwork) MLType = "Neural Network";
   if(fMLType == STAlgorithms::RandomForest) MLType = "Random Forest";
+  if(fMLType == STAlgorithms::Voting) MLType = "Voting Algorithm";
   fLogger -> Info(MESSAGE_ORIGIN, (MLType + " is selected").c_str());
   
   if(!fChain -> GetBranch("EvtData"))
@@ -125,17 +159,18 @@ void STPIDMachineLearningTask::LoadDataFromPython(int startID, int endID)
   {
     branch = fChain -> GetBranch("STData");
     origAddress = branch -> GetAddress();
-    branch -> SetAddress(&fSTDataArray);
+    fChain -> SetBranchAddress("STData", &fSTDataArray);
   }
   else
   {
     branch = fChain -> GetBranch("EvtData");
     origAddress = branch -> GetAddress();
-    branch -> SetAddress(&fSTData);
+    fChain -> SetBranchAddress("EvtData", &fSTData);
   }
 
   // write dat to buffer
   output.fFile << "dedx\tpx\tpy\tpz\teventid\n";
+  std::vector<std::pair<int, int>> excludedParticles;
   if(endID > fChain -> GetEntries()) endID = fChain -> GetEntries();
   for(int evt = startID; evt < endID; ++evt)
   {
@@ -147,6 +182,8 @@ void STPIDMachineLearningTask::LoadDataFromPython(int startID, int endID)
       double dedx = fSTData->vadedx[part];
       dedx = (isnan(dedx))? 0 : dedx;
       output.fFile << dedx << "\t" << vaMom.x() << "\t" << vaMom.y() << "\t" << vaMom.z() << "\t" << evt << "\n";
+
+      if(!fAcceptRegion.IsInside(vaMom.Mag(), dedx)) excludedParticles.push_back({evt - startID, part});
     }
   }
   output.fFile << std::flush;
@@ -155,6 +192,7 @@ void STPIDMachineLearningTask::LoadDataFromPython(int startID, int endID)
   std::string script;
   if(fMLType == STAlgorithms::NeuralNetwork) script = "MachineLearning.py";
   if(fMLType == STAlgorithms::RandomForest) script = "MachineLearningRandomForest.py";
+  if(fMLType == STAlgorithms::Voting) script = "MachineLearningVote.py";
 
   std::string VMCDIR(gSystem -> Getenv("VMCWORKDIR"));
   script = VMCDIR + "/MachineLearning/" + script;
@@ -177,6 +215,9 @@ void STPIDMachineLearningTask::LoadDataFromPython(int startID, int endID)
     auto& vec = fPDGFromPython.back();
     vec.push_back(type);
   }
+
+  // exclude particles from the list
+  for(const auto& id : excludedParticles) fPDGFromPython[id.first][id.second] = -1;
   
   // return branch to original address
   if(fIsTrimmedFile) fChain -> SetBranchAddress("STData", (TClonesArray**) origAddress);
@@ -198,10 +239,11 @@ void STPIDMachineLearningTask::TrainModel(const std::string& simulation, const s
   std::string script;
   if(type == STAlgorithms::NeuralNetwork) script = "MachineLearning.py";
   if(type == STAlgorithms::RandomForest) script = "MachineLearningRandomForest.py";
+  if(type == STAlgorithms::Voting) script = "MachineLearningVote.py";
 
   std::string VMCDIR(gSystem -> Getenv("VMCWORKDIR"));
   script = VMCDIR + "/MachineLearning/" + script;
-  gSystem -> Exec(("python " + script + " -l " + simulation + " -m " + saveModel + " -n " + std::to_string(minClus)).c_str());
+  gSystem -> Exec(("python " + script + " -l " + simulation + " -m " + saveModel/* + " -n " + std::to_string(minClus)*/).c_str());
 }
 
 void STPIDMachineLearningTask::ConvertEmbeddingConc(const std::vector<std::string>& embeddingFiles, 

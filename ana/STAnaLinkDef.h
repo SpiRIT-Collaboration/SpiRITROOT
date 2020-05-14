@@ -22,6 +22,7 @@
 #pragma link C++ class STFilterTask+;
 #pragma link C++ class STFilterEventTask+;
 #pragma link C++ class STAddBDCInfoTask+;
+#pragma link C++ class STSimpleGraphsTask+;
 
 #pragma link C++ class EfficiencyFactory+;
 #pragma link C++ class EfficiencyFromConcFactory+;

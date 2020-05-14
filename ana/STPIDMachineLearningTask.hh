@@ -27,6 +27,7 @@
 #include "TClonesArray.h"
 #include "TString.h"
 #include "TH2.h"
+#include "TCutG.h"
 #include "TTree.h"
 
 // STL
@@ -47,7 +48,7 @@ public:
   std::fstream fFile;
 };
 
-enum class STAlgorithms { NeuralNetwork, RandomForest };
+enum class STAlgorithms { NeuralNetwork, RandomForest, Voting };
 
 class STPIDMachineLearningTask : public FairTask {
   public:
@@ -91,6 +92,7 @@ class STPIDMachineLearningTask : public FairTask {
 
     STAlgorithms fMLType;
     std::string fSaveModel;
+    TCutG fAcceptRegion;
 
   ClassDef(STPIDMachineLearningTask, 1);
 };

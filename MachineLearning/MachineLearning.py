@@ -49,7 +49,7 @@ def TrainMachine(labeledData, modelSave, nClus):
   
   #MACHINE LEARN
   batch_size = 100
-  epochs = 100
+  epochs = 20
   
   model = Sequential()
 

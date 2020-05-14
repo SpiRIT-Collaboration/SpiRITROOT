@@ -19,11 +19,10 @@ STTransformFrameTask::STTransformFrameTask() : fTargetMass(0), fDoRotation(false
 { 
   fLogger = FairLogger::GetLogger(); 
   fCMVector = new TClonesArray("STVectorVec3");
-  fCMKE = new TClonesArray("STVectorVec3"); // the three compomenets in order are: transverse, long, total KE
   fFragRapidity = new TClonesArray("STVectorF");
   fFragVelocity = new TClonesArray("STVectorVec3");
   fLabRapidity = new TClonesArray("STVectorF");
-  fRandPhi = new STVectorF();
+  fBeamMom = new STVectorF();
   fBeamRapidity = new STVectorF();
 }
 
@@ -40,20 +39,18 @@ InitStatus STTransformFrameTask::Init()
   fData = (TClonesArray*) ioMan -> GetObject("STData");
 
   ioMan -> Register("CMVector", "ST", fCMVector, fIsPersistence);
-  ioMan -> Register("CMKE", "ST", fCMKE, fIsPersistence);
   ioMan -> Register("FragRapidity", "ST", fFragRapidity, fIsPersistence);
   ioMan -> Register("FragVelocity", "ST", fFragVelocity, fIsPersistence);
   ioMan -> Register("LabRapidity", "ST", fLabRapidity, fIsPersistence);
   ioMan -> Register("BeamRapidity", "ST", fBeamRapidity, fIsPersistence);
-  ioMan -> Register("RandPhi", "ST", fRandPhi, fIsPersistence);
-  // 0 of fElements is CM, 1 of fElements is Lab
+  ioMan -> Register("BeamMom", "ST", fBeamMom, fIsPersistence);
 
   fBeamRapidity -> fElements.push_back(0);
   fBeamRapidity -> fElements.push_back(0);
+  fBeamMom -> fElements.push_back(0);
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
     fCMVector -> ConstructedAt(i);
-    fCMKE -> ConstructedAt(i);
     fFragRapidity -> ConstructedAt(i);
     fFragVelocity -> ConstructedAt(i);
     fLabRapidity -> ConstructedAt(i);
@@ -94,6 +91,7 @@ void STTransformFrameTask::Exec(Option_t *opt)
   fBeamRapidity -> fElements[1] = LV.Rapidity();
   LV.Boost(vBeam);
   fBeamRapidity -> fElements[0] = LV.Rapidity();
+  fBeamMom -> fElements[0] = LV.Z();
 
   // beam rotation
   TVector3 beamDirection(TMath::Tan(data -> proja/1000.), TMath::Tan(data ->projb/1000.),1.);
@@ -102,25 +100,23 @@ void STTransformFrameTask::Exec(Option_t *opt)
   auto rotationAngle = beamDirection.Angle(TVector3(0,0,1));
 
   int npart = data -> multiplicity;
-  fRandPhi -> fElements.clear();
-  for(int part = 0; part < npart; ++part) fRandPhi -> fElements.push_back(gRandom -> Uniform(-TMath::Pi(), TMath::Pi()));
 
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
     int pdg = fSupportedPDG[i];
     int entry = fCMVector->GetEntriesFast();
     auto CMVector = static_cast<STVectorVec3*>(fCMVector -> At(i));
-    auto CMKE = static_cast<STVectorVec3*>(fCMKE -> At(i));;
     auto FragRapidity = static_cast<STVectorF*>(fFragRapidity -> At(i));
     auto FragVelocity = static_cast<STVectorVec3*>(fFragVelocity -> At(i));
     auto LabRapidity = static_cast<STVectorF*>(fLabRapidity -> At(i));
     CMVector -> fElements.clear();
-    CMKE -> fElements.clear();
     FragRapidity -> fElements.clear();
     FragVelocity -> fElements.clear();
     LabRapidity -> fElements.clear();
 
+    TLorentzVector pCM;
     for(int part = 0; part < npart; ++part)
+    {
       if(auto particle = TDatabasePDG::Instance()->GetParticle(pdg))
       {
         int ParticleZ = particle -> Charge()/3; // TParticlePDG define charge in units of |e|/3, probably to accomodate quarks
@@ -129,24 +125,16 @@ void STTransformFrameTask::Exec(Option_t *opt)
         auto mom = data -> vaMom[part]*ParticleZ;
         if(fDoRotation) mom.Rotate(rotationAngle, rotationAxis);
 
-        TLorentzVector pCM(mom.x(), mom.y(), mom.z(), sqrt(mom.Mag2() + ParticleMass*ParticleMass));
-        LabRapidity -> fElements.push_back(pCM.Rapidity());
-        pCM.Boost(vBeam);
-        CMVector -> fElements.emplace_back(pCM.Px(), pCM.Py(), pCM.Pz());
-        FragRapidity -> fElements.push_back(pCM.Rapidity()); 
-        FragVelocity -> fElements.push_back(pCM.BoostVector());
+        pCM.SetXYZM(mom.x(), mom.y(), mom.z(), ParticleMass);
+      }
+      else pCM.SetXYZM(0,0,0,0);
 
-        double totKE = pCM.Energy() - ParticleMass;
-        double transKE = pCM.Et() - ParticleMass;
-        double longKE = totKE - transKE;
-        CMKE -> fElements.emplace_back(transKE, longKE, totKE); 
-      }
-      else 
-      {
-        CMVector -> fElements.emplace_back(0,0,0);
-        CMKE -> fElements.emplace_back(0,0,0);
-        FragRapidity -> fElements.push_back(0);
-      }
+      LabRapidity -> fElements.push_back(pCM.Rapidity());
+      pCM.Boost(vBeam);
+      CMVector -> fElements.emplace_back(pCM.Px(), pCM.Py(), pCM.Pz());
+      FragRapidity -> fElements.push_back(pCM.Rapidity()); 
+      FragVelocity -> fElements.push_back(pCM.BoostVector());
+    }
   }
 }
 
