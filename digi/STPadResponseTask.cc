@@ -25,6 +25,7 @@ using namespace std;
 STPadResponseTask::STPadResponseTask()
 :FairTask("STPadResponseTask"),
  fEventID(0),
+ fGainMatchingDataScale(112, std::vector<double>(108, 1)),
  fAssumeGausPRF(kFALSE)
 {
   fIsPersistence = kFALSE;
@@ -45,6 +46,36 @@ STPadResponseTask::SetParContainers()
   FairRunAna* ana = FairRunAna::Instance();
   FairRuntimeDb* rtdb = ana->GetRuntimeDb();
   fPar = (STDigiPar*) rtdb->getContainer("STDigiPar");
+}
+
+void STPadResponseTask::SetGainMatchingData(TString filename)
+{
+  auto fGainMatchingData = filename;
+  if (!(fGainMatchingData.IsNull())) {
+    cout<< "== [STPadResponseTask] Low anode gain file set!" <<endl;  
+    std::ifstream matchList(fGainMatchingData.Data());
+    Int_t layer = 0;
+    Int_t row = 0;
+    Double_t relativeGain = 0;
+    std::string line;
+    while(std::getline(matchList, line))
+    {
+      double col1, col2, col3;
+      std::stringstream ss(line);
+      ss >> col1 >> col2;
+      layer = int(col1 + 0.5);
+      if(ss >> col3)
+      {
+        row = int(col2 + 0.5);
+        fGainMatchingDataScale[layer][row] = col3;
+      }
+      else 
+        for(int iRow = 0; iRow < 108; ++iRow)
+          fGainMatchingDataScale[layer][iRow] = col2;
+
+    }
+  }
+  
 }
 
 InitStatus 
@@ -149,6 +180,8 @@ STPadResponseTask::Exec(Option_t* option)
     Int_t iTb   = tEl/fTBTime;
     if(iTb>fNTbs) continue;
     if(iTb < 0) iTb = 0;
+
+    gain /= fGainMatchingDataScale[layer][row];
 
     // Covering 5x5(25 in total) pads cover 99.97 % of all the charges.
     for(Int_t iLayer=0; iLayer<5; iLayer++){ 

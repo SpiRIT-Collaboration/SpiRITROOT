@@ -43,7 +43,8 @@ STElectronicsTask::STElectronicsTask()
   fSignalPolarity(1),
   fKillAfterSaturation(kTRUE),
   fStartTb(0),
-  fEndTb(-1)
+  fEndTb(-1),
+  fGainMatchingDataScale(112, std::vector<double>(108, 1))
 {
   fLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STElectronicsTask");
 }
@@ -110,8 +111,6 @@ STElectronicsTask::Init()
 
   fRawEvent = new ((*fRawEventArray)[0]) STRawEvent();
 
-  for (auto iLayer = 0; iLayer < 112; iLayer++)
-    fGainMatchingDataScale[iLayer] = 1;
 
   if (!(fGainMatchingData.IsNull()))
     {
@@ -121,10 +120,24 @@ STElectronicsTask::Init()
       {
         fLogger->Info(MESSAGE_ORIGIN, (" Gain matching file " + fGainMatchingData + " set!"));
         Int_t layer = 0;
+        Int_t row = 0;
         Double_t relativeGain = 0;
-        for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
-          matchList >> layer >> relativeGain;
-          fGainMatchingDataScale[layer] = relativeGain;
+        std::string line;
+        while(std::getline(matchList, line))
+        {
+          double col1, col2, col3;
+          std::stringstream ss(line);
+          ss >> col1 >> col2;
+          layer = int(col1 + 0.5);
+          if(ss >> col3)
+          {
+            row = int(col2 + 0.5);
+            fGainMatchingDataScale[layer][row] = col3;
+          }
+          else 
+            for(int iRow = 0; iRow < 108; ++iRow)
+              fGainMatchingDataScale[layer][iRow] = col2;
+    
         }
       } else fLogger->Info(MESSAGE_ORIGIN, (" Cannot load gain matching file " + fGainMatchingData + ". Gain matching is ignored"));
     }
@@ -247,7 +260,7 @@ STElectronicsTask::Exec(Option_t* option)
     Int_t row   = padI -> GetRow();
     Int_t layer = padI -> GetLayer();
     STPad *padO = new STPad(row, layer);
-    Double_t gainI = fGainMatchingDataScale[layer];
+    Double_t gainI = fGainMatchingDataScale[layer][row];
     padO -> SetPedestalSubtracted();
 
     // pad I saturats only if it is killed by STSimulateBeamTask

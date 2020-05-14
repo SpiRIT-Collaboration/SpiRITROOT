@@ -90,7 +90,7 @@ class STElectronicsTask : public FairTask
     Bool_t   fPedestalSubtracted; //!< Pedestal subtracted flag.
     Bool_t   fSignalPolarity;     //!< Polartity of signal (1: positive, 0: negative)
     Bool_t   fKillAfterSaturation;//!< Kill after saturation ?
-    Double_t fGainMatchingDataScale[112]; //!<
+    std::vector<std::vector<double>> fGainMatchingDataScale; //!<
 
     Int_t    fStartTb;
     Int_t    fEndTb;
