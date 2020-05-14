@@ -47,8 +47,8 @@ void run_analysis_core(TString par, TString geo, TString out,
   
   //auto PIDProb = new STPIDMachineLearningTask();
   //PIDProb -> SetChain(&chain);
-  //PIDProb -> SetBufferSize(2500);
-  //PIDProb -> SetModel("MLForestCut", STAlgorithms::RandomForest);
+  //PIDProb -> SetBufferSize(50000);
+  //PIDProb -> SetModel("MLModelVoting", STAlgorithms::Voting);
   auto eventFilter = new STFilterEventTask();
   eventFilter -> SetMultiplicityCut(55, 100, 20);
 
@@ -87,8 +87,10 @@ void run_analysis_core(TString par, TString geo, TString out,
     if(pdg == 1000020060){ mMin = 2000; mMax = 6000; ptMin = 0; ptMax = 1300; CMzMin = -1000; CMzMax = 1000; }
   }
 
+  auto simpleGraphs = new STSimpleGraphsTask();
+
   run -> AddTask(reader);
-  //run -> AddTask(eventFilter);
+  run -> AddTask(eventFilter);
   //run -> AddTask(filter);
   //run -> AddTask(PIDCut);
   run -> AddTask(PIDProb);
@@ -97,6 +99,7 @@ void run_analysis_core(TString par, TString geo, TString out,
   {
     run -> AddTask(transform);
     run -> AddTask(efficiency);
+    run -> AddTask(simpleGraphs);
   }
 
   run -> Init();
