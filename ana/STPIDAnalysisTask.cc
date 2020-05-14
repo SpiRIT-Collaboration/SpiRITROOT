@@ -10,12 +10,24 @@
 #include "STVector.hh"
 #include "TString.h"
 
-STPIDAnalysisTask::STPIDAnalysisTask()
+STPIDAnalysisTask::STPIDAnalysisTask() : fMassCalH("EmpiricalBB"), 
+                                         fMassCalHe("EmpiricalBB")
 {}
 
 void STPIDAnalysisTask::SetBeamA(int t_beamA)
 { 
-  fMassCal.LoadCalibrationParameters(TString(gSystem -> Getenv("VMCWORKDIR")) + "/input/PIDCalib.root", t_beamA); 
+  auto calFile = TFile::Open(Form(TString(gSystem -> Getenv("VMCWORKDIR")) + "/input/db/PIDCalib_%dSn.root", t_beamA));
+  TH2D *h2ParamH[7], *h2ParamHe[7];
+  if( calFile  ) {
+    for(int i = 0; i < 7; ++i){
+      calFile->GetObject(Form("h2InterpolateNM_%dSn_Par%d"  ,t_beamA,i),h2ParamH[i]);
+      calFile->GetObject(Form("h2InterpolateHeNM_%dSn_Par%d",t_beamA,i),h2ParamHe[i]);
+    }
+    fMassCalH.AddParameters(h2ParamH);
+    fMassCalHe.AddParameters(h2ParamHe);
+  }
+  else
+    fLogger -> Fatal(MESSAGE_ORIGIN, Form("Mass calibration file PIDCalib_%dSn.root is not found.", t_beamA));
 }
 
 void
@@ -98,14 +110,8 @@ void STPIDAnalysisTask::Exec(Option_t *opt)
     VMom.Rotate(rotationAngle, rotationAxis);
     //--- Set MassFitter      
     Double_t mass[2] = {0.,0.};
-    if( dEdx > -1 ){
-      mass[0]  = fMassCal.CalcMass(0, 1., VMom, dEdx);  // proton fitted
-      
-      if( mass[0] > 1500. )  // deuteron fitted
-        mass[0]  = fMassCal.CalcMass(1, 1., VMom, dEdx);  
-      
-      mass[1]  = fMassCal.CalcMass(1, 2., VMom, dEdx);
-    }
+    mass[0] = fMassCalH.CalcMass(1., VMom, dEdx);
+    mass[1] = fMassCalHe.CalcMass(2., VMom, dEdx);
     RecoPIDTight->fElements.push_back(this -> GetPIDTight_(mass, dEdx));
     RecoPIDNorm->fElements.push_back(this -> GetPIDNorm_(mass, dEdx));
     RecoPIDLoose->fElements.push_back(this -> GetPIDLoose_(mass, dEdx));
@@ -118,14 +124,9 @@ void STPIDAnalysisTask::Exec(Option_t *opt)
     VMom.Rotate(rotationAngle, rotationAxis);
     //--- Set MassFitter      
     Double_t mass[2] = {0.,0.};
-    if( dEdx > -1 ){
-      mass[0]  = fMassCal.CalcMass(0, 1., VMom, dEdx);  // proton fitted
-      
-      if( mass[0] > 1500. )  // deuteron fitted
-        mass[0]  = fMassCal.CalcMass(1, 1., VMom, dEdx);  
-      
-      mass[1]  = fMassCal.CalcMass(1, 2., VMom, dEdx);
-    }
+    mass[0] = fMassCalH.CalcMass(1., VMom, dEdx);
+    mass[1] = fMassCalHe.CalcMass(2., VMom, dEdx);
+
     VAPIDTight->fElements.push_back(this -> GetPIDTight_(mass, dEdx));
     VAPIDNorm->fElements.push_back(this -> GetPIDNorm_(mass, dEdx));
     VAPIDLoose->fElements.push_back(this -> GetPIDLoose_(mass, dEdx));

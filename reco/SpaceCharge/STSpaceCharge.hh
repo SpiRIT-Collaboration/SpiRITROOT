@@ -66,7 +66,7 @@ class STSpaceCharge
     void SetXYZBins(int xbins, int ybins, int zbins);
     void SetBField(FairField* Bfield);
     void SetEFieldSolution(const std::string& value);
-    void SetSheetChargeDensity(Double_t value);
+    void SetSheetChargeDensity(Double_t value, Double_t bf = 0);
     void SetProjectile(Projectile t_proj);
     void SetDriftParameters(double mu, double wtau);
     void InferDriftParameters(double drift_vel, double e_field, double b_field);
@@ -96,6 +96,7 @@ class STSpaceCharge
   
     double fWidth, fLength, fHeight;// physical size of the TPC.
     Double_t fSheetChargeDensity;
+    Double_t fBackFlowDensity = 0;
     std::string fEFieldFile;
     Projectile fProj;
     const std::map<Projectile, std::string> fProjName;

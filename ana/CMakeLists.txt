@@ -65,7 +65,7 @@ STFilterTask.cc
 STFilterEventTask.cc
 STAddBDCInfoTask.cc
 STSimpleGraphsTask.cc
-MassCalculator/STMassCalculator.cc
+MassCalculator/STMassCalSimpleBB.cc
 MassCalculator/STBBFunction.cc
 )
 

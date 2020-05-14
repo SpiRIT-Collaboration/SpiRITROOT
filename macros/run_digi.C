@@ -48,6 +48,7 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
   fPadResponseTask -> SetPersistence(false);
   fPadResponseTask -> AssumeGausPRF();
   fPadResponseTask -> SetElectronicsJitterFile(workDir + "/parameters/yOffsetCalibration.dat");
+  fPadResponseTask -> SetGainMatchingData(workDir + "/parameters/RelativeGain.list");
   fRun -> AddTask(fPadResponseTask);
 
   /*******************************************************************************

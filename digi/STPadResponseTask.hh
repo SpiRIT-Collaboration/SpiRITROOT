@@ -59,6 +59,7 @@ class STPadResponseTask : public FairTask
      */
     void AssumeGausPRF(Bool_t val = kTRUE) { fAssumeGausPRF = val; };
     void SetElectronicsJitterFile(TString filename) { fElectronicsJitterFilename = filename.Data(); };
+    void SetGainMatchingData(TString filename);
 
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
@@ -116,6 +117,7 @@ class STPadResponseTask : public FairTask
      * - 2 : wire with 5/6 across (z) the pad.
      */
     Double_t fFillRatio[3][5];
+    std::vector<std::vector<double>> fGainMatchingDataScale; //!<
 
 
 

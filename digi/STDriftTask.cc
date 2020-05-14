@@ -196,11 +196,11 @@ STDriftTask::Exec(Option_t* option)
 
       Int_t layer = (iWire/3);//We can find layer number with /3 because 3 cases for position of wire 
       Int_t  gain = polya_highgain -> GetRandom();
-      if(fLowAnode)
-	{
-	  if( (layer >=91 && layer <= 98) || layer >=108)
-	    gain = polya_lowgain -> GetRandom(); //low anode sections
-	}
+//      if(fLowAnode)
+//	{
+//	  if( (layer >=91 && layer <= 98) || layer >=108)
+//	    gain = polya_lowgain -> GetRandom(); //low anode sections
+//	}
       if(gain<=0) continue;
 
       STDriftedElectron *electron

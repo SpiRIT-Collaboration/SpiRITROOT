@@ -18,7 +18,7 @@ from matplotlib.widgets import Slider
 class TPCGrid:
   Width = 86.4
   Height = 50.61
-  Length = 150.#134.
+  Length = 144.35#134.
   
   Vbottom = -124.7*Height#-7023.5#6463
   Vtop = 0
@@ -124,6 +124,51 @@ class LineCharge:
 
     self.geo_index = [np.array(geo_index) for geo_index in self.geo_index]
     self.geo_charge = np.array(self.geo_charge)/h#self.sheet_density/h # divide by h for line charge to conserve total charge
+
+class BackFlowCharge:
+
+  def __init__(self, beam_name, sheet_density=1.28e-8):
+    self.beam_loc = pd.read_csv(beam_name, sep=r'\s+')/10.
+    self.beam_loc.columns = ['x', 'y', 'z']
+    
+    # convert from Si To the unit of this program
+    permittivity = 8.854e-12
+    # divide 100 to convert C/m2 to C/cm2
+    self.sheet_density = sheet_density/100/permittivity
+
+  def SetGeo(self, x, y, z, h):
+    # our sheet charge has to span 2 pixels
+    beam_z = z[( 140 < z) & (z < 143.95)]
+    beam_x = np.interp(beam_z, self.beam_loc['z'], self.beam_loc['x'])
+    beam_y = np.interp(beam_z, self.beam_loc['z'], self.beam_loc['y'])
+    # convert real location to index
+    line_idx = [np.abs(x - X).argmin() for X in beam_x]
+    line_idy = [len(y) - 1 for Height in beam_y]
+    line_idz = [idz for idz, IsBGArea in enumerate((140 < z) & (z < 143.95)) if IsBGArea]
+
+    # draw geometry
+    self.geo_index = [[], [], []]
+    self.geo_charge = [] 
+    for idarr, (idz, max_idy, idx) in enumerate(zip(line_idz, line_idy, line_idx)):
+      self.geo_index[0] += [idz for idy in range(max_idy)]
+      self.geo_index[1] += [idy for idy in range(max_idy)]
+      self.geo_index[2] += [idx for idy in range(max_idy)]
+      self.geo_charge += [self.sheet_density/2. for idy in range(max_idy)]
+
+      if idx + 1 < x.shape:
+        self.geo_index[0] += [idz for idy in range(max_idy)]
+        self.geo_index[1] += [idy for idy in range(max_idy)]
+        self.geo_index[2] += [idx + 1 for idy in range(max_idy)]
+        self.geo_charge += [(- beam_x[idarr] + x[idx] + 0.5*h)*self.sheet_density/(2.*h) for idy in range(max_idy)]
+      if idx - 1 >= 0:
+        self.geo_index[0] += [idz for idy in range(max_idy)]
+        self.geo_index[1] += [idy for idy in range(max_idy)]
+        self.geo_index[2] += [idx - 1 for idy in range(max_idy)]
+        self.geo_charge += [(beam_x[idarr] - x[idx] + 0.5*h)*self.sheet_density/(2.*h) for idy in range(max_idy)]
+
+    self.geo_index = [np.array(geo_index) for geo_index in self.geo_index]
+    self.geo_charge = np.array(self.geo_charge)/h#self.sheet_density/h # divide by h for line charge to conserve total charge
+ 
       
 class PossionSolver:
 
@@ -163,11 +208,13 @@ def VToE(content, x, y, z):
 def CalculateEField(strength_and_beamfile):
   # load beam line data
   strength = strength_and_beamfile[0]
-  beam_file = strength_and_beamfile[1]
+  strength_backflow = strength_and_beamfile[1]
+  beam_file = strength_and_beamfile[2]
 
   grid = TPCGrid()
   line_charge = LineCharge(beam_file, strength)
-  solver = PossionSolver(grid, [line_charge])
+  backflow_charge = BackFlowCharge(beam_file, strength_backflow)
+  solver = PossionSolver(grid, [line_charge, backflow_charge])
   solver.Solve()
   result = grid.V
 
@@ -230,27 +277,35 @@ if __name__ == '__main__':
   #strengths = np.linspace(0.0)
   beam_files = ['_132Sn_BeamTrack.data', '_124Sn_BeamTrack.data', '_108Sn_BeamTrack.data', '_112Sn_BeamTrack.data']
   beam_name = ['132Sn', '124Sn', '108Sn', '112Sn']
-  strengths_and_beamfile = [(3.14e-8*factor, beam_file) for beam_file in beam_files for factor in range(0,2)]
-  
-  pool = Pool(4)
-  results = pool.map(CalculateEField, strengths_and_beamfile)
+  strengths_and_beamfile = [(3.14e-8*factor,0, beam_file) for beam_file in beam_files for factor in range(0,2)]
+  strengthsBF_and_beamfile = [(0, 3.14e-8, beam_file) for beam_file in beam_files]
+
+  pool = Pool(6)
+  results = pool.map(CalculateEField, strengths_and_beamfile + strengthsBF_and_beamfile)
+  #resultsBF = pool.map(CalculateEField, strengthsBF_and_beamfile)
   pool.close()
   pool.join()
 
+  results, resultsBF = results[:-4], results[-4:]
   # homogeneous solution
   print('Export result to ROOT')
-  for beam_file, homo_result, nohomo_result in zip(beam_name, results[::2], results[1::2]):
+  for beam_file, homo_result, nohomo_result, bf_result in zip(beam_name, results[::2], results[1::2], resultsBF):
     x, y, z, Ex_homo, Ey_homo, Ez_homo, V_homo, rho_homo, filename = homo_result
     # non-homogeneous solution
     _, _, _, Ex_nohomo, Ey_nohomo, Ez_nohomo, V_nohomo, rho_nohomo, nohomo_filename = nohomo_result
+    _, _, _, Ex_bf, Ey_bf, Ez_bf, V_bf, rho_bf, bf_filename = bf_result
 
     Ex_nohomo = Ex_nohomo - Ex_homo
     Ey_nohomo = Ey_nohomo - Ey_homo
     Ez_nohomo = Ez_nohomo - Ez_homo
+    Ex_bf = Ex_bf - Ex_homo
+    Ey_bf = Ey_bf - Ey_homo
+    Ez_bf = Ez_bf - Ez_homo
     V_nohomo = V_nohomo - V_homo
+    V_bf = V_bf - V_homo
 
     # save everything to ROOT
-    for type_, (Ex, Ey, Ez, V, rho) in zip(['homo', 'nohomo'], [[Ex_homo, Ey_homo, Ez_homo, V_homo, rho_homo], [Ex_nohomo, Ey_nohomo, Ez_nohomo, V_nohomo, rho_nohomo]]):
+    for type_, (Ex, Ey, Ez, V, rho) in zip(['homo', 'nohomo', 'bf'], [[Ex_homo, Ey_homo, Ez_homo, V_homo, rho_homo], [Ex_nohomo, Ey_nohomo, Ez_nohomo, V_nohomo, rho_nohomo], [Ex_bf, Ey_bf, Ez_bf, V_bf, rho_bf]]):
       for title, content in zip(['Ex', 'Ey', 'Ez', 'V', 'rho'], [Ex, Ey, Ez, V, rho]):
         dx = np.fabs(x[1] - x[0])
         dy = np.fabs(y[1] - y[0])
