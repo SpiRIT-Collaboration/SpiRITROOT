@@ -131,13 +131,26 @@ void STSpaceCharge::fFinalizeEField()
   auto nohomoy = static_cast<TH3D*>(file.Get(("nohomo_" + Proj + "_Ey").c_str()));
   auto nohomoz = static_cast<TH3D*>(file.Get(("nohomo_" + Proj + "_Ez").c_str()));
 
-  fSCLogger->Info(MESSAGE_ORIGIN,TString::Format("E-field is calculated with beam rate = %e", fSheetChargeDensity));
+  auto bfx = static_cast<TH3D*>(file.Get(("bf_" + Proj + "_Ex").c_str()));
+  auto bfy = static_cast<TH3D*>(file.Get(("bf_" + Proj + "_Ey").c_str()));
+  auto bfz = static_cast<TH3D*>(file.Get(("bf_" + Proj + "_Ez").c_str()));
+
+  fSCLogger->Info(MESSAGE_ORIGIN,TString::Format("E-field is calculated with beam rate = %e and backflow density = %e", fSheetChargeDensity, fBackFlowDensity));
   double factor = fSheetChargeDensity / 3.14e-8; //3.14e-8 is the beam rate of run 2841
+  double bfFactor = fBackFlowDensity / 3.14e-8;
   if(homox && homoy && homoz && nohomox && nohomoy && nohomoz)
   {
     homox->Add((nohomox->Scale(factor), nohomox));
     homoy->Add((nohomoy->Scale(factor), nohomoy));
     homoz->Add((nohomoz->Scale(factor), nohomoz));
+
+    if(bfx && bfy && bfz)
+    {
+      homox->Add((bfx->Scale(bfFactor), bfx));
+      homoy->Add((bfy->Scale(bfFactor), bfy));
+      homoz->Add((bfz->Scale(bfFactor), bfz));
+    }
+    else fSCLogger->Info(MESSAGE_ORIGIN, "No backflow E-field is found. It's contribution to E-field will be ignored");
 
     fEx = static_cast<TH3D*>(homox->Clone("shiftX"));
     fEy = static_cast<TH3D*>(homoy->Clone("shiftY"));
@@ -255,7 +268,7 @@ void STSpaceCharge::SetEFieldSolution(const std::string& value)
   fEFieldFile = vmc_dir + "/input/" + value; 
 }
 
-void STSpaceCharge::SetSheetChargeDensity(Double_t value){ fSheetChargeDensity = value; }
+void STSpaceCharge::SetSheetChargeDensity(Double_t value, Double_t bf){ fSheetChargeDensity = value; fBackFlowDensity = bf; }
 void STSpaceCharge::SetProjectile(Projectile value){ fProj = value; }
 void STSpaceCharge::SetDriftParameters(double mu, double wtau) { fmu = mu; fwtau = wtau; }
 
