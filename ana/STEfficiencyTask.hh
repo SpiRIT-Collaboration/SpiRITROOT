@@ -51,7 +51,7 @@ class STEfficiencyTask : public FairTask {
     /// Destructor
     ~STEfficiencyTask();
 
-    void SetUnfoldingFile(TString fileName) { fUnfoldingFileName = fileName; }
+    void SetUnfoldingFile(TString fileName, bool update = false) { fUnfoldingFileName = fileName; fUpdateUnfolding = update; }
     EfficiencySettings& AccessSettings(int t_pdg) { return fEfficiencySettings[t_pdg]; }
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
@@ -80,6 +80,7 @@ class STEfficiencyTask : public FairTask {
     std::map<int, TH2F> fDistributionForUnfolding; //<
     TString fUnfoldingFileName;
     std::unique_ptr<TFile> fUnfoldingFile;
+    bool fUpdateUnfolding = false;
   
   ClassDef(STEfficiencyTask, 1);
 };

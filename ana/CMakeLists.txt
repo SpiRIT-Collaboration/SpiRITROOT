@@ -67,6 +67,7 @@ STAddBDCInfoTask.cc
 STSimpleGraphsTask.cc
 MassCalculator/STMassCalSimpleBB.cc
 MassCalculator/STBBFunction.cc
+STAnalysisFactory.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

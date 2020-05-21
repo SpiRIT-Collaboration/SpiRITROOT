@@ -47,6 +47,7 @@ class STConcReaderTask : public FairTask {
     void SetPersistence(Bool_t value);
 
     void SetChain(TChain* chain);
+    void SetEventID(int eventID);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     STDigiPar* fPar = nullptr;

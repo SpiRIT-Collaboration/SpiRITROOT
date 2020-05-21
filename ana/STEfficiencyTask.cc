@@ -46,18 +46,29 @@ InitStatus STEfficiencyTask::Init()
   for(int pdg : fSupportedPDG)
   {
     auto& settings = fEfficiencySettings[pdg];
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Loading settings for particle with pdg = %d", pdg));
     if(fFactory -> IsInCM())
     {
       fFactory -> SetPtBins(settings.PtMin, settings.PtMax, settings.NPtBins);
       fFactory -> SetCMzBins(settings.CMzMin, settings.CMzMax, settings.NCMzBins);
+      fLogger -> Info(MESSAGE_ORIGIN, Form("Pt is populated from %.2f to %.2f with %d bins", settings.PtMin, settings.PtMax, settings.NPtBins));
+      fLogger -> Info(MESSAGE_ORIGIN, Form("CMz is populated from %.2f to %.2f with %d bins", settings.CMzMin, settings.CMzMax, settings.NCMzBins));
     }
     else
     {
       fFactory -> SetMomBins(settings.MomMin, settings.MomMax, settings.NMomBins);
       fFactory -> SetThetaBins(settings.ThetaMin, settings.ThetaMax, settings.NThetaBins);
+      fLogger -> Info(MESSAGE_ORIGIN, Form("Momentum is populated from %.2f to %.2f with %d bins", settings.MomMin, settings.MomMax, settings.NMomBins));
+      fLogger -> Info(MESSAGE_ORIGIN, Form("Theta is populated from %.2f to %.2f with %d bins", settings.ThetaMin, settings.ThetaMax, settings.NThetaBins));
+
     }
     fFactory -> SetPhiCut(settings.PhiCuts);
+    TString loggerMessage = "Accepting phi range = ";
+    for(const auto& range : settings.PhiCuts) loggerMessage += TString::Format("%.2f - %.2f ", range.first, range.second);
+    fLogger -> Info(MESSAGE_ORIGIN, loggerMessage + " deg");
+
     fFactory -> SetTrackQuality(settings.NClusters, settings.DPoca);
+    fLogger -> Info(MESSAGE_ORIGIN, Form("Acceptting N.O. clusters > %d and distance to vertex < %.2f", settings.NClusters, settings.DPoca));
     if(fUnfoldingFile)
       if(auto dist = static_cast<TH2F*>(fUnfoldingFile -> Get(TString::Format("DistUnfolding%d", pdg))))
         fFactory -> SetUnfoldingDist(dist);

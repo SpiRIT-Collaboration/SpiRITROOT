@@ -23,7 +23,7 @@ STSimpleGraphsTask::STSimpleGraphsTask() : fEntries(0)
   for(auto pdg : fSupportedPDG) fMinMomForCMInLab[pdg] = 0;
 
   fMinMomForCMInLab[2212] = 50;
-  fMinMomForCMInLab[1000010020] = 100;
+  fMinMomForCMInLab[1000010020] = 300;
   fMinMomForCMInLab[1000010030] = 450;
   fMinMomForCMInLab[1000020030] = 400;
   fMinMomForCMInLab[1000020040] = 400;
@@ -142,7 +142,7 @@ void STSimpleGraphsTask::Exec(Option_t *opt)
         int yawId = this -> _ToYawId(data -> vaMom[partid]);
         if(data -> vaNRowClusters[partid] + data -> vaNLayerClusters[partid] > fMinNClus && data -> recodpoca[partid].Mag() < fMaxDPOCA)
           fPIDForParticleHists[i][pitchID][yawId] -> Fill(data -> vaMom[partid].Mag(), data -> vadedx[partid], prob[partid]);
-        if(eff[partid] > 0.15 && prob[partid] > 0.)
+        if(eff[partid] > 0.10 && prob[partid] > 0.)
         {
           double weight = prob[partid]/eff[partid];
           if(data -> vaMom[partid].Mag() > minMom) 
@@ -178,16 +178,14 @@ void STSimpleGraphsTask::FinishTask()
     return hist;
   };
 
-  for(auto& hist : fPtHists) Set1DUnit(hist).Write();
-  for(auto& hist : fPtFullHists) Set1DUnit(hist).Write();
-  for(auto& hist : fRapHists) Set1DUnit(hist).Write();
+  for(auto& hist : fPtHists) Set1DUnit(hist).Write(); 
+  for(auto& hist : fPtFullHists) Set1DUnit(hist).Write(); 
+  for(auto& hist : fRapHists) Set1DUnit(hist).Write(); 
 
   std::map<int, TH1D*> ptHists;
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
     auto& hist = fHists[i];
-    hist.Write();
-    //hist.Scale(1./fEntries);
     auto HistName = hist.GetName();
     auto projx = hist.ProjectionX(TString::Format("%s_Rap", HistName));
     auto projy = hist.ProjectionY(TString::Format("%s_Pt", HistName),
@@ -200,6 +198,9 @@ void STSimpleGraphsTask::FinishTask()
     Set1DUnit(*projx);
     projx -> Write();
     ptHists[fSupportedPDG[i]] = projy;
+
+    hist.Scale(1./fEntries);
+    hist.Write();
   }
 
   auto THe3 = (TH1D*) ptHists[1000010030] -> Clone("tHe3_ana_Pt");

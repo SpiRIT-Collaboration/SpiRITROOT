@@ -140,11 +140,6 @@ TEfficiency OrigEfficiencyFactory::FinalizeBins(int t_pdg,
 
 EfficiencyFromAnaFactory::EfficiencyFromAnaFactory(){}
 
-void EfficiencyFromAnaFactory::SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db)
-{
-  fEfficiencyDB[t_pdg] = t_efficiency_db;
-}
-
 TEfficiency EfficiencyFromAnaFactory::FinalizeBins(int t_pdg,
                                                    bool t_verbose)
 {
@@ -316,6 +311,7 @@ TEfficiency EfficiencyFromConcFactory::FinalizeBins(int t_pdg,
                                                     bool t_verbose)
 {
   TChain tree("spirit");
+  std::cout << "Efficiency for pdg " << t_pdg << " is beling loaded from " + fEfficiencyDB[t_pdg] << std::endl;
   for(const auto& filename : glob(fEfficiencyDB[t_pdg].c_str()))
     tree.Add(filename.c_str());
 
@@ -410,11 +406,6 @@ TEfficiency EfficiencyFromConcFactory::FinalizeBins(int t_pdg,
 *********************************************************/
 
 EfficiencyInCMFactory::EfficiencyInCMFactory(){}
-
-void EfficiencyInCMFactory::SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db)
-{
-  fEfficiencyDB[t_pdg] = t_efficiency_db;
-}
 
 void EfficiencyInCMFactory::TransformBackToCM(const std::string& t_efficiency_db, const std::string& t_cm_db, int fragMass, int targetMass, int charge, double energyPerN)
 {
@@ -515,15 +506,11 @@ void EfficiencyInCMFactory::TransformBackToCM(const std::string& t_efficiency_db
   compressed.Write();
 }
 
-void EfficiencyInCMFactory::SetUnfoldingDist(TH2F *dist)
-{
-  if(dist) fUnfoldingDist = (TH2F*) dist -> Clone(TString::Format("%s_cloned", dist->GetName()));
-}
-
 TEfficiency EfficiencyInCMFactory::FinalizeBins(int t_pdg,
                                                 bool t_verbose)
 {
   TChain tree("spirit");
+  std::cout << "Efficiency for pdg " << t_pdg << " is beling loaded from " + fEfficiencyDB[t_pdg] << std::endl;
   for(const auto& filename : glob(fEfficiencyDB[t_pdg].c_str()))
     tree.Add(filename.c_str());
 

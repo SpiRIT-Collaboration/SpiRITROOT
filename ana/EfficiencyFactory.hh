@@ -87,7 +87,7 @@ class EfficiencyFromConcFactory : public EfficiencyFactory
 public:
     EfficiencyFromConcFactory();
     virtual ~EfficiencyFromConcFactory(){};
-    void SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db);
+    virtual void SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db);
     static void CompressFile(const std::string& t_efficiency_db, const std::string& t_compressed_db);  
     virtual TEfficiency FinalizeBins(int t_pdg,
                                      bool t_verbose=false); 
@@ -97,20 +97,16 @@ protected:
     TH2F *fUnfoldingDist = nullptr;
 };
 
-class EfficiencyInCMFactory : public EfficiencyFactory
+class EfficiencyInCMFactory : public EfficiencyFromConcFactory
 {
 public:
     EfficiencyInCMFactory();
     virtual ~EfficiencyInCMFactory(){};
-    void SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db);
     virtual TEfficiency FinalizeBins(int t_pdg,
                                      bool t_verbose=false); 
 
+    static void CompressFile(const std::string& t_efficiency_db, const std::string& t_compressed_db) = delete;    
     static void TransformBackToCM(const std::string& t_efficiency_db, const std::string& t_cm_db, int fragMass, int targetMass, int charge, double energyPerN);
     virtual bool IsInCM() { return true; }
-    virtual void SetUnfoldingDist(TH2F* dist);
-protected:
-    std::map<int, std::string> fEfficiencyDB;
-    TH2F *fUnfoldingDist = nullptr;
 };
 #endif

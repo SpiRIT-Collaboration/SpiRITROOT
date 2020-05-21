@@ -114,3 +114,5 @@ void STConcReaderTask::SetPersistence(Bool_t value)
 { fIsPersistence = value; }
 void STConcReaderTask::SetChain(TChain* chain)
 { fChain = chain; }
+void STConcReaderTask::SetEventID(int eventID)
+{ fEventID = eventID; }

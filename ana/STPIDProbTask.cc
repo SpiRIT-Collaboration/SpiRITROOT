@@ -167,6 +167,7 @@ void STPIDProbTask::SetMetaFile(const std::string& t_metafile, bool t_update)
 {
   fIterateMeta = t_update;
   if(fMetaFile) fMetaFile -> Close();
+  fLogger -> Info(MESSAGE_ORIGIN, ("Loading PID prior from " + t_metafile).c_str());
   fMetaFile = new TFile(t_metafile.c_str(), "update");
   for(int pdg : fSupportedPDG)
     fMomPriorDistribution[pdg] = (TH1F*) fMetaFile -> Get(TString::Format("Distribution%d", pdg));
@@ -176,6 +177,7 @@ void STPIDProbTask::SetPIDFitFile(const std::string& t_fitfile)
 {
   if(fFitFile) fFitFile -> Close();
   fFitFile = new TFile(t_fitfile.c_str(), "update");
+  fLogger -> Info(MESSAGE_ORIGIN, ("Loading PID fit from " + t_fitfile).c_str());
   for(int pdg : fSupportedPDG)
   {
     fBBE[pdg] = static_cast<TF1*>(fFitFile -> Get(TString::Format("BEE%d", pdg)));

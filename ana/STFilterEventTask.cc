@@ -40,7 +40,7 @@ InitStatus STFilterEventTask::Init()
   else fLogger -> Info(MESSAGE_ORIGIN, "No beam cut is used");
 
   if(fVertexCut) fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Only vertex from %f < z < %f are accepted", fVertexZMin, fVertexZMax));
-  if(fMultCut) fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Only vertex from %d < z < %d are accepted", fMultMin, fMultMax));
+  if(fMultCut) fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Only events with multiplicity from %d < z < %d are accepted", fMultMin, fMultMax));
 
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   fEventType = (TClonesArray*) ioMan -> GetObject("EventType");

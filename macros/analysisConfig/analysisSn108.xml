@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+  This is an example...
+-->
+<AnalysisConfig>
+    <IOInfo Type="Real">
+        <DataDir>data/Sn108/</DataDir>
+        <RunFirst>2272</RunFirst>
+        <RunLast>2500</RunLast>
+    </IOInfo>
+    <TaskList>
+    
+        <PIDProbTask Type="Bay">
+            <MetaFile>Prior/Meta_Sn108KanekoMult50.root</MetaFile>
+            <PIDFit>PIDFit/PIDSigma_Sn108KanekoMult50.root</PIDFit>
+        </PIDProbTask>
+    
+        <TransformFrameTask>
+             <TargetMass>112</TargetMass>
+             <TargetThickness>0.8</TargetThickness>
+             <EnergyLossFile>../parameters/Sn108Sn112.txt</EnergyLossFile>
+        </TransformFrameTask>
+    
+        <EfficiencyTask Type="Lab">
+             <NClus>15</NClus> 
+             <DPoca>15</DPoca> 
+             <Phi>160-200,0-20,320-360</Phi>
+             <UpscaleFactor>10</UpscaleFactor>
+             <ThetaBins>15</ThetaBins>
+             <MomBins>15</MomBins>
+             <UpscaleFactor>10</UpscaleFactor>
+             <PhaseSpaceFactor>3</PhaseSpaceFactor>
+             <Particle Name="p">
+                <EffFile>data/embed_dump/Feb20203/Run2899KanekoNoSC_embedNewProton.root</EffFile>
+                <MomMin>100</MomMin>
+                <MomMax>1500</MomMax>
+             </Particle>
+             <Particle Name="d">
+                <EffFile>data/embed_dump/Feb20203/Run2899KanekoNoSC_embedNewDeuteron.root</EffFile>
+                <MomMin>200</MomMin>
+                <MomMax>2200</MomMax>
+             </Particle>
+             <Particle Name="t">
+                <EffFile>data/embed_dump/Feb20203/Run2899KanekoNoSC_embedNewTriton.root</EffFile>
+                <MomMin>100</MomMin>
+                <MomMax>3200</MomMax>
+             </Particle>
+             <Particle Name="He3">
+                <EffFile>data/embed_dump/Feb20203/Run2899KanekoNoSC_embedNewHe3.root</EffFile>
+                <MomMin>100</MomMin>
+                <MomMax>3200</MomMax>
+             </Particle>
+             <Particle Name="He4">
+                <EffFile>data/embed_dump/Feb20203/Run2899KanekoNoSC_embedNewHe4.root</EffFile>
+                <MomMin>104</MomMin>
+                <MomMax>4200</MomMax>
+             </Particle>
+             <Particle Name="He6">
+                <EffFile>data/embed_dump/MarchCM/Run2272_CutTPCCMHe6.root</EffFile>
+                <MomMin>2000</MomMin>
+                <MomMax>6000</MomMax>
+             </Particle>
+    
+        </EfficiencyTask>
+    </TaskList>
+</AnalysisConfig>
