@@ -195,7 +195,8 @@ void run_reco_experiment_auto
   spaceCharge -> SetBField(gfBField -> GetFieldMap());
   if (fSheetChargeDensity != 0) {
     spaceCharge -> SetDriftParameters(-4.355e4, -2.18); // omega tau and mu of the Langevin equation
-    spaceCharge -> SetSheetChargeDensity(fSheetChargeDensity);  
+    const double fLeakageChargeFactor = 10.2;
+    spaceCharge -> SetSheetChargeDensity(fSheetChargeDensity, fLeakageChargeFactor*fSheetChargeDensity);
     switch (fSystemID) {
       case 132124: spaceCharge -> SetProjectile(STSpaceCharge::Projectile::Sn132); break;
       case 124112: spaceCharge -> SetProjectile(STSpaceCharge::Projectile::Sn124); break;
