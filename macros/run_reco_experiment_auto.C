@@ -252,6 +252,9 @@ void run_reco_experiment_auto
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
   run -> AddTask(smallOutput);
+
+  run -> Init();
+  run -> Run(0,fNumEventsInSplit);
   
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
@@ -271,17 +274,6 @@ void run_reco_experiment_auto
   auto driftVelocityInParameterFile = gSystem -> GetFromPipe("cat " + par + " | grep DriftVelocity | awk '{print $2}'");
   recoHeader -> SetPar("driftVelocity", driftVelocityInParameterFile);
   recoHeader -> Write("RecoHeader");
-
-  run -> Init();
-
-  // Uncomment and change below only if you know what you're doing.
-  /*
-  helix -> GetTrackFinder() -> SetDefaultCutScale(2.5);
-  helix -> GetTrackFinder() -> SetTrackWidthCutLimits(4, 10);
-  helix -> GetTrackFinder() -> SetTrackHeightCutLimits(2, 4);
-  */
-
-  run -> Run(0,fNumEventsInSplit);
 
   cout << "Log    : " << log << endl;
   cout << "Input  : " << fRawDataList << endl;
