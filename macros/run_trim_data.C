@@ -2,7 +2,8 @@ void run_trim_data
 (
   int fRunNo,
   int fSplitNo,
-  TString fPathToData = ""
+  TString fPathToData = "",
+  TString fPathToOutput = ""
 )
 {
   TString sRunNo   = TString::Itoa(fRunNo, 10);
@@ -29,14 +30,14 @@ void run_trim_data
   auto fParamSetter = new STParameters(fRunNo, fSystemDB, fRunDB);
   auto fParameterFile = fParamSetter -> GetParameterFile();
   auto fSystemID = fParamSetter -> GetSystemID();
-
+  if(fPathToOutput.IsNull()) fPathToOutput = fPathToData;
 
   TString par = spiritroot+"parameters/ST.parameters.par";
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root"; 
   TString in = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.*.conc.root";
-  TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.trimmed.root";
+  TString out = fPathToOutput+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.trimmed.root";
 
-  TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.trimmed.log";
+  TString log = fPathToOutput+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.trimmed.log";
 
   FairLogger *logger = FairLogger::GetLogger();
   logger -> SetLogToScreen(true);
@@ -58,31 +59,36 @@ void run_trim_data
   reader -> SetChain(&chain);
 
   auto eventFilter = new STFilterEventTask();
+  int multMin = 39, multMax = 100;
   switch(fSystemID)
   {
     case 124112: 
       eventFilter -> SetBeamFor124Star("../parameters/isotopesCutG124.root");
       eventFilter -> SetVertexCut(-17.84, -11.69);
-      eventFilter -> SetVertexBDCCut(0.0974, 0.848*3, 0.689, 3*0.803);
-      eventFilter -> SetMultiplicityCut(50, 100, 20);
+      //eventFilter -> SetVertexBDCCut(0.0974, 0.848*3, 0.689, 3*0.803);
+      eventFilter -> SetVertexBDCCut(0.0, 0.848*3, 0.0, 3*0.803);
+      eventFilter -> SetMultiplicityCut(multMin, multMax, 20);
       break;
     case 132124: 
       eventFilter -> SetBeamCut("../parameters/BeamCut.root", "Sn132"); 
       eventFilter -> SetVertexCut(-18.480, -11.165);
-      eventFilter -> SetVertexBDCCut(2.69e-1, 3*0.988, 3.71e-1, 3*0.7532);
-      eventFilter -> SetMultiplicityCut(50, 100, 20);
+      //eventFilter -> SetVertexBDCCut(2.69e-1, 3*0.988, 3.71e-1, 3*0.7532);
+      eventFilter -> SetVertexBDCCut(0, 3*0.988, 0, 3*0.7532);
+      eventFilter -> SetMultiplicityCut(multMin, multMax, 20);
       break;
     case 112124: 
       eventFilter -> SetBeamCut("../parameters/BeamCut.root", "Sn112"); 
       eventFilter -> SetVertexCut(-16.944, -11.727);
-      eventFilter -> SetVertexBDCCut(-1.55e-1, 3*0.832, -3.18, 3*0.997);
-      eventFilter -> SetMultiplicityCut(50, 100, 20);
+      //eventFilter -> SetVertexBDCCut(-1.55e-1, 3*0.832, -3.18, 3*0.997);
+      eventFilter -> SetVertexBDCCut(0.0, 3*0.832, 0.0, 3*0.997);
+      eventFilter -> SetMultiplicityCut(multMin, multMax, 20);
       break;
     case 108112: 
       eventFilter -> SetBeamCut("../parameters/BeamCut.root", "Sn108");
       eventFilter -> SetVertexCut(-18.480, -11.165);
-      eventFilter -> SetVertexBDCCut(-9.25e-3, 3*0.933, -2.80478, 3*0.8424);
-      eventFilter -> SetMultiplicityCut(50, 100, 20);
+      //eventFilter -> SetVertexBDCCut(-9.25e-3, 3*0.933, -2.80478, 3*0.8424);
+      eventFilter -> SetVertexBDCCut(0.0, 3*0.933, 0.0, 3*0.8424);
+      eventFilter -> SetMultiplicityCut(multMin, multMax, 20);
       break;
   }
   eventFilter -> SetVertexXYCut(-15, 15, -225, -185);
@@ -94,7 +100,7 @@ void run_trim_data
 
   run -> AddTask(reader);
   run -> AddTask(eventFilter);
-  run -> AddTask(bdcInfo);
+  //run -> AddTask(bdcInfo);
 
   run -> Init();
   run -> Run(0, chain.GetEntries());
