@@ -27,6 +27,7 @@
 #include "TString.h"
 #include "TH2.h"
 #include "TTree.h"
+#include "TXMLNode.h"
 
 // STL
 #include <vector>
@@ -47,6 +48,8 @@ class STConcReaderTask : public FairTask {
     void SetPersistence(Bool_t value);
 
     void SetChain(TChain* chain);
+    std::string LoadFromXMLNode(TXMLNode *node); // will return path to data
+    int GetNEntries();
     void SetEventID(int eventID);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
