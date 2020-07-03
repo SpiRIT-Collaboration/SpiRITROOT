@@ -35,50 +35,12 @@
 #include <vector>
 #include <memory>
 
-struct DataPackage
-{
-  DataPackage(std::vector<float>& t_labRapidity,
-              std::vector<float>& t_eff,
-              std::vector<float>& t_prob,
-              std::vector<float>& t_fragRapidity,
-              std::vector<TVector3>& t_cmVector,
-              std::vector<TVector3>& t_fragVelocity,
-              std::vector<float>& t_beamRapidity);
-  std::vector<float>& labRapidity, eff, prob, fragRapidity;
-  std::vector<TVector3>& cmVector, fragVelocity;
-  std::vector<float>& beamRapidity;
-
-  std::vector<float> weight, ptRap;
- 
-  ClassDef(DataPackage, 1);
-};
-
-
 class STSimpleGraphsTask : public FairTask {
   public:
     /// Constructor
     STSimpleGraphsTask();
     /// Destructor
     ~STSimpleGraphsTask();
-
-    template<class T, class ...Args>
-    T* RegisterHistogram(Args... args)
-    { auto hist = new T(args...); f1DHists[std::string(hist -> GetName())] = static_cast<TH1*>(hist); return hist; }
-    
-    // the name of the histogram will be prefixed by the particle name
-    template<class T, class ...Args>
-    void RegisterRuleForEachParticle(std::function<void(const DataPackage&, const STData&, TH1*, int)> rule, const std::string& suffix, Args... args)
-    {
-      for(auto pdg : fSupportedPDG)
-      {
-        auto hist = this -> RegisterHistogram<T>((fParticleName[pdg] + suffix).c_str(), args...);
-        this -> RegisterRuleWithParticle(pdg, [pdg, rule, hist](const DataPackage& package, const STData& data){ rule(package, data, hist, pdg); });
-      } 
-    };
-
-    void RegisterRuleWithParticle(int pdg, std::function<void(const DataPackage&, const STData&)> rule);
-    void RegisterRapidityPlots();
-    void RegisterPIDPlots();
 
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
@@ -93,8 +55,6 @@ class STSimpleGraphsTask : public FairTask {
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
     int fEntries;
-    bool fPlotRapidity = false;
-    bool fPlotPID = false;
   
     STDigiPar *fPar      = nullptr;                 ///< Parameter read-out class pointer
     TClonesArray *fData  = nullptr;                 ///< STData from the conc files
@@ -132,10 +92,11 @@ class STSimpleGraphsTask : public FairTask {
 
     int _ToPitchId(const TVector3& vec);
     int _ToYawId(const TVector3& vec);
+    std::vector<std::vector<std::vector<TH2F*>>> fPIDForParticleHists;
     const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
-    std::map<std::string, TH1*> f1DHists;
-    std::vector<std::vector<std::function<void(const DataPackage&, const STData&)>>> fFillRules;
-
+    std::vector<TH2F> fHists;
+    std::vector<TH1F> fRapHists, fPtHists, fPtFullHists;
+  
   ClassDef(STSimpleGraphsTask, 1);
 };
 
