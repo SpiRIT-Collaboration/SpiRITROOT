@@ -95,6 +95,7 @@ class STPIDProbTask : public FairTask {
     const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
 
     STVectorI *fPDGLists = nullptr;
+    STVectorI *fSkip = nullptr;
  
   ClassDef(STPIDProbTask, 1);
 };

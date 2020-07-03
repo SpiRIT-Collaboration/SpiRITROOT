@@ -31,6 +31,7 @@ STPIDProbTask::STPIDProbTask()
 
   fPDGProb = new TClonesArray("STVectorF", fSupportedPDG.size());
   fSDFromLine = new TClonesArray("STVectorF", fSupportedPDG.size());
+
 }
 
 STPIDProbTask::~STPIDProbTask()
@@ -61,7 +62,7 @@ InitStatus STPIDProbTask::Init()
     fPDGProbMap[pdg] = static_cast<STVectorF*>(fPDGProb -> ConstructedAt(i));
     fSDFromLineMap[pdg] = static_cast<STVectorF*>(fSDFromLine -> ConstructedAt(i));
   }
-
+  fSkip = (STVectorI*) ioMan -> GetObject("Skip");
 
   return kSUCCESS;
 }
@@ -84,6 +85,9 @@ STPIDProbTask::SetParContainers()
 
 void STPIDProbTask::Exec(Option_t *opt)
 {
+  if(fSkip)
+    if(fSkip -> fElements[0] == 1) return; // skip == 1 indicates event skip
+
   for(auto& ele : fPDGProbMap) ele.second -> fElements.clear();
   for(auto& ele : fSDFromLineMap) ele.second -> fElements.clear();
 
@@ -197,6 +201,34 @@ auto has_suffix = [](const std::string &str, const std::string &suffix)
              str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
   };
 
+auto AskRedrawIfExist = [](TObject *obj, const char *drawOpt, TCanvas *c2, const char *question)
+  {
+    if(obj)
+    {
+      if(c2)
+      {
+        c2 -> cd();
+        obj -> Draw(drawOpt);
+        c2 -> Update();
+        c2 -> Modified();
+      }
+      int response;
+      new TGMsgBox(
+        gClient->GetDefaultRoot(),
+        gClient->GetDefaultRoot(),
+        "",
+        question,
+        kMBIconQuestion,
+        kMBYes+kMBNo,
+        &response,  0, 0);
+      if(response == kMBYes) 
+      {
+        obj -> Delete();
+        obj = nullptr;
+      }
+    }
+    return obj;
+  };
 
 void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFile)
 {
@@ -267,35 +299,6 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
     auto PIDSigma = (TF1*) output.Get(PIDSigmaName);
     auto GLimitName = TString::Format("Limit%d", pdg);
     auto *GLimit = (TCutG*) output.Get(GLimitName);;
-
-    auto AskRedrawIfExist = [](TObject *obj, const char *drawOpt, TCanvas *c2, const char *question)
-    {
-      if(obj)
-      {
-        if(c2)
-        {
-          c2 -> cd();
-          obj -> Draw(drawOpt);
-          c2 -> Update();
-          c2 -> Modified();
-        }
-        int response;
-        new TGMsgBox(
-          gClient->GetDefaultRoot(),
-          gClient->GetDefaultRoot(),
-          "",
-          question,
-          kMBIconQuestion,
-          kMBYes+kMBNo,
-          &response,  0, 0);
-        if(response == kMBYes) 
-        {
-          obj -> Delete();
-          obj = nullptr;
-        }
-      }
-      return obj;
-    };
 
     // need to redraw
     tightCut = (TCutG*) AskRedrawIfExist(tightCut, "l same", &c1, TString::Format("Tight cut for %s is found. Redraw?", pname.c_str()));
@@ -525,22 +528,35 @@ void STPIDProbTask::CreatePriorFromCut(const std::string& anaFile, const std::st
 
   for(const auto& part : particles)
   {
-    PID.Draw("colz");
-    TLatex t(2000, 800, TString::Format("Draw cut for %s", part.name.Data()));
-    
-    t.Draw();
-    TCutG *cutg = nullptr;
-    while(!cutg) cutg = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
-    std::cout << "Finished? Press Ctrl-C" << std::endl;
-    c1.WaitPrimitive("temp", "[CUTG]"); //checkpoint to allow user to modify the cutg before pressing Ctrl-C
-    
     auto cutName = part.name + "Cut";
-    cutg -> SetName(cutName);
+    TCutG *cutg = nullptr;
+    PID.Draw("colz");
+
+    // search for the cut in folder first
+    // if it exist, ask wheather to keep it or remove it
+
+    cutg = (TCutG*) AskRedrawIfExist(output.Get(cutName), "l same", &c1, "CUTG for " + part.name + " is found. Redraw(y/n)?");
+    if(!cutg)
+    {    
+      TLatex t(2000, 800, TString::Format("Draw cut for %s", part.name.Data()));
+      t.Draw();
+      while(!cutg) cutg = (TCutG*) c1.WaitPrimitive("CUTG", "[CUTG]");
+      cutg -> SetName(cutName);
+    }
+    {
+      TPaveText text(0.5,0.5,0.85,0.8, "brNDC");
+      text.AddText("You may adjust the graphical cut.");
+      text.AddText("Press Ctrl-C to continue");
+      text.Draw(); 
+      c1.WaitPrimitive("temp", "[CUTG]");
+      output.cd();
+      cutg -> Write();
+    }
+        
     auto proj = PID.ProjectionX("",0,-1,"[" + cutName + "]");
     output.cd();
     proj -> Write(TString::Format("Distribution%d", part.pdg)); 
 
-    t.Delete();
   }
   
   
