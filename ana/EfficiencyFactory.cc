@@ -534,7 +534,7 @@ TEfficiency EfficiencyInCMFactory::FinalizeBins(int t_pdg,
     double phi = mom.Phi()*TMath::RadToDeg();
     double weight = 1;
     if(CMz_bin_.min < z && z < CMz_bin_.max && pt_bin_.min < pt && pt < pt_bin_.max)
-      if(fUnfoldingDist) weight = fUnfoldingDist -> Interpolate((z < 0)? -z : z, pt);
+      if(fUnfoldingDist) weight = fUnfoldingDist -> Interpolate(/*(z < 0)? -z : */z, pt);
     if(weight == 0) weight = 1;
     if(phi < 0) phi += 360;
     
