@@ -67,6 +67,7 @@ class STFilterEventTask : public FairTask {
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fData;                ///< STData from the conc files
     TClonesArray *fEventType;
+    STVectorI *fSkip;                ///< Tell other class to skip events. 1 = skip, 0 = dont' skip
 
     std::vector<TCutG*> fCutG;
     std::vector<double> fAcceptance;

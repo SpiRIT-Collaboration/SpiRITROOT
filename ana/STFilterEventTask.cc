@@ -15,6 +15,8 @@ ClassImp(STFilterEventTask);
 STFilterEventTask::STFilterEventTask()
 {
   fLogger = FairLogger::GetLogger(); 
+  fSkip = new STVectorI;
+  fSkip -> fElements.push_back(0);
 }
 
 STFilterEventTask::~STFilterEventTask()
@@ -42,6 +44,7 @@ InitStatus STFilterEventTask::Init()
   if(fVertexCut) fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Only vertex from %f < z < %f are accepted", fVertexZMin, fVertexZMax));
   if(fMultCut) fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Only events with multiplicity from %d < z < %d are accepted", fMultMin, fMultMax));
 
+  ioMan -> Register("Skip", "ST", fSkip, false); // Skip flag is only used internally
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   fEventType = (TClonesArray*) ioMan -> GetObject("EventType");
   return kSUCCESS;
@@ -107,6 +110,7 @@ void STFilterEventTask::Exec(Option_t *opt)
     if(type == 6 || type == 7) fill = false;
   }
 
+  fSkip -> fElements[0] = (fill)? 0 : 1;
   FairRunAna::Instance() -> MarkFill(fill);
 }
 

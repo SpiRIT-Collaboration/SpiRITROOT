@@ -67,6 +67,7 @@ class STTransformFrameTask : public FairTask {
     TClonesArray *fLabRapidity;
     STVectorF *fBeamRapidity;
     STVectorF *fBeamMom;
+    STVectorI *fSkip = nullptr;
 
     TGraph fEnergyLossInTarget; // Should link to LISE files for dEdX calculation
     double fTargetThickness = 0;

@@ -47,6 +47,7 @@ InitStatus STTransformFrameTask::Init()
 
   fBeamRapidity -> fElements.push_back(0);
   fBeamRapidity -> fElements.push_back(0);
+  //fBeamRapidity -> fElements.push_back(0);
   fBeamMom -> fElements.push_back(0);
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
@@ -57,6 +58,8 @@ InitStatus STTransformFrameTask::Init()
   }
 
   fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Target thickness is %f mm", fTargetThickness));
+  fSkip = (STVectorI*) ioMan -> GetObject("Skip");
+
   return kSUCCESS;
 }
 
@@ -77,6 +80,9 @@ void STTransformFrameTask::SetParContainers()
 
 void STTransformFrameTask::Exec(Option_t *opt)
 {
+  if(fSkip)
+    if(fSkip -> fElements[0] == 1) return; // skip == 1 indicates event skip
+
   auto data = (STData*) fData -> At(0);
   int beamMass = (data -> aoq)*(data -> z) + 0.5;
 
