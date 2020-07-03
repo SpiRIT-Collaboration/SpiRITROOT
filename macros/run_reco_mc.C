@@ -9,7 +9,8 @@ void run_reco_mc
   Double_t fPSAThreshold = 30,
   TString fParameterFile = "ST.parameters.fullmc.par",
   TString fMCFile = "",
-  TString fPathToData = ""
+  TString fPathToData = "",
+  Double_t fSheetCharge = 4e-8
 )
 {
   Int_t start = fSplitNo * fNumEventsInSplit;
@@ -89,7 +90,8 @@ void run_reco_mc
   auto spaceCharge = new STSpaceChargeCorrectionTask();
   auto gfBField = STGFBField::GetInstance("samurai_field_map", "A", -0.1794, -20.5502, 58.0526);   
   spaceCharge -> SetBField(gfBField -> GetFieldMap());
-  spaceCharge -> SetSheetChargeDensity(4e-8);
+  const double fGGLeakFactor = 10.2;
+  spaceCharge -> SetSheetChargeDensity(fSheetCharge, fGGLeakFactor*fSheetCharge);
   spaceCharge -> SetProjectile(STSpaceCharge::Projectile::Sn132);
   spaceCharge -> SetElectronDrift(true); 
   
