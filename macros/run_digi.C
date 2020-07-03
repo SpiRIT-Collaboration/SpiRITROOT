@@ -1,4 +1,3 @@
-
 /**
  * Digitization Simulation Macro
  *
@@ -32,7 +31,7 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
   fSpaceChargeTask -> SetPersistence(false);
   fSpaceChargeTask -> SetVerbose(false);
   fSpaceChargeTask -> SetProjectile(STSpaceCharge::Projectile::Sn132);
-  fSpaceChargeTask -> SetSheetChargeDensity(beamrate); // sheet charge density for run 2899
+  fSpaceChargeTask -> SetSheetChargeDensity(beamrate,10.2*beamrate); // sheet charge density for run 2899
   if(beamrate >= 0) fRun -> AddTask(fSpaceChargeTask);
 
 
@@ -48,7 +47,7 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
   fPadResponseTask -> SetPersistence(false);
   fPadResponseTask -> AssumeGausPRF();
   fPadResponseTask -> SetElectronicsJitterFile(workDir + "/parameters/yOffsetCalibration.dat");
-  fPadResponseTask -> SetGainMatchingData(workDir + "/parameters/RelativeGain.list");
+  fPadResponseTask -> SetGainMatchingData(workDir + "/parameters/RelativeGainRun2841.list");
   fRun -> AddTask(fPadResponseTask);
 
   /*******************************************************************************
@@ -59,14 +58,14 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
 
   STSimulateBeamTask* beamTask = new STSimulateBeamTask();
   beamTask -> SetDeadPadOnBeam(workDir + "/input/ProbDeadPad.root", "Sn132");
-  //beamTask -> SetHeavyFragments(workDir + "/SpaceCharge/potential/_132Sn_BeamTrack.data", -203.3, 5000000, 4.3);
+  beamTask -> SetHeavyFragments(workDir + "/SpaceCharge/potential/_132Sn_BeamTrack.data", -203.3, 5000000, 4.3);
   if(simulateBeam) fRun -> AddTask(beamTask);
 
 
   STElectronicsTask* fElectronicsTask = new STElectronicsTask(); 
   fElectronicsTask -> SetPersistence(true);
   fElectronicsTask -> SetADCConstant(1.);
-  fElectronicsTask -> SetGainMatchingData(workDir + "/parameters/RelativeGain.list");
+  fElectronicsTask -> SetGainMatchingData(workDir + "/parameters/RelativeGainRun2841.list");
   fRun -> AddTask(fElectronicsTask);
 
 
@@ -147,6 +146,7 @@ void run_digi(int fRunNo, TString name)
 
   auto fParamSetter = new STParameters(fRunNo, fSystemDB, fRunDB);
   auto fSheetChargeDensity = fParamSetter -> GetSheetChargeDensity();
+  auto fParameterFile = fParamSetter -> GetParameterFile();
 
-  run_digi(name, fSheetChargeDensity);
+  run_digi(name, fSheetChargeDensity, fParameterFile);
 }
