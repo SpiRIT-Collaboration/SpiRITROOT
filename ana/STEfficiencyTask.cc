@@ -105,6 +105,8 @@ InitStatus STEfficiencyTask::Init()
 
   fProb = (TClonesArray*) ioMan -> GetObject("Prob");
   ioMan -> Register("Eff", "ST", fEff, fIsPersistence);
+  fSkip = (STVectorI*) ioMan -> GetObject("Skip");
+  
   return kSUCCESS;
 }
 
@@ -125,6 +127,9 @@ void STEfficiencyTask::SetParContainers()
 
 void STEfficiencyTask::Exec(Option_t *opt)
 {
+  if(fSkip)
+    if(fSkip -> fElements[0] == 1) return; // skip == 1 indicates event skip
+
   auto data = (STData*) fData -> At(0);
 
   int npart = data -> multiplicity;
@@ -187,7 +192,7 @@ void STEfficiencyTask::FinishTask()
   auto outfile = FairRootManager::Instance() -> GetOutFile();
   outfile -> cd();
   for(const auto& eff : fEfficiency) eff.second.Write(TString::Format("Efficiency%d", eff.first));
-  if(fUnfoldingFile) fUnfoldingFile -> cd();
+  if(fUnfoldingFile && fUpdateUnfolding) fUnfoldingFile -> cd();
   for(const auto& dist : fDistributionForUnfolding) dist.second.Write(TString::Format("DistUnfolding%d", dist.first));
 }
 

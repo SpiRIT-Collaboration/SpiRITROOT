@@ -72,6 +72,7 @@ class STEfficiencyTask : public FairTask {
     TClonesArray *fCMVec = nullptr;                 ///< vector in CM frame
     TClonesArray *fEff   = nullptr;                 ///< Efficiency of each type of particle
     TClonesArray *fProb  = nullptr;                 ///< Particle PID from any of the PID Task
+    STVectorI *fSkip = nullptr;
 
     const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
     EfficiencyFactory *fFactory = nullptr;
