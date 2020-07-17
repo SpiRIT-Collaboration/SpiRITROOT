@@ -88,13 +88,14 @@ class STSimpleGraphsTask : public FairTask {
     virtual void Exec(Option_t *opt);
     virtual void FinishTask();
     void SetPersistence(Bool_t value);
-
+    void IgnoreMinMom(bool value) { fIgnoreMinMom = value; };
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
     int fEntries;
     bool fPlotRapidity = false;
     bool fPlotPID = false;
+    bool fIgnoreMinMom = false;
   
     STDigiPar *fPar      = nullptr;                 ///< Parameter read-out class pointer
     TClonesArray *fData  = nullptr;                 ///< STData from the conc files

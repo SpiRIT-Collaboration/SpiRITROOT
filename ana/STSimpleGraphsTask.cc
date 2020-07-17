@@ -67,9 +67,9 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
     auto pname = fParticleName[pdg];
     auto hist_ana = this -> RegisterHistogram<TH2F>(TString::Format("%s_ana", pname.c_str()),
                                                      ";y_{z}/y_{beam Lab};CM P_{t}/A (MeV/c2);",
-                                                     100, 0, 2, 100, 0, 1000);
+                                                     100, 0, 2, 60, 0, 1000);
     auto hist_rap = this -> RegisterHistogram<TH1F>(TString::Format("%s_rapHist", pname.c_str()),
-                                                     ";2y_{z}/y_{beam Lab};", 100, -0.5, 2);
+                                                     ";2y_{z}/y_{beam Lab};", 100, -2, 2);
     auto hist_pt = this -> RegisterHistogram<TH1F>(TString::Format("%s_ptHist", pname.c_str()),
                                                     "2y_{x}/y_{beam Lab}", 100, -2, 2);
     auto hist_ptFull = this -> RegisterHistogram<TH1F>(TString::Format("%s_ptFullHist", pname.c_str()),
@@ -79,24 +79,24 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
     auto pmass = particle -> Mass()/STAnaParticleDB::kAu2Gev;
 
     this -> RegisterRuleWithParticle(pdg, 
-      [hist_ana, hist_rap, hist_pt, hist_ptFull, minMom, pmass](const DataPackage& package, const STData& data)
+      [hist_ana, hist_rap, hist_pt, hist_ptFull, minMom, pmass, this](const DataPackage& package, const STData& data)
       {
         for(int i = 0; i < data.multiplicity; ++i)
           if(package.eff[i] > 0.05 && package.prob[i] > 0.2)
           {
-            if(data.vaMom[i].Mag() > minMom)
+            if(data.vaMom[i].Mag() > minMom || fIgnoreMinMom)
             {
               hist_ana -> Fill(package.labRapidity[i]/package.beamRapidity[1], 
                                package.cmVector[i].Perp()/pmass, package.weight[i]);
               hist_rap -> Fill(package.fragRapidity[i]/(0.5*package.beamRapidity[1]), 
                                package.weight[i]);
             }
-            if(package.cmVector[i].z() > 0)
+            if(package.cmVector[i].z() > 0 /*package.fragRapidity[i]/(0.5*package.beamRapidity[1]) > -0.2*/)
             {
               double phaseSpaceFactor = 2;
               hist_ptFull -> Fill(package.ptRap[i]/(0.5*package.beamRapidity[1]),
                                   package.weight[i]*phaseSpaceFactor);
-              if(fabs(0.5*package.beamRapidity[1] - 0.25) < 0.25) 
+              if(fabs(package.fragRapidity[i]/(0.5*package.beamRapidity[1]) - 0.25) < 0.25) 
                 hist_pt -> Fill(package.ptRap[i]/(0.5*package.beamRapidity[1]),
                                 package.weight[i]*phaseSpaceFactor);
             }
@@ -255,11 +255,13 @@ void STSimpleGraphsTask::FinishTask()
       int Z = particle -> Charge()/3;
       int A = int(particle -> Mass()/STAnaParticleDB::kAu2Gev + 0.5);
       auto cloned = (TH1D*) key.second -> Clone(TString::Format("%s_ClonedForP", key.second -> GetName()));
-      cloned -> Scale(Z);
+      cloned -> Rebin();
+      cloned -> Scale(Z/2.);
       CIP -> Add(cloned);
 
       cloned = (TH1D*) key.second -> Clone(TString::Format("%s_ClonedForN", key.second -> GetName()));
-      cloned -> Scale(A - Z);
+      cloned -> Rebin();
+      cloned -> Scale((A - Z)/2.);
       CIN -> Add(cloned); 
     }
 
