@@ -52,6 +52,7 @@ class STEfficiencyTask : public FairTask {
     ~STEfficiencyTask();
 
     void SetUnfoldingFile(TString fileName, bool update = false) { fUnfoldingFileName = fileName; fUpdateUnfolding = update; }
+    void UpdateUnfoldingFile(bool update) { fUpdateUnfolding = update; }
     EfficiencySettings& AccessSettings(int t_pdg) { return fEfficiencySettings[t_pdg]; }
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
