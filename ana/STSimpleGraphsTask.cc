@@ -133,6 +133,26 @@ void STSimpleGraphsTask::RegisterPIDPlots()
   }
 }
 
+void STSimpleGraphsTask::RegisterPlotsForMC()
+{
+  this -> RegisterRuleForEachParticle<TH1F>([](const DataPackage& package, const STData& data, TH1* hist, int pdg)
+    {
+      double multiplicity = 0;
+      for(int i = 0; i < data.multiplicity; ++i)
+        if(package.prob[i] > 0.2 && package.eff[i] > 0.05 && package.fragRapidity[i] > 0)
+          multiplicity += package.weight[i]*2; // 2 is the phase space factor for package.fragRapidity[i] > 0
+      hist -> Fill(multiplicity);
+    }, "_mult", "", 11,0,95);
+  
+  this -> RegisterRuleForEachParticle<TH2F>([](const DataPackage& package, const STData& data, TH1* hist, int pdg)
+    {
+      for(int i = 0; i < data.multiplicity; ++i)
+        if(package.prob[i] > 0.2 && package.eff[i] > 0.05 && package.fragRapidity[i] > 0)
+          static_cast<TH2F*>(hist) -> Fill(package.fragVelocity[i].z(), package.fragVelocity[i].Perp(), package.weight[i]);
+    }, "_CMVel", "", 50,0,1,50,0,1);
+}
+
+
 InitStatus STSimpleGraphsTask::Init()
 {
   FairRootManager *ioMan = FairRootManager::Instance();

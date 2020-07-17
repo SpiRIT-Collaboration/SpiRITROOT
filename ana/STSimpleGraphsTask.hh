@@ -78,6 +78,7 @@ class STSimpleGraphsTask : public FairTask {
 
     void RegisterRuleWithParticle(int pdg, std::function<void(const DataPackage&, const STData&)> rule);
     void RegisterRapidityPlots();
+    void RegisterPlotsForMC();
     void RegisterPIDPlots();
 
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
