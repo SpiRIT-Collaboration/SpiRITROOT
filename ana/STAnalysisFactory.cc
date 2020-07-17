@@ -8,6 +8,7 @@
 #include "STTransformFrameTask.hh"
 #include "STFilterEventTask.hh"
 #include "STSimpleGraphsTask.hh"
+#include "STERATTask.hh"
 
 #include "TObjString.h"
 #include "TString.h"
@@ -120,7 +121,7 @@ FairTask* STAnalysisFactory::GetEfficiencyTask()
     }
     if(std::strcmp(child -> GetNodeName(), "UpdateUnfolding") == 0)
     {
-      UnfoldingFile = child -> GetText();
+      UnfoldingFile = TString::Format("Unfolding/%s", child -> GetText());
       if(child -> HasAttributes()) update = true;
     }
   }
@@ -183,12 +184,44 @@ FairTask* STAnalysisFactory::GetEfficiencyTask()
   return task;
 }
 
+FairTask* STAnalysisFactory::GetERATTask()
+{
+  auto it = fNodes.find("ERATTask");
+  if(it == fNodes.end()) return nullptr;
+  auto task = new STERATTask();
+  auto child = it -> second -> GetChildren();
+  
+  auto attr = this -> fReadNodesToMap(child);
+  auto it2 = attr.find("ImpactParameterFile");
+  if(it2 != attr.end()) task -> SetImpactParameterTable(it2 -> second);
+
+  return new STERATTask;
+}
+
+FairTask* STAnalysisFactory::GetSimpleGraphsTask()
+{
+  auto it = fNodes.find("SimpleGraphsTask");
+  if(it == fNodes.end()) return nullptr;
+  auto graphTask = new STSimpleGraphsTask();
+  auto child = it -> second -> GetChildren();
+
+  auto attr = this -> fReadNodesToMap(child);
+  if(attr.find("RapidityPlots") != attr.end()) graphTask -> RegisterRapidityPlots();
+  if(attr.find("PIDPlots") != attr.end()) graphTask -> RegisterPIDPlots();
+  
+  return graphTask;
+}
+
 std::map<std::string, std::string> STAnalysisFactory::fReadNodesToMap(TXMLNode *node)
 {
   std::map<std::string, std::string> settings;
   for(; node; node = node->GetNextNode())
     if(node->GetNodeType() == TXMLNode::kXMLElementNode)
-      settings[std::string(node->GetNodeName())] = node->GetText();
+    {
+      if(auto text = node -> GetText()) settings[std::string(node->GetNodeName())] = node->GetText();
+      else settings[std::string(node->GetNodeName())] = "";
+    }
+  
   return settings;
 };
 

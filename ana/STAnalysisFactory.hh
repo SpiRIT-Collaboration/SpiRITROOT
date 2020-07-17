@@ -17,7 +17,8 @@ public:
   FairTask* GetPIDTask();
   FairTask* GetTransformFrameTask();
   FairTask* GetEfficiencyTask();
-
+  FairTask* GetERATTask();
+  FairTask* GetSimpleGraphsTask();
 private:
   template<typename T>
   bool AssignIfNodeIs(const std::string& name, TXMLNode *node, T& value)
