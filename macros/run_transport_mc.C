@@ -48,7 +48,8 @@ void run_transport_mc
  TString outputDir = "data/",
  Bool_t  useFieldMapFile = kTRUE,
  Int_t   start_evt=0,
- std::set<int> allowedParticles={}
+ std::set<int> allowedParticles={},
+ const std::string& truthFile="approx_Sn112.root"
 )
 {
   //////////////////////////////////////////////////////////
@@ -150,7 +151,7 @@ void run_transport_mc
   // -----------------------------------------------------------------
   // Event generator
   // ONLY FOR SN108!!!!
-  //auto fEvent = new STModelToLabFrameGenerator("approx_Sn108.root");
+  //auto fEvent = new STModelToLabFrameGenerator("approx_Sn108KanekoMult50.root");
   //fEvent -> SetBeamAndTarget(0.270, 108, 50, 112); 
   //fEvent -> SetPrimaryVertex(TVector3(-0.15,-20.55,-1.32));
   //fEvent -> SetVertexXYSigma(TVector2(0.356, 0.323));
@@ -158,8 +159,8 @@ void run_transport_mc
   //fEvent -> SetBeamAngleSigma(TVector2(0.0007095, 0.00184));
 
   // ONLY FOPR SN132
-  auto fEvent = new STModelToLabFrameGenerator("approx_Sn132.root");
-  fEvent -> SetBeamAndTarget(0.270, 132, 50, 124); 
+  auto fEvent = new STModelToLabFrameGenerator(truthFile.c_str());
+  fEvent -> SetBeamAndTarget(0.270, 112, 50, 124); 
   fEvent -> SetPrimaryVertex(TVector3(0.04,-20.55,-1.32));
   fEvent -> SetVertexXYSigma(TVector2(0.406, 0.362));
   fEvent -> SetBeamAngle(TVector2(-0.0443, 0.00066));
@@ -175,7 +176,7 @@ void run_transport_mc
 
 
 
-  FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator();
+  FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator(truthFile.c_str());
   fGenerator -> AddGenerator(fEvent);
   fRun -> SetGenerator(fGenerator);  
 
