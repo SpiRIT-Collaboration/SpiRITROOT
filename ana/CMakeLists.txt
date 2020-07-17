@@ -69,6 +69,7 @@ MassCalculator/STMassCalSimpleBB.cc
 MassCalculator/STBBFunction.cc
 STAnalysisFactory.cc
 STERATTask.cc
+STModelReaderTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
@@ -85,6 +86,7 @@ Set(DEPENDENCIES
    STPar
    STGlobal
    genfit2
+   STGen
 )
 
 GENERATE_LIBRARY()

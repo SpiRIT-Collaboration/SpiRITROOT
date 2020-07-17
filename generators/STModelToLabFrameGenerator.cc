@@ -133,6 +133,57 @@ void STImQMDReader::SetEntry(int t_entry)
   fEventID = t_entry;
 }
 
+/**********************************************
+ * Deried reader class for ImQMD particles
+ * ********************************************/
+STImQMDNewReader::STImQMDNewReader(TString fileName) : fFile(fileName)
+{
+  if(!fFile.IsOpen())
+    LOG(INFO) << "Reading ImQMD data (new format) from " << fileName << FairLogger::endl;
+
+  fTree = (TTree*) fFile.Get("cluster");
+  if(!fTree)
+    LOG(FATAL) << "Tree cluster is not found in file " << fileName << FairLogger::endl;
+  
+  fTree -> SetBranchAddress("multi", &fMulti);
+  fTree -> SetBranchAddress("A", &fPartA);
+  fTree -> SetBranchAddress("Z", &fPartZ);
+  fTree -> SetBranchAddress("px", &fPx);
+  fTree -> SetBranchAddress("py", &fPy);
+  fTree -> SetBranchAddress("pz", &fPz);
+  fTree -> SetBranchAddress("x", &fX);
+  fTree -> SetBranchAddress("y", &fY);
+  fTree -> SetBranchAddress("z", &fZ);
+}
+
+TString STImQMDNewReader::Print()
+{ return TString::Format("ImQMD reader (new format) with source %s", fFile.GetName()); }
+
+STImQMDNewReader::~STImQMDNewReader() {}
+
+bool STImQMDNewReader::GetNext(std::vector<STTransportParticle>& particleList)
+{
+  particleList.clear();
+  if(fEventID >= fTree -> GetEntries()) return false;
+  fTree -> GetEntry(fEventID);
+  for(int i = 0; i < fMulti; ++i)
+  {
+    int pdg = 0;
+    int Z = fPartZ[i], A = fPartA[i];
+    if(Z == 1 && A == 1) pdg = 2212;
+    else if(Z == 0 && A == 1) pdg = 2122;
+    // special case for ImQMD files
+    // When Z = +/- 1 and A = 0, it refers to pions
+    else if(Z == 1 && A == 0) pdg = 211;
+    else if(Z == -1 && A == 0) pdg = -211;
+    else pdg = 1000000000 + Z*10000 + A*10;
+
+    particleList.push_back({pdg, fPx[i], fPy[i], fPz[i], fX[i], fY[i], fZ[i]});
+  }
+  ++fEventID;
+  return true;;
+}
+
 /*************************************************
 * STpBUUReader
 **************************************************/
@@ -281,7 +332,9 @@ void STModelToLabFrameGenerator::RegisterReader()
   //if(fInputName.BeginsWith("amd"))    { fReader = new STAMDReader(fInputPath + fInputName); } 
   //else if(fInputName.BeginsWith("urqmd"))  { fReader = new STUrQMDReader(fInputPath + fInputName); } 
   //else if(fInputName.BeginsWith("pBUU"))   { fReader = new STpBUUReader(fInputPath + fInputName); } 
-  if(fInputName.BeginsWith("imqmd") || fInputName.BeginsWith("approx"))  { fReader = new STImQMDReader(fInputPath + fInputName); }  // approx data shares the same format as imqmd
+  std::cout << fInputName << std::endl;
+  if (fInputName.BeginsWith("imqmdNew")) { fReader = new STImQMDNewReader(fInputPath + fInputName); }
+  else if(fInputName.BeginsWith("imqmd") || fInputName.BeginsWith("approx"))  { fReader = new STImQMDReader(fInputPath + fInputName); }  // approx data shares the same format as imqmd
   else if(fInputName.BeginsWith("pbuu")) { fReader = new STpBUUReader(fInputPath + fInputName); }
   else
     LOG(FATAL)<<"STModelToLabFrameGenerator cannot accept event files without specifying generator names."<<FairLogger::endl;

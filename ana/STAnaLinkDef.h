@@ -25,6 +25,7 @@
 #pragma link C++ class STSimpleGraphsTask+;
 #pragma link C++ class DataPackage+;
 #pragma link C++ class STERATTask+;
+#pragma link C++ class STModelReaderTask+;
 
 #pragma link C++ class EfficiencyFactory+;
 #pragma link C++ class EfficiencyFromConcFactory+;

@@ -21,7 +21,8 @@
 
 struct STTransportParticle;
 class STTransportReader;
-class STImQMDReader;
+class STImQMDReader; // old ImQMD format
+class STImQMDNewReader; // Fanurs updated the ImQMD format
 
 namespace Elements
 {
@@ -148,6 +149,26 @@ protected:
   int fPartA, fPartZ;
   double fPx, fPy, fPz;
   double fX, fY, fZ;
+};
+
+class STImQMDNewReader : public STTransportReader
+{
+public: 
+  STImQMDNewReader(TString fileName);
+  virtual ~STImQMDNewReader();
+  virtual void SetEntry(int t_entry) { fEventID = t_entry; }
+  virtual int GetEntry() { return fEventID; }
+  virtual int GetEntries() { return fTree -> GetEntries(); }
+  virtual bool GetNext(std::vector<STTransportParticle>& particleList);
+  virtual TString Print();
+protected:
+  TFile fFile;
+  TTree *fTree = nullptr;
+  int fEventID = 0;
+  static const int fMaxN = 1024;
+  int fMulti, fPartA[fMaxN], fPartZ[fMaxN];
+  double fPx[fMaxN], fPy[fMaxN], fPz[fMaxN];
+  double fX[fMaxN], fY[fMaxN], fZ[fMaxN];
 };
 
 class STpBUUReader : public STTransportReader
