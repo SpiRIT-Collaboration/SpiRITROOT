@@ -16,6 +16,8 @@ STSmallOutputTask::STSmallOutputTask()
   fEventTypeArr = new TClonesArray("STVectorI");
   fMCEventID = new TClonesArray("STVectorI");
   fRunIDArr = new TClonesArray("STVectorI");
+  fMCRotZ = new STVectorF;
+  fMCRotZ -> fElements.push_back(0);
 }
 
 STSmallOutputTask::~STSmallOutputTask()
@@ -43,7 +45,7 @@ InitStatus STSmallOutputTask::Init()
   // BeamInfo comes from GenfitVATask
   // It won;t be filled if VA Task is absent
   fBeamInfo = static_cast<STBeamInfo*>(fRootManager->GetObject("STBeamInfo"));
-
+  fMCEventHeader = (FairMCEventHeader *) fRootManager -> GetObject("MCEventHeader.");
   // initialize the tclonesArray
   fData = new((*fArrData)[0]) STData();
   (new((*fMCEventID)[0]) STVectorI) -> fElements.push_back(0);
@@ -57,6 +59,7 @@ InitStatus STSmallOutputTask::Init()
     fRootManager -> Register("EventID", "ST", fMCEventID, fIsPersistence);
     fRootManager -> Register("EventType", "ST", fEventTypeArr, fIsPersistence);
     fRootManager -> Register("RunID", "ST", fRunIDArr, fIsPersistence);
+    if(fMCEventHeader) fRootManager -> Register("MCRotZ", "ST", fMCRotZ, fIsPersistence);
   }
 
   else
@@ -72,6 +75,7 @@ InitStatus STSmallOutputTask::Init()
       fSmallTree_->Branch("EvtData", fData);
       fSmallTree_->Branch("eventID", &fEventID);
       fSmallTree_->Branch("eventType", &fEventType);
+      if(fMCEventHeader) fSmallTree_->Branch("MCRotZ", &fMCRotZ);
     }
     else LOG(INFO) << "No file is set for small output" << FairLogger::endl;
   }
@@ -91,6 +95,10 @@ void STSmallOutputTask::Exec(Option_t* option)
     static_cast<STVectorI*>(fRunIDArr -> At(0)) -> fElements[0] = fRunID;
     fEventType = fEventHeader -> GetStatus();
   }
+
+  if(fMCEventHeader)
+    fMCRotZ -> fElements[0] = fMCEventHeader -> GetRotZ();
+  
   if(fBeamInfo)
   {
     fData -> aoq = fBeamInfo -> fBeamAoQ;

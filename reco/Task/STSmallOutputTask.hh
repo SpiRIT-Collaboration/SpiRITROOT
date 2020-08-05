@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "FairEventHeader.h"
+#include "FairMCEventHeader.h"
 
 #include "STVector.hh"
 #include "STData.hh"
@@ -33,6 +34,7 @@ public:
   void SetInPlace(bool inplace = true);
   void SetOffVerbose(Bool_t verbose = kFALSE) { fIsVerbose = verbose; }
 protected:
+  FairMCEventHeader *fMCEventHeader = nullptr;
   TClonesArray *fSTRecoTrack = nullptr;
   TClonesArray *fVATracks = nullptr;
   TClonesArray *fSTVertex = nullptr;
@@ -45,6 +47,7 @@ protected:
   TClonesArray *fMCEventID = nullptr;
   TClonesArray *fEventTypeArr = nullptr;
   TClonesArray *fRunIDArr = nullptr;
+  STVectorF *fMCRotZ = nullptr; // store MC reactioni plane
   std::unique_ptr<TFile> fSmallOutput_; //!< File where the tree is stored
   TTree *fSmallTree_; //!< Tree itself
 
