@@ -9,6 +9,7 @@
 
 #include <glob.h>
 #include "TXMLAttr.h"
+#include "TRandom.h"
 
 ClassImp(STModelReaderTask);
 
@@ -26,7 +27,9 @@ STModelReaderTask::STModelReaderTask(TString filename)
   { fReader = std::unique_ptr<STImQMDReader>(new STImQMDReader(fInputPath + filename)); }
   else if(filename.BeginsWith("pbuu")) { fReader = std::unique_ptr<STpBUUReader>(new STpBUUReader(fInputPath + filename)); }
   else
-    LOG(FATAL)<<"STModelReader cannot accept event files without specifying generator names."<<FairLogger::endl;
+  {
+    LOG(FATAL)<<"STModelReader cannot accept event files without specifying generator names.\nInput name : " << filename << FairLogger::endl;
+  }
 }
 
 STModelReaderTask::~STModelReaderTask()
@@ -37,12 +40,13 @@ int STModelReaderTask::GetNEntries()
 
 InitStatus STModelReaderTask::Init()
 {
+  STAnaParticleDB::FillTDatabasePDG();
   FairRootManager *ioMan = FairRootManager::Instance();
   if (ioMan == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");
     return kERROR;
   }
-  
+ 
   new((*fData)[0]) STData();
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
@@ -54,6 +58,16 @@ InitStatus STModelReaderTask::Init()
   ioMan -> Register("Prob", "ST", fProb, fIsPersistence);
   ioMan -> Register("Eff", "ST", fEff, fIsPersistence);
 
+  if(fRotate)
+  {
+    fLogger -> Info(MESSAGE_ORIGIN, "The event will be randomly rotated along the beam axis");
+    fMCRotZ = new STVectorF();
+    fMCRotZ -> fElements.push_back(0);
+    ioMan -> Register("MCRotZ", "ST", fMCRotZ, fIsPersistence);
+  }
+  else
+    fLogger -> Info(MESSAGE_ORIGIN, "The event will not be randomly rotated");
+ 
   return kSUCCESS;
 }
 
@@ -84,6 +98,14 @@ void STModelReaderTask::Exec(Option_t *opt)
     data -> beamEnergyTargetPlane = fEnergyPerA;
     data -> z = 1.;
     data -> aoq = fBeamA;
+    data -> proja = data -> projb = 0;
+
+    if(fRotate)
+    {
+      double phi = gRandom -> Uniform(-TMath::Pi(), TMath::Pi());
+      fMCRotZ -> fElements[0] = phi;
+    }
+
     for(int i = 0; i < data -> multiplicity; ++i)
     {
       const auto& particle = particleList[i];
@@ -94,6 +116,7 @@ void STModelReaderTask::Exec(Option_t *opt)
       TLorentzVector fragVect;
       fragVect.SetXYZM(particle.px, particle.py, particle.pz, p_info -> Mass());
       fragVect.Boost(fBoostVector); 
+      if(fRotate) fragVect.RotateZ(fMCRotZ -> fElements[0]);
 
       data -> recodpoca[i].SetXYZ(0, 0, 0);
       data -> recoNRowClusters[i] = 100;

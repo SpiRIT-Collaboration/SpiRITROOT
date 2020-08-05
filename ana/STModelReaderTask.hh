@@ -40,6 +40,7 @@ class STModelReaderTask : public FairTask {
     int GetNEntries();
     void SetEventID(int eventID);
     void SetBeamAndTarget(int beamA, int targetA, double energyPerA);
+    void RotateEvent(bool val=true) { fRotate = val; }
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     STDigiPar* fPar = nullptr;
@@ -49,17 +50,14 @@ class STModelReaderTask : public FairTask {
     TClonesArray *fData = nullptr;
     TClonesArray *fProb = nullptr;
     TClonesArray *fEff = nullptr;
-    TClonesArray *fCMVector = nullptr;
-    TClonesArray *fLabRapidity = nullptr;
-    STVectorF *fBeamRapidity = nullptr;
-    TClonesArray *fFragVelocity = nullptr;
-    TClonesArray *fFragRapidity = nullptr;
+    STVectorF *fMCRotZ = nullptr;
     const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
 
     TLorentzVector fFourVect;
     TVector3 fBoostVector;
     int fTargetA, fBeamA, fBeamZ;
     double fEnergyPerA;
+    bool fRotate = false;
 
   ClassDef(STModelReaderTask, 1);
 };
