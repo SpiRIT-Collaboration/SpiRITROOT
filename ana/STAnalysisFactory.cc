@@ -2,6 +2,8 @@
 #include <stdexcept>
 
 #include "STAnalysisFactory.hh"
+#include "STConcReaderTask.hh"
+#include "STModelReaderTask.hh"
 #include "STEfficiencyTask.hh"
 #include "STPIDProbTask.hh"
 #include "EfficiencyFactory.hh"
@@ -9,22 +11,60 @@
 #include "STFilterEventTask.hh"
 #include "STSimpleGraphsTask.hh"
 #include "STERATTask.hh"
+#include "STReactionPlaneTask.hh"
+#include "STDivideEventTask.hh"
 
 #include "TObjString.h"
 #include "TString.h"
 #include "TXMLAttr.h"
+#include "TSystem.h"
 
   // constructor input: node of TaskList
 STAnalysisFactory::STAnalysisFactory(TXMLNode *node) 
 { 
-  if(std::strcmp(node -> GetNodeName(), "TaskList") != 0) 
-    throw std::runtime_error("The node passed onto STAnalysisFactory is not TaskList.");
+  for(; node; node = node->GetNextNode())
+    if(node -> GetNodeType() == TXMLNode::kXMLElementNode)
+    {
+      if(std::strcmp(node -> GetNodeName(), "IOInfo") == 0) fIONode = node;
+      if(std::strcmp(node -> GetNodeName(), "TaskList") == 0) fTaskNode = node;
+    }
+ 
+  if(!fIONode)
+    throw std::runtime_error("The node passed onto STAnalysisFactory does not contain IOInfo");
+  if(!fTaskNode)
+    throw std::runtime_error("The node passed onto STAnalysisFactory does not contain TaskList.");
 
-  auto child = node -> GetChildren();
+  auto child = fTaskNode -> GetChildren();
   for(; child; child = child->GetNextNode())
     if(child -> GetNodeType() == TXMLNode::kXMLElementNode)
       fNodes[std::string(child -> GetNodeName())] = child;
 };
+
+FairTask* STAnalysisFactory::GetReaderTask()
+{
+  std::string DataType(this -> fReadNodesAttrToMap(fIONode)["Type"]);
+
+  if(DataType == "Perfect")
+  {
+    auto settings = this -> fReadNodesToMap(fIONode -> GetChildren());
+    TString dir = TString::Format("%s", settings["DataDir"].c_str());
+    auto reader = new STModelReaderTask(dir);
+    reader -> SetBeamAndTarget(std::stoi(settings["beamA"]), std::stoi(settings["targetA"]),
+                               std::stof(settings["beamEnergyPerA"]));
+    // TEMPORARY. TO BE DELETED
+    reader -> RotateEvent();
+    fOutPath = TString::Format("%s/macros/data/", gSystem -> Getenv("VMCWORKDIR"));
+    fEntries = reader -> GetNEntries();
+    return reader;
+  }
+  else
+  {
+    auto reader = new STConcReaderTask();
+    fOutPath = reader -> LoadFromXMLNode(fIONode).c_str();
+    fEntries = reader -> GetNEntries();
+    return reader;
+  }
+}
 
 FairTask* STAnalysisFactory::GetFilterEventTask()
 {
@@ -195,7 +235,7 @@ FairTask* STAnalysisFactory::GetERATTask()
   auto it2 = attr.find("ImpactParameterFile");
   if(it2 != attr.end()) task -> SetImpactParameterTable(it2 -> second);
 
-  return new STERATTask;
+  return task;
 }
 
 FairTask* STAnalysisFactory::GetSimpleGraphsTask()
@@ -208,8 +248,57 @@ FairTask* STAnalysisFactory::GetSimpleGraphsTask()
   auto attr = this -> fReadNodesToMap(child);
   if(attr.find("RapidityPlots") != attr.end()) graphTask -> RegisterRapidityPlots();
   if(attr.find("PIDPlots") != attr.end()) graphTask -> RegisterPIDPlots();
+  if(attr.find("VPlots") != attr.end()) graphTask -> RegisterVPlots();
   
   return graphTask;
+}
+
+FairTask* STAnalysisFactory::GetReactionPlaneTask()
+{
+  auto it = fNodes.find("ReactionPlaneTask");
+  if(it == fNodes.end()) return nullptr;
+  auto reactionPlaneTask = new STReactionPlaneTask();
+  auto child = it -> second -> GetChildren();
+ 
+  auto attr = this -> fReadNodesToMap(child);
+  auto it2 = attr.find("PhiEff");
+  if(it2 != attr.end()) reactionPlaneTask -> LoadPhiEff(it2 -> second);
+  auto charge = attr["ChargeCoef"];
+  if(!charge.empty()) reactionPlaneTask -> SetChargeCoef(std::stof(charge));
+  auto mass = attr["MassCoef"];
+  if(!mass.empty()) reactionPlaneTask -> SetMassCoef(std::stof(mass));
+  auto const_coef = attr["ConstCoef"];
+  if(!const_coef.empty()) reactionPlaneTask -> SetConstCoef(std::stof(const_coef));
+  auto it_use_mc = attr.find("UseMCReactionPlane");
+  if(it_use_mc != attr.end()) reactionPlaneTask -> UseMCReactionPlane();
+  auto part_coef = attr["ParticleCoef"];
+  if(!part_coef.empty())
+  {
+    std::vector<double> coefs;
+    std::stringstream ss(part_coef);
+    while(ss.good())
+    {
+      std::string temp;
+      std::getline(ss, temp, ','); // delimited by comma
+      coefs.push_back(std::stof(temp));
+    } 
+    reactionPlaneTask -> SetParticleCoef(coefs);
+  }
+
+  return reactionPlaneTask;
+}
+
+FairTask* STAnalysisFactory::GetDivideEventTask()
+{
+  auto it = fNodes.find("DivideEventTask");
+  if(it == fNodes.end()) return nullptr;
+  auto divideTask = new STDivideEventTask();
+  auto child = it -> second -> GetChildren();
+ 
+  auto attr = this -> fReadNodesToMap(child);
+  auto it2 = attr.find("ComplementaryTo");
+  if(it2 != attr.end()) divideTask -> ComplementaryTo(it2 -> second.c_str());
+  return divideTask;
 }
 
 std::map<std::string, std::string> STAnalysisFactory::fReadNodesToMap(TXMLNode *node)

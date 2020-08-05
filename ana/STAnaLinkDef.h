@@ -26,6 +26,8 @@
 #pragma link C++ class DataPackage+;
 #pragma link C++ class STERATTask+;
 #pragma link C++ class STModelReaderTask+;
+#pragma link C++ class STReactionPlaneTask+;
+#pragma link C++ class STDivideEventTask+;
 
 #pragma link C++ class EfficiencyFactory+;
 #pragma link C++ class EfficiencyFromConcFactory+;

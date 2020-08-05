@@ -65,14 +65,14 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
   for(auto& pdg : fSupportedPDG)
   {
     auto pname = fParticleName[pdg];
-    auto hist_ana = this -> RegisterHistogram<TH2F>(TString::Format("%s_ana", pname.c_str()),
+    auto hist_ana = this -> RegisterHistogram<TH2F>(true, TString::Format("%s_ana", pname.c_str()),
                                                      ";y_{z}/y_{beam Lab};CM P_{t}/A (MeV/c2);",
                                                      100, 0, 2, 60, 0, 1000);
-    auto hist_rap = this -> RegisterHistogram<TH1F>(TString::Format("%s_rapHist", pname.c_str()),
+    auto hist_rap = this -> RegisterHistogram<TH1F>(true, TString::Format("%s_rapHist", pname.c_str()),
                                                      ";2y_{z}/y_{beam Lab};", 100, -2, 2);
-    auto hist_pt = this -> RegisterHistogram<TH1F>(TString::Format("%s_ptHist", pname.c_str()),
+    auto hist_pt = this -> RegisterHistogram<TH1F>(true, TString::Format("%s_ptHist", pname.c_str()),
                                                     "2y_{x}/y_{beam Lab}", 100, -2, 2);
-    auto hist_ptFull = this -> RegisterHistogram<TH1F>(TString::Format("%s_ptFullHist", pname.c_str()),
+    auto hist_ptFull = this -> RegisterHistogram<TH1F>(true, TString::Format("%s_ptFullHist", pname.c_str()),
                                                         "2y_{xm}/y_{beam Lab}", 100, -2, 2);
     auto minMom = fMinMomForCMInLab[pdg];
     auto particle = TDatabasePDG::Instance() -> GetParticle(pdg);
@@ -105,6 +105,30 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
   }
 }
 
+void STSimpleGraphsTask::RegisterVPlots()
+{
+  fPlotVs = true;
+  // this only works for proton
+  auto counts = this -> RegisterHistogram<TH1F>(false, "p_v_rap_counts", "", 25, -2, 2);
+  auto v1 = this -> RegisterHistogram<TH1F>(false, "p_v1_cumsum", "", 25, -2, 2); 
+  auto v2 = this -> RegisterHistogram<TH1F>(false, "p_v2_cumsum", "", 25, -2, 2); 
+
+  this -> RegisterRuleWithParticle(2212, 
+    [v1, v2, counts](const DataPackage& package, const STData& data)
+    {
+      for(int i = 0; i < data.multiplicity; ++i)
+        if(package.prob[i] > 0.2)
+        {
+          double y0 = package.fragRapidity[i]/(0.5*package.beamRapidity[1]);
+          double pxpt = package.cmVector[i].x()/package.cmVector[i].Perp();
+          double pypt = package.cmVector[i].y()/package.cmVector[i].Perp();
+          v1 -> Fill(y0, pxpt*package.prob[i]);
+          v2 -> Fill(y0, (pxpt*pxpt - pypt*pypt)*package.prob[i]);
+          counts -> Fill(y0);
+        }
+    });
+}
+
 void STSimpleGraphsTask::RegisterPIDPlots()
 {
   fPlotPID = true;
@@ -113,7 +137,7 @@ void STSimpleGraphsTask::RegisterPIDPlots()
     std::vector<std::vector<TH2F*>> pdg_hists(fNPitches, std::vector<TH2F*>(fNYaw, nullptr));
     for(int i = 0; i < fNPitches; ++i)
       for(int j = 0; j < fNYaw; ++j)
-        pdg_hists[i][j] = this -> RegisterHistogram<TH2F>(TString::Format("Pitch%dYaw%dPDG%d", i, j, pdg), "", 
+        pdg_hists[i][j] = this -> RegisterHistogram<TH2F>(true, TString::Format("Pitch%dYaw%dPDG%d", i, j, pdg), "", 
                                                           fMomBins, fMinMom, fMaxMom, 
                                                           fdEdXBins, fMindEdX, fMaxdEdX);
 
@@ -204,8 +228,17 @@ void STSimpleGraphsTask::Exec(Option_t *opt)
      
     for(int i = 0; i < fSupportedPDG.size(); ++i)
     {
+      std::vector<float> dummy_eff;
+      std::vector<float> *eff_add;
+      if(fEff) eff_add = &(static_cast<STVectorF*>(fEff -> At(i)) -> fElements);
+      else 
+      {
+        for(int j = 0; j < data -> multiplicity; ++j) dummy_eff.push_back(1);
+        eff_add = &dummy_eff;
+      }
+
       DataPackage dataPackage(static_cast<STVectorF*>(fLabRapidity -> At(i)) -> fElements,
-                              static_cast<STVectorF*>(fEff -> At(i)) -> fElements,
+                              *eff_add,
                               static_cast<STVectorF*>(fProb -> At(i)) -> fElements,
                               static_cast<STVectorF*>(fFragRapidity -> At(i)) -> fElements,
                               static_cast<STVectorVec3*>(fCMVector -> At(i)) -> fElements,
@@ -232,8 +265,11 @@ void STSimpleGraphsTask::FinishTask()
     return hist;
   };
 
-  for(auto& hist : f1DHists) 
-      Set1DUnit(hist.second) -> Write();
+  for(auto it = f1DHists.begin(); it != f1DHists.end(); ++it)
+    if(fNormalize[it -> first])
+      Set1DUnit(it -> second) -> Write();
+    else
+      it -> second -> Write();      
 
   if(fPlotRapidity)
   {
@@ -318,6 +354,17 @@ void STSimpleGraphsTask::FinishTask()
     c1.Write("PIDCanvas");
     gROOT -> SetBatch(false);
   }  
+
+  if(fPlotVs)
+  {
+    auto v1_cloned = (TH1F*) f1DHists["p_v1_cumsum"] -> Clone("p_v1");
+    v1_cloned -> Divide(f1DHists["p_v_rap_counts"]);
+    v1_cloned -> Write();
+
+    auto v2_cloned = (TH1F*) f1DHists["p_v2_cumsum"] -> Clone("p_v2");
+    v2_cloned -> Divide(f1DHists["p_v_rap_counts"]);
+    v2_cloned -> Write();
+  }
 }
 
 void STSimpleGraphsTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }

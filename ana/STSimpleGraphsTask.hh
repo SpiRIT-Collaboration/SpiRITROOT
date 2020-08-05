@@ -62,8 +62,13 @@ class STSimpleGraphsTask : public FairTask {
     ~STSimpleGraphsTask();
 
     template<class T, class ...Args>
-    T* RegisterHistogram(Args... args)
-    { auto hist = new T(args...); f1DHists[std::string(hist -> GetName())] = static_cast<TH1*>(hist); return hist; }
+    T* RegisterHistogram(bool normalize, Args... args)
+    { 
+      auto hist = new T(args...); 
+      f1DHists[std::string(hist -> GetName())] = static_cast<TH1*>(hist); 
+      fNormalize[std::string(hist -> GetName())] = normalize;
+      return hist; 
+    }
     
     // the name of the histogram will be prefixed by the particle name
     template<class T, class ...Args>
@@ -71,12 +76,13 @@ class STSimpleGraphsTask : public FairTask {
     {
       for(auto pdg : fSupportedPDG)
       {
-        auto hist = this -> RegisterHistogram<T>((fParticleName[pdg] + suffix).c_str(), args...);
+        auto hist = this -> RegisterHistogram<T>(true, (fParticleName[pdg] + suffix).c_str(), args...);
         this -> RegisterRuleWithParticle(pdg, [pdg, rule, hist](const DataPackage& package, const STData& data){ rule(package, data, hist, pdg); });
       } 
     };
 
     void RegisterRuleWithParticle(int pdg, std::function<void(const DataPackage&, const STData&)> rule);
+    void RegisterVPlots();
     void RegisterRapidityPlots();
     void RegisterPlotsForMC();
     void RegisterPIDPlots();
@@ -96,6 +102,7 @@ class STSimpleGraphsTask : public FairTask {
     int fEntries;
     bool fPlotRapidity = false;
     bool fPlotPID = false;
+    bool fPlotVs = true;
     bool fIgnoreMinMom = false;
   
     STDigiPar *fPar      = nullptr;                 ///< Parameter read-out class pointer
@@ -136,6 +143,7 @@ class STSimpleGraphsTask : public FairTask {
     int _ToYawId(const TVector3& vec);
     const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
     std::map<std::string, TH1*> f1DHists;
+    std::map<std::string, bool> fNormalize;
     std::vector<std::vector<std::function<void(const DataPackage&, const STData&)>>> fFillRules;
 
   ClassDef(STSimpleGraphsTask, 1);
