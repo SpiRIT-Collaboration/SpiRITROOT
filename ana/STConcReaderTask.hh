@@ -64,6 +64,7 @@ class STConcReaderTask : public FairTask {
     int fMCLoadedID;
     int fRunID;
     STData *fSTData = nullptr;
+    STVectorF *fMCRotZ = nullptr;
     Int_t  fEventID;
     Bool_t fIsPersistence;
 

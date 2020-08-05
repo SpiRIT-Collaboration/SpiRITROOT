@@ -19,6 +19,7 @@ STConcReaderTask::STConcReaderTask(): fEventID(0)
   fMCEventID = new TClonesArray("STVectorI");
   fEventTypeArr = new TClonesArray("STVectorI");
   fRunIDArr = new TClonesArray("STVectorI");
+  fMCRotZ = new STVectorF;
 
   fSTData = new STData();
   fLogger = FairLogger::GetLogger(); 
@@ -131,6 +132,12 @@ InitStatus STConcReaderTask::Init()
     if(fChain -> GetBranch("RunID")) fChain -> SetBranchAddress("RunID", &fRunIDArr);
     else fLogger -> Warning(MESSAGE_ORIGIN, "RunID is not found in TChain.");
     fIsTrimmedFile = true;
+  }
+  if(fChain -> GetBranch("MCRotZ")) 
+  {
+    fChain -> SetBranchAddress("MCRotZ", &fMCRotZ);
+    fLogger -> Info(MESSAGE_ORIGIN, "Retrieving MC reaction plean.");
+    ioMan -> Register("MCRotZ", "ST", fMCRotZ, fIsPersistence);
   }
 
   ioMan -> Register("STData", "ST", fData, fIsPersistence);
