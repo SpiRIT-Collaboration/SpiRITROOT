@@ -10,5 +10,6 @@
 #pragma link C++ class STElectronicsTask+;
 #pragma link C++ class STAnalyzeG4StepTask+;
 #pragma link C++ class STSimulateBeamTask+;
+#pragma link C++ class STKyotoTask+;
 
 #endif

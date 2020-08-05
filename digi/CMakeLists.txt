@@ -39,6 +39,7 @@ STDriftTask.cc
 STPadResponseTask.cc
 STElectronicsTask.cc
 STAnalyzeG4StepTask.cc
+STKyotoTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
