@@ -1,4 +1,4 @@
-void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOutName="", bool iter_unfold=false)
+void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOutName="", bool iter_unfold=false, int entries_lim=-1)
 {
   /***************************************************************
   * Read xml
@@ -7,22 +7,14 @@ void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOu
   parser.SetValidate(false);
   parser.ParseFile(xmlFile.c_str());
   auto node = parser.GetXMLDocument()->GetRootNode()->GetChildren();
-  TXMLNode *TaskNode = nullptr;
-  TXMLNode *IONode = nullptr;
-
-  for(auto child = node; child; child = child -> GetNextNode())
-    if(child -> GetNodeType() == TXMLNode::kXMLElementNode)
-    {
-      if(std::strcmp(child -> GetNodeName(), "TaskList") == 0) TaskNode = child;
-      if(std::strcmp(child -> GetNodeName(), "IOInfo") == 0) IONode = child;
-    }
-  STAnalysisFactory factory(TaskNode);
+  STAnalysisFactory factory(node);
 
   /***************************************************************
   *  FairRoot setup
   ****************************************************************/
-  auto reader = new STConcReaderTask();
-  TString fPathToData = reader -> LoadFromXMLNode(IONode).c_str();
+  auto reader = factory.GetReaderTask();
+  int nentries = factory.GetEntries();
+  TString fPathToData = factory.GetOutPath();
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
   TString par = spiritroot + "parameters/ST.parameters.par";
   TString geo = spiritroot + "geometry/geomSpiRIT.man.root";
@@ -43,25 +35,26 @@ void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOu
   /*************************************************************
   * Add tasks
   **************************************************************/
-  int nentries = reader -> GetNEntries();
 
   std::vector<FairTask*> tasks;
   tasks.push_back(reader);
   tasks.push_back(factory.GetFilterEventTask());
+  tasks.push_back(factory.GetDivideEventTask());
+
   tasks.push_back(factory.GetPIDTask());
   tasks.push_back(factory.GetTransformFrameTask());
   auto eff = static_cast<STEfficiencyTask*>(factory.GetEfficiencyTask());
   if(eff) eff -> UpdateUnfoldingFile(iter_unfold);
   tasks.push_back(eff);
-  tasks.push_back(factory.GetSimpleGraphsTask());
   tasks.push_back(factory.GetERATTask());
-  
- 
+  tasks.push_back(factory.GetReactionPlaneTask());
+  tasks.push_back(factory.GetSimpleGraphsTask());
+
   for(auto task : tasks)
     if(task) run -> AddTask(task);
 
   run -> Init();
-  run -> Run(0, nentries);
+  run -> Run(0, (entries_lim > 0)? entries_lim : nentries);
 
   cout << "Log    : " << log << endl;
   cout << "Output : " << out << endl;
