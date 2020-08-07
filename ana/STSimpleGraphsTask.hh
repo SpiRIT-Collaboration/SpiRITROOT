@@ -43,10 +43,11 @@ struct DataPackage
               std::vector<float>& t_fragRapidity,
               std::vector<TVector3>& t_cmVector,
               std::vector<TVector3>& t_fragVelocity,
-              std::vector<float>& t_beamRapidity);
-  std::vector<float>& labRapidity, eff, prob, fragRapidity;
-  std::vector<TVector3>& cmVector, fragVelocity;
-  std::vector<float>& beamRapidity;
+              std::vector<float>& t_beamRapidity,
+              std::vector<float>& t_beamMom);
+  std::vector<float> &labRapidity, &eff, &prob, &fragRapidity;
+  std::vector<TVector3> &cmVector, &fragVelocity;
+  std::vector<float> &beamRapidity, &beamMom;
 
   std::vector<float> weight, ptRap;
  
@@ -86,6 +87,7 @@ class STSimpleGraphsTask : public FairTask {
     void RegisterRapidityPlots();
     void RegisterPlotsForMC();
     void RegisterPIDPlots();
+    void RemoveParticleMin();
 
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
@@ -95,7 +97,6 @@ class STSimpleGraphsTask : public FairTask {
     virtual void Exec(Option_t *opt);
     virtual void FinishTask();
     void SetPersistence(Bool_t value);
-    void IgnoreMinMom(bool value) { fIgnoreMinMom = value; };
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
@@ -103,7 +104,6 @@ class STSimpleGraphsTask : public FairTask {
     bool fPlotRapidity = false;
     bool fPlotPID = false;
     bool fPlotVs = true;
-    bool fIgnoreMinMom = false;
   
     STDigiPar *fPar      = nullptr;                 ///< Parameter read-out class pointer
     TClonesArray *fData  = nullptr;                 ///< STData from the conc files
@@ -115,6 +115,7 @@ class STSimpleGraphsTask : public FairTask {
     TClonesArray *fCMVector = nullptr;
     STVectorI    *fSkip = nullptr;
     STVectorF    *fBeamRapidity = nullptr;
+    STVectorF    *fBeamMom = nullptr;
 
     std::map<int, double> fMinMomForCMInLab;
     std::map<int, std::string> fParticleName{{2212, "p"}, 

@@ -84,7 +84,7 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
         for(int i = 0; i < data.multiplicity; ++i)
           if(package.eff[i] > 0.05 && package.prob[i] > 0.2)
           {
-            if(data.vaMom[i].Mag() > minMom || fIgnoreMinMom)
+            if(data.vaMom[i].Mag() > minMom)
             {
               hist_ana -> Fill(package.labRapidity[i]/package.beamRapidity[1], 
                                package.cmVector[i].Perp()/pmass, package.weight[i]);
@@ -109,12 +109,13 @@ void STSimpleGraphsTask::RegisterVPlots()
 {
   fPlotVs = true;
   // this only works for proton
-  auto counts = this -> RegisterHistogram<TH1F>(false, "p_v_rap_counts", "", 25, -2, 2);
+  auto v1_counts = this -> RegisterHistogram<TH1F>(false, "p_v1_rap_counts", "", 25, -2, 2);
+  auto v2_counts = this -> RegisterHistogram<TH1F>(false, "p_v2_rap_counts", "", 25, -2, 2);
   auto v1 = this -> RegisterHistogram<TH1F>(false, "p_v1_cumsum", "", 25, -2, 2); 
   auto v2 = this -> RegisterHistogram<TH1F>(false, "p_v2_cumsum", "", 25, -2, 2); 
 
   this -> RegisterRuleWithParticle(2212, 
-    [v1, v2, counts](const DataPackage& package, const STData& data)
+    [v1, v2, v1_counts, v2_counts](const DataPackage& package, const STData& data)
     {
       for(int i = 0; i < data.multiplicity; ++i)
         if(package.prob[i] > 0.2)
@@ -123,8 +124,14 @@ void STSimpleGraphsTask::RegisterVPlots()
           double pxpt = package.cmVector[i].x()/package.cmVector[i].Perp();
           double pypt = package.cmVector[i].y()/package.cmVector[i].Perp();
           v1 -> Fill(y0, pxpt*package.prob[i]);
-          v2 -> Fill(y0, (pxpt*pxpt - pypt*pypt)*package.prob[i]);
-          counts -> Fill(y0);
+          v1_counts -> Fill(y0);
+
+          if(package.cmVector[i].Perp()/package.beamMom[0] > 0.4)
+          {
+            v2 -> Fill(y0, (pxpt*pxpt - pypt*pypt)*package.prob[i]);
+            v2_counts -> Fill(y0);
+          }
+
         }
     });
 }
@@ -193,6 +200,7 @@ InitStatus STSimpleGraphsTask::Init()
   fCMVector = (TClonesArray*) ioMan -> GetObject("CMVector");
   fLabRapidity = (TClonesArray*) ioMan -> GetObject("LabRapidity");
   fBeamRapidity = (STVectorF*) ioMan -> GetObject("BeamRapidity");
+  fBeamMom = (STVectorF*) ioMan -> GetObject("BeamMom");
   fFragVelocity = (TClonesArray*) ioMan -> GetObject("FragVelocity");
   fFragRapidity = (TClonesArray*) ioMan -> GetObject("FragRapidity");
   fSkip = (STVectorI*) ioMan -> GetObject("Skip");
@@ -225,6 +233,7 @@ void STSimpleGraphsTask::Exec(Option_t *opt)
   {
     int npart = data -> multiplicity;
     auto& beamRapidity = fBeamRapidity -> fElements;
+    auto& beamMom = fBeamMom ->fElements;
      
     for(int i = 0; i < fSupportedPDG.size(); ++i)
     {
@@ -243,7 +252,8 @@ void STSimpleGraphsTask::Exec(Option_t *opt)
                               static_cast<STVectorF*>(fFragRapidity -> At(i)) -> fElements,
                               static_cast<STVectorVec3*>(fCMVector -> At(i)) -> fElements,
                               static_cast<STVectorVec3*>(fFragVelocity -> At(i)) -> fElements,
-                              beamRapidity);
+                              beamRapidity,
+                              beamMom);
       for(auto& rule : fFillRules[i]) 
         rule(dataPackage, *data);
     }
@@ -358,13 +368,18 @@ void STSimpleGraphsTask::FinishTask()
   if(fPlotVs)
   {
     auto v1_cloned = (TH1F*) f1DHists["p_v1_cumsum"] -> Clone("p_v1");
-    v1_cloned -> Divide(f1DHists["p_v_rap_counts"]);
+    v1_cloned -> Divide(f1DHists["p_v1_rap_counts"]);
     v1_cloned -> Write();
 
     auto v2_cloned = (TH1F*) f1DHists["p_v2_cumsum"] -> Clone("p_v2");
-    v2_cloned -> Divide(f1DHists["p_v_rap_counts"]);
+    v2_cloned -> Divide(f1DHists["p_v2_rap_counts"]);
     v2_cloned -> Write();
   }
+}
+
+void STSimpleGraphsTask::RemoveParticleMin()
+{
+  for(auto& val : fMinMomForCMInLab) val.second = -9999;
 }
 
 void STSimpleGraphsTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }
@@ -376,14 +391,16 @@ DataPackage::DataPackage(std::vector<float>& t_labRapidity,
                          std::vector<float>& t_fragRapidity,
                          std::vector<TVector3>& t_cmVector,
                          std::vector<TVector3>& t_fragVelocity,
-                         std::vector<float>& t_beamRapidity):
+                         std::vector<float>& t_beamRapidity,
+                         std::vector<float>& t_beamMom):
   labRapidity(t_labRapidity),
   eff(t_eff),
   prob(t_prob),
   fragRapidity(t_fragRapidity),
   cmVector(t_cmVector),
   fragVelocity(t_fragVelocity),
-  beamRapidity(t_beamRapidity)
+  beamRapidity(t_beamRapidity),
+  beamMom(t_beamMom)
 {
   for(int i = 0; i < t_eff.size(); ++i) 
   {
