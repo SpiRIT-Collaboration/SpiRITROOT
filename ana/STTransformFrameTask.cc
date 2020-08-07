@@ -97,7 +97,7 @@ void STTransformFrameTask::Exec(Option_t *opt)
   fBeamRapidity -> fElements[1] = LV.Rapidity();
   LV.Boost(vBeam);
   fBeamRapidity -> fElements[0] = LV.Rapidity();
-  fBeamMom -> fElements[0] = LV.Z();
+  fBeamMom -> fElements[0] = LV.Z()/beamMass;
 
   // beam rotation
   TVector3 beamDirection(TMath::Tan(data -> proja/1000.), TMath::Tan(data ->projb/1000.),1.);
