@@ -59,15 +59,13 @@ InitStatus STModelReaderTask::Init()
   ioMan -> Register("Eff", "ST", fEff, fIsPersistence);
 
   if(fRotate)
-  {
     fLogger -> Info(MESSAGE_ORIGIN, "The event will be randomly rotated along the beam axis");
-    fMCRotZ = new STVectorF();
-    fMCRotZ -> fElements.push_back(0);
-    ioMan -> Register("MCRotZ", "ST", fMCRotZ, fIsPersistence);
-  }
   else
     fLogger -> Info(MESSAGE_ORIGIN, "The event will not be randomly rotated");
- 
+
+  fMCRotZ = new STVectorF();
+  fMCRotZ -> fElements.push_back(0);
+  ioMan -> Register("MCRotZ", "ST", fMCRotZ, fIsPersistence);
   return kSUCCESS;
 }
 
