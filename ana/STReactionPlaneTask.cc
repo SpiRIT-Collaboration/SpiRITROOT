@@ -51,6 +51,7 @@ InitStatus STReactionPlaneTask::Init()
   fCMVector = (TClonesArray*) ioMan -> GetObject("CMVector");
   fProb = (TClonesArray*) ioMan -> GetObject("Prob");
   fFragRapidity = (TClonesArray*) ioMan -> GetObject("FragRapidity");
+  fBeamRapidity = (STVectorF*) ioMan -> GetObject("BeamRapidity");
   fMCRotZ = (STVectorF*) ioMan -> GetObject("MCRotZ");
 
   if(fUseMCReactionPlane)
@@ -89,6 +90,7 @@ void STReactionPlaneTask::Exec(Option_t *opt)
   TVector2 Q(0,0);
  
   std::vector<std::vector<TVector2>> Q_elements(fSupportedPDG.size());
+  auto beamRap = fBeamRapidity -> fElements[1];
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
     auto cmVector = static_cast<STVectorVec3*>(fCMVector -> At(i));
@@ -101,7 +103,7 @@ void STReactionPlaneTask::Exec(Option_t *opt)
 
     for(int j = 0; j < mult; ++j)
     {
-      if(fabs(rap -> fElements[j]) > fMidRapidity) // reject mid-rapidity particles
+      if(fabs(2*rap -> fElements[j]/beamRap) > fMidRapidity) // reject mid-rapidity particles
       {
         const auto& vec = cmVector -> fElements[j];
         if(vec.Theta() < fThetaCut)

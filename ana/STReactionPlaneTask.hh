@@ -64,11 +64,12 @@ class STReactionPlaneTask : public FairTask {
     TClonesArray *fCMVector;
     TClonesArray *fProb;
     TClonesArray *fFragRapidity;
+    STVectorF *fBeamRapidity;
     STVectorF *fMCRotZ;
 
     STVectorF *fReactionPlane;
-    double fThetaCut = 180; // max theta in populating v1 and v2 in lab frame
-    double fMidRapidity = 0.3; // when |y| < fMidRapidity, they will not count towards reaction plane calculation
+    double fThetaCut = 90; // max theta in populating v1 and v2 in lab frame
+    double fMidRapidity = 0.4; // when |y| < fMidRapidity, they will not count towards reaction plane calculation
     std::string fEffFilename;
     TFile *fEffFile = nullptr;
     TH1F *fEff = nullptr;
