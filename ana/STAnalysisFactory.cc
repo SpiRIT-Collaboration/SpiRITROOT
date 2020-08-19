@@ -2,17 +2,6 @@
 #include <stdexcept>
 
 #include "STAnalysisFactory.hh"
-#include "STConcReaderTask.hh"
-#include "STModelReaderTask.hh"
-#include "STEfficiencyTask.hh"
-#include "STPIDProbTask.hh"
-#include "EfficiencyFactory.hh"
-#include "STTransformFrameTask.hh"
-#include "STFilterEventTask.hh"
-#include "STSimpleGraphsTask.hh"
-#include "STERATTask.hh"
-#include "STReactionPlaneTask.hh"
-#include "STDivideEventTask.hh"
 
 #include "TObjString.h"
 #include "TString.h"
@@ -40,7 +29,7 @@ STAnalysisFactory::STAnalysisFactory(TXMLNode *node)
       fNodes[std::string(child -> GetNodeName())] = child;
 };
 
-FairTask* STAnalysisFactory::GetReaderTask()
+STReaderTask* STAnalysisFactory::GetReaderTask()
 {
   std::string DataType(this -> fReadNodesAttrToMap(fIONode)["Type"]);
 
@@ -52,21 +41,20 @@ FairTask* STAnalysisFactory::GetReaderTask()
     reader -> SetBeamAndTarget(std::stoi(settings["beamA"]), std::stoi(settings["targetA"]),
                                std::stof(settings["beamEnergyPerA"]));
     // TEMPORARY. TO BE DELETED
-    reader -> RotateEvent();
-    fOutPath = TString::Format("%s/macros/data/", gSystem -> Getenv("VMCWORKDIR"));
+    //reader -> RotateEvent();
     fEntries = reader -> GetNEntries();
     return reader;
   }
   else
   {
     auto reader = new STConcReaderTask();
-    fOutPath = reader -> LoadFromXMLNode(fIONode).c_str();
+    reader -> LoadFromXMLNode(fIONode);
     fEntries = reader -> GetNEntries();
     return reader;
   }
 }
 
-FairTask* STAnalysisFactory::GetFilterEventTask()
+STFilterEventTask* STAnalysisFactory::GetFilterEventTask()
 {
   auto it = fNodes.find("EventFilterTask");
   if(it == fNodes.end()) return nullptr;
@@ -103,7 +91,18 @@ FairTask* STAnalysisFactory::GetPIDTask()
   return nullptr; 
 }
 
-FairTask* STAnalysisFactory::GetTransformFrameTask()
+STPiProbTask* STAnalysisFactory::GetPiProbTask()
+{
+  auto it = fNodes.find("PiProbTask");
+  if(it == fNodes.end()) return nullptr;
+
+  auto task = new STPiProbTask;
+  auto settings = this -> fReadNodesToMap(it -> second -> GetChildren());
+  if(!settings["GausFile"].empty()) task -> ReadFile(settings["GausFile"].c_str());
+  return task;
+}
+
+STTransformFrameTask* STAnalysisFactory::GetTransformFrameTask()
 {
   auto it = fNodes.find("TransformFrameTask");
   if(it == fNodes.end()) return nullptr;
@@ -118,113 +117,133 @@ FairTask* STAnalysisFactory::GetTransformFrameTask()
   return task;
 }
 
-FairTask* STAnalysisFactory::GetEfficiencyTask()
+STEfficiencyTask* STAnalysisFactory::GetEfficiencyTask()
 {
   auto it = fNodes.find("EfficiencyTask");
   if(it == fNodes.end()) return nullptr;
-  auto node = it -> second;
-  std::string type(this -> fReadNodesAttrToMap(node)["Type"]);
+  auto task_node = it -> second;
 
-  EfficiencyFromConcFactory *effFactory;
-  if(type == "Lab") effFactory = new EfficiencyFromConcFactory;
-  else effFactory = new EfficiencyInCMFactory();
-  
-  // variable for all particles
-  int NClus;
-  double DPoca;
-  TString PhiCutStr, UnfoldingFile = "";
-  bool update = false;
-  int ThetaBins, MomBins;
-  int PtBins, CMzBins;
-  double UpscaleFactor;
-  double PhaseSpaceFactor;
-
-  auto task = new STEfficiencyTask(effFactory);
-  auto child = node -> GetChildren();
-  for(; child; child = child -> GetNextNode())
+  // get efficiency nodes
+  std::vector<TXMLNode*> eff_nodes;
   {
-     // first fill those particle independent variables
-    this -> AssignIfNodeIs("NClus", child, NClus);
-    this -> AssignIfNodeIs("DPoca", child, DPoca);
-    this -> AssignIfNodeIs("Phi", child, PhiCutStr);
-    this -> AssignIfNodeIs("UpscaleFactor", child, UpscaleFactor);
-    this -> AssignIfNodeIs("PhaseSpaceFactor", child, PhaseSpaceFactor);
-    if(type == "Lab")
-    {
-      this -> AssignIfNodeIs("ThetaBins", child, ThetaBins);
-      this -> AssignIfNodeIs("MomBins", child, MomBins);
-    }
-    else
-    {
-      this -> AssignIfNodeIs("PtBins", child, PtBins);
-      this -> AssignIfNodeIs("CMzBins", child, CMzBins);
-    }
-    if(std::strcmp(child -> GetNodeName(), "UpdateUnfolding") == 0)
-    {
-      UnfoldingFile = TString::Format("Unfolding/%s", child -> GetText());
-      if(child -> HasAttributes()) update = true;
-    }
+    auto child = task_node -> GetChildren();
+    for(; child; child = child -> GetNextNode())
+      if(child->GetNodeType() == TXMLNode::kXMLElementNode)
+        if(std::string(child -> GetNodeName()) == "EfficiencyGroup") eff_nodes.push_back(child);
+    if(eff_nodes.size() == 0) eff_nodes.push_back(task_node); // if there are no EfficiencyGroup, then EfficiencyTask must be one implicit EfficiencyGroup
   }
 
-  if(!UnfoldingFile.IsNull()) task -> SetUnfoldingFile(UnfoldingFile, update);
-
-  // turn PhiCut into vector of pair
-  std::vector<std::pair<double, double>> PhiCuts;
-  auto phiRangeList = PhiCutStr.Tokenize(",");
-  for(int i = 0; i < phiRangeList -> GetEntriesFast(); ++i)
+  auto task = new STEfficiencyTask();
+  for(auto node : eff_nodes)
   {
-    auto rangeStr = static_cast<TObjString*>(phiRangeList -> At(i)) -> GetString();
-    auto range = rangeStr.Tokenize("-");
-    PhiCuts.push_back({std::atof(range -> At(0) -> GetName()), std::atof(range -> At(1) -> GetName())});
-  }
- 
-  // handle particle dependent config
-  child = node -> GetChildren();
-  for(; child; child = child -> GetNextNode())
-    if(child->GetNodeType() == TXMLNode::kXMLElementNode)
-      if(std::strcmp(child -> GetNodeName(), "Particle") == 0)     
+    std::string type(this -> fReadNodesAttrToMap(node)["Type"]);
+    EfficiencyFactory *effFactory;
+    if(type == "Lab") effFactory = new EfficiencyFromConcFactory;
+    else if(type == "CM") effFactory = new EfficiencyInCMFactory();
+    else effFactory = new OrigEfficiencyFactory();
+     
+    // variable for all particles
+    int NClus;
+    double DPoca;
+    TString PhiCutStr, UnfoldingFile = "";
+    bool update = false;
+    int ThetaBins, MomBins;
+    int PtBins, CMzBins;
+    double UpscaleFactor;
+    double PhaseSpaceFactor;
+
+    auto child = node -> GetChildren();
+    for(; child; child = child -> GetNextNode())
+    {
+       // first fill those particle independent variables
+      this -> AssignIfNodeIs("NClus", child, NClus);
+      this -> AssignIfNodeIs("DPoca", child, DPoca);
+      this -> AssignIfNodeIs("Phi", child, PhiCutStr);
+      this -> AssignIfNodeIs("UpscaleFactor", child, UpscaleFactor);
+      this -> AssignIfNodeIs("PhaseSpaceFactor", child, PhaseSpaceFactor);
+      if(type == "CM")
       {
-        auto particleNode = child -> GetChildren();
-        auto particleInfo = this -> fReadNodesToMap(particleNode);
-        std::string pname(static_cast<TXMLAttr*>(child -> GetAttributes() -> At(0)) -> GetValue());
-
-        int pdg;
-        if(pname == "p") pdg = 2212;
-        if(pname == "d") pdg = 1000010020;
-        if(pname == "t") pdg = 1000010030;
-        if(pname == "He3") pdg = 1000020030;
-        if(pname == "He4") pdg = 1000020040;
-        if(pname == "He6") pdg = 1000020060;
-
-        effFactory -> SetDataBaseForPDG(pdg, particleInfo["EffFile"]);
-        auto& settings = task -> AccessSettings(pdg);
-        settings.NClusters = NClus;
-        settings.DPoca = DPoca;
-        settings.PhiCuts = PhiCuts;
-        if(type == "Lab")
-        {
-          settings.ThetaMin = 0; settings.ThetaMax = 90; 
-          settings.NThetaBins = ThetaBins;
-          settings.MomMin = std::stof(particleInfo["MomMin"]); 
-          settings.MomMax = std::stof(particleInfo["MomMax"]); 
-          settings.NMomBins = MomBins;
-        }
-        else
-        {
-          settings.PtMin = std::stof(particleInfo["PtMin"]);
-          settings.PtMax = std::stof(particleInfo["PtMax"]);
-          settings.NPtBins = PtBins;
-          settings.CMzMin = std::stof(particleInfo["CMzMin"]);
-          settings.CMzMax = std::stof(particleInfo["CMzMax"]);
-          settings.NCMzBins = CMzBins;
-        }
+        this -> AssignIfNodeIs("PtBins", child, PtBins);
+        this -> AssignIfNodeIs("CMzBins", child, CMzBins);
       }
-  effFactory -> SetPhaseSpaceFactor(PhaseSpaceFactor);
-  effFactory -> SetUpScalingFactor(UpscaleFactor);
+      else
+      {
+        this -> AssignIfNodeIs("ThetaBins", child, ThetaBins);
+        this -> AssignIfNodeIs("MomBins", child, MomBins);
+      }
+
+      if(std::strcmp(child -> GetNodeName(), "UpdateUnfolding") == 0)
+      {
+        UnfoldingFile = TString::Format("Unfolding/%s", child -> GetText());
+        if(child -> HasAttributes()) update = true;
+      }
+    }
+    if(!UnfoldingFile.IsNull()) task -> SetUnfoldingFile(UnfoldingFile, update);
+
+    // turn PhiCut into vector of pair
+    std::vector<std::pair<double, double>> PhiCuts;
+    auto phiRangeList = PhiCutStr.Tokenize(",");
+    for(int i = 0; i < phiRangeList -> GetEntriesFast(); ++i)
+    {
+      auto rangeStr = static_cast<TObjString*>(phiRangeList -> At(i)) -> GetString();
+      auto range = rangeStr.Tokenize("-");
+      PhiCuts.push_back({std::atof(range -> At(0) -> GetName()), std::atof(range -> At(1) -> GetName())});
+    }
+ 
+    // handle particle dependent config
+    child = node -> GetChildren();
+    std::vector<int> pdgList;
+    for(; child; child = child -> GetNextNode())
+      if(child->GetNodeType() == TXMLNode::kXMLElementNode)
+        if(std::strcmp(child -> GetNodeName(), "Particle") == 0)     
+        {
+          auto particleNode = child -> GetChildren();
+          auto particleInfo = this -> fReadNodesToMap(particleNode);
+          std::string pname(static_cast<TXMLAttr*>(child -> GetAttributes() -> At(0)) -> GetValue());
+
+          int pdg;
+          if(pname == "pi+") pdg = 211;
+          if(pname == "pi-") pdg = -211;
+          if(pname == "p") pdg = 2212;
+          if(pname == "d") pdg = 1000010020;
+          if(pname == "t") pdg = 1000010030;
+          if(pname == "He3") pdg = 1000020030;
+          if(pname == "He4") pdg = 1000020040;
+          if(pname == "He6") pdg = 1000020060;
+          pdgList.push_back(pdg);
+
+          effFactory -> SetDataBaseForPDG(pdg, particleInfo["EffFile"]);
+          auto& settings = task -> AccessSettings(pdg);
+          settings.NClusters = NClus;
+          settings.DPoca = DPoca;
+          settings.PhiCuts = PhiCuts;
+          if(type == "CM")
+          {
+            settings.PtMin = std::stof(particleInfo["PtMin"]);
+            settings.PtMax = std::stof(particleInfo["PtMax"]);
+            settings.NPtBins = PtBins;
+            settings.CMzMin = std::stof(particleInfo["CMzMin"]);
+            settings.CMzMax = std::stof(particleInfo["CMzMax"]);
+            settings.NCMzBins = CMzBins;
+          }
+          else
+          {
+            settings.ThetaMin = 0; settings.ThetaMax = 90; 
+            settings.NThetaBins = ThetaBins;
+            settings.MomMin = std::stof(particleInfo["MomMin"]); 
+            settings.MomMax = std::stof(particleInfo["MomMax"]); 
+            settings.NMomBins = MomBins;
+          }
+
+        }
+    effFactory -> SetPhaseSpaceFactor(PhaseSpaceFactor);
+    effFactory -> SetUpScalingFactor(UpscaleFactor);
+    task -> SetFactoriesForParticle(effFactory, pdgList);
+  }
   return task;
 }
 
-FairTask* STAnalysisFactory::GetERATTask()
+STERATTask* STAnalysisFactory::GetERATTask()
 {
   auto it = fNodes.find("ERATTask");
   if(it == fNodes.end()) return nullptr;
@@ -238,7 +257,7 @@ FairTask* STAnalysisFactory::GetERATTask()
   return task;
 }
 
-FairTask* STAnalysisFactory::GetSimpleGraphsTask()
+STSimpleGraphsTask* STAnalysisFactory::GetSimpleGraphsTask()
 {
   auto it = fNodes.find("SimpleGraphsTask");
   if(it == fNodes.end()) return nullptr;
@@ -246,14 +265,16 @@ FairTask* STAnalysisFactory::GetSimpleGraphsTask()
   auto child = it -> second -> GetChildren();
 
   auto attr = this -> fReadNodesToMap(child);
+  if(attr.find("RemoveParticleMin") != attr.end()) graphTask -> RemoveParticleMin();
   if(attr.find("RapidityPlots") != attr.end()) graphTask -> RegisterRapidityPlots();
   if(attr.find("PIDPlots") != attr.end()) graphTask -> RegisterPIDPlots();
   if(attr.find("VPlots") != attr.end()) graphTask -> RegisterVPlots();
+  if(attr.find("PionPlots") != attr.end()) graphTask -> RegisterPionPlots();
   
   return graphTask;
 }
 
-FairTask* STAnalysisFactory::GetReactionPlaneTask()
+STReactionPlaneTask* STAnalysisFactory::GetReactionPlaneTask()
 {
   auto it = fNodes.find("ReactionPlaneTask");
   if(it == fNodes.end()) return nullptr;
@@ -270,7 +291,7 @@ FairTask* STAnalysisFactory::GetReactionPlaneTask()
   auto const_coef = attr["ConstCoef"];
   if(!const_coef.empty()) reactionPlaneTask -> SetConstCoef(std::stof(const_coef));
   auto it_use_mc = attr.find("UseMCReactionPlane");
-  if(it_use_mc != attr.end()) reactionPlaneTask -> UseMCReactionPlane();
+  if(it_use_mc != attr.end()) reactionPlaneTask -> UseMCReactionPlane(true, std::stof((it_use_mc -> second.empty())? "0" : it_use_mc -> second));
   auto part_coef = attr["ParticleCoef"];
   if(!part_coef.empty())
   {
@@ -288,7 +309,7 @@ FairTask* STAnalysisFactory::GetReactionPlaneTask()
   return reactionPlaneTask;
 }
 
-FairTask* STAnalysisFactory::GetDivideEventTask()
+STDivideEventTask* STAnalysisFactory::GetDivideEventTask()
 {
   auto it = fNodes.find("DivideEventTask");
   if(it == fNodes.end()) return nullptr;

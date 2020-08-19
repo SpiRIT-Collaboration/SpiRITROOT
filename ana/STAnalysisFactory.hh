@@ -7,23 +7,35 @@
 #include <map>
 
 #include "FairTask.h"
+#include "STConcReaderTask.hh"
+#include "STModelReaderTask.hh"
+#include "STEfficiencyTask.hh"
+#include "STPIDProbTask.hh"
+#include "STPiProbTask.hh"
+#include "EfficiencyFactory.hh"
+#include "STTransformFrameTask.hh"
+#include "STFilterEventTask.hh"
+#include "STSimpleGraphsTask.hh"
+#include "STERATTask.hh"
+#include "STReactionPlaneTask.hh"
+#include "STDivideEventTask.hh"
 
 class STAnalysisFactory
 {
 public:
   // constructor input: node of TaskList
   STAnalysisFactory(TXMLNode *node);
-  FairTask* GetReaderTask();
-  TString GetOutPath() { return fOutPath; };
+  STReaderTask* GetReaderTask();
   int GetEntries() { return fEntries; };
-  FairTask* GetFilterEventTask();
+  STFilterEventTask* GetFilterEventTask();
   FairTask* GetPIDTask();
-  FairTask* GetTransformFrameTask();
-  FairTask* GetEfficiencyTask();
-  FairTask* GetERATTask();
-  FairTask* GetSimpleGraphsTask();
-  FairTask* GetReactionPlaneTask();
-  FairTask* GetDivideEventTask();
+  STPiProbTask* GetPiProbTask();
+  STTransformFrameTask* GetTransformFrameTask();
+  STEfficiencyTask* GetEfficiencyTask();
+  STERATTask* GetERATTask();
+  STSimpleGraphsTask* GetSimpleGraphsTask();
+  STReactionPlaneTask* GetReactionPlaneTask();
+  STDivideEventTask* GetDivideEventTask();
 private:
   template<typename T>
   bool AssignIfNodeIs(const std::string& name, TXMLNode *node, T& value)
@@ -42,7 +54,6 @@ private:
   std::map<std::string, TXMLNode*> fNodes;
   TXMLNode *fIONode = nullptr;
   TXMLNode *fTaskNode = nullptr;
-  TString fOutPath;
   int fEntries = 0;
 };
 
