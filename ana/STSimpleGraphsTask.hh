@@ -65,7 +65,7 @@ struct DataPackage
    int fPartID; // indicates which element of the tclones array needs to be loaded
    std::vector<float> fWeight; // prob/ 
    std::vector<float> fPtxRap; // x-rapidity distribution. Extended from transverse rapidity assuming uniform phi dist
-
+   std::map<TCArrType, double> fDefaultValues{{EFF, 1}, {EFFERR, 0}, {PHIEFF, 1}};
 };
 
 class STSimpleGraphsTask : public FairTask {

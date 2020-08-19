@@ -20,38 +20,18 @@ DataPackage::DataPackage() : fTCArrList(ARREND, nullptr), fVecList(VECEND, nullp
 
 void DataPackage::CheckEmptyElements(int n_particle_type)
 {
-  if(!fTCArrList[EFF])
+  for(const auto& def_val : fDefaultValues)
   {
-    fTCArrList[EFF] = new TClonesArray("STVectorF");   
-    for(int i = 0; i < n_particle_type; ++i) 
+    if(!fTCArrList[def_val.first])
     {
-      auto eff = new((*fTCArrList[EFF])[i]) STVectorF();
-      eff -> fElements.resize(50, 1);
+      fTCArrList[def_val.first] = new TClonesArray("STVectorF");   
+      for(int i = 0; i < n_particle_type; ++i) 
+      {
+        auto eff = new((*fTCArrList[def_val.first])[i]) STVectorF();
+        eff -> fElements.resize(50, def_val.second);
+      }
     }
   }
-
-  if(!fTCArrList[EFFERR])
-  {
-    fTCArrList[EFFERR] = new TClonesArray("STVectorF");   
-    for(int i = 0; i < n_particle_type; ++i) 
-    {
-      auto efferr = new((*fTCArrList[EFFERR])[i]) STVectorF();
-      efferr -> fElements.resize(50, 0);
-    }
-  }
-
-  if(!fTCArrList[PHIEFF])
-  {
-    fTCArrList[PHIEFF] = new TClonesArray("STVectorF");   
-    for(int i = 0; i < n_particle_type; ++i) 
-    {
-      auto eff = new((*fTCArrList[PHIEFF])[i]) STVectorF();
-      eff -> fElements.resize(50, 1);
-    }
-  }
-
-
-
 }
 
 void DataPackage::UpdateData(int part_id)
@@ -59,17 +39,13 @@ void DataPackage::UpdateData(int part_id)
   fPartID = part_id;
   // first check if efficiency is empty
   // if so fill everything with one
-  auto& eff = static_cast<STVectorF*>(fTCArrList[EFF] -> At(fPartID)) -> fElements;
-  auto& eff_err = static_cast<STVectorF*>(fTCArrList[EFFERR] -> At(fPartID)) -> fElements;
-  auto& phi_eff = static_cast<STVectorF*>(fTCArrList[PHIEFF] -> At(fPartID)) -> fElements;
-
   auto data = static_cast<STData*>(fTCArrList[DATA] -> At(0));
-  if(eff.size() < data -> multiplicity)
-    eff.resize(data -> multiplicity, 1);  
-  if(eff_err.size() < data -> multiplicity)
-    eff_err.resize(data -> multiplicity, 0);
-  if(phi_eff.size() < data -> multiplicity)
-    phi_eff.resize(data -> multiplicity, 1);
+  for(const auto& def_val : fDefaultValues)
+  {
+    auto& val = static_cast<STVectorF*>(fTCArrList[def_val.first] -> At(fPartID)) -> fElements;
+    if(val.size() < data -> multiplicity)
+      val.resize(data -> multiplicity, def_val.second);  
+  }
 
   fWeight.clear();
   fPtxRap.clear();
