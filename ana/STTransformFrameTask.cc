@@ -31,6 +31,7 @@ STTransformFrameTask::~STTransformFrameTask()
 
 InitStatus STTransformFrameTask::Init()
 {
+  STAnaParticleDB::FillTDatabasePDG();
   FairRootManager *ioMan = FairRootManager::Instance();
   if (ioMan == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");
@@ -125,7 +126,7 @@ void STTransformFrameTask::Exec(Option_t *opt)
     {
       if(auto particle = TDatabasePDG::Instance()->GetParticle(pdg))
       {
-        int ParticleZ = particle -> Charge()/3; // TParticlePDG define charge in units of |e|/3, probably to accomodate quarks
+        int ParticleZ = std::fabs(particle -> Charge()/3); // TParticlePDG define charge in units of |e|/3, probably to accomodate quarks
         double ParticleMass = particle -> Mass()*1000; // GeV to MeV
 
         auto mom = data -> vaMom[part]*ParticleZ;
