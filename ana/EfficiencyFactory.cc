@@ -56,10 +56,11 @@ TH2F* EfficiencyFactory::UpScaling(TH2F* t_hist, double t_xfactor, double t_yfac
 /*********************************************
 *  OrigEfficiency
 **********************************************/
-OrigEfficiencyFactory::OrigEfficiencyFactory(const std::string& t_efficiency_db) : data_filename_(t_efficiency_db)
-{}
+void OrigEfficiencyFactory::SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db)
+{ data_filename_ = t_efficiency_db; }
+
 TEfficiency OrigEfficiencyFactory::FinalizeBins(int t_pdg,
-                                            bool t_verbose)
+                                                bool t_verbose)
 {
   TFile file(data_filename_.c_str());
   if(!file.IsOpen()) throw std::runtime_error("EfficiencyFactory: File " + data_filename_ + " not found.");
@@ -67,8 +68,8 @@ TEfficiency OrigEfficiencyFactory::FinalizeBins(int t_pdg,
   std::string treename;
   switch(t_pdg)
   {  
-    case 211: treename = "pi+"; break;
-    case -211: treename = "pi-"; break;
+    case 211: treename = "pip"; break;
+    case -211: treename = "pim"; break;
     case 2212: treename = "proton"; break;
     case 1000010020: treename = "deuteron"; break;
     case 1000010030: treename = "triton"; break;
@@ -138,7 +139,7 @@ TEfficiency OrigEfficiencyFactory::FinalizeBins(int t_pdg,
 * Efficiency from ana 
 *********************************************************/
 
-EfficiencyFromAnaFactory::EfficiencyFromAnaFactory(){}
+/*EfficiencyFromAnaFactory::EfficiencyFromAnaFactory(){}
 
 TEfficiency EfficiencyFromAnaFactory::FinalizeBins(int t_pdg,
                                                    bool t_verbose)
@@ -173,7 +174,7 @@ TEfficiency EfficiencyFromAnaFactory::FinalizeBins(int t_pdg,
   truth -> SetDirectory(0);
   efficiency.SetDirectory(0);
   return efficiency;
-};
+};*/
 
 /********************************************************
 * Efficiency from conc

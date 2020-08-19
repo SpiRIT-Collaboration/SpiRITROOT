@@ -34,6 +34,7 @@ public:
     EfficiencyFactory& SetCMzBins(double t_min, double t_max, int t_bins);
 
 
+    virtual void SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db) = 0;
     virtual TEfficiency FinalizeBins(int t_pdg,
                                      bool t_verbose=false) = 0;
     virtual bool IsInCM() { return false; };
@@ -60,27 +61,29 @@ protected:
 class OrigEfficiencyFactory : public EfficiencyFactory
 {
 public:  
-    OrigEfficiencyFactory(const std::string& t_efficiency_db);
+    OrigEfficiencyFactory(){};
     ~OrigEfficiencyFactory(){};
+
+    virtual void SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db);
     virtual TEfficiency FinalizeBins(int t_pdg,
                                      bool t_verbose=false);
 protected:
     std::string data_filename_;
 };
 
-class EfficiencyFromAnaFactory : public EfficiencyFactory
+/*class EfficiencyFromAnaFactory : public EfficiencyFactory
 {
 public:
     EfficiencyFromAnaFactory();
     virtual ~EfficiencyFromAnaFactory(){};
-    void SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db);
+    virtual void SetDataBaseForPDG(int t_pdg, const std::string& t_efficiency_db);
     
     virtual TEfficiency FinalizeBins(int t_pdg,
                                      bool t_verbose=false); 
 
 protected:
     std::map<int, std::string> fEfficiencyDB;
-};
+};*/
 
 class EfficiencyFromConcFactory : public EfficiencyFactory
 {
