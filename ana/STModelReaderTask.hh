@@ -10,6 +10,7 @@
 #include "STDigiPar.hh"
 #include "STVector.hh"
 #include "STModelToLabFrameGenerator.hh"
+#include "STConcReaderTask.hh"
 #include "STAnaParticleDB.hh"
 
 // ROOT classes
@@ -18,11 +19,12 @@
 #include "TH2.h"
 #include "TTree.h"
 #include "TXMLNode.h"
+#include "TSystem.h"
 
 // STL
 #include <vector>
 
-class STModelReaderTask : public FairTask {
+class STModelReaderTask : public STReaderTask {
   public:
     /// Constructor
     STModelReaderTask(TString filename);
@@ -39,6 +41,8 @@ class STModelReaderTask : public FairTask {
 
     int GetNEntries();
     void SetEventID(int eventID);
+    std::string GetPathToData() { return std::string(gSystem -> Getenv("VMCWORKDIR")) + "/macros/data/"; };
+
     void SetBeamAndTarget(int beamA, int targetA, double energyPerA);
     void RotateEvent(bool val=true) { fRotate = val; }
   private:
@@ -51,7 +55,7 @@ class STModelReaderTask : public FairTask {
     TClonesArray *fProb = nullptr;
     TClonesArray *fEff = nullptr;
     STVectorF *fMCRotZ = nullptr;
-    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
+    std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
 
     TLorentzVector fFourVect;
     TVector3 fBoostVector;

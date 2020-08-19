@@ -15,6 +15,9 @@ ClassImp(STModelReaderTask);
 
 STModelReaderTask::STModelReaderTask(TString filename)
 {
+  STAnaParticleDB::SupportedPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040, 1000020060};
+  fSupportedPDG = STAnaParticleDB::SupportedPDG;
+
   fLogger = FairLogger::GetLogger(); 
 
   fData = new TClonesArray("STData");

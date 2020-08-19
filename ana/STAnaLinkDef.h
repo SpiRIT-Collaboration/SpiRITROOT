@@ -15,6 +15,7 @@
 #pragma link C++ class STPIDAnalysisTask+;
 #pragma link C++ class STPIDCutTask+;
 #pragma link C++ class STPIDProbTask+;
+#pragma link C++ class STPiProbTask+;
 #pragma link C++ class STPIDMachineLearningTask+;
 #pragma link C++ class STEfficiencyTask+;
 #pragma link C++ class STTransformFrameTask+;
@@ -25,11 +26,14 @@
 #pragma link C++ class STSimpleGraphsTask+;
 #pragma link C++ class DataPackage+;
 #pragma link C++ class STERATTask+;
+#pragma link C++ class STReaderTask+;
 #pragma link C++ class STModelReaderTask+;
 #pragma link C++ class STReactionPlaneTask+;
 #pragma link C++ class STDivideEventTask+;
 
 #pragma link C++ class EfficiencyFactory+;
+#pragma link C++ class OrigEfficiencyFactory+;
+//#pragma link C++ class EfficiencyFromAnaFactory+;
 #pragma link C++ class EfficiencyFromConcFactory+;
 #pragma link C++ class EfficiencyInCMFactory+;
 

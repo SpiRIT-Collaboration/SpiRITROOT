@@ -28,46 +28,52 @@ STConcReaderTask::STConcReaderTask(): fEventID(0)
 STConcReaderTask::~STConcReaderTask()
 {}
 
-std::string STConcReaderTask::LoadFromXMLNode(TXMLNode *node)
+void STConcReaderTask::LoadFromXMLNode(TXMLNode *node)
 {
   // find out whether we are reading real data or simulated data
   // the files are named differently and thus have to be read differently
   std::string dataType(static_cast<TXMLAttr*>(node -> GetAttributes() -> At(0)) -> GetValue());
   // load node info into map
-  std::map<std::string, std::string> nodeInfo;
+  std::map<std::string, std::vector<std::string>> nodeInfo;
   for(auto IOInfo = node -> GetChildren(); IOInfo; IOInfo = IOInfo -> GetNextNode())
     if(IOInfo -> GetNodeType() == TXMLNode::kXMLElementNode)
-      nodeInfo[IOInfo -> GetNodeName()] = IOInfo -> GetText();
+      nodeInfo[IOInfo -> GetNodeName()].push_back(IOInfo -> GetText());
 
   if(fChain) delete fChain;
   auto chain = new TChain("spirit");
   fChain = chain;
 
-  auto pathToData = nodeInfo["DataDir"];
+  //auto pathToData = nodeInfo["DataDir"];
   // load data. Lowered error verbose level when loading runs because some runs do not exist and have to be skipped
   auto origLevel = gErrorIgnoreLevel;
   gErrorIgnoreLevel = kFatal;
 
+  auto firstPathToData = nodeInfo["DataDir"][0];
   if(dataType == "Real")
   {
-    int startRun = std::stoi(nodeInfo["RunFirst"]);
-    int lastRun = std::stoi(nodeInfo["RunLast"]);
-
-    for(int runNo = startRun; runNo <= lastRun ; ++runNo)
+    for(const auto& pathToData : nodeInfo["DataDir"])
     {
-      auto sRunNo = std::to_string(runNo);
-      std::vector<std::string> filenamesToTry{pathToData + "run" + sRunNo + "_s*.reco.*trimmed*.root/cbmsim",
-                                              pathToData + "run" + sRunNo + "_s*.reco.*conc.root/spirit",
-                                              pathToData + "run" + sRunNo + "_s*.reco.*conc.root/cbmsim"};
-      for(const auto& tryFilename : filenamesToTry)
-        if(chain -> Add(tryFilename.c_str(), -1) > 0) // if file is successfully loaded
-          fLogger -> Info(MESSAGE_ORIGIN, ("Reading from file " + tryFilename).c_str());
+      int startRun = std::stoi(nodeInfo["RunFirst"][0]);
+      int lastRun = std::stoi(nodeInfo["RunLast"][0]);
+
+      for(int runNo = startRun; runNo <= lastRun ; ++runNo)
+      {
+        auto sRunNo = std::to_string(runNo);
+        std::vector<std::string> filenamesToTry{pathToData + "run" + sRunNo + "_s*.reco.*trimmed*.root/cbmsim",
+                                                pathToData + "run" + sRunNo + "_s*.reco.*conc.root/spirit",
+                                                pathToData + "run" + sRunNo + "_s*.reco.*conc.root/cbmsim"};
+        for(const auto& tryFilename : filenamesToTry)
+          if(chain -> Add(tryFilename.c_str(), -1) > 0) // if file is successfully loaded
+            fLogger -> Info(MESSAGE_ORIGIN, ("Reading from file " + tryFilename).c_str());
+      }
     }
   }
   else if(dataType == "Sim")
   {
     glob_t g;
-    glob((pathToData + nodeInfo["InputName"] + ".root").c_str(), GLOB_TILDE, nullptr, &g);
+    for(const auto& pathToData : nodeInfo["DataDir"])
+      for(const auto& inputName : nodeInfo["InputName"])
+        glob((pathToData + inputName + ".root").c_str(), GLOB_TILDE, nullptr, &g);
     for(size_t i = 0; i < g.gl_pathc; ++i)
     {
       chain -> Add(g.gl_pathv[i]);
@@ -81,7 +87,7 @@ std::string STConcReaderTask::LoadFromXMLNode(TXMLNode *node)
     fLogger -> Fatal(MESSAGE_ORIGIN, "No entries is being read from the file!");
   gErrorIgnoreLevel = origLevel;
 
-  return pathToData;
+  fPathToData = firstPathToData;
 }
 
 int STConcReaderTask::GetNEntries()

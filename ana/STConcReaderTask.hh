@@ -32,7 +32,17 @@
 // STL
 #include <vector>
 
-class STConcReaderTask : public FairTask {
+class STReaderTask : public FairTask {
+  public:
+    virtual int GetNEntries() = 0;
+    virtual void SetEventID(int eventID) = 0;
+    virtual std::string GetPathToData() = 0;
+  ClassDef(STReaderTask, 1);
+};
+
+
+
+class STConcReaderTask : public STReaderTask {
   public:
     /// Constructor
     STConcReaderTask();
@@ -48,7 +58,8 @@ class STConcReaderTask : public FairTask {
     void SetPersistence(Bool_t value);
 
     void SetChain(TChain* chain);
-    std::string LoadFromXMLNode(TXMLNode *node); // will return path to data
+    void LoadFromXMLNode(TXMLNode *node); // will return path to data
+    std::string GetPathToData() { return fPathToData; };
     int GetNEntries();
     void SetEventID(int eventID);
   private:
@@ -70,6 +81,7 @@ class STConcReaderTask : public FairTask {
 
     bool fIsTrimmedFile = false;
     bool fHasRegistered = false;
+    std::string fPathToData = "";
 
   ClassDef(STConcReaderTask, 1);
 };
