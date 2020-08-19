@@ -24,7 +24,10 @@ if __name__ == '__main__':
   parser.add_argument('--MMin', help='Minimum multiplicity')
   parser.add_argument('--MMax', help='Maximum multiplicity')
   parser.add_argument('--Dir', help='Directory to data source')
+  parser.add_argument('--AddDir', help='Append directory to data source', nargs='+')
   parser.add_argument('--TgMass', help='Atomic mass of the target')
+  parser.add_argument('--PrMass', help='Projectile mass')
+  parser.add_argument('--Energy', help='Beam energy per nucleons')
   parser.add_argument('--Unfold', help='Unfold file')
   parser.add_argument('--Filename', help='Filename of the data source')
   parser.add_argument('--exec', default=False, action='store_true', help='Execute the modified config')
@@ -32,12 +35,12 @@ if __name__ == '__main__':
   parser.add_argument('--Divide', default=False, action='store_true', help='Divide each event by half')
   parser.add_argument('--Comp', help='Choose complementary tracks to the given file')
   parser.add_argument('--PhiEff', help='Change phi efficiency file')
+  parser.add_argument('--UseMCRP', default=False, action='store_true', help='Rotate according to MC truth reaction plane instead of the inferred reaction plane')
   parser.add_argument('--rmTask', help='Remove a task', nargs='+')
   parser.add_argument('--MassCoef', help='Mass Coef')
   parser.add_argument('--ChargeCoef', help='Charge Coef')
   parser.add_argument('--ConstCoef', help='Const Coef')
   parser.add_argument('--ParticleCoef', help='Particle Coef')
-
 
 
   values = vars(parser.parse_args())
@@ -46,27 +49,43 @@ if __name__ == '__main__':
   tree = ET.parse(values['input'])
   root = tree.getroot()
 
+  if values['UseMCRP']:
+    values['UseMCRP'] = ''
+  else:
+    values['UseMCRP'] = None
+
   parameter_table = {'MMin': 'TaskList/EventFilterTask/MultiplicityMin',
                      'MMax': 'TaskList/EventFilterTask/MultiplicityMax',
                      'Dir': 'IOInfo/DataDir',
                      'Unfold': 'TaskList/EfficiencyTask/UpdateUnfolding',
-                     'TgMass': 'TaskList/TransformFrameTask/TargetMass',
+                     'TgMass': ['TaskList/TransformFrameTask/TargetMass', 'IOInfo/targetA'],
+                     'Energy': 'IOInfo/beamEnergyPerA',
+                     'PrMass': 'IOInfo/beamA',
                      'Filename': 'IOInfo/InputName',
                      'PhiEff': 'TaskList/ReactionPlaneTask/PhiEff',
+                     'UseMCRP': 'TaskList/ReactionPlaneTask/UseMCReactionPlane',
                      'MassCoef': 'TaskList/ReactionPlaneTask/MassCoef',
                      'ChargeCoef': 'TaskList/ReactionPlaneTask/ChargeCoef',
                      'ConstCoef': 'TaskList/ReactionPlaneTask/ConstCoef',
                      'ParticleCoef': 'TaskList/ReactionPlaneTask/ParticleCoef'}
 
-  for key, path in parameter_table.items():
+  for key, paths in parameter_table.items():
     value = values[key]
-    if value is not None:
-      ele = root.find(path)
-      if ele is None:
-        #print('Cannot find ' + path)
-        create_nested_node(root, path).text = value
-      else:
-        ele.text = value
+    if type(paths) is not list:
+      paths = [paths]
+    for path in paths:
+      if value is not None:
+        ele = root.find(path)
+        if ele is None:
+          #print('Cannot find ' + path)
+          create_nested_node(root, path).text = value
+        else:
+          ele.text = value
+
+  if values['AddDir'] is not None:
+    ele = root.find('IOInfo')
+    for dir_ in values['AddDir']:
+      ET.SubElement(ele, 'DataDir').text = dir_
 
   tasks = root.find('TaskList')
   if values['Divide'] is True:
