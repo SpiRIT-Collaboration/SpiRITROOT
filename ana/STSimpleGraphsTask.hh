@@ -28,6 +28,7 @@
 #include "TClonesArray.h"
 #include "TLorentzVector.h"
 #include "TString.h"
+#include "TH1.h"
 #include "TH2.h"
 #include "TDatabasePDG.h"
 
@@ -37,23 +38,35 @@
 
 struct DataPackage
 {
-  DataPackage(std::vector<float>& t_labRapidity,
-              std::vector<float>& t_eff,
-              std::vector<float>& t_prob,
-              std::vector<float>& t_fragRapidity,
-              std::vector<TVector3>& t_cmVector,
-              std::vector<TVector3>& t_fragVelocity,
-              std::vector<float>& t_beamRapidity,
-              std::vector<float>& t_beamMom);
-  std::vector<float> &labRapidity, &eff, &prob, &fragRapidity;
-  std::vector<TVector3> &cmVector, &fragVelocity;
-  std::vector<float> &beamRapidity, &beamMom;
+   DataPackage();
+   enum TCArrType{ DATA, PROB, EFF, CMVECTOR, LABRAPIDITY, FRAGRAPIDITY, FRAGVELOCITY, EFFERR, PHIEFF, ARREND };
+   enum VecType { BEAMRAPIDITY, BEAMMOM, VECEND };
+   void CheckEmptyElements(int n_particle_type);
+   void UpdateData(int part_id);
 
-  std::vector<float> weight, ptRap;
- 
-  ClassDef(DataPackage, 1);
+   // access data
+   const STData& Data() const                     { return *static_cast<STData*>(fTCArrList[DATA] -> At(0)); };
+   float Eff(int n) const                         { return static_cast<STVectorF*>(fTCArrList[EFF] -> At(fPartID)) -> fElements[n]; };
+   float EffErr(int n) const                      { return static_cast<STVectorF*>(fTCArrList[EFFERR] -> At(fPartID)) -> fElements[n]; };
+   float Prob(int n) const                        { return static_cast<STVectorF*>(fTCArrList[PROB] -> At(fPartID)) -> fElements[n]; };
+   const TVector3& CMVector(int n) const          { return static_cast<STVectorVec3*>(fTCArrList[CMVECTOR] -> At(fPartID)) -> fElements[n]; };
+   float LabRapidity(int n) const                 { return static_cast<STVectorF*>(fTCArrList[LABRAPIDITY] -> At(fPartID)) -> fElements[n]; };
+   const TVector3& FragVelocity(int n) const      { return static_cast<STVectorVec3*>(fTCArrList[FRAGVELOCITY] -> At(fPartID)) -> fElements[n]; };
+   float FragRapidity(int n) const                { return static_cast<STVectorF*>(fTCArrList[FRAGRAPIDITY] -> At(fPartID)) -> fElements[n]; };
+   float PhiEff(int n) const                      { return static_cast<STVectorF*>(fTCArrList[PHIEFF] -> At(fPartID)) -> fElements[n]; };
+
+   float Weight(int n) const                      { return fWeight[n]; };
+   float PtxRap(int n) const                      { return fPtxRap[n]; };
+   const std::vector<float>& BeamRapidity() const { return fVecList[BEAMRAPIDITY] -> fElements; };
+   const std::vector<float>& BeamMom() const      { return fVecList[BEAMMOM] -> fElements; };
+
+   std::vector<TClonesArray*> fTCArrList;
+   std::vector<STVectorF*> fVecList;
+   int fPartID; // indicates which element of the tclones array needs to be loaded
+   std::vector<float> fWeight; // prob/ 
+   std::vector<float> fPtxRap; // x-rapidity distribution. Extended from transverse rapidity assuming uniform phi dist
+
 };
-
 
 class STSimpleGraphsTask : public FairTask {
   public:
@@ -73,20 +86,22 @@ class STSimpleGraphsTask : public FairTask {
     
     // the name of the histogram will be prefixed by the particle name
     template<class T, class ...Args>
-    void RegisterRuleForEachParticle(std::function<void(const DataPackage&, const STData&, TH1*, int)> rule, const std::string& suffix, Args... args)
+    void RegisterRuleForEachParticle(std::function<void(const DataPackage&, TH1*, int)> rule, const std::string& suffix, Args... args)
     {
       for(auto pdg : fSupportedPDG)
       {
         auto hist = this -> RegisterHistogram<T>(true, (fParticleName[pdg] + suffix).c_str(), args...);
-        this -> RegisterRuleWithParticle(pdg, [pdg, rule, hist](const DataPackage& package, const STData& data){ rule(package, data, hist, pdg); });
+        this -> RegisterRuleWithParticle(pdg, [pdg, rule, hist](const DataPackage& package){ rule(package, hist, pdg); });
       } 
     };
 
-    void RegisterRuleWithParticle(int pdg, std::function<void(const DataPackage&, const STData&)> rule);
+    void RegisterRuleWithParticle(int pdg, std::function<void(const DataPackage&)> rule);
+    void RegisterFinishTaskRule(std::function<void()> rule);
     void RegisterVPlots();
     void RegisterRapidityPlots();
     void RegisterPlotsForMC();
     void RegisterPIDPlots();
+    void RegisterPionPlots();
     void RemoveParticleMin();
 
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
@@ -97,25 +112,20 @@ class STSimpleGraphsTask : public FairTask {
     virtual void Exec(Option_t *opt);
     virtual void FinishTask();
     void SetPersistence(Bool_t value);
+
+  
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
     int fEntries;
     bool fPlotRapidity = false;
     bool fPlotPID = false;
-    bool fPlotVs = true;
+    bool fPlotVs = false;
+    bool fPlotPion = false;
   
-    STDigiPar *fPar      = nullptr;                 ///< Parameter read-out class pointer
-    TClonesArray *fData  = nullptr;                 ///< STData from the conc files
-    TClonesArray *fEff   = nullptr;                 ///< Efficiency of each type of particle
-    TClonesArray *fProb  = nullptr;                 ///< Particle PID from any of the PID Task
-    TClonesArray *fLabRapidity = nullptr;
-    TClonesArray *fFragRapidity = nullptr;
-    TClonesArray *fFragVelocity = nullptr;
-    TClonesArray *fCMVector = nullptr;
-    STVectorI    *fSkip = nullptr;
-    STVectorF    *fBeamRapidity = nullptr;
-    STVectorF    *fBeamMom = nullptr;
+    STDigiPar   *fPar  = nullptr;                 ///< Parameter read-out class pointer
+    STVectorI   *fSkip = nullptr;
+    DataPackage fDataPackage;
 
     std::map<int, double> fMinMomForCMInLab;
     std::map<int, std::string> fParticleName{{2212, "p"}, 
@@ -123,7 +133,9 @@ class STSimpleGraphsTask : public FairTask {
                                              {1000010030, "t"}, 
                                              {1000020030, "He3"}, 
                                              {1000020040, "He4"}, 
-                                             {1000020060, "He6"}};
+                                             {1000020060, "He6"},
+                                             {211, "pip"},
+                                             {-211, "pim"}};
 
     // For drawing PIDs
     int fNYaw = 6;
@@ -145,7 +157,8 @@ class STSimpleGraphsTask : public FairTask {
     const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
     std::map<std::string, TH1*> f1DHists;
     std::map<std::string, bool> fNormalize;
-    std::vector<std::vector<std::function<void(const DataPackage&, const STData&)>>> fFillRules;
+    std::vector<std::vector<std::function<void(const DataPackage&)>>> fFillRules;
+    std::vector<std::function<void()>> fFinishTaskRule;
 
   ClassDef(STSimpleGraphsTask, 1);
 };
