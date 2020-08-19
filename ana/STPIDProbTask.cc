@@ -21,8 +21,12 @@
 
 ClassImp(STPIDProbTask);
 
+std::vector<int> STAnaParticleDB::SupportedPDG;
+
 STPIDProbTask::STPIDProbTask()
-{ 
+{
+  STAnaParticleDB::SupportedPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040, 1000020060};
+  fSupportedPDG = STAnaParticleDB::SupportedPDG;
   fLogger = FairLogger::GetLogger(); 
   //fPDGLists = new STVectorI();
 
@@ -32,6 +36,9 @@ STPIDProbTask::STPIDProbTask()
   fPDGProb = new TClonesArray("STVectorF", fSupportedPDG.size());
   fSDFromLine = new TClonesArray("STVectorF", fSupportedPDG.size());
 
+  // exclude the particles that needs to be ignored
+  //for(auto pdg : STAnaParticleDB::SupportedPDG)
+  //  if(fIgnoredPDG.find(pdg) == fIgnoredPDG.end()) fSupportedPDG.push_back(pdg);
 }
 
 STPIDProbTask::~STPIDProbTask()
@@ -45,7 +52,15 @@ InitStatus STPIDProbTask::Init()
     return kERROR;
   }
 
-  auto namelist = ioMan -> GetBranchNameList();
+  // create all branches in STAnaParticleDB::SupportedPDG
+  // but fille the particle in fIgnoredPDG with zeros
+  for(int i = 0; i < STAnaParticleDB::SupportedPDG.size(); ++i)
+  {
+    auto pdg = STAnaParticleDB::SupportedPDG[i];
+    fPDGProbMap[pdg] = static_cast<STVectorF*>(fPDGProb -> ConstructedAt(i));
+    fSDFromLineMap[pdg] = static_cast<STVectorF*>(fSDFromLine -> ConstructedAt(i));
+  }
+
   fData = (TClonesArray*) ioMan -> GetObject("STData");
 
   for(auto& pdg : fSupportedPDG)
@@ -56,12 +71,6 @@ InitStatus STPIDProbTask::Init()
 
   if(fPIDRegion) fLogger -> Info(MESSAGE_ORIGIN, "Found PID region cut. Will only consider data inside that cut");
 
-  for(int i = 0; i < fSupportedPDG.size(); ++i)
-  {
-    auto pdg = fSupportedPDG[i];
-    fPDGProbMap[pdg] = static_cast<STVectorF*>(fPDGProb -> ConstructedAt(i));
-    fSDFromLineMap[pdg] = static_cast<STVectorF*>(fSDFromLine -> ConstructedAt(i));
-  }
   fSkip = (STVectorI*) ioMan -> GetObject("Skip");
 
   return kSUCCESS;
@@ -155,8 +164,8 @@ void STPIDProbTask::FinishTask()
 {
   auto file = FairRootManager::Instance() -> GetOutFile();
   file -> cd();
-  for(auto& hist : fFlattenHist)
-    hist.second.Write();
+  //for(auto& hist : fFlattenHist)
+  //  hist.second.Write();
 
   if(fIterateMeta)
   {

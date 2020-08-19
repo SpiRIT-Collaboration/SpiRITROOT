@@ -6,6 +6,7 @@ const double STAnaParticleDB::khSlash = 1.0545726663e-27;
 const double STAnaParticleDB::kErg2Gev = 1/1.6021773349e-3;
 const double STAnaParticleDB::khShGev = khSlash*kErg2Gev;
 const double STAnaParticleDB::kYear2Sec = 3600*24*365.25;
+std::vector<int> SupportedPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040, 1000020060};
 
 void STAnaParticleDB::FillTDatabasePDG()
 {

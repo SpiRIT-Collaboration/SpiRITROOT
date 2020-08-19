@@ -92,7 +92,8 @@ class STPIDProbTask : public FairTask {
     std::map<int, TH1F*> fMomPriorDistribution;
     std::map<int, STVectorF*> fPDGProbMap;
     std::map<int, STVectorF*> fSDFromLineMap;
-    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
+    std::vector<int> fSupportedPDG;
+    const std::set<int> fIgnoredPDG = {211, -211}; // This task will not handle pions.
 
     STVectorI *fPDGLists = nullptr;
     STVectorI *fSkip = nullptr;
