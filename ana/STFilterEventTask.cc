@@ -47,6 +47,7 @@ InitStatus STFilterEventTask::Init()
   ioMan -> Register("Skip", "ST", fSkip, false); // Skip flag is only used internally
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   fEventType = (TClonesArray*) ioMan -> GetObject("EventType");
+  fERat = (STVectorF*) ioMan -> GetObject("ERAT");
   return kSUCCESS;
 }
 
@@ -108,6 +109,11 @@ void STFilterEventTask::Exec(Option_t *opt)
   {
     int type = static_cast<STVectorI*>(fEventType -> At(0)) -> fElements[0];
     if(type == 6 || type == 7) fill = false;
+  }
+  if(fERatCut && fERat)
+  {
+    auto erat = fERat -> fElements[0];
+    if(!(fERatMin < erat && erat < fERatMax)) fill = false;
   }
 
   fSkip -> fElements[0] = (fill)? 0 : 1;

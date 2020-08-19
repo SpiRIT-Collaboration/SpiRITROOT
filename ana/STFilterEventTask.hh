@@ -52,6 +52,7 @@ class STFilterEventTask : public FairTask {
     void SetVertexBDCCut(double xmean, double xdiff, double ymean, double ydiff) 
     { fXDiff = xdiff; fXMean = xmean; fYDiff = ydiff; fYMean = ymean; fVertexBDCCut = true; }
     void SetRejectBadEvents(bool reject = true) { fRejectFastClose = reject; }
+    void SetERatCut(double ERatMin, double ERatMax) { fERatMin = ERatMin; fERatMax = ERatMax; fERatCut = true; };
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
     /// Setting parameter containers. This will be called inbetween Init() and Run().
@@ -68,6 +69,7 @@ class STFilterEventTask : public FairTask {
     TClonesArray *fData;                ///< STData from the conc files
     TClonesArray *fEventType;
     STVectorI *fSkip;                ///< Tell other class to skip events. 1 = skip, 0 = dont' skip
+    STVectorF *fERat = nullptr;
 
     std::vector<TCutG*> fCutG;
     std::vector<double> fAcceptance;
@@ -82,6 +84,8 @@ class STFilterEventTask : public FairTask {
     bool fVertexBDCCut = false;
     double fXDiff, fXMean, fYDiff, fYMean;
     bool fRejectFastClose = false;
+    double fERatMin, fERatMax;
+    bool fERatCut = false;
     int fStatus;
     
     
