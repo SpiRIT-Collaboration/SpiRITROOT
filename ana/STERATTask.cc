@@ -91,7 +91,7 @@ void STERATTask::Exec(Option_t *opt)
       for(int itrack = 0; itrack < ntracks; ++itrack)
       {
         auto& P = static_cast<STVectorVec3*>(fCMVector -> At(i)) -> fElements[itrack];
-        if(P.z() < 0) continue;
+        //if(P.z() < 0) continue;
         double prob = static_cast<STVectorF*>(fProb -> At(i)) -> fElements[itrack];
         double Ei = sqrt(ParticleMass*ParticleMass + P.Mag2());
         double pt = P.Perp();

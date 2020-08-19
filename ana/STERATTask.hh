@@ -45,7 +45,7 @@ class STERATTask : public FairTask {
     virtual void SetParContainers();
     /// Running the task. This will be called when Run() method invoked from FairRun.
     virtual void Exec(Option_t *opt);
-    void SetPersistence(Bool_t value);
+    void SetPersistence(Bool_t value) { fIsPersistence = value; };
     void SetImpactParameterTable(const std::string& table_filename);
 
     static void CreateImpactParameterTable(const std::string& ana_filename, const std::string& output_filename);
