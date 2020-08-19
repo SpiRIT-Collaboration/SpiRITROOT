@@ -47,10 +47,11 @@ class STEfficiencyTask : public FairTask {
      std::vector<std::pair<double, double>> PhiCuts = {{0,360}};};
 
     /// Constructor
-    STEfficiencyTask(EfficiencyFactory* t_factory);
+    STEfficiencyTask();
     /// Destructor
     ~STEfficiencyTask();
 
+    void SetFactoriesForParticle(EfficiencyFactory* t_factory, const std::vector<int>& pdgList);
     void SetUnfoldingFile(TString fileName, bool update = false) { fUnfoldingFileName = fileName; fUpdateUnfolding = update; }
     void UpdateUnfoldingFile(bool update) { fUpdateUnfolding = update; }
     EfficiencySettings& AccessSettings(int t_pdg) { return fEfficiencySettings[t_pdg]; }
@@ -72,11 +73,12 @@ class STEfficiencyTask : public FairTask {
     TClonesArray *fData  = nullptr;                 ///< STData from the conc files
     TClonesArray *fCMVec = nullptr;                 ///< vector in CM frame
     TClonesArray *fEff   = nullptr;                 ///< Efficiency of each type of particle
+    TClonesArray *fEffErr = nullptr;                ///< Average efficiency error (0.5*(up err + down err))
     TClonesArray *fProb  = nullptr;                 ///< Particle PID from any of the PID Task
     STVectorI *fSkip = nullptr;
 
     const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
-    EfficiencyFactory *fFactory = nullptr;
+    std::map<int, EfficiencyFactory*> fFactory; ///<
     std::map<int, TEfficiency> fEfficiency; ///<
     std::map<int, EfficiencySettings> fEfficiencySettings; ///<
     std::map<int, TH2F> fDistributionForUnfolding; //<
