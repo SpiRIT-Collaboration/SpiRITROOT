@@ -47,6 +47,9 @@ STKyotoTask::Init()
   fMCPointArray = (TClonesArray*) ioman->GetObject("STMCPoint");
   fFairMCEventHeader = (FairMCEventHeader*) ioman->GetObject("MCEventHeader.");
 
+  fEventHeader = new STEventHeader;
+  ioman -> Register("STEventHeader", "SpiRIT", fEventHeader, true);
+
   fEnclosureWidth = 1477.4;//fPar->GetPadPlaneX();
 
   return kSUCCESS;
@@ -56,6 +59,8 @@ STKyotoTask::Init()
 void 
 STKyotoTask::Exec(Option_t* option)
 {
+  fEventHeader -> Clear();
+
   fLogger->Debug(MESSAGE_ORIGIN,"Exec of STKyotoTask");
   Int_t nMCPoints = fMCPointArray->GetEntries();
 
@@ -79,7 +84,8 @@ STKyotoTask::Exec(Option_t* option)
             Form("Event #%d : Kyoto multiplicity %d. %s event.",
                  fEventID, num_trigged, (reject)? "Reject" : "Accept"));
 
-  FairRunAna::Instance() -> MarkFill(!reject);
+  if(reject) fEventHeader -> SetIsEmptyEvent();
+  //FairRunAna::Instance() -> MarkFill(!reject);
   return;
 }
 

@@ -11,6 +11,7 @@
 #include "STMCPoint.hh"
 #include "STDigiPar.hh"
 #include "FairField.h"
+#include "STEventHeader.hh"
 
 // ROOT class headers
 #include "TClonesArray.h"
@@ -39,6 +40,7 @@ class STKyotoTask : public FairTask
     STMCPoint* fMCPoint;             //!< [INPUT] MC data container (position, time, energyloss etc.)
     STDigiPar* fPar; //!< Base parameter container
     FairMCEventHeader *fFairMCEventHeader; //!<
+    STEventHeader *fEventHeader; //!
     Double_t fEnclosureWidth;
 
   ClassDef(STKyotoTask,1);
