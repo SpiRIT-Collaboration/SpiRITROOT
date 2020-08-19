@@ -25,6 +25,7 @@
 
 // ROOT classes
 #include "TClonesArray.h"
+#include "TH2.h"
 #include "TH1.h"
 
 // STL
@@ -51,19 +52,22 @@ class STReactionPlaneTask : public FairTask {
     void SetMassCoef(double coef) { fMassCoef = coef; }
     void SetConstCoef(double coef) { fConstCoef = coef; }
     void SetParticleCoef(const std::vector<double>& val) { fParticleCoef = val; }
-    void UseMCReactionPlane(bool val = true) { fUseMCReactionPlane = val; }
+    void UseMCReactionPlane(bool val = true, double res = 0) { fUseMCReactionPlane = val; fMCReactionPlaneRes = res*TMath::DegToRad(); }
     void SetMaxTheta(double val) { fThetaCut = val; }
     void SetMidRapidity(double val) { fMidRapidity = val; }
 
-    static void CreatePhiEffFromData(const std::string& ana_filename, const std::string& out_filename);
+    static void CreatePhiEffFromData(const std::string& ana_filename, const std::string& out_filename, int nClus=5, double poca=20);
+    static double ReactionPlaneRes(const std::string& filename1, const std::string& filename2);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
+    TClonesArray *fData;
     TClonesArray *fCMVector;
     TClonesArray *fProb;
     TClonesArray *fFragRapidity;
+    TClonesArray *fPhiEff;
     STVectorF *fBeamRapidity;
     STVectorF *fMCRotZ;
 
@@ -72,7 +76,7 @@ class STReactionPlaneTask : public FairTask {
     double fMidRapidity = 0.4; // when |y| < fMidRapidity, they will not count towards reaction plane calculation
     std::string fEffFilename;
     TFile *fEffFile = nullptr;
-    TH1F *fEff = nullptr;
+    std::map<int, TH2F*> fEff;
     const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
 
     double fChargeCoef = 0;
@@ -80,6 +84,9 @@ class STReactionPlaneTask : public FairTask {
     double fConstCoef = 1;
     std::vector<double> fParticleCoef; // alternative to the linear combination. Will ignore charge, mass and const coef it this is set
     bool fUseMCReactionPlane = false; // if enabled, will rotate particle using the truth MC rotation angle instead of the infered reaction plane
+    double fMCReactionPlaneRes = 0;
+    int fMinNClusters = 0;
+    double fMaxDPOCA = 20;
     
   ClassDef(STReactionPlaneTask, 1);
 };
