@@ -12,6 +12,7 @@
 #pragma link C++ class ST_ClusterNum_DB+;
 #pragma link C++ class ST_TrackCut+;
 #pragma link C++ class STConcReaderTask+;
+#pragma link C++ class STCSVReaderTask+;
 #pragma link C++ class STPIDAnalysisTask+;
 #pragma link C++ class STPIDCutTask+;
 #pragma link C++ class STPIDProbTask+;

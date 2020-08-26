@@ -6,13 +6,18 @@
 
 #include "STPID.hh"
 #include "STPIDAnalysisTask.hh"
+#include "STAnaParticleDB.hh"
+
 #include "TSystem.h"
 #include "STVector.hh"
 #include "TString.h"
 
 STPIDAnalysisTask::STPIDAnalysisTask() : fMassCalH("EmpiricalBB"), 
                                          fMassCalHe("EmpiricalBB")
-{}
+{
+  fLogger = FairLogger::GetLogger(); 
+  STAnaParticleDB::SupportedPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040, 1000020060};
+}
 
 void STPIDAnalysisTask::SetBeamA(int t_beamA)
 { 
@@ -49,6 +54,7 @@ STPIDAnalysisTask::SetParContainers()
 InitStatus
 STPIDAnalysisTask::Init()
 {
+  fSupportedPDG = STAnaParticleDB::SupportedPDG;
   FairRootManager *ioMan = FairRootManager::Instance();
   if (ioMan == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");
@@ -65,6 +71,8 @@ STPIDAnalysisTask::Init()
   fVAPIDTight = new TClonesArray("STVectorI");
   fVAPIDLoose = new TClonesArray("STVectorI");
   fVAPIDNorm = new TClonesArray("STVectorI");
+  fPIDProb = new TClonesArray("STVectorF");
+  for(int i = 0; i < fSupportedPDG.size(); ++i) new((*fPIDProb)[i]) STVectorF();
 
   ioMan -> Register("RecoPIDTight", "ST", fRecoPIDTight, fIsPersistence);
   ioMan -> Register("RecoPIDLoose", "ST", fRecoPIDLoose, fIsPersistence);
@@ -73,6 +81,7 @@ STPIDAnalysisTask::Init()
   ioMan -> Register("VAPIDTight", "ST", fVAPIDTight, fIsPersistence);
   ioMan -> Register("VAPIDLoose", "ST", fVAPIDLoose, fIsPersistence);
   ioMan -> Register("VAPIDNorm", "ST", fVAPIDNorm, fIsPersistence);
+  ioMan -> Register("Prob", "ST", fPIDProb, fIsPersistence);
 
 }
 
@@ -130,6 +139,15 @@ void STPIDAnalysisTask::Exec(Option_t *opt)
     VAPIDTight->fElements.push_back(this -> GetPIDTight_(mass, dEdx));
     VAPIDNorm->fElements.push_back(this -> GetPIDNorm_(mass, dEdx));
     VAPIDLoose->fElements.push_back(this -> GetPIDLoose_(mass, dEdx));
+  }
+
+  for(int i = 0; i < fSupportedPDG.size(); ++i)
+  {
+    auto& element = static_cast<STVectorF*>(fPIDProb -> At(i)) -> fElements;
+    element.resize(mult);
+    for(int j = 0; j < mult; ++j)
+      if(VAPIDNorm -> fElements[j] == fSupportedPDG[i]) element[j] = 1;
+      else element[j] = 0;
   }
 }
 

@@ -20,13 +20,14 @@ STAnalysisFactory::STAnalysisFactory(TXMLNode *node)
  
   if(!fIONode)
     throw std::runtime_error("The node passed onto STAnalysisFactory does not contain IOInfo");
-  if(!fTaskNode)
-    throw std::runtime_error("The node passed onto STAnalysisFactory does not contain TaskList.");
-
-  auto child = fTaskNode -> GetChildren();
-  for(; child; child = child->GetNextNode())
-    if(child -> GetNodeType() == TXMLNode::kXMLElementNode)
-      fNodes[std::string(child -> GetNodeName())] = child;
+  if(fTaskNode)
+  {
+    //throw std::runtime_error("The node passed onto STAnalysisFactory does not contain TaskList.");
+    auto child = fTaskNode -> GetChildren();
+    for(; child; child = child->GetNextNode())
+      if(child -> GetNodeType() == TXMLNode::kXMLElementNode)
+        fNodes[std::string(child -> GetNodeName())] = child;
+  }
 };
 
 STReaderTask* STAnalysisFactory::GetReaderTask()
@@ -41,7 +42,15 @@ STReaderTask* STAnalysisFactory::GetReaderTask()
     reader -> SetBeamAndTarget(std::stoi(settings["beamA"]), std::stoi(settings["targetA"]),
                                std::stof(settings["beamEnergyPerA"]));
     // TEMPORARY. TO BE DELETED
-    //reader -> RotateEvent();
+    reader -> RotateEvent();
+    fEntries = reader -> GetNEntries();
+    return reader;
+  }
+  else if(DataType == "ML")
+  {
+    auto settings = this -> fReadNodesToMap(fIONode -> GetChildren());
+    TString dir = TString::Format("%s", settings["DataDir"].c_str());
+    auto reader = new STCSVReaderTask(dir);
     fEntries = reader -> GetNEntries();
     return reader;
   }
@@ -65,6 +74,8 @@ STFilterEventTask* STAnalysisFactory::GetFilterEventTask()
   task -> SetMultiplicityCut(std::stoi(settings["MultiplicityMin"]),
                              std::stoi(settings["MultiplicityMax"]),
                              std::stof(settings["MultiplicityDPOCA"]));
+  if(!settings["ERatMin"].empty() && !settings["ERatMax"].empty())
+    task -> SetERatCut(std::stof(settings["ERatMin"]), std::stof(settings["ERatMax"]));
   return task;
 }
 
@@ -85,6 +96,12 @@ FairTask* STAnalysisFactory::GetPIDTask()
     auto task = new STPIDProbTask();
     task -> SetMetaFile(settings["MetaFile"], false);
     task -> SetPIDFitFile(settings["PIDFit"]);
+    return task;
+  }
+  else if(PIDType == "Kenako")
+  {
+    auto task = new STPIDAnalysisTask();
+    task -> SetBeamA(std::stoi(settings["BeamA"]));
     return task;
   }
   else throw std::runtime_error("Cannot create PIDTask of type " + PIDType);

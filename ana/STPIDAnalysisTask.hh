@@ -34,7 +34,7 @@ private:
   TClonesArray *fVAPIDTight = nullptr;
   TClonesArray *fVAPIDLoose = nullptr;
   TClonesArray *fVAPIDNorm = nullptr;
-
+  TClonesArray *fPIDProb = nullptr;
 
   STMassCalSimpleBB fMassCalH;
   STMassCalSimpleBB fMassCalHe;
@@ -76,6 +76,7 @@ private:
   Int_t GetPIDTight_(Double_t mass[2], Double_t dedx);
   Int_t GetPIDNorm_(Double_t mass[2], Double_t dedx);
 
+  std::vector<int> fSupportedPDG;
   ClassDef(STPIDAnalysisTask,1);
 };
 

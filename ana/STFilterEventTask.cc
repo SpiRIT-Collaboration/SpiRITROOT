@@ -48,6 +48,7 @@ InitStatus STFilterEventTask::Init()
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   fEventType = (TClonesArray*) ioMan -> GetObject("EventType");
   fERat = (STVectorF*) ioMan -> GetObject("ERAT");
+  if(!fERat) fLogger -> Info(MESSAGE_ORIGIN, "ERAT data cannot be loaded. Will not perform cut on ERAT");
   return kSUCCESS;
 }
 

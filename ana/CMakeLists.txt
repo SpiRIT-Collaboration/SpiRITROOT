@@ -73,6 +73,7 @@ STModelReaderTask.cc
 STReactionPlaneTask.cc
 STDivideEventTask.cc
 STPiProbTask.cc
+STCSVReaderTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")
