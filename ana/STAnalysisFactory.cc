@@ -98,7 +98,7 @@ FairTask* STAnalysisFactory::GetPIDTask()
     task -> SetPIDFitFile(settings["PIDFit"]);
     return task;
   }
-  else if(PIDType == "Kenako")
+  else if(PIDType == "Kaneko")
   {
     auto task = new STPIDAnalysisTask();
     task -> SetBeamA(std::stoi(settings["BeamA"]));
