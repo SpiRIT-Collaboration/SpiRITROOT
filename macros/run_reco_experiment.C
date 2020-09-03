@@ -1,31 +1,34 @@
 #include <unistd.h>
 
-void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
+//void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
+void readEventList(TString eventListFile, vector<Int_t> &events);
 
 void run_reco_experiment
 (
+  TString fMCFile = "",
+  TString fOUTName = "",
   Int_t fRunNo = 2894,
   Int_t fNumEventsInRun = 500,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 500,
-  TString fGCData = "abc", // this parameter can be anything, but nothing.
-  TString fGGData = "/mnt/spirit/rawdata/misc/ggNoise/ggNoise_2886.root", //the different run will has different GG noise, for the accurate corresponding file, you can ask Genie.
+  TString fPathToData = "",
+  TString fGCData = "/data/Q18393/production/calib/120fC_RUN1984-2017.root", // this parameter can be anything, but nothing.
+  TString fGGData = "/data/Q18393/production/ggNoise/ggNoise_2349.root", //the different run will has different GG noise, for the accurate corresponding file, you can ask Genie.
   std::vector<Int_t> fSkipEventArray = {},
-  TString fMCFile = "",
-  TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement",
+  TString fSupplePath = "/data/Q20393/rawdataSupplement",
   Double_t fPSAThreshold = 30,
   TString fParameterFile = "ST.parameters.PhysicsRuns_201707.par",
-  TString fPathToData = "",
   Bool_t fUseMeta = kTRUE,
   double YPedestalOffset = +21.88,  // 132Sn: +21.88, 124Sn: +21.68, 112Sn: +22.98, 108Sn: +23.28, this value will move all the STHit YPedestalOffset, after applying this offset, the PosY of reconstructed TPC vertex will at -205.5mm, same with BDC.
   double BDC_Xoffset = -1.7,//-0.299, // 132Sn: -0.299, 124Sn: -0.609, 112Sn: -0.757, 108Sn: -0.706, this value will adjust the center of TPC vertex same with the center of BDC.
   double BDC_Yoffset = -210.0, //this value will transfer the BDC frame to TPC frame along Y direction.
   double BDC_Zoffset = 0,
   double charge_density = -1, // the magnitude of charge density used in space-charge correction
-  bool fUseRunInfo = false // if enabled, it will look for run-by-run information in parameters/RunInfo.dat, and charge_density value will be ignored
+  bool fUseRunInfo = true // if enabled, it will look for run-by-run information in parameters/RunInfo.dat, and charge_density value will be ignored
 )
 {
-  Int_t start = fSplitNo * fNumEventsInSplit;
+  //  Int_t start = fSplitNo * fNumEventsInSplit;
+  Int_t start = fSplitNo * 1000;
   if (start >= fNumEventsInRun) return;
   if (start + fNumEventsInSplit > fNumEventsInRun)
     fNumEventsInSplit = fNumEventsInRun - start;
@@ -49,8 +52,10 @@ void run_reco_experiment
   TString par = spiritroot+"parameters/"+fParameterFile;
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root";
   TString raw = TString(gSystem -> Getenv("PWD"))+"/list_run"+sRunNo+".txt";
-  TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".root";
-  TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+"."+version+".log";
+  TString out = fPathToData+fOUTName+".embed.reco.root";
+  TString log = fPathToData+fOUTName+".embed.reco.log";
+  //  TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".root";
+  //  TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+"."+version+".log";
   
   if (TString(gSystem -> Which(".", raw)).IsNull() && !fUseMeta)
     gSystem -> Exec("./createList.sh "+sRunNo);
@@ -81,7 +86,7 @@ void run_reco_experiment
     decoder -> SetUseGainCalibration(true);
   decoder -> SetGGNoiseData(fGGData);
   decoder -> SetDataList(raw);
-  //decoder -> SetEventID(start);
+  decoder -> SetEventID(start);
   decoder -> SetTbRange(30, 257); 
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
   decoder -> SetGainMatchingData(spiritroot + "parameters/RelativeGain.list");
@@ -96,7 +101,11 @@ void run_reco_experiment
   //FileName_PiEvt = FileName_PiEvt+"Sn108_Run"+fRunNo+"_PiEvt";
   //cout<<"Reading the Event list for the pion events : "<<FileName_PiEvt<<endl;
   //readEventList(FileName_PiEvt, events);
-  //cout <<"Number of events " << fNumEventsInSplit << " starting at " << start <<endl;
+  cout <<"Number of events " << fNumEventsInSplit << " starting at " << start <<endl;
+
+  vector<Int_t> events;
+  readEventList(Form("/data/Q20393/isobe/20200811SingleIonMC/spiritroot.20200529/macros/makeEventSelection/eventlist/eventlist%d.txt", fRunNo), events);
+  //  decoder -> SetEventList(events);
 
   //decoder -> SetEventList(*events[fRunNo]);
   if (fUseMeta) 
@@ -117,10 +126,8 @@ void run_reco_experiment
   auto preview = new STEventPreviewTask();
   preview -> SetSkippingEvents(fSkipEventArray);
   preview -> SetPersistence(true);
-  //preview -> SetSelectingEvents(*events[fRunNo]);
+  //  preview -> SetSelectingEvents(events);
 
-
- 
   auto psa = new STPSAETask();
   psa -> SetPersistence(false);
   psa -> SetThreshold(fPSAThreshold);
@@ -190,7 +197,7 @@ void run_reco_experiment
   genfitVA -> SetListPersistence(true);
 //  genfitVA -> SetBeamFile("");
 //  genfitVA -> SetBeamFile(Form("/mnt/home/tsangchu/SpiRITROOT_develope/SpiRITROOT/BeamInfo/beam_run%d.ridf.root", fRunNo));
-  genfitVA -> SetBeamFile(Form("/mnt/spirit/analysis/changj/BeamAnalysis/macros/output/beam.Sn132_all/beam_run%d.ridf.root", fRunNo));
+  genfitVA -> SetBeamFile(Form("/data/Q19393/BeamAnalysis/Sn132.raw/beam_run%d.ridf.root", fRunNo));
 //  genfitVA -> SetInformationForBDC(fRunNo, /* xOffset */ -0.507, /* yOffset */ -227.013);
   genfitVA -> SetInformationForBDC(fRunNo,BDC_Xoffset,BDC_Yoffset,BDC_Zoffset);
   // Uncomment if you want to recalculate the vertex using refit tracks.
@@ -203,13 +210,12 @@ void run_reco_experiment
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
 
-  auto smallOutput = new STSmallOutputTask();
-  smallOutput->SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.root").Data());
+  //  auto smallOutput = new STSmallOutputTask();
+  //  smallOutput->SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.root").Data());
   //smallOutput->SetRun(fRunNo);
     
   run -> AddTask(decoder);
-  if(!fMCFile.IsNull())
-    run -> AddTask(embedTask);
+  //  if(!fMCFile.IsNull()) run -> AddTask(embedTask);
   run -> AddTask(preview);
   run -> AddTask(psa);
   run -> AddTask(helix);
@@ -217,9 +223,8 @@ void run_reco_experiment
   run -> AddTask(spaceCharge);
   run -> AddTask(genfitPID);
   run -> AddTask(genfitVA);
-  if(!fMCFile.IsNull())
-    run -> AddTask(embedCorr);
-  run -> AddTask(smallOutput);
+  //  if(!fMCFile.IsNull()) run -> AddTask(embedCorr);
+  //  run -> AddTask(smallOutput);
   
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
@@ -245,6 +250,7 @@ void run_reco_experiment
   gApplication -> Terminate();
 }
 
+/*
 void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events) {
   vector<Int_t> *temp = new vector<Int_t>;
 
@@ -275,3 +281,27 @@ void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events) {
     temp -> push_back(eventid);
   }
 }
+*/
+
+void readEventList(TString eventListFile, vector<Int_t> &events) {
+
+  ifstream eventList(eventListFile.Data());
+  Int_t numEvents = 0;
+  Int_t oldRunid = 0;
+  Int_t runid, eventid;
+  Double_t vx, vy, vz;
+
+  while (1) {
+    eventList >> runid >> eventid >> vx >> vy >> vz;
+    //    std::cout << runid << " " << eventid << std::endl;
+
+    if (eventList.eof()) {
+      break;
+    }
+    
+    events.push_back(eventid);
+  }
+
+  std::cout << "event list from " << eventListFile << " " << events.size() << std::endl;
+}
+

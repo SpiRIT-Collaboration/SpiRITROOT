@@ -1,16 +1,17 @@
 #include <unistd.h>
 
-void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
+void readEventList(TString eventListFile, vector<Int_t> &events);
 
 void run_reco_experiment_auto
 (
-  Int_t fRunNo = 2894,
+  Int_t fRunNo = 2990,
   Int_t fSplitNo = 0,
-  Int_t fNumEventsInSplit = 500,
-  std::vector<Int_t> fSkipEventArray = {},
-  TString fMCFile = "",
+  Int_t fNumEventsInSplit = 10,
+  TString fMCFile = "/tmp_work/isobeeCtDud/geant4_1000MeV_neve1k_bulk000000.digi.root",
+  TString fOUTName = "out",
   TString fPathToData = "", 
-  TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement"
+  std::vector<Int_t> fSkipEventArray = {},
+  TString fSupplePath = "/data/Q20393/rawdataSupplement"
 )
 {
   /* ======= This part you need initial configuration ========= */
@@ -20,8 +21,8 @@ void run_reco_experiment_auto
 
   // Data paths - must have one %d for run number
   // If you don't need either of them, pass it blank.
-  TString ggDataPathWithFormat = "/mnt/spirit/rawdata/misc/Frozen_Information_For_SpiRIT_Analysis/Aug2019/ggNoise/ggNoise_%d.root";
-  TString beamDataPathWithFormat = "/mnt/spirit/rawdata/misc/Frozen_Information_For_SpiRIT_Analysis/Aug2019/BeamData/beam/beam_run%d.ridf.root";
+  TString ggDataPathWithFormat = "/data/Q20393/production/ggNoise/ggNoise_%d.root";
+  TString beamDataPathWithFormat = "/data/Q20393/production/20200529/SpiRITROOT/beam/beam_run%d.ridf.root";
 
   // Meta data path
   Bool_t fUseMeta = kTRUE;
@@ -58,10 +59,11 @@ void run_reco_experiment_auto
   if (fIsBeamDataSet) fBeamData = Form(beamDataPathWithFormat.Data(), fRunNo);
   TString fGainMatchingFile = fSpiRITROOTPath + Form("parameters/RelativeGainRun%d.list", fRelativeGainRunID);
 
-  Int_t start = fSplitNo * fNumEventsInSplit;
+  Int_t ffNumEventsInSplit = 1000;
+  Int_t start = fSplitNo * ffNumEventsInSplit;
   if (start >= fNumEventsInRun) return;
-  if (start + fNumEventsInSplit > fNumEventsInRun)
-    fNumEventsInSplit = fNumEventsInRun - start;
+  if (start + ffNumEventsInSplit > fNumEventsInRun)
+    ffNumEventsInSplit = fNumEventsInRun - start;
 
   TString sRunNo   = TString::Itoa(fRunNo, 10);
   TString sSplitNo = TString::Itoa(fSplitNo, 10);
@@ -81,8 +83,10 @@ void run_reco_experiment_auto
   TString par = fSpiRITROOTPath+"parameters/"+fParameterFile;
   TString geo = fSpiRITROOTPath+"geometry/geomSpiRIT.man.root";
   TString fRawDataList = TString(gSystem -> Getenv("PWD"))+"/list_run"+sRunNo+".txt";
-  TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".root";
-  TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+"."+version+".log";
+  //  TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".root";
+  //  TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+"."+version+".log";
+  TString out = fPathToData+fOUTName+"_"+version+".root";
+  TString log = fPathToData+fOUTName+"_"+version+".log";
   
   if (TString(gSystem -> Which(".", fRawDataList)).IsNull() && !fUseMeta)
     gSystem -> Exec("./createList.sh "+sRunNo);
@@ -132,12 +136,13 @@ void run_reco_experiment_auto
   //FileName_PiEvt = FileName_PiEvt+"Sn108_Run"+fRunNo+"_PiEvt";
   //cout<<"Reading the Event list for the pion events : "<<FileName_PiEvt<<endl;
   //readEventList(FileName_PiEvt, events);
-  //cout <<"Number of events " << fNumEventsInSplit << " starting at " << start <<endl;
+  cout <<"Number of events " << fNumEventsInSplit << " starting at " << start <<endl;
 
-  //decoder -> SetEventList(*events[fRunNo]);
+  vector<Int_t> events;
+  readEventList(Form("/data/Q20393/isobe/20200811SingleIonMC/spiritroot.20200529/macros/makeEventSelection/eventlist/eventlist%d.txt", fRunNo), events);
+  decoder -> SetEventList(events);
   decoder -> SetEventID(start);
- 
-  
+   
   if (fUseMeta) 
   {
     std::ifstream metalistFile(fMetaDataList.Data());
@@ -156,7 +161,7 @@ void run_reco_experiment_auto
   auto preview = new STEventPreviewTask();
   preview -> SetSkippingEvents(fSkipEventArray);
   preview -> SetPersistence(true);
-  //preview -> SetSelectingEvents(*events[fRunNo]);
+  preview -> SetSelectingEvents(events);
 
   auto psa = new STPSAETask();
   psa -> SetPersistence(false);
@@ -195,7 +200,8 @@ void run_reco_experiment_auto
   spaceCharge -> SetBField(gfBField -> GetFieldMap());
   if (fSheetChargeDensity != 0) {
     spaceCharge -> SetDriftParameters(-4.355e4, -2.18); // omega tau and mu of the Langevin equation
-    spaceCharge -> SetSheetChargeDensity(fSheetChargeDensity);  
+    const double fLeakageChargeFactor = 10.2;
+    spaceCharge -> SetSheetChargeDensity(fSheetChargeDensity, fLeakageChargeFactor*fSheetChargeDensity);
     switch (fSystemID) {
       case 132124: spaceCharge -> SetProjectile(STSpaceCharge::Projectile::Sn132); break;
       case 124112: spaceCharge -> SetProjectile(STSpaceCharge::Projectile::Sn124); break;
@@ -234,9 +240,9 @@ void run_reco_experiment_auto
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
 
-  auto smallOutput = new STSmallOutputTask();
-  smallOutput -> SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.root").Data());
-  smallOutput -> SetRun(fRunNo);
+  //  auto smallOutput = new STSmallOutputTask();
+  //  smallOutput -> SetOutputFile((fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco."+version+".conc.root").Data());
+  //  smallOutput -> SetRun(fRunNo);
 
   run -> AddTask(decoder);
   if(!fMCFile.IsNull())
@@ -250,7 +256,7 @@ void run_reco_experiment_auto
   run -> AddTask(genfitVA);
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
-  run -> AddTask(smallOutput);
+  //  run -> AddTask(smallOutput);
   
   auto outFile = FairRootManager::Instance() -> GetOutFile();
   auto recoHeader = new STRecoHeader("RecoHeader","");
@@ -289,33 +295,24 @@ void run_reco_experiment_auto
   gApplication -> Terminate();
 }
 
-void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events) {
-  vector<Int_t> *temp = new vector<Int_t>;
+void readEventList(TString eventListFile, vector<Int_t> &events) {
 
   ifstream eventList(eventListFile.Data());
   Int_t numEvents = 0;
   Int_t oldRunid = 0;
   Int_t runid, eventid;
+  Double_t vx, vy, vz;
 
   while (1) {
-    eventList >> runid >> eventid;
+    eventList >> runid >> eventid >> vx >> vy >> vz;
+    //    std::cout << runid << " " << eventid << std::endl;
 
     if (eventList.eof()) {
-      events.insert(make_pair(oldRunid, temp));
-
       break;
     }
     
-    if (oldRunid == 0)
-      oldRunid = runid;
-
-    if (oldRunid != runid) {
-      events.insert(make_pair(oldRunid, temp));
-
-      oldRunid = runid;
-      temp = new vector<Int_t>;
-    }
-
-    temp -> push_back(eventid);
+    events.push_back(eventid);
   }
+
+  std::cout << "event list from " << eventListFile << " " << events.size() << std::endl;
 }

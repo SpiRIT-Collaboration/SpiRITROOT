@@ -38,9 +38,27 @@ class STEventHeader : public TNamed
 
     void SetTbOffsets(Double_t *tbOffsets);
     Double_t *GetTbOffsets();
+  
+    void SetAoQ(Double_t val);
+    Double_t GetAoQ();
+    void SetZ(Double_t val);
+    Double_t GetZ();
+
+    void SetNRecoTrk(Int_t val);
+    Int_t GetNRecoTrk();
+    void SetNGoodRecoTrk(Int_t val);
+    Int_t GetNGoodRecoTrk();
+    void SetNVATrk(Int_t val);
+    Int_t GetNVATrk();
+
 
   private:
     Int_t fEventID; ///< Original event ID from the run
+  Double_t fAoQ;
+  Double_t fZ;
+  Int_t ntrk;
+  Int_t ngtrk;
+  Int_t nvtrk;
 
     /** 
      * Status of the event 

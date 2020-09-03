@@ -40,7 +40,7 @@ class STGenfitTest2
     void SetMaxIterations(Int_t value);
 
     void Init();
-    genfit::Track* FitTrack(STHelixTrack *helixTrack, Int_t pdg = 2212);
+  genfit::Track* FitTrack(STHelixTrack *helixTrack, Int_t pdg = 2212, Bool_t usepri=false);
     genfit::Track* FitTrackWithVertex(STHelixTrack *helixTrack, STHitCluster *vertex, Int_t pdg = 2212);
 
     void GetTrackParameters(genfit::Track *gfTrack, TVector3 &mom, TVector3 &momentumTargetPlane, TVector3 &posTargetPlane);

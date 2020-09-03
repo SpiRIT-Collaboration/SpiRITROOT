@@ -16,6 +16,7 @@ void STRecoTrackCand::Clear(Option_t *option)
   fMomentum.SetXYZ(0,0,0);
   fMomentumTargetPlane.SetXYZ(0,0,0);
   fPosTargetPlane.SetXYZ(0,0,0);
+  fPosVtxCluster.SetXYZ(0,0,0);
 
   fdEdxPointArray.clear();
 }
@@ -31,8 +32,11 @@ void STRecoTrackCand::Copy(TObject *obj) const
   cand -> SetPID(fPID);
   cand -> SetPIDProbability(fPIDProbability);
   cand -> SetMomentum(fMomentum);
+  cand -> SetPriMomentum(fPriMomentum);
   cand -> SetMomentumTargetPlane(fMomentumTargetPlane);
   cand -> SetPosTargetPlane(fPosTargetPlane);
+  cand -> SetPriPosTargetPlane(fPriPosTargetPlane);
+  cand -> SetPosVtxCluster(fPosVtxCluster);
   cand -> SetGenfitTrack(fGenfitTrack);
 
   auto array = cand -> GetdEdxPointArray();

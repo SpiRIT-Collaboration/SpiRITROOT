@@ -21,7 +21,10 @@ class STRecoTrackCand : public TObject
 
     TVector3 fMomentum; ///< momentum at vertex
     TVector3 fMomentumTargetPlane; ///< momentum at target plane
+    TVector3 fPriMomentum; ///< momentum with primary pos
     TVector3 fPosTargetPlane; ///< position at target plane
+    TVector3 fPriPosTargetPlane; ///< position at target plane
+    TVector3 fPosVtxCluster; ///< position at target plane
     vector<STdEdxPoint> fdEdxPointArray; ///< Array of dEdxPoint
 
     genfit::Track *fGenfitTrack; //! < only used for task
@@ -51,8 +54,17 @@ class STRecoTrackCand : public TObject
     void SetMomentumTargetPlane(TVector3 val) { fMomentumTargetPlane = val; }
     TVector3 GetMomentumTargetPlane() { return fMomentumTargetPlane; }
 
+    void SetPriMomentum(TVector3 val) { fPriMomentum = val; }
+    TVector3 GetPriMomentum() { return fPriMomentum; }
+
     void SetPosTargetPlane(TVector3 val) { fPosTargetPlane = val; }
     TVector3 GetPosTargetPlane() { return fPosTargetPlane; }
+
+    void SetPriPosTargetPlane(TVector3 val) { fPriPosTargetPlane = val; }
+    TVector3 GetPriPosTargetPlane() { return fPriPosTargetPlane; }
+
+    void SetPosVtxCluster(TVector3 val) { fPosVtxCluster = val; }
+    TVector3 GetPosVtxCluster() { return fPosVtxCluster; }
 
     void AdddEdxPoint(STdEdxPoint dedxPoint) { fdEdxPointArray.push_back(dedxPoint); }
     vector<STdEdxPoint> *GetdEdxPointArray() { return &fdEdxPointArray; }

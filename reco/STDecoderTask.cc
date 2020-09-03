@@ -83,7 +83,10 @@ void STDecoderTask::SetGainMatchingData(TString filename)                       
 void STDecoderTask::SetTbRange(Int_t startTb, Int_t endTb)                                    { fStartTb = startTb; fEndTb = endTb; }
 void STDecoderTask::SetUseSeparatedData(Bool_t value)                                         { fIsSeparatedData = value; }
 void STDecoderTask::SetEventID(Long64_t eventid)                                              { fEventID = eventid; }
-void STDecoderTask::SetEventList(const std::vector<int>& eventlist)                           { fEventIDList = eventlist; }
+void STDecoderTask::SetEventList(const std::vector<int>& eventlist)                           { 
+  fEventIDList = eventlist; 
+  std::cout << "Isobe given event list " << eventlist.size() << std::endl;
+}
 void STDecoderTask::ClearEventList()                                                          { fEventIDList.clear(); }
 void STDecoderTask::SetDataList(TString list)
 {
@@ -253,8 +256,12 @@ STDecoderTask::Exec(Option_t *opt)
   int EventID = fEventID;
   if(fEventIDList.size() > 0) 
   {
-    if(fEventIDList.size() > fEventID) EventID = fEventIDList[fEventID] - 1; // Run number starts at 1
-    else fLogger -> Fatal(MESSAGE_ORIGIN, "fEventID is larger than the size of fEventIDList");
+    if(fEventIDList.size() > fEventID){ 
+      EventID = fEventIDList[fEventID] - 1; // Run number starts at 1
+      std::cout << "Isobe STDecoder EventID: " << EventID << std::endl;
+    }
+    else{ fLogger -> Fatal(MESSAGE_ORIGIN, "fEventID is larger than the size of fEventIDList");
+    }
   }
   if(EventID < 0) fLogger -> Fatal(MESSAGE_ORIGIN, "EventID < 0");
   

@@ -13,7 +13,11 @@
  *   @ name : Name of simulation. Should be same with MC simulation.
  */
 
-void run_digi(TString name = "protons_75_events", double beamrate=-1, TString ParFile = "ST.parameters.par", bool simulateBeam = false)
+void run_digi(TString name = "protons_75_events", 
+	      TString dataDir = "",
+	      double beamrate = 3.909E-08, // run 2900
+	      TString ParFile = "ST.parameters.par", 
+	      bool simulateBeam = false)
 {
   gRandom -> SetSeed(0);
 
@@ -79,7 +83,7 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
 
   // -----------------------------------------------------------------
   // Set enveiroment
-  TString dataDir   = workDir + "/macros/data/";
+  //  TString dataDir   = workDir + "/macros/data/";
 
 
   // -----------------------------------------------------------------

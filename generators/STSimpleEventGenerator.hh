@@ -10,7 +10,11 @@
 #include "FairPrimaryGenerator.h"
 #include "FairLogger.h"
 
+#include "TFile.h"
+#include "TROOT.h"
+#include "TNtuple.h"
 #include "TVector3.h"
+#include "TRandom3.h"
 
 #include <fstream>
 
@@ -50,16 +54,33 @@ class STSimpleEventGenerator : public FairGenerator
 
     Bool_t SetAngleStep(Int_t pgd, UInt_t numEvt, Double_t p, Double_t theta_begin, Double_t theta_end, Double_t phi_begin, Double_t phi_end);
 
+  void SetMCFile(TString fname,
+		   Int_t neve, // number of events in a mc file
+		   Int_t pdg=2212, // pdg for mc
+		   Double_t pfactor=1.0); // factor for momentum
+
+  void SetEventFile(TString fname);
+  void SetRealEvent(int eventid);
 
   private :
     Int_t     fPDG;            ///< Particle number
+    Double_t  fP;              ///< Momentum
     TVector3  fV3Vertex;       ///< Position of primary vertex
     TVector3  fPDirection;     ///< Momentum direction vector
     Int_t     fNEvents;        ///< Total number of events
     Int_t     fCurrentEvent;   ///< Current event number
+    Int_t     fRealEvent;   ///< Real event number
     Int_t     fMultiplicity;   ///< Multiplicity of a momentum value
 
     Double_t *fPList;      ///< Momentum list
+  TRandom3 *ran;
+  TFile *fin;
+  TFile *fin_eve;
+  TNtuple *ntp;
+  TTree *evetree;
+  Float_t fX,fY,fZ;
+  Int_t fTreeEventID;
+  Double_t fVtxX,fVtxY,fVtxZ;
 
     std::vector<TVector3> fMomentum; 
 

@@ -57,7 +57,10 @@ STGenfitPIDTask::Init()
   fRootManager -> Register("STCandList", "SpiRIT", fCandListArray, fIsListPersistence);
 
   fRecoTrackArray = new TClonesArray("STRecoTrack");
-  fRootManager -> Register("STRecoTrack", "SpiRIT", fRecoTrackArray, fIsPersistence);
+  fRootManager -> Register("STRecoTrack", "SpiRIT", fRecoTrackArray, false);//fIsPersistence);
+  fEmbedTrackArray = new TClonesArray("STRecoTrack");
+  fRootManager -> Register("STEmbedRecoTrack", "SpiRIT", fEmbedTrackArray, fIsPersistence);
+
 
   fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldXOffset, fFieldYOffset, fFieldZOffset);
   fGenfitTest -> SetTargetPlane(fTargetX*0.1, fTargetY*0.1, fTargetZ*0.1); // Target plane position unit mm -> cm
@@ -95,6 +98,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 {
   fCandListArray -> Clear("C");
   fRecoTrackArray -> Clear("C");
+  fEmbedTrackArray -> Clear("C");
   fVertexArray -> Delete();
 
   if (fEventHeader -> IsBadEvent())
@@ -278,7 +282,6 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 	numEmbedClusters++;
       
       auto pos = cluster -> GetPosition();
-
       Int_t clusRow = (pos.X() + 8*54.)/8;
       Int_t clusLayer = pos.Z()/12;
       if(clusLayer > 111) clusLayer = 111;
@@ -387,10 +390,15 @@ void STGenfitPIDTask::Exec(Option_t *opt)
   }
 
   Int_t numVertices = vertices.size();
+  Int_t ngtrk = 0;
   LOG(INFO) << Space() << "vector verticies " << vertices.size() << FairLogger::endl;
 
   for (UInt_t iVert = 0; iVert < numVertices; iVert++) {
     genfit::GFRaveVertex* vertex = static_cast<genfit::GFRaveVertex*>(vertices[iVert]);
+    LOG(INFO) << Space() << "vtxx " << vertex->getPos().X() 
+	      << " vtxy " << vertex->getPos().Y() 
+	      << " vtxz " << vertex->getPos().Z() 
+	      << FairLogger::endl;
 
     Int_t numTracks = vertex -> getNTracks();
     for (Int_t iTrack = 0; iTrack < numTracks; iTrack++) {
@@ -414,6 +422,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
             momVertex = -momVertex;
           recoTrack -> SetMomentum(momVertex);
           recoTrack -> SetPOCAVertex(pocaVertex);
+	  if(0 == iVert)
+	    if(((10*vertex->getPos()) - pocaVertex).Mag() < 20) ngtrk ++;
 
           Double_t effCurvature1;
           Double_t effCurvature2;
@@ -430,6 +440,72 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     new ((*fVertexArray)[iVert]) STVertex(*vertex);
     delete vertex;
   }
+
+  // recording only embedded tracks
+  Int_t numTrk = fRecoTrackArray -> GetEntriesFast();
+  Int_t netrk = 0;
+  for (Int_t i = 0; i < numTrk; i++){
+    STRecoTrack *trk = (STRecoTrack *) fRecoTrackArray -> At(i);
+    if(trk->GetNumEmbedClusters()>0){
+      auto newtrk = (STRecoTrack *) fEmbedTrackArray -> ConstructedAt(netrk);
+      
+      // from STRecoTrackCand
+      newtrk -> SetPID(trk->GetPID());
+      newtrk -> SetPIDProbability(trk->GetPIDProbability());
+      newtrk -> SetMomentum(trk->GetMomentum());
+      newtrk -> SetMomentumTargetPlane(trk->GetMomentumTargetPlane());
+      newtrk -> SetPosTargetPlane(trk->GetPosTargetPlane());
+      newtrk -> SetIsEmbed(trk->IsEmbed());
+      newtrk -> SetNumEmbedClusters(trk->GetNumEmbedClusters());
+
+      auto inarray = trk -> GetdEdxPointArray();
+      auto newarray = newtrk -> GetdEdxPointArray();
+      for (auto dedx : *inarray) {
+	newtrk -> AdddEdxPoint(dedx);
+      }
+
+      // from STRecoTrack
+      newtrk -> SetCharge(trk->GetCharge());
+      newtrk -> SetParentID(trk->GetParentID());
+      newtrk -> SetVertexID(trk->GetVertexID());
+      newtrk -> SetHelixID(trk->GetHelixID());
+      newtrk -> SetPOCAVertex(trk->GetPOCAVertex());
+      newtrk -> SetPosKyotoL(trk->GetPosKyotoL());
+      newtrk -> SetPosKyotoR(trk->GetPosKyotoR());
+      newtrk -> SetPosKatana(trk->GetPosKatana());
+      newtrk -> SetPosNeuland(trk->GetPosNeuland());
+
+      auto inclid = trk -> GetClusterIDArray();
+      for (auto ii : *inclid) {
+	newtrk -> AddClusterID(ii);
+      }
+
+      newtrk -> SetEffCurvature1(trk->GetEffCurvature1());
+      newtrk -> SetEffCurvature2(trk->GetEffCurvature2());
+      newtrk -> SetEffCurvature3(trk->GetEffCurvature3());
+      newtrk -> SetNumRowClusters(trk->GetNumRowClusters());
+      newtrk -> SetNumLayerClusters(trk->GetNumLayerClusters());
+      newtrk -> SetNumRowClusters90(trk->GetNumRowClusters90());
+      newtrk -> SetNumLayerClusters90(trk->GetNumLayerClusters90());
+      newtrk -> SetHelixChi2R(trk->GetHelixChi2R());
+      newtrk -> SetHelixChi2X(trk->GetHelixChi2X());
+      newtrk -> SetHelixChi2Y(trk->GetHelixChi2Y());
+      newtrk -> SetHelixChi2Z(trk->GetHelixChi2Z());
+      newtrk -> SetTrackLength(trk->GetTrackLength());
+      newtrk -> SetNDF(trk->GetNDF());
+      newtrk -> SetChi2(trk->GetChi2());
+      newtrk -> SetChi2R(trk->GetChi2R());
+      newtrk -> SetChi2X(trk->GetChi2X());
+      newtrk -> SetChi2Y(trk->GetChi2Y());
+      newtrk -> SetChi2Z(trk->GetChi2Z());
+      newtrk -> SetRecoID(trk->GetRecoID());
+
+      netrk ++;
+    }
+  }
+
+  fEventHeader -> SetNRecoTrk(fRecoTrackArray->GetEntries());
+  fEventHeader -> SetNGoodRecoTrk(ngtrk);
 
   LOG(INFO) << Space() << "STVertex " << fVertexArray -> GetEntriesFast() << FairLogger::endl;
 }

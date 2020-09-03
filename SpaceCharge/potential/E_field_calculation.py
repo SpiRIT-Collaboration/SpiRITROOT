@@ -9,7 +9,6 @@ import ROOT
 from matplotlib.animation import FuncAnimation
 from multiprocessing import Pool
 from functools import partial
-from scipy.interpolate import RegularGridInterpolator
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
 from scipy.ndimage import zoom
@@ -222,7 +221,7 @@ def CalculateEField(strength_and_beamfile):
   for charge in solver.charges:
     density_grid[tuple(charge.geo_index)] += charge.geo_charge
 
-  ArrayToGif(grid.TPCx, grid.TPCy, grid.TPCz, result, 'strength%.2E_%s.gif' % (strength, beam_file))
+  #ArrayToGif(grid.TPCx, grid.TPCy, grid.TPCz, result, 'strength%.2E_%s.gif' % (strength, beam_file))
   Ex, Ey, Ez = VToE(result, grid.TPCx, grid.TPCy, grid.TPCz)
   E_strength = np.sqrt(Ex*Ex + Ey*Ey + Ez*Ez)
   print('Maximum E-field strength: %.2f V/cm' % E_strength.ravel().max())
@@ -233,7 +232,7 @@ def CalculateEField(strength_and_beamfile):
 def ArrayToGif(x, y, z, content, title):
   fig, ax = plt.subplots()
   plt.subplots_adjust(bottom=0.25)
-  cmap = plt.get_cmap('inferno')
+  #cmap = plt.get_cmap('inferno')
   levels = MaxNLocator(nbins=15).tick_values(content.ravel().min(), content.ravel().max())
   norm = BoundaryNorm(levels, ncolors=cmap.N)
 
@@ -280,7 +279,7 @@ if __name__ == '__main__':
   strengths_and_beamfile = [(3.14e-8*factor,0, beam_file) for beam_file in beam_files for factor in range(0,2)]
   strengthsBF_and_beamfile = [(0, 3.14e-8, beam_file) for beam_file in beam_files]
 
-  pool = Pool(6)
+  pool = Pool(1)
   results = pool.map(CalculateEField, strengths_and_beamfile + strengthsBF_and_beamfile)
   #resultsBF = pool.map(CalculateEField, strengthsBF_and_beamfile)
   pool.close()

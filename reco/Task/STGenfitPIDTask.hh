@@ -40,6 +40,7 @@ class STGenfitPIDTask : public STRecoTask
     TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fCandListArray = nullptr;
     TClonesArray *fRecoTrackArray = nullptr;
+    TClonesArray *fEmbedTrackArray = nullptr;
     TClonesArray *fVertexArray = nullptr;
 
     bool fIsListPersistence = false;

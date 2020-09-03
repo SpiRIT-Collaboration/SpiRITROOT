@@ -14,6 +14,11 @@ void STEventHeader::Clear(Option_t *option)
 {
   fEventID = -1;
   fStatus = -1;
+  fAoQ = -1;
+  fZ = -1;
+  ntrk = -1;
+  ngtrk = -1;
+  nvtrk = -1;
 }
 
 void STEventHeader::Print(Option_t *option) const
@@ -54,6 +59,18 @@ void STEventHeader::SetIsBeamEvent()           { fStatus = 4; }
 void STEventHeader::SetIsCosmicEvent()         { fStatus = 5; }
 void STEventHeader::SetIsBadEvent()            { fStatus = 6; }
 void STEventHeader::SetIsGGCloseEvent()        { fStatus = 7; }
+
+void STEventHeader::SetAoQ(Double_t val)       { fAoQ = val; }
+void STEventHeader::SetZ(Double_t val)       { fZ = val; }
+Double_t STEventHeader::GetAoQ()       { return fAoQ; }
+Double_t STEventHeader::GetZ()       { return fZ; }
+
+void STEventHeader::SetNRecoTrk(Int_t val)       { ntrk = val; }
+void STEventHeader::SetNGoodRecoTrk(Int_t val)       { ngtrk = val; }
+void STEventHeader::SetNVATrk(Int_t val)       { nvtrk = val; }
+Int_t STEventHeader::GetNRecoTrk()       { return ntrk; }
+Int_t STEventHeader::GetNGoodRecoTrk()       { return ngtrk; }
+Int_t STEventHeader::GetNVATrk()       { return nvtrk; }
 
 void STEventHeader::SetTbOffsets(Double_t *tbOffsets)
 {

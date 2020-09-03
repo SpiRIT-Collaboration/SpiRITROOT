@@ -16,6 +16,7 @@
 // FAIRROOT classes
 #include "FairTask.h"
 #include "FairLogger.h"
+#include "FairMCEventHeader.h"
 
 // SPiRITROOT classes
 #include "STCore.hh"
@@ -73,6 +74,8 @@ class STEmbedTask : public FairTask {
     STRawEvent *fRawEvent;              ///< Current raw event for data + MC
     STRawEvent *fRawEventMC;            ///< Current raw event for MC run  
     STRawEvent *fRawEventData;          ///< Current raw event for just data
+
+  FairMCEventHeader *fMCEventHeader;
   
   ClassDef(STEmbedTask, 1);
 };

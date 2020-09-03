@@ -35,7 +35,7 @@ STGenfitVATask::~STGenfitVATask()
 {
 }
 
-void STGenfitVATask::SetPerferMCBeam()                   { fUseMCBeam = kTRUE; }
+void STGenfitVATask::SetPreferMCBeam()                   { fUseMCBeam = kTRUE; }
 void STGenfitVATask::SetClusteringType(Int_t type) { fClusteringType = type; }
 void STGenfitVATask::SetConstantField() { fIsSamurai = kFALSE; }
 void STGenfitVATask::SetFieldOffset(Double_t xOffset, Double_t yOffset, Double_t zOffset)
@@ -73,7 +73,14 @@ STGenfitVATask::Init()
     return kERROR;
   }
 
+  fMCEventHeader = (FairMCEventHeader *) fRootManager -> GetObject("MCEventHeader");
+  if (fMCEventHeader == nullptr) {
+    LOG(ERROR) << "Cannot find fMCEventHeader array!" << FairLogger::endl;
+    return kERROR;
+  }
+
   if(fUseMCBeam)
+  //  if(1) // Isobe
   {
     fMCEventHeader = (FairMCEventHeader *) fRootManager -> GetObject("MCEventHeader.");
     if(!fMCEventHeader) 
@@ -96,7 +103,10 @@ STGenfitVATask::Init()
   }
 
   fVATrackArray = new TClonesArray("STRecoTrack");
-  fRootManager -> Register("VATracks", "SpiRIT", fVATrackArray, fIsPersistence);
+  fRootManager -> Register("VATracks", "SpiRIT", fVATrackArray, false);
+  fPATrackArray = new TClonesArray("STRecoTrack");
+  fEmbedVATrackArray = new TClonesArray("STRecoTrack");
+  fRootManager -> Register("EmbedVATracks", "SpiRIT", fEmbedVATrackArray, fIsPersistence);
 
   fCandListArray = new TClonesArray("STRecoTrackCandList");
   fRootManager -> Register("VACandList", "SpiRIT", fCandListArray, fIsListPersistence);
@@ -157,6 +167,8 @@ void STGenfitVATask::Exec(Option_t *opt)
 {
   fCandListArray -> Clear("C");
   fVATrackArray -> Clear("C");
+  fPATrackArray -> Clear("C");
+  fEmbedVATrackArray -> Clear("C");
   fVAVertexArray -> Clear("C");
   fBeamInfo -> Clear();
   if (!fBeamFilename.IsNull() || (fFixedVertexX != -9999 && fFixedVertexY != -9999 && fFixedVertexZ != -9999))
@@ -199,6 +211,8 @@ void STGenfitVATask::Exec(Option_t *opt)
   }
 
   auto vertexPos = vertex -> GetPos(); //this position is TPC Vertex
+  //  std::cout << "vpos0: " << vertexPos.X() << std::endl;
+
   Bool_t goodBDC = kTRUE;
   if (!fBeamFilename.IsNull()) {
     fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
@@ -279,8 +293,13 @@ void STGenfitVATask::Exec(Option_t *opt)
     auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
     bdcVertex -> SetIsGoodBDC();
     bdcVertex -> SetPos(vertexPos);
-    LOG(INFO) << Space() << "STGenfitVATask " << "BDC vertex is loaded from MCEventHeader" << FairLogger::endl;
+    LOG(INFO) << Space() << "STGenfitVATask " << "BDC vertex is loaded from MCEventHeader " << vertexPos.X() << " " << vertexPos.Y() << " " << vertexPos.Z() << FairLogger::endl;
   }
+
+    //    std::cout << "vpos: " << vertexPos.X() << " " << VertexPosShift.X() << std::endl;
+  LOG(INFO) << Space() << "STGenfitVATask vtxpos " << vertexPos.X()  << " " << vertexPos.Y() << " " << vertexPos.Z() << FairLogger::endl;
+  LOG(INFO) << Space() << "STGenfitVATask pripos " << fMCEventHeader -> GetX()  << " " << fMCEventHeader -> GetY() << " " << fMCEventHeader -> GetZ() << FairLogger::endl;
+  TVector3 pripos = TVector3(fMCEventHeader -> GetX(), fMCEventHeader -> GetY(), fMCEventHeader -> GetZ());
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();
   for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
@@ -317,25 +336,41 @@ void STGenfitVATask::Exec(Option_t *opt)
 
     auto vertexCluster = new STHitCluster();
     vertexCluster -> SetIsStable(kTRUE);
+    vertexCluster -> SetClusterID(-2);
     vertexCluster -> SetHit(-4, vertexPos+VertexPosShift, 30); // here add this shift to the BDC original position 
     vertexCluster -> SetCovMatrix(cov);
     vertexCluster -> SetDFromCovForGenfit(1,1,1,true);
+
+    // isobe priCluster: MCvertex instead of reco. vertex
+    auto priCluster = new STHitCluster();
+    priCluster -> SetIsStable(kTRUE);
+    priCluster -> SetClusterID(-3);
+    priCluster -> SetHit(-4, pripos, 30);
+    //priCluster -> SetHit(-4, vertexPos+VertexPosShift, 30); // here add this shift to the BDC original position 
+    priCluster -> SetCovMatrix(cov);
+    priCluster -> SetDFromCovForGenfit(1,1,1,true);
+
 
     Int_t trackID = fCandListArray -> GetEntriesFast();
 
     auto candList = (STRecoTrackCandList *) fCandListArray -> ConstructedAt(trackID);
     auto vaTrack = (STRecoTrack *) fVATrackArray -> ConstructedAt(trackID);
     vaTrack -> SetParentID(iTrack);
+    auto paTrack = (STRecoTrack *) fPATrackArray -> ConstructedAt(trackID);
+    paTrack -> SetParentID(iTrack);
 
     auto helixTrack = (STHelixTrack *) fHelixTrackArray -> At(track -> GetHelixID());
     vaTrack -> SetHelixTrack(helixTrack);
+    paTrack -> SetHelixTrack(helixTrack);
 
     auto clusterArray = helixTrack -> GetClusterArray();
+    clusterArray -> insert(clusterArray -> begin(), priCluster);
     clusterArray -> insert(clusterArray -> begin(), vertexCluster);
     for (auto cluster : *clusterArray) {
       if (cluster -> IsStable()) {
         candList -> AddHitID(cluster -> GetClusterID());
         vaTrack -> AddClusterID(cluster -> GetClusterID());
+        paTrack -> AddClusterID(cluster -> GetClusterID());
       }
     }
 
@@ -359,6 +394,7 @@ void STGenfitVATask::Exec(Option_t *opt)
 
       //genfit::Track *gfTrack = fGenfitTest -> FitTrackWithVertex(helixTrack, vertexCluster, pdg);
       genfit::Track *gfTrack = fGenfitTest -> FitTrack(helixTrack, pdg);
+      genfit::Track *pgfTrack = fGenfitTest -> FitTrack(helixTrack, pdg, true);
       if (gfTrack == nullptr) {
         vaTrackCand -> SetPIDProbability(0);
         continue;
@@ -368,13 +404,23 @@ void STGenfitVATask::Exec(Option_t *opt)
 
       TVector3 mom, momTargetPlane, posTargetPlane;
       fGenfitTest -> GetTrackParameters(gfTrack, mom, momTargetPlane, posTargetPlane);
+      TVector3 pmom, pmomTargetPlane, pposTargetPlane;
+      fGenfitTest -> GetTrackParameters(pgfTrack, pmom, pmomTargetPlane, pposTargetPlane);
+
       if (mom.Z() < 0)
         mom = -mom;
+      if (pmom.Z() < 0)
+        pmom = -pmom;
       if (momTargetPlane.Z() < 0)
         momTargetPlane = -momTargetPlane;
       vaTrackCand -> SetMomentum(mom);
       vaTrackCand -> SetMomentumTargetPlane(momTargetPlane);
       vaTrackCand -> SetPosTargetPlane(posTargetPlane);
+
+      vaTrackCand -> SetPriMomentum(pmom);
+      vaTrackCand -> SetPriPosTargetPlane(pposTargetPlane);
+      vaTrackCand -> SetPosVtxCluster(vertexCluster->GetPosition());
+
 
       fGenfitTest -> GetdEdxPointsByLayerRow(gfTrack, helixTrack, vaTrackCand -> GetdEdxPointArray(), true);
 
@@ -592,6 +638,88 @@ void STGenfitVATask::Exec(Option_t *opt)
       new ((*fVAVertexArray)[iVert]) STVertex(*vaVertex);
       delete vaVertex;
     }
+
+    // Isobe
+
+    Int_t numTrk = fVATrackArray -> GetEntriesFast();
+    Int_t netrk = 0;
+    for (Int_t i = 0; i < numTrk; i++){
+      STRecoTrack *trk = (STRecoTrack *) fVATrackArray -> At(i);
+      if(trk->GetNumEmbedClusters()>0){
+	auto newtrk = (STRecoTrack *) fEmbedVATrackArray -> ConstructedAt(netrk);
+	//      std::cout << __FILE__ << "\t" << __LINE__ << std::endl;
+        // from STRecoTrackCand
+        newtrk -> SetPID(trk->GetPID());
+        newtrk -> SetPIDProbability(trk->GetPIDProbability());
+        newtrk -> SetMomentum(trk->GetMomentum());
+        newtrk -> SetMomentumTargetPlane(trk->GetMomentumTargetPlane());
+        newtrk -> SetPriMomentum(trk->GetPriMomentum());
+        newtrk -> SetPosTargetPlane(trk->GetPosTargetPlane());
+        newtrk -> SetPriPosTargetPlane(trk->GetPriPosTargetPlane());
+        newtrk -> SetPosVtxCluster(trk->GetPosVtxCluster());
+        //      std::cout << "VAPos2: " << trk->GetPosVtxCluster().X() << "\t"      << trk->GetPosVtxCluster().Y() << "\t"      << trk->GetPosVtxCluster().Z() << std::endl;
+        newtrk -> SetIsEmbed(trk->IsEmbed());
+        newtrk -> SetNumEmbedClusters(trk->GetNumEmbedClusters());
+
+        //      std::cout << __FILE__ << "\t" << __LINE__ << std::endl;
+
+	auto inarray = trk -> GetdEdxPointArray();
+        auto newarray = newtrk -> GetdEdxPointArray();
+        for (auto dedx : *inarray) {
+          newtrk -> AdddEdxPoint(dedx);
+        }
+
+        //      std::cout << __FILE__ << "\t" << __LINE__ << std::endl;
+
+	// from STRecoTrack
+        newtrk -> SetCharge(trk->GetCharge());
+        newtrk -> SetParentID(trk->GetParentID());
+        newtrk -> SetVertexID(trk->GetVertexID());
+        newtrk -> SetHelixID(trk->GetHelixID());
+	newtrk -> SetPOCAVertex(trk->GetPOCAVertex());
+        newtrk -> SetPosKyotoL(trk->GetPosKyotoL());
+        newtrk -> SetPosKyotoR(trk->GetPosKyotoR());
+        newtrk -> SetPosKatana(trk->GetPosKatana());
+        newtrk -> SetPosNeuland(trk->GetPosNeuland());
+
+        //      std::cout << __FILE__ << "\t" << __LINE__ << std::endl;
+
+        auto inclid = trk -> GetClusterIDArray();
+        for (auto ii : *inclid) {
+          newtrk -> AddClusterID(ii);
+        }
+
+        //      std::cout << __FILE__ << "\t" << __LINE__ << std::endl;
+
+        newtrk -> SetEffCurvature1(trk->GetEffCurvature1());
+        newtrk -> SetEffCurvature2(trk->GetEffCurvature2());
+        newtrk -> SetEffCurvature3(trk->GetEffCurvature3());
+        newtrk -> SetNumRowClusters(trk->GetNumRowClusters());
+        newtrk -> SetNumLayerClusters(trk->GetNumLayerClusters());
+        newtrk -> SetNumRowClusters90(trk->GetNumRowClusters90());
+        newtrk -> SetNumLayerClusters90(trk->GetNumLayerClusters90());
+        newtrk -> SetHelixChi2R(trk->GetHelixChi2R());
+        newtrk -> SetHelixChi2X(trk->GetHelixChi2X());
+        newtrk -> SetHelixChi2Y(trk->GetHelixChi2Y());
+        newtrk -> SetHelixChi2Z(trk->GetHelixChi2Z());
+        newtrk -> SetTrackLength(trk->GetTrackLength());
+        newtrk -> SetNDF(trk->GetNDF());
+        newtrk -> SetChi2(trk->GetChi2());
+        newtrk -> SetChi2R(trk->GetChi2R());
+        newtrk -> SetChi2X(trk->GetChi2X());
+        newtrk -> SetChi2Y(trk->GetChi2Y());
+        newtrk -> SetChi2Z(trk->GetChi2Z());
+        newtrk -> SetRecoID(trk->GetRecoID());
+
+        //      std::cout << __FILE__ << "\t" << __LINE__ << std::endl;
+
+        netrk ++;
+      }
+    }
+
+    fEventHeader -> SetNVATrk(fVATrackArray->GetEntries());
+
+    // end: Isobe
 
     LOG(INFO) << Space() << "VAVertex " << fVAVertexArray -> GetEntriesFast() << FairLogger::endl;
   }

@@ -38,7 +38,7 @@ class STGenfitVATask : public STRecoTask
     virtual void Exec(Option_t *opt);
 
     void SetBeamFile(TString fileName);
-    void SetPerferMCBeam();
+    void SetPreferMCBeam();
     void SetInformationForBDC(Int_t runNo, Double_t offsetX, Double_t offsetY, Double_t offsetZ = 0);
     void SetZtoProject(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple);
     void SetFixedVertex(Double_t x, Double_t y, Double_t z);
@@ -51,6 +51,8 @@ class STGenfitVATask : public STRecoTask
     TClonesArray *fVertexArray = nullptr;
     TClonesArray *fCandListArray = nullptr;
     TClonesArray *fVATrackArray = nullptr;
+    TClonesArray *fPATrackArray = nullptr;
+    TClonesArray *fEmbedVATrackArray = nullptr;
     TClonesArray *fBDCVertexArray = nullptr;
     TClonesArray *fVAVertexArray = nullptr;
     STBeamInfo   *fBeamInfo = nullptr;

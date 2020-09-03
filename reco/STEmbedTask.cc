@@ -27,7 +27,8 @@ STEmbedTask::STEmbedTask()
   fRawEvent = NULL;
   fChain = NULL;
   fEventArray = nullptr;
-  
+  fMCEventHeader = new FairMCEventHeader;
+
   fEventID = -1;
 }
 
@@ -51,7 +52,7 @@ STEmbedTask::Init()
   //Check if embedding is turned on
   if (!fEmbedFile.EqualTo(""))
     {
-      std::cout << "== [STEmbedTask] Setting up embed mode" << std::endl;
+      std::cout << "== [STEmbedTask] Setting up embed mode " << fEmbedFile << std::endl;
       fChain = new TChain("cbmsim");
       fChain -> Add(fEmbedFile);
       if(fChain -> GetListOfFiles() -> GetEntries() == 0)
@@ -62,10 +63,12 @@ STEmbedTask::Init()
 
       fChain -> SetBranchAddress("STRawEvent", &fEventArray);
       fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
+      fChain -> SetBranchAddress("MCEventHeader.", &fMCEventHeader);
 
-      ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
-      ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
-      ioMan -> Register("STMCTrack", "SPiRIT", fEmbedTrackArray, fIsPersistence);
+      ioMan -> Register("STRawEmbedEvent", "SpiRIT", fRawEmbedEventArray, fIsPersistence);
+      ioMan -> Register("STRawDataEvent", "SpiRIT", fRawDataEventArray, fIsPersistence);
+      ioMan -> Register("STMCTrack", "SpiRIT", fEmbedTrackArray, fIsPersistence);
+      ioMan -> Register("MCEventHeader", "SpiRIT", fMCEventHeader, fIsPersistence);
       fPar -> SetIsEmbed(kTRUE);
     }
   else
@@ -113,9 +116,13 @@ STEmbedTask::Exec(Option_t *opt)
     int fMCEventID = fEventID % fChain -> GetEntries();
     fChain -> GetEntry(fMCEventID);
     fRawEventMC = (STRawEvent *) fEventArray -> At(0);
+
+    LOG(INFO) << "Data embed eid: " << fEventID << " MC eid: " << fMCEventID << FairLogger::endl;
   }
 
-  
+  LOG(INFO) << "STEmbedTask pripos " << fMCEventHeader -> GetX() << " " << fMCEventHeader -> GetY() << " " << fMCEventHeader -> GetZ() << FairLogger::endl;
+
+  //  fRawEventMC = nullptr; // isobe
   //
   if(fRawEventMC != nullptr)
   {

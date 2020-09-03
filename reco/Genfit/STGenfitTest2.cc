@@ -98,8 +98,9 @@ void STGenfitTest2::Init()
   fGenfitTrackArray -> Delete();
 }
 
-genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
+genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg, Bool_t usepri)
 {
+
   fHitClusterArray -> Delete();
   genfit::TrackCand trackCand;
 
@@ -109,6 +110,16 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
 
   auto clusterArray = helixTrack -> GetClusterArray();
   for (auto cluster : *clusterArray) {
+
+    //    if(usepri) std::cout << "cluster ID: " << cluster -> GetClusterID() << " " << cluster -> GetX() << " " << cluster -> GetY() << " " << cluster -> GetZ() << std::endl;
+
+    if(usepri){
+      if (cluster -> GetClusterID() == -2) continue; // -2 is vertex cluster
+    }
+    else{
+      if (cluster -> GetClusterID() == -3) continue; // -3 is pri mc cluster
+    }
+
     if (cluster -> IsStable() == false)
       continue;
     Int_t idx = fHitClusterArray->GetEntriesFast();
@@ -118,6 +129,14 @@ genfit::Track* STGenfitTest2::FitTrack(STHelixTrack *helixTrack, Int_t pdg)
 
   STHitCluster *refCluster;
   for (auto cluster : *clusterArray) {
+
+    if(usepri){
+      if (cluster -> GetClusterID() == -2) continue;
+    }
+    else{
+      if (cluster -> GetClusterID() == -3) continue;
+    }
+
     if (cluster -> IsStable()) {
       refCluster = cluster;
       break;
