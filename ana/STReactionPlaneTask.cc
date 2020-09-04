@@ -61,6 +61,7 @@ double STReactionPlaneTask::Correction(const TVector2& Q_vec)
   else phi = -9999;
   return phi;
 }
+
 double STReactionPlaneTask::Shifting(TVector2 Q_vec)
 {
   Q_vec.SetX((Q_vec.X() - fQx_mean -> GetVal())/fQx_sigma -> GetVal());
@@ -365,7 +366,7 @@ void STReactionPlaneTask::CreateBiasCorrection(const std::string& ana_filename, 
   // correction 1: shifting, need mean and std of the distribution
   if(!Qx_mean || !Qy_mean || !Qx_sigma || !Qy_sigma)
   {
-    TH2F hist("Qxy_dist", "", 1000, -1, 1, 1000, -1, 1);
+    TH2F hist("Qxy_dist", "", 1000, -10000, 10000, 1000, -10000, 10000);
     chain.Project("Qxy_dist", "QMag.fElements*sin(RP.fElements):QMag.fElements*cos(RP.fElements)");
     Qx_mean = new TParameter<double>("Qx_mean", hist.GetMean(1));
     Qx_sigma = new TParameter<double>("Qx_sigma", hist.GetRMS(1));
