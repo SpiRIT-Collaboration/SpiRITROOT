@@ -39,7 +39,7 @@
 struct DataPackage
 {
    DataPackage();
-   enum TCArrType{ DATA, PROB, EFF, CMVECTOR, LABRAPIDITY, FRAGRAPIDITY, FRAGVELOCITY, EFFERR, PHIEFF, ARREND };
+   enum TCArrType{ DATA, PROB, SD, EFF, CMVECTOR, LABRAPIDITY, FRAGRAPIDITY, FRAGVELOCITY, EFFERR, PHIEFF, V1RPANGLE, V2RPANGLE, ARREND };
    enum VecType { BEAMRAPIDITY, BEAMMOM, VECEND };
    void CheckEmptyElements(int n_particle_type);
    void UpdateData(int part_id);
@@ -49,11 +49,17 @@ struct DataPackage
    float Eff(int n) const                         { return static_cast<STVectorF*>(fTCArrList[EFF] -> At(fPartID)) -> fElements[n]; };
    float EffErr(int n) const                      { return static_cast<STVectorF*>(fTCArrList[EFFERR] -> At(fPartID)) -> fElements[n]; };
    float Prob(int n) const                        { return static_cast<STVectorF*>(fTCArrList[PROB] -> At(fPartID)) -> fElements[n]; };
+   float StdDev(int n) const                        { return static_cast<STVectorF*>(fTCArrList[SD] -> At(fPartID)) -> fElements[n]; };
+
    const TVector3& CMVector(int n) const          { return static_cast<STVectorVec3*>(fTCArrList[CMVECTOR] -> At(fPartID)) -> fElements[n]; };
    float LabRapidity(int n) const                 { return static_cast<STVectorF*>(fTCArrList[LABRAPIDITY] -> At(fPartID)) -> fElements[n]; };
    const TVector3& FragVelocity(int n) const      { return static_cast<STVectorVec3*>(fTCArrList[FRAGVELOCITY] -> At(fPartID)) -> fElements[n]; };
    float FragRapidity(int n) const                { return static_cast<STVectorF*>(fTCArrList[FRAGRAPIDITY] -> At(fPartID)) -> fElements[n]; };
    float PhiEff(int n) const                      { return static_cast<STVectorF*>(fTCArrList[PHIEFF] -> At(fPartID)) -> fElements[n]; };
+   float V1RPAngle(int n) const                   { return static_cast<STVectorF*>(fTCArrList[V1RPANGLE] -> At(fPartID)) -> fElements[n]; };
+   float V2RPAngle(int n) const                   { return static_cast<STVectorF*>(fTCArrList[V2RPANGLE] -> At(fPartID)) -> fElements[n]; };
+
+
 
    float Weight(int n) const                      { return fWeight[n]; };
    float PtxRap(int n) const                      { return fPtxRap[n]; };
@@ -65,7 +71,7 @@ struct DataPackage
    int fPartID; // indicates which element of the tclones array needs to be loaded
    std::vector<float> fWeight; // prob/ 
    std::vector<float> fPtxRap; // x-rapidity distribution. Extended from transverse rapidity assuming uniform phi dist
-   std::map<TCArrType, double> fDefaultValues{{EFF, 1}, {EFFERR, 0}, {PHIEFF, 1}};
+   std::map<TCArrType, double> fDefaultValues{{EFF, 1}, {EFFERR, 0}, {PHIEFF, 1}, {V1RPANGLE, 0}, {V2RPANGLE, 0}, {SD, 0}};
 };
 
 class STSimpleGraphsTask : public FairTask {
@@ -98,11 +104,12 @@ class STSimpleGraphsTask : public FairTask {
     void RegisterRuleWithParticle(int pdg, std::function<void(const DataPackage&)> rule);
     void RegisterFinishTaskRule(std::function<void()> rule);
     void RegisterVPlots();
-    void RegisterRapidityPlots();
+    void RegisterRapidityPlots(double probThreshold=0.2, double SDThreshold=1000);
     void RegisterPlotsForMC();
     void RegisterPIDPlots();
     void RegisterPionPlots();
     void RemoveParticleMin();
+    void DiscardData(const std::vector<int>& type) { fTypeToDiscard = type; };
 
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
@@ -159,6 +166,7 @@ class STSimpleGraphsTask : public FairTask {
     std::map<std::string, bool> fNormalize;
     std::vector<std::vector<std::function<void(const DataPackage&)>>> fFillRules;
     std::vector<std::function<void()>> fFinishTaskRule;
+    std::vector<int> fTypeToDiscard;
 
   ClassDef(STSimpleGraphsTask, 1);
 };

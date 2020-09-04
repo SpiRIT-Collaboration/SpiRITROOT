@@ -49,6 +49,7 @@ class STERATTask : public FairTask {
     void SetImpactParameterTable(const std::string& table_filename);
 
     static void CreateImpactParameterTable(const std::string& ana_filename, const std::string& output_filename);
+    static void CreateImpactParameterTable(const std::vector<std::string>& ana_filename, const std::string& output_filename);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable

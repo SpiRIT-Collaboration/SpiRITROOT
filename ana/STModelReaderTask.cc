@@ -33,6 +33,9 @@ STModelReaderTask::STModelReaderTask(TString filename)
   {
     LOG(FATAL)<<"STModelReader cannot accept event files without specifying generator names.\nInput name : " << filename << FairLogger::endl;
   }
+
+  fEventID = new TClonesArray("STVectorI");
+  fRunID = new TClonesArray("STVectorI");
 }
 
 STModelReaderTask::~STModelReaderTask()
@@ -57,9 +60,14 @@ InitStatus STModelReaderTask::Init()
     new((*fEff)[i]) STVectorF();
   }
 
+  (new((*fEventID)[0]) STVectorI()) -> fElements.push_back(-1);
+  (new((*fRunID)[0]) STVectorI()) -> fElements.push_back(0);
+
   ioMan -> Register("STData", "ST", fData, fIsPersistence);
   ioMan -> Register("Prob", "ST", fProb, fIsPersistence);
   ioMan -> Register("Eff", "ST", fEff, fIsPersistence);
+  ioMan -> Register("EventID", "ST", fEventID, fIsPersistence);
+  ioMan -> Register("RunID", "ST", fRunID, fIsPersistence);
 
   if(fRotate)
     fLogger -> Info(MESSAGE_ORIGIN, "The event will be randomly rotated along the beam axis");
@@ -149,6 +157,7 @@ void STModelReaderTask::Exec(Option_t *opt)
         }
       }
     }
+    ++static_cast<STVectorI*>(fEventID -> At(0)) -> fElements[0];
   }else fLogger -> Fatal(MESSAGE_ORIGIN, "Event ID exceeds the length of the TChain");
 }
 

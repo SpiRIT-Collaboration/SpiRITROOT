@@ -18,6 +18,16 @@
 
 // STL
 #include <vector>
+#include <unordered_map> 
+
+struct pair_hash
+{
+  template <class T1, class T2>
+  std::size_t operator() (const std::pair<T1, T2> &pair) const
+  {
+    return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
+  }
+};
 
 class STDivideEventTask : public FairTask {
   public:
@@ -45,6 +55,7 @@ class STDivideEventTask : public FairTask {
     TClonesArray *fProb = nullptr;
     TClonesArray *fEff = nullptr;
     TClonesArray *fEventID = nullptr;
+    TClonesArray *fRunID = nullptr;
     TClonesArray *fCompEventID = nullptr;
 
     TString fComplementaryFilename;
@@ -52,7 +63,7 @@ class STDivideEventTask : public FairTask {
     STVectorI *fID = nullptr;
     STVectorI *fComplementaryID = nullptr;
     STVectorI *fSkip = nullptr;
-    int fTreeEventID = 0;
+    std::unordered_map<std::pair<int, int>, int, pair_hash> fEventIDToTreeID;
     const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
 
   ClassDef(STDivideEventTask, 1);

@@ -1,4 +1,4 @@
-#include "STReactionPlaneTask.hh"
+#include "STRPBiasCorrectionTask.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -18,9 +18,9 @@
 
 #include <cmath>
 
-ClassImp(STReactionPlaneTask);
+ClassImp(STRPBiasCorrectionTask);
 
-STReactionPlaneTask::STReactionPlaneTask()
+STRPBiasCorrectionTask::STRPBiasCorrectionTask()
 {
   fLogger = FairLogger::GetLogger(); 
   fReactionPlane = new STVectorF();
@@ -41,10 +41,10 @@ STReactionPlaneTask::STReactionPlaneTask()
   }
 }
 
-STReactionPlaneTask::~STReactionPlaneTask()
+STRPBiasCorrectionTask::~STRPBiasCorrectionTask()
 {}
 
-double STReactionPlaneTask::Correction(const TVector2& Q_vec)
+double STRPBiasCorrectionTask::Correction(const TVector2& Q_vec)
 {
   double phi = -9999;
   if(Q_vec.Mod() > 0)
@@ -61,14 +61,14 @@ double STReactionPlaneTask::Correction(const TVector2& Q_vec)
   else phi = -9999;
   return phi;
 }
-double STReactionPlaneTask::Shifting(TVector2 Q_vec)
+double STRPBiasCorrectionTask::Shifting(TVector2 Q_vec)
 {
   Q_vec.SetX((Q_vec.X() - fQx_mean -> GetVal())/fQx_sigma -> GetVal());
   Q_vec.SetY((Q_vec.Y() - fQy_mean -> GetVal())/fQy_sigma -> GetVal());
   return  Q_vec.Phi();
 }
 
-double STReactionPlaneTask::Flattening(double phi)
+double STRPBiasCorrectionTask::Flattening(double phi)
 {
   double delta_phi = 0;
   for(int i = 0; i < fAn -> fElements.size(); ++i)
@@ -79,7 +79,7 @@ double STReactionPlaneTask::Flattening(double phi)
   return phi + delta_phi;
 }
 
-InitStatus STReactionPlaneTask::Init()
+InitStatus STRPBiasCorrectionTask::Init()
 {
   STAnaParticleDB::FillTDatabasePDG();
   FairRootManager *ioMan = FairRootManager::Instance();
@@ -142,7 +142,7 @@ InitStatus STReactionPlaneTask::Init()
   return kSUCCESS;
 }
 
-void STReactionPlaneTask::SetParContainers()
+void STRPBiasCorrectionTask::SetParContainers()
 {
   FairRunAna *run = FairRunAna::Instance();
   if (!run)
@@ -157,7 +157,7 @@ void STReactionPlaneTask::SetParContainers()
     fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot find STDigiPar!");
 }
 
-void STReactionPlaneTask::Exec(Option_t *opt)
+void STRPBiasCorrectionTask::Exec(Option_t *opt)
 {
   std::vector<std::vector<TVector2>> Q_v1_elements(fSupportedPDG.size()), Q_v2_elements(fSupportedPDG.size());
   auto beamRap = fBeamRapidity -> fElements[1];
@@ -216,7 +216,7 @@ void STReactionPlaneTask::Exec(Option_t *opt)
 
   {
     fQMag -> fElements[0] = Q_v1_sum.Mod();
-    fReactionPlane -> fElements[0] = this -> Correction(Q_v1_sum.Unit());
+    fReactionPlane -> fElements[0] = this -> Correction(Q_v1_sum);
     auto phi = (Q_v2_sum.Mod() > 0)? Q_v2_sum.Phi()/2 : -9999;
     fReactionPlaneV2 -> fElements[0] = (phi > TMath::Pi())? phi - 2*TMath::Pi() : phi;//0.5*((phi > TMath::Pi())? phi - 2*TMath::Pi() : phi);
   }
@@ -234,7 +234,7 @@ void STReactionPlaneTask::Exec(Option_t *opt)
     for(int j = 0; j < mult; ++j)
     {
       // eliminate correlation by removing the particle of interest constribution to reaction plane determination
-      double phi = (fUseMCReactionPlane)? mcRotZ : this -> Correction((Q_v1_sum - Q_v1_elements[i][j]).Unit());
+      double phi = (fUseMCReactionPlane)? mcRotZ : this -> Correction(Q_v1_sum - Q_v1_elements[i][j]);
       v1RPAngle -> fElements.push_back((phi > TMath::Pi())? phi - 2*TMath::Pi() : phi);
       phi = (fUseMCReactionPlane)? mcRotZ : (Q_v2_sum - Q_v2_elements[i][j]).Phi()/2;
       v2RPAngle -> fElements.push_back((phi > TMath::Pi())? phi - 2*TMath::Pi() : phi);
@@ -242,7 +242,7 @@ void STReactionPlaneTask::Exec(Option_t *opt)
   }
 }
 
-void STReactionPlaneTask::FinishTask()
+void STRPBiasCorrectionTask::FinishTask()
 {
   auto outfile = FairRootManager::Instance() -> GetOutFile();
   outfile -> cd();
@@ -260,13 +260,13 @@ void STReactionPlaneTask::FinishTask()
   }
 }
 
-void STReactionPlaneTask::LoadPhiEff(const std::string& eff_filename)
+void STRPBiasCorrectionTask::LoadPhiEff(const std::string& eff_filename)
 { fEffFilename = eff_filename; }
 
-void STReactionPlaneTask::LoadBiasCorrection(const std::string& bias_filename)
+void STRPBiasCorrectionTask::LoadBiasCorrection(const std::string& bias_filename)
 { fBiasFilename = bias_filename; }
 
-void STReactionPlaneTask::CreatePhiEffFromData(const std::string& ana_filename, const std::string& out_filename, int nClus, double poca)
+void STRPBiasCorrectionTask::CreatePhiEffFromData(const std::string& ana_filename, const std::string& out_filename, int nClus, double poca)
 {
   TChain chain("cbmsim");
   chain.Add(ana_filename.c_str());
@@ -315,7 +315,7 @@ void STReactionPlaneTask::CreatePhiEffFromData(const std::string& ana_filename, 
   }
 }
 
-void STReactionPlaneTask::CreateBiasCorrection(const std::string& ana_filename, const std::string& out_filename)
+void STRPBiasCorrectionTask::CreateBiasCorrection(const std::string& ana_filename, const std::string& out_filename)
 {
   TChain chain("cbmsim");
   chain.Add(ana_filename.c_str());
@@ -335,11 +335,11 @@ void STReactionPlaneTask::CreateBiasCorrection(const std::string& ana_filename, 
       auto filename = fileList -> At(i) -> GetTitle();
       TFile file(filename);
       auto taskList = static_cast<FairFileHeader*>(file.Get("FileHeader")) -> GetListOfTasks();
-      if(!taskList -> FindObject("STReactionPlaneTask"))
+      if(!taskList -> FindObject("STRPBiasCorrectionTask"))
       {
-        std::cerr << "STReactionPlaneTask is NOT found in " << filename << std::endl; 
+        std::cerr << "STRPBiasCorrectionTask is NOT found in " << filename << std::endl; 
         std::cerr << "This means the file doesn't contain raw reaction plane to which corrections will be applied to.\n";
-        std::cerr << "ABORT. Please try again for files that is processed by STReactionPlaneTask.\n";
+        std::cerr << "ABORT. Please try again for files that is processed by STRPBiasCorrectionTask.\n";
         return;
       }
       Qx_mean = (TParameter<double>*) file.Get("Qx_mean");
@@ -365,8 +365,8 @@ void STReactionPlaneTask::CreateBiasCorrection(const std::string& ana_filename, 
   // correction 1: shifting, need mean and std of the distribution
   if(!Qx_mean || !Qy_mean || !Qx_sigma || !Qy_sigma)
   {
-    TH2F hist("Qxy_dist", "", 1000, -1, 1, 1000, -1, 1);
-    chain.Project("Qxy_dist", "QMag.fElements*sin(RP.fElements):QMag.fElements*cos(RP.fElements)");
+    TH2F hist("Qxy_dist", "", 1000, -10000, 10000, 1000, -10000, 10000);
+    chain.Project("Qxy_dist", "sin(RP.fElements):cos(RP.fElements)");
     Qx_mean = new TParameter<double>("Qx_mean", hist.GetMean(1));
     Qx_sigma = new TParameter<double>("Qx_sigma", hist.GetRMS(1));
     Qy_mean = new TParameter<double>("Qy_mean", hist.GetMean(2));
@@ -382,8 +382,8 @@ void STReactionPlaneTask::CreateBiasCorrection(const std::string& ana_filename, 
   // correction 2: flattening with Fourier expansion
   if(!An || !Bn)
   {
-    auto Qx_shifted = TString::Format("(QMag.fElements*cos(RP.fElements) - %f)/%f", Qx_mean -> GetVal(), Qx_sigma -> GetVal());
-    auto Qy_shifted = TString::Format("(QMag.fElements*sin(RP.fElements) - %f)/%f", Qy_mean -> GetVal(), Qy_sigma -> GetVal());
+    auto Qx_shifted = TString::Format("(cos(RP.fElements) - %f)/%f", Qx_mean -> GetVal(), Qx_sigma -> GetVal());
+    auto Qy_shifted = TString::Format("(sin(RP.fElements) - %f)/%f", Qy_mean -> GetVal(), Qy_sigma -> GetVal());
     auto Phi_shifted = "TMath::ATan2(" + Qy_shifted + ", " + Qx_shifted + ")";
 
     //calculate fourier series
@@ -403,7 +403,7 @@ void STReactionPlaneTask::CreateBiasCorrection(const std::string& ana_filename, 
   
 }
 
-double STReactionPlaneTask::ReactionPlaneRes(const std::string& filename1, const std::string& filename2)
+double STRPBiasCorrectionTask::ReactionPlaneRes(const std::string& filename1, const std::string& filename2)
 {
   // if filename2 is empty, the script will assume that the data comes from MC and reaction plane will be loaded directly from the truth value
   TH1F *hist = new TH1F("hist", "hist", 180, 0, 180);

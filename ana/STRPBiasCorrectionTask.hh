@@ -1,17 +1,5 @@
-//-----------------------------------------------------------
-// Description:
-//   Embed pulses onto the data
-//
-// Environment:
-//   Software developed for the SPiRIT-TPC at RIKEN
-//
-// Author List:
-//   Genie Jhang     Korea University     (original author)
-//   Tommy Tsang     MSU                  (decouple this class from STDecoder class)
-//-----------------------------------------------------------
-
-#ifndef _STREACTIONPLANETASK_H_
-#define _STREACTIONPLANETASK_H_
+#ifndef _STRPBIASCORRECTIONTASK_H_
+#define _STRPBIASCORRECTIONTASK_H_
 
 // FAIRROOT classes
 #include "FairTask.h"
@@ -35,11 +23,11 @@
 
 
 
-class STReactionPlaneTask : public FairTask {
+class STRPBiasCorrectionTask : public FairTask {
   public:
-    STReactionPlaneTask();
+    STRPBiasCorrectionTask();
     /// Destructor
-    ~STReactionPlaneTask();
+    ~STRPBiasCorrectionTask();
 
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
@@ -114,7 +102,7 @@ class STReactionPlaneTask : public FairTask {
     STVectorF *fAn = nullptr;
     STVectorF *fBn = nullptr;
     
-  ClassDef(STReactionPlaneTask, 1);
+  ClassDef(STRPBiasCorrectionTask, 1);
 };
 
 #endif

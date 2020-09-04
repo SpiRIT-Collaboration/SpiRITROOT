@@ -50,16 +50,20 @@ void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOu
 
   std::vector<FairTask*> tasks;
   tasks.push_back(reader);
-  tasks.push_back(factory.GetFilterEventTask());
-  tasks.push_back(factory.GetDivideEventTask());
   tasks.push_back(factory.GetPIDTask());
   tasks.push_back(factory.GetPiProbTask());
+  tasks.push_back(factory.GetDivideEventTask());
   tasks.push_back(factory.GetTransformFrameTask());
   auto eff = factory.GetEfficiencyTask();
   if(eff) eff -> UpdateUnfoldingFile(iter_unfold);
   tasks.push_back(eff);
   tasks.push_back(factory.GetERATTask());
-  tasks.push_back(factory.GetReactionPlaneTask());
+  tasks.push_back(factory.GetFilterEventTask());
+  auto reactionPlaneTask = factory.GetReactionPlaneTask();
+  //reactionPlaneTask -> LoadBiasCorrection("test.root");
+  //reactionPlaneTask -> UseShifting();
+  //reactionPlaneTask -> UseFlattening();
+  tasks.push_back(reactionPlaneTask);
   tasks.push_back(factory.GetSimpleGraphsTask());
 
   for(auto task : tasks)

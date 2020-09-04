@@ -54,6 +54,8 @@ class STModelReaderTask : public STReaderTask {
     TClonesArray *fData = nullptr;
     TClonesArray *fProb = nullptr;
     TClonesArray *fEff = nullptr;
+    TClonesArray *fEventID = nullptr;
+    TClonesArray *fRunID = nullptr;
     STVectorF *fMCRotZ = nullptr;
     std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
 

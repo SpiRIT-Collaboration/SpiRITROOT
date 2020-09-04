@@ -37,7 +37,24 @@ InitStatus STDivideEventTask::Init()
     fComplementaryEvent.Add(fComplementaryFilename);
     if(fComplementaryEvent.GetEntries() == 0)
       fLogger -> Fatal(MESSAGE_ORIGIN, "No entries are loaded from the complementary file. Disable if you don't need it.");
+
+    // fill event ids in the complementary file
+    // will synch event ids of the two files, otherwise the trackID comparison won't corresponds to the same event
+    TClonesArray *EventID = nullptr;
+    TClonesArray *RunID = nullptr;
+    fComplementaryEvent.SetBranchAddress("EventID", &EventID);
+    fComplementaryEvent.SetBranchAddress("RunID", &RunID);
+    fLogger -> Info(MESSAGE_ORIGIN, "Loading tree entries from complementary file.");
+    for(int i = 0; i < fComplementaryEvent.GetEntries(); ++i)
+    {
+      fComplementaryEvent.GetEntry(i);
+      fEventIDToTreeID[{static_cast<STVectorI*>(EventID -> At(0)) -> fElements[0], 
+                        static_cast<STVectorI*>(RunID -> At(0)) -> fElements[0]}] = i;
+    }
+    fComplementaryEvent.ResetBranchAddresses();
+
     fComplementaryEvent.SetBranchAddress("TrackID", &fComplementaryID);
+
     //fComplementaryEvent.SetBranchAddress("EventID", &fCompEventID);
   }
   else fLogger -> Info(MESSAGE_ORIGIN, "Will cut every event into half randomly.");
@@ -46,7 +63,8 @@ InitStatus STDivideEventTask::Init()
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   fProb = (TClonesArray*) ioMan -> GetObject("Prob");
   fEff = (TClonesArray*) ioMan -> GetObject("Eff");
-  //fEventID = (TClonesArray*) ioMan -> GetObject("EventID");
+  fEventID = (TClonesArray*) ioMan -> GetObject("EventID");
+  fRunID = (TClonesArray*) ioMan -> GetObject("RunID");
 
   ioMan -> Register("TrackID", "ST", fID, fIsPersistence);
 
@@ -85,16 +103,19 @@ void STDivideEventTask::Exec(Option_t *opt)
   }
   else
   {
-    fComplementaryEvent.GetEntry(fTreeEventID);
-    //auto compEventID = static_cast<STVectorI*>(fCompEventID -> At(0)) -> fElements[0];
-    //auto eventID = static_cast<STVectorI*>(fEventID -> At(0)) -> fElements[0];
-    //if(compEventID != eventID)
-    //  fLogger -> Fatal(MESSAGE_ORIGIN, TString::Format("Event ID mismatch at treeID = %d, event ID = %d when complementary event ID = %d", fTreeEventID, eventID, compEventID));
+    auto it = fEventIDToTreeID.find({static_cast<STVectorI*>(fEventID -> At(0)) -> fElements[0], 
+                                     static_cast<STVectorI*>(fRunID -> At(0)) -> fElements[0]});
+    if(it == fEventIDToTreeID.end())
+    {
+      FairRunAna::Instance() -> MarkFill(false); // reject events that are not present in the complementary file
+      return;
+    }
+
+    fComplementaryEvent.GetEntry(it -> second);
     std::vector<int> all_ids;
     for(int i = 0; i < data -> multiplicity; ++i) all_ids.push_back(i);
     std::set_difference(all_ids.begin(), all_ids.end(), fComplementaryID -> fElements.begin(), fComplementaryID -> fElements.end(),
                         std::inserter(fID -> fElements, fID -> fElements.begin()));
-    ++fTreeEventID;
   }
 
   std::sort(fID -> fElements.begin(), fID -> fElements.end());

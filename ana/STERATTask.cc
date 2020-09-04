@@ -41,6 +41,7 @@ InitStatus STERATTask::Init()
   fProb = (TClonesArray*) ioMan -> GetObject("Prob");
   ioMan -> Register("ERAT", "ST", fERAT, fIsPersistence);
 
+  fData = (TClonesArray*) ioMan -> GetObject("STData");
   if(!fImpactParameterFilename.empty())
   {
     fLogger -> Info(MESSAGE_ORIGIN, ("Loading impact parameter distribution from " + fImpactParameterFilename).c_str());
@@ -55,7 +56,6 @@ InitStatus STERATTask::Init()
     {
       fMultHist = (TH1F*) fImpactParameterFile -> Get("Mult");
       fERatHist = (TH1F*) fImpactParameterFile -> Get("ERat");
-      fData = (TClonesArray*) ioMan -> GetObject("STData");
       ioMan -> Register("bERat", "ST", fbERat, fIsPersistence);
       ioMan -> Register("bMult", "ST", fbMult, fIsPersistence);
     }
@@ -81,6 +81,7 @@ void STERATTask::SetParContainers()
 
 void STERATTask::Exec(Option_t *opt)
 {
+  auto data = static_cast<STData*>(fData -> At(0));
   double Et_expected = 0;
   double El_expected = 0;
   for(int i = 0; i < fSupportedPDG.size(); ++i)
@@ -89,23 +90,23 @@ void STERATTask::Exec(Option_t *opt)
       double ParticleMass = particle -> Mass()*1000;
       int ntracks = static_cast<STVectorF*>(fProb -> At(i)) -> fElements.size();
       for(int itrack = 0; itrack < ntracks; ++itrack)
-      {
-        auto& P = static_cast<STVectorVec3*>(fCMVector -> At(i)) -> fElements[itrack];
-        //if(P.z() < 0) continue;
-        double prob = static_cast<STVectorF*>(fProb -> At(i)) -> fElements[itrack];
-        double Ei = sqrt(ParticleMass*ParticleMass + P.Mag2());
-        double pt = P.Perp();
-        double pl = P.z();
-        Et_expected += prob*pt*pt/(ParticleMass + Ei);
-        El_expected += prob*pl*pl/(ParticleMass + Ei);
-      }
+        if(data -> recodpoca[itrack].Mag() < 20)
+        {
+          auto& P = static_cast<STVectorVec3*>(fCMVector -> At(i)) -> fElements[itrack];
+          //if(P.z() < 0) continue;
+          double prob = static_cast<STVectorF*>(fProb -> At(i)) -> fElements[itrack];
+          double Ei = sqrt(ParticleMass*ParticleMass + P.Mag2());
+          double pt = P.Perp();
+          double pl = P.z();
+          Et_expected += prob*pt*pt/(ParticleMass + Ei);
+          El_expected += prob*pl*pl/(ParticleMass + Ei);
+        }
     }
   fERAT -> fElements[0] = Et_expected / El_expected;
 
   if(fImpactParameterFile)
   {
     int mult = 0;
-    auto data = static_cast<STData*>(fData -> At(0));
     for(int i = 0; i < data -> multiplicity; ++i) 
       if(data -> recodpoca[i].Mag() < 20) 
         ++mult;
@@ -120,6 +121,10 @@ void STERATTask::SetImpactParameterTable(const std::string& table_filename)
 }
 
 void STERATTask::CreateImpactParameterTable(const std::string& ana_filename, const std::string& output_filename)
+{ STERATTask::CreateImpactParameterTable({ana_filename}, output_filename); }
+
+
+void STERATTask::CreateImpactParameterTable(const std::vector<std::string>& ana_filenames, const std::string& output_filename)
 {
   const int fMultMin = 0;
   const int fMultMax = 500;
@@ -128,7 +133,7 @@ void STERATTask::CreateImpactParameterTable(const std::string& ana_filename, con
   const int fERatBins = 300;
 
   TChain chain("cbmsim");
-  chain.Add(ana_filename.c_str());
+  for(const auto& ana_filename : ana_filenames) chain.Add(ana_filename.c_str());
 
   TFile output(output_filename.c_str(), "RECREATE");
   TH1F mult_hist("Mult", "Mult", fMultMax - fMultMin + 1, fMultMin, fMultMax);

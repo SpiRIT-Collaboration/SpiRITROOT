@@ -42,7 +42,7 @@ InitStatus STFilterEventTask::Init()
   else fLogger -> Info(MESSAGE_ORIGIN, "No beam cut is used");
 
   if(fVertexCut) fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Only vertex from %f < z < %f are accepted", fVertexZMin, fVertexZMax));
-  if(fMultCut) fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Only events with multiplicity from %d < z < %d are accepted", fMultMin, fMultMax));
+  if(fMultCut) fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Only events with multiplicity from %d < z <= %d are accepted", fMultMin, fMultMax));
 
   ioMan -> Register("Skip", "ST", fSkip, false); // Skip flag is only used internally
   fData = (TClonesArray*) ioMan -> GetObject("STData");
@@ -100,7 +100,7 @@ void STFilterEventTask::Exec(Option_t *opt)
       for(const auto recodpoca : data -> recodpoca) 
         if(recodpoca.Mag() < fDPoca) ++mult;
     }
-    if(!(fMultMin < mult && mult < fMultMax)) fill = false;
+    if(!(fMultMin < mult && mult <= fMultMax)) fill = false;
   }
   if(fPosCut)
     if(!(fXmin < bdcVertex.x() && bdcVertex.x() < fXmax && fYmin < bdcVertex.y() && bdcVertex.y() < fYmax)) fill = false;

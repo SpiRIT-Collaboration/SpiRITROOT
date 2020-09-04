@@ -93,6 +93,7 @@ InitStatus STSimpleGraphsTask::Init()
 
   fDataPackage.fTCArrList[DataPackage::DATA] = (TClonesArray*) ioMan -> GetObject("STData");
   fDataPackage.fTCArrList[DataPackage::PROB] = (TClonesArray*) ioMan -> GetObject("Prob");
+  fDataPackage.fTCArrList[DataPackage::SD] = (TClonesArray*) ioMan -> GetObject("SD");
   fDataPackage.fTCArrList[DataPackage::EFF] = (TClonesArray*) ioMan -> GetObject("Eff");
   fDataPackage.fTCArrList[DataPackage::EFFERR] = (TClonesArray*) ioMan -> GetObject("EffErr");
   fDataPackage.fTCArrList[DataPackage::CMVECTOR] = (TClonesArray*) ioMan -> GetObject("CMVector");
@@ -100,11 +101,14 @@ InitStatus STSimpleGraphsTask::Init()
   fDataPackage.fTCArrList[DataPackage::FRAGVELOCITY] = (TClonesArray*) ioMan -> GetObject("FragVelocity");
   fDataPackage.fTCArrList[DataPackage::FRAGRAPIDITY] = (TClonesArray*) ioMan -> GetObject("FragRapidity");
   fDataPackage.fTCArrList[DataPackage::PHIEFF] = (TClonesArray*) ioMan -> GetObject("PhiEff");
-
+  fDataPackage.fTCArrList[DataPackage::V1RPANGLE] = (TClonesArray*) ioMan -> GetObject("V1RPAngle");
+  fDataPackage.fTCArrList[DataPackage::V2RPANGLE] = (TClonesArray*) ioMan -> GetObject("V2RPAngle");
 
   fDataPackage.fVecList[DataPackage::BEAMRAPIDITY] = (STVectorF*) ioMan -> GetObject("BeamRapidity");
   fDataPackage.fVecList[DataPackage::BEAMMOM] = (STVectorF*) ioMan -> GetObject("BeamMom");
   fSkip = (STVectorI*) ioMan -> GetObject("Skip");
+
+  for(const auto type : fTypeToDiscard) fDataPackage.fTCArrList[type] = nullptr;
   fDataPackage.CheckEmptyElements(fSupportedPDG.size()); // sometimes efficiency maybe empty. In that case efficiency will be auto-filled by ones
 
   // if efficiency is empty, fill it with ones 
@@ -202,7 +206,7 @@ void STSimpleGraphsTask::RegisterRuleWithParticle(int pdg, std::function<void(co
   fFillRules[it - fSupportedPDG.begin()].push_back(rule);
 }
 
-void STSimpleGraphsTask::RegisterRapidityPlots()
+void STSimpleGraphsTask::RegisterRapidityPlots(double probThreshold, double SDThreshold)
 {
   fPlotRapidity = true;
   STAnaParticleDB::FillTDatabasePDG();
@@ -224,11 +228,11 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
     pmass = (pmass == 0)? 1 : std::abs(pmass);
 
     this -> RegisterRuleWithParticle(pdg, 
-      [this, hist_ana, hist_rap, hist_pt, hist_ptFull, pmass, pdg](const DataPackage& package)
+      [this, hist_ana, hist_rap, hist_pt, hist_ptFull, pmass, pdg, probThreshold, SDThreshold](const DataPackage& package)
       {
         const auto& data = package.Data();
         for(int i = 0; i < data.multiplicity; ++i)
-          if(package.Eff(i) > 0.05 && package.Prob(i) > 0.2)
+          if(package.Eff(i) > 0.05 && package.Prob(i) > probThreshold && std::fabs(package.StdDev(i)) < SDThreshold)
           {
             double y0 = package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);
             auto minMom = fMinMomForCMInLab[pdg];
@@ -397,23 +401,30 @@ void STSimpleGraphsTask::RegisterVPlots()
     auto v1 = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v1_cumsum", fParticleName[pdg].c_str()), "", 25, -2, 2); 
     auto v2 = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v2_cumsum", fParticleName[pdg].c_str()), "", 25, -2, 2); 
 
+    auto particle = TDatabasePDG::Instance() -> GetParticle(pdg);
+    double mass = particle -> Mass()/STAnaParticleDB::kAu2Gev;
+
     this -> RegisterRuleWithParticle(pdg, 
-      [v1, v2, v1_counts, v2_counts](const DataPackage& package)
+      [v1, v2, v1_counts, v2_counts, mass](const DataPackage& package)
       {
         const auto& data = package.Data();
         for(int i = 0; i < data.multiplicity; ++i)
-          if(package.Prob(i) > 0.2 && package.PhiEff(i) > 0)
+          if(package.Prob(i) > 0.95 && package.PhiEff(i) > 0)
           {
-            double y0 = package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);
-            double pxpt = package.CMVector(i).x()/package.CMVector(i).Perp();
-            double pypt = package.CMVector(i).y()/package.CMVector(i).Perp();
-            double weight = package.Prob(i)/package.PhiEff(i);
-            v1 -> Fill(y0, pxpt*weight);
-            v1_counts -> Fill(y0);
-
-            if(package.CMVector(i).Perp()/package.BeamMom()[0] > 0.3)
+            if(package.CMVector(i).Perp()/package.BeamMom()[0]/mass > 0.4)
             {
-              v2 -> Fill(y0, (pxpt*pxpt - pypt*pypt)*weight);
+              double y0 = package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);
+              double phi = package.CMVector(i).Phi();
+              double weight = package.Prob(i)/package.PhiEff(i);
+              v1 -> Fill(y0, cos(phi - package.V1RPAngle(i))*weight);
+              v1_counts -> Fill(y0);
+
+              //phi = (phi < 0)? 2*TMath::Pi() + phi : phi; 
+              double v2_phi = package.V1RPAngle(i);
+              double diff = phi - v2_phi;
+              //if(diff < 0) diff += 2*TMath::Pi();
+              //diff = std::fmod(diff, TMath::Pi()/2);
+              v2 -> Fill(y0, cos(2*diff)*weight);
               v2_counts -> Fill(y0);
             }
 

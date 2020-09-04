@@ -309,6 +309,13 @@ STReactionPlaneTask* STAnalysisFactory::GetReactionPlaneTask()
   if(!const_coef.empty()) reactionPlaneTask -> SetConstCoef(std::stof(const_coef));
   auto it_use_mc = attr.find("UseMCReactionPlane");
   if(it_use_mc != attr.end()) reactionPlaneTask -> UseMCReactionPlane(true, std::stof((it_use_mc -> second.empty())? "0" : it_use_mc -> second));
+  auto it_bias_file = attr.find("CorrectBias");
+  if(it_bias_file != attr.end())
+  {
+    reactionPlaneTask -> LoadBiasCorrection(it_bias_file -> second);
+    reactionPlaneTask -> UseShifting();
+    reactionPlaneTask -> UseFlattening();
+  }
   auto part_coef = attr["ParticleCoef"];
   if(!part_coef.empty())
   {
