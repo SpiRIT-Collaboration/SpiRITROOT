@@ -62,7 +62,7 @@ class STERATTask : public FairTask {
     STVectorF *fbERat; // impact parameter from ERAT
     STVectorF *fbMult; // impact parameter from multiplicity
 
-    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
+    const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
 
     std::string fImpactParameterFilename;
     TFile *fImpactParameterFile = nullptr;

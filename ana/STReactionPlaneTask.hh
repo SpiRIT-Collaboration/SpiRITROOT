@@ -91,7 +91,7 @@ class STReactionPlaneTask : public FairTask {
     std::string fEffFilename;
     TFile *fEffFile = nullptr;
     std::map<int, TH2F*> fEff;
-    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
+    const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
 
     double fChargeCoef = 0;
     double fMassCoef = 0;

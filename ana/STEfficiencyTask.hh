@@ -77,7 +77,7 @@ class STEfficiencyTask : public FairTask {
     TClonesArray *fProb  = nullptr;                 ///< Particle PID from any of the PID Task
     STVectorI *fSkip = nullptr;
 
-    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
+    const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
     std::map<int, EfficiencyFactory*> fFactory; ///<
     std::map<int, TEfficiency> fEfficiency; ///<
     std::map<int, EfficiencySettings> fEfficiencySettings; ///<

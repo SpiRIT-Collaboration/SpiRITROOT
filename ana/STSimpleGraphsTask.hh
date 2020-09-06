@@ -161,7 +161,7 @@ class STSimpleGraphsTask : public FairTask {
 
     int _ToPitchId(const TVector3& vec);
     int _ToYawId(const TVector3& vec);
-    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
+    const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
     std::map<std::string, TH1*> f1DHists;
     std::map<std::string, bool> fNormalize;
     std::vector<std::vector<std::function<void(const DataPackage&)>>> fFillRules;

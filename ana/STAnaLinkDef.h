@@ -5,7 +5,7 @@
 #pragma link off all functions;
 
 // Add namespaces
-#pragma link C++ namespace STAnaParticleDB+;
+#pragma link C++ class STAnaParticleDB+;
 
 // Add the class names you created
 #pragma link C++ class ST_ProduceDB_ClusterNum+;

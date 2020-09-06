@@ -16,7 +16,7 @@ STPIDAnalysisTask::STPIDAnalysisTask() : fMassCalH("EmpiricalBB"),
                                          fMassCalHe("EmpiricalBB")
 {
   fLogger = FairLogger::GetLogger(); 
-  STAnaParticleDB::SupportedPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040, 1000020060};
+  STAnaParticleDB::EnableChargedParticles();
 }
 
 void STPIDAnalysisTask::SetBeamA(int t_beamA)
@@ -54,7 +54,7 @@ STPIDAnalysisTask::SetParContainers()
 InitStatus
 STPIDAnalysisTask::Init()
 {
-  fSupportedPDG = STAnaParticleDB::SupportedPDG;
+  fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
   FairRootManager *ioMan = FairRootManager::Instance();
   if (ioMan == 0) {
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");

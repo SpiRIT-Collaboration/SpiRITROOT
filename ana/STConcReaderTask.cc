@@ -74,13 +74,15 @@ void STConcReaderTask::LoadFromXMLNode(TXMLNode *node)
     glob_t g;
     for(const auto& pathToData : nodeInfo["DataDir"])
       for(const auto& inputName : nodeInfo["InputName"])
+      {
         glob((pathToData + inputName + ".root").c_str(), GLOB_TILDE, nullptr, &g);
-    for(size_t i = 0; i < g.gl_pathc; ++i)
-    {
-      chain -> Add(g.gl_pathv[i]);
-      fLogger -> Info(MESSAGE_ORIGIN, ("Reading from file " + std::string(g.gl_pathv[i])).c_str());
-    }
-    globfree(&g);
+        for(size_t i = 0; i < g.gl_pathc; ++i)
+        {
+          chain -> Add(g.gl_pathv[i]);
+          fLogger -> Info(MESSAGE_ORIGIN, ("Reading from file " + std::string(g.gl_pathv[i])).c_str());
+        }
+        globfree(&g);
+      }
   }
   else fLogger -> Fatal(MESSAGE_ORIGIN, ("Cannot parse dataType " + dataType).c_str());
 

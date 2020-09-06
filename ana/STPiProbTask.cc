@@ -30,8 +30,7 @@ STPiProbTask::STPiProbTask() :
       return p[0]/betaP3*(p[1] - betaP3 + TMath::Log(p[2] + TMath::Power(1./(beta*gamma), p[4])));
     }, 0, 700., 5)
 {
-  STAnaParticleDB::SupportedPDG.push_back(211);
-  STAnaParticleDB::SupportedPDG.push_back(-211);
+  STAnaParticleDB::EnablePions();
   fLogger = FairLogger::GetLogger();
 }
 
@@ -126,7 +125,7 @@ InitStatus STPiProbTask::Init()
     }
   }
 
-  const auto& pdgList = STAnaParticleDB::SupportedPDG;
+  const auto& pdgList = STAnaParticleDB::GetSupportedPDG();
   fPiPlusID = std::find(pdgList.begin(), pdgList.end(), 211) - pdgList.begin();
   fPiMinusID = std::find(pdgList.begin(), pdgList.end(), -211) - pdgList.begin();
 
@@ -169,7 +168,7 @@ void STPiProbTask::Exec(Option_t *opt)
   for(int i = 0; i < data -> multiplicity; ++i)
   {
     auto& recoMom = data -> vaMom[i];
-    auto recoCharge = data -> vaCharge[i];
+    auto recoCharge = data -> recoCharge[i];
     auto dedxs05 = data -> vadedx[i];
     auto momCharge = recoMom.Mag()/recoCharge;
 

@@ -88,7 +88,7 @@ class STPIDMachineLearningTask : public FairTask {
 
     bool fIsTrimmedFile = false;
     TClonesArray *fSTDataArray = nullptr; // may read from trimmed files
-    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
+    std::vector<int> fSupportedPDG;
 
     STAlgorithms fMLType;
     std::string fSaveModel;

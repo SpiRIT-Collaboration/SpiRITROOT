@@ -1,16 +1,19 @@
 #include "STAnaParticleDB.hh"
 #include "TDatabasePDG.h"
 
+#include <iostream>
+
+ClassImp(STAnaParticleDB);
+
 const double STAnaParticleDB::kAu2Gev = 0.9314943228;
 const double STAnaParticleDB::khSlash = 1.0545726663e-27;
 const double STAnaParticleDB::kErg2Gev = 1/1.6021773349e-3;
 const double STAnaParticleDB::khShGev = khSlash*kErg2Gev;
 const double STAnaParticleDB::kYear2Sec = 3600*24*365.25;
-std::vector<int> SupportedPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040, 1000020060};
+//extern std::vector<int> STAnaParticleDB::SupportedPDG;
 
 void STAnaParticleDB::FillTDatabasePDG()
 {
-  using namespace STAnaParticleDB;
   auto pdgDB = TDatabasePDG::Instance();
   if ( !pdgDB->GetParticle(1000010020) )
     pdgDB->AddParticle("Deuteron","Deuteron",2*kAu2Gev+8.071e-3,kTRUE,
@@ -33,4 +36,30 @@ void STAnaParticleDB::FillTDatabasePDG()
                        0,6,"Ion",1000020060);
 
 
+}
+
+std::vector<int> STAnaParticleDB::EnableChargedParticles()
+{
+  std::vector<int> ChargedParticles{2212, 1000010020, 1000010030, 1000020030, 1000020040, 1000020060};
+  SupportedPDG.insert(SupportedPDG.end(), ChargedParticles.begin(), ChargedParticles.end());
+  return ChargedParticles; // return PDG added in this function
+}
+
+std::vector<int> STAnaParticleDB::EnablePions()
+{
+  std::vector<int> PionPDG{211, -211};
+  SupportedPDG.insert(SupportedPDG.end(), PionPDG.begin(), PionPDG.end());
+  return PionPDG; // return PDG added in this function
+}
+
+std::vector<int> STAnaParticleDB::GetSupportedPDG()
+{
+  if(SupportedPDG.size() == 0)
+  {
+    std::cerr << "Please specify which particle type do you want to analyze with the following two commands,\n";
+    std::cerr << "STAnaParticleDB::EnableChargedParticles()\n";
+    std::cerr << "STAnaParticleDB::EnablePions() (if you want pions)\n";
+    std::cerr << "Please be reminded that the order to which you enable things do matter.\n";
+  }
+  return SupportedPDG;
 }

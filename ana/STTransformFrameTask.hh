@@ -74,7 +74,7 @@ class STTransformFrameTask : public FairTask {
     int fTargetMass;
     bool fDoRotation;
     const Double_t fNucleonMass = 931.5;
-    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
+    const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
   
   ClassDef(STTransformFrameTask, 1);
 };

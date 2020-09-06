@@ -25,8 +25,7 @@ std::vector<int> STAnaParticleDB::SupportedPDG;
 
 STPIDProbTask::STPIDProbTask()
 {
-  STAnaParticleDB::SupportedPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040, 1000020060};
-  fSupportedPDG = STAnaParticleDB::SupportedPDG;
+  fSupportedPDG = STAnaParticleDB::EnableChargedParticles();
   fLogger = FairLogger::GetLogger(); 
   //fPDGLists = new STVectorI();
 
@@ -35,10 +34,6 @@ STPIDProbTask::STPIDProbTask()
 
   fPDGProb = new TClonesArray("STVectorF", fSupportedPDG.size());
   fSDFromLine = new TClonesArray("STVectorF", fSupportedPDG.size());
-
-  // exclude the particles that needs to be ignored
-  //for(auto pdg : STAnaParticleDB::SupportedPDG)
-  //  if(fIgnoredPDG.find(pdg) == fIgnoredPDG.end()) fSupportedPDG.push_back(pdg);
 }
 
 STPIDProbTask::~STPIDProbTask()
@@ -52,11 +47,11 @@ InitStatus STPIDProbTask::Init()
     return kERROR;
   }
 
-  // create all branches in STAnaParticleDB::SupportedPDG
+  // create all branches in STAnaParticleDB::GetSupportedPDG()
   // but fille the particle in fIgnoredPDG with zeros
-  for(int i = 0; i < STAnaParticleDB::SupportedPDG.size(); ++i)
+  for(int i = 0; i < STAnaParticleDB::GetSupportedPDG().size(); ++i)
   {
-    auto pdg = STAnaParticleDB::SupportedPDG[i];
+    auto pdg = STAnaParticleDB::GetSupportedPDG()[i];
     fPDGProbMap[pdg] = static_cast<STVectorF*>(fPDGProb -> ConstructedAt(i));
     fSDFromLineMap[pdg] = static_cast<STVectorF*>(fSDFromLine -> ConstructedAt(i));
   }
@@ -288,7 +283,7 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
              "vaNRowClusters + vaNLayerClusters > 15 && recodpoca.Mag() < 15 && (fabs(vaMom.Phi()*TMath::RadToDeg()) < 30 || fabs(phi - 180) < 30) ", 
              "goff",100000);
 
-  for(const int pdg : STAnaParticleDB::SupportedPDG)
+  for(const int pdg : STAnaParticleDB::GetSupportedPDG())
    {
     c1.cd();
     c1.SetLogz();
@@ -495,10 +490,10 @@ void STPIDProbTask::CreatePriorFromCut(const std::string& anaFile, const std::st
   struct particleCharacteristic{ int color; int pdg; TString name; };
   std::vector<particleCharacteristic> particles;
   auto db = TDatabasePDG::Instance();
-  for(int i = 0; i < STAnaParticleDB::SupportedPDG.size(); ++i)
+  for(int i = 0; i < STAnaParticleDB::GetSupportedPDG().size(); ++i)
     particles.push_back({i + 1, 
-                         STAnaParticleDB::SupportedPDG[i], 
-                         db->GetParticle(STAnaParticleDB::SupportedPDG[i])->GetName()});
+                         STAnaParticleDB::GetSupportedPDG()[i], 
+                         db->GetParticle(STAnaParticleDB::GetSupportedPDG()[i])->GetName()});
 
   TCanvas c1;
   // continue from where we left in the existing files

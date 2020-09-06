@@ -102,7 +102,7 @@ class STPIDCutTask : public FairTask {
     Double_t fMaxDPOCA = 20;
 
     TFile *fCutFile = nullptr;
-    const std::vector<int> fPDG = STAnaParticleDB::SupportedPDG;
+    const std::vector<int> fPDG = STAnaParticleDB::GetSupportedPDG();
     std::vector<std::map<std::pair<int, int>, TCutG*>> fCuts;
 
     std::vector<std::vector<TH2F*>> fPIDHists;

@@ -32,6 +32,8 @@ ClassImp(STPIDMachineLearningTask);
 
 STPIDMachineLearningTask::STPIDMachineLearningTask(): fEventID(0)
 {
+  STAnaParticleDB::EnableChargedParticles();
+  fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
   fChain = nullptr; 
   fPDGProb = new TClonesArray("STVectorF", fSupportedPDG.size());
   fSTData = new STData();

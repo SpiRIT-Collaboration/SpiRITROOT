@@ -293,9 +293,9 @@ void STReactionPlaneTask::CreatePhiEffFromData(const std::string& ana_filename, 
   TParameter<double> DPOCA("DPOCA", poca);
   NClus.Write();
   DPOCA.Write();
-  for(int i = 0; i < STAnaParticleDB::SupportedPDG.size(); ++i)
+  for(int i = 0; i < STAnaParticleDB::GetSupportedPDG().size(); ++i)
   {
-    auto hist_name = TString::Format("PhiEfficiency%d", STAnaParticleDB::SupportedPDG[i]);
+    auto hist_name = TString::Format("PhiEfficiency%d", STAnaParticleDB::GetSupportedPDG()[i]);
     TH2F hist(hist_name, "", 40, 0, 3.15, 100, -3.15, 3.15);
     chain.Project(hist_name, TString::Format("CMVector[%d].fElements.Phi():CMVector[%d].fElements.Theta()", i, i), TString::Format("Prob[%d].fElements*(Prob[%d].fElements > 0.2 && STData[0].vaNRowClusters + STData[0].vaNLayerClusters >%d &&STData[0].recodpoca.Mag() < %f)", i, i, nClus, poca));
     

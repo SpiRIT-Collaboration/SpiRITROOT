@@ -178,8 +178,8 @@ void STPIDCutTask::DrawPID(const std::string& anaFile, const std::string& cutFil
   TFile file(anaFile.c_str());
   std::vector<particleCharacteristic> particles;
   auto db = TDatabasePDG::Instance();
-  for(int i = 0; i < STAnaParticleDB::SupportedPDG.size(); ++i)
-    particles.push_back({i + 1, db->GetParticle(STAnaParticleDB::SupportedPDG[i])->GetName()});
+  for(int i = 0; i < STAnaParticleDB::GetSupportedPDG().size(); ++i)
+    particles.push_back({i + 1, db->GetParticle(STAnaParticleDB::GetSupportedPDG()[i])->GetName()});
 
   std::vector<TCutG*> cuts;
   TCanvas c1;

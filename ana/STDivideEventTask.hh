@@ -64,7 +64,7 @@ class STDivideEventTask : public FairTask {
     STVectorI *fComplementaryID = nullptr;
     STVectorI *fSkip = nullptr;
     std::unordered_map<std::pair<int, int>, int, pair_hash> fEventIDToTreeID;
-    const std::vector<int> fSupportedPDG = STAnaParticleDB::SupportedPDG;
+    const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
 
   ClassDef(STDivideEventTask, 1);
 };

@@ -16,7 +16,7 @@ ClassImp(STAzimuthalCorRPTask);
 STAzimuthalCorRPTask::STAzimuthalCorRPTask() 
 {
   fLogger = FairLogger::GetLogger(); 
-  fSupportedPDG = STAnaParticleDB::SupportedPDG;
+  fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
 }
 
 STAzimuthalCorRPTask::~STAzimuthalCorRPTask()

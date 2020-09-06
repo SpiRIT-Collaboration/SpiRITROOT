@@ -15,8 +15,9 @@ ClassImp(STModelReaderTask);
 
 STModelReaderTask::STModelReaderTask(TString filename)
 {
-  STAnaParticleDB::SupportedPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040, 1000020060, 211, -211};
-  fSupportedPDG = STAnaParticleDB::SupportedPDG;
+  STAnaParticleDB::EnableChargedParticles();
+  STAnaParticleDB::EnablePions();
+  fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
 
   fLogger = FairLogger::GetLogger(); 
 
