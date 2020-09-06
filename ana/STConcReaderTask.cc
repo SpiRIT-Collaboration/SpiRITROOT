@@ -9,6 +9,7 @@
 
 #include <glob.h>
 #include "TXMLAttr.h"
+#include "TRandom.h"
 
 ClassImp(STConcReaderTask);
 
@@ -151,6 +152,20 @@ InitStatus STConcReaderTask::Init()
   ioMan -> Register("EventType", "ST", fEventTypeArr, fIsPersistence);
   ioMan -> Register("RunID", "ST", fRunIDArr, fIsPersistence);
 
+  if(fSampleEvents > 0)
+  {
+    int nentries = this -> GetNEntries();
+    if(fSampleEvents < nentries)
+    {
+      fLogger -> Info(MESSAGE_ORIGIN, TString::Format("We will randomly sample %d events from the tree. ", fSampleEvents));
+      std::set<int> sample_id; //  a set is used to remove repeated random id
+      while(sample_id.size() < fSampleEvents) sample_id.insert(int(gRandom -> Uniform(0, nentries + 1)));
+      for(int id : sample_id) fTreeSampleID.push_back(id); // set should be ordered from small to large
+      fTreeSampleID_it = fTreeSampleID.begin();
+    }
+    else fLogger -> Info(MESSAGE_ORIGIN, "Requested sample size is larger than the tree size. Will ignore sampling");
+  }
+
   return kSUCCESS;
 }
 
@@ -172,9 +187,17 @@ STConcReaderTask::SetParContainers()
 
 void STConcReaderTask::Exec(Option_t *opt)
 {
+  if(fTreeSampleID.size() > 0)
+  {
+    if(fTreeSampleID_it == fTreeSampleID.end())
+      fLogger -> Fatal(MESSAGE_ORIGIN, "There are no more random id to sample.");
+    fEventID = *fTreeSampleID_it;
+    ++fTreeSampleID_it;
+  }
+
   if(fChain -> GetEntries() > fEventID)
   {
-    fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Event %d", fEventID));
+    fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Event %d", fEventID));   fChain -> GetEntry(fEventID);
     fChain -> GetEntry(fEventID);
     ++fEventID;
 
@@ -194,3 +217,6 @@ void STConcReaderTask::SetChain(TChain* chain)
 { fChain = chain; }
 void STConcReaderTask::SetEventID(int eventID)
 { fEventID = eventID; }
+void STConcReaderTask::RandSample(int nevents)
+{ fSampleEvents = nevents; }
+   

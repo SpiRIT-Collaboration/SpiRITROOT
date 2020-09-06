@@ -37,6 +37,7 @@ class STReaderTask : public FairTask {
     virtual int GetNEntries() = 0;
     virtual void SetEventID(int eventID) = 0;
     virtual std::string GetPathToData() = 0;
+    virtual void RandSample(int nevents){};
   ClassDef(STReaderTask, 1);
 };
 
@@ -62,6 +63,7 @@ class STConcReaderTask : public STReaderTask {
     std::string GetPathToData() { return fPathToData; };
     int GetNEntries();
     void SetEventID(int eventID);
+    virtual void RandSample(int nevents);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     STDigiPar* fPar = nullptr;
@@ -82,6 +84,9 @@ class STConcReaderTask : public STReaderTask {
     bool fIsTrimmedFile = false;
     bool fHasRegistered = false;
     std::string fPathToData = "";
+    std::vector<int> fTreeSampleID;
+    std::vector<int>::iterator fTreeSampleID_it;
+    int fSampleEvents = 0;
 
   ClassDef(STConcReaderTask, 1);
 };

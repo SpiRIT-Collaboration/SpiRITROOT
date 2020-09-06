@@ -420,7 +420,7 @@ void STSimpleGraphsTask::RegisterVPlots()
               v1_counts -> Fill(y0);
 
               //phi = (phi < 0)? 2*TMath::Pi() + phi : phi; 
-              double v2_phi = package.V1RPAngle(i);
+              double v2_phi = package.V2RPAngle(i);
               double diff = phi - v2_phi;
               //if(diff < 0) diff += 2*TMath::Pi();
               //diff = std::fmod(diff, TMath::Pi()/2);

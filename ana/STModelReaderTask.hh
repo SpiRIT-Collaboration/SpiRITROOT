@@ -64,6 +64,7 @@ class STModelReaderTask : public STReaderTask {
     int fTargetA, fBeamA, fBeamZ;
     double fEnergyPerA;
     bool fRotate = false;
+    std::vector<int> fTreeIDList;
 
   ClassDef(STModelReaderTask, 1);
 };

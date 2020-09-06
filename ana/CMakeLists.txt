@@ -71,6 +71,7 @@ STAnalysisFactory.cc
 STERATTask.cc
 STModelReaderTask.cc
 STReactionPlaneTask.cc
+STAzimuthalCorRPTask.cc
 STDivideEventTask.cc
 STPiProbTask.cc
 STCSVReaderTask.cc

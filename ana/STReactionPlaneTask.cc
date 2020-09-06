@@ -217,7 +217,7 @@ void STReactionPlaneTask::Exec(Option_t *opt)
 
   {
     fQMag -> fElements[0] = Q_v1_sum.Mod();
-    fReactionPlane -> fElements[0] = this -> Correction(Q_v1_sum.Unit());
+    fReactionPlane -> fElements[0] = this -> Correction(Q_v1_sum);
     auto phi = (Q_v2_sum.Mod() > 0)? Q_v2_sum.Phi()/2 : -9999;
     fReactionPlaneV2 -> fElements[0] = (phi > TMath::Pi())? phi - 2*TMath::Pi() : phi;//0.5*((phi > TMath::Pi())? phi - 2*TMath::Pi() : phi);
   }
@@ -235,7 +235,7 @@ void STReactionPlaneTask::Exec(Option_t *opt)
     for(int j = 0; j < mult; ++j)
     {
       // eliminate correlation by removing the particle of interest constribution to reaction plane determination
-      double phi = (fUseMCReactionPlane)? mcRotZ : this -> Correction((Q_v1_sum - Q_v1_elements[i][j]).Unit());
+      double phi = (fUseMCReactionPlane)? mcRotZ : this -> Correction((Q_v1_sum - Q_v1_elements[i][j]));
       v1RPAngle -> fElements.push_back((phi > TMath::Pi())? phi - 2*TMath::Pi() : phi);
       phi = (fUseMCReactionPlane)? mcRotZ : (Q_v2_sum - Q_v2_elements[i][j]).Phi()/2;
       v2RPAngle -> fElements.push_back((phi > TMath::Pi())? phi - 2*TMath::Pi() : phi);
@@ -428,9 +428,12 @@ double STReactionPlaneTask::ReactionPlaneRes(const std::string& filename1, const
   double ave_cos2_v2 = 0;
   for(int i = 0; i < n; ++i)
   {
-    ave_cos_v1 += cos(v1_file1[i] - v1_file2[i]);
-    ave_cos2_v1 += cos(2*(v1_file1[i] - v1_file2[i]));
-    ave_cos2_v2 += cos(2*(v2_file1[i] - v2_file2[i]));
+    if(!std::isnan(v1_file1[i]) && !std::isnan(v1_file2[i]))
+    {
+      ave_cos_v1 += cos(v1_file1[i] - v1_file2[i]);
+      ave_cos2_v1 += cos(2*(v1_file1[i] - v1_file2[i]));
+      ave_cos2_v2 += cos(2*(v2_file1[i] - v2_file2[i]));
+    }
   }
 
   std::cout << "<cos(phi1_1 - phi2_1)> = " << ave_cos_v1/n << std::endl;

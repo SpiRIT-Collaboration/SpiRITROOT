@@ -15,7 +15,7 @@ ClassImp(STModelReaderTask);
 
 STModelReaderTask::STModelReaderTask(TString filename)
 {
-  STAnaParticleDB::SupportedPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040, 1000020060};
+  STAnaParticleDB::SupportedPDG = {2212, 1000010020, 1000010030, 1000020030, 1000020040, 1000020060, 211, -211};
   fSupportedPDG = STAnaParticleDB::SupportedPDG;
 
   fLogger = FairLogger::GetLogger(); 
@@ -130,11 +130,13 @@ void STModelReaderTask::Exec(Option_t *opt)
       data -> recodpoca[i].SetXYZ(0, 0, 0);
       data -> recoNRowClusters[i] = 100;
       data -> recoNLayerClusters[i] = 100; 
-      data -> recoMom[i].SetXYZ(fragVect.Px()*1000/Z, fragVect.Py()*1000/Z, fragVect.Pz()*1000/Z);
+      data -> recoMom[i].SetXYZ(fragVect.Px()*1000/std::fabs(Z), fragVect.Py()*1000/std::fabs(Z), fragVect.Pz()*1000/std::fabs(Z));
+      data -> recoCharge[i] = (Z > 0) ? 1 : -1;
 
       data -> vaMom[i] = data -> recoMom[i];
       data -> vaNRowClusters[i] = 100;
       data -> vaNLayerClusters[i] = 100;
+      data -> vaCharge[i] = data -> recoCharge[i];
     }
 
     for(int i = 0; i < fSupportedPDG.size(); ++i)

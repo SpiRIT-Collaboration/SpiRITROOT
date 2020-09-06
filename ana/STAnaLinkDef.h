@@ -30,6 +30,7 @@
 #pragma link C++ class STReaderTask+;
 #pragma link C++ class STModelReaderTask+;
 #pragma link C++ class STReactionPlaneTask+;
+#pragma link C++ class STAzimuthalCorRPTask+;
 #pragma link C++ class STDivideEventTask+;
 
 #pragma link C++ class EfficiencyFactory+;
