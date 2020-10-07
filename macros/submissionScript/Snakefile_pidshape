@@ -1,0 +1,85 @@
+Tot_Evt = 1000
+Num_Divided = 100
+DirName = 'ApproxSn132ForRatio'
+FileName = 'Approx'
+PDGList = ['All']
+
+import os
+vmc_dir = os.environ['VMCWORKDIR']
+evt_per_job = int(Tot_Evt/Num_Divided)
+os.makedirs(os.path.join(vmc_dir, 'macros', 'log', DirName), exist_ok=True)
+
+localrules: get_ratio
+
+rule run_all:
+  input:
+    expand('{VMCDIR}/macros/Ratio1_Ratio.root', VMCDIR=vmc_dir)
+
+rule run_transport_mc:
+  output:
+    expand('{VMCDIR}/macros/data/{{DIRNAME}}/{{PDG}}/{{filename}}_s{{id}}.mc.root', VMCDIR=vmc_dir),
+    expand('{VMCDIR}/macros/data/{{DIRNAME}}/{{PDG}}/{{filename}}_s{{id}}.params.root', VMCDIR=vmc_dir)
+  resources:
+    cpu=1
+  params:
+    log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+    run_num = evt_per_job,
+    start_num =  lambda wildcards: evt_per_job*int(str(wildcards.id)),
+    pdg = lambda wildcards: '2212,1000010020,1000010030,1000020030,1000020040' if wildcards.PDG == 'All' else '2212,1000010020,1000020030,1000020040' if wildcards.PDG == 'NoTriton' else '2212,1000010030,1000020030,1000020040' if wildcards.PDG == 'NoDeuteron' else '2212,1000020030' if wildcards.PDG == 'PHe3' else str(wildcards.PDG)
+  shell:
+    """
+    LOGDIR={params.log_dir}/{wildcards.DIRNAME}/{wildcards.PDG}/{wildcards.filename}
+    mkdir -p ${{LOGDIR}}
+    root -b -q -l 'run_transport_mc.C("{wildcards.DIRNAME}/{wildcards.PDG}/{wildcards.filename}_s{wildcards.id}",{params.run_num},"","data/",kTRUE,{params.start_num},{{{params.pdg}}})' > ${{LOGDIR}}_{wildcards.id}_mc.log
+    """
+
+rule run_transport_digi:
+  input:
+    expand('{VMCDIR}/macros/data/{{filename}}_s{{id}}.mc.root', VMCDIR=vmc_dir),
+    expand('{VMCDIR}/macros/data/{{filename}}_s{{id}}.params.root', VMCDIR=vmc_dir)
+  output:
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_s{{id}}.digi.root', VMCDIR=vmc_dir)),
+  resources:
+    cpu=1
+  params:
+    log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+    run_num = evt_per_job,
+    start_num =  lambda wildcards: evt_per_job*int(str(wildcards.id))
+  shell:
+    """
+    LOGDIR={params.log_dir}/{wildcards.filename}
+    mkdir -p ${{LOGDIR}}
+    root -b -q -l 'run_digi.C("{wildcards.filename}_s{wildcards.id}",4e-8,"ST.parameters.fullmc.par",true,"Ratio.root")' > ${{LOGDIR}}_{wildcards.id}_digi.log
+    """
+
+rule run_transport_reco:
+  input:
+    expand('{VMCDIR}/macros/data/{{filename}}_s{{id}}.digi.root', VMCDIR=vmc_dir),
+  output:
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_s{{id}}_s0.reco.v1.04.root', VMCDIR=vmc_dir)),
+    expand('{VMCDIR}/macros/data/{{filename}}_s{{id}}_s0.reco.v1.04.conc.root', VMCDIR=vmc_dir)
+  resources:
+    cpu=1
+  params:
+    log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+    run_num = evt_per_job,
+    start_num =  lambda wildcards: evt_per_job*int(str(wildcards.id))
+  shell:
+    """
+    LOGDIR={params.log_dir}/{wildcards.filename}
+    root -b -q -l 'run_reco_mc.C("{wildcards.filename}_s{wildcards.id}")' > ${{LOGDIR}}_{wildcards.id}_reco.log
+    """
+
+rule get_ratio:
+   input:
+      expand('{VMCDIR}/macros/data/{DIRNAME}/{PDG}/{FILENAME}_s{id}_s0.reco.v1.04.conc.root', DIRNAME=DirName, PDG=PDGList, FILENAME=FileName, VMCDIR=vmc_dir, id=list(range(Num_Divided)))
+   output:
+      expand('{VMCDIR}/macros/{{RatioName}}_Ratio.root', VMCDIR=vmc_dir)
+   params:
+      dirfull = vmc_dir + '/macros/data/' + DirName + '/All/*conc*' 
+   shell:
+     """
+     root -b -l -q 'GetdEdXPeakRatio.C("{params.dirfull}","Sn108dEdX.root","{wildcards.RatioName}_Ratio.root","Ratio.root")'
+     rm -f Ratio.root
+     cp {wildcards.RatioName} Ratio.root
+     """

@@ -1,0 +1,148 @@
+import pandas as pd
+import os
+
+num_threads_per_job = 1
+num_threads_per_reco_job = 5
+tot_events = 2400
+cal_times_per_particle = 10
+vertex_file = 'Vertex_run2899Kaneko.txt'
+space_charge = 4e-8
+beam_mass = 112
+targ_mass = 124
+energy_per_N = 0.27
+output_dir = 'DumpEmbed'
+
+DigiPath='../../Picked_run_SimSn132KanekoMult50'
+ParameterFile='ST.parameters.fullmc.par'
+
+"""
+Don't modify anything below
+"""
+
+vmc_dir = os.environ['VMCWORKDIR']
+with open(vmc_dir + '/VERSION.compiled', 'r') as f:
+  spiritroot_ver = f.read().rstrip()
+
+ParticleName = ['Proton', 'Deuteron', 'Triton', 'He3', 'He4']
+ParticleMass = [1, 2, 3, 3, 4]
+ParticleCharge = [1, 1, 1, 2, 2]
+ParticlePDG = [2212, 1000010020, 1000010030, 1000020030, 1000020040]
+PtRange = [(0, 1.3), (0, 2), (0, 2.5), (0, 2.5), (0, 2.5)]
+CMzRange = [(-1, 1), (-1.3, 1.3), (-2.5, 2.5), (-1.9, 1.9), (-2.5, 2.5)]
+PhiRange0 = [(-40, 20)]*5
+PhiRange1 = [(160, 220)]*5
+log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+
+
+localrules: all, GenParForJob, upload
+
+list_of_outputs_prefix = []
+list_of_settings = {'PtRange':[], 'CMzRange':[], 'PhiRange0':[], 'PhiRange1':[], 
+                    'VertexFile':[], 'Particle':[], 'BeamRate':[], 'RealB':[], 
+                    'BeamMass':[], 'TargetMass':[], 'BeamEnergyPerN':[]}
+for pname, pdg, pt_range, cmz_range, phi_range0, phi_range1 in zip(ParticleName, ParticlePDG, PtRange, CMzRange, PhiRange0, PhiRange1):
+    list_of_settings['PtRange'].append(u'%f %f' % pt_range)
+    list_of_settings['CMzRange'].append(u'%f %f' % cmz_range)
+    list_of_settings['PhiRange0'].append(u'%f %f' % phi_range0)
+    list_of_settings['PhiRange1'].append(u'%f %f' % phi_range1)
+    list_of_settings['VertexFile'].append(vertex_file)
+    list_of_settings['Particle'].append(pdg)
+    list_of_settings['BeamRate'].append(space_charge)
+    list_of_settings['RealB'].append('true')
+    list_of_settings['BeamMass'].append(beam_mass)
+    list_of_settings['TargetMass'].append(targ_mass)
+    list_of_settings['BeamEnergyPerN'].append(energy_per_N)
+df_systems = pd.DataFrame.from_dict(list_of_settings)
+
+
+rule all:
+  input:
+    expand('{VMCDIR}/macros/data/{output_dir}/Embed_ParticleType_{particle_type}.root', VMCDIR=vmc_dir, output_dir=output_dir, particle_type=ParticleName)
+
+rule Compress:
+  input: 
+    expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{job_id}_ParticleType_{{particle_type}}_s{run_id}.reco.v1.04.conc.root', VMCDIR=vmc_dir, job_id=range(cal_times_per_particle), run_id=range(num_threads_per_reco_job))
+  output:
+    expand('{VMCDIR}/macros/data/{{output_dir}}/Embed_ParticleType_{{particle_type}}.root', VMCDIR=vmc_dir)
+  params:
+    fragMass = lambda wildcards: ParticleMass[ParticleName.index(wildcards.particle_type)],
+    charge = lambda wildcards: ParticleCharge[ParticleName.index(wildcards.particle_type)],
+    targetMass = targ_mass,
+    energyPerN = energy_per_N*1000, #To MeV
+  shell:
+    '''
+    root -b -l -q 'submissionScript/Compress.C("data/{wildcards.output_dir}/Group_*_ParticleType_{wildcards.particle_type}_s*.reco.v1.04.conc.root", "{output}",{params.fragMass},{params.targetMass},{params.charge},{params.energyPerN})' || true
+    '''
+
+rule run_reco_new:
+  input:
+    expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_SARR_{id}.digi.root', VMCDIR=vmc_dir, id=['%02d' % i for i in range(0, num_threads_per_job)])
+  output:
+    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_s{{run_id}}.reco.v1.04.root', VMCDIR=vmc_dir)),
+    expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_s{{run_id}}.reco.v1.04.conc.root', VMCDIR=vmc_dir),
+  resources:
+    cpu=1
+  params:
+    threads = num_threads_per_reco_job-1,
+    ntotal = tot_events,
+    nsplit = int((tot_events + num_threads_per_reco_job -1)/num_threads_per_reco_job),
+    input_name = lambda wildcards: '%s/macros/data/%s/Group_%s_ParticleType_%s_SARR' % (vmc_dir, wildcards.output_dir, wildcards.job_id, wildcards.particle_type),
+    output_dir = lambda wildcards: '%s/Group_%s_ParticleType_%s' % (wildcards.output_dir, wildcards.job_id, wildcards.particle_type),
+    parDigiPath = DigiPath + '/SimSn132KanekoMult50',
+    parParameterFile = ParameterFile,
+    log_dir = log_dir,
+    num_id = lambda wildcards: int(str(wildcards.run_id)),
+    beam_rate = space_charge, 
+    job_id = lambda wildcards: wildcards.job_id
+  shell:
+    """
+    i={params.num_id}
+    LOGDIR={params.log_dir}/{wildcards.output_dir}/Group_{wildcards.job_id}_ParticleType_{wildcards.particle_type}_SARR_{wildcards.job_id}
+    root.exe -b -q -l 'run_reco_mc.C("{params.parDigiPath}",
+                                     "{params.output_dir}",
+                                     {params.ntotal},
+                                     '$i',
+                                     {params.nsplit},
+                                     30,
+                                     "{params.parParameterFile}",
+                                     "{params.input_name}_*.digi.root")' > ${{LOGDIR}}_${{i}}_reco.log
+    """
+
+rule run_mc_new:
+  input:
+    expand('{VMCDIR}/macros/data/{{output_dir}}/ParticleType_{{particle_type}}_par.dat', VMCDIR=vmc_dir)
+  output:
+    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_SARR_{{id}}.mc.root', 
+         VMCDIR=vmc_dir)),
+    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_SARR_{{id}}.params.root', 
+         VMCDIR=vmc_dir)), 
+    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_SARR_{{id}}.digi.root', 
+         VMCDIR=vmc_dir))
+  resources:
+    cpu=1
+  params:
+    evt_per_jobs = int(tot_events/num_threads_per_job),
+    log_dir = log_dir,
+    num_id = lambda wildcards: int(str(wildcards.id)),
+    beam_rate = space_charge,
+    parParameterFile = ParameterFile,
+    RealB = 'true',
+    job_id = lambda wildcards: wildcards.job_id
+  shell:
+    """
+    NTOTAL={params.evt_per_jobs}
+    SPLIT=$((NTOTAL*{params.num_id}))
+    OUTPUT={wildcards.output_dir}/Group_{wildcards.job_id}_ParticleType_{wildcards.particle_type}_SARR_{wildcards.id}
+    LOGDIR={params.log_dir}/${{OUTPUT}}
+    mkdir -p {params.log_dir}/{wildcards.output_dir}
+    root -b -q -l 'run_mc.C("'$OUTPUT'",'$NTOTAL',"","data/",kTRUE,"../macros/data/{wildcards.output_dir}/ParticleType_{wildcards.particle_type}_par.dat",'$SPLIT')' > ${{LOGDIR}}_mc.log
+    root -b -q -l 'run_digi.C("'$OUTPUT'",{params.beam_rate},"{params.parParameterFile}")' > ${{LOGDIR}}_digi.log
+    """
+
+rule GenParForJob:
+  output: 
+    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/ParticleType_{{particle_type}}_par.dat', VMCDIR=vmc_dir))
+  run:
+    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
+    particle_order = ParticleName.index(wildcards.particle_type)
+    df_systems.iloc[particle_order].to_csv(str(output), sep='\t', header=False)

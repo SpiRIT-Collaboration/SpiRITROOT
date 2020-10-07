@@ -1,0 +1,76 @@
+import pandas as pd
+import os
+
+SheetCharge = [-1]
+
+num_threads_per_reco_job = 40
+tot_events = 5000
+GCData='/mnt/spirit/analysis/user/tsangc/SpiRITROOT/Picked_run_2899/gainCalibration_groundPlane_120fC_117ns_20160509.root'
+GGData='/mnt/spirit/analysis/user/tsangc/SpiRITROOT/Picked_run_2899/ggNoise_2842.root'
+ParameterFile='ST.parameters.PhysicsRuns_201707.par'
+
+"""
+Don't modify anything below
+"""
+
+localrules: FindSC, make_log
+
+vmc_dir = os.environ['VMCWORKDIR']
+with open(vmc_dir + '/VERSION.compiled', 'r') as f:
+  spiritroot_ver = f.read().rstrip()
+
+rule all:
+  input:
+    expand('{VMCDIR}/macros/data/FindSCTemp/SC{run_num}.txt', VMCDIR=vmc_dir, run_num=2899)
+
+rule make_log:
+  output:
+    expand('{VMCDIR}/macros/log/FindSCTemp/Run{{run_num}}_SC{{SC}}/created.txt', VMCDIR=vmc_dir)
+  params:
+    log_dir = lambda wildcards, output: os.path.dirname(str(output[0]))
+  shell:
+    """
+    mkdir -p {params.log_dir}
+    touch {params.log_dir}/created.txt
+    """ 
+
+
+rule run_reco_SC:
+  input:
+    expand('{VMCDIR}/macros/log/FindSCTemp/Run{{run_num}}_SC{{SC}}/created.txt', VMCDIR=vmc_dir)
+  output:
+    expand('{VMCDIR}/macros/data/FindSCTemp/Run{{run_num}}_SC{{SC}}/run{{run_num}}_s{{id}}.reco.{version}.root', VMCDIR=vmc_dir, version=spiritroot_ver)
+  resources:
+    cpu=1
+  params:
+    ntotal = tot_events,
+    nsplit = int((tot_events + num_threads_per_reco_job -1)/num_threads_per_reco_job),
+    parGCData = GCData,
+    parGGData = GGData,
+    parParameterFile = ParameterFile,
+    output_path = lambda wildcards, output: os.path.dirname(str(output[0])) + '/',
+    log_path = lambda wildcards, output: os.path.dirname(str(output[0])).replace('data', 'log') + '/',
+    num_id = lambda wildcards: int(str(wildcards.id)),
+    run_num = lambda wildcards: int(wildcards.run_num),
+    beam_rate = lambda wildcards: float(str(wildcards.SC))
+  shell:
+    """
+    i={params.num_id}
+    LOGDIR={params.log_path}
+    mkdir -p ${{LOGDIR}}
+    root.exe -b -q -l 'run_reco_experiment.C({params.run_num},{params.ntotal},'$i',{params.nsplit},"{params.parGCData}","{params.parGGData}",{{}},"","/mnt/spirit/rawdata/misc/rawdataSupplement",30,"{params.parParameterFile}","{params.output_path}",kTRUE,21.88,-1.399,-205.5,0,{params.beam_rate},kFALSE)' > ${{LOGDIR}}Reco_${{i}}_reco.log
+    """
+
+rule FindSC:
+  input:
+    expand('{VMCDIR}/macros/data/FindSCTemp/Run{{run_num}}_SC{SC}/run{{run_num}}_s{id}.reco.{version}.root', SC=SheetCharge, id=['%d' % i for i in range(0, num_threads_per_reco_job)], VMCDIR=vmc_dir, version=spiritroot_ver)
+  output:
+    expand('{VMCDIR}/macros/data/FindSCTemp/SC{{run_num}}.txt', VMCDIR=vmc_dir)
+  params:
+    run_num = lambda wildcards: int(wildcards.run_num),
+    list_sheet_charge = ','.join(['"' + str(sc) + '"' for sc in SheetCharge])
+  shell:
+    """
+    cd ${{VMCWORKDIR}}/macros/data/FindSCTemp
+    root -b -l -q 'GetSCForRun.C({params.run_num},{{{params.list_sheet_charge}}})' || echo "Done"
+    """

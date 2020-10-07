@@ -1,0 +1,108 @@
+import pandas as pd
+import os
+
+num_threads_per_job = 100
+num_threads_per_reco_job = 100
+tot_events = 2400
+run_num = 2899
+SupplePath='/mnt/spirit/analysis/user/tsangc/SpiRITROOT/Picked_run_%04dKaneko/' % run_num
+config_file = 'Pion_test.dat'
+
+"""
+Don't modify anything below
+"""
+
+localrules: all, GenParForJob, upload
+
+vmc_dir = os.environ['VMCWORKDIR']
+df = pd.read_csv(config_file, sep=r'\s+')
+list_of_output = df['#Filename'].tolist()
+with open(vmc_dir + '/VERSION.compiled', 'r') as f:
+  spiritroot_ver = f.read().rstrip()
+
+rule all:
+  input:
+    expand('{VMCDIR}/macros/data/{filename}/uploaded.dat', 
+           VMCDIR=vmc_dir, 
+           filename=df['#Filename'].iloc[:])
+
+rule GenParForJob:
+  output: 
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_par.dat', VMCDIR=vmc_dir))
+  run:
+    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
+    job_id = df.index[df['#Filename']==str(wildcards.filename)][0]
+    df.iloc[job_id].to_csv(str(output), sep='\t', header=False)
+    os.makedirs(os.path.dirname(os.path.join(vmc_dir, 'macros', 'log', str(wildcards.filename))), exist_ok=True)
+
+rule run_mc:
+  input:
+    vmc_dir + '/macros/data/{filename}_par.dat'
+  output:
+    expand('{VMCDIR}/macros/data/{{filename}}_SARR_{{id}}.mc.root', 
+           VMCDIR=vmc_dir),
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_SARR_{{id}}.params.root', 
+         VMCDIR=vmc_dir)), 
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_SARR_{{id}}.digi.root', 
+         VMCDIR=vmc_dir))
+  resources:
+    cpu=1
+  params:
+    evt_per_jobs = int(tot_events/num_threads_per_job),
+    log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+    job_id = lambda wildcards: df.index[df['#Filename']==str(wildcards.filename)][0],
+    num_id = lambda wildcards: int(str(wildcards.id)),
+    beam_rate = lambda wildcards: df['BeamRate'][df.index[df['#Filename']==str(wildcards.filename)][0]],
+    RealB = lambda wildcards: 'true' if df['RealB'][df.index[df['#Filename']==str(wildcards.filename)][0]] else 'false',
+    run_num = run_num
+  shell:
+    """
+    cp {input} ${{VMCWORKDIR}}/parameters/ParFor_{params.job_id}_{wildcards.id}.dat
+    LOGDIR={params.log_dir}/{wildcards.filename}
+    NTOTAL={params.evt_per_jobs}
+    SPLIT=$((NTOTAL*{params.num_id}))
+    OUTPUT={wildcards.filename}_SARR_{wildcards.id}
+    LOGDIR={params.log_dir}/{wildcards.filename}_SARR_{wildcards.id}
+    root -b -q -l 'run_mc.C("'$OUTPUT'",'$NTOTAL',"","data/",kTRUE,"ParFor_{params.job_id}_{wildcards.id}.dat",'$SPLIT')' > ${{LOGDIR}}_mc.log
+    root -b -q -l 'run_digi.C({params.run_num},"'$OUTPUT'")' > ${{LOGDIR}}_digi.log
+    rm -f ${{VMCWORKDIR}}/parameters/ParFor_{params.job_id}_{wildcards.id}.dat
+    """
+
+rule run_reco:
+  input:
+    expand('{VMCDIR}/macros/data/{{filename}}_SARR_{id}.digi.root', VMCDIR=vmc_dir, id=['%02d' % i for i in range(0, num_threads_per_job)])
+  output:
+    expand('{VMCDIR}/macros/data/{{filename}}/run{run_num}_s{{id}}.reco.{version}.root', run_num=run_num, VMCDIR=vmc_dir, version=spiritroot_ver),
+    expand('{VMCDIR}/macros/data/{{filename}}/run{run_num}_s{{id}}.reco.{version}.conc.root', run_num=run_num, VMCDIR=vmc_dir, version=spiritroot_ver)
+  resources:
+    cpu=1
+  params:
+    job_id = lambda wildcards: df.index[df['#Filename']==str(wildcards.filename)][0],
+    nsplit = int((tot_events + num_threads_per_reco_job -1)/num_threads_per_reco_job),
+    input_name = expand('{VMCDIR}/macros/data/{{filename}}_SARR', VMCDIR=vmc_dir),
+    parSupplePath = SupplePath,
+    output_path = lambda wildcards: vmc_dir + '/macros/data/' + str(wildcards.filename) + '/',
+    log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+    num_id = lambda wildcards: int(str(wildcards.id)),
+    run_num = run_num
+  shell:
+    """
+    i={params.num_id}
+    LOGDIR={params.log_dir}/{wildcards.filename}
+    #root.exe -b -q -l 'run_reco_experiment_auto.C({params.run_num},'$i',{params.nsplit},{{}},"","{params.output_path}","{params.parSupplePath}")' > ${{LOGDIR}}_${{i}}_reco.log
+    root.exe -b -q -l 'run_reco_experiment_auto.C({params.run_num},'$i',{params.nsplit},{{}},"{params.input_name}_*.digi.root","{params.output_path}","{params.parSupplePath}")' > ${{LOGDIR}}_${{i}}_reco.log
+    """
+
+
+rule upload:
+  input:
+    expand('{VMCDIR}/macros/data/{{filename}}/run{run_num}_s{id}.reco.{version}.conc.root', run_num=run_num, VMCDIR=vmc_dir, version=spiritroot_ver, id=['%d' % job for job in range(num_threads_per_reco_job)])
+  output:
+    expand('{VMCDIR}/macros/data/{{filename}}/uploaded.dat', VMCDIR=vmc_dir)
+  #params:
+  #  user = FishtankUser,
+  #  dest = Destination 
+  shell:
+    """
+    touch {output}
+    """

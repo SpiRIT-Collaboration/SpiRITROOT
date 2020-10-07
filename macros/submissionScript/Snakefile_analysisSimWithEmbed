@@ -1,0 +1,159 @@
+from submissionScript.GlobalConfig import *
+from shutil import copyfile
+import numpy as np
+from analysisConfig.changeAttr import main as attr_change
+
+input_dir = sim_DirName
+proj = beam_mass
+iter_samples = ana_samples
+tot_samples = tot_ana
+
+"""
+Don't change anything below
+"""
+
+include: "submissionScript/Snakefile_embedMCFull2"
+
+localrules: AssignEffToXML
+
+rule all:
+  input:
+    'data/%s/Final_PhiCor_graph.root' % input_dir,
+    'data/%s/Res.txt' % input_dir,
+    [vmc_dir + '/macros/data/' + input_dir + '/' + filename_bg_source + '_evts%d_s%d_s0.reco.v1.04.conc.root' % (sim_evt_per_jobs, i) for i in range(sim_Num_Divided)],
+
+rule AssignEffToXML:
+  input:
+    xml = 'analysisConfig/analysisSimSn{proj}CMWithPions.xml',
+    eff = ['%s/macros/data/%s/Embed_ParticleType_%s.root' % (vmc_dir, output_dir, pname) for pname in ParticleName],
+  output:
+    temp('analysisConfig/analysisSimSn{proj}CMEffSub.xml')
+  run:
+    with open(input.xml) as f:
+      data = f.read()
+    for i, pname in enumerate(ParticleName):
+      data = data.replace('data/embed_dump/MarchCM/SimSn132KanekoMult50_CM%s.root' % pname, input.eff[i].replace(vmc_dir + '/macros/', ''))
+    with open(output[0], 'wt') as f:
+      f.write(data)
+
+
+rule IterPIDMeta:
+  input:
+    'Prior/Meta_SimSn%dTemplate.root' % proj,
+    'analysisConfig/analysisSimSn%dCMEffSub.xml' % proj,
+    [vmc_dir + '/macros/data/' + input_dir + '/' + filename_bg_source + '_evts%d_s%d_s0.reco.v1.04.conc.root' % (sim_evt_per_jobs, i) for i in range(sim_Num_Divided)]
+  output:
+    'Prior/Meta_SimSn%d{input_dir}.root' % proj,
+    temp('analysisConfig/analysisSimSn%dCM{input_dir}_temp.xml' % proj),
+    temp('data/{input_dir}/TempFinal_ana.root'),
+  run:
+    with open(input[1]) as f:
+      data = f.read()
+    data = data.replace('Prior/Meta_SimSn%dKanekoMult50.root' % proj, output[0])
+    with open(output[1], 'wt') as f:
+      f.write(data)
+
+    # seed of the iteration
+    copyfile(input[0], output[0])
+    args = {'Dir': os.path.join('data', input_dir) + '/',
+            'Filename': '*.conc',
+            'rmTask' : ['EfficiencyTask', 'SimpleGraphsTask', 'ReactionPlaneTask', 'ERATTask'],
+            'execarg': 'TempFinal false %d true' % iter_samples,
+            'exec': True}
+    for i in range(3):
+      attr_change(output[1], args)
+
+rule IterUnfold:
+  input:
+    'Unfolding/Sn%dTemplate.root' % proj,
+    'analysisConfig/analysisSimSn%dCMEffSub.xml' % proj,
+    'Prior/Meta_SimSn%d{input_dir}.root' % proj,
+    [vmc_dir + '/macros/data/' + input_dir + '/' + filename_bg_source + '_evts%d_s%d_s0.reco.v1.04.conc.root' % (sim_evt_per_jobs, i) for i in range(sim_Num_Divided)]
+  output:
+    'Unfolding/SimSn%d{input_dir}.root' % proj,
+    temp('analysisConfig/analysisSimSn%dCM{input_dir}_temp.xml' % proj),
+    temp('data/{input_dir}/TempFinal_ana.root'),
+  run:
+    with open(input[1]) as f:
+      data = f.read()
+    data = data.replace('Prior/Meta_SimSn%dKanekoMult50.root' % proj, input[2])
+    data = data.replace('SimSn%dUnfold.root' % proj, os.path.basename(output[0]))
+    with open(output[1], 'wt') as f:
+      f.write(data)
+
+    # seed of the iteration
+    copyfile(input[0], output[0])
+    args = {'Dir': os.path.join('data', input_dir)+ '/',
+            'Filename': '*.conc',
+            'rmTask' : ['SimpleGraphsTask', 'ReactionPlaneTask', 'ERATTask'],
+            'execarg': 'TempFinal true %d false' % iter_samples,
+            'exec': True}
+    for i in range(3):
+      attr_change(output[1], args)
+
+def input_for_status(wcs):
+  input = ['analysisConfig/analysisSimSn%dCMEffSub.xml' % proj,
+           'Prior/Meta_SimSn%d' % proj + wcs.input_dir + '.root',
+           'Unfolding/SimSn%d' % proj + wcs.input_dir + '.root']
+  if wcs.status != 'NoPhiEff':
+    input = input + ['PhiEff/SimSn%d' % proj + wcs.input_dir + '.root']
+  if wcs.status == 'Second':
+    input = input + ['data/' + wcs.input_dir + '/Final_First_ana.root']
+  return input
+    
+vmc_dir = os.environ['VMCWORKDIR']
+rule analysis:
+  input:
+    files = input_for_status,
+    eff = vmc_dir + '/macros/data/' + output_dir + '/Embed_ParticleType_Proton.root',
+    data = [vmc_dir + '/macros/data/' + input_dir + '/' + filename_bg_source + '_evts%d_s%d_s0.reco.v1.04.conc.root' % (sim_evt_per_jobs, i) for i in range(sim_Num_Divided)]
+  output:
+    temp('analysisConfig/analysisSimSn%dCM{input_dir}_{status}.xml' % proj),
+    'data/{input_dir}/Final_{status}_ana.root'
+  run:
+    with open(input[0]) as f:
+      data = f.read()
+    data = data.replace('Prior/Meta_SimSn%dKanekoMult50.root' % proj, input[1])
+    data = data.replace('SimSn%dUnfold.root' % proj, os.path.basename(input[2]))
+    with open(output[0], 'wt') as f:
+      f.write(data)
+
+    args = {'Dir': os.path.join('data',input_dir) + '/',
+            'Filename': '*.conc',
+            'PhiEff': None if wildcards.status == 'NoPhiEff' else input.files[3],
+            'Divide': True if wildcards.status == 'First' or wildcards.status == 'Second' else False,
+            'Comp': input.files[4] if wildcards.status == 'Second' else None,
+            'execarg': 'Final_%s false %d' % (wildcards.status, tot_samples),
+            'exec': True}
+    attr_change(output[0], args)
+
+rule PhiEff:
+  input:
+    'data/{input_dir}/Final_NoPhiEff_ana.root',
+  output:
+    'PhiEff/SimSn%d{input_dir}.root' % proj
+  shell:
+    '''
+    root -b -l -q 'submissionScript/GetPhiEff.C({{"{input}"}},"{output}",8,20)' || true
+    '''
+
+rule ReactionPlaneResolution:
+  input:
+    first = 'data/{input_dir}/Final_First_ana.root',
+    second = 'data/{input_dir}/Final_Second_ana.root'
+  output:
+    'data/{input_dir}/Res.txt'
+  shell:
+    '''
+    root -b -l -q 'submissionScript/GetRPRes.C({{"{input.first}"}},{{"{input.second}"}})' > {output}
+    '''
+
+rule GetAccurateGraph:
+  input:
+    'data/{input_dir}/Final_PhiCor_ana.root'
+  output:
+    'data/{input_dir}/Final_PhiCor_graph.root'
+  shell:
+    '''
+    root -b -l -q 'run_analysis_graph.C("{input_dir}/Final_PhiCor")' || true
+    '''

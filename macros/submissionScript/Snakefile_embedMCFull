@@ -1,0 +1,248 @@
+import pandas as pd
+import os
+from submissionScript.GlobalConfig import *
+
+#"""
+#parameters for embeding
+#"""
+#
+#num_threads_per_job = 5
+#num_threads_per_reco_job = 5
+#cal_times_per_particle = 50
+#
+#tot_events = 2500
+#space_charge = 4e-8
+#beam_mass = 112
+#targ_mass = 124
+#energy_per_N = 0.27
+#output_dir = 'DumpEmbed'
+#
+#DigiPath='../../Picked_run_SimSn132KanekoMult50'
+#ParameterFile='ST.parameters.fullmc.par'
+#
+#"""
+#parameters for generating
+#Background for embeding
+#"""
+#num_threads_per_bg_generation = 250
+#dir_to_bg = 'ApproxSn112DigiEmbed'
+#filename_bg_source = 'approx_Sn112Sn124CorV'
+#digiCharge = 10.2
+#length = 150
+
+
+localrules: all, GenParForJob
+
+list_of_outputs_prefix = []
+list_of_settings = {'PtRange':[], 'CMzRange':[], 'PhiRange0':[], 'PhiRange1':[], 
+                    'VertexFile':[], 'Particle':[], 'BeamRate':[], 'RealB':[], 
+                    'BeamMass':[], 'TargetMass':[], 'BeamEnergyPerN':[]}
+for pname, pdg, pt_range, cmz_range, phi_range0, phi_range1 in zip(ParticleName, ParticlePDG, PtRange, CMzRange, PhiRange0, PhiRange1):
+    list_of_settings['PtRange'].append(u'%f %f' % pt_range)
+    list_of_settings['CMzRange'].append(u'%f %f' % cmz_range)
+    list_of_settings['PhiRange0'].append(u'%f %f' % phi_range0)
+    list_of_settings['PhiRange1'].append(u'%f %f' % phi_range1)
+    list_of_settings['VertexFile'].append(filename_bg_source + '_Vertex.dat')
+    list_of_settings['Particle'].append(pdg)
+    list_of_settings['BeamRate'].append(space_charge)
+    list_of_settings['RealB'].append('true')
+    list_of_settings['BeamMass'].append(beam_mass)
+    list_of_settings['TargetMass'].append(targ_mass)
+    list_of_settings['BeamEnergyPerN'].append(energy_per_N)
+df_systems = pd.DataFrame.from_dict(list_of_settings)
+
+
+#rule all:
+#  input:
+#    expand('{VMCDIR}/macros/data/{output_dir}/Embed_ParticleType_{particle_type}.root', VMCDIR=vmc_dir, output_dir=output_dir, particle_type=ParticleName), 
+#    #'/mnt/spirit/analysis/user/tsangc/SpiRITROOT/parameters/approx_Sn112Sn124CorV_Vertex.dat'
+
+rule Compress:
+  input: 
+    expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{job_id}_ParticleType_{{particle_type}}_s{run_id}.reco.v1.04.conc.root', VMCDIR=vmc_dir, job_id=range(cal_times_per_particle), run_id=range(num_threads_per_reco_job))
+  output:
+    expand('{VMCDIR}/macros/data/{{output_dir}}/Embed_ParticleType_{{particle_type}}.root', VMCDIR=vmc_dir)
+  params:
+    fragMass = lambda wildcards: ParticleMass[ParticleName.index(wildcards.particle_type)],
+    charge = lambda wildcards: ParticleCharge[ParticleName.index(wildcards.particle_type)],
+    targetMass = targ_mass,
+    energyPerN = energy_per_N*1000, #To MeV
+  shell:
+    '''
+    root -b -l -q 'submissionScript/Compress.C("data/{wildcards.output_dir}/Group_*_ParticleType_{wildcards.particle_type}_s*.reco.v1.04.conc.root", "{output}",{params.fragMass},{params.targetMass},{params.charge},{params.energyPerN})' || true
+    '''
+
+rule run_reco_new:
+  input:
+    expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_SARR_{id}.digi.root', VMCDIR=vmc_dir, id=['%02d' % i for i in range(0, num_threads_per_job)]),
+    expand('{VMCDIR}/macros/data/{bg_dir}/{bg_name}_DigiCharge{digiCharge}_merged.digi.root',VMCDIR=vmc_dir, bg_dir=dir_to_bg, bg_name=filename_bg_source, digiCharge=digiCharge)
+  output:
+    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_s{{run_id}}.reco.v1.04.root', VMCDIR=vmc_dir)),
+    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_s{{run_id}}.reco.v1.04.conc.root', VMCDIR=vmc_dir)),
+  resources:
+    cpu=1
+  params:
+    threads = num_threads_per_reco_job-1,
+    ntotal = tot_events,
+    nsplit = int((tot_events + num_threads_per_reco_job -1)/num_threads_per_reco_job),
+    input_name = lambda wildcards: '%s/macros/data/%s/Group_%s_ParticleType_%s_SARR' % (vmc_dir, wildcards.output_dir, wildcards.job_id, wildcards.particle_type),
+    output_dir = lambda wildcards: '%s/Group_%s_ParticleType_%s' % (wildcards.output_dir, wildcards.job_id, wildcards.particle_type),
+    parDigiPath = dir_to_bg + '/' + filename_bg_source + '_DigiCharge%g_merged' % digiCharge,
+    parParameterFile = ParameterFile,
+    log_dir = log_dir,
+    num_id = lambda wildcards: int(str(wildcards.run_id)),
+    beam_rate = space_charge, 
+    job_id = lambda wildcards: wildcards.job_id
+  shell:
+    """
+    i={params.num_id}
+    LOGDIR={params.log_dir}/{wildcards.output_dir}/Group_{wildcards.job_id}_ParticleType_{wildcards.particle_type}_SARR_{wildcards.job_id}
+    root.exe -b -q -l 'run_reco_mc.C("{params.parDigiPath}",
+                                     "{params.output_dir}",
+                                     {params.ntotal},
+                                     '$i',
+                                     {params.nsplit},
+                                     30,
+                                     "{params.parParameterFile}",
+                                     "{params.input_name}_*.digi.root")' > ${{LOGDIR}}_${{i}}_reco.log
+    """
+
+rule run_mc_new:
+  input:
+    expand('{VMCDIR}/macros/data/{{output_dir}}/ParticleType_{{particle_type}}_par.dat', VMCDIR=vmc_dir),
+    expand('{VMCDIR}/parameters/{bg_name}_Vertex.dat', VMCDIR=vmc_dir, bg_name=filename_bg_source)
+  output:
+    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_SARR_{{id}}.mc.root', 
+         VMCDIR=vmc_dir)),
+    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_SARR_{{id}}.params.root', 
+         VMCDIR=vmc_dir)), 
+    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_SARR_{{id}}.digi.root', 
+         VMCDIR=vmc_dir))
+  resources:
+    cpu=1
+  params:
+    evt_per_jobs = int(tot_events/num_threads_per_job),
+    log_dir = log_dir,
+    num_id = lambda wildcards: int(str(wildcards.id)),
+    beam_rate = space_charge,
+    parParameterFile = ParameterFile,
+    RealB = 'true',
+    job_id = lambda wildcards: wildcards.job_id
+  shell:
+    """
+    NTOTAL={params.evt_per_jobs}
+    SPLIT=$((NTOTAL*{params.num_id}))
+    OUTPUT={wildcards.output_dir}/Group_{wildcards.job_id}_ParticleType_{wildcards.particle_type}_SARR_{wildcards.id}
+    LOGDIR={params.log_dir}/${{OUTPUT}}
+    mkdir -p {params.log_dir}/{wildcards.output_dir}
+    root -b -q -l 'run_mc.C("'$OUTPUT'",'$NTOTAL',"","data/",kTRUE,"../macros/data/{wildcards.output_dir}/ParticleType_{wildcards.particle_type}_par.dat",'$SPLIT')' > ${{LOGDIR}}_mc.log
+    root -b -q -l 'run_digi.C("'$OUTPUT'",{params.beam_rate},"{params.parParameterFile}")' > ${{LOGDIR}}_digi.log
+    """
+
+rule GenParForJob:
+  output: 
+    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/ParticleType_{{particle_type}}_par.dat', VMCDIR=vmc_dir))
+  run:
+    os.makedirs(os.path.dirname(str(output)), exist_ok=True)
+    particle_order = ParticleName.index(wildcards.particle_type)
+    df_systems.iloc[particle_order].to_csv(str(output), sep='\t', header=False)
+
+
+"""
+rules for generating background mc events for embeding
+"""
+
+rule run_transport_mc:
+  output:
+    temp(expand('{VMCDIR}/macros/data/{{DIRNAME}}/{{filename}}_s{{id}}.mc.root', VMCDIR=vmc_dir)),
+    temp(expand('{VMCDIR}/macros/data/{{DIRNAME}}/{{filename}}_s{{id}}.params.root', VMCDIR=vmc_dir)),
+  resources:
+    cpu=1
+  params:
+    log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+    run_num = evt_per_job,
+    start_num =  lambda wildcards: evt_per_job*int(str(wildcards.id)),
+    pdg = '2212,1000010020,1000010030,1000020030,1000020040,211,-211',
+  shell:
+    """
+    LOGDIR={params.log_dir}/{wildcards.DIRNAME}/{wildcards.filename}
+    mkdir -p ${{LOGDIR}}
+    root -b -q -l 'run_transport_mc.C("{wildcards.DIRNAME}/{wildcards.filename}_s{wildcards.id}",
+                                      {params.run_num},"","data/",
+                                      kTRUE,{params.start_num},{{{params.pdg}}},
+                                      "{wildcards.filename}.root")' > ${{LOGDIR}}_{wildcards.id}_mc.log
+    """
+
+rule run_transport_digi:
+  input:
+    expand('{VMCDIR}/macros/data/{{filename}}_s{{id}}.mc.root', VMCDIR=vmc_dir),
+    expand('{VMCDIR}/macros/data/{{filename}}_s{{id}}.params.root', VMCDIR=vmc_dir)
+  output:
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_s{{id}}.digi.root', VMCDIR=vmc_dir)),
+  resources:
+    cpu=1
+  params:
+    log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+    run_num = evt_per_job,
+    start_num =  lambda wildcards: evt_per_job*int(str(wildcards.id)),
+    space_charge = space_charge
+  shell:
+    """
+    LOGDIR={params.log_dir}/{wildcards.filename}
+    mkdir -p ${{LOGDIR}}
+    root -b -q -l 'run_digi.C("{wildcards.filename}_s{wildcards.id}",
+                              {params.space_charge},
+                              "ST.parameters.fullmc.par",true,
+                              {wildcards.digiCharge},
+                              "{wildcards.filename}_DigiCharge{wildcards.digiCharge}_s{wildcards.id}")' > ${{LOGDIR}}_DigiCharge{wildcards.digiCharge}_{wildcards.id}_digi.log
+    """
+
+rule merge_digi:
+  input:
+    expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_s{id}.digi.root', VMCDIR=vmc_dir, id=list(range(num_threads_per_bg_generation)))
+  output:
+    expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_merged.digi.root', VMCDIR=vmc_dir)
+  params:
+    prefix = lambda wildcards: vmc_dir + '/macros/data/' + wildcards.filename + '_DigiCharge' + wildcards.digiCharge + '_s',
+    suffix = lambda wildcards, input: str(input).replace(vmc_dir + '/macros/data/' + wildcards.filename + '_DigiCharge' + wildcards.digiCharge + '_s', '')
+  shell:
+    """
+    input_list="{params.suffix}"
+    input_list=$( echo ${{input_list// /\\\",\\\"}} )
+    root -b -l -q 'submissionScript/hadd_digi.C("{output}","{params.prefix}",{{"'${{input_list}}'"}})' || true
+    """
+
+rule run_transport_reco:
+  input:
+    expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_s{{id}}.digi.root', VMCDIR=vmc_dir),
+  output:
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_s{{id}}_s0.reco.v1.04.root', VMCDIR=vmc_dir)),
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_s{{id}}_s0.reco.v1.04.conc.root', VMCDIR=vmc_dir))
+  resources:
+    cpu=1
+  params:
+    log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+    run_num = evt_per_job,
+    start_num =  lambda wildcards: evt_per_job*int(str(wildcards.id)),
+    length=150
+  shell:
+    """
+    LOGDIR={params.log_dir}/{wildcards.filename}
+    root -b -q -l 'run_reco_mc.C("{wildcards.filename}_DigiCharge{wildcards.digiCharge}_s{wildcards.id}","{wildcards.filename}_DigiCharge{wildcards.digiCharge}_s{wildcards.id}")' > ${{LOGDIR}}_{wildcards.id}_reco.log
+    """
+
+rule get_vertex:
+  input:
+    expand('{VMCDIR}/macros/data/{DIRNAME}/{{filename}}_DigiCharge{digiCharge}_s{id}_s0.reco.v1.04.conc.root', DIRNAME=dir_to_bg, VMCDIR=vmc_dir, digiCharge=digiCharge, id=list(range(num_threads_per_bg_generation)))
+  output:
+    expand('{VMCDIR}/parameters/{{filename}}_Vertex.dat', VMCDIR=vmc_dir)
+  params:
+    prefix = lambda wildcards: vmc_dir + '/macros/data/' + dir_to_bg + '/' + wildcards.filename + '_DigiCharge%g_s' % digiCharge,
+    suffix = lambda wildcards, input: str(input).replace(vmc_dir + '/macros/data/' + dir_to_bg + '/' + wildcards.filename + '_DigiCharge%g_s' % digiCharge, '')
+  shell:
+    """
+    input_list="{params.suffix}"
+    input_list=$( echo ${{input_list// /\\\",\\\"}} )
+    root -b -l -q 'submissionScript/GetVertex.C("{output}","{params.prefix}",{{"'${{input_list}}'"}})'
+    """
+

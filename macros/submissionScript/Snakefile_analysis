@@ -1,0 +1,68 @@
+import numpy as np
+
+step = 3
+mult_output_range = [[mult, mult + step] for mult in np.arange(25, 55, step)] #The desired partition of the analyzed files
+mult_output_range = mult_output_range + [[mult_output_range[-1][-1], 100]]
+
+"""
+Don't change anything below
+"""
+sys = [108, 112, 124, 132]
+mult_file_ranges = [[25, 35], [35, 40], [40, 45], [45, 50], [50, 55], [55, 100]] #The way raw root files are partitioned
+mult_output_files = [] #list of directies from which data is loaded for the desire partition
+# decide what files to load the approporate multiplicity ranges
+for mult_range in mult_output_range:
+  output_files = []
+  # find which partition(s) contains all desired multiplicity ranged data
+  for file_range in mult_file_ranges:
+    if mult_range[0] < file_range[1] and file_range[0] < mult_range[1]:
+      output_files.append('Mult%d_%d' % (file_range[0], file_range[1]))
+  mult_output_files.append(output_files)
+
+output_full_dir = []
+for proj in sys:
+  for mult_range, output_dir in zip(mult_output_range, mult_output_files):
+    output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_ana.root' % (proj, mult_range[0], mult_range[1]))
+    output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_First_ana.root' % (proj, mult_range[0], mult_range[1]))
+    output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_Second_ana.root' % (proj, mult_range[0], mult_range[1]))
+
+ruleorder: analysis_res > analysis
+
+rule all:
+  input:
+    expand('{output}', output=output_full_dir)
+
+rule analysis:
+  input:
+    'analysisConfig/analysisSn{proj}CM.xml'
+  output:
+    'data/Sn{proj}Final/FinalM{output_range1}_{output_range2}_ana.root'
+  params:
+    output_dir = lambda wildcards: mult_output_files[mult_output_range.index([int(wildcards.output_range1), int(wildcards.output_range2)])][0],
+    add_dir = lambda wildcards: '' if len(mult_output_files[mult_output_range.index([int(wildcards.output_range1), int(wildcards.output_range2)])]) == 1 else '--AddDir Sn%s' % wildcards.proj + (' Sn%s' % (wildcards.proj)).join(mult_output_files[mult_output_range.index([int(wildcards.output_range1), int(wildcards.output_range2)])][1:])
+  shell:
+    '''
+    python analysisConfig/changeAttr.py {input} --Dir data/Sn{wildcards.proj}{params.output_dir}/ {params.add_dir} --MMin {wildcards.output_range1} --MMax {wildcards.output_range2} --Unfold Unfolding/Sn{wildcards.proj}{params.output_dir}.root --execarg 'FinalM{wildcards.output_range1}_{wildcards.output_range2} false -1' --exec >/dev/null 2>/dev/null
+    mv data/Sn{wildcards.proj}{params.output_dir}/FinalM{wildcards.output_range1}_{wildcards.output_range2}_ana.root data/Sn{wildcards.proj}Final/
+      
+    '''
+
+rule analysis_res:
+  input:
+    'analysisConfig/analysisSn{proj}CM.xml'
+  output:
+    'data/Sn{proj}Final/FinalM{output_range1}_{output_range2}_First_ana.root',
+    'data/Sn{proj}Final/FinalM{output_range1}_{output_range2}_Second_ana.root'
+  params:
+    output_dir = lambda wildcards: mult_output_files[mult_output_range.index([int(wildcards.output_range1), int(wildcards.output_range2)])][0],
+    add_dir = lambda wildcards: '' if len(mult_output_files[mult_output_range.index([int(wildcards.output_range1), int(wildcards.output_range2)])]) == 1 else '--AddDir Sn%s' % wildcards.proj + (' Sn%s' % (wildcards.proj)).join(mult_output_files[mult_output_range.index([int(wildcards.output_range1), int(wildcards.output_range2)])][1:]),
+    output_range1 = lambda wildcards: int((float(wildcards.output_range1))*0.5),
+    output_range2 = lambda wildcards: int((float(wildcards.output_range2))*0.5 + 0.5)
+  shell:
+        '''
+    python analysisConfig/changeAttr.py {input} --Dir data/Sn{wildcards.proj}{params.output_dir}/ {params.add_dir} --MMin {params.output_range1} --MMax {params.output_range2} --Unfold Unfolding/Sn{wildcards.proj}{params.output_dir}.root --execarg 'FinalM{wildcards.output_range1}_{wildcards.output_range2}_First false 50000' --exec --Divide>/dev/null 2>/dev/null
+    python analysisConfig/changeAttr.py {input} --Dir data/Sn{wildcards.proj}{params.output_dir}/ {params.add_dir} --Unfold Unfolding/Sn{wildcards.proj}{params.output_dir}.root --execarg 'FinalM{wildcards.output_range1}_{wildcards.output_range2}_Second false 50000' --exec --Divide --Comp data/Sn{wildcards.proj}{params.output_dir}/FinalM{wildcards.output_range1}_{wildcards.output_range2}_First_ana.root>/dev/null 2>/dev/null
+
+    mv data/Sn{wildcards.proj}{params.output_dir}/FinalM{wildcards.output_range1}_{wildcards.output_range2}_First_ana.root data/Sn{wildcards.proj}Final/
+    mv data/Sn{wildcards.proj}{params.output_dir}/FinalM{wildcards.output_range1}_{wildcards.output_range2}_Second_ana.root data/Sn{wildcards.proj}Final/
+    '''

@@ -1,0 +1,200 @@
+from shutil import copyfile
+import numpy as np
+from analysisConfig.changeAttr import main as attr_change
+
+step = 0.3
+erat_output_range = [[round(erat, 1), round(erat + step, 1)] for erat in np.arange(0, 2.5, step)] #The desired partition of the analyzed files
+erat_output_range = erat_output_range + [[erat_output_range[-1][-1], 5]]
+iter_samples = 100000
+tot_samples = -1
+phi_eff_overlap = 4
+
+"""
+Don't change anything below
+"""
+sys = [108, 112, 124, 132]
+erat_file_ranges = [[0, 1], [1, 1.5], [1.5, 2], [2, 2.5], [2.5, 5]]
+erat_output_files = [] #list of directies from which data is loaded for the desire partition
+# decide what files to load the approporate eratiplicity ranges
+for erat_range in erat_output_range:
+  output_files = []
+  # find which partition(s) contains all desired eratiplicity ranged data
+  for file_range in erat_file_ranges:
+    if erat_range[0] < file_range[1] and erat_range[0] < erat_range[1]:
+      output_files.append('ERat%g_%g' % (file_range[0], file_range[1]))
+  erat_output_files.append(output_files)
+
+output_full_dir = []
+for proj in sys:
+  for erat_range, output_dir in zip(erat_output_range, erat_output_files):
+    output_full_dir.append('data/Sn%dFinal/FinalERat%g_%g_PhiCor_ana.root' % (proj, erat_range[0], erat_range[1]))
+    output_full_dir.append('data/Sn%dFinal/FinalERat%g_%g_PhiCor_graph.root' % (proj, erat_range[0], erat_range[1]))
+    output_full_dir.append('data/Sn%dFinal/FinalERat%g_%g_First_ana.root' % (proj, erat_range[0], erat_range[1]))
+    output_full_dir.append('data/Sn%dFinal/FinalERat%g_%g_Second_ana.root' % (proj, erat_range[0], erat_range[1]))
+
+#ruleorder: analysis_res > analysis
+
+output_dir_lambda = lambda wildcards: erat_output_files[erat_output_range.index([float(wildcards.output_range1), float(wildcards.output_range2)])][0]
+
+rule all:
+  input:
+    expand('{output}', output=output_full_dir),
+    expand('data/Sn{sys}Final/Res.txt', sys=sys)
+
+rule IterPIDMeta:
+  input:
+    'Prior/Meta_Sn{proj}Template.root',
+    'analysisConfig/analysisSn{proj}CM.xml'
+  output:
+    'Prior/Meta_Sn{proj}ERat{output_range1}_{output_range2}.root',
+    temp('analysisConfig/analysisSn{proj}CM_ERat{output_range1}_{output_range2}_temp.xml'),
+    temp('data/Sn{proj}Final/TempFinalERat{output_range1}_{output_range2}_ana.root'),
+  params:
+    output_dir = output_dir_lambda,
+  run:
+    with open(input[1]) as f:
+      data = f.read()
+    data = data.replace('Prior/Meta_Sn' + wildcards.proj + 'KanekoMult50.root', output[0])
+    with open(output[1], 'wt') as f:
+      f.write(data)
+
+    # seed of the iteration
+    copyfile(input[0], output[0])
+    args = {'Dir': os.path.join('data', 'Sn' + wildcards.proj + params.output_dir) + '/',
+            'AddDir': ['data/Sn%s%s/' % (wildcards.proj, dir_suffix) for dir_suffix in erat_output_files[erat_output_range.index([float(wildcards.output_range1), float(wildcards.output_range2)])][1:]],
+            'MMin': str(0),
+            'MMax': str(150),
+            'ERatMin': wildcards.output_range1,
+            'ERatMax': wildcards.output_range2,
+            'rmTask' : ['EfficiencyTask', 'SimpleGraphsTask', 'ReactionPlaneTask', 'ERATTask'],
+            'execarg': 'TempFinalERat' + wildcards.output_range1 + '_' + wildcards.output_range2 + ' false %d true' % iter_samples,
+            'exec': True}
+    output_filename = 'TempFinalERat' + wildcards.output_range1 + '_' + wildcards.output_range2 + '_ana.root'
+    for i in range(3):
+      attr_change(output[1], args)
+    os.rename(os.path.join(args['Dir'], output_filename), os.path.join('data', 'Sn' + wildcards.proj + 'Final', output_filename))
+
+rule IterUnfold:
+  input:
+    'Unfolding/Sn{proj}Template.root',
+    'analysisConfig/analysisSn{proj}CM.xml',
+    'Prior/Meta_Sn{proj}ERat{output_range1}_{output_range2}.root',
+  output:
+    'Unfolding/Sn{proj}ERat{output_range1}_{output_range2}.root',
+    temp('analysisConfig/analysisSn{proj}CM_ERat{output_range1}_{output_range2}_temp.xml'),
+    temp('data/Sn{proj}Final/TempFinalERat{output_range1}_{output_range2}_ana.root'),
+  params:
+    output_dir = output_dir_lambda,
+  run:
+    with open(input[1]) as f:
+      data = f.read()
+    data = data.replace('Prior/Meta_Sn' + wildcards.proj + 'KanekoMult50.root', input[2])
+    data = data.replace('Sn' + wildcards.proj + 'Unfold.root', os.path.basename(output[0]))
+    with open(output[1], 'wt') as f:
+      f.write(data)
+
+    # seed of the iteration
+    copyfile(input[0], output[0])
+    args = {'Dir': os.path.join('data', 'Sn' + wildcards.proj + params.output_dir) + '/',
+            'AddDir':  ['data/Sn%s%s/' % (wildcards.proj, dir_suffix) for dir_suffix in erat_output_files[erat_output_range.index([float(wildcards.output_range1), float(wildcards.output_range2)])][1:]],
+            'rmTask' : ['SimpleGraphsTask', 'ReactionPlaneTask', 'ERATTask'],
+            'MMin': str(0),
+            'MMax': str(150),
+            'ERatMin': wildcards.output_range1,
+            'ERatMax': wildcards.output_range2,
+            'execarg': 'TempFinalERat' + wildcards.output_range1 + '_' + wildcards.output_range2 + ' true %d false' % iter_samples,
+            'exec': True}
+    output_filename = 'TempFinalERat' + wildcards.output_range1 + '_' + wildcards.output_range2 + '_ana.root'
+    for i in range(3):
+      attr_change(output[1], args)
+    os.rename(os.path.join(args['Dir'], output_filename), os.path.join('data', 'Sn' + wildcards.proj + 'Final', output_filename))
+
+def input_for_status(wcs):
+  input = ['analysisConfig/analysisSn' + wcs.proj + 'CM.xml',
+           'Prior/Meta_Sn%sERat%s_%s.root' % (wcs.proj, wcs.output_range1, wcs.output_range2),
+           'Unfolding/Sn%sERat%s_%s.root' % (wcs.proj, wcs.output_range1, wcs.output_range2)]
+  if wcs.status != 'NoPhiEff':
+    input = input + ['PhiEff/Sn%sERat%s_%s.root' % (wcs.proj, wcs.output_range1, wcs.output_range2)]
+  if wcs.status == 'Second':
+    input = input + ['data/Sn%sFinal/FinalERat%s_%s_First_ana.root' % (wcs.proj, wcs.output_range1, wcs.output_range2)]
+  return input
+    
+ 
+rule analysis:
+  input:
+    files = input_for_status
+  output:
+    'analysisConfig/analysisSn{proj}CMERat{output_range1}_{output_range2}_{status}.xml',
+    'data/Sn{proj}Final/FinalERat{output_range1}_{output_range2}_{status}_ana.root'
+  params:
+    output_dir = output_dir_lambda,
+  run:
+    with open(input.files[0]) as f:
+      data = f.read()
+    data = data.replace('Prior/Meta_Sn' + wildcards.proj + 'KanekoMult50.root', input.files[1])
+    data = data.replace('Sn' + wildcards.proj + 'Unfold.root', os.path.basename(input.files[2]))
+    with open(output[0], 'wt') as f:
+      f.write(data)
+
+    output_filename = 'FinalERat' + wildcards.output_range1 + '_' + wildcards.output_range2 + '_' + wildcards.status
+    args = {'Dir': os.path.join('data', 'Sn' + wildcards.proj + params.output_dir) + '/',
+            'AddDir': ['data/Sn%s%s/' % (wildcards.proj, dir_suffix) for dir_suffix in erat_output_files[erat_output_range.index([float(wildcards.output_range1), float(wildcards.output_range2)])][1:]],
+            'MMin': str(0),
+            'MMax': str(150),
+            'ERatMin': wildcards.output_range1,
+            'ERatMax': wildcards.output_range2,
+            'PhiEff': None if wildcards.status == 'NoPhiEff' else input.files[3],
+            'execarg': output_filename + ' false %d' % tot_samples,
+            'Divide': True if wildcards.status == 'First' or wildcards.status == 'Second' else False,
+            'Comp': input.files[4] if wildcards.status == 'Second' else None,
+            'exec': True}
+    output_filename = output_filename + '_ana.root'
+    attr_change(output[0], args)
+    os.rename(os.path.join(args['Dir'], output_filename), os.path.join('data', 'Sn' + wildcards.proj + 'Final', output_filename))
+
+def phi_list_for_eratiplicity(wcs):
+  erat_range = [float(wcs.output_range1), float(wcs.output_range2)]
+  idx = erat_output_range.index(erat_range)
+  idx_start = int(idx - phi_eff_overlap/2)
+  idx_end = int(idx + phi_eff_overlap/2)
+  if idx_start < 0:
+    idx_start = 0
+  if idx_end > len(erat_output_range):
+    idx_end = len(erat_output_range)
+  return ['data/Sn%sFinal/FinalERat%g_%g_NoPhiEff_ana.root' % (wcs.proj, range_[0], range_[1]) for range_ in erat_output_range[idx_start:idx_end]]
+
+rule PhiEff:
+  input:
+    files = phi_list_for_eratiplicity
+  output:
+    'PhiEff/Sn{proj}ERat{output_range1}_{output_range2}.root'
+  params:
+    phi_comma_sep = lambda wildcards, input: '","'.join(input.files)
+  shell:
+   '''
+   root -b -l -q 'submissionScript/GetPhiEff.C({{"{params.phi_comma_sep}"}},"{output}",8,20)' || true
+   '''
+    
+rule ReactionPlaneResolution:
+  input:
+    first = lambda wcs: ['data/Sn{proj}Final/FinalERat%g_%g_First_ana.root' % (erat[0], erat[1]) for erat in erat_output_range],
+    second = lambda wcs: ['data/Sn{proj}Final/FinalERat%g_%g_Second_ana.root' % (erat[0], erat[1]) for erat in erat_output_range],
+  output:
+    'data/Sn{proj}Final/Res.txt'
+  params:
+    first_comma_sep = lambda wildcards, input: '","'.join(input.first),
+    second_comma_sep = lambda wildcards, input: '","'.join(input.second)
+  shell:
+    '''
+    root -b -l -q 'submissionScript/GetRPRes.C({{"{params.first_comma_sep}"}},{{"{params.second_comma_sep}"}})' > {output}
+    '''
+
+rule GetAccurateGraph:
+  input:
+    'data/Sn{proj}Final/FinalERat{output_range1}_{output_range2}_PhiCor_ana.root',
+  output:
+    'data/Sn{proj}Final/FinalERat{output_range1}_{output_range2}_PhiCor_graph.root',
+  shell:
+    '''
+    root -b -l -q 'run_analysis_graph.C("Sn{wildcards.proj}Final/FinalERat{wildcards.output_range1}_{wildcards.output_range2}_PhiCor")' || true
+    '''

@@ -1,0 +1,240 @@
+{
+  "__default__" :
+  {
+    "job-name" : "default",
+    "time" : "15:00:0",
+    "mem" : "4G",
+    "ntasks" : "1",
+    "cpus-per-task" : "1",
+    "output" : "log/{rule}.out",
+    "error" : "log/{rule}.err"
+  },
+  "IterPIDMeta" :
+  {
+    "job-name" : "IterPIDMeta",
+    "time" : "15:00:0",
+    "mem" : "4G",
+    "ntasks" : "1",
+    "cpus-per-task" : "1",
+    "output" : "log/{rule}.{wildcards}out",
+    "error" : "log/{rule}.{wildcards}err"
+  },
+  "IterUnfold" :
+  {
+    "job-name" : "IterUnfold",
+    "time" : "15:00:0",
+    "mem" : "4G",
+    "ntasks" : "1",
+    "cpus-per-task" : "1",
+    "output" : "log/{rule}.{wildcards}out",
+    "error" : "log/{rule}.{wildcards}err"
+  },
+  "analysis" :
+  {
+    "job-name" : "analysis",
+    "time" : "15:00:0",
+    "mem" : "4G",
+    "ntasks" : "1",
+    "cpus-per-task" : "1",
+    "output" : "log/{rule}.{wildcards}out",
+    "error" : "log/{rule}.{wildcards}err"
+  },
+
+
+
+  "run_mc" :
+  {
+    "job-name" : "MC_{params.job_id}",
+    "output" : "log/{wildcards.filename}_MCControl.out",
+    "error" : "log/{wildcards.filename}_MCControl.err",
+    "time" : "10:00:00",
+    "mem" : "3000",
+    "ntasks" : "{resources.cpu}",
+    "cpus-per-task" : "{resources.cpu}"
+  },
+
+  "run_mc_new" :
+  {
+    "job-name" : "MC_{params.job_id}",
+    "output" : "log/{wildcards.output_dir}_Group_{wildcards.job_id}_ParticleType{wildcards.particle_type}_SARR_{wildcards.id}_MCControl.out",
+    "error" : "log/{wildcards.output_dir}_Group_{wildcards.job_id}_ParticleType{wildcards.particle_type}_SARR_{wildcards.id}_MCControl.err",
+    "time" : "10:00:00",
+    "mem" : "3000",
+    "ntasks" : "{resources.cpu}",
+    "cpus-per-task" : "{resources.cpu}"
+  },
+
+  "run_mc_parallel" :
+  {
+    "job-name" : "MCParallel_{wildcards.job_id}",
+    "output" : "log/{wildcards.filename}_MCControl.out",
+    "error" : "log/{wildcards.filename}_MCControl.err",
+    "time" : "02:00:00",
+    "mem" : "{resources.RAM}",
+    "ntasks" : "1",
+    "cpus-per-task" : "{resources.cpu}"
+  },
+  "run_reco_parallel" :
+  {
+    "job-name" : "RecoParallel_{wildcards.job_id}",
+    "output" : "log/{wildcards.filename}_n{wildcards.job_id}_RecoControl.out",
+    "error" : "log/{wildcards.filename}_n{wildcards.job_id}_RecoControl.err",
+    "time" : "03:59:59",
+    "mem" : "{resources.RAM}",
+    "ntasks" : "1",
+    "cpus-per-task" : "{resources.cpu}"
+  },
+  "run_reco_mc_parallel" :
+  {
+    "job-name" : "RecoMCParallel_{wildcards.job_id}",
+    "output" : "log/{wildcards.filename}_n{wildcards.job_id}_RecoMCControl.out",
+    "error" : "log/{wildcards.filename}_n{wildcards.job_id}_RecoMCControl.err",
+    "time" : "03:59:59",
+    "mem" : "{resources.RAM}",
+    "ntasks" : "1",
+    "cpus-per-task" : "{resources.cpu}"
+  },
+ 
+ 
+  "run_reco" :
+  {
+    "job-name" : "Reco_{params.job_id}",
+    "output" : "log/{wildcards.filename}_id_{wildcards.id}_RecoControl.out",
+    "error" : "log/{wildcards.filename}_id_{wildcards.id}_RecoControl.err",
+    "time" : "20:00:00",
+    "mem" : "4000",
+    "ntasks" : "1",
+    "cpus-per-task" : "{resources.cpu}"
+  },
+  "run_reco_new" :
+  {
+    "job-name" : "Reco_{params.job_id}",
+    "output" : "log/{wildcards.output_dir}/Group_{wildcards.job_id}_ParticleType_{wildcards.particle_type}_s{wildcards.run_id}_RecoControl.out",
+    "error" : "log/{wildcards.output_dir}/Group_{wildcards.job_id}_ParticleType_{wildcards.particle_type}_s{wildcards.run_id}_RecoControl.err",
+
+    "time" : "20:00:00",
+    "mem" : "4000",
+    "ntasks" : "1",
+    "cpus-per-task" : "{resources.cpu}"
+  },
+
+  "run_reco_SC" :
+  {
+    "job-name" : "RecoSC",
+    "output" : "log/FindSCTemp/Run{wildcards.run_num}_SC{wildcards.SC}/reco_id_{wildcards.id}_RecoControl.out",
+    "error" : "log/FindSCTemp/Run{wildcards.run_num}_SC{wildcards.SC}/reco_id_{wildcards.id}_RecoControl.err",
+    "time" : "07:00:00",
+    "mem" : "4000",
+    "ntasks" : "1",
+    "cpus-per-task" : "{resources.cpu}"
+  },
+
+  "run_onlyreco" :
+  {
+    "job-name" : "Reco_{wildcards.run_num}",
+    "output" : "log/Run{wildcards.run_num}_reco_{wildcards.id}_RecoControl.out",
+    "error" : "log/Run{wildcards.run_num}_reco_{wildcards.id}_RecoControl.err",
+    "time" : "07:00:00",
+    "mem" : "4000",
+    "ntasks" : "1",
+    "cpus-per-task" : "{resources.cpu}"
+  },
+
+
+
+  "run_reco_mc" :
+  {
+    "job-name" : "RecoMC_{params.job_id}",
+    "output" : "log/{wildcards.filename}_id_{wildcards.id}_RecoMCControl.out",
+    "error" : "log/{wildcards.filename}_id_{wildcards.id}_RecoMCControl.err",
+    "time" : "07:00:00",
+    "mem" : "4000",
+    "ntasks" : "1",
+    "cpus-per-task" : "{resources.cpu}"
+  },
+
+  "Analyze" :
+  {
+    "job-name" : "Analyze",
+    "output" : "log/{wildcards.filename}_Analyze.out",
+    "error" : "log/{wildcards.filename}_Analyze.err",
+    "time" : "00:30:00",
+    "mem" : "4000",
+    "ntasks" : "1",
+    "cpus-per-task" : "1"
+  },
+  "run_transport_mc":
+  {
+    "job-name" : "MC_{wildcards.id}",
+    "output" : "log/{params.filename_for_output}_id_{wildcards.id}_MCTransport.out",
+    "error" : "log/{params.filename_for_output}_id_{wildcards.id}_MCTransport.err",
+    "time" : "03:59:59",
+    "mem" : "2000",
+    "ntasks" : "1",
+    "cpus-per-task" : "1"
+  },
+  "run_transport_parallel_mc":
+  {
+    "job-name" : "MCParallel",
+    "output" : "log/{wildcards.DIRNAME}/{wildcards.filename}_{wildcards.PDG}_node{wildcards.Node}_parallel_MCTransport.out",
+    "error" : "log/{wildcards.DIRNAME}/{wildcards.filename}_{wildcards.PDG}_node{wildcards.Node}_parallel_MCTransport.err",
+    "time" : "03:59:59",
+    "mem" : "{params.Ram}",
+    "ntasks" : "1",
+    "cpus-per-task" : "{params.Jobs_Per_Node}"
+  },
+  "run_transport_parallel_digi":
+  {
+    "job-name" : "DigiParallel",
+    "output" : "log/{wildcards.filename}_parallel_node{wildcards.Node}_DigiTransport.out",
+    "error" : "log/{wildcards.filename}_parallel_node{wildcards.Node}_DigiTransport.err",
+    "time" : "03:59:59",
+    "mem" : "{params.Ram}",
+    "ntasks" : "1",
+    "cpus-per-task" : "{params.Jobs_Per_Node}"
+  },
+  "run_transport_parallel_reco":
+  {
+    "job-name" : "RecoParallel",
+    "output" : "log/{wildcards.filename}_parallel_node{wildcards.Node}_RecoTransport.out",
+    "error" : "log/{wildcards.filename}_parallel_node{wildcards.Node}_RecoTransport.err",
+    "time" : "03:59:59",
+    "mem" : "{params.Ram}",
+    "ntasks" : "1",
+    "cpus-per-task" : "{params.Jobs_Per_Node}"
+  },
+
+  "run_merge_mc":
+  {
+    "job-name" : "MergeMC_{wildcards.id}",
+    "output" : "log/{wildcards.DIRNAME}/{wildcards.filename}_Merged_id_{wildcards.id}_MCMergeTransport.out",
+    "error" : "log/{wildcards.DIRNAME}/{wildcards.filename}_Merged_id_{wildcards.id}_MCMergeTransport.err",
+    "time" : "03:59:59",
+    "mem" : "4000",
+    "ntasks" : "1",
+    "cpus-per-task" : "1"
+  },
+
+  "run_transport_digi":
+  {
+    "job-name" : "Digi_{wildcards.id}",
+    "output" : "log/{wildcards.filename}_id_{wildcards.id}_DigiTransport.out",
+    "error" : "log/{wildcards.filename}_id_{wildcards.id}_DigiTransport.err",
+    "time" : "03:59:59",
+    "mem" : "6000",
+    "ntasks" : "1",
+    "cpus-per-task" : "1"
+  },
+  "run_transport_reco":
+  {
+    "job-name" : "Reco_{wildcards.id}",
+    "output" : "log/{wildcards.filename}_id_{wildcards.id}_RecoTransport.out",
+    "error" : "log/{wildcards.filename}_id_{wildcards.id}_RecoTransport.err",
+    "time" : "03:59:59",
+    "mem" : "3000",
+    "ntasks" : "1",
+    "cpus-per-task" : "1"
+  }
+
+
+}

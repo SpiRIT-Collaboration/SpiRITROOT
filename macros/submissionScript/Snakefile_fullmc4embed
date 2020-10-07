@@ -1,0 +1,108 @@
+Tot_Evt = 110
+Num_Divided = 11
+DirName = 'ApproxSn112DigiEmbed'
+FileName = ['approx_Sn112Sn124CorV']
+digiCharge = [10.2]
+length = [150]
+space_charge = 4e-8
+
+import os
+vmc_dir = os.environ['VMCWORKDIR']
+evt_per_job = int(Tot_Evt/Num_Divided)
+os.makedirs(os.path.join(vmc_dir, 'macros', 'log', DirName), exist_ok=True)
+
+rule run_all:
+  input:
+    expand('{VMCDIR}/macros/data/{DIRNAME}/{FILENAME}_DigiCharge{digiCharge}_merged.digi.root', DIRNAME=DirName, FILENAME=FileName, VMCDIR=vmc_dir, id=list(range(Num_Divided)), digiCharge=digiCharge),
+    expand('{VMCDIR}/parameters/{FILENAME}_Vertex.dat', FILENAME=FileName, VMCDIR=vmc_dir)
+
+
+
+rule run_transport_mc:
+  output:
+    temp(expand('{VMCDIR}/macros/data/{{DIRNAME}}/{{filename}}_s{{id}}.mc.root', VMCDIR=vmc_dir)),
+    temp(expand('{VMCDIR}/macros/data/{{DIRNAME}}/{{filename}}_s{{id}}.params.root', VMCDIR=vmc_dir)),
+  resources:
+    cpu=1
+  params:
+    log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+    run_num = evt_per_job,
+    start_num =  lambda wildcards: evt_per_job*int(str(wildcards.id)),
+    pdg = '2212,1000010020,1000010030,1000020030,1000020040,211,-211',
+  shell:
+    """
+    LOGDIR={params.log_dir}/{wildcards.DIRNAME}/{wildcards.filename}
+    mkdir -p ${{LOGDIR}}
+    root -b -q -l 'run_transport_mc.C("{wildcards.DIRNAME}/{wildcards.filename}_s{wildcards.id}",
+                                      {params.run_num},"","data/",
+                                      kTRUE,{params.start_num},{{{params.pdg}}},
+                                      "{wildcards.filename}.root")' > ${{LOGDIR}}_{wildcards.id}_mc.log
+    """
+
+rule run_transport_digi:
+  input:
+    expand('{VMCDIR}/macros/data/{{filename}}_s{{id}}.mc.root', VMCDIR=vmc_dir),
+    expand('{VMCDIR}/macros/data/{{filename}}_s{{id}}.params.root', VMCDIR=vmc_dir)
+  output:
+    expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_s{{id}}.digi.root', VMCDIR=vmc_dir),
+  resources:
+    cpu=1
+  params:
+    log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+    run_num = evt_per_job,
+    start_num =  lambda wildcards: evt_per_job*int(str(wildcards.id)),
+    space_charge = space_charge
+  shell:
+    """
+    LOGDIR={params.log_dir}/{wildcards.filename}
+    mkdir -p ${{LOGDIR}}
+    root -b -q -l 'run_digi.C("{wildcards.filename}_s{wildcards.id}",
+                              {params.space_charge},
+                              "ST.parameters.fullmc.par",true,
+                              {wildcards.digiCharge},
+                              "{wildcards.filename}_DigiCharge{wildcards.digiCharge}_s{wildcards.id}")' > ${{LOGDIR}}_DigiCharge{wildcards.digiCharge}_{wildcards.id}_digi.log
+    """
+
+rule merge_digi:
+  input:
+    expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_s{id}.digi.root', VMCDIR=vmc_dir, id=list(range(Num_Divided)))
+  output:
+    expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_merged.digi.root', VMCDIR=vmc_dir)
+  shell:
+    """
+    input_list="{input}"
+    input_list=$( echo ${{input_list// /\\\",\\\"}} )
+    root -b -l -q 'submissionScript/hadd_digi.C("{output}",{{"'${{input_list}}'"}})' || true
+    """
+
+rule run_transport_reco:
+  input:
+    expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_s{{id}}.digi.root', VMCDIR=vmc_dir),
+  output:
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_s{{id}}_s0.reco.v1.04.root', VMCDIR=vmc_dir)),
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_DigiCharge{{digiCharge}}_s{{id}}_s0.reco.v1.04.conc.root', VMCDIR=vmc_dir))
+  resources:
+    cpu=1
+  params:
+    log_dir = os.path.join(vmc_dir, 'macros', 'log'),
+    run_num = evt_per_job,
+    start_num =  lambda wildcards: evt_per_job*int(str(wildcards.id)),
+    length=150
+  shell:
+    """
+    LOGDIR={params.log_dir}/{wildcards.filename}
+    root -b -q -l 'run_reco_mc.C("{wildcards.filename}_DigiCharge{wildcards.digiCharge}_s{wildcards.id}","{wildcards.filename}_DigiCharge{wildcards.digiCharge}_s{wildcards.id}")' > ${{LOGDIR}}_{wildcards.id}_reco.log
+    """
+
+rule get_vertex:
+  input:
+    expand('{VMCDIR}/macros/data/{DIRNAME}/{{filename}}_DigiCharge{digiCharge}_s{id}_s0.reco.v1.04.conc.root', DIRNAME=DirName, VMCDIR=vmc_dir, digiCharge=digiCharge, id=list(range(Num_Divided)))
+  output:
+    expand('{VMCDIR}/parameters/{{filename}}_Vertex.dat', VMCDIR=vmc_dir)
+  shell:
+    """
+    input_list="{input}"
+    input_list=$( echo ${{input_list// /\\\",\\\"}} )
+    root -b -l -q 'submissionScript/GetVertex.C("{output}",{{"'${{input_list}}'"}})'
+    """
+   
