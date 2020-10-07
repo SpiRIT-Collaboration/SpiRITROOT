@@ -46,25 +46,12 @@ InitStatus STAzimuthalCorRPTask::Init()
     return kERROR;
   }
 
-  if(!fEffFilename.empty())
-  {
-    fLogger -> Info(MESSAGE_ORIGIN, ("Phi Efficiency file is loaded from " + fEffFilename).c_str());
-    fEffFile = new TFile(fEffFilename.c_str());
-    for(auto pdg : fSupportedPDG)
-    {
-      fEff[pdg] = (TH2F*) fEffFile -> Get(TString::Format("PhiEfficiency%d", pdg));
-      if(!fEff[pdg]) fLogger -> Fatal(MESSAGE_ORIGIN, "Efficiency histogram cannot be loaded. Will ignore efficiency");
-      else fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Efficiency histogram of particle %d is loaded", pdg));
-    }
-    if(auto temp = (TParameter<int>*) fEffFile -> Get("NClus")) fMinNClusters = temp -> GetVal();
-    if(auto temp = (TParameter<double>*) fEffFile -> Get("DPOCA")) fMaxDPOCA = temp -> GetVal();
-  }
-
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   fCMVector = (TClonesArray*) ioMan -> GetObject("CMVector");
   fProb = (TClonesArray*) ioMan -> GetObject("Prob");
   fFragRapidity = (TClonesArray*) ioMan -> GetObject("FragRapidity");
   fBeamRapidity = (STVectorF*) ioMan -> GetObject("BeamRapidity");
+  fPhiEff = (TClonesArray*) ioMan -> GetObject("PhiEff");
 
   fReactionPlane = new STVectorF();
   fReactionPlane -> fElements.push_back(0);
@@ -75,14 +62,9 @@ InitStatus STAzimuthalCorRPTask::Init()
   ioMan -> Register("RPV2", "ST", fReactionPlaneV2, fIsPersistence);
 
   fV1RPAngle = new TClonesArray("STVectorF");
-  fPhiEff = new TClonesArray("STVectorF");
   for(int i = 0; i < fSupportedPDG.size(); ++i)
-  {
     new((*fV1RPAngle)[i]) STVectorF();
-    new((*fPhiEff)[i]) STVectorF();
-  }
   ioMan -> Register("V1RPAngle", "ST", fV1RPAngle, fIsPersistence);
-  ioMan -> Register("PhiEff", "ST", fPhiEff, fIsPersistence);
 
   return kSUCCESS;
 }
@@ -99,14 +81,13 @@ void STAzimuthalCorRPTask::Exec(Option_t *opt)
   int mult = 0;
   for(int i = 0; i < num_pdgs; ++i)
   {
-    auto& phiEff = static_cast<STVectorF*>(fPhiEff -> At(i)) -> fElements;
-    phiEff.clear();
+    STVectorF* phiEff = nullptr;
+    if(fPhiEff) phiEff = static_cast<STVectorF*>(fPhiEff -> At(i));
     auto cmVector = static_cast<STVectorVec3*>(fCMVector -> At(i));
     auto prob = static_cast<STVectorF*>(fProb -> At(i));
     auto rap = static_cast<STVectorF*>(fFragRapidity -> At(i));
     mult = cmVector -> fElements.size();
     int pdg = fSupportedPDG[i];
-    auto TEff = fEff[pdg];
 
     for(int j = 0; j < mult; ++j) 
     {
@@ -115,14 +96,9 @@ void STAzimuthalCorRPTask::Exec(Option_t *opt)
       Y2_elements[i].push_back(vec_unit.Y()*vec_unit.Y());
       XY_elements[i].push_back(vec_unit.X()*vec_unit.Y());
 
-      double eff = 1;
-      double theta = cmVector -> fElements[j].Theta();
-      double phi = cmVector -> fElements[j].Phi();
-      if(TEff && !std::isnan(theta)) eff = TEff -> Interpolate(theta, phi);
-      phiEff.push_back(eff);
+      double eff = (phiEff)? phiEff -> fElements[j] : 1;
       //weight[i].push_back(prob -> fElements[j]);
-      if(data -> vaNRowClusters[j] + data -> vaNLayerClusters[j] >= fMinNClusters && 
-         data -> recodpoca[j].Mag() < fMaxDPOCA && eff > 0 && fabs(2*rap -> fElements[j]/beamRap) > 0.2) 
+      if(eff > 0 && fabs(2*rap -> fElements[j]/beamRap) > 0.4) 
       {
         weight[i].push_back(prob -> fElements[j]/eff);
         if(rap -> fElements[j] > 0) Qx += weight[i].back()*cmVector -> fElements[j].y();
@@ -195,6 +171,3 @@ void STAzimuthalCorRPTask::Exec(Option_t *opt)
 void STAzimuthalCorRPTask::SetPersistence(Bool_t value)                                              { fIsPersistence = value; }
 void STAzimuthalCorRPTask::SetCutConditions(int min_clusters, double max_dpoca)
 { fMinNClusters = min_clusters; fMaxDPOCA = max_dpoca; }
-void STAzimuthalCorRPTask::LoadPhiEff(const std::string& eff_filename)
-{ fEffFilename = eff_filename; }
-

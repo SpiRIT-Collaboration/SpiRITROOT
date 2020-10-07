@@ -111,6 +111,11 @@ void STFilterEventTask::Exec(Option_t *opt)
     int type = static_cast<STVectorI*>(fEventType -> At(0)) -> fElements[0];
     if(type == 6 || type == 7) fill = false;
   }
+  if(fRejectEmpty)
+  {
+    int type = static_cast<STVectorI*>(fEventType -> At(0)) -> fElements[0];
+    if(type == 0) fill = false;
+  }
   if(fERatCut && fERat)
   {
     auto erat = fERat -> fElements[0];

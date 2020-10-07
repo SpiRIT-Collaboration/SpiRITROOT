@@ -59,6 +59,7 @@ class STPIDProbTask : public FairTask {
 
     void SetMetaFile(const std::string& t_metafile, bool t_update=false);
     void SetPIDFitFile(const std::string& t_fitfile);
+    void SetMetaFileUpdate(bool t_update) { fIterateMeta = t_update; };
  
     // global function to assist fitting PID lines
     static void FitPID(const std::string& anaFile, const std::string& fitFile);

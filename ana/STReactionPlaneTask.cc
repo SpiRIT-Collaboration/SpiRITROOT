@@ -30,12 +30,10 @@ STReactionPlaneTask::STReactionPlaneTask()
   fQMag = new STVectorF();
   fQMag -> fElements.push_back(0);
 
-  fPhiEff = new TClonesArray("STVectorF");
   fV1RPAngle = new TClonesArray("STVectorF");
   fV2RPAngle = new TClonesArray("STVectorF");
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
-    new((*fPhiEff)[i]) STVectorF();
     new((*fV1RPAngle)[i]) STVectorF();
     new((*fV2RPAngle)[i]) STVectorF();
   }
@@ -89,19 +87,6 @@ InitStatus STReactionPlaneTask::Init()
     return kERROR;
   }
 
-  if(!fEffFilename.empty())
-  {
-    fLogger -> Info(MESSAGE_ORIGIN, ("Phi Efficiency file is loaded from " + fEffFilename).c_str());
-    fEffFile = new TFile(fEffFilename.c_str());
-    for(auto pdg : fSupportedPDG)
-    {
-      fEff[pdg] = (TH2F*) fEffFile -> Get(TString::Format("PhiEfficiency%d", pdg));
-      if(!fEff[pdg]) fLogger -> Fatal(MESSAGE_ORIGIN, "Efficiency histogram cannot be loaded. Will ignore efficiency");
-      else fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Efficiency histogram of particle %d is loaded", pdg));
-    }
-    if(auto temp = (TParameter<int>*) fEffFile -> Get("NClus")) fMinNClusters = temp -> GetVal();
-    if(auto temp = (TParameter<double>*) fEffFile -> Get("DPOCA")) fMaxDPOCA = temp -> GetVal();
-  }
   if(!fBiasFilename.empty())
   {
     fLogger -> Info(MESSAGE_ORIGIN, ("Bias correction file is loaded from " + fBiasFilename).c_str());
@@ -122,6 +107,7 @@ InitStatus STReactionPlaneTask::Init()
   fFragRapidity = (TClonesArray*) ioMan -> GetObject("FragRapidity");
   fBeamRapidity = (STVectorF*) ioMan -> GetObject("BeamRapidity");
   fMCRotZ = (STVectorF*) ioMan -> GetObject("MCRotZ");
+  fPhiEff = (TClonesArray*) ioMan -> GetObject("PhiEff");
 
   if(fUseMCReactionPlane)
   {
@@ -136,7 +122,6 @@ InitStatus STReactionPlaneTask::Init()
   ioMan -> Register("RP", "ST", fReactionPlane, fIsPersistence);
   ioMan -> Register("RPV2", "ST", fReactionPlaneV2, fIsPersistence);
   ioMan -> Register("QMag", "ST", fQMag, fIsPersistence);
-  ioMan -> Register("PhiEff", "ST", fPhiEff, fIsPersistence);
   ioMan -> Register("V1RPAngle", "ST", fV1RPAngle, fIsPersistence);
   ioMan -> Register("V2RPAngle", "ST", fV2RPAngle, fIsPersistence);
 
@@ -165,8 +150,8 @@ void STReactionPlaneTask::Exec(Option_t *opt)
   auto data = static_cast<STData*>(fData -> At(0));
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
-    auto& phiEff = static_cast<STVectorF*>(fPhiEff -> At(i)) -> fElements;
-    phiEff.clear();
+    STVectorF* phiEff = nullptr;
+    if(fPhiEff) phiEff = static_cast<STVectorF*>(fPhiEff -> At(i));
     auto cmVector = static_cast<STVectorVec3*>(fCMVector -> At(i));
     auto prob = static_cast<STVectorF*>(fProb -> At(i));
     auto rap = static_cast<STVectorF*>(fFragRapidity -> At(i));
@@ -175,19 +160,15 @@ void STReactionPlaneTask::Exec(Option_t *opt)
     auto mass = pinfo -> Mass()/STAnaParticleDB::kAu2Gev;
     auto charge = pinfo -> Charge()/3.;
     int pdg = fSupportedPDG[i];
-    auto TEff = fEff[pdg];
 
     for(int j = 0; j < mult; ++j)
     {
       TVector2 Q_v1(0, 0), Q_v2(0, 0);
       double weight = 0;
-      double eff = 1;
+      double eff = (phiEff)? phiEff -> fElements[j] : 1;
       const auto& vec = cmVector -> fElements[j];
       double theta = vec.Theta();
       double phi = vec.Phi();
-      if(TEff && !std::isnan(theta)) eff = TEff -> Interpolate(theta, phi);
-      if(!(data -> vaNRowClusters[j] + data -> vaNLayerClusters[j] > fMinNClusters && data -> recodpoca[j].Mag() < fMaxDPOCA)) eff = 0;
-      phiEff.push_back(eff);
 
       if(fabs(2*rap -> fElements[j]/beamRap) > fMidRapidity) // reject mid-rapidity particles
         if(vec.Theta() < fThetaCut)
@@ -206,7 +187,7 @@ void STReactionPlaneTask::Exec(Option_t *opt)
           if(vec.z() < 0) weight = -weight;
         }
       Q_v1_elements[i].push_back(weight*Q_v1);
-      Q_v2_elements[i].push_back(weight*Q_v2);
+      Q_v2_elements[i].push_back(std::fabs(weight)*Q_v2);
     }
   }
   TVector2 Q_v1_sum(0, 0), Q_v2_sum(0, 0);
@@ -261,60 +242,8 @@ void STReactionPlaneTask::FinishTask()
   }
 }
 
-void STReactionPlaneTask::LoadPhiEff(const std::string& eff_filename)
-{ fEffFilename = eff_filename; }
-
 void STReactionPlaneTask::LoadBiasCorrection(const std::string& bias_filename)
 { fBiasFilename = bias_filename; }
-
-void STReactionPlaneTask::CreatePhiEffFromData(const std::string& ana_filename, const std::string& out_filename, int nClus, double poca)
-{
-  TChain chain("cbmsim");
-  chain.Add(ana_filename.c_str());
-
-  // check if the momentum vector has been rotated
-  // can only create efficiency if the data is NOT rotated
-  {
-    auto fileList = chain.GetListOfFiles();
-    for(int i = 0; i < fileList->GetEntries(); ++i)
-    {
-      auto filename = fileList -> At(i) -> GetTitle();
-      TFile file(filename);
-      if(file.Get("Qx_mean"))
-      {
-        std::cerr << "The supplied file has been flattened. PhiEfficiency must be applied on files BEFORE flattening. ABORT.\n";
-        return;
-      }
-    }
-  }
-      
-  TFile output(out_filename.c_str(), "RECREATE");
-  TParameter<int> NClus("NClus", nClus);
-  TParameter<double> DPOCA("DPOCA", poca);
-  NClus.Write();
-  DPOCA.Write();
-  for(int i = 0; i < STAnaParticleDB::GetSupportedPDG().size(); ++i)
-  {
-    auto hist_name = TString::Format("PhiEfficiency%d", STAnaParticleDB::GetSupportedPDG()[i]);
-    TH2F hist(hist_name, "", 40, 0, 3.15, 100, -3.15, 3.15);
-    chain.Project(hist_name, TString::Format("CMVector[%d].fElements.Phi():CMVector[%d].fElements.Theta()", i, i), TString::Format("Prob[%d].fElements*(Prob[%d].fElements > 0.2 && STData[0].vaNRowClusters + STData[0].vaNLayerClusters >%d &&STData[0].recodpoca.Mag() < %f)", i, i, nClus, poca));
-    
-    // normalize
-    hist.Smooth();
-    for(int j = 0; j <= hist.GetNbinsX(); ++j)
-    {
-      // normalize each x-bin
-      auto proj = hist.ProjectionY("_px", j, j);
-      double max = proj -> GetMaximum();
-      max = (max == 0)? 1 : max;
-      proj -> Delete();
-      for(int k = 0; k <= hist.GetNbinsY(); ++k) 
-        hist.SetBinContent(j, k, hist.GetBinContent(j, k)/max);
-    }
-    output.cd();
-    hist.Write();
-  }
-}
 
 void STReactionPlaneTask::CreateBiasCorrection(const std::string& ana_filename, const std::string& out_filename)
 {
@@ -421,7 +350,7 @@ double STReactionPlaneTask::ReactionPlaneRes(const std::string& filename1, const
   auto v1_file1 = tree1 -> GetV1();
   auto v1_file2 = (tree2)? tree2 -> GetV1() : tree1 -> GetV3();
   auto v2_file1 = tree1 -> GetV2();
-  auto v2_file2 = (tree2)? tree2 -> GetV1() : tree1 -> GetV3();
+  auto v2_file2 = (tree2)? tree2 -> GetV2() : tree1 -> GetV3();
 
   double ave_cos_v1 = 0;
   double ave_cos2_v1 = 0;

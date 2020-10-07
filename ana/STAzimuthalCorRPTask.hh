@@ -38,7 +38,6 @@ class STAzimuthalCorRPTask : public FairTask {
     void SetPersistence(Bool_t value);
     void SetCutConditions(int min_clusters, double max_dpoca);
 
-    void LoadPhiEff(const std::string& eff_filename);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
@@ -59,11 +58,6 @@ class STAzimuthalCorRPTask : public FairTask {
     Double_t fMaxDPOCA = 20;
     std::vector<int> fSupportedPDG;
 
-    std::string fEffFilename;
-    TFile *fEffFile = nullptr;
-    std::map<int, TH2F*> fEff;
-
-  
   ClassDef(STAzimuthalCorRPTask, 1);
 };
 

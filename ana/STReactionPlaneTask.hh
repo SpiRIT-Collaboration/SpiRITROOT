@@ -50,7 +50,6 @@ class STReactionPlaneTask : public FairTask {
     virtual void FinishTask();
 
     void SetPersistence(Bool_t value);
-    void LoadPhiEff(const std::string& eff_filename);
     void LoadBiasCorrection(const std::string& bias_filename);
     void SetChargeCoef(double coef) { fChargeCoef = coef; }
     void SetMassCoef(double coef) { fMassCoef = coef; }
@@ -62,7 +61,6 @@ class STReactionPlaneTask : public FairTask {
     void UseShifting(bool val = true) { fShift = val; }
     void UseFlattening(bool val = true) {fFlat = val; }
 
-    static void CreatePhiEffFromData(const std::string& ana_filename, const std::string& out_filename, int nClus=5, double poca=20);
     static void CreateBiasCorrection(const std::string& ana_filename, const std::string& out_filename);
     static double ReactionPlaneRes(const std::string& filename1, const std::string& filename2);
   private:
@@ -88,9 +86,6 @@ class STReactionPlaneTask : public FairTask {
     STVectorF *fQMag;
     double fThetaCut = 90; // max theta in populating v1 and v2 in lab frame
     double fMidRapidity = 0.4; // when |y| < fMidRapidity, they will not count towards reaction plane calculation
-    std::string fEffFilename;
-    TFile *fEffFile = nullptr;
-    std::map<int, TH2F*> fEff;
     const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
 
     double fChargeCoef = 0;
@@ -99,8 +94,6 @@ class STReactionPlaneTask : public FairTask {
     std::vector<double> fParticleCoef; // alternative to the linear combination. Will ignore charge, mass and const coef it this is set
     bool fUseMCReactionPlane = false; // if enabled, will rotate particle using the truth MC rotation angle instead of the infered reaction plane
     double fMCReactionPlaneRes = 0;
-    int fMinNClusters = 0;
-    double fMaxDPOCA = 20;
 
     std::string fBiasFilename;
     TFile *fBiasFile = nullptr;

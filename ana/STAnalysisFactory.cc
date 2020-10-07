@@ -42,7 +42,7 @@ STReaderTask* STAnalysisFactory::GetReaderTask()
     reader -> SetBeamAndTarget(std::stoi(settings["beamA"]), std::stoi(settings["targetA"]),
                                std::stof(settings["beamEnergyPerA"]));
     // TEMPORARY. TO BE DELETED
-    reader -> RotateEvent();
+    //reader -> RotateEvent();
     fEntries = reader -> GetNEntries();
     return reader;
   }
@@ -76,6 +76,8 @@ STFilterEventTask* STAnalysisFactory::GetFilterEventTask()
                              std::stof(settings["MultiplicityDPOCA"]));
   if(!settings["ERatMin"].empty() && !settings["ERatMax"].empty())
     task -> SetERatCut(std::stof(settings["ERatMin"]), std::stof(settings["ERatMax"]));
+  auto it2 = settings.find("RejectEmpty");
+  if(it2 != settings.end()) task -> SetRejectEmpty(true);
   return task;
 }
 
@@ -94,7 +96,7 @@ FairTask* STAnalysisFactory::GetPIDTask()
   if(PIDType == "Bay")
   {
     auto task = new STPIDProbTask();
-    task -> SetMetaFile(settings["MetaFile"], false);
+    task -> SetMetaFile(settings["MetaFile"], (settings.find("Update") != settings.end()));
     task -> SetPIDFitFile(settings["PIDFit"]);
     return task;
   }
@@ -291,6 +293,20 @@ STSimpleGraphsTask* STAnalysisFactory::GetSimpleGraphsTask()
   return graphTask;
 }
 
+STPhiEfficiencyTask* STAnalysisFactory::GetPhiEfficiencyTask()
+{
+  auto it = fNodes.find("PhiEfficiencyTask");
+  if(it == fNodes.end()) return nullptr;
+  auto child = it -> second -> GetChildren();
+
+  auto settings = this -> fReadNodesToMap(child);
+  auto task = new STPhiEfficiencyTask();
+  task -> SetPersistence(true);
+  auto it2 = settings.find("PhiEff");
+  if(it2 != settings.end()) task -> LoadPhiEff(it2 -> second);
+  return task;
+}
+
 STReactionPlaneTask* STAnalysisFactory::GetReactionPlaneTask()
 {
   auto it = fNodes.find("ReactionPlaneTask");
@@ -299,8 +315,6 @@ STReactionPlaneTask* STAnalysisFactory::GetReactionPlaneTask()
   auto child = it -> second -> GetChildren();
  
   auto attr = this -> fReadNodesToMap(child);
-  auto it2 = attr.find("PhiEff");
-  if(it2 != attr.end()) reactionPlaneTask -> LoadPhiEff(it2 -> second);
   auto charge = attr["ChargeCoef"];
   if(!charge.empty()) reactionPlaneTask -> SetChargeCoef(std::stof(charge));
   auto mass = attr["MassCoef"];

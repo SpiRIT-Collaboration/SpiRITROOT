@@ -48,14 +48,14 @@ InitStatus STEfficiencyTask::Init()
   if(!fUnfoldingFileName.IsNull())
   {
     fLogger -> Info(MESSAGE_ORIGIN, "Setting up unfolding with distribution from " + fUnfoldingFileName);
-    fUnfoldingFile = std::unique_ptr<TFile>(new TFile(fUnfoldingFileName, "UPDATE"));
+    fUnfoldingFile = std::unique_ptr<TFile>(new TFile(fUnfoldingFileName, (fUpdateUnfolding)? "UPDATE" : "READ"));
     if(!fUnfoldingFile -> IsOpen())
     {   
       fLogger -> Info(MESSAGE_ORIGIN, "Cannot load unfolding file! Will disable unfolding");
       fUnfoldingFile.reset();
     }
   }
-
+ 
   for(int pdg : fSupportedPDG)
   {
     auto factory = fFactory[pdg];

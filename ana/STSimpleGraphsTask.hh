@@ -1,4 +1,4 @@
-//-----------------------------------------------------------
+
 // Description:
 //   Embed pulses onto the data
 //
@@ -96,7 +96,7 @@ class STSimpleGraphsTask : public FairTask {
     {
       for(auto pdg : fSupportedPDG)
       {
-        auto hist = this -> RegisterHistogram<T>(true, (fParticleName[pdg] + suffix).c_str(), args...);
+        auto hist = this -> RegisterHistogram<T>(true, (fParticleName.at(pdg) + suffix).c_str(), args...);
         this -> RegisterRuleWithParticle(pdg, [pdg, rule, hist](const DataPackage& package){ rule(package, hist, pdg); });
       } 
     };
@@ -104,12 +104,16 @@ class STSimpleGraphsTask : public FairTask {
     void RegisterRuleWithParticle(int pdg, std::function<void(const DataPackage&)> rule);
     void RegisterFinishTaskRule(std::function<void()> rule);
     void RegisterVPlots();
-    void RegisterRapidityPlots(double probThreshold=0.2, double SDThreshold=1000);
+    void RegisterRapidityPlots();
     void RegisterPlotsForMC();
     void RegisterPIDPlots();
     void RegisterPionPlots();
     void RemoveParticleMin();
     void DiscardData(const std::vector<int>& type) { fTypeToDiscard = type; };
+
+    static void CreateMCEventsFromHist(const std::string& forwardFile, const std::string& backwardFile,
+                                       const std::string& outputFile, int nevent, double energyPerN,
+                                       int multMin, int multMax, const std::string& simPara);
 
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
@@ -120,30 +124,16 @@ class STSimpleGraphsTask : public FairTask {
     virtual void FinishTask();
     void SetPersistence(Bool_t value);
 
-  
-  private:
-    FairLogger *fLogger;                ///< FairLogger singleton
-    Bool_t fIsPersistence;              ///< Persistence check variable
-    int fEntries;
-    bool fPlotRapidity = false;
-    bool fPlotPID = false;
-    bool fPlotVs = false;
-    bool fPlotPion = false;
-  
-    STDigiPar   *fPar  = nullptr;                 ///< Parameter read-out class pointer
-    STVectorI   *fSkip = nullptr;
-    DataPackage fDataPackage;
-
-    std::map<int, double> fMinMomForCMInLab;
-    std::map<int, std::string> fParticleName{{2212, "p"}, 
-                                             {1000010020, "d"}, 
-                                             {1000010030, "t"}, 
-                                             {1000020030, "He3"}, 
-                                             {1000020040, "He4"}, 
-                                             {1000020060, "He6"},
-                                             {211, "pip"},
-                                             {-211, "pim"}};
-
+    // parameters for graph drawing
+    // this one is for drawing flow
+    Double_t fPtThresholdForVs = 0.4;
+    Double_t fProbThresholdForVs = 0.95;
+    Double_t fPhiEffThresholdForVs = 0.2;
+    // this one is for rapidity plots
+    Double_t fProbThresholdForRap = 0.2;
+    Double_t fSDThresholdForRap = 1000;
+    Double_t fEffThresholdForRap = 0.05;
+    Double_t fPtThresholdForRap = 0;
     // For drawing PIDs
     int fNYaw = 6;
     int fNPitches = 5;
@@ -158,6 +148,23 @@ class STSimpleGraphsTask : public FairTask {
 
     Int_t fMinNClus = 15;
     Double_t fMaxDPOCA = 15;
+
+
+  private:
+    FairLogger *fLogger;                ///< FairLogger singleton
+    Bool_t fIsPersistence;              ///< Persistence check variable
+    int fEntries;
+    bool fPlotRapidity = false;
+    bool fPlotPID = false;
+    bool fPlotVs = false;
+    bool fPlotPion = false;
+  
+    STDigiPar   *fPar  = nullptr;                 ///< Parameter read-out class pointer
+    STVectorI   *fSkip = nullptr;
+    DataPackage fDataPackage;
+
+    std::map<int, double> fMinMomForCMInLab;
+    static const std::map<int, std::string> fParticleName;
 
     int _ToPitchId(const TVector3& vec);
     int _ToYawId(const TVector3& vec);

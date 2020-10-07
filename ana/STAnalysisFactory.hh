@@ -11,6 +11,7 @@
 #include "STModelReaderTask.hh"
 #include "STCSVReaderTask.hh"
 #include "STEfficiencyTask.hh"
+#include "STPhiEfficiencyTask.hh"
 #include "STPIDProbTask.hh"
 #include "STPIDAnalysisTask.hh"
 #include "STPiProbTask.hh"
@@ -36,6 +37,7 @@ public:
   STEfficiencyTask* GetEfficiencyTask();
   STERATTask* GetERATTask();
   STSimpleGraphsTask* GetSimpleGraphsTask();
+  STPhiEfficiencyTask *GetPhiEfficiencyTask();
   STReactionPlaneTask* GetReactionPlaneTask();
   STDivideEventTask* GetDivideEventTask();
 private:

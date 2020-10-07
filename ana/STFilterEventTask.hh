@@ -53,6 +53,7 @@ class STFilterEventTask : public FairTask {
     { fXDiff = xdiff; fXMean = xmean; fYDiff = ydiff; fYMean = ymean; fVertexBDCCut = true; }
     void SetRejectBadEvents(bool reject = true) { fRejectFastClose = reject; }
     void SetERatCut(double ERatMin, double ERatMax) { fERatMin = ERatMin; fERatMax = ERatMax; fERatCut = true; };
+    void SetRejectEmpty(bool val = true) { fRejectEmpty = val; }
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
     /// Setting parameter containers. This will be called inbetween Init() and Run().
@@ -84,6 +85,7 @@ class STFilterEventTask : public FairTask {
     bool fVertexBDCCut = false;
     double fXDiff, fXMean, fYDiff, fYMean;
     bool fRejectFastClose = false;
+    bool fRejectEmpty = false;
     double fERatMin, fERatMax;
     bool fERatCut = false;
     int fStatus;

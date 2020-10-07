@@ -59,6 +59,7 @@ STPIDProbTask.cc
 STPIDMachineLearningTask.cc
 STTransformFrameTask.cc
 STEfficiencyTask.cc
+STPhiEfficiencyTask.cc
 EfficiencyFactory.cc
 STMatchImQMDTask.cc
 STFilterTask.cc
@@ -84,6 +85,7 @@ Set(LIBRARY_NAME STAna)
 Set(DEPENDENCIES
     Base
     Stack
+    XMLParser
 # Add all library names your code depending on.
 # Basically those are the libraries in the header files' directory.
    STReco

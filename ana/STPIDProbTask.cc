@@ -164,6 +164,7 @@ void STPIDProbTask::FinishTask()
 
   if(fIterateMeta)
   {
+    fMetaFile -> ReOpen("UPDATE");
     fMetaFile -> cd();
     for(auto& hist : fMomPosteriorDistribution)
       hist.second.Write(TString::Format("Distribution%d", hist.first));
@@ -176,7 +177,7 @@ void STPIDProbTask::SetMetaFile(const std::string& t_metafile, bool t_update)
   fIterateMeta = t_update;
   if(fMetaFile) fMetaFile -> Close();
   fLogger -> Info(MESSAGE_ORIGIN, ("Loading PID prior from " + t_metafile).c_str());
-  fMetaFile = new TFile(t_metafile.c_str(), "update");
+  fMetaFile = new TFile(t_metafile.c_str(), (t_update)? "update" : "read");
   for(int pdg : fSupportedPDG)
     fMomPriorDistribution[pdg] = (TH1F*) fMetaFile -> Get(TString::Format("Distribution%d", pdg));
 }
