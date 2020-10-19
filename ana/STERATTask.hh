@@ -59,6 +59,7 @@ class STERATTask : public FairTask {
     TClonesArray *fCMVector;
     TClonesArray *fData;
     STVectorF *fERAT;
+    STVectorF *fET; // sum of transverse ke
     STVectorF *fbERat; // impact parameter from ERAT
     STVectorF *fbMult; // impact parameter from multiplicity
 

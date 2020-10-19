@@ -27,7 +27,7 @@
 class STModelReaderTask : public STReaderTask {
   public:
     /// Constructor
-    STModelReaderTask(TString filename);
+    STModelReaderTask(TString filename, bool enable_neutrons=false);
     /// Destructor
     ~STModelReaderTask();
 
@@ -63,6 +63,7 @@ class STModelReaderTask : public STReaderTask {
     TVector3 fBoostVector;
     int fTargetA, fBeamA, fBeamZ;
     double fEnergyPerA;
+    bool fEnableNeutrons = false;
     bool fRotate = false;
     std::vector<int> fTreeIDList;
 

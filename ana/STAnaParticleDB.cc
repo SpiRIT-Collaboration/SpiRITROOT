@@ -52,6 +52,12 @@ std::vector<int> STAnaParticleDB::EnablePions()
   return PionPDG; // return PDG added in this function
 }
 
+std::vector<int> STAnaParticleDB::EnableMCNeutrons()
+{
+  SupportedPDG.push_back(2112);
+  return {2112};
+}
+
 std::vector<int> STAnaParticleDB::GetSupportedPDG()
 {
   if(SupportedPDG.size() == 0)
@@ -63,3 +69,4 @@ std::vector<int> STAnaParticleDB::GetSupportedPDG()
   }
   return SupportedPDG;
 }
+

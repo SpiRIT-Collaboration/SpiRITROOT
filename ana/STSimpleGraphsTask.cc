@@ -28,7 +28,8 @@ const std::map<int, std::string> STSimpleGraphsTask::fParticleName{{2212, "p"},
                                                                    {1000020040, "He4"}, 
                                                                    {1000020060, "He6"},
                                                                    {211, "pip"},
-                                                                   {-211, "pim"}};
+                                                                   {-211, "pim"},
+                                                                   {2112, "n"}};
 
 
 
@@ -226,6 +227,60 @@ void STSimpleGraphsTask::RegisterRuleWithParticle(int pdg, std::function<void(co
   fFillRules[it - fSupportedPDG.begin()].push_back(rule);
 }
 
+void STSimpleGraphsTask::RegisterMCNPPlots()
+{
+  STAnaParticleDB::FillTDatabasePDG();
+  if(std::find(fSupportedPDG.begin(), fSupportedPDG.end(), 2112) == fSupportedPDG.end())
+  {
+    std::cerr << "Neutrons are not added to the list of supported PDG. Cannot plot MC NP ratio.\n";
+    return;
+  }
+
+  auto CIN = this -> RegisterHistogram<TH1F>(true, TString::Format("CIN_MC"), 
+                                             ";P_{t}/A;", 12, 0, 1000);
+  auto CIP = this -> RegisterHistogram<TH1F>(true, TString::Format("CIP_MC"), 
+                                             ";P_{t}/A;", 12, 0, 1000);
+  auto CIN_rap = this -> RegisterHistogram<TH1F>(true, TString::Format("CIN_MC_Rap"), 
+                                                 ";P_{t}/A;", 200, -4, 4);
+  auto CIP_rap = this -> RegisterHistogram<TH1F>(true, TString::Format("CIP_MC_Rap"), 
+                                                 ";P_{t}/A;", 200, -4, 4);
+
+
+
+  for(auto& pdg : fSupportedPDG)
+  {
+    auto particle = TDatabasePDG::Instance() -> GetParticle(pdg);
+    auto pmass = int(particle -> Mass()/STAnaParticleDB::kAu2Gev + 0.5);
+    int charge = int(particle -> Charge()/3 + 0.5);
+    pmass = (pmass == 0)? 1 : std::abs(pmass);
+ 
+    this -> RegisterRuleWithParticle(pdg, [this, CIN, CIP, CIN_rap, CIP_rap, pmass, charge](const DataPackage& package)
+      {
+        const auto& data = package.Data();
+        for(int i = 0; i < data.multiplicity; ++i)
+          if(package.Eff(i) > 0.5 && package.Prob(i) > 0.5)
+          {
+            double y0 = (fNNFrame)? package.LabRapidity(i)/(0.5*package.BeamRapidity()[1]) - 1 : package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);//package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);
+            if(std::fabs(y0) < 0.5)
+            {
+              CIN -> Fill(package.CMVector(i).Perp()/pmass, (pmass - charge)*package.Weight(i));
+              CIP -> Fill(package.CMVector(i).Perp()/pmass, charge*package.Weight(i));
+            }
+            CIN_rap -> Fill(y0, (pmass - charge)*package.Weight(i));
+            CIP_rap -> Fill(y0, charge*package.Weight(i));
+          }
+      });
+  }
+
+  this -> RegisterFinishTaskRule([this, CIN, CIP]()
+    {
+      auto CINCIP = (TH1F*) CIN -> Clone("CINCIP_MC");
+      CINCIP -> Divide(CIP);
+      CINCIP -> Write();
+    });
+
+}
+
 void STSimpleGraphsTask::RegisterRapidityPlots()
 {
   fPlotRapidity = true;
@@ -255,7 +310,7 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
           if(package.Eff(i) > fEffThresholdForRap && package.Prob(i) > fProbThresholdForRap && 
              std::fabs(package.StdDev(i)) < fSDThresholdForRap)
           {
-            double y0 = package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);
+            double y0 = (fNNFrame)? package.LabRapidity(i)/(0.5*package.BeamRapidity()[1]) - 1 : package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);
             auto minMom = fMinMomForCMInLab[pdg];
             if(data.vaMom[i].Mag() > minMom)
             {
@@ -283,13 +338,21 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
         auto HistName = TString::Format("%s", hist -> GetName());
         auto projx = hist -> ProjectionX(TString::Format("%s_Rap", HistName.Data()));
         auto projy = hist -> ProjectionY(TString::Format("%s_Pt", HistName.Data()),
-                                         hist -> GetXaxis() -> FindBin(double(0.5)), 
-                                         hist -> GetXaxis() -> FindBin(double(1)));
+                                         hist -> GetXaxis() -> FindBin(double(0.)), 
+                                         hist -> GetXaxis() -> FindBin(double(0.5)));
+        auto projy_side = hist -> ProjectionY(TString::Format("%s_Pt_0.5_y_1", HistName.Data()),
+                                              hist -> GetXaxis() -> FindBin(double(0.5)), 
+                                              hist -> GetXaxis() -> FindBin(double(1)));
+
         double dx = hist -> GetXaxis() -> GetBinWidth(0);
         double dy = hist -> GetYaxis() -> GetBinWidth(0);
         projy -> Rebin();
         projy -> Scale(0.5*dx);
         projy -> Write();
+
+        projy_side -> Rebin();
+        projy_side -> Scale(0.5*dx);
+        projy_side -> Write();
 
         projx -> Rebin();
         projx -> Scale(0.5*dy);
@@ -351,9 +414,19 @@ void STSimpleGraphsTask::RegisterPionPlots()
   auto pip_err = this -> RegisterHistogram<TH1F>(false, "pipkecm_err", "", 6, kebins);
   pip_err -> Sumw2();
 
+  double ptbins[] = {0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 280, 320, 440};
+  auto pim_pt = this -> RegisterHistogram<TH1F>(false, "pimptcm", "Pi- CM P_{t}", 15, ptbins);
+  pim_pt -> Sumw2();
+  auto pim_pt_err = this -> RegisterHistogram<TH1F>(false, "pimptcm_err", "", 15, ptbins);
+  pim_pt_err -> Sumw2();
+  auto pip_pt = this -> RegisterHistogram<TH1F>(false, "pipptcm", "Pi- CM P_{t}", 15, ptbins);
+  pip_pt -> Sumw2();
+  auto pip_pt_err = this -> RegisterHistogram<TH1F>(false, "pipptcm_err", "", 15, ptbins);
+  pip_pt_err -> Sumw2();
+
   auto pion_mass = TDatabasePDG::Instance() -> GetParticle(211) -> Mass()*1000;
 
-  this -> RegisterRuleWithParticle(211, [pip, pip_err, pion_mass](const DataPackage& package)
+  this -> RegisterRuleWithParticle(211, [pip, pip_err, pip_pt, pip_pt_err, pion_mass](const DataPackage& package)
     {
       const auto& data = package.Data();
       for(int i = 0; i < data.multiplicity; ++i)
@@ -369,11 +442,15 @@ void STSimpleGraphsTask::RegisterPionPlots()
             auto ke = sqrt(p*p + pion_mass*pion_mass) - pion_mass;
             pip -> Fill(ke, prob/eff);
             pip_err -> Fill(ke, std::pow(prob/eff*package.EffErr(i)/eff, 2));
+
+            auto pt = package.CMVector(i).Perp();
+            pip_pt -> Fill(pt, prob/eff);
+            pip_pt_err -> Fill(pt, std::pow(prob/eff*package.EffErr(i)/eff, 2));
           }
        }
     });
 
-  this -> RegisterRuleWithParticle(-211, [pim, pim_err, pion_mass](const DataPackage& package)
+  this -> RegisterRuleWithParticle(-211, [pim, pim_err, pim_pt, pim_pt_err, pion_mass](const DataPackage& package)
     {
       const auto& data = package.Data();
       for(int i = 0; i < data.multiplicity; ++i)
@@ -384,16 +461,21 @@ void STSimpleGraphsTask::RegisterPionPlots()
           {
             const double phaseSpaceFactor = 2; // assume that backward angle contribute the other half
             double eff = package.Eff(i)/phaseSpaceFactor;
+            double effErr = package.EffErr(i)/phaseSpaceFactor;
             double prob = package.Prob(i);
             auto p = package.CMVector(i).Mag();
             auto ke = sqrt(p*p + pion_mass*pion_mass) - pion_mass;
             pim -> Fill(ke, prob/eff);
-            pim_err -> Fill(ke, std::pow(prob/eff*package.EffErr(i)/eff, 2));
+            pim_err -> Fill(ke, std::pow(prob/eff*effErr/eff, 2));
+
+            auto pt = package.CMVector(i).Perp();
+            pim_pt -> Fill(pt, prob/eff);
+            pim_pt_err -> Fill(pt, std::pow(prob/eff*effErr/eff, 2));
           }
        }
     });
  
-  this -> RegisterFinishTaskRule([pip, pip_err, pim, pim_err, this]()
+  this -> RegisterFinishTaskRule([pip, pip_err, pip_pt, pip_pt_err, pim, pim_err, pim_pt, pim_pt_err, this]()
     {
       // error bar assignment
       for(int i = 1; i <= pim -> GetNbinsX(); ++i)
@@ -412,8 +494,28 @@ void STSimpleGraphsTask::RegisterPionPlots()
         pip -> SetBinError(i, totalError);
       }
 
+      for(int i = 1; i <= pim_pt -> GetNbinsX(); ++i)
+      {
+        double effErrSquared = pim_pt_err -> GetBinContent(i);
+        double statErrSquared = std::pow(pim_pt -> GetBinError(i), 2);
+        double totalError = std::sqrt(effErrSquared + statErrSquared);
+        pim_pt -> SetBinError(i, totalError);
+      }
+
+      for(int i = 1; i <= pip_pt -> GetNbinsX(); ++i)
+      {
+        double effErrSquared = pip_pt_err -> GetBinContent(i);
+        double statErrSquared = std::pow(pip_pt -> GetBinError(i), 2);
+        double totalError = std::sqrt(effErrSquared + statErrSquared);
+        pip_pt -> SetBinError(i, totalError);
+      }
+
       auto pimpip = (TH1F*) f1DHists["pimkecm"] -> Clone("pimpip");
       pimpip -> Divide(f1DHists["pipkecm"]);
+      pimpip -> Write();
+
+      pimpip = (TH1F*) f1DHists["pimptcm"] -> Clone("pimpip_pt");
+      pimpip -> Divide(f1DHists["pipptcm"]);
       pimpip -> Write();
     });
 }
@@ -430,38 +532,56 @@ void STSimpleGraphsTask::RegisterVPlots()
     auto v2 = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v2_cumsum", fParticleName.at(pdg).c_str()), "", nbins, -2, 2); 
     auto v2_sechar = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v2_sechar_cumsum", fParticleName.at(pdg).c_str()), "", nbins, -2, 2);
 
+    nbins = (std::abs(pdg) == 211)? 5 : 10;
+    auto v1_pt_counts = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v1_pt_counts", fParticleName.at(pdg).c_str()), "", nbins, 0, 1000);
+    auto v1_pt = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v1_pt_cumsum", fParticleName.at(pdg).c_str()), "", nbins, 0, 1000);
+
     auto particle = TDatabasePDG::Instance() -> GetParticle(pdg);
     double mass = particle -> Mass()/STAnaParticleDB::kAu2Gev;
 
     this -> RegisterRuleWithParticle(pdg, 
-      [this, v1, v2, v2_sechar, v1_counts, v2_counts,  mass](const DataPackage& package)
+      [this, v1, v2, v2_sechar, v1_counts, v2_counts, v1_pt, v1_pt_counts, mass](const DataPackage& package)
       {
         const auto& data = package.Data();
         for(int i = 0; i < data.multiplicity; ++i)
           if(package.Prob(i) > fProbThresholdForVs && package.PhiEff(i) > fPhiEffThresholdForVs)
           {
-            if(package.CMVector(i).Perp()/package.BeamMom()[0]/mass > fPtThresholdForVs && !std::isnan(package.V1RPAngle(i)))
+            double y0 = (fNNFrame)? package.LabRapidity(i)/(0.5*package.BeamRapidity()[1]) - 1 : package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);// package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);
+            double phi = package.CMVector(i).Phi();
+            double weight = package.Prob(i)/package.PhiEff(i);
+            double pt = package.CMVector(i).Perp();
+
+            if(!std::isnan(package.V1RPAngle(i)))
             {
-              double y0 = package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);
-              double phi = package.CMVector(i).Phi();
-              double weight = package.Prob(i)/package.PhiEff(i);
-              v1 -> Fill(y0, cos(phi - package.V1RPAngle(i))*weight);
-              v1_counts -> Fill(y0);
+              if(pt/package.BeamMom()[0]/mass > fPtThresholdForVs)
+              {
+                v1 -> Fill(y0, cos(phi - package.V1RPAngle(i))*weight);
+                v1_counts -> Fill(y0);
 
-              //phi = (phi < 0)? 2*TMath::Pi() + phi : phi; 
-              v2 -> Fill(y0, cos(2*(package.V1RPAngle(i) - phi))*weight);
-              v2_sechar -> Fill(y0, cos(2*(package.V2RPAngle(i) - phi))*weight);
-              v2_counts -> Fill(y0);
+                //phi = (phi < 0)? 2*TMath::Pi() + phi : phi; 
+                v2 -> Fill(y0, cos(2*(package.V1RPAngle(i) - phi))*weight);
+                v2_sechar -> Fill(y0, cos(2*(package.V2RPAngle(i) - phi))*weight);
+                v2_counts -> Fill(y0);
+              }
+
+              if(0.4 < y0 && y0 < 0.8)
+              {
+                v1_pt -> Fill(pt/mass, cos(package.V1RPAngle(i) - phi)*weight);
+                v1_pt_counts -> Fill(pt/mass);
+              }
             }
-
           }
       });
 
-    this -> RegisterFinishTaskRule([v1, v1_counts, v2, v2_sechar, v2_counts, pdg, this]()
+    this -> RegisterFinishTaskRule([v1, v1_counts, v1_pt, v1_pt_counts, v2, v2_sechar, v2_counts, pdg, this]()
       {
         auto v1_cloned = (TH1F*) v1 -> Clone(TString::Format("%s_v1", fParticleName.at(pdg).c_str()));
         v1_cloned -> Divide(v1_counts);
         v1_cloned -> Write();
+
+        auto v1_pt_cloned = (TH1F*) v1_pt -> Clone(TString::Format("%s_pt_v1", fParticleName.at(pdg).c_str()));
+        v1_pt_cloned -> Divide(v1_pt_counts);
+        v1_pt_cloned -> Write();
 
         auto v2_cloned = (TH1F*) v2 -> Clone(TString::Format("%s_v2", fParticleName.at(pdg).c_str()));
         v2_cloned -> Divide(v2_counts);
@@ -471,6 +591,7 @@ void STSimpleGraphsTask::RegisterVPlots()
         v2_cloned -> Divide(v2_counts);
         v2_cloned -> Write();
 
+        TParameter<double>("fMidRapThresholdForVs", fMidRapThresholdForVs).Write();
         TParameter<double>("PtThresholdForVs", fPtThresholdForVs).Write();
         TParameter<double>("ProbThresholdForVs", fProbThresholdForVs).Write();
         TParameter<double>("PhiEffThresholdForVs", fPhiEffThresholdForVs).Write();

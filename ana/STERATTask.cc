@@ -24,6 +24,8 @@ STERATTask::STERATTask()
   fbMult -> fElements.push_back(0);
   fERAT = new STVectorF();
   fERAT -> fElements.push_back(0);
+  fET = new STVectorF();
+  fET -> fElements.push_back(0);
 }
 
 STERATTask::~STERATTask()
@@ -39,6 +41,7 @@ InitStatus STERATTask::Init()
 
   fCMVector = (TClonesArray*) ioMan -> GetObject("CMVector");
   fProb = (TClonesArray*) ioMan -> GetObject("Prob");
+  ioMan -> Register("ET", "ST", fET, fIsPersistence);
   ioMan -> Register("ERAT", "ST", fERAT, fIsPersistence);
 
   fData = (TClonesArray*) ioMan -> GetObject("STData");
@@ -102,6 +105,7 @@ void STERATTask::Exec(Option_t *opt)
           El_expected += prob*pl*pl/(ParticleMass + Ei);
         }
     }
+  fET -> fElements[0] = Et_expected;
   fERAT -> fElements[0] = Et_expected / El_expected;
 
   if(fImpactParameterFile)

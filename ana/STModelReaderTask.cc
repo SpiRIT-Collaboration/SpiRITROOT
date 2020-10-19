@@ -13,10 +13,11 @@
 
 ClassImp(STModelReaderTask);
 
-STModelReaderTask::STModelReaderTask(TString filename)
+STModelReaderTask::STModelReaderTask(TString filename, bool enable_neutrons) : fEnableNeutrons(enable_neutrons)
 {
   STAnaParticleDB::EnableChargedParticles();
   STAnaParticleDB::EnablePions();
+  if(enable_neutrons) STAnaParticleDB::EnableMCNeutrons();
   fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
 
   fLogger = FairLogger::GetLogger(); 
@@ -122,7 +123,17 @@ void STModelReaderTask::Exec(Option_t *opt)
       auto p_info = TDatabasePDG::Instance() -> GetParticle(particle.pdg);
       if(!p_info) continue;
       double Z = p_info -> Charge()/3.;
-      if(Z == 0) continue; // neutral particles cannot be detected
+      if(Z == 0) 
+      {
+        if(fEnableNeutrons)
+        {
+          if(particle.pdg == 2112)
+            Z = 1;
+          else
+            continue; // neutral particles cannot be detected
+        }
+        else continue;
+      }
       TLorentzVector fragVect;
       fragVect.SetXYZM(particle.px, particle.py, particle.pz, p_info -> Mass());
       fragVect.Boost(fBoostVector); 

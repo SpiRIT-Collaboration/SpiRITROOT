@@ -38,7 +38,7 @@ STReaderTask* STAnalysisFactory::GetReaderTask()
   {
     auto settings = this -> fReadNodesToMap(fIONode -> GetChildren());
     TString dir = TString::Format("%s", settings["DataDir"].c_str());
-    auto reader = new STModelReaderTask(dir);
+    auto reader = new STModelReaderTask(dir, (settings.find("WithNeutron") != settings.end()));
     reader -> SetBeamAndTarget(std::stoi(settings["beamA"]), std::stoi(settings["targetA"]),
                                std::stof(settings["beamEnergyPerA"]));
     // TEMPORARY. TO BE DELETED
@@ -289,6 +289,7 @@ STSimpleGraphsTask* STAnalysisFactory::GetSimpleGraphsTask()
   if(attr.find("PIDPlots") != attr.end()) graphTask -> RegisterPIDPlots();
   if(attr.find("VPlots") != attr.end()) graphTask -> RegisterVPlots();
   if(attr.find("PionPlots") != attr.end()) graphTask -> RegisterPionPlots();
+  if(attr.find("MCNPPlots") != attr.end()) graphTask -> RegisterMCNPPlots();
   
   return graphTask;
 }
@@ -301,7 +302,7 @@ STPhiEfficiencyTask* STAnalysisFactory::GetPhiEfficiencyTask()
 
   auto settings = this -> fReadNodesToMap(child);
   auto task = new STPhiEfficiencyTask();
-  task -> SetPersistence(true);
+  task -> SetPersistence(false);
   auto it2 = settings.find("PhiEff");
   if(it2 != settings.end()) task -> LoadPhiEff(it2 -> second);
   return task;

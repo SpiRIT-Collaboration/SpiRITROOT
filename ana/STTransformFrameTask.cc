@@ -127,6 +127,7 @@ void STTransformFrameTask::Exec(Option_t *opt)
       if(auto particle = TDatabasePDG::Instance()->GetParticle(pdg))
       {
         int ParticleZ = std::fabs(particle -> Charge()/3); // TParticlePDG define charge in units of |e|/3, probably to accomodate quarks
+        if(pdg == 2112) ParticleZ = 1; // if the input particle is neutron (from Monte Carlo, not real data), treat this as having particleZ = 1 for finite p/z values
         double ParticleMass = particle -> Mass()*1000; // GeV to MeV
 
         auto mom = data -> vaMom[part]*ParticleZ;

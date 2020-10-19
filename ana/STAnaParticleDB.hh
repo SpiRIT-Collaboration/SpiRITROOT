@@ -18,6 +18,7 @@ struct STAnaParticleDB : public TObject
   static void FillTDatabasePDG();
   static std::vector<int> EnableChargedParticles();
   static std::vector<int> EnablePions();
+  static std::vector<int> EnableMCNeutrons();
   static std::vector<int> GetSupportedPDG();
 
   ClassDef(STAnaParticleDB, 1);

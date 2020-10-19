@@ -118,7 +118,7 @@ InitStatus STEfficiencyTask::Init()
   }
 
   ioMan -> Register("Eff", "ST", fEff, fIsPersistence);
-  ioMan -> Register("EffErr", "ST", fEffErr, false);
+  ioMan -> Register("EffErr", "ST", fEffErr, fIsPersistence);
   fSkip = (STVectorI*) ioMan -> GetObject("Skip");
   
   return kSUCCESS;

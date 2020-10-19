@@ -109,6 +109,8 @@ class STSimpleGraphsTask : public FairTask {
     void RegisterPIDPlots();
     void RegisterPionPlots();
     void RemoveParticleMin();
+    void RegisterMCNPPlots();
+    void SetNNFrame(bool val=true) { fNNFrame = val; };
     void DiscardData(const std::vector<int>& type) { fTypeToDiscard = type; };
 
     static void CreateMCEventsFromHist(const std::string& forwardFile, const std::string& backwardFile,
@@ -126,6 +128,7 @@ class STSimpleGraphsTask : public FairTask {
 
     // parameters for graph drawing
     // this one is for drawing flow
+    Double_t fMidRapThresholdForVs = 0.5;
     Double_t fPtThresholdForVs = 0.4;
     Double_t fProbThresholdForVs = 0.95;
     Double_t fPhiEffThresholdForVs = 0.2;
@@ -158,6 +161,7 @@ class STSimpleGraphsTask : public FairTask {
     bool fPlotPID = false;
     bool fPlotVs = false;
     bool fPlotPion = false;
+    bool fNNFrame = false;
   
     STDigiPar   *fPar  = nullptr;                 ///< Parameter read-out class pointer
     STVectorI   *fSkip = nullptr;

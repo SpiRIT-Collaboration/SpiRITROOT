@@ -104,7 +104,7 @@ bool STImQMDReader::GetNext(std::vector<STTransportParticle>& particleList)
     int pdg = 0;
     int Z = fPartZ, A = fPartA;
     if(Z == 1 && A == 1) pdg = 2212;
-    else if(Z == 0 && A == 1) pdg = 2122;
+    else if(Z == 0 && A == 1) pdg = 2112;
     // special case for ImQMD files
     // When Z = +/- 1 and A = 0, it refers to pions
     else if(Z == 1 && A == 0) pdg = 211;
@@ -171,7 +171,7 @@ bool STImQMDNewReader::GetNext(std::vector<STTransportParticle>& particleList)
     int pdg = 0;
     int Z = fPartZ[i], A = fPartA[i];
     if(Z == 1 && A == 1) pdg = 2212;
-    else if(Z == 0 && A == 1) pdg = 2122;
+    else if(Z == 0 && A == 1) pdg = 2112;
     // special case for ImQMD files
     // When Z = +/- 1 and A = 0, it refers to pions
     else if(Z == 1 && A == 0) pdg = 211;
@@ -220,7 +220,7 @@ bool STpBUUReader::GetNext(std::vector<STTransportParticle>& particleList)
       switch(fPID[i])
       {
         case 1: pdg = 2212; break;
-        case 2: pdg = 2122; break;
+        case 2: pdg = 2112; break;
         case 3: pdg = 1000010020; break;
         case 4: pdg = 1000020030; break;
         case 5: pdg = 1000010030; break;
