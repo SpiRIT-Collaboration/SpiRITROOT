@@ -76,6 +76,8 @@ STAzimuthalCorRPTask.cc
 STDivideEventTask.cc
 STPiProbTask.cc
 STCSVReaderTask.cc
+STObsWriterTask.cc
+STUrQMDFormatWriterTask.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

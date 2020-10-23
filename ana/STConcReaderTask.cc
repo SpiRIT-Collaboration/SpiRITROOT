@@ -162,7 +162,7 @@ InitStatus STConcReaderTask::Init()
       fLogger -> Info(MESSAGE_ORIGIN, TString::Format("We will randomly sample %d events from the tree. ", fSampleEvents));
       std::set<int> sample_id; //  a set is used to remove repeated random id
       while(sample_id.size() < fSampleEvents) sample_id.insert(int(gRandom -> Uniform(0.5, nentries - 0.5)));
-      for(int id : sample_id) { std::cout << id << std::endl; fTreeSampleID.push_back(id); }// set should be ordered from small to large
+      for(int id : sample_id) fTreeSampleID.push_back(id); // set should be ordered from small to large
       fTreeSampleID_it = fTreeSampleID.begin();
     }
     else fLogger -> Info(MESSAGE_ORIGIN, "Requested sample size is larger than the tree size. Will ignore sampling");

@@ -23,6 +23,9 @@ struct STTransportParticle;
 class STTransportReader;
 class STImQMDReader; // old ImQMD format
 class STImQMDNewReader; // Fanurs updated the ImQMD format
+class STImQMDRawReader; // Fanurs updated the ImQMD format without coaleasce
+class STUrQMDReader;
+
 
 namespace Elements
 {
@@ -171,6 +174,26 @@ protected:
   double fX[fMaxN], fY[fMaxN], fZ[fMaxN];
 };
 
+class STImQMDRawReader : public STTransportReader
+{
+public: 
+  STImQMDRawReader(TString fileName);
+  virtual ~STImQMDRawReader();
+  virtual void SetEntry(int t_entry) { fEventID = t_entry; }
+  virtual int GetEntry() { return fEventID; }
+  virtual int GetEntries() { return fTree -> GetEntries(); }
+  virtual bool GetNext(std::vector<STTransportParticle>& particleList);
+  virtual TString Print();
+protected:
+  TFile fFile;
+  TTree *fTree = nullptr;
+  int fEventID = 0;
+  static const int fMaxN = 1024;
+  int fMulti, fIso[fMaxN];
+  double fPx[fMaxN], fPy[fMaxN], fPz[fMaxN];
+  double fX[fMaxN], fY[fMaxN], fZ[fMaxN];
+};
+
 class STpBUUReader : public STTransportReader
 {
 public: 
@@ -194,6 +217,30 @@ protected:
   float fPz[maxMulti];
   short fX[maxMulti], fY[maxMulti], fZ[maxMulti];
 };
+
+class STUrQMDReader : public STTransportReader
+{
+public: 
+  STUrQMDReader(TString fileName);
+  virtual ~STUrQMDReader(){};
+  virtual void SetEntry(int t_entry) { fEventID = t_entry; }
+  virtual int GetEntry() { return fEventID; }
+  virtual int GetEntries() { return fParticleList.size(); }
+  virtual bool GetNext(std::vector<STTransportParticle>& particleList);
+  virtual TString Print();
+  virtual std::vector<FairIon*> GetParticleList();
+  double GetB() { return bs[fEventID]; }; 
+protected:
+  std::ifstream fFile;
+  TString fFilename;
+  int fEventID = 0;
+  std::vector<std::vector<STTransportParticle>> fParticleList;
+  void ReadNextEvent_(std::vector<STTransportParticle>& particleList);
+  int ITypeChargeToPDG(int itype, int charge);
+  std::vector<double> bs;
+};
+
+
 
 
 

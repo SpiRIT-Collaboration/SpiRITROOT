@@ -332,6 +332,7 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
   this -> RegisterFinishTaskRule([ana_hists, this]()
     {
       std::map<int, TH1D*> ptHists;
+      TH1F *CIP_rap = nullptr;
       for(int i = 0; i < fSupportedPDG.size(); ++i)
       {
         const auto hist = ana_hists.at(fSupportedPDG[i]);
@@ -358,7 +359,17 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
         projx -> Scale(0.5*dy);
         projx -> Write();
         ptHists[fSupportedPDG[i]] = projy;
+
+        if(!CIP_rap) CIP_rap = (TH1F*) projx -> Clone("CIP_rapHist");
+        else if(fSupportedPDG[i] == 2212 || fSupportedPDG[i] == 1000010020 || fSupportedPDG[i] == 1000010030)
+          CIP_rap -> Add(projx);
+        else if(fSupportedPDG[i] == 1000020030 || fSupportedPDG[i] == 1000020040)
+        {
+          projx -> Scale(2);
+          CIP_rap -> Add(projx);
+        }
       }
+      if(CIP_rap) CIP_rap -> Write();
 
       auto THe3 = (TH1D*) ptHists[1000010030] -> Clone("tHe3_ana_Pt");
       THe3 -> Divide(ptHists[1000020030]);
@@ -553,7 +564,7 @@ void STSimpleGraphsTask::RegisterVPlots()
 
             if(!std::isnan(package.V1RPAngle(i)))
             {
-              if(pt/package.BeamMom()[0]/mass > fPtThresholdForVs)
+              if(pt/mass > fPtThresholdForVs)
               {
                 v1 -> Fill(y0, cos(phi - package.V1RPAngle(i))*weight);
                 v1_counts -> Fill(y0);
@@ -564,7 +575,7 @@ void STSimpleGraphsTask::RegisterVPlots()
                 v2_counts -> Fill(y0);
               }
 
-              if(0.4 < y0 && y0 < 0.8)
+              if(0.15 <  package.FragRapidity(i) &&  package.FragRapidity(i) < 0.3)
               {
                 v1_pt -> Fill(pt/mass, cos(package.V1RPAngle(i) - phi)*weight);
                 v1_pt_counts -> Fill(pt/mass);
@@ -579,7 +590,7 @@ void STSimpleGraphsTask::RegisterVPlots()
         v1_cloned -> Divide(v1_counts);
         v1_cloned -> Write();
 
-        auto v1_pt_cloned = (TH1F*) v1_pt -> Clone(TString::Format("%s_pt_v1", fParticleName.at(pdg).c_str()));
+        auto v1_pt_cloned = (TH1F*) v1_pt -> Clone(TString::Format("%s_v1_Pt_MidRap", fParticleName.at(pdg).c_str()));
         v1_pt_cloned -> Divide(v1_pt_counts);
         v1_pt_cloned -> Write();
 

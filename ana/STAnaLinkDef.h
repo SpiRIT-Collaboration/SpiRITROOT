@@ -28,11 +28,13 @@
 #pragma link C++ class STSimpleGraphsTask+;
 #pragma link C++ class DataPackage+;
 #pragma link C++ class STERATTask+;
+#pragma link C++ class STObsWriterTask+;
 #pragma link C++ class STReaderTask+;
 #pragma link C++ class STModelReaderTask+;
 #pragma link C++ class STReactionPlaneTask+;
 #pragma link C++ class STAzimuthalCorRPTask+;
 #pragma link C++ class STDivideEventTask+;
+#pragma link C++ class STUrQMDFormatWriterTask+;
 
 #pragma link C++ class EfficiencyFactory+;
 #pragma link C++ class OrigEfficiencyFactory+;

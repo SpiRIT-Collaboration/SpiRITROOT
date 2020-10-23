@@ -184,6 +184,50 @@ bool STImQMDNewReader::GetNext(std::vector<STTransportParticle>& particleList)
   return true;;
 }
 
+/**********************************************
+ * Deried reader class for ImQMD raw (no coalesce) particles
+ * ********************************************/
+STImQMDRawReader::STImQMDRawReader(TString fileName) : fFile(fileName)
+{
+  if(!fFile.IsOpen())
+    LOG(INFO) << "Reading ImQMD data (new format) from " << fileName << FairLogger::endl;
+
+  fTree = (TTree*) fFile.Get("raw");
+  if(!fTree)
+    LOG(FATAL) << "Tree raw is not found in file " << fileName << FairLogger::endl;
+  
+  fTree -> SetBranchAddress("multi", &fMulti);
+  fTree -> SetBranchAddress("iso", &fIso);
+  fTree -> SetBranchAddress("px", &fPx);
+  fTree -> SetBranchAddress("py", &fPy);
+  fTree -> SetBranchAddress("pz", &fPz);
+  fTree -> SetBranchAddress("x", &fX);
+  fTree -> SetBranchAddress("y", &fY);
+  fTree -> SetBranchAddress("z", &fZ);
+}
+
+TString STImQMDRawReader::Print()
+{ return TString::Format("ImQMD reader (new format) with source %s", fFile.GetName()); }
+
+STImQMDRawReader::~STImQMDRawReader() {}
+
+bool STImQMDRawReader::GetNext(std::vector<STTransportParticle>& particleList)
+{
+  particleList.clear();
+  if(fEventID >= fTree -> GetEntries()) return false;
+  fTree -> GetEntry(fEventID);
+  for(int i = 0; i < fMulti; ++i)
+  {
+    int pdg = 0;
+    if(fIso[i] == 1) pdg = 2212;
+    else pdg = 2112;
+
+    particleList.push_back({pdg, fPx[i], fPy[i], fPz[i], fX[i], fY[i], fZ[i]});
+  }
+  ++fEventID;
+  return true;;
+}
+
 /*************************************************
 * STpBUUReader
 **************************************************/
@@ -243,6 +287,120 @@ std::vector<FairIon*> STpBUUReader::GetParticleList()
 {
   std::vector<FairIon*> particleList;
   // pBUU only support ions of up to He4
+  for(auto pdg : std::vector<std::pair<int, int>>{{2,1},{3,1},{3,2},{4,2}})
+  {
+    int a = pdg.first, z = pdg.second;
+    particleList.push_back(new FairIon(Form("%d",a)+Elements::symbol[z-1],z,a,z));
+  }
+  return particleList; 
+}
+
+/*************************************************
+* STUrQMDReader
+**************************************************/
+STUrQMDReader::STUrQMDReader(TString fileName) : fFile(fileName), fFilename(fileName)
+{
+  if(fFile.is_open())
+    LOG(INFO) << "Reading UrQMD data from " << fileName << FairLogger::endl;
+
+  // IMPORTANT! this allows getline to throw exception when it reaches eof
+  fFile.exceptions(std::ifstream::failbit|std::ifstream::badbit);
+
+  while(true)
+  {
+    fParticleList.push_back(std::vector<STTransportParticle>());
+    try
+    {
+      this -> ReadNextEvent_(fParticleList.back());
+    }
+    catch(...)
+    {
+      break;
+    }
+  }
+
+}
+
+void STUrQMDReader::ReadNextEvent_(std::vector<STTransportParticle>& particleList)
+{
+  particleList.clear();
+  std::string line, temp;
+  // ignore line 1 - 3
+  for(int i = 1; i <= 3; ++i) std::getline(fFile, line);
+  // impact parameter
+  double b;
+  std::getline(fFile, line);
+  {
+    std::stringstream ss(line);
+    ss >> temp >> b >> temp; 
+  }
+  bs.push_back(b);
+  // ignore line 5 to 18
+  for(int i = 5; i <= 18; ++i) std::getline(fFile, line);
+  // first entry in line 19 is multiplicity
+  int mult;
+  std::getline(fFile, line);
+  {
+    std::stringstream ss(line);
+    ss >> mult >> temp;
+  }
+  // discard one more line
+  std::getline(fFile, line);
+  // particle information
+  const std::vector<int> supported_pdg{-211,211,2212,1000010020,1000010030,1000020030,1000020040};
+  for(int i = 0; i < mult; ++i)
+  {
+    int itype, charge;
+    double px, py, pz, x, y, z;
+    std::getline(fFile, line);
+    std::stringstream ss(line);
+    ss >> temp >> x >> y >> z >> temp >> px >> py >> pz >> temp >> itype >> temp >> charge;
+    int pdg = this -> ITypeChargeToPDG(itype, charge);
+    if(std::find(supported_pdg.begin(), supported_pdg.end(), pdg) != supported_pdg.end())
+      particleList.push_back({pdg, px, py, pz, x, y, z});
+  }
+}
+
+int STUrQMDReader::ITypeChargeToPDG(int itype, int charge)
+{
+  int failed_pdg = -1;
+  if(itype == 1) // nucleons, either proton or neutron
+  {
+    if(charge == 0) return 2112; // n
+    else return 2212; // p
+  }
+  else if(itype == 101) // pions
+  {
+    if(charge == 1) return 211; // pi+
+    else if(charge == -1) return -211; // pi-
+    else return 111; // pi 0
+  }
+  else if(500 < itype && itype < 600)
+  {
+    int A = itype - 500;
+    int Z = charge;
+    if(Z == 0 || A == Z) return failed_pdg; // reject unphysical clusters that is either only proton or neutron
+    return 1000000000 + Z*10000 + A*10;
+  }
+  else return failed_pdg;
+}
+
+bool STUrQMDReader::GetNext(std::vector<STTransportParticle>& particleList)
+{
+  if(fEventID >= fParticleList.size()) return false;
+
+  particleList = fParticleList[fEventID];
+  ++fEventID;
+  return true;
+}
+
+TString STUrQMDReader::Print()
+{ return "UrQMD reader with source " + fFilename; }
+
+std::vector<FairIon*> STUrQMDReader::GetParticleList()
+{
+  std::vector<FairIon*> particleList;
+  // UrQMD only support ions of up to He4
   for(auto pdg : std::vector<std::pair<int, int>>{{2,1},{3,1},{3,2},{4,2}})
   {
     int a = pdg.first, z = pdg.second;
@@ -330,12 +488,12 @@ void STModelToLabFrameGenerator::Print()
 void STModelToLabFrameGenerator::RegisterReader()
 {
   //if(fInputName.BeginsWith("amd"))    { fReader = new STAMDReader(fInputPath + fInputName); } 
-  //else if(fInputName.BeginsWith("urqmd"))  { fReader = new STUrQMDReader(fInputPath + fInputName); } 
   //else if(fInputName.BeginsWith("pBUU"))   { fReader = new STpBUUReader(fInputPath + fInputName); } 
   std::cout << fInputName << std::endl;
   if (fInputName.BeginsWith("imqmdNew")) { fReader = new STImQMDNewReader(fInputPath + fInputName); }
   else if(fInputName.BeginsWith("imqmd") || fInputName.BeginsWith("approx"))  { fReader = new STImQMDReader(fInputPath + fInputName); }  // approx data shares the same format as imqmd
   else if(fInputName.BeginsWith("pbuu")) { fReader = new STpBUUReader(fInputPath + fInputName); }
+  else if(fInputName.BeginsWith("urqmd"))  { fReader = new STUrQMDReader(fInputPath + fInputName); } 
   else
     LOG(FATAL)<<"STModelToLabFrameGenerator cannot accept event files without specifying generator names."<<FairLogger::endl;
   LOG(INFO)<<"-I Opening file: "<<fInputName<<FairLogger::endl;

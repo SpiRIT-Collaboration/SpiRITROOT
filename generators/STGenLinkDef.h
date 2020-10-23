@@ -13,6 +13,7 @@
 #pragma link C++ class STTransportParticle+;
 #pragma link C++ class STTransportReader+;
 #pragma link C++ class STImQMDReader+;
+#pragma link C++ class STUrQMDReader+;
 
 #pragma link C++ class STSingleTrackGenerator+;
 #pragma link C++ class STSingleTrackInCMGenerator+;

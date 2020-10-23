@@ -28,8 +28,10 @@ STModelReaderTask::STModelReaderTask(TString filename, bool enable_neutrons) : f
 
   auto fInputPath = TString::Format("%s/input/", gSystem->Getenv("VMCWORKDIR"));
   if (filename.BeginsWith("imqmdNew")) { fReader = std::unique_ptr<STImQMDNewReader>(new STImQMDNewReader(fInputPath + filename)); }
+  else if (filename.BeginsWith("imqmdRaw")) { fReader = std::unique_ptr<STImQMDRawReader>(new STImQMDRawReader(fInputPath + filename)); }
   else if(filename.BeginsWith("imqmd") || filename.BeginsWith("approx"))  
   { fReader = std::unique_ptr<STImQMDReader>(new STImQMDReader(fInputPath + filename)); }
+  else if(filename.BeginsWith("urqmd"))  { fReader = std::unique_ptr<STUrQMDReader>(new STUrQMDReader(fInputPath + filename)); }
   else if(filename.BeginsWith("pbuu")) { fReader = std::unique_ptr<STpBUUReader>(new STpBUUReader(fInputPath + filename)); }
   else
   {
@@ -62,7 +64,7 @@ InitStatus STModelReaderTask::Init()
     new((*fEff)[i]) STVectorF();
   }
 
-  (new((*fEventID)[0]) STVectorI()) -> fElements.push_back(-1);
+  (new((*fEventID)[0]) STVectorI()) -> fElements.push_back(0);
   (new((*fRunID)[0]) STVectorI()) -> fElements.push_back(0);
 
   ioMan -> Register("STData", "ST", fData, fIsPersistence);

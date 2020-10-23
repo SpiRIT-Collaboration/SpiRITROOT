@@ -97,7 +97,11 @@ void STSmallOutputTask::Exec(Option_t* option)
   }
 
   if(fMCEventHeader)
+  {
     fMCRotZ -> fElements[0] = fMCEventHeader -> GetRotZ();
+    fEventID = fMCEventHeader -> GetEventID();
+    static_cast<STVectorI*>(fMCEventID -> At(0)) -> fElements[0] = fEventID;
+  }
   
   if(fBeamInfo)
   {
@@ -193,6 +197,10 @@ void STSmallOutputTask::Exec(Option_t* option)
 
 void STSmallOutputTask::FinishTask()
 {
+  auto file = FairRootManager::Instance() -> GetOutFile();
+  file -> cd();
+  if(fMCEventHeader) fMCEventHeader -> Write(); // save MCEventHeader if it exist
+
   if(fSmallOutput_) 
   {
     LOG(INFO) << "Saving data to file " << fSmallOutput_->GetName() << FairLogger::endl;
