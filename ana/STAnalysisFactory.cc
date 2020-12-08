@@ -78,6 +78,9 @@ STFilterEventTask* STAnalysisFactory::GetFilterEventTask()
     task -> SetERatCut(std::stof(settings["ERatMin"]), std::stof(settings["ERatMax"]));
   auto it2 = settings.find("RejectEmpty");
   if(it2 != settings.end()) task -> SetRejectEmpty(true);
+  it2 = settings.find("MinBias");
+  if(it2 != settings.end()) task -> SetMCMinBias(true);
+
   return task;
 }
 
@@ -360,6 +363,33 @@ STDivideEventTask* STAnalysisFactory::GetDivideEventTask()
   if(it2 != attr.end()) divideTask -> ComplementaryTo(it2 -> second.c_str());
   return divideTask;
 }
+
+STObsWriterTask* STAnalysisFactory::GetObsWriterTask()
+{
+  auto it = fNodes.find("ObsWriterTask");
+  if(it == fNodes.end()) return nullptr;
+  auto child = it -> second -> GetChildren();
+  auto attr = this -> fReadNodesToMap(child);
+
+  auto obsWriterTask = new STObsWriterTask(attr["ObsFile"]);
+  auto it2 = attr.find("UrQMDTruthFile");
+  if(it2 != attr.end()) obsWriterTask -> LoadTrueImpactPara(it2 -> second.c_str());
+  return obsWriterTask;
+}
+
+STImpactParameterMLTask* STAnalysisFactory::GetImpactParameterMLTask()
+{
+  auto it = fNodes.find("ImpactParameterMLTask");
+  if(it == fNodes.end()) return nullptr;
+  auto child = it -> second -> GetChildren();
+  auto attr = this -> fReadNodesToMap(child);
+
+  auto impactParameterMLTask = new STImpactParameterMLTask(attr.at("ModelFile"));
+  return impactParameterMLTask;
+}
+
+STImpactParameterMLTask *GetImpactParameterMLTask();
+
 
 std::map<std::string, std::string> STAnalysisFactory::fReadNodesToMap(TXMLNode *node)
 {

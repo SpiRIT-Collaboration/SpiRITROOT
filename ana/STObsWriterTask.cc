@@ -18,11 +18,15 @@ ClassImp(STObsWriterTask);
 STObsWriterTask::STObsWriterTask(const std::string& output_name) : fOutput(output_name)
 {
   fLogger = FairLogger::GetLogger(); 
-  fOutput << "ET\tERat\tMCh\tN(H,He)\tN(H,He)pt\tN\tNpt\n";
 }
 
 STObsWriterTask::~STObsWriterTask()
 {}
+
+void STObsWriterTask::LoadTrueImpactPara(const std::string& filename)
+{
+  fUrQMDReader = new STUrQMDReader(filename);
+}
 
 InitStatus STObsWriterTask::Init()
 {
@@ -40,6 +44,28 @@ InitStatus STObsWriterTask::Init()
   fET = (STVectorF*) ioMan -> GetObject("ET");
   fFragRapidity = (TClonesArray*) ioMan -> GetObject("FragRapidity");
   fBeamRapidity = (STVectorF*) ioMan -> GetObject("BeamRapidity");
+  fSkip = (STVectorI*) ioMan -> GetObject("Skip");
+
+  if(!fET || !fERAT)
+  {
+    fLogger -> Error(MESSAGE_ORIGIN, "No transverse momentum and ERat found. Have you added STERATTask before STObsWriterTask?");
+    return kERROR;
+  }
+
+  fAllObs = new STVectorF;
+  fAllObs -> fElements.resize(ObsType::END);
+  ioMan -> Register("AllObs", "ST", fAllObs, fIsPersistence);
+
+  fOutput << "ETL\tERAT\tMch\tN(H-He)\tN(H-He)pt\tN\tNpt";
+  if(fUrQMDReader)
+  {
+    fImpactParameterTruth = new STVectorF();
+    fImpactParameterTruth -> fElements.push_back(0);
+    ioMan -> Register("bTruth", "ST", fImpactParameterTruth, fIsPersistence);
+    fEventID = (TClonesArray*) ioMan -> GetObject("EventID");
+    fOutput << "\tbim";
+  }
+  fOutput << std::endl;
 
   return kSUCCESS;
 }
@@ -61,6 +87,9 @@ void STObsWriterTask::SetParContainers()
 
 void STObsWriterTask::Exec(Option_t *opt)
 {
+  if(fSkip)
+    if(static_cast<STVectorI*>(fSkip) -> fElements[0] == 1) return;
+
   double et = fET -> fElements[0];
   double erat = fERAT -> fElements[0];
   double Mch = 0; // multiplicity
@@ -83,7 +112,7 @@ void STObsWriterTask::Exec(Option_t *opt)
       double rap = static_cast<STVectorF*>(fFragRapidity -> At(i)) -> fElements[itrack];
       if(rap > 0)
       {
-        if(data -> recodpoca[itrack].Mag() < 20 && data -> vaNRowClusters[itrack] + data -> vaNLayerClusters[itrack] > 8 && prob > 0.2)
+        if(data -> recodpoca[itrack].Mag() < 20 /*&& data -> vaNRowClusters[itrack] + data -> vaNLayerClusters[itrack] > 8*/ && prob > /*0.2*/0.4)
         {
           auto& P = static_cast<STVectorVec3*>(fCMVector -> At(i)) -> fElements[itrack];
           if(fSupportedPDG[i] == 2212 || fSupportedPDG[i] == 1000010020 || fSupportedPDG[i] == 1000010030 || fSupportedPDG[i] == 1000020030 || fSupportedPDG[i] == 1000020040)
@@ -103,7 +132,30 @@ void STObsWriterTask::Exec(Option_t *opt)
   if(N_H_He > 0) N_H_He_pt /= N_H_He;
   if(N > 0) Npt /= N;
 
+  if(fUrQMDReader)
+  {
+    double b = -9999;
+    int id = static_cast<STVectorI*>(fEventID -> At(0)) -> fElements[0];
+    if(fUrQMDReader) 
+    {
+      fUrQMDReader -> SetEntry(id - 1);
+      b = fUrQMDReader -> GetB();
+    }
+    fImpactParameterTruth -> fElements[0] = b;
+  }
+
+
+  fAllObs -> fElements[ObsType::ET] = et;
+  fAllObs -> fElements[ObsType::ERat] = erat;
+  fAllObs -> fElements[ObsType::MCh] = Mch;
+  fAllObs -> fElements[ObsType::N_H_He] = N_H_He;
+  fAllObs -> fElements[ObsType::N_H_He_pt] = N_H_He_pt;
+  fAllObs -> fElements[ObsType::N] = N;
+  fAllObs -> fElements[ObsType::Npt] = Npt;
+
   fOutput << et << "\t" << erat << "\t" << Mch << "\t";
   fOutput << N_H_He << "\t" << N_H_He_pt << "\t" << N << "\t";
-  fOutput << Npt << "\n";
+  fOutput << Npt;
+  if(fUrQMDReader) fOutput << "\t" << fImpactParameterTruth -> fElements[0];
+  fOutput << std::endl;
 }

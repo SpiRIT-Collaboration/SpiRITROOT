@@ -22,6 +22,7 @@
 #include "STDigiPar.hh"
 #include "STVector.hh"
 #include "STAnaParticleDB.hh"
+#include "STModelToLabFrameGenerator.hh"
 
 // ROOT classes
 #include "TClonesArray.h"
@@ -31,14 +32,16 @@
 #include <vector>
 #include <memory>
 
-
+enum ObsType {ET, ERat, MCh, N_H_He, N_H_He_pt, N, Npt, END};
 
 class STObsWriterTask : public FairTask {
   public:
+
     STObsWriterTask(const std::string& output_name);
     /// Destructor
     ~STObsWriterTask();
 
+    void LoadTrueImpactPara(const std::string& filename);
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
     /// Setting parameter containers. This will be called inbetween Init() and Run().
@@ -49,7 +52,7 @@ class STObsWriterTask : public FairTask {
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
-  
+
     std::ofstream fOutput;
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fProb;
@@ -60,8 +63,12 @@ class STObsWriterTask : public FairTask {
     STVectorF *fERAT;
     STVectorF *fET;
     STVectorF *fAllObs;
-    
+    STVectorF *fImpactParameterTruth;
+    STVectorI *fSkip = nullptr;
+    TClonesArray *fEventID;
 
+  
+    STUrQMDReader *fUrQMDReader = nullptr;
     const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
     
   ClassDef(STObsWriterTask, 1);

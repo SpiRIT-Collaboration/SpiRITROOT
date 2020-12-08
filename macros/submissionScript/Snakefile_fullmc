@@ -1,30 +1,8 @@
-Tot_Evt = 50000
-Num_Divided = 400
-#DirName = 'ImQMDImpacParameter'
-#FileName = ['imqmdNew_sn112sn124b9',
-#            'imqmdNew_sn112sn124b9.5',
-#            'imqmdNew_sn112sn124b8',
-#            'imqmdNew_sn112sn124b8.5',
-#            'imqmdNew_sn112sn124b7',
-#            'imqmdNew_sn112sn124b7.5',
-#            'imqmdNew_sn112sn124b6',
-#            'imqmdNew_sn112sn124b6.5',
-#            'imqmdNew_sn112sn124b5',
-#            'imqmdNew_sn112sn124b5.5',
-#            'imqmdNew_sn112sn124b4',
-#            'imqmdNew_sn112sn124b4.5',
-#            'imqmdNew_sn112sn124b3',
-#            'imqmdNew_sn112sn124b3.5',
-#            'imqmdNew_sn112sn124b2',
-#            'imqmdNew_sn112sn124b2.5',
-#            'imqmdNew_sn112sn124b1',
-#            'imqmdNew_sn112sn124b1.5',
-#            'imqmdNew_sn112sn124b10',
-#            'imqmdNew_sn112sn124b0',
-#            'imqmdNew_sn112sn124b0.5']
+Tot_Evt = 1000
+Num_Divided = 100
 
-DirName = 'ApproxSn112CorV'
-FileName = ['approx_Sn112Sn124CorV']
+DirName = ['UrQMD_b1_10_WithBias']#['ImQMD_b3Sn112', 'ImQMD_b5Sn112', 'ImQMD_b7Sn112']
+FileName = ['urqmd_b1_10']#'imqmdNew_Varb/imqmdNew_Sn112b3.root', 'imqmdNew_Varb/imqmdNew_Sn112b5.root', 'imqmdNew_Varb/imqmdNew_Sn112b7.root']
 digiCharge = [10.2]
 length = [150]
 #'imqmdNew_sn112sn124_b5_SLy4']
@@ -34,11 +12,13 @@ PDGList = ['All']
 import os
 vmc_dir = os.environ['VMCWORKDIR']
 evt_per_job = int(Tot_Evt/Num_Divided)
-os.makedirs(os.path.join(vmc_dir, 'macros', 'log', DirName), exist_ok=True)
+for name in DirName:
+  os.makedirs(os.path.join(vmc_dir, 'macros', 'log', name), exist_ok=True)
+#os.makedirs(os.path.join(vmc_dir, 'macros', 'log', DirName), exist_ok=True)
 
 rule run_all:
   input:
-    expand('{VMCDIR}/macros/data/{DIRNAME}/{PDG}/{FILENAME}_DigiCharge{digiCharge}_Length{length}_s{id}_s0.reco.v1.04.conc.root', DIRNAME=DirName, PDG=PDGList, FILENAME=FileName, VMCDIR=vmc_dir, id=list(range(Num_Divided)), digiCharge=digiCharge, length=length)
+    [expand('{VMCDIR}/macros/data/{DIRNAME}/{PDG}/{FILENAME}_DigiCharge{digiCharge}_Length{length}_s{id}_s0.reco.v1.04.conc.root', DIRNAME=dir_name, PDG=PDGList, FILENAME=file_name, VMCDIR=vmc_dir, id=list(range(Num_Divided)), digiCharge=digiCharge, length=length) for dir_name, file_name in zip(DirName, FileName)]
 
 rule run_transport_mc:
   output:
@@ -50,7 +30,8 @@ rule run_transport_mc:
     log_dir = os.path.join(vmc_dir, 'macros', 'log'),
     run_num = evt_per_job,
     start_num =  lambda wildcards: evt_per_job*int(str(wildcards.id)),
-    pdg = lambda wildcards: '2212,1000010020,1000010030,1000020030,1000020040,211,-211' if wildcards.PDG == 'All' else '2212,1000010020,1000020030,1000020040' if wildcards.PDG == 'NoTriton' else '2212,1000010030,1000020030,1000020040' if wildcards.PDG == 'NoDeuteron' else '2212,1000020030' if wildcards.PDG == 'PHe3' else str(wildcards.PDG)
+    pdg = lambda wildcards: '2212,1000010020,1000010030,1000020030,1000020040,211,-211' if wildcards.PDG == 'All' else '2212,1000010020,1000020030,1000020040' if wildcards.PDG == 'NoTriton' else '2212,1000010030,1000020030,1000020040' if wildcards.PDG == 'NoDeuteron' else '2212,1000020030' if wildcards.PDG == 'PHe3' else str(wildcards.PDG),
+    filename_for_output = lambda wildcards: wildcards.filename + '_' + wildcards.id
   shell:
     """
     LOGDIR={params.log_dir}/{wildcards.DIRNAME}/{wildcards.PDG}/{wildcards.filename}

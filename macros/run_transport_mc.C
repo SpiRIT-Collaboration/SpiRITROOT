@@ -160,6 +160,7 @@ void run_transport_mc
 
   // ONLY FOPR SN132
   auto fEvent = new STModelToLabFrameGenerator(truthFile.c_str());
+  //fEvent -> SetBeamAndTarget(0.270, 132, 50, 124); 
   fEvent -> SetBeamAndTarget(0.270, 112, 50, 124); 
   fEvent -> SetPrimaryVertex(TVector3(0.04,-20.55,-1.32));
   fEvent -> SetVertexXYSigma(TVector2(0.406, 0.362));
@@ -173,7 +174,9 @@ void run_transport_mc
   fEvent -> SetTargetThickness(0.08);
   fEvent -> SetBeamDetectorVertexSigma(TVector2(0.0708, 0.0265));
   fEvent -> SetBeamDetectorAngleSigma(TVector2(0.00064, 0.00024));
-
+  // check if event id exceed limits
+  if(nEvent > 0)
+    if(start_evt + nEvent > fEvent->GetNEvents()) nEvent = fEvent -> GetNEvents() - start_evt;
 
 
   FairPrimaryGenerator* fGenerator = new FairPrimaryGenerator(truthFile.c_str());

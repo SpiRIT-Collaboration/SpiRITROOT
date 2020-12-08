@@ -25,6 +25,9 @@ class STImQMDReader; // old ImQMD format
 class STImQMDNewReader; // Fanurs updated the ImQMD format
 class STImQMDRawReader; // Fanurs updated the ImQMD format without coaleasce
 class STUrQMDReader;
+class STIBUUReader;
+class STDcQMDReader;
+
 
 
 namespace Elements
@@ -240,7 +243,39 @@ protected:
   std::vector<double> bs;
 };
 
+class STIBUUReader : public STTransportReader
+{
+public:
+  STIBUUReader(TString fileName, bool flipZ=true);
+  virtual ~STIBUUReader(){};
+  virtual int GetEntries();
+  virtual int GetEntry();
+  virtual void SetEntry(int t_entry);
+  virtual bool GetNext(std::vector<STTransportParticle>& particleList);  
+  virtual TString Print();
+protected:
+  std::ifstream fFile;
+  TString fFilename;
+  int fEventID = 0;
+  std::vector<std::vector<STTransportParticle>> fParticleList;
+};
 
+class STDcQMDReader : public STTransportReader
+{
+public:
+  STDcQMDReader(TString fileName);
+  virtual ~STDcQMDReader(){};
+  virtual int GetEntries();
+  virtual int GetEntry();
+  virtual void SetEntry(int t_entry);
+  virtual bool GetNext(std::vector<STTransportParticle>& particleList);  
+  virtual TString Print();
+protected:
+  std::ifstream fFile;
+  TString fFilename;
+  int fEventID = 0;
+  std::vector<std::vector<STTransportParticle>> fParticleList;
+};
 
 
 

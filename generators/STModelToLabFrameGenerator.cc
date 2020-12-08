@@ -347,7 +347,7 @@ void STUrQMDReader::ReadNextEvent_(std::vector<STTransportParticle>& particleLis
   // discard one more line
   std::getline(fFile, line);
   // particle information
-  const std::vector<int> supported_pdg{-211,211,2212,1000010020,1000010030,1000020030,1000020040};
+  //const std::vector<int> supported_pdg{-211,211,2212,1000010020,1000010030,1000020030,1000020040};
   for(int i = 0; i < mult; ++i)
   {
     int itype, charge;
@@ -356,8 +356,8 @@ void STUrQMDReader::ReadNextEvent_(std::vector<STTransportParticle>& particleLis
     std::stringstream ss(line);
     ss >> temp >> x >> y >> z >> temp >> px >> py >> pz >> temp >> itype >> temp >> charge;
     int pdg = this -> ITypeChargeToPDG(itype, charge);
-    if(std::find(supported_pdg.begin(), supported_pdg.end(), pdg) != supported_pdg.end())
-      particleList.push_back({pdg, px, py, pz, x, y, z});
+    //if(std::find(supported_pdg.begin(), supported_pdg.end(), pdg) != supported_pdg.end())
+    particleList.push_back({pdg, px, py, pz, x, y, z});
   }
 }
 
@@ -375,7 +375,7 @@ int STUrQMDReader::ITypeChargeToPDG(int itype, int charge)
     else if(charge == -1) return -211; // pi-
     else return 111; // pi 0
   }
-  else if(500 < itype && itype < 600)
+  else if(500 < itype && itype < 700)
   {
     int A = itype - 500;
     int Z = charge;
@@ -408,6 +408,88 @@ std::vector<FairIon*> STUrQMDReader::GetParticleList()
   }
   return particleList; 
 }
+
+/**************************************************
+* IBUU Reader
+***************************************************/
+
+STIBUUReader::STIBUUReader(TString fileName, bool flipZ) : fFile(fileName), fFilename(fileName)
+{
+  std::string line;
+  while(std::getline(fFile, line))
+  {
+    double mass, x, y, z, px, py, pz;
+    int ptype;
+    std::stringstream ss(line);
+    // In IBUU, projectile moves in -x direction
+    if(ss >> ptype >> mass >> x >> y >> z >> px >> py >> pz)
+      fParticleList.back().push_back({((ptype == 1)? 2212 : 2112), px, py, (flipZ)? -pz : pz, x, y, z});  
+    else
+      fParticleList.push_back(std::vector<STTransportParticle>());
+  }
+}
+
+int STIBUUReader::GetEntries() { return fParticleList.size(); }
+int STIBUUReader::GetEntry() { return fEventID; }
+void STIBUUReader::SetEntry(int t_entry) { fEventID = t_entry; }
+
+bool STIBUUReader::GetNext(std::vector<STTransportParticle>& particleList)
+{
+  if(fEventID >= fParticleList.size()) return false;
+
+  particleList = fParticleList[fEventID];
+  ++fEventID;
+  return true;
+}
+
+TString STIBUUReader::Print()
+{ return "IBUU reader with sou8rce " + fFilename; }
+
+/**************************************************
+* DcQMD Reader
+***************************************************/
+
+STDcQMDReader::STDcQMDReader(TString fileName) : fFile(fileName), fFilename(fileName)
+{
+  std::string line;
+  while(std::getline(fFile, line))
+  {
+    double x, y, z, px, py, pz;
+    int ptype, temp;
+    std::stringstream ss(line);
+    if(ss >> x >> y >> z >> px >> py >> pz >> ptype >> temp)
+    {  
+      // for dcQMD, the projectile is moving in negative z direction
+      if(ptype < 100) fParticleList.back().push_back({((ptype == 1)? 2212 : 2112), px, py, -pz, x, y, z});  
+    }
+    else
+    {
+      // discard header columns
+      std::getline(fFile, line);
+      std::getline(fFile, line);
+
+      fParticleList.push_back(std::vector<STTransportParticle>());
+    }
+  }
+}
+
+int STDcQMDReader::GetEntries() { return fParticleList.size(); }
+int STDcQMDReader::GetEntry() { return fEventID; }
+void STDcQMDReader::SetEntry(int t_entry) { fEventID = t_entry; }
+
+bool STDcQMDReader::GetNext(std::vector<STTransportParticle>& particleList)
+{
+  if(fEventID >= fParticleList.size()) return false;
+
+  particleList = fParticleList[fEventID];
+  ++fEventID;
+  return true;
+}
+
+TString STDcQMDReader::Print()
+{ return "DcQMD reader with sou8rce " + fFilename; }
+
+
 
 
 /**************************************************
@@ -494,6 +576,7 @@ void STModelToLabFrameGenerator::RegisterReader()
   else if(fInputName.BeginsWith("imqmd") || fInputName.BeginsWith("approx"))  { fReader = new STImQMDReader(fInputPath + fInputName); }  // approx data shares the same format as imqmd
   else if(fInputName.BeginsWith("pbuu")) { fReader = new STpBUUReader(fInputPath + fInputName); }
   else if(fInputName.BeginsWith("urqmd"))  { fReader = new STUrQMDReader(fInputPath + fInputName); } 
+  else if(fInputName.BeginsWith("ibuu")) { fReader = new STIBUUReader(fInputPath + fInputName); }
   else
     LOG(FATAL)<<"STModelToLabFrameGenerator cannot accept event files without specifying generator names."<<FairLogger::endl;
   LOG(INFO)<<"-I Opening file: "<<fInputName<<FairLogger::endl;
@@ -596,6 +679,11 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     Int_t pdg = particle.pdg;
     auto particleData = Elements::PDGToParticleData(pdg);
     int charge = particleData -> Charge()/3;
+    // register if Z > 20 residue is found
+    if(charge >= 20)
+      if(auto castedEvent = dynamic_cast<STFairMCEventHeader*>(event))
+        castedEvent -> SetHvyResidue();
+
     if(charge == 0 || (charge > fMaxZ && fMaxZ > 0))
       continue;
 

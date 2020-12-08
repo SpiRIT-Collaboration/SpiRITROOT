@@ -48,6 +48,8 @@ InitStatus STFilterEventTask::Init()
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   fEventType = (TClonesArray*) ioMan -> GetObject("EventType");
   fERat = (STVectorF*) ioMan -> GetObject("ERAT");
+  if(fBCut)
+    fB = (STVectorF*) ioMan -> GetObject(("b" + fBType).c_str());
   if(!fERat) fLogger -> Info(MESSAGE_ORIGIN, "ERAT data cannot be loaded. Will not perform cut on ERAT");
   return kSUCCESS;
 }
@@ -114,12 +116,22 @@ void STFilterEventTask::Exec(Option_t *opt)
   if(fRejectEmpty)
   {
     int type = static_cast<STVectorI*>(fEventType -> At(0)) -> fElements[0];
-    if(type == 0) fill = false;
+    if(type != -1) fill = false;
+  }
+  if(fMCMinBias)
+  {
+    int type = static_cast<STVectorI*>(fEventType -> At(0)) -> fElements[0];
+    if(type == 10) fill = false;
   }
   if(fERatCut && fERat)
   {
     auto erat = fERat -> fElements[0];
     if(!(fERatMin < erat && erat < fERatMax)) fill = false;
+  }
+  if(fBCut && fB)
+  {
+    auto b = fB -> fElements[0];
+    if(!(fBMin < b && b < fBMax)) fill = false;
   }
 
   fSkip -> fElements[0] = (fill)? 0 : 1;

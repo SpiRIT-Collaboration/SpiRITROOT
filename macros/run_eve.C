@@ -20,7 +20,7 @@ void run_eve
   if (pathToData.IsNull())
     pathToData = spiritroot+"macros/data/";
 
-  TString input     = pathToData + name + ".reco.root";
+  TString input     = pathToData + name + ".mc.root";
   TString output    = pathToData + name + ".eve.root";
   TString parameter = spiritroot + "parameters/"  + parname;
   TString geomety   = spiritroot + "geometry/geomSpiRIT.man.root";
@@ -30,6 +30,7 @@ void run_eve
 
   STEveManager *eve = new STEveManager();
   eve -> SetInputFile(input);         // Set input file (string)
+  eve -> AddFriend(pathToData + name + "_s0.reco.v1.04.root");
   eve -> SetParInputFile(parameter);  // Set parameter file (string)
   eve -> SetOutputFile(output);       // Set output file (string)
   eve -> SetBackgroundColor(kWhite);  // Set background color (Color_t) 
@@ -38,7 +39,7 @@ void run_eve
   eve -> SetViewerPoint(-0.7, 1.1);   // Set camera angle (theta, phi)
 
   STEveDrawTask *draw = new STEveDrawTask();
-  draw -> SetRendering("mc",         false);
+  draw -> SetRendering("mc",         true);
   draw -> SetRendering("digi",       false);
   draw -> SetRendering("hit",        true);
   draw -> SetRendering("hitbox",     false);
@@ -69,7 +70,7 @@ void run_eve
         decoder -> SetMetaData(dataFileWithPath, iCobo);
       }
     }
-    eve -> AddTask(decoder);
+    //eve -> AddTask(decoder);
   }
 
   eve -> AddEveTask(draw);

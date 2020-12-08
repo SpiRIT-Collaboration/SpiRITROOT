@@ -117,6 +117,7 @@ STDriftTask::Init()
   fCoefL    = fPar->GetCoefDiffusionLong()*sqrt(10.);  // [cm^(-1/2)] to [mm^(-1/2)]
   fGain     = fPar->GetGain();
   fYDriftOffset = fPar->GetYDriftOffset();
+  fTPCWidth = fPar->GetPadPlaneX()/2;
 
   if(fSpline)
     fInterpolator = BichselCorrection(fSpecies);
@@ -155,6 +156,7 @@ STDriftTask::Exec(Option_t* option)
 
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
     fMCPoint = (STMCPoint*) fMCPointArray->At(iPoint);
+    if(std::fabs(fMCPoint -> GetX()*10) > fTPCWidth + fEdgeClearance) continue;
     Double_t eLoss = 0.;
     if(fSpline)
     {

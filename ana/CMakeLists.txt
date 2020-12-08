@@ -78,6 +78,8 @@ STPiProbTask.cc
 STCSVReaderTask.cc
 STObsWriterTask.cc
 STUrQMDFormatWriterTask.cc
+STImpactParameterMLTask.cc
+ProcessPipe.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

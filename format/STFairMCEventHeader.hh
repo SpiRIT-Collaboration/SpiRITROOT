@@ -12,6 +12,7 @@ public:
   virtual ~STFairMCEventHeader();
   virtual void Register();
 
+  void SetHvyResidue(bool value=true);
   void SetBeamZ(double Z);
   void SetBeamA(double A);
   void SetEnergyPerNucleons(double EnergyPN); // in GeV
@@ -20,10 +21,12 @@ public:
   double GetBeamA();
   double GetBeamAoZ();
   double GetEnergyPerNucleons();
+  bool HasHvyResidue();
 protected:
   double fBeamZ;
   double fBeamA;
   double fBeamEnergyPerN;
+  bool   fHasHvyResidue = false;
 
   ClassDef(STFairMCEventHeader, 1);
 };

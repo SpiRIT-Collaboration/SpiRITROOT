@@ -127,9 +127,11 @@ class STSimpleGraphsTask : public FairTask {
     void SetPersistence(Bool_t value);
 
     // parameters for graph drawing
+    // for MC CIN CIP
+    Double_t fPtThresholdForMC = 150;
     // this one is for drawing flow
     Double_t fMidRapThresholdForVs = 0.5;
-    Double_t fPtThresholdForVs = 0.4;
+    Double_t fPtThresholdForVs = 0.;
     Double_t fProbThresholdForVs = 0.95;
     Double_t fPhiEffThresholdForVs = 0.2;
     // this one is for rapidity plots

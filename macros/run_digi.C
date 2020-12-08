@@ -12,7 +12,7 @@
  *   @ name : Name of simulation. Should be same with MC simulation.
  */
 
-void run_digi(TString name = "protons_75_events", double beamrate=-1, TString ParFile = "ST.parameters.par", bool simulateBeam = false)
+void run_digi(TString name = "protons_75_events", double beamrate=-1, TString ParFile = "ST.parameters.par", bool simulateBeam = false, double fLeakageFactor = 10.2, TString outname = "")
 {
   gRandom -> SetSeed(0);
 
@@ -21,6 +21,10 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
 
   // FairRun
   FairRunAna* fRun = new FairRunAna();
+  
+  auto kyotoTask = new STKyotoTask();
+  fRun -> AddTask(kyotoTask); 
+
   // -----------------------------------------------------------------
   // Set space charge task
   // uncomment the following to enable space charge
@@ -31,7 +35,7 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
   fSpaceChargeTask -> SetPersistence(false);
   fSpaceChargeTask -> SetVerbose(false);
   fSpaceChargeTask -> SetProjectile(STSpaceCharge::Projectile::Sn132);
-  fSpaceChargeTask -> SetSheetChargeDensity(beamrate,10.2*beamrate); // sheet charge density for run 2899
+  fSpaceChargeTask -> SetSheetChargeDensity(beamrate,fLeakageFactor*beamrate); // sheet charge density for run 2899
   if(beamrate >= 0) fRun -> AddTask(fSpaceChargeTask);
 
 
@@ -58,7 +62,7 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
 
   STSimulateBeamTask* beamTask = new STSimulateBeamTask();
   beamTask -> SetDeadPadOnBeam(workDir + "/input/ProbDeadPad.root", "Sn132");
-  beamTask -> SetHeavyFragments(workDir + "/SpaceCharge/potential/_132Sn_BeamTrack.data", -203.3, 5000000, 4.3);
+  //beamTask -> SetHeavyFragments(workDir + "/SpaceCharge/potential/_132Sn_BeamTrack.data", -203.3, 5000000, 4.3);
   if(simulateBeam) fRun -> AddTask(beamTask);
 
 
@@ -84,7 +88,7 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
   // -----------------------------------------------------------------
   // Set file names
   TString inputFile   = dataDir + name + ".mc.root"; 
-  TString outputFile  = dataDir + name + ".digi.root"; 
+  TString outputFile  = dataDir + ((!outname.IsNull())? outname : name) + ".digi.root"; 
   TString mcParFile   = dataDir + name + ".params.root";
   TString loggerFile  = dataDir + "log_" + name + ".digi.txt";
   TString digiParFile = workDir + "/parameters/" + ParFile;

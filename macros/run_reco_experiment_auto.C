@@ -7,12 +7,14 @@ void run_reco_experiment_auto
   Int_t fRunNo = 2894,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 500,
+  /*0double fLength = 300,*/
   std::vector<Int_t> fSkipEventArray = {},
   TString fMCFile = "",
   TString fPathToData = "", 
   TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement"
 )
 {
+  double fLength = 300;
   /* ======= This part you need initial configuration ========= */
   // Parameter database file - files should be in parameters folder.
   TString systemDB = "systemDB.csv";
@@ -58,11 +60,14 @@ void run_reco_experiment_auto
   if (fIsBeamDataSet) fBeamData = Form(beamDataPathWithFormat.Data(), fRunNo);
   TString fGainMatchingFile = fSpiRITROOTPath + Form("parameters/RelativeGainRun%d.list", fRelativeGainRunID);
 
+  cout << "cp0" << endl;
+
   Int_t start = fSplitNo * fNumEventsInSplit;
   if (start >= fNumEventsInRun) return;
   if (start + fNumEventsInSplit > fNumEventsInRun)
     fNumEventsInSplit = fNumEventsInRun - start;
 
+  cout << "cp1" << endl;
   TString sRunNo   = TString::Itoa(fRunNo, 10);
   TString sSplitNo = TString::Itoa(fSplitNo, 10);
 
@@ -128,8 +133,8 @@ void run_reco_experiment_auto
   //        runid eventid
   //        runid eventid
   //map<Int_t, vector<Int_t> *> events;
-  //string FileName_PiEvt = "./Pick_PiEvt/Sn108_PiEvt/";
-  //FileName_PiEvt = FileName_PiEvt+"Sn108_Run"+fRunNo+"_PiEvt";
+  //string FileName_PiEvt = "./Pick_PiEvt/Sn132_KanekoEvt/";
+  //FileName_PiEvt = FileName_PiEvt+"Sn132_Run"+fRunNo+"_KanekoEvt";
   //cout<<"Reading the Event list for the pion events : "<<FileName_PiEvt<<endl;
   //readEventList(FileName_PiEvt, events);
   //cout <<"Number of events " << fNumEventsInSplit << " starting at " << start <<endl;
@@ -192,6 +197,7 @@ void run_reco_experiment_auto
   auto gfBField = STGFBField::GetInstance("samurai_field_map", "A", fFieldOffsetX, fFieldOffsetY, fFieldOffsetZ);   
 
   auto spaceCharge = new STSpaceChargeCorrectionTask();
+  spaceCharge -> DiscardLengthAfter(fLength);
   spaceCharge -> SetBField(gfBField -> GetFieldMap());
   if (fSheetChargeDensity != 0) {
     spaceCharge -> SetDriftParameters(-4.355e4, -2.18); // omega tau and mu of the Langevin equation
@@ -218,7 +224,7 @@ void run_reco_experiment_auto
   genfitPID -> SetListPersistence(true);
   // Removing shorter length tracklet by distance of adjacent clusters.
   // genfitPID -> SetMaxDCluster(60);
-  
+  /*
   auto genfitVA = new STGenfitVATask();
   genfitVA -> SetPersistence(true);
   // Only for test
@@ -231,7 +237,7 @@ void run_reco_experiment_auto
   // Uncomment if you want to recalculate the vertex using refit tracks.
   genfitVA -> SetUseRave(true);
   genfitVA -> SetZtoProject(-13.2, 1.7, 3); //(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple), this function will project the BDC on the Target.
-  
+  */
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
 
@@ -248,7 +254,7 @@ void run_reco_experiment_auto
   run -> AddTask(correct);
   run -> AddTask(spaceCharge);
   run -> AddTask(genfitPID);
-  run -> AddTask(genfitVA);
+  //run -> AddTask(genfitVA);
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
   run -> AddTask(smallOutput);

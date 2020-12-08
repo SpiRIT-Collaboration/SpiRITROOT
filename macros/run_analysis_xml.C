@@ -1,6 +1,7 @@
-void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOutName="", bool iter_unfold=false, int entries_lim=-1, int ndivisions=0, int job_id=0)
+void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOutName="", bool iter_unfold=false, int entries_lim=-1, bool iter_PID=false, int ndivisions=0, int job_id=0)
 {
   std::srand(std::time(0));
+  gRandom -> SetSeed(std::time(0));
   /***************************************************************
   * Read xml
   ****************************************************************/
@@ -18,6 +19,8 @@ void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOu
   if(entries_lim > 0)
     if(nentries > entries_lim)
       nentries = entries_lim;
+  bool use_rand = true;
+  if(use_rand && entries_lim > 0) reader -> RandSample(entries_lim);
   if(ndivisions > 1)
   {
     int n_local_entries = int((nentries + 1)/ndivisions);
@@ -50,7 +53,16 @@ void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOu
 
   std::vector<FairTask*> tasks;
   tasks.push_back(reader);
-  tasks.push_back(factory.GetPIDTask());
+  auto pidTask = factory.GetPIDTask();
+  if(auto castedPIDTask = dynamic_cast<STPIDProbTask*>(pidTask))
+    castedPIDTask -> SetMetaFileUpdate(iter_PID);
+  tasks.push_back(pidTask);
+  //auto PIDTask = new STPIDMachineLearningTask();
+  //PIDTask -> SetChain((TChain*) ((STConcReaderTask*) reader) -> GetChain());
+  //PIDTask -> SetBufferSize(10000);
+  //PIDTask -> SetModel("MLModelVotingSn132", STAlgorithms::Voting);
+  //tasks.push_back(PIDTask);
+
   tasks.push_back(factory.GetPiProbTask());
   tasks.push_back(factory.GetDivideEventTask());
   tasks.push_back(factory.GetTransformFrameTask());
@@ -59,12 +71,11 @@ void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOu
   tasks.push_back(eff);
   tasks.push_back(factory.GetERATTask());
   tasks.push_back(factory.GetFilterEventTask());
-  auto reactionPlaneTask = factory.GetReactionPlaneTask();
-  //reactionPlaneTask -> LoadBiasCorrection("test.root");
-  //reactionPlaneTask -> UseShifting();
-  //reactionPlaneTask -> UseFlattening();
-  tasks.push_back(reactionPlaneTask);
+  tasks.push_back(factory.GetPhiEfficiencyTask());
+  tasks.push_back(factory.GetReactionPlaneTask());
   tasks.push_back(factory.GetSimpleGraphsTask());
+  tasks.push_back(factory.GetObsWriterTask());
+  tasks.push_back(factory.GetImpactParameterMLTask());
 
   for(auto task : tasks)
     if(task) run -> AddTask(task);

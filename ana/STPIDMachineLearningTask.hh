@@ -50,6 +50,7 @@ public:
 
 enum class STAlgorithms { NeuralNetwork, RandomForest, Voting };
 
+
 class STPIDMachineLearningTask : public FairTask {
   public:
     /// Constructor
@@ -68,12 +69,15 @@ class STPIDMachineLearningTask : public FairTask {
     void SetBufferSize(int size);
     void SetModel(const std::string& saveModel, STAlgorithms type);
 
-    static void TrainModel(const std::string& simulation, const std::string& saveModel, STAlgorithms type, int minClus = 0);
+    static void TrainModel(const std::string& simulation, const std::string& saveModel, STAlgorithms type, int minClus = 0, const std::string& scaling_filename = "");
+    static void dEdXMCDataRatio(const std::string& simulation, const std::string& data_to_match, const std::string& ratio_filename, bool display=false, int nevent=-1);
     static void ConvertEmbeddingConc(const std::vector<std::string>& embeddingFiles, 
                                     const std::vector<int>& particlePDG,
                                     const std::string& simulationFile);
   private:
     void LoadDataFromPython(int startID, int endID);
+    static void ScaledEdX(STTmpFile& output, const std::string& simulation, const std::string& PID_scale_filename);
+
 
     FairLogger *fLogger;                ///< FairLogger singleton
     TClonesArray *fPDGProb = nullptr;
@@ -90,11 +94,19 @@ class STPIDMachineLearningTask : public FairTask {
     TClonesArray *fSTDataArray = nullptr; // may read from trimmed files
     std::vector<int> fSupportedPDG;
 
+    static const std::map<int, std::string> fMLPDGToName;
+    // PDG list and valid range of unsupervised learning
+    static const std::map<int, int> fPIDPredictionToPDG;
+    static const std::vector<std::pair<double, double>> fValidRange;
+
     STAlgorithms fMLType;
     std::string fSaveModel;
     TCutG fAcceptRegion;
 
   ClassDef(STPIDMachineLearningTask, 1);
 };
+
+                              
+
 
 #endif

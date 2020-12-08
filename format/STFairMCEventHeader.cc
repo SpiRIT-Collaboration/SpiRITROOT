@@ -7,6 +7,9 @@ STFairMCEventHeader::STFairMCEventHeader()
 STFairMCEventHeader::~STFairMCEventHeader()
 {}
 
+void STFairMCEventHeader::SetHvyResidue(bool value)
+{ fHasHvyResidue = value; }
+
 void STFairMCEventHeader::SetBeamZ(double Z)
 { fBeamZ = Z; }
 
@@ -27,6 +30,9 @@ double STFairMCEventHeader::GetBeamAoZ()
 
 double STFairMCEventHeader::GetEnergyPerNucleons()
 { return fBeamEnergyPerN; }
+
+bool STFairMCEventHeader::HasHvyResidue()
+{ return fHasHvyResidue; }
 
 void STFairMCEventHeader::Register()
 { 

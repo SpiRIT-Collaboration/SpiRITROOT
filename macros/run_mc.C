@@ -156,6 +156,19 @@ void run_mc
   auto fEvent = new STSingleTrackGenerator();
   fEvent->ReadConfig((parDir + parName).Data());
   fEvent->SetVertexBegin(nSplit);
+
+  //fEvent->SetParticleList({2212});
+  //fEvent->SetPrimaryVertex(TVector3(0,-20.33,-1.32));
+  //fEvent->SetMomentum(0.9);
+  //fEvent->SetThetaPhi(45*TMath::DegToRad(), 0*TMath::DegToRad());
+
+
+
+  //auto fEvent = new STSingleTrackInCMGenerator();
+  //fEvent->SetMCBeamFile("../Picked_run_SimSn132KanekoMult50/SimSn132KanekoMult50.digi.root");
+  //fEvent->ReadConfig((parDir + parName).Data());
+  //fEvent->SetVertexBegin(nSplit);
+
   //fEvent->SetCocktailEvent(300.);
   //fEvent->SetUniformRandomDirection(true);
   //fEvent->SetParticleList({2212, 211, -211, 1000010020, 1000010030});

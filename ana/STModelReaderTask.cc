@@ -33,6 +33,8 @@ STModelReaderTask::STModelReaderTask(TString filename, bool enable_neutrons) : f
   { fReader = std::unique_ptr<STImQMDReader>(new STImQMDReader(fInputPath + filename)); }
   else if(filename.BeginsWith("urqmd"))  { fReader = std::unique_ptr<STUrQMDReader>(new STUrQMDReader(fInputPath + filename)); }
   else if(filename.BeginsWith("pbuu")) { fReader = std::unique_ptr<STpBUUReader>(new STpBUUReader(fInputPath + filename)); }
+  else if(filename.BeginsWith("ibuu") || filename.BeginsWith("amd")) { fReader = std::unique_ptr<STIBUUReader>(new STIBUUReader(fInputPath + filename, filename.BeginsWith("ibuu"))); }
+  else if(filename.BeginsWith("dcqmd")) { fReader = std::unique_ptr<STDcQMDReader>(new STDcQMDReader(fInputPath + filename)); }
   else
   {
     LOG(FATAL)<<"STModelReader cannot accept event files without specifying generator names.\nInput name : " << filename << FairLogger::endl;

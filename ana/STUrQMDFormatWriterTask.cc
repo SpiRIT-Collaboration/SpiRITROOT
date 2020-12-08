@@ -15,11 +15,13 @@
 
 ClassImp(STUrQMDFormatWriterTask);
 
-STUrQMDFormatWriterTask::STUrQMDFormatWriterTask(const std::string& output_name, const std::string& urqmd_raw) : fOutput(output_name)
+STUrQMDFormatWriterTask::STUrQMDFormatWriterTask(const std::string& output_name, const std::string& urqmd_raw, bool simple_format) : fOutput(output_name), fSimpleFormat(simple_format)
 {
   fLogger = FairLogger::GetLogger(); 
   if(!fOutput.is_open())
     fLogger -> Info(MESSAGE_ORIGIN, "UrQMDFormatWriter cannot write to output. Will not write to output");
+  else if(fSimpleFormat)
+    fOutput << "dEdX,Px,Py,Pz,Charge,NClus,Type\n";
   if(!urqmd_raw.empty())
   {
     fLogger -> Info(MESSAGE_ORIGIN, ("Will load additional meta data from " + urqmd_raw).c_str());
@@ -99,58 +101,75 @@ void STUrQMDFormatWriterTask::SetParContainers()
 
 void STUrQMDFormatWriterTask::Exec(Option_t *opt)
 {
-  double b = -9999;
-  int id = static_cast<STVectorI*>(fEventID -> At(0)) -> fElements[0];
-  if(fUrQMDReader) 
-  {
-    fUrQMDReader -> SetEntry(id - 1);
-    b = fUrQMDReader -> GetB();
-  }
-
-  if(fBMin >= 0 && fBMax >= 0)
-  {
-    if(!(fBMin <= b && b <= fBMax)) 
-    {
-      fSkip -> fElements[0] = 1;
-      return;
-    }
-    else fSkip -> fElements[0] = 0;
-  }
   if(!fOutput.is_open()) return;
-
   auto data = static_cast<STData*>(fData -> At(0));
-  int mult_identified = 0;
-  std::stringstream ss;
 
-  for(int i = 0; i < fSupportedPDG.size(); ++i)
+  if(fSimpleFormat)
   {
-    auto& cm_vector = static_cast<STVectorVec3*>(fCMVector -> At(i)) -> fElements;
-    auto& prob = static_cast<STVectorF*>(fProb -> At(i)) -> fElements;
-    int pdg = fSupportedPDG[i];
-    auto particle = TDatabasePDG::Instance() -> GetParticle(pdg);
     for(int j = 0; j < data -> multiplicity; ++j)
-      if(prob[j] > 0.5)
-      {
-        ++mult_identified;
-        int A = particle -> Mass()/STAnaParticleDB::kAu2Gev + 0.5;
-        int Z = particle -> Charge()/3 + 0.5;
-        int ityp;
-        if(std::fabs(pdg) == 211)
-        {
-          ityp = 101;
-          A = Z = 0; 
-        }
-        else if(pdg == 2212 || pdg == 2112) ityp = 1;
-        else ityp = 500 + A;
-        int N = A - Z;
-
-        double p0 = std::sqrt(cm_vector[j].Mag2()/1000000 + particle -> Mass()*particle -> Mass());
-        ss << std::scientific << "0 0 0 0 " << p0 << " " << cm_vector[j].x()/1000. << " " << cm_vector[j].y()/1000. << " " << cm_vector[j].z()/1000.;
-        ss << " " << particle -> Mass() << " " << ityp << " " << Z - N << " " << Z << " 0 0 0" << std::endl;
-      }
+      if(data -> recodpoca[j].Mag() < 20 && data -> vaNRowClusters[j] + data -> vaNLayerClusters[j] > 15)
+        fOutput << data -> vadedx[j] << "," << data -> vaMom[j].x() << "," << data -> vaMom[j].y() << "," 
+                << data -> vaMom[j].z() << "," << data -> recoCharge[j] << "," 
+                << data -> vaNRowClusters[j] + data -> vaNLayerClusters[j] << ",Null\n";
   }
-  
-  fOutput << TString::Format(fEventHeader, 132, 50, 124, 50, b, 
-                             id, mult_identified);
-  fOutput << ss.str();
+  else
+  {
+    double b = -9999;
+    int id = static_cast<STVectorI*>(fEventID -> At(0)) -> fElements[0];
+    if(fUrQMDReader) 
+    {
+      fUrQMDReader -> SetEntry(id - 1);
+      b = fUrQMDReader -> GetB();
+    }
+
+    if(fBMin >= 0 && fBMax >= 0)
+    {
+      if(!(fBMin <= b && b <= fBMax)) 
+      {
+        fSkip -> fElements[0] = 1;
+        return;
+      }
+      else fSkip -> fElements[0] = 0;
+    }
+
+    int mult_identified = 0;
+    std::stringstream ss;
+
+    for(int i = 0; i < fSupportedPDG.size(); ++i)
+    {
+      auto& cm_vector = static_cast<STVectorVec3*>(fCMVector -> At(i)) -> fElements;
+      auto& prob = static_cast<STVectorF*>(fProb -> At(i)) -> fElements;
+      int pdg = fSupportedPDG[i];
+      auto particle = TDatabasePDG::Instance() -> GetParticle(pdg);
+      for(int j = 0; j < data -> multiplicity; ++j)
+        if(prob[j] > 0.5)
+        {
+          ++mult_identified;
+          int A = particle -> Mass()/STAnaParticleDB::kAu2Gev + 0.5;
+          int Z = particle -> Charge()/3 + 0.5;
+          int ityp;
+          if(std::fabs(pdg) == 211)
+          {
+            ityp = 101;
+            A = Z = 0; 
+          }
+          else if(pdg == 2212 || pdg == 2112) ityp = 1;
+          else ityp = 500 + A;
+          int N = A - Z;
+
+          double p0 = std::sqrt(cm_vector[j].Mag2()/1000000 + particle -> Mass()*particle -> Mass());
+          ss << std::scientific << "0 0 0 0 " << p0 << " " << cm_vector[j].x()/1000. << " " << cm_vector[j].y()/1000. << " " << cm_vector[j].z()/1000.;
+          ss << " " << particle -> Mass() << " " << ityp << " " << Z - N << " " << Z << " 0 0 0" << std::endl;
+        }
+    }
+    
+    fOutput << TString::Format(fEventHeader, 132, 50, 124, 50, b, 
+                               id, mult_identified);
+    fOutput << ss.str();
+  }
+}
+
+void STUrQMDFormatWriterTask::FinishTask()
+{
+  fOutput << std::flush;
 }

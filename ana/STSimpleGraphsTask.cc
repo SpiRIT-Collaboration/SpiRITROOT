@@ -258,7 +258,7 @@ void STSimpleGraphsTask::RegisterMCNPPlots()
       {
         const auto& data = package.Data();
         for(int i = 0; i < data.multiplicity; ++i)
-          if(package.Eff(i) > 0.5 && package.Prob(i) > 0.5)
+          if(package.Eff(i) > 0.5 && package.Prob(i) > 0.5 && package.CMVector(i).Perp() > fPtThresholdForMC)
           {
             double y0 = (fNNFrame)? package.LabRapidity(i)/(0.5*package.BeamRapidity()[1]) - 1 : package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);//package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);
             if(std::fabs(y0) < 0.5)
@@ -277,6 +277,8 @@ void STSimpleGraphsTask::RegisterMCNPPlots()
       auto CINCIP = (TH1F*) CIN -> Clone("CINCIP_MC");
       CINCIP -> Divide(CIP);
       CINCIP -> Write();
+
+      TParameter<double>("PtThresholdForMC", fPtThresholdForMC).Write();
     });
 
 }
@@ -286,6 +288,7 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
   fPlotRapidity = true;
   STAnaParticleDB::FillTDatabasePDG();
   std::map<int, TH2F*> ana_hists;
+  std::map<int, TH1F*> ptFullHists;
   for(auto& pdg : fSupportedPDG)
   {
     auto pname = fParticleName.at(pdg);
@@ -327,12 +330,14 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
           }
       });
     ana_hists[pdg] = hist_ana;
+    ptFullHists[pdg] = hist_ptFull;
   }
 
-  this -> RegisterFinishTaskRule([ana_hists, this]()
+  this -> RegisterFinishTaskRule([ana_hists, ptFullHists, this]()
     {
       std::map<int, TH1D*> ptHists;
       TH1F *CIP_rap = nullptr;
+      TH1F *CIP_pt = nullptr;
       for(int i = 0; i < fSupportedPDG.size(); ++i)
       {
         const auto hist = ana_hists.at(fSupportedPDG[i]);
@@ -360,16 +365,35 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
         projx -> Write();
         ptHists[fSupportedPDG[i]] = projy;
 
-        if(!CIP_rap) CIP_rap = (TH1F*) projx -> Clone("CIP_rapHist");
+        auto temp = (TH1F*) ptFullHists.at(fSupportedPDG[i]) -> Clone("temp");
+        temp -> Rebin();
+        temp -> Scale(0.5);
+
+        if(!CIP_rap && !CIP_pt) 
+        {
+          CIP_rap = (TH1F*) projx -> Clone("CIP_rapHist");
+          CIP_pt = (TH1F*) temp -> Clone("CIP_ptFullHist");
+        }
         else if(fSupportedPDG[i] == 2212 || fSupportedPDG[i] == 1000010020 || fSupportedPDG[i] == 1000010030)
+        {
           CIP_rap -> Add(projx);
+          CIP_pt -> Add(temp);
+        }
         else if(fSupportedPDG[i] == 1000020030 || fSupportedPDG[i] == 1000020040)
         {
           projx -> Scale(2);
           CIP_rap -> Add(projx);
+
+          temp -> Scale(2);
+          CIP_pt -> Add(temp);
         }
+        temp -> Delete();
       }
-      if(CIP_rap) CIP_rap -> Write();
+      if(CIP_rap && CIP_pt) 
+      {
+        CIP_rap -> Write();
+        CIP_pt -> Write();
+      }
 
       auto THe3 = (TH1D*) ptHists[1000010030] -> Clone("tHe3_ana_Pt");
       THe3 -> Divide(ptHists[1000020030]);
@@ -541,17 +565,34 @@ void STSimpleGraphsTask::RegisterVPlots()
     auto v2_counts = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v2_rap_counts", fParticleName.at(pdg).c_str()), "", nbins, -2, 2);
     auto v1 = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v1_cumsum", fParticleName.at(pdg).c_str()), "", nbins, -2, 2); 
     auto v2 = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v2_cumsum", fParticleName.at(pdg).c_str()), "", nbins, -2, 2); 
-    auto v2_sechar = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v2_sechar_cumsum", fParticleName.at(pdg).c_str()), "", nbins, -2, 2);
 
-    nbins = (std::abs(pdg) == 211)? 5 : 10;
-    auto v1_pt_counts = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v1_pt_counts", fParticleName.at(pdg).c_str()), "", nbins, 0, 1000);
-    auto v1_pt = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v1_pt_cumsum", fParticleName.at(pdg).c_str()), "", nbins, 0, 1000);
+    int pt_nbins = (std::abs(pdg) == 211)? 5 : 10;
+    auto v1_pt_counts = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v1_pt_counts", fParticleName.at(pdg).c_str()), "", pt_nbins, 0, 1000);
+    auto v1_pt = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v1_pt_cumsum", fParticleName.at(pdg).c_str()), "", pt_nbins, 0, 1000);
+
+    TH1F *v1_withPtCut = nullptr;
+    TH1F *v2_withPtCut = nullptr;
+    TH1F *v1_counts_withPtCut = nullptr;
+    TH1F *v2_counts_withPtCut = nullptr;
+
+    if(fPtThresholdForVs > 0)
+    {
+      v1_withPtCut = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v1_Pt%g_cumsum", fParticleName.at(pdg).c_str(), fPtThresholdForVs), "", nbins, -2, 2);
+      v2_withPtCut = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v2_Pt%g_cumsum", fParticleName.at(pdg).c_str(), fPtThresholdForVs), "", nbins, -2, 2);
+
+      v1_counts_withPtCut = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v1_rap_counts_Pt%g", fParticleName.at(pdg).c_str(), fPtThresholdForVs), "", nbins, -2, 2);
+      v2_counts_withPtCut = this -> RegisterHistogram<TH1F>(false, TString::Format("%s_v2_rap_counts_Pt%g", fParticleName.at(pdg).c_str(), fPtThresholdForVs), "", nbins, -2, 2);
+
+    }
 
     auto particle = TDatabasePDG::Instance() -> GetParticle(pdg);
     double mass = particle -> Mass()/STAnaParticleDB::kAu2Gev;
 
     this -> RegisterRuleWithParticle(pdg, 
-      [this, v1, v2, v2_sechar, v1_counts, v2_counts, v1_pt, v1_pt_counts, mass](const DataPackage& package)
+      [this, v1, v2, v1_withPtCut, v2_withPtCut, 
+       v1_counts, v2_counts, 
+       v1_counts_withPtCut, v2_counts_withPtCut, 
+       v1_pt, v1_pt_counts, mass](const DataPackage& package)
       {
         const auto& data = package.Data();
         for(int i = 0; i < data.multiplicity; ++i)
@@ -564,16 +605,25 @@ void STSimpleGraphsTask::RegisterVPlots()
 
             if(!std::isnan(package.V1RPAngle(i)))
             {
-              if(pt/mass > fPtThresholdForVs)
-              {
-                v1 -> Fill(y0, cos(phi - package.V1RPAngle(i))*weight);
-                v1_counts -> Fill(y0);
+              double cos1_weight = cos(phi - package.V1RPAngle(i))*weight;
+              double cos2_weight = cos(2*(package.V1RPAngle(i) - phi))*weight;
+              v1 -> Fill(y0, cos1_weight);
+              v1_counts -> Fill(y0);
 
-                //phi = (phi < 0)? 2*TMath::Pi() + phi : phi; 
-                v2 -> Fill(y0, cos(2*(package.V1RPAngle(i) - phi))*weight);
-                v2_sechar -> Fill(y0, cos(2*(package.V2RPAngle(i) - phi))*weight);
-                v2_counts -> Fill(y0);
-              }
+              //phi = (phi < 0)? 2*TMath::Pi() + phi : phi; 
+              v2 -> Fill(y0, cos2_weight);
+              v2_counts -> Fill(y0);
+
+              if(fPtThresholdForVs > 0)
+                if(pt/mass > fPtThresholdForVs)
+                {
+                  v1_withPtCut -> Fill(y0, cos1_weight);
+                  v1_counts_withPtCut -> Fill(y0);
+
+                  //_withPtCutphi = (phi < 0)? 2*TMath::Pi() + phi : phi; 
+                  v2_withPtCut -> Fill(y0, cos2_weight);
+                  v2_counts_withPtCut -> Fill(y0);
+                }
 
               if(0.15 <  package.FragRapidity(i) &&  package.FragRapidity(i) < 0.3)
               {
@@ -584,7 +634,9 @@ void STSimpleGraphsTask::RegisterVPlots()
           }
       });
 
-    this -> RegisterFinishTaskRule([v1, v1_counts, v1_pt, v1_pt_counts, v2, v2_sechar, v2_counts, pdg, this]()
+    this -> RegisterFinishTaskRule([v1, v1_counts, v1_pt, v1_pt_counts, v2, v2_counts, 
+                                    v1_withPtCut, v1_counts_withPtCut, 
+                                    v2_withPtCut, v2_counts_withPtCut, pdg, this]()
       {
         auto v1_cloned = (TH1F*) v1 -> Clone(TString::Format("%s_v1", fParticleName.at(pdg).c_str()));
         v1_cloned -> Divide(v1_counts);
@@ -598,14 +650,29 @@ void STSimpleGraphsTask::RegisterVPlots()
         v2_cloned -> Divide(v2_counts);
         v2_cloned -> Write();
 
-        v2_cloned = (TH1F*) v2_sechar -> Clone(TString::Format("%s_v2_sechar", fParticleName.at(pdg).c_str()));
-        v2_cloned -> Divide(v2_counts);
-        v2_cloned -> Write();
+        if(fPtThresholdForVs > 0)
+        {
+          v1_cloned = (TH1F*) v1_withPtCut -> Clone(TString::Format("%s_v1_Pt%g", fParticleName.at(pdg).c_str(), fPtThresholdForVs));
+          v1_cloned -> Divide(v1_counts_withPtCut);
+          v1_cloned -> Write();
 
-        TParameter<double>("fMidRapThresholdForVs", fMidRapThresholdForVs).Write();
-        TParameter<double>("PtThresholdForVs", fPtThresholdForVs).Write();
-        TParameter<double>("ProbThresholdForVs", fProbThresholdForVs).Write();
-        TParameter<double>("PhiEffThresholdForVs", fPhiEffThresholdForVs).Write();
+          v2_cloned = (TH1F*) v2_withPtCut -> Clone(TString::Format("%s_v2_Pt%g", fParticleName.at(pdg).c_str(), fPtThresholdForVs));
+          v2_cloned -> Divide(v2_counts_withPtCut);
+          v2_cloned -> Write();
+
+          int y0bin = v2_withPtCut -> GetXaxis() -> FindBin(double(0));
+          TParameter<double>(TString::Format("%s_AveV2_Pt%g", fParticleName.at(pdg).c_str(), fPtThresholdForVs), v2_withPtCut->Integral(y0bin, -1)/v2_counts_withPtCut->Integral(y0bin, -1)).Write();
+        }
+
+        if(pdg == fParticleName.begin() -> first)
+        {
+          TParameter<double>("fMidRapThresholdForVs", fMidRapThresholdForVs).Write();
+          TParameter<double>("PtThresholdForVs", fPtThresholdForVs).Write();
+          TParameter<double>("ProbThresholdForVs", fProbThresholdForVs).Write();
+          TParameter<double>("PhiEffThresholdForVs", fPhiEffThresholdForVs).Write();
+        }
+        int y0bin = v2 -> GetXaxis() -> FindBin(double(0));
+        TParameter<double>(TString::Format("%s_AveV2", fParticleName.at(pdg).c_str()), v2->Integral(y0bin, -1)/v2_counts->Integral(y0bin, -1)).Write();
       });
   }
 

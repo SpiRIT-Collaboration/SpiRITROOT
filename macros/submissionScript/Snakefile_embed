@@ -1,9 +1,9 @@
 import pandas as pd
 import os
 
-num_threads_per_job = 100
-num_threads_per_reco_job = 100
-tot_events = 2400
+num_threads_per_job = 20
+num_threads_per_reco_job = 20
+tot_events = 200
 run_num = 2899
 SupplePath='/mnt/spirit/analysis/user/tsangc/SpiRITROOT/Picked_run_%04dKaneko/' % run_num
 config_file = 'Pion_test.dat'
@@ -43,8 +43,8 @@ rule run_mc:
            VMCDIR=vmc_dir),
     temp(expand('{VMCDIR}/macros/data/{{filename}}_SARR_{{id}}.params.root', 
          VMCDIR=vmc_dir)), 
-    temp(expand('{VMCDIR}/macros/data/{{filename}}_SARR_{{id}}.digi.root', 
-         VMCDIR=vmc_dir))
+    expand('{VMCDIR}/macros/data/{{filename}}_SARR_{{id}}.digi.root', 
+         VMCDIR=vmc_dir)
   resources:
     cpu=1
   params:
@@ -53,7 +53,6 @@ rule run_mc:
     job_id = lambda wildcards: df.index[df['#Filename']==str(wildcards.filename)][0],
     num_id = lambda wildcards: int(str(wildcards.id)),
     beam_rate = lambda wildcards: df['BeamRate'][df.index[df['#Filename']==str(wildcards.filename)][0]],
-    RealB = lambda wildcards: 'true' if df['RealB'][df.index[df['#Filename']==str(wildcards.filename)][0]] else 'false',
     run_num = run_num
   shell:
     """

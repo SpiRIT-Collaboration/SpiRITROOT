@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+  This is an example...
+-->
+<AnalysisConfig>
+    <IOInfo Type="Sim">
+        <DataDir>data/ApproxSn112/</DataDir>
+        <InputName>All/*.conc</InputName>
+    </IOInfo>
+    <TaskList>
+        <EventFilterTask>
+            <MultiplicityMin>0</MultiplicityMin>
+            <MultiplicityMax>100</MultiplicityMax>
+            <MultiplicityDPOCA>20</MultiplicityDPOCA>
+        </EventFilterTask>
+
+        <PIDProbTask Type="Bay">
+            <MetaFile>Prior/Meta_SimSn112KanekoMult50.root</MetaFile>
+            <PIDFit>PIDFit/PIDSigma_SimSn112KanekoMult50.root</PIDFit>
+        </PIDProbTask>
+
+        <PiProbTask>
+            <GausFile>piAna/sliceFit.txt</GausFile>
+        </PiProbTask>
+    
+        <TransformFrameTask>
+             <TargetMass>124</TargetMass>
+             <TargetThickness>0.</TargetThickness>
+             <EnergyLossFile>../parameters/Sn132Sn124.txt</EnergyLossFile>
+        </TransformFrameTask>
+    
+        <EfficiencyTask Type="CM">
+            <EfficiencyGroup Type="Orig">
+                 <NClus>20</NClus> 
+                 <DPoca>20</DPoca> 
+                 <Phi>160-220,0-20,320-360</Phi>
+                 <MomBins>25</MomBins>
+                 <ThetaBins>14</ThetaBins>
+                 <UpscaleFactor>10</UpscaleFactor>
+                 <PhaseSpaceFactor>1</PhaseSpaceFactor>
+                 <UpdateUnfolding>Sn112Unfold.root</UpdateUnfolding>
+                 <Particle Name="pi+">
+                    <EffFile>/mnt/spirit/analysis/changj/effDB/effFactory/DataBase/EfficiencyDB_Sn112.root</EffFile>
+                    <MomMin>50</MomMin>
+                    <MomMax>600</MomMax>
+                 </Particle>
+                 <Particle Name="pi-">
+                    <EffFile>/mnt/spirit/analysis/changj/effDB/effFactory/DataBase/EfficiencyDB_Sn112.root</EffFile>
+                    <MomMin>50</MomMin>
+                    <MomMax>600</MomMax>
+                 </Particle>
+            </EfficiencyGroup>
+            <EfficiencyGroup Type="CM">
+                 <NClus>15</NClus> 
+                 <DPoca>15</DPoca> 
+                 <Phi>160-220,0-20,320-360</Phi>
+                 <UpscaleFactor>10</UpscaleFactor>
+                 <PtBins>15</PtBins>
+                 <CMzBins>15</CMzBins>
+                 <UpscaleFactor>10</UpscaleFactor>
+                 <PhaseSpaceFactor>3</PhaseSpaceFactor>
+                 <UpdateUnfolding Update="">SimSn112Unfold.root</UpdateUnfolding>
+                 <Particle Name="p">
+                    <EffFile>data/embed_dump/MarchCM/SimSn132KanekoMult50_CMProton.root</EffFile>
+                    <PtMin>0</PtMin>
+                    <PtMax>1300</PtMax>
+                    <CMzMin>-1000</CMzMin>
+                    <CMzMax>1000</CMzMax>
+                 </Particle>
+                 <Particle Name="d">
+                    <EffFile>data/embed_dump/MarchCM/SimSn132KanekoMult50_CMDeuteron.root</EffFile>
+                    <PtMin>0</PtMin>
+                    <PtMax>2000</PtMax>
+                    <CMzMin>-1300</CMzMin>
+                    <CMzMax>1300</CMzMax>
+                 </Particle>
+                 <Particle Name="t">
+                    <EffFile>data/embed_dump/MarchCM/SimSn132KanekoMult50_CMTriton.root</EffFile>
+                    <PtMin>0</PtMin>
+                    <PtMax>2500</PtMax>
+                    <CMzMin>-2500</CMzMin>
+                    <CMzMax>2500</CMzMax>
+                 </Particle>
+                 <Particle Name="He3">
+                    <EffFile>data/embed_dump/MarchCM/SimSn132KanekoMult50_CMHe3.root</EffFile>
+                    <PtMin>0</PtMin>
+                    <PtMax>2500</PtMax>
+                    <CMzMin>-1900</CMzMin>
+                    <CMzMax>1900</CMzMax>
+                 </Particle>
+                 <Particle Name="He4">
+                    <EffFile>data/embed_dump/MarchCM/SimSn132KanekoMult50_CMHe4.root</EffFile>
+                    <PtMin>0</PtMin>
+                    <PtMax>2500</PtMax>
+                    <CMzMin>-2500</CMzMin>
+                    <CMzMax>2500</CMzMax>
+                 </Particle>
+                 <Particle Name="He6">
+                    <EffFile>data/embed_dump/MarchCM/SimSn108_CMHe6.root</EffFile>
+                    <PtMin>0</PtMin>
+                    <PtMax>1300</PtMax>
+                    <CMzMin>-1000</CMzMin>
+                    <CMzMax>1000</CMzMax>
+                 </Particle>
+            </EfficiencyGroup> 
+        </EfficiencyTask>
+
+        <ERATTask>
+            <ImpactParameterFile>ImpactParameter/urqmd_bTriggered.root</ImpactParameterFile>
+        </ERATTask>
+
+        <PhiEfficiencyTask>
+            <PhiEff></PhiEff>
+        </PhiEfficiencyTask>
+
+        <ReactionPlaneTask>
+            <!--<UseMCReactionPlane></UseMCReactionPlane>-->
+        </ReactionPlaneTask>      
+
+        <SimpleGraphsTask>
+            <RapidityPlots></RapidityPlots>
+            <VPlots></VPlots>
+        </SimpleGraphsTask>
+    </TaskList>
+</AnalysisConfig>

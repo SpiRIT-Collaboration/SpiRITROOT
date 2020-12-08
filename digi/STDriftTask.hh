@@ -100,6 +100,8 @@ class STDriftTask : public FairTask
     Double_t fCoefL;    //!< Longitudinal diffusion coefficient. [mm^(-1/2)]
     Double_t fGain;     //!< Gain.
     Double_t fYDriftOffset; //!< offset for drift time
+    Double_t fTPCWidth; //!< Width of TPC in mm. Reject hit point ouside of this range to reduce ram usage
+    Double_t fEdgeClearance = 10; //!<Also simulate electrons that are fEdgeClearance from the end of pad plane for edge effect
 
     TF1 *polya_highgain = new TF1("polya_highgain","(1/1024.)*(pow(1.41,1.41)/TMath::Gamma(1.41))*pow(x/1024.,1.41-1)*exp(-1.41*(x/1024.))",0,10000);
 

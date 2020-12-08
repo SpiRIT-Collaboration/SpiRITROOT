@@ -31,7 +31,7 @@ void run_create_conc(TString fName,
 
   TString par = spiritroot+"parameters/ST.parameters.fullmc.par";
   TString geo = spiritroot+"geometry/geomSpiRIT.man.root";
-  auto inPattern = fPathToData+fName+"_s"+sSplitNo+".reco.*.root";
+  auto inPattern = fPathToData+fName+"_s"+sSplitNo+"*.reco.*.root";
   auto inList = glob(inPattern);//NewAna.2023.2753c44.root";//develop.1944.33821f0.root";
   if(inList.size() == 0) throw std::runtime_error(std::string(("No pattern matches " + inPattern).Data()));
   TString in1(inList[0]);

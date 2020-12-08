@@ -59,6 +59,7 @@ class STConcReaderTask : public STReaderTask {
     void SetPersistence(Bool_t value);
 
     void SetChain(TChain* chain);
+    TTree *GetChain() { return fChain; }
     void LoadFromXMLNode(TXMLNode *node); // will return path to data
     std::string GetPathToData() { return fPathToData; };
     int GetNEntries();

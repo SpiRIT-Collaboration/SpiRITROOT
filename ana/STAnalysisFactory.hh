@@ -22,6 +22,8 @@
 #include "STERATTask.hh"
 #include "STReactionPlaneTask.hh"
 #include "STDivideEventTask.hh"
+#include "STObsWriterTask.hh"
+#include "STImpactParameterMLTask.hh"
 
 class STAnalysisFactory
 {
@@ -40,6 +42,8 @@ public:
   STPhiEfficiencyTask *GetPhiEfficiencyTask();
   STReactionPlaneTask* GetReactionPlaneTask();
   STDivideEventTask* GetDivideEventTask();
+  STObsWriterTask *GetObsWriterTask();
+  STImpactParameterMLTask *GetImpactParameterMLTask();
 private:
   template<typename T>
   bool AssignIfNodeIs(const std::string& name, TXMLNode *node, T& value)

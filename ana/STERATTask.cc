@@ -125,7 +125,7 @@ void STERATTask::SetImpactParameterTable(const std::string& table_filename)
 }
 
 void STERATTask::CreateImpactParameterTable(const std::string& ana_filename, const std::string& output_filename)
-{ STERATTask::CreateImpactParameterTable({ana_filename}, output_filename); }
+{ STERATTask::CreateImpactParameterTable(std::vector<std::string>{ana_filename}, output_filename); }
 
 
 void STERATTask::CreateImpactParameterTable(const std::vector<std::string>& ana_filenames, const std::string& output_filename)
@@ -143,18 +143,18 @@ void STERATTask::CreateImpactParameterTable(const std::vector<std::string>& ana_
   TH1F mult_hist("Mult", "Mult", fMultMax - fMultMin + 1, fMultMin, fMultMax);
   chain.Project("Mult", "Sum$(recodpoca.Mag() < 20)");
   auto cumulative = mult_hist.GetCumulative(false);
-  int max = double(cumulative -> GetMaximum());
+  int max_val = double(cumulative -> GetMaximum());
   for(int i = 1; i < cumulative -> GetNbinsX(); ++i)
-    cumulative -> SetBinContent(i, sqrt(cumulative -> GetBinContent(i)/max));
+    cumulative -> SetBinContent(i, sqrt(cumulative -> GetBinContent(i)/max_val));
   output.cd();
   cumulative -> Write("Mult");
 
   TH1F erat_hist("erat", "erat", fERatBins, fERatMin, fERatMax);
   chain.Project("erat", "ERAT.fElements");
   cumulative = erat_hist.GetCumulative(false);
-  max = double(cumulative -> GetMaximum());
+  max_val = double(cumulative -> GetMaximum());
   for(int i = 1; i < cumulative -> GetNbinsX(); ++i)
-    cumulative -> SetBinContent(i, sqrt(cumulative -> GetBinContent(i)/max));
+    cumulative -> SetBinContent(i, sqrt(cumulative -> GetBinContent(i)/max_val));
   output.cd();
   cumulative -> Write("ERat");
 }

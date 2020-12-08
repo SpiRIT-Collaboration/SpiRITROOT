@@ -1,12 +1,12 @@
 import pandas as pd
 import os
 
-num_threads_per_job = 1
-num_threads_per_reco_job = 5
+num_threads_per_job = 10
+num_threads_per_reco_job = 10
 tot_events = 2400
 DigiPath='../../Picked_run_SimSn132KanekoMult50'
 ParameterFile='ST.parameters.fullmc.par'
-config_file = 'EmbedMCCM.dat'
+config_file = 'EmbedMC.dat'
 
 """
 Don't modify anything below

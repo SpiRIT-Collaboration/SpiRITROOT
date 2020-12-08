@@ -36,7 +36,7 @@
 
 class STUrQMDFormatWriterTask : public FairTask {
   public:
-    STUrQMDFormatWriterTask(const std::string& output_name, const std::string& urqmd_raw="");
+    STUrQMDFormatWriterTask(const std::string& output_name, const std::string& urqmd_raw="", bool simple_format=false);
     /// Destructor
     ~STUrQMDFormatWriterTask();
 
@@ -46,6 +46,7 @@ class STUrQMDFormatWriterTask : public FairTask {
     virtual void SetParContainers();
     /// Running the task. This will be called when Run() method invoked from FairRun.
     virtual void Exec(Option_t *opt);
+    virtual void FinishTask();
     void SetPersistence(Bool_t value) { fIsPersistence = value; };
     void SetBRange(double b_min, double b_max) { fBMin = b_min; fBMax = b_max; };
   private:
@@ -64,6 +65,7 @@ class STUrQMDFormatWriterTask : public FairTask {
     STUrQMDReader *fUrQMDReader = nullptr;
     TString fEventHeader;
 
+    bool fSimpleFormat;
     const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
     
   ClassDef(STUrQMDFormatWriterTask, 1);

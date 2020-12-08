@@ -4,7 +4,8 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.externals import joblib
+#from sklearn.externals import joblib
+import joblib
 from pickle import dump, load
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import VotingClassifier
@@ -13,13 +14,15 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 
-def TrainMachine(labeledData, modelSave):
+def TrainMachine(labeledData, modelSave, minClus=None):
 
   #ALL THINGS NEEDED TO ADD NEW PARTICLES ARE LABELLED 'HERE'
 
   
   #READ DATASET
   trains = pd.read_table(str(labeledData), delimiter=',')
+  if minClus is not None:
+    trains = trains[trains['NClus'] > minClus]
   
   trains = trains[(trains['Px']**2+trains['Py']**2+trains['Pz']**2)<4600**2]
   trains = trains[(trains['dEdX'])<1600]
@@ -40,7 +43,7 @@ def TrainMachine(labeledData, modelSave):
 
 
   modelVote = VotingClassifier(estimators=[('NN', clf1), ('GB', clf2), ('RF', clf3)], voting='soft')
-  modelVote.fit(train,label)
+  modelVote.fit(train.values,label)
   
   dump(modelVote, open(str(modelSave), 'wb'))
   
@@ -50,7 +53,7 @@ def TrainMachine(labeledData, modelSave):
 def ClassifyParticle(input, output, modelSave):
   model = load(open(str(modelSave), 'rb'))
   
-  dataset = pd.read_table(str(input), header=0, delim_whitespace=True)
+  dataset = pd.read_table(str(input), header=0, sep='\s+')#delim_whitespace=True)
   eventid = dataset['eventid']
   data = dataset.values
   
@@ -79,12 +82,14 @@ if __name__ == '__main__':
   parser.add_argument('-o', help='Name of the output to which classified PID is stored', required=False)
   parser.add_argument('-l', help='labeled data used in training the machine', required=False)
   parser.add_argument('-m', help='Name of the model file', required=True)
+  parser.add_argument('-n', help='Number of cluster cut in training', required=False, type=int)
+
 
   
   args = vars(parser.parse_args())
   if args['i'] is not None and args['o'] is not None:
     ClassifyParticle(args['i'], args['o'], args['m'])
   elif args['l'] is not None:
-    TrainMachine(args['l'], args['m'])
+    TrainMachine(args['l'], args['m'], args['n'])
   else:
     raise Exception('Invide arguments provided')

@@ -1,4 +1,5 @@
 #include "STKyotoTask.hh"
+#include "STFairMCEventHeader.hh"
 
 // Fair class header
 #include "FairRootManager.h"
@@ -78,6 +79,10 @@ STKyotoTask::Exec(Option_t* option)
 
   int num_trigged = kyoto_trigged_id.size();
   bool reject = (num_trigged >= 4)? false : true;
+ 
+  // reject heavy events, i.e. approximate Katana veto
+  if(auto castedEvent = dynamic_cast<STFairMCEventHeader*>(fFairMCEventHeader))
+    if(castedEvent -> HasHvyResidue()) reject = true;
 
   fEventID = fFairMCEventHeader -> GetEventID();
   fLogger->Info(MESSAGE_ORIGIN, 
@@ -85,6 +90,9 @@ STKyotoTask::Exec(Option_t* option)
                  fEventID, num_trigged, (reject)? "Reject" : "Accept"));
 
   if(reject) fEventHeader -> SetIsEmptyEvent();
+  // if no particles passes through kyoto array, it doesn't even satisfy minimum bias condition
+  // will be designated status 10
+  if(num_trigged == 0) fEventHeader -> SetStatus(10);
   //FairRunAna::Instance() -> MarkFill(!reject);
   return;
 }

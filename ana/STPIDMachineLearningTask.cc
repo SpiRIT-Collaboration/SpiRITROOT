@@ -8,6 +8,32 @@
 #include "FairRunAna.h"
 #include "FairRuntimeDb.h"
 
+// ROOT function
+#include "TProfile.h"
+#include "TGraphSmooth.h"
+#include "TCanvas.h"
+
+const std::map<int, std::string> STPIDMachineLearningTask::fMLPDGToName{{211, "Pion"},
+                                                                        {2212, "Proton"},
+                                                                        {1000010020, "Deuteron"},
+                                                                        {1000010030, "Triton"},
+                                                                        {1000020030, "He3"},
+                                                                        {1000020040, "He4"}};
+
+const std::map<int, int> STPIDMachineLearningTask::fPIDPredictionToPDG{{1, 2212},
+                                                                       {2, 1000010020},
+                                                                       {3, 1000010030},
+                                                                       {4, 1000020030},
+                                                                       {5, 1000020040}};
+      
+const std::vector<std::pair<double, double>> STPIDMachineLearningTask::fValidRange{{0, 600}, 
+                                                                                   {200, 1000},
+                                                                                   {400, 2000},
+                                                                                   {800, 2500},
+                                                                                   {800, 1300},
+                                                                                   {900,1700}};
+ 
+
 STTmpFile::STTmpFile(std::ios_base::openmode mode) : buffer{'/','t','m','p','/','S','T','T','m','p','.','X','X','X','X','X','X'},
   fFileName((mkstemp(buffer), buffer)), 
   fFile(buffer, mode)
@@ -33,9 +59,7 @@ ClassImp(STPIDMachineLearningTask);
 STPIDMachineLearningTask::STPIDMachineLearningTask(): fEventID(0)
 {
   STAnaParticleDB::EnableChargedParticles();
-  fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
   fChain = nullptr; 
-  fPDGProb = new TClonesArray("STVectorF", fSupportedPDG.size());
   fSTData = new STData();
 
   fLogger = FairLogger::GetLogger(); 
@@ -112,6 +136,9 @@ InitStatus STPIDMachineLearningTask::Init()
   
   if(!fChain -> GetBranch("EvtData"))
     fIsTrimmedFile = true;
+
+  fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
+  fPDGProb = new TClonesArray("STVectorF", fSupportedPDG.size());
   ioMan -> Register("Prob", "ST", fPDGProb, fIsPersistence);
   for(int pdg : fSupportedPDG)
     fPDGProbVec[pdg] = static_cast<STVectorF*>(fPDGProb -> ConstructedAt(fPDGProb -> GetEntriesFast()));
@@ -236,7 +263,164 @@ void STPIDMachineLearningTask::SetBufferSize(int size)
 void STPIDMachineLearningTask::SetModel(const std::string& saveModel, STAlgorithms type)
 { fMLType = type; fSaveModel = saveModel; }
 
-void STPIDMachineLearningTask::TrainModel(const std::string& simulation, const std::string& saveModel, STAlgorithms type, int minClus)
+void STPIDMachineLearningTask::dEdXMCDataRatio(const std::string& simulation, const std::string& data_to_match, const std::string& ratio_filename, bool display, int nevent)
+{
+  // both simulation and data_to_match should be dat file generated from UrQMDWriterTask in light format
+
+  // use Tom's python code to separate PID with KDE
+  std::string VMCDIR(gSystem -> Getenv("VMCWORKDIR"));
+  std::string script = VMCDIR + "/MachineLearning/PIDSeperator.py";
+  // Unsupervised PID of simulated data
+  std::string simPID = std::tmpnam(nullptr), dataPID = std::tmpnam(nullptr);
+  std::string option = "";
+  if(nevent > 0) option = " -n " + std::to_string(nevent);
+
+  std::cout << "Evaluate unsupervised PID on real data" << std::endl;
+  gSystem -> Exec(("python " + script + " -i " + data_to_match + " -o " + dataPID + option).c_str());
+  std::cout << "Evaluate unsupervised PID on simulated data" << std::endl;
+  gSystem -> Exec(("python " + script + " -i " + simulation + " -o " + simPID + option).c_str());
+
+  std::cout << "Reading the output for PID ratio." << std::endl;
+
+  // convert csv output to graph
+  auto ReadData = [](const std::string& filename, int type) -> std::vector<std::pair<double, double>>
+    {
+      std::ifstream file(filename);
+      std::string line;
+      std::vector<std::pair<double, double>> results;
+      // ignore first line
+      std::getline(file,line);
+      while(std::getline(file,line))
+      {
+        std::string temp;
+        std::vector<std::string> elements;
+        std::istringstream ss(line);
+        while(std::getline(ss, temp, ',')) elements.push_back(temp);
+        if(int(std::stof(elements.back()) + 0.5) == type)
+        {
+          double px = std::stof(elements[2]);
+          double py = std::stof(elements[3]);
+          double pz = std::stof(elements[4]);
+          results.push_back({std::sqrt(px*px + py*py + pz*pz), std::stof(elements[1])});
+        }
+      }
+      return results;
+    };
+
+  // convert TProfile into graph that can be futher smoothed
+  auto HistToGraph = [](const TProfile& hist, double xmin, double xmax) -> TGraph
+    {
+      TGraph graph;
+      graph.SetPoint(0, 0, 1);
+    
+      int bin_min = hist.GetXaxis() -> FindBin(xmin);
+      int bin_max = hist.GetXaxis() -> FindBin(xmax);
+      for(int i = bin_min; i <= bin_max; ++i) 
+        graph.SetPoint(graph.GetN(), hist.GetXaxis() -> GetBinCenter(i), hist.GetBinContent(i));
+    
+      graph.SetPoint(graph.GetN(), 2*xmax,  1);
+      return graph;
+    
+    };
+
+ 
+  TFile file(ratio_filename.c_str(), "RECREATE");
+  TCanvas *c1 = nullptr;
+  for(auto typePDG : fPIDPredictionToPDG)
+  { 
+    auto particle_data = ReadData(dataPID, typePDG.first);
+    auto particle_mc = ReadData(simPID, typePDG.first);
+
+    // data to Histogram for profile
+    TH2F PID_MC("PID_MC", "", 50, 0, 4000, 500, 0, 500);
+    TH2F PID_data("PID_data", "", 50, 0, 4000, 500, 0, 500);
+
+    for(const auto& content : particle_mc)
+      PID_MC.Fill(content.first, content.second);   
+    for(const auto& content : particle_data)
+      PID_data.Fill(content.first, content.second);
+
+    auto profX_MC = PID_MC.ProfileX();
+    auto profX_data = PID_data.ProfileX();
+    profX_MC -> Divide(profX_data);
+
+    auto graph = HistToGraph(*profX_MC, fValidRange[typePDG.first].first, fValidRange[typePDG.first].second);
+    TGraphSmooth *gs = new TGraphSmooth("normal");
+    auto gout = gs -> SmoothSuper(&graph, "", 1);
+
+    file.cd();
+    gout -> Write(TString::Format("PIDRatio_%d", typePDG.second));   
+
+    if(display)
+    {
+      if(!c1)
+      {
+        c1 = new TCanvas;
+        c1 -> Divide(3, 1);
+      }
+      c1 -> cd(1);
+      PID_MC.Draw("colz");
+      c1 -> cd(2);
+      PID_data.Draw("colz");
+      c1 -> cd(3);
+      profX_MC -> Draw("hist");
+      gout -> Draw("l same");
+
+      c1 -> WaitPrimitive();
+    }
+  }
+
+  std::remove(dataPID.c_str());
+  std::remove(simPID.c_str());
+    
+}
+
+
+void STPIDMachineLearningTask::ScaledEdX(STTmpFile& output, const std::string& simulation, const std::string& PID_scale_filename)
+{
+  std::ifstream file(simulation);
+  
+  TFile scale_file(PID_scale_filename.c_str());
+  std::map<int, TGraph*> ratios;
+  
+  for(const auto& pdgName : fMLPDGToName)
+    ratios[pdgName.first] = (TGraph*) scale_file.Get(TString::Format("PIDRatio_%d", pdgName.first));
+
+  // transfer old data to new
+  // header first
+  std::string line;
+  std::getline(file, line);
+  output.fFile << line << "\n";
+  
+  // scale content
+  while(std::getline(file, line))
+  {
+    std::string temp;
+    std::vector<std::string> elements;
+    std::stringstream ss(line);
+    while(std::getline(ss, temp, ',')) elements.push_back(temp);
+
+    double px = std::stof(elements[1]);
+    double py = std::stof(elements[2]);
+    double pz = std::stof(elements[3]);
+    double pMag = std::sqrt(px*px + py*py + pz*pz);
+    for(const auto& pdgName : fMLPDGToName)
+      if(pdgName.second == elements.back())
+      {
+        if(pdgName.first == 211) continue;
+        elements[0] = std::to_string(std::stof(elements[0])/ratios[pdgName.first] -> Eval(pMag));
+        break;
+      }
+
+    output.fFile << elements[0];
+    for(int i = 1; i < elements.size(); ++i) output.fFile << "," << elements[i];
+    output.fFile << "\n";
+  }
+  
+  output.fFile << std::flush;
+}
+
+void STPIDMachineLearningTask::TrainModel(const std::string& simulation, const std::string& saveModel, STAlgorithms type, int minClus, const std::string& scaling_filename)
 {
   std::string script;
   if(type == STAlgorithms::NeuralNetwork) script = "MachineLearning.py";
@@ -245,7 +429,14 @@ void STPIDMachineLearningTask::TrainModel(const std::string& simulation, const s
 
   std::string VMCDIR(gSystem -> Getenv("VMCWORKDIR"));
   script = VMCDIR + "/MachineLearning/" + script;
-  gSystem -> Exec(("python " + script + " -l " + simulation + " -m " + saveModel/* + " -n " + std::to_string(minClus)*/).c_str());
+
+  if(!scaling_filename.empty())
+  {
+    STTmpFile output;
+    ScaledEdX(output, simulation, scaling_filename);
+    gSystem -> Exec(("python " + script + " -l " + output.GetFileName() + " -m " + saveModel + " -n " + std::to_string(minClus)).c_str());
+  }
+  else gSystem -> Exec(("python " + script + " -l " + simulation + " -m " + saveModel + " -n " + std::to_string(minClus)).c_str());
 }
 
 void STPIDMachineLearningTask::ConvertEmbeddingConc(const std::vector<std::string>& embeddingFiles, 
@@ -259,15 +450,12 @@ void STPIDMachineLearningTask::ConvertEmbeddingConc(const std::vector<std::strin
   for(int i = 0; i < embeddingFiles.size(); ++i)
   {
      std::string pname;
-     switch(particlePDG[i])
+     try
      {
-       case 211: pname = "Pion"; break;
-       case 2212: pname = "Proton"; break;
-       case 1000010020: pname = "Deuteron"; break;
-       case 1000010030: pname = "Triton"; break;
-       case 1000020030: pname = "He3"; break;
-       case 1000020040: pname = "He4"; break;
-       default:
+       pname = fMLPDGToName.at(particlePDG[i]);
+     }
+     catch(const std::out_of_range& e)
+     {
          std::cout << "Particle id is not identified! " << std::endl;
          continue;
      }

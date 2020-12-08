@@ -2,7 +2,7 @@ from shutil import copyfile
 import numpy as np
 from analysisConfig.changeAttr import main as attr_change
 
-input_dir = 'ApproxSn112CorVs'
+input_dir = 'UrQMD_b1_10_Full'#'ApproxSn112CorVs'
 proj = 112
 iter_samples = 100000
 tot_samples = -1
@@ -19,7 +19,7 @@ rule all:
 rule IterPIDMeta:
   input:
     'Prior/Meta_SimSn%dTemplate.root' % proj,
-    'analysisConfig/analysisSimSn%dCM.xml' % proj
+    'analysisConfig/analysisSimSn%dCMWithPions.xml' % proj
   output:
     'Prior/Meta_Sn%d{input_dir}.root' % proj,
     temp('analysisConfig/analysisSimSn%dCM{input_dir}_temp.xml' % proj),
@@ -43,7 +43,7 @@ rule IterPIDMeta:
 rule IterUnfold:
   input:
     'Unfolding/SimSn%dTemplate.root' % proj,
-    'analysisConfig/analysisSimSn%dCM.xml' % proj,
+    'analysisConfig/analysisSimSn%dCMWithPions.xml' % proj,
     'Prior/Meta_Sn%d{input_dir}.root' % proj
   output:
     'Unfolding/Sn%d{input_dir}.root' % proj,
@@ -67,7 +67,7 @@ rule IterUnfold:
       attr_change(output[1], args)
 
 def input_for_status(wcs):
-  input = ['analysisConfig/analysisSimSn%dCM.xml' % proj,
+  input = ['analysisConfig/analysisSimSn%dCMWithPions.xml' % proj,
            'Prior/Meta_Sn%d' % proj + wcs.input_dir + '.root',
            'Unfolding/Sn%d' % proj + wcs.input_dir + '.root']
   if wcs.status != 'NoPhiEff':
@@ -94,7 +94,7 @@ rule analysis:
             'PhiEff': None if wildcards.status == 'NoPhiEff' else input.files[3],
             'Divide': True if wildcards.status == 'First' or wildcards.status == 'Second' else False,
             'Comp': input.files[4] if wildcards.status == 'Second' else None,
-            'execarg': 'Final false %d' % tot_samples,
+            'execarg': 'Final_%s false %d' % (wildcards.status, tot_samples),
             'exec': True}
     attr_change(output[0], args)
 

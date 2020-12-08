@@ -44,7 +44,7 @@ rule all:
 rule IterPIDMeta:
   input:
     'Prior/Meta_Sn{proj}Template.root',
-    'analysisConfig/analysisSn{proj}CM.xml'
+    ancient('analysisConfig/analysisSn{proj}CM.xml')
   output:
     'Prior/Meta_Sn{proj}Mult{output_range1}_{output_range2}.root',
     temp('analysisConfig/analysisSn{proj}CM_M{output_range1}_{output_range2}_temp.xml'),
@@ -75,7 +75,7 @@ rule IterPIDMeta:
 rule IterUnfold:
   input:
     'Unfolding/Sn{proj}Template.root',
-    'analysisConfig/analysisSn{proj}CM.xml',
+    ancient('analysisConfig/analysisSn{proj}CM.xml'),
     'Prior/Meta_Sn{proj}Mult{output_range1}_{output_range2}.root',
   output:
     'Unfolding/Sn{proj}Mult{output_range1}_{output_range2}.root',
@@ -106,7 +106,7 @@ rule IterUnfold:
     os.rename(os.path.join(args['Dir'], output_filename), os.path.join('data', 'Sn' + wildcards.proj + 'Final', output_filename))
 
 def input_for_status(wcs):
-  input = ['analysisConfig/analysisSn' + wcs.proj + 'CM.xml',
+  input = [ancient('analysisConfig/analysisSn' + wcs.proj + 'CM.xml'),
            'Prior/Meta_Sn%sMult%s_%s.root' % (wcs.proj, wcs.output_range1, wcs.output_range2),
            'Unfolding/Sn%sMult%s_%s.root' % (wcs.proj, wcs.output_range1, wcs.output_range2)]
   if wcs.status != 'NoPhiEff':

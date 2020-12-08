@@ -1,6 +1,7 @@
 void run_reco_mc
 (
   TString fName = "he4_lowmom",
+  double fLength = 150,
   TString fOutName = "",
   //Int_t fRunNo = 0,
   Int_t fNumEventsInRun = 10000,
@@ -13,6 +14,7 @@ void run_reco_mc
   Double_t fSheetCharge = 4e-8
 )
 {
+  //double fLength = 300;
   Int_t start = fSplitNo * fNumEventsInSplit;
   if (start >= fNumEventsInRun) return;
   if (start + fNumEventsInSplit > fNumEventsInRun)
@@ -88,6 +90,7 @@ void run_reco_mc
   auto correct = new STCorrectionTask(); //Correct for saturation   
 
   auto spaceCharge = new STSpaceChargeCorrectionTask();
+  spaceCharge -> DiscardLengthAfter(fLength);
   auto gfBField = STGFBField::GetInstance("samurai_field_map", "A", -0.1794, -20.5502, 58.0526);   
   spaceCharge -> SetBField(gfBField -> GetFieldMap());
   const double fGGLeakFactor = 10.2;
