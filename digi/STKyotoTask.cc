@@ -47,6 +47,8 @@ STKyotoTask::Init()
 
   fMCPointArray = (TClonesArray*) ioman->GetObject("STMCPoint");
   fFairMCEventHeader = (FairMCEventHeader*) ioman->GetObject("MCEventHeader.");
+  if(fUseKatana)
+    fLogger->Info(MESSAGE_ORIGIN, "Remember you must enable STDetector::SaveParentID() for Katana simulation to work.");
 
   fEventHeader = new STEventHeader;
   ioman -> Register("STEventHeader", "SpiRIT", fEventHeader, true);
@@ -66,28 +68,37 @@ STKyotoTask::Exec(Option_t* option)
   Int_t nMCPoints = fMCPointArray->GetEntries();
 
   std::unordered_set<int> kyoto_trigged_id;
+  bool reject_by_katana = false;
+  int Z_max = 0;
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
     fMCPoint = (STMCPoint*) fMCPointArray->At(iPoint);
     double posx = fMCPoint->GetX()*10; // to mm
     double posy = fMCPoint->GetY()*10; // to mm
     double posz = fMCPoint->GetZ()*10; // to mm
 
-    if(fabs(posx) > fEnclosureWidth/2.)
+    const double katana_z_min = 1700; // any hit beyond z = 1700 mm must come from Katana
+    if(fabs(posx) > fEnclosureWidth/2. && posz < katana_z_min)
       kyoto_trigged_id.insert(fMCPoint -> GetDetectorID());
-      
+
+    if(posz > katana_z_min && fUseKatana)
+    {
+      int pdg = fMCPoint -> GetPDG();
+      int Z = (pdg%10000000)/10000;
+      if(pdg > 10000000 && Z >= 20)
+      {
+        reject_by_katana = true;
+        if(Z > Z_max) Z_max = Z;
+      }
+    }
   }
 
   int num_trigged = kyoto_trigged_id.size();
-  bool reject = (num_trigged >= 4)? false : true;
+  bool reject = (num_trigged < 4 || reject_by_katana)? true : false;
  
-  // reject heavy events, i.e. approximate Katana veto
-  if(auto castedEvent = dynamic_cast<STFairMCEventHeader*>(fFairMCEventHeader))
-    if(castedEvent -> HasHvyResidue()) reject = true;
-
   fEventID = fFairMCEventHeader -> GetEventID();
   fLogger->Info(MESSAGE_ORIGIN, 
-            Form("Event #%d : Kyoto multiplicity %d. %s event.",
-                 fEventID, num_trigged, (reject)? "Reject" : "Accept"));
+            Form("Event #%d : Kyoto multiplicity %d. Katana max Z %d. %s event.",
+                 fEventID, num_trigged, Z_max, (reject)? "Reject" : "Accept"));
 
   if(reject) fEventHeader -> SetIsEmptyEvent();
   // if no particles passes through kyoto array, it doesn't even satisfy minimum bias condition

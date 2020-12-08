@@ -6,6 +6,8 @@
 #include "TVector3.h"
 #include "TLorentzVector.h"
 
+#include <map>
+
 class STMCPoint;
 class FairVolume;
 class TClonesArray;
@@ -78,6 +80,7 @@ class STDetector: public FairDetector
     virtual void PreTrack() {;}
     virtual void BeginEvent() {;}
 
+    void SaveParentID(bool val = true) {fSaveParentTrackID = val; }
 
   private:
 
@@ -93,7 +96,11 @@ class STDetector: public FairDetector
     Double32_t     fTime;              //!<  time
     Double32_t     fLength;            //!<  length
     Double32_t     fELoss;             //!<  energy loss
-	 Int_t 			 fPdg;					//!<  particle data group code
+    Int_t 			 fPdg;					//!<  particle data group code
+    bool           fSaveParentTrackID = false; //!< If enable, we will save the parent track id instead for secondary tracks
+
+    std::map<int, int>  fToParent;     //!<
+    std::map<int, int>  fParentPDG;    //!<
 
     /** Container for data points */
     TClonesArray*  fSTMCPointCollection;

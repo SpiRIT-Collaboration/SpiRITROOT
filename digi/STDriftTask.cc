@@ -70,6 +70,10 @@ STDriftTask::Init()
   fElectronArray = new TClonesArray("STDriftedElectron");
   ioman->Register("STDriftedElectron","ST",fElectronArray,fIsPersistence);
 
+  if(fMaxZToDigi > 0)
+    fLogger->Info(MESSAGE_ORIGIN, TString::Format("Remember you must enable STDetector::SaveParentID() for Digi task to not digitize points from Z >= %d.", fMaxZToDigi));
+
+
   fYAnodeWirePlane = fPar->GetAnodeWirePlaneY(); // [mm]
   fZWidthPadPlane  = fPar->GetPadPlaneZ(); // [mm]
   fNumWires        = 363;
@@ -169,6 +173,8 @@ STDriftTask::Exec(Option_t* option)
     {
       Double_t corFactor = 1;
       auto it = trackIDToPDGMom.find(fMCPoint -> GetTrackID());
+      if(it->second.first > 10000000 && fMaxZToDigi > 0)
+        if((it->second.first%10000000)/10000 > fMaxZToDigi) continue; // don't digitize heavy ion
       if(it != trackIDToPDGMom.end()) corFactor = BichselCorrection(it->second.first,it->second.second);
       eLoss = (fMCPoint->GetEnergyLoss())*1.E9*corFactor; // [GeV] to [eV]
     }

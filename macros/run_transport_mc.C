@@ -128,8 +128,9 @@ void run_transport_mc
   fCave -> SetGeometryFileName("cave_vacuum.geo"); 
   fRun -> AddModule(fCave);
 
-  FairDetector* fSpiRIT = new STDetector("STDetector", kTRUE);
+  auto* fSpiRIT = new STDetector("STDetector", kTRUE);
   fSpiRIT -> SetGeometryFileName("geomSpiRIT.root");
+  fSpiRIT -> SaveParentID();
   fRun -> AddModule(fSpiRIT); 
 
 
@@ -167,9 +168,10 @@ void run_transport_mc
   fEvent -> SetBeamAngle(TVector2(-0.0443, 0.00066));
   fEvent -> SetBeamAngleSigma(TVector2(0.00224, 0.00291));
 
-  fEvent -> SetMaxAllowedZ(2);
+  //fEvent -> SetMaxAllowedZ(2);
   //fEvent -> SetMaxMult(50);
   fEvent -> SetStartEvent(start_evt);
+  fEvent -> SetAllHvyFragAsCa40(true);
   fEvent -> RegisterHeavyIon(allowedParticles);
   fEvent -> SetTargetThickness(0.08);
   fEvent -> SetBeamDetectorVertexSigma(TVector2(0.0708, 0.0265));

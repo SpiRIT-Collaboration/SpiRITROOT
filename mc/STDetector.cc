@@ -86,6 +86,22 @@ STDetector::ProcessHits(FairVolume* vol)
   gMC->TrackMomentum(fMom);
   fPdg         = gMC->TrackPid();
 
+  if(fSaveParentTrackID)
+  {
+    int parentID = stack -> GetCurrentParentTrackNumber();
+    if(parentID > -1)
+    {   
+      auto it = fToParent.find(parentID); 
+      for(;it != fToParent.end(); it = fToParent.find(parentID))
+        parentID = it -> second;
+      fToParent[fTrackID] = parentID;
+      fTrackID = parentID;
+
+      auto it2 = fParentPDG.find(fTrackID);
+      if(it2 != fParentPDG.end()) fPdg = it2 -> second;
+    }
+    else fParentPDG[fTrackID] = fPdg;
+  }
   AddHit(fTrackID, fVolumeID, 
       TVector3(fPos.X(),  fPos.Y(),  fPos.Z()),
       TVector3(fMom.Px(), fMom.Py(), fMom.Pz()), 
@@ -102,6 +118,8 @@ STDetector::ProcessHits(FairVolume* vol)
 STDetector::EndOfEvent()
 {
   fSTMCPointCollection->Clear();
+  fParentPDG.clear();
+  fToParent.clear();
 }
 
   void 
@@ -116,7 +134,6 @@ STDetector::Register()
 
   FairRootManager::Instance()->Register("STMCPoint", "SPiRIT",
       fSTMCPointCollection, kTRUE);
-
 }
 
 
@@ -203,7 +220,7 @@ STDetector::CheckIfSensitive(std::string name)
     return kTRUE;
   if (nameStr.BeginsWith("kyoto"))
     return kTRUE;
-  if (nameStr.BeginsWith("katanaVPla"))
+  if (nameStr.BeginsWith("katanaVPla") || nameStr.BeginsWith("katanaMPla"))
     return kTRUE;
 
 

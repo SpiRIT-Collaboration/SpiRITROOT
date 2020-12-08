@@ -58,6 +58,7 @@ class STDriftTask : public FairTask
    Double_t BichselCorrection(TString species, Double_t value);
    Double_t BichselCorrection(Int_t pdg, Double_t value);
    ROOT::Math::Interpolator* BichselCorrection(TString species);
+   void SetMaxZ(int max_z) { fMaxZToDigi = max_z; };
   
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
@@ -93,6 +94,7 @@ class STDriftTask : public FairTask
     Int_t fIFirstWire;   //!< Numbering of first wire.
     Int_t fILastWire;    //!< Numbering of last wire.
     Int_t fICritWire;    //!< Numbering of criterion wire. (should be 0)
+    Int_t fMaxZToDigi = -1;   //!< Maximum Z that the digi class is willing to handle. It uses up all ram with heavy ion so we must cap it
 
     Double_t fEIonize;  //!< Effective ionization energy of gas. [eV]
     Double_t fVelDrift; //!< Drift velocity of electron in gas. [mm/ns]

@@ -23,6 +23,7 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
   FairRunAna* fRun = new FairRunAna();
   
   auto kyotoTask = new STKyotoTask();
+  kyotoTask -> UseKatana();
   fRun -> AddTask(kyotoTask); 
 
   // -----------------------------------------------------------------
@@ -44,6 +45,7 @@ void run_digi(TString name = "protons_75_events", double beamrate=-1, TString Pa
   fDriftTask -> SetPersistence(false);
   fDriftTask -> SetSplineInterpolation(false);
   fDriftTask -> SetVerbose(false);  
+  fDriftTask -> SetMaxZ(2);
   fRun -> AddTask(fDriftTask);
 
   TString workDir   = gSystem -> Getenv("VMCWORKDIR");

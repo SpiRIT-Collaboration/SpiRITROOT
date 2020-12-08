@@ -18,8 +18,8 @@ TParticlePDG* Elements::PDGToParticleData(int pdg)
   else
   {
     // heavy ioins. Otherwise TDatabasePDG should already have the information
-    int Z = (pdg%10000000)/10000;
-    int A = (pdg%10000)/10;
+    int Z = (pdg%10000000)/10000 + 0.5;
+    int A = (pdg%10000)/10 + 0.5;
     // add particle to TDatabasePDG so the memory management behavior is identical for light particles or ions.
     return TDatabasePDG::Instance()->AddParticle(symbol[Z], symbol[Z], A*Elements::kProtonMass, true, 0, 3*Z, "ion", pdg, 0, 0); 
   }
@@ -52,8 +52,10 @@ std::vector<FairIon*> STTransportReader::GetParticleList()
   for(auto pdg : pdgList)
   {
     auto particle = Elements::PDGToParticleData(pdg);
+    if(!particle) continue;
     int a = int(particle -> Mass()/Elements::kProtonMass + 0.5);
     int z = int(particle -> Charge()/3. + 0.5);
+ 
     if(a > 1) particleList.push_back(new FairIon(Form("%d",a)+Elements::symbol[z-1],z,a,z));
   }
 
@@ -397,17 +399,17 @@ bool STUrQMDReader::GetNext(std::vector<STTransportParticle>& particleList)
 TString STUrQMDReader::Print()
 { return "UrQMD reader with source " + fFilename; }
 
-std::vector<FairIon*> STUrQMDReader::GetParticleList()
-{
-  std::vector<FairIon*> particleList;
-  // UrQMD only support ions of up to He4
-  for(auto pdg : std::vector<std::pair<int, int>>{{2,1},{3,1},{3,2},{4,2}})
-  {
-    int a = pdg.first, z = pdg.second;
-    particleList.push_back(new FairIon(Form("%d",a)+Elements::symbol[z-1],z,a,z));
-  }
-  return particleList; 
-}
+//std::vector<FairIon*> STUrQMDReader::GetParticleList()
+//{
+//  std::vector<FairIon*> particleList;
+//  // UrQMD only support ions of up to He4
+//  for(auto pdg : std::vector<std::pair<int, int>>{{2,1},{3,1},{3,2},{4,2}})
+//  {
+//    int a = pdg.first, z = pdg.second;
+//    particleList.push_back(new FairIon(Form("%d",a)+Elements::symbol[z-1],z,a,z));
+//  }
+//  return particleList; 
+//}
 
 /**************************************************
 * IBUU Reader
@@ -678,24 +680,23 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
   {
     Int_t pdg = particle.pdg;
     auto particleData = Elements::PDGToParticleData(pdg);
+    if(!particleData) continue;
     int charge = particleData -> Charge()/3;
     // register if Z > 20 residue is found
-    if(charge >= 20)
-      if(auto castedEvent = dynamic_cast<STFairMCEventHeader*>(event))
-        castedEvent -> SetHvyResidue();
-
-    if(charge == 0 || (charge > fMaxZ && fMaxZ > 0))
-      continue;
-
-    if(fAllowedPDG.size() > 0)
-      if(fAllowedPDG.find(pdg) == fAllowedPDG.end())
+    if(!(charge >= 20 && fHvyFragAsCa40))
+    {
+      if(charge == 0 || (charge > fMaxZ && fMaxZ > 0))
         continue;
-
+      if(fAllowedPDG.size() > 0)
+        if(fAllowedPDG.find(pdg) == fAllowedPDG.end())
+          continue;
+    }
+   
     acceptedParticles.push_back(particle);
     if(acceptedParticles.size() >= fMaxMult && fMaxMult > 0) break;
   }
 
-  for(const auto& particle : acceptedParticles)
+  for(auto& particle : acceptedParticles)
   {
     auto particleData = Elements::PDGToParticleData(particle.pdg);
     auto mass = particleData -> Mass(); // It's already in GeV
@@ -707,6 +708,15 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     TLorentzVector pCM(p.x(), p.y(), p.z(), sqrt(p.Mag2() + mass*mass));
     pCM.Boost(fBoostVector);
     p = pCM.Vect();
+   
+    int charge = particleData -> Charge()/3;
+    int CaZ = 20;
+    if(charge >= CaZ && fHvyFragAsCa40)
+    {
+      // keep p/Z constant for similar track shape
+      p = (double(CaZ)/charge)*p;
+      particle.pdg = 1000200400;
+    }
 
     p.RotateY(beamAngleA);    // rotate w.r.t Y axis
     p.Transform(rotateInRotatedFrame);
@@ -740,6 +750,12 @@ void STModelToLabFrameGenerator::RegisterHeavyIon(std::set<int> pdgList)
       auto a = int(particleData -> Mass()/Elements::kProtonMass + 0.5);
       if(a > 1) particleList.push_back(new FairIon(Form("%d",a)+Elements::symbol[z-1],z,a,z));
     }
+  }
+  if(fHvyFragAsCa40)
+  {
+    LOG(INFO) << "Will treat all Z>=20 fragments as 40Ca for Katana bias simulation." << FairLogger::endl;
+    particleList.push_back(new FairIon("40Ca",20,40,20));
+    if(!pdgList.empty()) fAllowedPDG.insert(1000200400);
   }
 
   for(auto ion : particleList)

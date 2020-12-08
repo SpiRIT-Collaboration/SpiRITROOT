@@ -31,7 +31,7 @@ class STKyotoTask : public FairTask
     virtual void SetParContainers();  //!< Load the parameter container from the runtime database.
 
    void SetVerbose(Bool_t value = kTRUE);
-
+   void UseKatana(Bool_t value = kTRUE) { fUseKatana = value; }
    private:
     Bool_t fVerbose; // testing with cout 
     Int_t fEventID; //!< EventID
@@ -42,6 +42,7 @@ class STKyotoTask : public FairTask
     FairMCEventHeader *fFairMCEventHeader; //!<
     STEventHeader *fEventHeader; //!
     Double_t fEnclosureWidth;
+    Bool_t fUseKatana = false; //!
 
   ClassDef(STKyotoTask,1);
 };

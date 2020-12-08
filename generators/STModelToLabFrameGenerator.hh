@@ -40,6 +40,7 @@ namespace Elements
   TParticlePDG* PDGToParticleData(int pdg); // convert pdg code to TParticlePDG. It works even for heavy ions. 
   // if A = 0 and Z = +/- 1, pdg == +/- 211 (pion is assumed in such case)
   const double kProtonMass = TDatabasePDG::Instance()->GetParticle(2212)->Mass(); // in GeV
+  // All ions that are supported by Geant4
 };
 
 class STModelToLabFrameGenerator : public FairGenerator
@@ -76,6 +77,13 @@ class STModelToLabFrameGenerator : public FairGenerator
     void SetStartEvent(int t_start)           { fCurrentEvent = t_start; }
     void SetMaxAllowedZ(int t_z);             
     void SetMaxMult(int mult)                 { fMaxMult = mult; }
+    // Aux function for Katana bias simulation
+    // Heavy fragments from transport model are sometimes not stable
+    // or fragment information is not found in Geant4
+    // This causes the simulation to stop
+    // Since all heavy fragments have similar curvature and we are not interested in the dEdX/momentum reconstruction
+    // we can approx. the effect of Katana bias by reducing all Z>=20 fragments to Ca40
+    void SetAllHvyFragAsCa40(bool val)        { fHvyFragAsCa40 = val; } 
 
     virtual Bool_t ReadEvent(FairPrimaryGenerator* primGen);
     void RegisterHeavyIon(std::set<int> pdgList = {}); // if pdgList is supplied, it will only simulate particles inside the list
@@ -109,6 +117,7 @@ class STModelToLabFrameGenerator : public FairGenerator
     int               fMaxMult = -1;
     const double      fNucleonMass = 0.9315;
     std::set<int>     fAllowedPDG;
+    bool              fHvyFragAsCa40 = false;
 
     void RegisterReader();
     ClassDef(STModelToLabFrameGenerator,1);
@@ -231,7 +240,7 @@ public:
   virtual int GetEntries() { return fParticleList.size(); }
   virtual bool GetNext(std::vector<STTransportParticle>& particleList);
   virtual TString Print();
-  virtual std::vector<FairIon*> GetParticleList();
+  //virtual std::vector<FairIon*> GetParticleList();
   double GetB() { return bs[fEventID]; }; 
 protected:
   std::ifstream fFile;

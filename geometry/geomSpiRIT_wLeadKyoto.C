@@ -106,7 +106,7 @@ void geomSpiRIT_wLeadKyoto()
 
   // Top Plate dimension including top-frame, pad-plane and some part of active area
   Double_t dxTopPlate = 152.4;
-  Double_t dzTopPlate = 206.06;
+  Double_t dzTopPlate = 240;//206.06;
   Double_t dyTopPlate = 10.9042;
 
   Double_t dyBottomPlate = 1.0541; // thickness of the bottom plate
@@ -116,7 +116,7 @@ void geomSpiRIT_wLeadKyoto()
   Double_t dyActiveTop = 1.8;        // TODO original value in macro was 1.905
   Double_t dyActiveTopMiddle = dyActiveMiddle + dyActiveTop;
 
-  Double_t dzActiveMiddle = 143.899; // TODO Should be smaller than dzAtive. original value in macro was 143.899
+  Double_t dzActiveMiddle = 143.899 + dzTopPlate - 206.06; // TODO Should be smaller than dzAtive. original value in macro was 143.899
   Double_t dzActiveTop = 155.7;
 
   // Tpc (World) dimension
@@ -584,6 +584,82 @@ void geomSpiRIT_wLeadKyoto()
   TGeoTranslation *transPadArray = new TGeoTranslation(0,offyPadArray,offzPadPlane);
 
   // ----------------------------------------------------
+  // KATANA veto plastic
+  // ----------------------------------------------------
+  
+  Double_t dlKatanaV = 40.;
+  Double_t dwKatanaV = 10.;
+  Double_t dtKatanaV = 1.;
+  TGeoVolume * katanaVPlaL = gGeoManager -> MakeBox("katanaVPlaL",lead,dwKatanaV/2,dlKatanaV/2,dtKatanaV/2);
+  TGeoVolume * katanaVPlaM = gGeoManager -> MakeBox("katanaVPlaM",lead,dwKatanaV/2,dlKatanaV/2,dtKatanaV/2);
+  TGeoVolume * katanaVPlaR = gGeoManager -> MakeBox("katanaVPlaR",lead,dwKatanaV/2,dlKatanaV/2,dtKatanaV/2);
+  
+  Double_t offxKatanaVPla = 21.6; // for 132Sn
+  //Double_t offxKatanaVPla = 24.6; // for 108Sn
+  Double_t offyKatanaVPla = offyPadPlane - 4. - dlKatanaV/2.;
+  Double_t offzKatanaVPla = offzPadPlane+dzPadPlane/2.-186.7-dtKatanaV/2.;
+  TGeoTranslation * transKatanaVPlaL = new TGeoTranslation("transKatanaVPlaL",offxKatanaVPla-dwKatanaV+1.2,offyKatanaVPla,offzKatanaVPla+1.);
+  TGeoTranslation * transKatanaVPlaM = new TGeoTranslation("transKatanaVPlaM",offxKatanaVPla,offyKatanaVPla,offzKatanaVPla);
+  TGeoTranslation * transKatanaVPlaR = new TGeoTranslation("transKatanaVPlaR",offxKatanaVPla+dwKatanaV-1.2,offyKatanaVPla,offzKatanaVPla+1.);
+  transKatanaVPlaL -> RegisterYourself();
+  transKatanaVPlaM -> RegisterYourself();
+  transKatanaVPlaR -> RegisterYourself();
+  
+
+
+  // ----------------------------------------------------
+  // defintion of KATANA Multiplicity scintillators
+  // note that there are 7 paddles to the beam right of the middle veto, and 5 paddles to the beam left of middle veto
+  // dimensions in cm
+  // ----------------------------------------------------
+
+  Double_t dlKatanaM = 40.;//note that 1 cm on top and bottom is actually covered by aluminum mounting, so full paddle isn't used
+  Double_t dwKatanaM = 9.9;
+  Double_t dtKatanaM = 1.;
+
+  //distance between adjacent paddles - may be off by fraction of mm
+  Double_t offxKatanaMPlaToPla=10.;
+
+ 
+  TGeoVolume * katanaMPlaL[5];
+  for(Int_t ikatanaL=0; ikatanaL<5; ikatanaL++){
+    katanaMPlaL[ikatanaL] = gGeoManager -> MakeBox(Form("katanaMPlaL%i",ikatanaL),lead,dwKatanaM/2,dlKatanaM/2,dtKatanaM/2);
+  }
+  TGeoVolume * katanaMPlaR[7];
+  for(Int_t ikatanaR=0; ikatanaR<7; ikatanaR++){
+    katanaMPlaR[ikatanaR] = gGeoManager -> MakeBox(Form("katanaMPlaR%i",ikatanaR),lead,dwKatanaM/2,dlKatanaM/2,dtKatanaM/2);
+  }
+  
+
+  //y is same as katana veto, x is relative to veto position
+  Double_t offxKatanaM = offxKatanaVPla;
+  Double_t offyKatanaM = offyKatanaVPla;
+
+  //approximately correct but needs exact verification
+  Double_t offzKatanaM = offzPadPlane+dzPadPlane/2. -186.7-dtKatanaM/2.;
+
+
+  TGeoTranslation * transKatanaML[5];
+  for(Int_t ikatanaL=0; ikatanaL<5; ikatanaL++){
+    transKatanaML[ikatanaL] = new TGeoTranslation(Form("transKatanaML%i",ikatanaL),offxKatanaM - 11. - offxKatanaMPlaToPla*ikatanaL,offyKatanaM,offzKatanaM);
+    transKatanaML[ikatanaL] -> RegisterYourself();
+  }
+
+  TGeoTranslation * transKatanaMR[7];
+  for(Int_t ikatanaR=0; ikatanaR<7; ikatanaR++){
+    transKatanaMR[ikatanaR] = new TGeoTranslation(Form("transKatanaMR%i",ikatanaR),offxKatanaM + 11. + offxKatanaMPlaToPla*ikatanaR,offyKatanaM,offzKatanaM);
+    transKatanaMR[ikatanaR] -> RegisterYourself();
+  }
+
+
+  for(Int_t ikatanaL=0; ikatanaL<5; ikatanaL++)
+    katanaMPlaL[ikatanaL] -> SetMedium(lead);
+  for(Int_t ikatanaR=0; ikatanaR<7; ikatanaR++)
+    katanaMPlaR[ikatanaR] -> SetMedium(lead);
+
+
+
+  // ----------------------------------------------------
   // Kyoto array plastics
   // dl: length, dw: width, dt: thickness
   // ----------------------------------------------------
@@ -667,7 +743,17 @@ void geomSpiRIT_wLeadKyoto()
     tpc -> AddNode(kyoto[i],i+1,transKyotoPlaL[i]);
   for(Int_t i=0; i<30; i++)
     tpc -> AddNode(kyoto[i+30],i+1+30,transKyotoPlaR[i]);
- 
+
+  tpc -> AddNode(katanaVPlaL,1,transKatanaVPlaL); 
+  tpc -> AddNode(katanaVPlaM,2,transKatanaVPlaM); 
+  tpc -> AddNode(katanaVPlaR,3,transKatanaVPlaR); 
+
+
+  for(Int_t ikatanaL=0; ikatanaL<5; ikatanaL++)
+    tpc -> AddNode(katanaMPlaL[ikatanaL],ikatanaL+1+70,transKatanaML[ikatanaL]);
+  for(Int_t ikatanaR=0; ikatanaR<7; ikatanaR++)
+    tpc -> AddNode(katanaMPlaR[ikatanaR],ikatanaR+1+100,transKatanaMR[ikatanaR]);
+
   /*
   */
   //tpc -> AddNode(padPlane,1,transPadPlane); // TODO decide whether to add pad-plane to node or not, overlap with topPlate
@@ -711,7 +797,15 @@ void geomSpiRIT_wLeadKyoto()
   padPlane          -> SetLineColor(kRed+4);
   padArray          -> SetLineColor(kRed);
 
+  katanaVPlaL       -> SetTransparency(transparency);
+  katanaVPlaM       -> SetTransparency(transparency);
+  katanaVPlaR       -> SetTransparency(transparency);
 
+  for(Int_t ikatanaL=0; ikatanaL<5; ikatanaL++)
+    katanaMPlaL[ikatanaL] -> SetTransparency(transparency);
+  for(Int_t ikatanaR=0; ikatanaR<7; ikatanaR++)
+    katanaMPlaR[ikatanaR] -> SetTransparency(transparency);
+ 
 
   // ----------------------------------------------------
   //  End of Building Geometry
