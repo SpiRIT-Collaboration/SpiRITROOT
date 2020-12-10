@@ -236,21 +236,25 @@ class STUrQMDReader : public STTransportReader
 public: 
   STUrQMDReader(TString fileName);
   virtual ~STUrQMDReader(){};
-  virtual void SetEntry(int t_entry) { fEventID = t_entry; }
+  virtual void SetEntry(int t_entry) { this -> GoToEvent(t_entry); }
   virtual int GetEntry() { return fEventID; }
-  virtual int GetEntries() { return fParticleList.size(); }
+  virtual int GetEntries() { return fTotEntries; }
   virtual bool GetNext(std::vector<STTransportParticle>& particleList);
   virtual TString Print();
   //virtual std::vector<FairIon*> GetParticleList();
-  double GetB() { return bs[fEventID]; }; 
+  double GetB() { return fCurrentB; }; 
 protected:
   std::ifstream fFile;
   TString fFilename;
-  int fEventID = 0;
-  std::vector<std::vector<STTransportParticle>> fParticleList;
-  void ReadNextEvent_(std::vector<STTransportParticle>& particleList);
+  int fEventID = -1;
+  void ReadNextEvent_(std::vector<STTransportParticle>& particleList, bool skip=false);
   int ITypeChargeToPDG(int itype, int charge);
-  std::vector<double> bs;
+  double fCurrentB = -1;
+  std::vector<STTransportParticle> fCurrentParticleList;
+
+  bool GoToEvent(int event);
+  int fTotEntries = 0;
+  
 };
 
 class STIBUUReader : public STTransportReader

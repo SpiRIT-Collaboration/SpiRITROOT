@@ -308,35 +308,34 @@ STUrQMDReader::STUrQMDReader(TString fileName) : fFile(fileName), fFilename(file
   // IMPORTANT! this allows getline to throw exception when it reaches eof
   fFile.exceptions(std::ifstream::failbit|std::ifstream::badbit);
 
+  std::vector<STTransportParticle> temp;
   while(true)
   {
-    fParticleList.push_back(std::vector<STTransportParticle>());
     try
     {
-      this -> ReadNextEvent_(fParticleList.back());
+      this -> ReadNextEvent_(temp, true);
+      ++fTotEntries;
     }
     catch(...)
-    {
-      break;
-    }
+    { break; }
   }
+  this -> GoToEvent(0);
 
 }
 
-void STUrQMDReader::ReadNextEvent_(std::vector<STTransportParticle>& particleList)
+void STUrQMDReader::ReadNextEvent_(std::vector<STTransportParticle>& particleList, bool skip)
 {
-  particleList.clear();
   std::string line, temp;
   // ignore line 1 - 3
   for(int i = 1; i <= 3; ++i) std::getline(fFile, line);
   // impact parameter
-  double b;
   std::getline(fFile, line);
+  if(!skip)
   {
+    particleList.clear();
     std::stringstream ss(line);
-    ss >> temp >> b >> temp; 
+    ss >> temp >> fCurrentB >> temp; 
   }
-  bs.push_back(b);
   // ignore line 5 to 18
   for(int i = 5; i <= 18; ++i) std::getline(fFile, line);
   // first entry in line 19 is multiplicity
@@ -352,15 +351,39 @@ void STUrQMDReader::ReadNextEvent_(std::vector<STTransportParticle>& particleLis
   //const std::vector<int> supported_pdg{-211,211,2212,1000010020,1000010030,1000020030,1000020040};
   for(int i = 0; i < mult; ++i)
   {
-    int itype, charge;
-    double px, py, pz, x, y, z;
     std::getline(fFile, line);
-    std::stringstream ss(line);
-    ss >> temp >> x >> y >> z >> temp >> px >> py >> pz >> temp >> itype >> temp >> charge;
-    int pdg = this -> ITypeChargeToPDG(itype, charge);
-    //if(std::find(supported_pdg.begin(), supported_pdg.end(), pdg) != supported_pdg.end())
-    particleList.push_back({pdg, px, py, pz, x, y, z});
+    if(!skip)
+    {
+      int itype, charge;
+      double px, py, pz, x, y, z;
+      std::stringstream ss(line);
+      ss >> temp >> x >> y >> z >> temp >> px >> py >> pz >> temp >> itype >> temp >> charge;
+      int pdg = this -> ITypeChargeToPDG(itype, charge);
+      //if(std::find(supported_pdg.begin(), supported_pdg.end(), pdg) != supported_pdg.end())
+      particleList.push_back({pdg, px, py, pz, x, y, z});
+    }
   }
+  ++fEventID;
+}
+
+bool STUrQMDReader::GoToEvent(int event)
+{
+  if(event >= fTotEntries) return false;
+  if(event == fEventID) return true;
+  // revert back to beginning if requested event is from before the current event
+  if(event < fEventID)
+  {
+    fFile.clear();
+    fFile.seekg(0);
+    //fFile.seekg(std::ios::beg);
+    fEventID = -1;
+    fCurrentB = -1;
+  }
+  std::vector<STTransportParticle> temp;
+  for(;fEventID < event - 1;)
+    this -> ReadNextEvent_(temp, true);
+  this -> ReadNextEvent_(fCurrentParticleList);
+  return true;
 }
 
 int STUrQMDReader::ITypeChargeToPDG(int itype, int charge)
@@ -389,27 +412,17 @@ int STUrQMDReader::ITypeChargeToPDG(int itype, int charge)
 
 bool STUrQMDReader::GetNext(std::vector<STTransportParticle>& particleList)
 {
-  if(fEventID >= fParticleList.size()) return false;
-
-  particleList = fParticleList[fEventID];
-  ++fEventID;
+  if(fEventID >= fTotEntries - 1) return false;
+  particleList = fCurrentParticleList;
+  try
+  { this -> ReadNextEvent_(fCurrentParticleList); }
+  catch(...){ fCurrentB = -1; }
   return true;
 }
 
 TString STUrQMDReader::Print()
 { return "UrQMD reader with source " + fFilename; }
 
-//std::vector<FairIon*> STUrQMDReader::GetParticleList()
-//{
-//  std::vector<FairIon*> particleList;
-//  // UrQMD only support ions of up to He4
-//  for(auto pdg : std::vector<std::pair<int, int>>{{2,1},{3,1},{3,2},{4,2}})
-//  {
-//    int a = pdg.first, z = pdg.second;
-//    particleList.push_back(new FairIon(Form("%d",a)+Elements::symbol[z-1],z,a,z));
-//  }
-//  return particleList; 
-//}
 
 /**************************************************
 * IBUU Reader
