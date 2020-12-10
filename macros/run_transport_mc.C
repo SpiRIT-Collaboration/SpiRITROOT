@@ -161,8 +161,8 @@ void run_transport_mc
 
   // ONLY FOPR SN132
   auto fEvent = new STModelToLabFrameGenerator(truthFile.c_str());
-  //fEvent -> SetBeamAndTarget(0.270, 132, 50, 124); 
-  fEvent -> SetBeamAndTarget(0.270, 112, 50, 124); 
+  fEvent -> SetBeamAndTarget(0.270, 132, 50, 124); 
+  //fEvent -> SetBeamAndTarget(0.270, 112, 50, 124); 
   fEvent -> SetPrimaryVertex(TVector3(0.04,-20.55,-1.32));
   fEvent -> SetVertexXYSigma(TVector2(0.406, 0.362));
   fEvent -> SetBeamAngle(TVector2(-0.0443, 0.00066));
@@ -171,7 +171,7 @@ void run_transport_mc
   //fEvent -> SetMaxAllowedZ(2);
   //fEvent -> SetMaxMult(50);
   fEvent -> SetStartEvent(start_evt);
-  fEvent -> SetAllHvyFragAsCa40(true);
+  fEvent -> SetAllHvyFragAsCa40(true, 20);
   fEvent -> RegisterHeavyIon(allowedParticles);
   fEvent -> SetTargetThickness(0.08);
   fEvent -> SetBeamDetectorVertexSigma(TVector2(0.0708, 0.0265));

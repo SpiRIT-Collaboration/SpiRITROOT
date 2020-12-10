@@ -34,6 +34,8 @@ parser.add_argument('--MinBias', default=False, action='store_true', help='Use m
 parser.add_argument('--ObsFile', help='Output selected observables to text file', nargs='?', const='')
 parser.add_argument('--TrueImpFile', help='Truth file from UrQMD such that the true impact parameter can be saved')
 parser.add_argument('--ImpModel', help='Model file for impact parameter determination')
+parser.add_argument('--PIDFit', help='PID fit to data')
+parser.add_argument('--PIDPrior', help='PID prior to data')
 
 
 
@@ -101,6 +103,8 @@ def main(input, values):
                      'MinBias': 'TaskList/EventFilterTask/MinBias',
                      'ObsFile': 'TaskList/ObsWriterTask/ObsFile',
                      'TrueImpFile': 'TaskList/ObsWriterTask/UrQMDTruthFile',
+                     'PIDFit': 'TaskList/PIDProbTask/PIDFit',
+                     'PIDPrior': 'TaskList/PIDProbTask/MetaFile',
                      'ImpModel': 'TaskList/ImpactParameterMLTask/ModelFile'}
 
   for key, paths in parameter_table.items():

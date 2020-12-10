@@ -66,6 +66,7 @@ void geomSpiRIT_wLeadKyoto()
   FairGeoMedium *FGMpolycarb = media -> getMedium("polycarb");
   FairGeoMedium *FGMpolystyrene = media -> getMedium("polystyrene");
   FairGeoMedium *FGMlead = media -> getMedium("lead");
+  FairGeoMedium *FGMpolyvinyltoluene = media -> getMedium("polyvinyltoluene");
 
   geoBuilder -> createMedium(FGMvacuum);
   geoBuilder -> createMedium(FGMp10);
@@ -76,6 +77,7 @@ void geomSpiRIT_wLeadKyoto()
   geoBuilder -> createMedium(FGMpolycarb);
   geoBuilder -> createMedium(FGMpolystyrene);
   geoBuilder -> createMedium(FGMlead);
+  geoBuilder -> createMedium(FGMpolyvinyltoluene);
   
   gGeoManager = (TGeoManager *) gROOT -> FindObject("FAIRGeom");
   gGeoManager -> SetName("SpiRIT");
@@ -88,6 +90,7 @@ void geomSpiRIT_wLeadKyoto()
   TGeoMedium *copper = gGeoManager -> GetMedium("copper");
   TGeoMedium *polycarb = gGeoManager -> GetMedium("polycarb");
   TGeoMedium *polystyrene = gGeoManager -> GetMedium("polystyrene");
+  TGeoMedium *polyvinyltoluene = gGeoManager -> GetMedium("polyvinyltoluene");
   TGeoMedium *lead = gGeoManager -> GetMedium("lead");
 
 
@@ -615,7 +618,7 @@ void geomSpiRIT_wLeadKyoto()
 
   Double_t dlKatanaM = 40.;//note that 1 cm on top and bottom is actually covered by aluminum mounting, so full paddle isn't used
   Double_t dwKatanaM = 9.9;
-  Double_t dtKatanaM = 1.;
+  Double_t dtKatanaM = 0.1;
 
   //distance between adjacent paddles - may be off by fraction of mm
   Double_t offxKatanaMPlaToPla=10.;
@@ -623,11 +626,11 @@ void geomSpiRIT_wLeadKyoto()
  
   TGeoVolume * katanaMPlaL[5];
   for(Int_t ikatanaL=0; ikatanaL<5; ikatanaL++){
-    katanaMPlaL[ikatanaL] = gGeoManager -> MakeBox(Form("katanaMPlaL%i",ikatanaL),lead,dwKatanaM/2,dlKatanaM/2,dtKatanaM/2);
+    katanaMPlaL[ikatanaL] = gGeoManager -> MakeBox(Form("katanaMPlaL%i",ikatanaL),polyvinyltoluene,dwKatanaM/2,dlKatanaM/2,dtKatanaM/2);
   }
   TGeoVolume * katanaMPlaR[7];
   for(Int_t ikatanaR=0; ikatanaR<7; ikatanaR++){
-    katanaMPlaR[ikatanaR] = gGeoManager -> MakeBox(Form("katanaMPlaR%i",ikatanaR),lead,dwKatanaM/2,dlKatanaM/2,dtKatanaM/2);
+    katanaMPlaR[ikatanaR] = gGeoManager -> MakeBox(Form("katanaMPlaR%i",ikatanaR),polyvinyltoluene,dwKatanaM/2,dlKatanaM/2,dtKatanaM/2);
   }
   
 
@@ -653,9 +656,9 @@ void geomSpiRIT_wLeadKyoto()
 
 
   for(Int_t ikatanaL=0; ikatanaL<5; ikatanaL++)
-    katanaMPlaL[ikatanaL] -> SetMedium(lead);
+    katanaMPlaL[ikatanaL] -> SetMedium(polyvinyltoluene);
   for(Int_t ikatanaR=0; ikatanaR<7; ikatanaR++)
-    katanaMPlaR[ikatanaR] -> SetMedium(lead);
+    katanaMPlaR[ikatanaR] -> SetMedium(polyvinyltoluene);
 
 
 
@@ -712,6 +715,10 @@ void geomSpiRIT_wLeadKyoto()
   bottomPlate       -> SetMedium(vacuum);
   padPlane          -> SetMedium(pcb);
   padArray          -> SetMedium(copper);
+
+  katanaVPlaL       -> SetMedium(lead);
+  katanaVPlaM       -> SetMedium(lead);
+  katanaVPlaR       -> SetMedium(lead);
 
   for(Int_t ik=0; ik<60; ik++) kyoto[ik] -> SetMedium(lead);
 

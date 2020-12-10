@@ -2,9 +2,11 @@
 #define STDETECTOR
 
 #include "FairDetector.h"
+#include "FairRootManager.h"
 
 #include "TVector3.h"
 #include "TLorentzVector.h"
+#include "STFairMCEventHeader.hh"
 
 #include <map>
 
@@ -74,11 +76,11 @@ class STDetector: public FairDetector
     virtual void SetSpecialPhysicsCuts() {;}
     virtual void EndOfEvent();
     virtual void FinishPrimary() {;}
-    virtual void FinishRun() {;}
+    virtual void FinishRun() {;};
     virtual void BeginPrimary() {;}
     virtual void PostTrack() {;}
     virtual void PreTrack() {;}
-    virtual void BeginEvent() {;}
+    virtual void BeginEvent(); 
 
     void SaveParentID(bool val = true) {fSaveParentTrackID = val; }
 

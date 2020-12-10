@@ -48,7 +48,28 @@ STKyotoTask::Init()
   fMCPointArray = (TClonesArray*) ioman->GetObject("STMCPoint");
   fFairMCEventHeader = (FairMCEventHeader*) ioman->GetObject("MCEventHeader.");
   if(fUseKatana)
-    fLogger->Info(MESSAGE_ORIGIN, "Remember you must enable STDetector::SaveParentID() for Katana simulation to work.");
+  {
+    fCastedHeader = dynamic_cast<STFairMCEventHeader*>(fFairMCEventHeader);
+    if(!fCastedHeader)
+    {
+      fLogger -> Warning(MESSAGE_ORIGIN, "Event header cannot be casted to STFairMCEventHeader. This means the MC files are not configured for Katana simulation. Katana disabled");
+      fUseKatana = false;
+    }
+    else
+    {
+      if(!fCastedHeader -> IsParentIDOnHits())
+      {
+        fLogger->Info(MESSAGE_ORIGIN, "STDetector::SaveParentID() is not enabled! This is required for Katana simulation to work. Katana disabled");
+        fUseKatana = false;
+      }
+      else
+      {
+        fKatanaZMax = new STVectorI;
+        fKatanaZMax -> fElements.push_back(0);
+        ioman -> Register("STKatanaZMax", "SpiRIT", fKatanaZMax, true);
+      }
+    }
+  }
 
   fEventHeader = new STEventHeader;
   ioman -> Register("STEventHeader", "SpiRIT", fEventHeader, true);
@@ -68,7 +89,6 @@ STKyotoTask::Exec(Option_t* option)
   Int_t nMCPoints = fMCPointArray->GetEntries();
 
   std::unordered_set<int> kyoto_trigged_id;
-  bool reject_by_katana = false;
   int Z_max = 0;
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
     fMCPoint = (STMCPoint*) fMCPointArray->At(iPoint);
@@ -82,18 +102,25 @@ STKyotoTask::Exec(Option_t* option)
 
     if(posz > katana_z_min && fUseKatana)
     {
-      int pdg = fMCPoint -> GetPDG();
-      int Z = (pdg%10000000)/10000;
-      if(pdg > 10000000 && Z >= 20)
+      int track_id = fMCPoint -> GetTrackID();
+      if(fCastedHeader)
       {
-        reject_by_katana = true;
+        int Z = fCastedHeader -> TrackIDToZ(track_id);
         if(Z > Z_max) Z_max = Z;
       }
     }
+      //int Z = (pdg%10000000)/10000;
+      //if(pdg > 10000000 && Z == 20)
+      //{
+      //  reject_by_katana = true;
+      //  if(Z > Z_max) Z_max = Z;
+      //}
   }
 
   int num_trigged = kyoto_trigged_id.size();
-  bool reject = (num_trigged < 4 || reject_by_katana)? true : false;
+  bool reject = (num_trigged < 4)? true : false;
+  if(fUseKatana && fKatanaZMax)
+    fKatanaZMax -> fElements[0] = Z_max;
  
   fEventID = fFairMCEventHeader -> GetEventID();
   fLogger->Info(MESSAGE_ORIGIN, 

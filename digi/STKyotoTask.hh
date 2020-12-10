@@ -12,6 +12,8 @@
 #include "STDigiPar.hh"
 #include "FairField.h"
 #include "STEventHeader.hh"
+#include "STVector.hh"
+#include "STFairMCEventHeader.hh"
 
 // ROOT class headers
 #include "TClonesArray.h"
@@ -38,8 +40,10 @@ class STKyotoTask : public FairTask
     
     TClonesArray* fMCPointArray;     //!< [INPUT] Array of STMCPoint.
     STMCPoint* fMCPoint;             //!< [INPUT] MC data container (position, time, energyloss etc.)
+    STVectorI* fKatanaZMax = nullptr;//!< [OUTPUT] Max Z particle that reaches Katana
     STDigiPar* fPar; //!< Base parameter container
     FairMCEventHeader *fFairMCEventHeader; //!<
+    STFairMCEventHeader *fCastedHeader = nullptr; //!<
     STEventHeader *fEventHeader; //!
     Double_t fEnclosureWidth;
     Bool_t fUseKatana = false; //!

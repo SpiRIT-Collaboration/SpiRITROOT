@@ -21,6 +21,7 @@ STConcReaderTask::STConcReaderTask(): fEventID(0)
   fEventTypeArr = new TClonesArray("STVectorI");
   fRunIDArr = new TClonesArray("STVectorI");
   fMCRotZ = new STVectorF;
+  fKatanaZMax = new STVectorI;
 
   fSTData = new STData();
   fLogger = FairLogger::GetLogger(); 
@@ -147,6 +148,12 @@ InitStatus STConcReaderTask::Init()
     fChain -> SetBranchAddress("MCRotZ", &fMCRotZ);
     fLogger -> Info(MESSAGE_ORIGIN, "Retrieving MC reaction plean.");
     ioMan -> Register("MCRotZ", "ST", fMCRotZ, fIsPersistence);
+  }
+  if(fChain -> GetBranch("KatanaZMax")) 
+  {
+    fChain -> SetBranchAddress("KatanaZMax", &fKatanaZMax);
+    fLogger -> Info(MESSAGE_ORIGIN, "Retrieving charge of particles that hit Katana.");
+    ioMan -> Register("KatanaZMax", "ST", fKatanaZMax, fIsPersistence);
   }
 
   ioMan -> Register("STData", "ST", fData, fIsPersistence);

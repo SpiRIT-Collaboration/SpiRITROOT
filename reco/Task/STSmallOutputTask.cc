@@ -42,6 +42,8 @@ InitStatus STSmallOutputTask::Init()
   fBDCVertex =   static_cast<TClonesArray*>(fRootManager->GetObject("BDCVertex"));
   fSTVertex =    static_cast<TClonesArray*>(fRootManager->GetObject("STVertex"));
   fSTEmbedTrack = static_cast<TClonesArray*>(fRootManager->GetObject("STEmbedTrack"));
+  if(auto obj = fRootManager->GetObject("STKatanaZMax"))
+    fKatanaZMax = static_cast<STVectorI*>(obj);
   // BeamInfo comes from GenfitVATask
   // It won;t be filled if VA Task is absent
   fBeamInfo = static_cast<STBeamInfo*>(fRootManager->GetObject("STBeamInfo"));
@@ -59,6 +61,7 @@ InitStatus STSmallOutputTask::Init()
     fRootManager -> Register("EventID", "ST", fMCEventID, fIsPersistence);
     fRootManager -> Register("EventType", "ST", fEventTypeArr, fIsPersistence);
     fRootManager -> Register("RunID", "ST", fRunIDArr, fIsPersistence);
+    if(fKatanaZMax) fRootManager -> Register("KatanaZMax", "ST", fKatanaZMax, fIsPersistence);
     if(fMCEventHeader) fRootManager -> Register("MCRotZ", "ST", fMCRotZ, fIsPersistence);
   }
 
@@ -75,6 +78,7 @@ InitStatus STSmallOutputTask::Init()
       fSmallTree_->Branch("EvtData", fData);
       fSmallTree_->Branch("eventID", &fEventID);
       fSmallTree_->Branch("eventType", &fEventType);
+      if(fKatanaZMax) fSmallTree_->Branch("KatanaZMax", &fKatanaZMax);
       if(fMCEventHeader) fSmallTree_->Branch("MCRotZ", &fMCRotZ);
     }
     else LOG(INFO) << "No file is set for small output" << FairLogger::endl;

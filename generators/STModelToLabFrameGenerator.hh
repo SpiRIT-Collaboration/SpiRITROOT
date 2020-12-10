@@ -83,7 +83,7 @@ class STModelToLabFrameGenerator : public FairGenerator
     // This causes the simulation to stop
     // Since all heavy fragments have similar curvature and we are not interested in the dEdX/momentum reconstruction
     // we can approx. the effect of Katana bias by reducing all Z>=20 fragments to Ca40
-    void SetAllHvyFragAsCa40(bool val)        { fHvyFragAsCa40 = val; } 
+    void SetAllHvyFragAsCa40(bool val, int ZOfHvyFrag)        { fHvyFragAsCa40 = val; fHvyFragZ = ZOfHvyFrag; } 
 
     virtual Bool_t ReadEvent(FairPrimaryGenerator* primGen);
     void RegisterHeavyIon(std::set<int> pdgList = {}); // if pdgList is supplied, it will only simulate particles inside the list
@@ -118,6 +118,7 @@ class STModelToLabFrameGenerator : public FairGenerator
     const double      fNucleonMass = 0.9315;
     std::set<int>     fAllowedPDG;
     bool              fHvyFragAsCa40 = false;
+    int               fHvyFragZ = 20;
 
     void RegisterReader();
     ClassDef(STModelToLabFrameGenerator,1);

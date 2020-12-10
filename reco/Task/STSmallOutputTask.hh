@@ -48,6 +48,7 @@ protected:
   TClonesArray *fEventTypeArr = nullptr;
   TClonesArray *fRunIDArr = nullptr;
   STVectorF *fMCRotZ = nullptr; // store MC reactioni plane
+  STVectorI *fKatanaZMax = nullptr;
   std::unique_ptr<TFile> fSmallOutput_; //!< File where the tree is stored
   TTree *fSmallTree_; //!< Tree itself
 

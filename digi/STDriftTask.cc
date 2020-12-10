@@ -71,8 +71,19 @@ STDriftTask::Init()
   ioman->Register("STDriftedElectron","ST",fElectronArray,fIsPersistence);
 
   if(fMaxZToDigi > 0)
-    fLogger->Info(MESSAGE_ORIGIN, TString::Format("Remember you must enable STDetector::SaveParentID() for Digi task to not digitize points from Z >= %d.", fMaxZToDigi));
-
+  {
+    STFairMCEventHeader *castedHeader = dynamic_cast<STFairMCEventHeader*>(fFairMCEventHeader);
+    if(!castedHeader)
+    {
+      fLogger->Warning(MESSAGE_ORIGIN, TString::Format("Cannot cast event header to STFairMCEventHeader. Remember you must enable STDetector::SaveParentID() for Digi task to not digitize points from Z >= %d.", fMaxZToDigi));
+      fMaxZToDigi = -1;
+    }
+    else if(!castedHeader -> IsParentIDOnHits())
+     {
+      fLogger->Warning(MESSAGE_ORIGIN, TString::Format("STDetector::SaveParentID() is not set. Cannot remove points from Z >= %d.", fMaxZToDigi));
+      fMaxZToDigi = -1;
+    }
+  } 
 
   fYAnodeWirePlane = fPar->GetAnodeWirePlaneY(); // [mm]
   fZWidthPadPlane  = fPar->GetPadPlaneZ(); // [mm]

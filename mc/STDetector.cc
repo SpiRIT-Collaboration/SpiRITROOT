@@ -220,11 +220,20 @@ STDetector::CheckIfSensitive(std::string name)
     return kTRUE;
   if (nameStr.BeginsWith("kyoto"))
     return kTRUE;
-  if (nameStr.BeginsWith("katanaVPla") || nameStr.BeginsWith("katanaMPla"))
+  if (nameStr.BeginsWith("katanaVPla"))
     return kTRUE;
 
 
   return kFALSE;
 }
+
+void STDetector::BeginEvent() 
+{  
+  auto eventHeader = FairRootManager::Instance()->GetObject("MCEventHeader.");
+  if(auto castedHeader = dynamic_cast<STFairMCEventHeader*>(eventHeader))
+    if(fSaveParentTrackID)
+      castedHeader -> SetParentIDOnHits();
+}
+
 
 ClassImp(STDetector)

@@ -652,6 +652,7 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
 
   auto nPart = particleList.size();
   auto event = (FairMCEventHeader*) primGen->GetEvent();
+  STFairMCEventHeader* castedEvent = dynamic_cast<STFairMCEventHeader*>(event);
   if( event && !(event->IsSet()) ){
     event->SetEventID(fCurrentEvent + 1);
     event->MarkSet(kTRUE);
@@ -661,11 +662,12 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     event->SetRotZ(phiRP); 
     event->SetB(fB);
     event->SetNPrim(nPart);
-    if(auto castedEvent = dynamic_cast<STFairMCEventHeader*>(event))
+    if(dynamic_cast<STFairMCEventHeader*>(event))
     {
       castedEvent -> SetBeamZ(fBeamCharge);
       castedEvent -> SetBeamA(fBeamMass);
       castedEvent -> SetEnergyPerNucleons(fBeamEnergyPerN);
+      castedEvent -> ClearTrackZRecord();
     }
   }
 
@@ -682,8 +684,8 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     auto particleData = Elements::PDGToParticleData(pdg);
     if(!particleData) continue;
     int charge = particleData -> Charge()/3;
-    // register if Z > 20 residue is found
-    if(!(charge >= 20 && fHvyFragAsCa40))
+    // register if Z >= fHvyFragZ residue is found
+    if(!(charge >= fHvyFragZ && fHvyFragAsCa40))
     {
       if(charge == 0 || (charge > fMaxZ && fMaxZ > 0))
         continue;
@@ -696,8 +698,10 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
     if(acceptedParticles.size() >= fMaxMult && fMaxMult > 0) break;
   }
 
-  for(auto& particle : acceptedParticles)
+  //for(auto& particle : acceptedParticles)
+  for(int i = 0; i < acceptedParticles.size(); ++i)
   {
+    auto& particle = acceptedParticles[i];
     auto particleData = Elements::PDGToParticleData(particle.pdg);
     auto mass = particleData -> Mass(); // It's already in GeV
 
@@ -711,11 +715,12 @@ Bool_t STModelToLabFrameGenerator::ReadEvent(FairPrimaryGenerator* primGen)
    
     int charge = particleData -> Charge()/3;
     int CaZ = 20;
-    if(charge >= CaZ && fHvyFragAsCa40)
+    if(charge >= fHvyFragZ && fHvyFragAsCa40)
     {
       // keep p/Z constant for similar track shape
       p = (double(CaZ)/charge)*p;
       particle.pdg = 1000200400;
+      if(castedEvent) castedEvent -> RecordTrackZ(i, charge);
     }
 
     p.RotateY(beamAngleA);    // rotate w.r.t Y axis

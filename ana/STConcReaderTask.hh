@@ -79,6 +79,8 @@ class STConcReaderTask : public STReaderTask {
     int fRunID;
     STData *fSTData = nullptr;
     STVectorF *fMCRotZ = nullptr;
+    STVectorI *fKatanaZMax = nullptr;
+
     Int_t  fEventID;
     Bool_t fIsPersistence;
 
