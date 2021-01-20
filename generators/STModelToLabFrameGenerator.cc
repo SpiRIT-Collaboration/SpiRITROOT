@@ -505,12 +505,13 @@ void STAMDHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTransportPar
       place = reader -> fFile.tellg();
       if(!skip)
       {
+        int A = Z + N;
         if(Z == 0 && N == 0) break; // end of file
         int pdg;
         if(Z == 1 && N == 0) pdg = 2212;
         else if(Z == 0 && N == 1) pdg = 2112;
-        else pdg = 1000000000 + Z*10000 + (Z + N)*10;
-        particleList.push_back({pdg, px/1000, py/1000, pz/1000, 0, 0, 0});
+        else pdg = 1000000000 + Z*10000 + A*10;
+        particleList.push_back({pdg, A*px/1000, A*py/1000, A*pz/1000, 0, 0, 0});
       }
     }
   }
