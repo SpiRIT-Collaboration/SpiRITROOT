@@ -4,7 +4,7 @@ from analysisConfig.changeAttr import main as attr_change
 
 step = 3
 mult_output_range = [[mult, mult + step] for mult in np.arange(25, 55, step)] #The desired partition of the analyzed files
-mult_output_range = mult_output_range + [[mult_output_range[-1][-1], 100]]
+mult_output_range = [[0, mult_output_range[0][0]]]# + mult_output_range + [[mult_output_range[-1][-1], 100]]
 iter_samples = 100000
 tot_samples = -1
 phi_eff_overlap = 4
@@ -12,8 +12,8 @@ phi_eff_overlap = 4
 """
 Don't change anything below
 """
-sys = [108, 112, 124, 132]
-mult_file_ranges = [[25, 35], [35, 40], [40, 45], [45, 50], [50, 55], [55, 100]] #The way raw root files are partitioned
+sys = [132]
+mult_file_ranges = [[0, 25], [25, 35], [35, 40], [40, 45], [45, 50], [50, 55], [55, 100]] #The way raw root files are partitioned
 mult_output_files = [] #list of directies from which data is loaded for the desire partition
 # decide what files to load the approporate multiplicity ranges
 for mult_range in mult_output_range:
@@ -28,9 +28,9 @@ output_full_dir = []
 for proj in sys:
   for mult_range, output_dir in zip(mult_output_range, mult_output_files):
     output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_PhiCor_ana.root' % (proj, mult_range[0], mult_range[1]))
-    output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_PhiCor_graph.root' % (proj, mult_range[0], mult_range[1]))
-    output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_First_ana.root' % (proj, mult_range[0], mult_range[1]))
-    output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_Second_ana.root' % (proj, mult_range[0], mult_range[1]))
+    #output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_PhiCor_graph.root' % (proj, mult_range[0], mult_range[1]))
+    #output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_First_ana.root' % (proj, mult_range[0], mult_range[1]))
+    #output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_Second_ana.root' % (proj, mult_range[0], mult_range[1]))
 
 #ruleorder: analysis_res > analysis
 
@@ -39,7 +39,7 @@ output_dir_lambda = lambda wildcards: mult_output_files[mult_output_range.index(
 rule all:
   input:
     expand('{output}', output=output_full_dir),
-    expand('data/Sn{sys}Final/Res.txt', sys=sys)
+    #expand('data/Sn{sys}Final/Res.txt', sys=sys)
 
 rule IterPIDMeta:
   input:
@@ -145,6 +145,9 @@ rule analysis:
     if args['Divide']:
       args['MMin'] = str(int(float(args['MMin'])/2))
       args['MMax'] = str(int(float(args['MMax'])/2))
+    if wildcards.status == 'PhiCor':
+      args['ObsFile'] = ''
+      args['ImpModel'] = 'urqmd_SM_uni_weighted.pkl'
     output_filename = output_filename + '_ana.root'
     attr_change(output[0], args)
     os.rename(os.path.join(args['Dir'], output_filename), os.path.join('data', 'Sn' + wildcards.proj + 'Final', output_filename))

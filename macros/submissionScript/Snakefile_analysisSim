@@ -2,7 +2,7 @@ from shutil import copyfile
 import numpy as np
 from analysisConfig.changeAttr import main as attr_change
 
-input_dir = 'UrQMD_b1_10_Full'#'ApproxSn112CorVs'
+input_dir = 'UrQMD_b1_10_WithBias_CorVetoM35_Full'#UrQMD_b1_10_Full'#'ApproxSn112CorVs'
 proj = 112
 iter_samples = 100000
 tot_samples = -1

@@ -66,6 +66,7 @@ class STPIDMachineLearningTask : public FairTask {
     virtual void Exec(Option_t *opt);
     void SetPersistence(Bool_t value);
     void SetChain(TChain* chain);
+    void SetID(const std::vector<int>& ids) { fTreeIDs = ids; };
     void SetBufferSize(int size);
     void SetModel(const std::string& saveModel, STAlgorithms type);
 
@@ -87,6 +88,7 @@ class STPIDMachineLearningTask : public FairTask {
     
     TTree *fChain = nullptr;
     int fBufferSize = 5000;
+    std::vector<int> fTreeIDs;
     Int_t  fEventID;
     Bool_t fIsPersistence;
 

@@ -44,6 +44,7 @@ STReaderTask* STAnalysisFactory::GetReaderTask()
     // TEMPORARY. TO BE DELETED
     //reader -> RotateEvent();
     fEntries = reader -> GetNEntries();
+    fReader = reader;
     return reader;
   }
   else if(DataType == "ML")
@@ -52,6 +53,7 @@ STReaderTask* STAnalysisFactory::GetReaderTask()
     TString dir = TString::Format("%s", settings["DataDir"].c_str());
     auto reader = new STCSVReaderTask(dir);
     fEntries = reader -> GetNEntries();
+    fReader = reader;
     return reader;
   }
   else
@@ -59,6 +61,7 @@ STReaderTask* STAnalysisFactory::GetReaderTask()
     auto reader = new STConcReaderTask();
     reader -> LoadFromXMLNode(fIONode);
     fEntries = reader -> GetNEntries();
+    fReader = reader;
     return reader;
   }
 }
@@ -107,6 +110,16 @@ FairTask* STAnalysisFactory::GetPIDTask()
   {
     auto task = new STPIDAnalysisTask();
     task -> SetBeamA(std::stoi(settings["BeamA"]));
+    return task;
+  }
+  else if(PIDType == "ML")
+  {
+    auto task = new STPIDMachineLearningTask();
+    task -> SetChain((TChain*) fReader -> GetChain());
+    auto randID = fReader -> GetRandID();
+    task -> SetBufferSize(10000*((randID.size() == 0)? 1 : fReader -> GetNEntries()/randID.size()));
+    task -> SetModel("MLModelVotingSn132", STAlgorithms::Voting);
+    task -> SetID(randID);
     return task;
   }
   else throw std::runtime_error("Cannot create PIDTask of type " + PIDType);
@@ -305,7 +318,6 @@ STPhiEfficiencyTask* STAnalysisFactory::GetPhiEfficiencyTask()
 
   auto settings = this -> fReadNodesToMap(child);
   auto task = new STPhiEfficiencyTask();
-  task -> SetPersistence(false);
   auto it2 = settings.find("PhiEff");
   if(it2 != settings.end()) task -> LoadPhiEff(it2 -> second);
   return task;

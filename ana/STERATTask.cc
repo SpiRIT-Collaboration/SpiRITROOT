@@ -141,7 +141,7 @@ void STERATTask::CreateImpactParameterTable(const std::vector<std::string>& ana_
 
   TFile output(output_filename.c_str(), "RECREATE");
   TH1F mult_hist("Mult", "Mult", fMultMax - fMultMin + 1, fMultMin, fMultMax);
-  chain.Project("Mult", "Sum$(recodpoca.Mag() < 20)");
+  chain.Project("Mult", "Sum$(recodpoca.Mag() < 20)", "EventType.fElements != 10 && KatanaZMax.fElements <= 35");
   auto cumulative = mult_hist.GetCumulative(false);
   int max_val = double(cumulative -> GetMaximum());
   for(int i = 1; i < cumulative -> GetNbinsX(); ++i)

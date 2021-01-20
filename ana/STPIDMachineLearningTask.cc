@@ -200,10 +200,16 @@ void STPIDMachineLearningTask::LoadDataFromPython(int startID, int endID)
   // write dat to buffer
   output.fFile << "dedx\tpx\tpy\tpz\teventid\n";
   std::vector<std::pair<int, int>> excludedParticles;
-  if(endID > fChain -> GetEntries()) endID = fChain -> GetEntries();
+  if(fTreeIDs.size() == 0)
+  {
+    if(endID > fChain -> GetEntries()) endID = fChain -> GetEntries();
+  }
+  else
+    if(endID > fTreeIDs.size()) endID = fTreeIDs.size();
+
   for(int evt = startID; evt < endID; ++evt)
   {
-    fChain -> GetEntry(evt);
+    fChain -> GetEntry((fTreeIDs.size() == 0)? evt : fTreeIDs[evt]);
     if(fIsTrimmedFile) fSTData = (STData*) fSTDataArray->At(0);
     for(int part = 0; part < fSTData->multiplicity; ++part)
     {

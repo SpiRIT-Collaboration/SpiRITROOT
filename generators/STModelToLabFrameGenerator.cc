@@ -21,8 +21,23 @@ TParticlePDG* Elements::PDGToParticleData(int pdg)
     int Z = (pdg%10000000)/10000 + 0.5;
     int A = (pdg%10000)/10 + 0.5;
     // add particle to TDatabasePDG so the memory management behavior is identical for light particles or ions.
-    return TDatabasePDG::Instance()->AddParticle(symbol[Z], symbol[Z], A*Elements::kProtonMass, true, 0, 3*Z, "ion", pdg, 0, 0); 
+    return TDatabasePDG::Instance()->AddParticle(Form("%d",A) + symbol[Z-1], Form("%d",A)+symbol[Z-1], A*Elements::kProtonMass, true, 0, 3*Z, "ion", pdg, 0, 0); 
   }
+}
+
+STTransportReader* ReaderFactory(TString prefix, TString filename)
+{
+  if (filename.BeginsWith("imqmdNew")) { return new STImQMDNewReader(prefix + filename); }
+  else if (filename.BeginsWith("imqmdRaw")) { return new STImQMDRawReader(prefix + filename); }
+  else if(filename.BeginsWith("imqmd") || filename.BeginsWith("approx")) { return new STImQMDReader(prefix + filename); }
+  else if(filename.BeginsWith("urqmd"))  { return new STUrQMDReader(prefix + filename); }
+  else if(filename.BeginsWith("pbuu")) { return new STpBUUReader(prefix + filename); }
+  else if(filename.BeginsWith("amdNew")) { return new STAMDReader(prefix + filename); }
+  else if(filename.BeginsWith("ibuu") || filename.BeginsWith("amd")) { return new STIBUUReader(prefix + filename, filename.BeginsWith("ibuu")); }
+  else if(filename.BeginsWith("dcqmdNew")) { return new STDcQMDNewReader(prefix + filename); }
+  else if(filename.BeginsWith("dcqmd")) { return new STDcQMDReader(prefix + filename); }
+  else if(filename.BeginsWith("hw")) { return new STHWReader(prefix + filename); }
+  else return nullptr;
 }
 
 /***********************************************
@@ -298,12 +313,12 @@ std::vector<FairIon*> STpBUUReader::GetParticleList()
 }
 
 /*************************************************
-* STUrQMDReader
+* STTXTReader
 **************************************************/
-STUrQMDReader::STUrQMDReader(TString fileName) : fFile(fileName), fFilename(fileName)
+STTXTReader::STTXTReader(TString fileName, std::unique_ptr<STReaderHelper>&& helper) : fFile(fileName), fFilename(fileName), fHelper(std::move(helper))
 {
   if(fFile.is_open())
-    LOG(INFO) << "Reading UrQMD data from " << fileName << FairLogger::endl;
+    LOG(INFO) << "Reading data from " << fileName << FairLogger::endl;
 
   // IMPORTANT! this allows getline to throw exception when it reaches eof
   fFile.exceptions(std::ifstream::failbit|std::ifstream::badbit);
@@ -313,60 +328,17 @@ STUrQMDReader::STUrQMDReader(TString fileName) : fFile(fileName), fFilename(file
   {
     try
     {
-      this -> ReadNextEvent_(temp, true);
+      fHelper -> ReadNextEvent_(this, temp, true);
       ++fTotEntries;
     }
     catch(...)
     { break; }
   }
-  this -> GoToEvent(0);
+  this -> GoToEvent(-1);
 
 }
 
-void STUrQMDReader::ReadNextEvent_(std::vector<STTransportParticle>& particleList, bool skip)
-{
-  std::string line, temp;
-  // ignore line 1 - 3
-  for(int i = 1; i <= 3; ++i) std::getline(fFile, line);
-  // impact parameter
-  std::getline(fFile, line);
-  if(!skip)
-  {
-    particleList.clear();
-    std::stringstream ss(line);
-    ss >> temp >> fCurrentB >> temp; 
-  }
-  // ignore line 5 to 18
-  for(int i = 5; i <= 18; ++i) std::getline(fFile, line);
-  // first entry in line 19 is multiplicity
-  int mult;
-  std::getline(fFile, line);
-  {
-    std::stringstream ss(line);
-    ss >> mult >> temp;
-  }
-  // discard one more line
-  std::getline(fFile, line);
-  // particle information
-  //const std::vector<int> supported_pdg{-211,211,2212,1000010020,1000010030,1000020030,1000020040};
-  for(int i = 0; i < mult; ++i)
-  {
-    std::getline(fFile, line);
-    if(!skip)
-    {
-      int itype, charge;
-      double px, py, pz, x, y, z;
-      std::stringstream ss(line);
-      ss >> temp >> x >> y >> z >> temp >> px >> py >> pz >> temp >> itype >> temp >> charge;
-      int pdg = this -> ITypeChargeToPDG(itype, charge);
-      //if(std::find(supported_pdg.begin(), supported_pdg.end(), pdg) != supported_pdg.end())
-      particleList.push_back({pdg, px, py, pz, x, y, z});
-    }
-  }
-  ++fEventID;
-}
-
-bool STUrQMDReader::GoToEvent(int event)
+bool STTXTReader::GoToEvent(int event)
 {
   if(event >= fTotEntries) return false;
   if(event == fEventID) return true;
@@ -381,12 +353,69 @@ bool STUrQMDReader::GoToEvent(int event)
   }
   std::vector<STTransportParticle> temp;
   for(;fEventID < event - 1;)
-    this -> ReadNextEvent_(temp, true);
-  this -> ReadNextEvent_(fCurrentParticleList);
+    fHelper -> ReadNextEvent_(this, temp, true);
+  fHelper -> ReadNextEvent_(this, fCurrentParticleList);
   return true;
 }
 
-int STUrQMDReader::ITypeChargeToPDG(int itype, int charge)
+bool STTXTReader::GetNext(std::vector<STTransportParticle>& particleList)
+{
+  if(fEventID >= fTotEntries) return false;
+  particleList = fCurrentParticleList;
+  try
+  { fHelper -> ReadNextEvent_(this, fCurrentParticleList); }
+  catch(...){ fCurrentB = -1; ++fEventID; }
+  return true;
+}
+
+/*************
+* UrQMD and helper
+**************/
+
+void STUrQMDHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip)
+{
+  std::string line, temp;
+  // ignore line 1 - 3
+  for(int i = 1; i <= 3; ++i) std::getline(reader -> fFile, line);
+  // impact parameter
+  std::getline(reader -> fFile, line);
+  if(!skip)
+  {
+    particleList.clear();
+    std::stringstream ss(line);
+    ss >> temp >> reader -> fCurrentB >> temp; 
+  }
+  // ignore line 5 to 18
+  for(int i = 5; i <= 18; ++i) std::getline(reader -> fFile, line);
+  // first entry in line 19 is multiplicity
+  int mult;
+  std::getline(reader -> fFile, line);
+  {
+    std::stringstream ss(line);
+    ss >> mult >> temp;
+  }
+  // discard one more line
+  std::getline(reader -> fFile, line);
+  // particle information
+  //const std::vector<int> supported_pdg{-211,211,2212,1000010020,1000010030,1000020030,1000020040};
+  for(int i = 0; i < mult; ++i)
+  {
+    std::getline(reader -> fFile, line);
+    if(!skip)
+    {
+      int itype, charge;
+      double px, py, pz, x, y, z;
+      std::stringstream ss(line);
+      ss >> temp >> x >> y >> z >> temp >> px >> py >> pz >> temp >> itype >> temp >> charge;
+      int pdg = this -> ITypeChargeToPDG(itype, charge);
+      //if(std::find(supported_pdg.begin(), supported_pdg.end(), pdg) != supported_pdg.end())
+      particleList.push_back({pdg, px, py, pz, x, y, z});
+    }
+  }
+  ++(reader -> fEventID);
+}
+
+int STUrQMDHelper::ITypeChargeToPDG(int itype, int charge)
 {
   int failed_pdg = -1;
   if(itype == 1) // nucleons, either proton or neutron
@@ -410,18 +439,123 @@ int STUrQMDReader::ITypeChargeToPDG(int itype, int charge)
   else return failed_pdg;
 }
 
-bool STUrQMDReader::GetNext(std::vector<STTransportParticle>& particleList)
-{
-  if(fEventID >= fTotEntries - 1) return false;
-  particleList = fCurrentParticleList;
-  try
-  { this -> ReadNextEvent_(fCurrentParticleList); }
-  catch(...){ fCurrentB = -1; }
-  return true;
-}
-
 TString STUrQMDReader::Print()
 { return "UrQMD reader with source " + fFilename; }
+
+/**************************************************
+* TPME HW reader
+**************************************************/
+
+void STHWHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip)
+{
+  int mult;
+  std::string line, temp;
+  std::getline(reader -> fFile, line);
+  {
+    std::stringstream ss(line);
+    ss >> mult;
+  }
+  if(!skip) particleList.clear();
+  for(int i = 0; i < mult; ++i)
+  {
+    std::getline(reader -> fFile, line);
+    if(!skip)
+    {
+      int itype;
+      double mass, x, y, z, px, py, pz;
+      std::stringstream ss(line);
+      ss >> itype >> mass >> x >> y >> z >> px >> py >> pz;
+      auto it = fIDToPDG.find(itype);
+      if(it != fIDToPDG.end())
+        particleList.push_back({it -> second, px, py, pz, x, y, z});
+    }
+  }
+  ++(reader -> fEventID);
+}
+
+TString STHWReader::Print()
+{ return "TPME HW reader with source " + fFilename; }
+
+/**************************************************
+* AMD reader
+**************************************************/
+
+void STAMDHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip)
+{
+  std::string line, temp;
+  // ignore first line if this is the start of the file
+  if(reader -> fEventID < 0) std::getline(reader -> fFile, line);
+  if(!skip) particleList.clear();
+  int Z, N, curr_eventId = -1, eventId;
+  double px, py, pz, b;
+  int place;
+  while(std::getline(reader -> fFile, line))
+  {
+    std::stringstream ss(line);
+    ss >> Z >> N >> px >> py >> pz >> temp >> temp >> temp >> b >> eventId >> temp;
+    if(curr_eventId == -1) curr_eventId = eventId;
+    if(curr_eventId != eventId) 
+    {  // we reach the next event. Go up by one line
+      reader -> fFile.seekg(place);
+      break;
+    }
+    else 
+    {
+      reader -> fCurrentB = b;
+      place = reader -> fFile.tellg();
+      if(!skip)
+      {
+        if(Z == 0 && N == 0) break; // end of file
+        int pdg;
+        if(Z == 1 && N == 0) pdg = 2212;
+        else if(Z == 0 && N == 1) pdg = 2112;
+        else pdg = 1000000000 + Z*10000 + (Z + N)*10;
+        particleList.push_back({pdg, px/1000, py/1000, pz/1000, 0, 0, 0});
+      }
+    }
+  }
+  ++(reader -> fEventID);
+}
+
+TString STAMDReader::Print()
+{ return "AMD reader with source " + fFilename; }
+
+/***************************************************
+* DcQMD reader 2. Dan upload events with different format each time
+****************************************************/
+
+void STDcQMDNewHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip)
+{
+  std::string line, temp;
+  if(!skip) particleList.clear();
+  int A, Z, multi;
+  double px, py, pz, b;
+  { // read first line for event info
+    std::getline(reader -> fFile, line);
+    std::stringstream ss(line);
+    ss >> b >> multi;
+    reader -> fCurrentB = b;
+  }
+  for(int i = 0; i < multi; ++i)
+  {
+    std::getline(reader -> fFile, line);
+    std::stringstream ss(line);
+    ss >> A >> Z >> px >> py >> pz;
+    if(!skip)
+    {
+      int N = A - Z;
+      int pdg;
+      if(Z == 1 && N == 0) pdg = 2212;
+      else if(Z == 0 && N == 1) pdg = 2112;
+      else pdg = 1000000000 + Z*10000 + (Z + N)*10;
+      particleList.push_back({pdg, px, py, pz, 0, 0, 0});
+    }
+  }
+  ++(reader -> fEventID);
+}
+
+TString STDcQMDNewReader::Print()
+{ return "DcQMDNew reader with source " + fFilename; }
 
 
 /**************************************************
@@ -584,15 +718,8 @@ void STModelToLabFrameGenerator::Print()
 
 void STModelToLabFrameGenerator::RegisterReader()
 {
-  //if(fInputName.BeginsWith("amd"))    { fReader = new STAMDReader(fInputPath + fInputName); } 
-  //else if(fInputName.BeginsWith("pBUU"))   { fReader = new STpBUUReader(fInputPath + fInputName); } 
-  std::cout << fInputName << std::endl;
-  if (fInputName.BeginsWith("imqmdNew")) { fReader = new STImQMDNewReader(fInputPath + fInputName); }
-  else if(fInputName.BeginsWith("imqmd") || fInputName.BeginsWith("approx"))  { fReader = new STImQMDReader(fInputPath + fInputName); }  // approx data shares the same format as imqmd
-  else if(fInputName.BeginsWith("pbuu")) { fReader = new STpBUUReader(fInputPath + fInputName); }
-  else if(fInputName.BeginsWith("urqmd"))  { fReader = new STUrQMDReader(fInputPath + fInputName); } 
-  else if(fInputName.BeginsWith("ibuu")) { fReader = new STIBUUReader(fInputPath + fInputName); }
-  else
+  fReader = ReaderFactory(fInputPath, fInputName);
+  if(!fReader)
     LOG(FATAL)<<"STModelToLabFrameGenerator cannot accept event files without specifying generator names."<<FairLogger::endl;
   LOG(INFO)<<"-I Opening file: "<<fInputName<<FairLogger::endl;
 
@@ -776,10 +903,11 @@ void STModelToLabFrameGenerator::RegisterHeavyIon(std::set<int> pdgList)
     if(!pdgList.empty()) fAllowedPDG.insert(1000200400);
   }
 
+  fHeavyIonsRegistered = true;
+
   for(auto ion : particleList)
     FairRunSim::Instance()->AddNewIon(ion);
 
-  fHeavyIonsRegistered = true;
 }
 
 

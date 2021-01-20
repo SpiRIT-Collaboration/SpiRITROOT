@@ -24,11 +24,20 @@ class STTransportReader;
 class STImQMDReader; // old ImQMD format
 class STImQMDNewReader; // Fanurs updated the ImQMD format
 class STImQMDRawReader; // Fanurs updated the ImQMD format without coaleasce
+class STTXTReader;
+class STUrQMDHelper;
 class STUrQMDReader;
+class STAMDHelper;
+class STAMDReader;
+class STDcQMDNewHelper;
+class STDcQMDNewReader;
 class STIBUUReader;
 class STDcQMDReader;
+class STHWHelper;
+class STHWReader;
+class STReaderHelper;
 
-
+STTransportReader* ReaderFactory(TString prefix, TString filename);
 
 namespace Elements
 {
@@ -231,31 +240,99 @@ protected:
   short fX[maxMulti], fY[maxMulti], fZ[maxMulti];
 };
 
-class STUrQMDReader : public STTransportReader
+class STReaderHelper
+{
+  public:
+    virtual void ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip=false){};
+};
+
+class STTXTReader : public STTransportReader
 {
 public: 
-  STUrQMDReader(TString fileName);
-  virtual ~STUrQMDReader(){};
+  STTXTReader(TString fileName, std::unique_ptr<STReaderHelper>&& helper);
+  virtual ~STTXTReader(){};
   virtual void SetEntry(int t_entry) { this -> GoToEvent(t_entry); }
   virtual int GetEntry() { return fEventID; }
   virtual int GetEntries() { return fTotEntries; }
   virtual bool GetNext(std::vector<STTransportParticle>& particleList);
-  virtual TString Print();
+  virtual TString Print() = 0;
   //virtual std::vector<FairIon*> GetParticleList();
   double GetB() { return fCurrentB; }; 
 protected:
+  friend class STReaderHelper;
+  friend class STUrQMDHelper;
+  friend class STHWHelper;
+  friend class STAMDHelper;
+  friend class STDcQMDNewHelper;
+
   std::ifstream fFile;
   TString fFilename;
   int fEventID = -1;
-  void ReadNextEvent_(std::vector<STTransportParticle>& particleList, bool skip=false);
-  int ITypeChargeToPDG(int itype, int charge);
   double fCurrentB = -1;
   std::vector<STTransportParticle> fCurrentParticleList;
 
+  std::unique_ptr<STReaderHelper> fHelper;
   bool GoToEvent(int event);
   int fTotEntries = 0;
   
 };
+
+class STUrQMDHelper : public STReaderHelper
+{
+public:
+  virtual void ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip=false);
+protected:
+  int ITypeChargeToPDG(int itype, int charge);
+};
+
+class STUrQMDReader : public STTXTReader
+{
+public: 
+  STUrQMDReader(TString fileName) : STTXTReader(fileName, std::unique_ptr<STUrQMDHelper>(new STUrQMDHelper)) {};
+  virtual TString Print();
+};
+
+class STHWHelper : public STReaderHelper
+{
+public:
+  virtual void ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip=false);
+protected:
+  const std::map<int, int> fIDToPDG{{1,2212}, {2,2112}, {3,-211}, {4,111}, {5,211},{6,1114},{7,2114},{8,2214},{9,2224}};
+};
+
+class STHWReader : public STTXTReader
+{
+public:
+  STHWReader(TString fileName) : STTXTReader(fileName, std::unique_ptr<STHWHelper>(new STHWHelper)) {};
+  virtual TString Print();
+};
+
+class STAMDHelper : public STReaderHelper
+{
+public:
+  virtual void ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip=false);
+};
+
+class STAMDReader : public STTXTReader
+{
+public:
+  STAMDReader(TString fileName) : STTXTReader(fileName, std::unique_ptr<STAMDHelper>(new STAMDHelper)) {};
+  virtual TString Print();
+};
+
+class STDcQMDNewHelper : public STReaderHelper
+{
+public:
+  virtual void ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip=false);
+};
+
+class STDcQMDNewReader : public STTXTReader
+{
+public:
+  STDcQMDNewReader(TString fileName) : STTXTReader(fileName, std::unique_ptr<STDcQMDNewHelper>(new STDcQMDNewHelper)) {};
+  virtual TString Print();
+};
+
 
 class STIBUUReader : public STTransportReader
 {

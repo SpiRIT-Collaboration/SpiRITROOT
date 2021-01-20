@@ -1,8 +1,8 @@
-Tot_Evt = 1000
+Tot_Evt = 1300
 Num_Divided = 100
 
-DirName = ['UrQMD_b1_10_WithBias']#['ImQMD_b3Sn112', 'ImQMD_b5Sn112', 'ImQMD_b7Sn112']
-FileName = ['urqmd_b1_10']#'imqmdNew_Varb/imqmdNew_Sn112b3.root', 'imqmdNew_Varb/imqmdNew_Sn112b5.root', 'imqmdNew_Varb/imqmdNew_Sn112b7.root']
+DirName = ['AMD_b3']#UrQMD_b1_10_DR48']#['ImQMD_b3Sn112', 'ImQMD_b5Sn112', 'ImQMD_b7Sn112']
+FileName = ['amdNew_b3']#'urqmd_b1_10_DR48']#'imqmdNew_Varb/imqmdNew_Sn112b3.root', 'imqmdNew_Varb/imqmdNew_Sn112b5.root', 'imqmdNew_Varb/imqmdNew_Sn112b7.root']
 digiCharge = [10.2]
 length = [150]
 #'imqmdNew_sn112sn124_b5_SLy4']

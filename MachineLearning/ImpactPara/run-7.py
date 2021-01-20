@@ -14,7 +14,7 @@ df_all = pd.read_table(sys.argv[1],sep='\t')
 #df_test = df_all.drop(df_train.index)[['Mch','N','N(H-He)','ETL','ERAT','Npt','N(H-He)pt']]
 #df_all = df_all[df_all['bim'] < 3]
 df_all['weight'] = 1
-df_all['weight'].loc[df_all['bim'] < 1] = 1/df_all['bim'].loc[df_all['bim'] < 1]**4
+df_all['weight'].loc[df_all['bim'] < 0.5] = 3#2 - df_all['bim'].loc[df_all['bim'] < 1]
 
 df_train = df_all[['Mch','N','N(H-He)','ETL','ERAT','Npt','N(H-He)pt','bim']]
 df_test = df_all.sample(frac=0.01)[['Mch','N','N(H-He)','ETL','ERAT','Npt','N(H-He)pt','bim']]

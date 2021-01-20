@@ -27,18 +27,9 @@ STModelReaderTask::STModelReaderTask(TString filename, bool enable_neutrons) : f
   fEff = new TClonesArray("STVectorF");
 
   auto fInputPath = TString::Format("%s/input/", gSystem->Getenv("VMCWORKDIR"));
-  if (filename.BeginsWith("imqmdNew")) { fReader = std::unique_ptr<STImQMDNewReader>(new STImQMDNewReader(fInputPath + filename)); }
-  else if (filename.BeginsWith("imqmdRaw")) { fReader = std::unique_ptr<STImQMDRawReader>(new STImQMDRawReader(fInputPath + filename)); }
-  else if(filename.BeginsWith("imqmd") || filename.BeginsWith("approx"))  
-  { fReader = std::unique_ptr<STImQMDReader>(new STImQMDReader(fInputPath + filename)); }
-  else if(filename.BeginsWith("urqmd"))  { fReader = std::unique_ptr<STUrQMDReader>(new STUrQMDReader(fInputPath + filename)); }
-  else if(filename.BeginsWith("pbuu")) { fReader = std::unique_ptr<STpBUUReader>(new STpBUUReader(fInputPath + filename)); }
-  else if(filename.BeginsWith("ibuu") || filename.BeginsWith("amd")) { fReader = std::unique_ptr<STIBUUReader>(new STIBUUReader(fInputPath + filename, filename.BeginsWith("ibuu"))); }
-  else if(filename.BeginsWith("dcqmd")) { fReader = std::unique_ptr<STDcQMDReader>(new STDcQMDReader(fInputPath + filename)); }
-  else
-  {
+  fReader = std::unique_ptr<STTransportReader>(ReaderFactory(fInputPath, filename));
+  if(!fReader)
     LOG(FATAL)<<"STModelReader cannot accept event files without specifying generator names.\nInput name : " << filename << FairLogger::endl;
-  }
 
   fEventID = new TClonesArray("STVectorI");
   fRunID = new TClonesArray("STVectorI");

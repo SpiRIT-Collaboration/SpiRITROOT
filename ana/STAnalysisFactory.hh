@@ -13,6 +13,7 @@
 #include "STEfficiencyTask.hh"
 #include "STPhiEfficiencyTask.hh"
 #include "STPIDProbTask.hh"
+#include "STPIDMachineLearningTask.hh"
 #include "STPIDAnalysisTask.hh"
 #include "STPiProbTask.hh"
 #include "EfficiencyFactory.hh"
@@ -62,6 +63,7 @@ private:
   std::map<std::string, TXMLNode*> fNodes;
   TXMLNode *fIONode = nullptr;
   TXMLNode *fTaskNode = nullptr;
+  STReaderTask *fReader = nullptr;
   int fEntries = 0;
 };
 

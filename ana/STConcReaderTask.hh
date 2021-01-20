@@ -38,6 +38,8 @@ class STReaderTask : public FairTask {
     virtual void SetEventID(int eventID) = 0;
     virtual std::string GetPathToData() = 0;
     virtual void RandSample(int nevents){};
+    virtual TTree* GetChain() { return nullptr; };
+    virtual std::vector<int> GetRandID() { return {}; };
   ClassDef(STReaderTask, 1);
 };
 
@@ -59,7 +61,8 @@ class STConcReaderTask : public STReaderTask {
     void SetPersistence(Bool_t value);
 
     void SetChain(TChain* chain);
-    TTree *GetChain() { return fChain; }
+    virtual TTree *GetChain() { return fChain; }
+    virtual std::vector<int> GetRandID(){ return fTreeSampleID; }
     void LoadFromXMLNode(TXMLNode *node); // will return path to data
     std::string GetPathToData() { return fPathToData; };
     int GetNEntries();

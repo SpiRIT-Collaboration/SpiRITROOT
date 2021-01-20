@@ -439,14 +439,14 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
 void STSimpleGraphsTask::RegisterPionPlots()
 {
   fPlotPion = true;
-  double kebins[] = {0, 30, 60, 90, 120, 170, 240};
-  auto pim = this -> RegisterHistogram<TH1F>(false, "pimkecm", "Pi- CM K.E.", 6, kebins);
+  double kebins[] = {0, 15, 30, 45, 60, 75, 90, 105, 120, 145, 170, 205, 240};
+  auto pim = this -> RegisterHistogram<TH1F>(false, "pimkecm", "Pi- CM K.E.", 12, kebins);
   pim -> Sumw2();
-  auto pim_err = this -> RegisterHistogram<TH1F>(false, "pimkecm_err", "", 6, kebins);
+  auto pim_err = this -> RegisterHistogram<TH1F>(false, "pimkecm_err", "", 12, kebins);
   pim_err -> Sumw2();
-  auto pip = this -> RegisterHistogram<TH1F>(false, "pipkecm", "Pi+ CM K.E.", 6, kebins);
+  auto pip = this -> RegisterHistogram<TH1F>(false, "pipkecm", "Pi+ CM K.E.", 12, kebins);
   pip -> Sumw2();
-  auto pip_err = this -> RegisterHistogram<TH1F>(false, "pipkecm_err", "", 6, kebins);
+  auto pip_err = this -> RegisterHistogram<TH1F>(false, "pipkecm_err", "", 12, kebins);
   pip_err -> Sumw2();
 
   double ptbins[] = {0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 280, 320, 440};
@@ -661,7 +661,8 @@ void STSimpleGraphsTask::RegisterVPlots()
           v2_cloned -> Write();
 
           int y0bin = v2_withPtCut -> GetXaxis() -> FindBin(double(0));
-          TParameter<double>(TString::Format("%s_AveV2_Pt%g", fParticleName.at(pdg).c_str(), fPtThresholdForVs), v2_withPtCut->Integral(y0bin, -1)/v2_counts_withPtCut->Integral(y0bin, -1)).Write();
+          int y0_5bin = v2_withPtCut -> GetXaxis() -> FindBin(0.5);
+          TParameter<double>(TString::Format("%s_AveV2_Pt%g", fParticleName.at(pdg).c_str(), fPtThresholdForVs), v2_withPtCut->Integral(y0bin, y0_5bin)/v2_counts_withPtCut->Integral(y0bin, y0_5bin)).Write();
         }
 
         if(pdg == fParticleName.begin() -> first)
@@ -672,7 +673,8 @@ void STSimpleGraphsTask::RegisterVPlots()
           TParameter<double>("PhiEffThresholdForVs", fPhiEffThresholdForVs).Write();
         }
         int y0bin = v2 -> GetXaxis() -> FindBin(double(0));
-        TParameter<double>(TString::Format("%s_AveV2", fParticleName.at(pdg).c_str()), v2->Integral(y0bin, -1)/v2_counts->Integral(y0bin, -1)).Write();
+        int y0_5bin = v2 -> GetXaxis() -> FindBin(0.5);
+        TParameter<double>(TString::Format("%s_AveV2", fParticleName.at(pdg).c_str()), v2->Integral(y0bin, y0_5bin)/v2_counts->Integral(y0bin, y0_5bin)).Write();
       });
   }
 
@@ -919,7 +921,7 @@ void STSimpleGraphsTask::CreateMCEventsFromHist(const std::string& forwardFile, 
           angEq.SetParameters(v1_par, v2_par);
           double delta_phi = gRandom -> Uniform(-TMath::Pi(), TMath::Pi());
           // add flow to uniform phi distribution
-          delta_phi = angEq.GetX(delta_phi, -TMath::Pi(), TMath::Pi(), 1e-2);
+          delta_phi = angEq.GetX(delta_phi, -TMath::Pi(), TMath::Pi(), 1e-5);
           //delta_phi = delta_phi - 2*v1_par*sin(delta_phi) - v2_par*sin(2*delta_phi);
           momCM.RotateZ(delta_phi);
           ParticleInfo info;

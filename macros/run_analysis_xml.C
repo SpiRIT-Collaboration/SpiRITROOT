@@ -57,11 +57,6 @@ void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOu
   if(auto castedPIDTask = dynamic_cast<STPIDProbTask*>(pidTask))
     castedPIDTask -> SetMetaFileUpdate(iter_PID);
   tasks.push_back(pidTask);
-  //auto PIDTask = new STPIDMachineLearningTask();
-  //PIDTask -> SetChain((TChain*) ((STConcReaderTask*) reader) -> GetChain());
-  //PIDTask -> SetBufferSize(10000);
-  //PIDTask -> SetModel("MLModelVotingSn132", STAlgorithms::Voting);
-  //tasks.push_back(PIDTask);
 
   tasks.push_back(factory.GetPiProbTask());
   tasks.push_back(factory.GetDivideEventTask());
