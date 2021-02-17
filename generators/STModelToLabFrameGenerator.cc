@@ -550,7 +550,7 @@ void STDcQMDNewHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTranspo
       if(Z == 1 && N == 0) pdg = 2212;
       else if(Z == 0 && N == 1) pdg = 2112;
       else pdg = 1000000000 + Z*10000 + (Z + N)*10;
-      particleList.push_back({pdg, px, py, pz, 0, 0, 0});
+      particleList.push_back({pdg, A*px, A*py, A*pz, 0, 0, 0});
     }
   }
   ++(reader -> fEventID);
