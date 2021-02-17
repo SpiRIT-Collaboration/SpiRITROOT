@@ -35,6 +35,8 @@ class STIBUUReader;
 class STDcQMDReader;
 class STHWHelper;
 class STHWReader;
+class STIQMDHelper;
+class STIQMDReader;
 class STReaderHelper;
 
 STTransportReader* ReaderFactory(TString prefix, TString filename);
@@ -264,6 +266,7 @@ protected:
   friend class STHWHelper;
   friend class STAMDHelper;
   friend class STDcQMDNewHelper;
+  friend class STIQMDHelper;
 
   std::ifstream fFile;
   TString fFilename;
@@ -333,6 +336,18 @@ public:
   virtual TString Print();
 };
 
+class STIQMDHelper : public STReaderHelper
+{
+public:
+  virtual void ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip=false);
+};
+
+class STIQMDReader : public STTXTReader
+{
+public:
+  STIQMDReader(TString fileName) : STTXTReader(fileName, std::unique_ptr<STIQMDHelper>(new STIQMDHelper)) {};
+  virtual TString Print();
+};
 
 class STIBUUReader : public STTransportReader
 {
