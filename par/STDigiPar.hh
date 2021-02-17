@@ -68,6 +68,7 @@ class STDigiPar : public FairParGenericSet
     Bool_t IsEmbed();
     Double_t GetYDriftOffset();
     Double_t GetTotalADCWhenSat();
+    Double_t GetADCSigma();
     void SetIsEmbed(Bool_t val);
 
   private :
@@ -113,6 +114,7 @@ class STDigiPar : public FairParGenericSet
     Double_t fGCQuadratic;
     Double_t fYDriftOffset;
     Double_t fTotalADCWhenSat;
+    Double_t fADCSigma;
 
   ClassDef(STDigiPar, 1);
 };

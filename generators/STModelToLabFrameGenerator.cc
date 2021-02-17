@@ -37,6 +37,7 @@ STTransportReader* ReaderFactory(TString prefix, TString filename)
   else if(filename.BeginsWith("dcqmdNew")) { return new STDcQMDNewReader(prefix + filename); }
   else if(filename.BeginsWith("dcqmd")) { return new STDcQMDReader(prefix + filename); }
   else if(filename.BeginsWith("hw")) { return new STHWReader(prefix + filename); }
+  else if(filename.BeginsWith("iqmd")) { return new STIQMDReader(prefix + filename); }
   else return nullptr;
 }
 
@@ -557,6 +558,45 @@ void STDcQMDNewHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTranspo
 
 TString STDcQMDNewReader::Print()
 { return "DcQMDNew reader with source " + fFilename; }
+
+/***************************************************
+* IQMD
+****************************************************/
+
+void STIQMDHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip)
+{
+  std::string line, temp;
+  if(!skip) particleList.clear();
+  double Af, Zf, multi;
+  double px, py, pz, b;
+  { // read first line for event info
+    std::getline(reader -> fFile, line);
+    std::stringstream ss(line);
+    ss >> temp >> multi;
+  }
+  int imulti = int(multi + 0.5);
+  for(int i = 0; i < imulti; ++i)
+  {
+    std::getline(reader -> fFile, line);
+    std::stringstream ss(line);
+    ss >> Af >> Zf >> temp >> temp >> temp >> px >> py >> pz;
+    int A = int(Af + 0.5);
+    int Z = int(Zf + 0.5);
+    if(!skip)
+    {
+      int N = A - Z;
+      int pdg;
+      if(Z == 1 && N == 0) pdg = 2212;
+      else if(Z == 0 && N == 1) pdg = 2112;
+      else pdg = 1000000000 + Z*10000 + (Z + N)*10;
+      particleList.push_back({pdg, A*px, A*py, A*pz, 0, 0, 0});
+    }
+  }
+  ++(reader -> fEventID);
+}
+
+TString STIQMDReader::Print()
+{ return "IQMD reader with source " + fFilename; }
 
 
 /**************************************************

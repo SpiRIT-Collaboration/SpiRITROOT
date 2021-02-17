@@ -117,6 +117,7 @@ void run_reco_mc
   TString out2 = fPathToData+fOutName+"_s"+sSplitNo+".reco."+version+".conc.root";
   auto smallOutput = new STSmallOutputTask();
   smallOutput -> SetOutputFile(out2.Data());
+  smallOutput -> SetRun(std::hash<std::string>()(std::string(fName.Data())));
 
   auto mctruth = new STMCTruthTask(true);
 

@@ -37,4 +37,6 @@ GCConstant:Double_t             3.576E-2
 GCLinear:Double_t               1.671E-3
 GCQuadratic:Double_t            -2.358E-8
 YDriftOffset:Double_t           78.63
+TotalADCWhenSat:Double_t        31000
+ADCSigma:Double_t               2000
 #########################################################################

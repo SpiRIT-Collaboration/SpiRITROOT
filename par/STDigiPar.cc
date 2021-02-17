@@ -51,7 +51,9 @@ Double_t STDigiPar::GetGCLinear()                    { return fGCLinear; }
 Double_t STDigiPar::GetGCQuadratic()                 { return fGCQuadratic; }
 Bool_t   STDigiPar::IsEmbed()                        { return fIsEmbed; }
 Double_t STDigiPar::GetYDriftOffset()                { return fYDriftOffset; }
-Double_t STDigiPar::GetTotalADCWhenSat()               { return fTotalADCWhenSat; }
+Double_t STDigiPar::GetTotalADCWhenSat()             { return fTotalADCWhenSat; }
+Double_t STDigiPar::GetADCSigma()                    { return fADCSigma; }
+
 
 void     STDigiPar::SetIsEmbed(Bool_t val)               { fIsEmbed = val; }
 
@@ -196,6 +198,10 @@ STDigiPar::getParams(FairParamList *paramList)
     if (!(paramList -> fill("TotalADCWhenSat", &fTotalADCWhenSat))) {
       fLogger -> Info(MESSAGE_ORIGIN, "TotalADCWhenSat not found. It will be set to -1 (Neg. values disable this saturation mode)");
       fTotalADCWhenSat = -1;
+    }
+    if (!(paramList -> fill("ADCSigma", &fADCSigma))) {
+      fLogger -> Info(MESSAGE_ORIGIN, "ADCSigma not found. Smearing on shadow saturation will be disabled.");
+      fADCSigma = 0;
     }
 
     fInitialized = kTRUE;

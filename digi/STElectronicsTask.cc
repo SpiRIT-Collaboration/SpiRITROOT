@@ -85,6 +85,12 @@ STElectronicsTask::Init()
     ioman->Register("MCEventHeader.", "ST", fairMCEventHeader, fIsPersistence);
 
  
+  fTotalADCWhenSat = fPar -> GetTotalADCWhenSat();
+  fADCSigma = fPar -> GetADCSigma();
+  if(fTotalADCWhenSat > 0)
+    fLogger -> Info(MESSAGE_ORIGIN, ("A pad is saturated if total ADC value > " + std::to_string(fTotalADCWhenSat)).c_str()); 
+  else 
+    fLogger -> Info(MESSAGE_ORIGIN, "Shadowing saturation mode disabled");
   fNTBs = fPar -> GetNumTbs();
   if(fEndTb == -1)
     fEndTb = fNTBs;
@@ -195,6 +201,10 @@ STElectronicsTask::Exec(Option_t* option)
     bool is_sat = false;
     Int_t satTB=-1;
 
+    Int_t row   = padI -> GetRow();
+    Int_t layer = padI -> GetLayer();
+    Double_t gainI = fGainMatchingDataScale[layer][row];
+
     if(fUseSaturationTemplate){
       if(fKillAfterSaturation){
 
@@ -221,7 +231,23 @@ STElectronicsTask::Exec(Option_t* option)
 	  }
 	}
 
-	if(satTB!=-1){	// found saturation.
+        bool shadow_saturated = false;
+        if(fTotalADCWhenSat > 0)
+        {
+          double totalADCWhenSatThisEvt = gRandom -> Gaus(fTotalADCWhenSat, fADCSigma);
+          double totADC = 0;
+          for(int iTB = 1; iTB<fNTBs-1; iTB++) {
+            totADC += adcO[iTB]*gainI;
+            if(totADC >= totalADCWhenSatThisEvt) {
+              shadow_saturated = true;
+              satTB = iTB;
+              is_sat = true;
+              for(; iTB<fNTBs-1; iTB++) adcO[iTB] = 0;
+            }
+          }
+        }
+
+	if(satTB!=-1 && !shadow_saturated){	// found saturation.
           is_sat = true;
 	  Int_t tempIndex;	// saturation moment of the template.
           // embed the pulse index according to the pulse height at saturation
@@ -230,16 +256,18 @@ STElectronicsTask::Exec(Option_t* option)
           else if(sat_height < 555) tempIndex = 49;
           else if(sat_height < 1890) tempIndex = 50;
           else tempIndex = 51;
-	  while( satTB<fNTBs && tempIndex<fNBinSaturatedPulse )
-	    adcO[satTB++] = fSaturatedPulse[tempIndex++];
-	  while(satTB<fNTBs)
-	    adcO[satTB++] = fSaturatedPulse[tempIndex];
+          int i = satTB;
+	  while( i<fNTBs && tempIndex<fNBinSaturatedPulse )
+	    adcO[i++] = fSaturatedPulse[tempIndex++];
+	  while(i<fNTBs)
+	    adcO[i++] = fSaturatedPulse[tempIndex];
 	}
 	else{	// there are no adc which exceed the threshold continuously (at least one Tb excess.).
 	  for(Int_t iTB=0; iTB<fNTBs; iTB++)
 	    if(adcO[iTB]>satThreshold)
 	      adcO[iTB]=satThreshold;
 	}
+
       }
     }
     else{
@@ -257,10 +285,7 @@ STElectronicsTask::Exec(Option_t* option)
     }
 
     // Set ADC
-    Int_t row   = padI -> GetRow();
-    Int_t layer = padI -> GetLayer();
     STPad *padO = new STPad(row, layer);
-    Double_t gainI = fGainMatchingDataScale[layer][row];
     padO -> SetPedestalSubtracted();
 
     // pad I saturats only if it is killed by STSimulateBeamTask

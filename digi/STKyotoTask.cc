@@ -66,6 +66,7 @@ STKyotoTask::Init()
       {
         fKatanaZMax = new STVectorI;
         fKatanaZMax -> fElements.push_back(0);
+        fKatanaZMax -> fElements.push_back(0);
         ioman -> Register("STKatanaZMax", "SpiRIT", fKatanaZMax, true);
       }
     }
@@ -117,20 +118,23 @@ STKyotoTask::Exec(Option_t* option)
       //}
   }
 
-  int num_trigged = kyoto_trigged_id.size();
-  bool reject = (num_trigged < 4)? true : false;
-  if(fUseKatana && fKatanaZMax)
+  int num_triggered = kyoto_trigged_id.size();
+  bool reject = (num_triggered < 4)? true : false;
+  if(fUseKatana && fKatanaZMax) 
+  {
     fKatanaZMax -> fElements[0] = Z_max;
+    fKatanaZMax -> fElements[1] = num_triggered;
+  }
  
   fEventID = fFairMCEventHeader -> GetEventID();
   fLogger->Info(MESSAGE_ORIGIN, 
             Form("Event #%d : Kyoto multiplicity %d. Katana max Z %d. %s event.",
-                 fEventID, num_trigged, Z_max, (reject)? "Reject" : "Accept"));
+                 fEventID, num_triggered, Z_max, (reject)? "Reject" : "Accept"));
 
   if(reject) fEventHeader -> SetIsEmptyEvent();
   // if no particles passes through kyoto array, it doesn't even satisfy minimum bias condition
   // will be designated status 10
-  if(num_trigged == 0) fEventHeader -> SetStatus(10);
+  if(num_triggered == 0) fEventHeader -> SetStatus(10);
   //FairRunAna::Instance() -> MarkFill(!reject);
   return;
 }

@@ -75,6 +75,8 @@ class STElectronicsTask : public FairTask
   
     Int_t   fNBinPulser; //!< Number of bin for pulser data.
     Int_t   fNBinSaturatedPulse; //!< Number of bin for saturated pulser data.
+    Double_t   fTotalADCWhenSat;
+    Double_t   fADCSigma;
 
     Bool_t	fUseSaturationTemplate;
     TString	fSaturatedPulseFileName;
