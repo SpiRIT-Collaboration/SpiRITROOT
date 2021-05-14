@@ -57,6 +57,8 @@ class STModelReaderTask : public STReaderTask {
     TClonesArray *fEventID = nullptr;
     TClonesArray *fRunID = nullptr;
     STVectorF *fMCRotZ = nullptr;
+    STVectorVec3 *fHvyResVec = nullptr;
+    STVectorI *fHvyResPDG = nullptr;
     std::vector<int> fSupportedPDG;
 
     TLorentzVector fFourVect;

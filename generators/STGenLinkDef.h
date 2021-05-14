@@ -18,6 +18,7 @@
 #pragma link C++ class STAMDReader+;
 #pragma link C++ class STIBUUReader+;
 #pragma link C++ class STDcQMDReader+;
+#pragma link C++ class STDcQMDPionReader+;
 #pragma link C++ class STIQMDReader+;
 #pragma link C++ class STDcQMDNewReader+;
 

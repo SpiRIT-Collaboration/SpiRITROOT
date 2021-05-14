@@ -32,7 +32,8 @@
 #include <vector>
 #include <memory>
 
-enum ObsType {ET, ERat, MCh, N_H_He, N_H_He_pt, N, Npt, END};
+enum class ObsType: int{ET, ERat, MCh, N_H_He, N_H_He_pt, N, Npt, ERatOnlyP, N_H_He_NoP, N_H_He_ptNoP, ET_alt, END};
+const std::vector<std::string> ObsHeader{"ETL","ERAT","Mch","N(H-He)","N(H-He)pt","N","Npt", "ERATOnlyP", "N(H-He)NoP", "N(H-He)ptNoP", "ETL_alt"};
 
 class STObsWriterTask : public FairTask {
   public:
@@ -70,6 +71,7 @@ class STObsWriterTask : public FairTask {
   
     STUrQMDReader *fUrQMDReader = nullptr;
     const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
+    double fProtonMass;
     
   ClassDef(STObsWriterTask, 1);
 };

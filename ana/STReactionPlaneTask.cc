@@ -355,6 +355,7 @@ double STReactionPlaneTask::ReactionPlaneRes(const std::string& filename1, const
   double ave_cos_v1 = 0;
   double ave_cos2_v1 = 0;
   double ave_cos2_v2 = 0;
+  int counter = 0;
   for(int i = 0; i < n; ++i)
   {
     if(!std::isnan(v1_file1[i]) && !std::isnan(v1_file2[i]))
@@ -362,12 +363,31 @@ double STReactionPlaneTask::ReactionPlaneRes(const std::string& filename1, const
       ave_cos_v1 += cos(v1_file1[i] - v1_file2[i]);
       ave_cos2_v1 += cos(2*(v1_file1[i] - v1_file2[i]));
       ave_cos2_v2 += cos(2*(v2_file1[i] - v2_file2[i]));
+      ++counter;
     }
   }
 
-  std::cout << "<cos(phi1_1 - phi2_1)> = " << ave_cos_v1/n << std::endl;
-  std::cout << "<cos(2(phi1_1 - phi2_1))> = " << ave_cos2_v1/n << std::endl;
-  std::cout << "<cos(2(phi1_2 - phi2_2))> = " << ave_cos2_v2/n << std::endl;
+  ave_cos_v1 /= counter;
+  ave_cos2_v1 /= counter;
+  ave_cos2_v2 /= counter;
+  std::cout << "<cos(phi1_1 - phi2_1)> = " << ave_cos_v1 << std::endl;
+  std::cout << "<cos(2(phi1_1 - phi2_1))> = " << ave_cos2_v1 << std::endl;
+  std::cout << "<cos(2(phi1_2 - phi2_2))> = " << ave_cos2_v2 << std::endl;
+
+  // calculate the reaction plane resolution of the full event
+  // ref. https://arxiv.org/pdf/nucl-ex/9805001.pdf
+
+  std::cout << "Resolution of the full event: " << std::endl;
+  double cos_v1_sub = std::sqrt(ave_cos_v1);
+  double cos_v2_sub = std::sqrt(ave_cos2_v1);
+
+  TF1 k1Eq("k1Eq", "0.626657*x - 0.09694*x*x*x + 0.02754*x*x*x*x - 0.002283*x*x*x*x*x", 0, 3);
+  auto chi_m = std::sqrt(2)*k1Eq.GetX(cos_v1_sub); 
+  std::cout << "<cos(phi - phi_r)> = " << k1Eq.Eval(chi_m) << std::endl;
+
+  TF1 k2Eq("k2Eq", "0.25*x*x - 0.011414*x*x*x - 0.034726*x*x*x*x + 0.006815*x*x*x*x*x", 0, 3);
+  chi_m = std::sqrt(2)*k2Eq.GetX(cos_v2_sub);
+  std::cout << "<cos(2(phi - phi_r))> = " << k2Eq.Eval(chi_m) << std::endl;
 
   return 0;
 }

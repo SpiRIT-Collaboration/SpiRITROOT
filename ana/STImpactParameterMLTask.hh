@@ -42,10 +42,18 @@ class STImpactParameterMLTask : public FairTask {
     void SetPersistence(Bool_t value) { fIsPersistence = value; };
 
     // Input obs files from STObsWriter class. It is being trained with UrQMD data.
-    static void TrainAlgorithm(const std::string& obs_filename, const std::string& model_filename);
+    static void TrainAlgorithm(const std::string& obs_filename, const std::string& model_filename, 
+                               const std::vector<ObsType>& features={ObsType::ET, 
+                                                                     ObsType::ERat, 
+                                                                     ObsType::MCh, 
+                                                                     ObsType::N_H_He, 
+                                                                     ObsType::N_H_He_pt, 
+                                                                     ObsType::N, 
+                                                                     ObsType::Npt});
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
+    Bool_t fUseAltObs = false;
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     STVectorF *fImpactParameterML = nullptr;
@@ -54,6 +62,8 @@ class STImpactParameterMLTask : public FairTask {
 
     const std::string fSPIRITDIR;
     std::string fImpactParameterFilename;
+    std::vector<int> fFeatureID;
+    int fFeatureMaxID;
     ProcessPipe fPipe;
 
     

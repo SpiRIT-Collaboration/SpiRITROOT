@@ -61,6 +61,8 @@ class STUrQMDFormatWriterTask : public FairTask {
     TClonesArray *fEventID;
     STVectorI *fSkip;
     double fBMin = -9999, fBMax = -9999;
+    STVectorVec3 *fHvyResVec;
+    STVectorI *fHvyResPDG;
 
     STUrQMDReader *fUrQMDReader = nullptr;
     TString fEventHeader;

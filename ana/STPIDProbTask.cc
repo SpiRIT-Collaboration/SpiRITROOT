@@ -100,15 +100,15 @@ void STPIDProbTask::Exec(Option_t *opt)
 
   for(int part = 0; part < npart; ++part)
   {
-    int nClus = data -> vaNRowClusters[part] + data -> vaNLayerClusters[part];
+    int nClus = (fUseRecoMom)? data -> recoNRowClusters[part] + data -> recoNLayerClusters[part] : data -> vaNRowClusters[part] + data -> vaNLayerClusters[part];
     double poca = data ->recodpoca[part].Mag();
-    const auto& mom = data -> vaMom[part];
+    const auto& mom = (fUseRecoMom)? data -> recoMom[part] : data -> vaMom[part];
     const auto& charge = data -> recoCharge[part];
-    const auto& dedx = data -> vadedx[part];
+    const auto& dedx = (fUseRecoMom)? data -> recodedx[part] : data -> vadedx[part];
     double momMag = mom.Mag();
     double mass = 0;
 
-    std::map<int, double> NotNormPDGProb;
+    std::unordered_map<int, double> NotNormPDGProb;
     double sumProb = 0;
     for(int pdg : fSupportedPDG)
     {

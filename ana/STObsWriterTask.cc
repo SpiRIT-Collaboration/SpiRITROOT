@@ -18,6 +18,7 @@ ClassImp(STObsWriterTask);
 STObsWriterTask::STObsWriterTask(const std::string& output_name) : fOutput(output_name)
 {
   fLogger = FairLogger::GetLogger(); 
+  fProtonMass = TDatabasePDG::Instance() -> GetParticle(2212) -> Mass()*1000;
 }
 
 STObsWriterTask::~STObsWriterTask()
@@ -53,10 +54,12 @@ InitStatus STObsWriterTask::Init()
   }
 
   fAllObs = new STVectorF;
-  fAllObs -> fElements.resize(ObsType::END);
+  fAllObs -> fElements.resize(static_cast<int>(ObsType::END));
   ioMan -> Register("AllObs", "ST", fAllObs, fIsPersistence);
 
-  fOutput << "ETL\tERAT\tMch\tN(H-He)\tN(H-He)pt\tN\tNpt";
+  for(int i = 0; i < static_cast<int>(ObsType::END); ++i)
+    fOutput << ((i == 0)? "" : "\t") << ObsHeader[i];
+
   if(fUrQMDReader)
   {
     fImpactParameterTruth = new STVectorF();
@@ -103,6 +106,12 @@ void STObsWriterTask::Exec(Option_t *opt)
     if(data -> recodpoca[i].Mag() < 20)
       Mch += 1.;
 
+  // calculate proton ERAT 
+  double Et_proton = 0, El_proton = 0;
+  double N_H_He_ptNoP = 0;
+  double N_H_He_NoP = 0;
+  double Et_INDRA = 0; // Et in INDRA in PRC55.1906
+
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
     int ntracks = static_cast<STVectorF*>(fProb -> At(i)) -> fElements.size();
@@ -115,10 +124,25 @@ void STObsWriterTask::Exec(Option_t *opt)
         if(data -> recodpoca[itrack].Mag() < 20 /*&& data -> vaNRowClusters[itrack] + data -> vaNLayerClusters[itrack] > 8*/ && prob > /*0.2*/0.4)
         {
           auto& P = static_cast<STVectorVec3*>(fCMVector -> At(i)) -> fElements[itrack];
-          if(fSupportedPDG[i] == 2212 || fSupportedPDG[i] == 1000010020 || fSupportedPDG[i] == 1000010030 || fSupportedPDG[i] == 1000020030 || fSupportedPDG[i] == 1000020040)
+          double pt = P.Perp();
+          double pl = P.z();
+
+          if(fSupportedPDG[i] == 2212) 
           {
+            double Ei = sqrt(fProtonMass*fProtonMass + P.Mag2());
+            Et_proton += prob*pt*pt/(fProtonMass + Ei);
+            El_proton += prob*pl*pl/(fProtonMass + Ei);
+          }
+          if(fSupportedPDG[i] == 2212 || fSupportedPDG[i] == 1000010020 || fSupportedPDG[i] == 1000010030 || fSupportedPDG[i] == 1000020030 || fSupportedPDG[i] == 1000020040 || fSupportedPDG[i] == 1000020060)
+          {
+            if(fSupportedPDG[i] != 2212) 
+            {
+              N_H_He_NoP += prob;
+              N_H_He_ptNoP += (pt*prob)/((fSupportedPDG[i] % 10000)/10); // per nucleon
+            }
             N_H_He += prob;
-            N_H_He_pt += (P.Perp()*prob);
+            N_H_He_pt += (pt*prob);
+            Et_INDRA += pt*pt*prob/(2*fProtonMass*(fSupportedPDG[i] % 10000)/10);
             if(fSupportedPDG[i] == 2212 && rap/(0.5*fBeamRapidity -> fElements[1]) < 0.5)
             {
               N += prob;
@@ -129,6 +153,7 @@ void STObsWriterTask::Exec(Option_t *opt)
       }
     } 
   }
+  if(N_H_He_NoP > 0) N_H_He_ptNoP /= N_H_He_NoP;
   if(N_H_He > 0) N_H_He_pt /= N_H_He;
   if(N > 0) Npt /= N;
 
@@ -145,17 +170,21 @@ void STObsWriterTask::Exec(Option_t *opt)
   }
 
 
-  fAllObs -> fElements[ObsType::ET] = et;
-  fAllObs -> fElements[ObsType::ERat] = erat;
-  fAllObs -> fElements[ObsType::MCh] = Mch;
-  fAllObs -> fElements[ObsType::N_H_He] = N_H_He;
-  fAllObs -> fElements[ObsType::N_H_He_pt] = N_H_He_pt;
-  fAllObs -> fElements[ObsType::N] = N;
-  fAllObs -> fElements[ObsType::Npt] = Npt;
+  fAllObs -> fElements[static_cast<int>(ObsType::ET)] = et;
+  fAllObs -> fElements[static_cast<int>(ObsType::ERat)] = erat;
+  fAllObs -> fElements[static_cast<int>(ObsType::MCh)] = Mch;
+  fAllObs -> fElements[static_cast<int>(ObsType::N_H_He)] =  N_H_He;
+  fAllObs -> fElements[static_cast<int>(ObsType::N_H_He_pt)] = N_H_He_pt;
+  fAllObs -> fElements[static_cast<int>(ObsType::N)] = N;
+  fAllObs -> fElements[static_cast<int>(ObsType::Npt)] = Npt;
+  double eratP = (El_proton != 0)? Et_proton/El_proton : 0;
+  fAllObs -> fElements[static_cast<int>(ObsType::ERatOnlyP)] = eratP;
+  fAllObs -> fElements[static_cast<int>(ObsType::N_H_He_NoP)] = N_H_He_NoP;
+  fAllObs -> fElements[static_cast<int>(ObsType::N_H_He_ptNoP)] = N_H_He_ptNoP;
+  fAllObs -> fElements[static_cast<int>(ObsType::ET_alt)] = Et_INDRA;
 
-  fOutput << et << "\t" << erat << "\t" << Mch << "\t";
-  fOutput << N_H_He << "\t" << N_H_He_pt << "\t" << N << "\t";
-  fOutput << Npt;
+  for(int i = 0; i < static_cast<int>(ObsType::END); ++i)
+    fOutput << ((i == 0)? "" : "\t") << fAllObs -> fElements[i];
   if(fUrQMDReader) fOutput << "\t" << fImpactParameterTruth -> fElements[0];
   fOutput << std::endl;
 }

@@ -56,10 +56,14 @@ InitStatus STDivideEventTask::Init()
     fComplementaryEvent.SetBranchAddress("TrackID", &fComplementaryID);
 
     //fComplementaryEvent.SetBranchAddress("EventID", &fCompEventID);
+    fSkip -> fElements.push_back(0);
+    ioMan -> Register("Skip", "ST", fSkip, fIsPersistence);
   }
-  else fLogger -> Info(MESSAGE_ORIGIN, "Will cut every event into half randomly.");
-  
-  fSkip = (STVectorI*) ioMan -> GetObject("Skip");
+  else
+  { 
+    fLogger -> Info(MESSAGE_ORIGIN, "Will cut every event into half randomly.");
+    fSkip = (STVectorI*) ioMan -> GetObject("Skip");
+  }
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   fProb = (TClonesArray*) ioMan -> GetObject("Prob");
   fEff = (TClonesArray*) ioMan -> GetObject("Eff");
@@ -67,6 +71,10 @@ InitStatus STDivideEventTask::Init()
   fRunID = (TClonesArray*) ioMan -> GetObject("RunID");
 
   ioMan -> Register("TrackID", "ST", fID, fIsPersistence);
+  ioMan -> Register("EventID", "ST", fEventID, fIsPersistence);
+  ioMan -> Register("RunID", "ST", fRunID, fIsPersistence);
+
+
 
   return kSUCCESS;
 }
@@ -89,13 +97,13 @@ STDivideEventTask::SetParContainers()
 
 void STDivideEventTask::Exec(Option_t *opt)
 {
-  if(fSkip)
-    if(fSkip -> fElements[0] == 1) return; // skip event
-
   fID -> fElements.clear();
   auto data = static_cast<STData*>(fData -> At(0));
   if(fComplementaryEvent.GetEntries() == 0)
   {
+    if(fSkip)
+      if(fSkip -> fElements[0] == 1) return; // skip event
+
     for(int i = 0; i < data -> multiplicity; ++i) fID -> fElements.push_back(i);
     std::random_shuffle(fID -> fElements.begin(), fID -> fElements.end());
     int half = data -> multiplicity / 2;
@@ -108,8 +116,10 @@ void STDivideEventTask::Exec(Option_t *opt)
     if(it == fEventIDToTreeID.end())
     {
       FairRunAna::Instance() -> MarkFill(false); // reject events that are not present in the complementary file
+      if(fSkip) fSkip -> fElements[0] = 1;
       return;
     }
+    else if(fSkip) fSkip -> fElements[0] = 0;
 
     fComplementaryEvent.GetEntry(it -> second);
     std::vector<int> all_ids;

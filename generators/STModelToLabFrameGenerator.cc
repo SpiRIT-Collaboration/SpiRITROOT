@@ -35,6 +35,7 @@ STTransportReader* ReaderFactory(TString prefix, TString filename)
   else if(filename.BeginsWith("amdNew")) { return new STAMDReader(prefix + filename); }
   else if(filename.BeginsWith("ibuu") || filename.BeginsWith("amd")) { return new STIBUUReader(prefix + filename, filename.BeginsWith("ibuu")); }
   else if(filename.BeginsWith("dcqmdNew")) { return new STDcQMDNewReader(prefix + filename); }
+  else if(filename.BeginsWith("dcqmdPion")) { return new STDcQMDPionReader(prefix + filename); }
   else if(filename.BeginsWith("dcqmd")) { return new STDcQMDReader(prefix + filename); }
   else if(filename.BeginsWith("hw")) { return new STHWReader(prefix + filename); }
   else if(filename.BeginsWith("iqmd")) { return new STIQMDReader(prefix + filename); }
@@ -211,6 +212,7 @@ STImQMDRawReader::STImQMDRawReader(TString fileName) : fFile(fileName)
     LOG(INFO) << "Reading ImQMD data (new format) from " << fileName << FairLogger::endl;
 
   fTree = (TTree*) fFile.Get("raw");
+  if(!fTree) fTree = (TTree*) fFile.Get("nucleon");
   if(!fTree)
     LOG(FATAL) << "Tree raw is not found in file " << fileName << FairLogger::endl;
   
@@ -547,6 +549,7 @@ void STDcQMDNewHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTranspo
     {
       int N = A - Z;
       int pdg;
+      if(N < 0 || Z < 0) continue;
       if(Z == 1 && N == 0) pdg = 2212;
       else if(Z == 0 && N == 1) pdg = 2112;
       else pdg = 1000000000 + Z*10000 + (Z + N)*10;
@@ -558,6 +561,41 @@ void STDcQMDNewHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTranspo
 
 TString STDcQMDNewReader::Print()
 { return "DcQMDNew reader with source " + fFilename; }
+
+/***************************************************
+* DcQMD reader for pion data. pion data is separated from nuclear data
+****************************************************/
+
+void STDcQMDPionHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip)
+{
+  std::string line, temp;
+  if(!skip) particleList.clear();
+  int A, Z, multi, iso;
+  double px, py, pz, x, y, z, b;
+  { // read first line for event info
+    std::getline(reader -> fFile, line);
+    std::stringstream ss(line);
+    ss >> multi >> b;
+    reader -> fCurrentB = b;
+  }
+  for(int i = 0; i < multi; ++i)
+  {
+    std::getline(reader -> fFile, line);
+    std::stringstream ss(line);
+    ss >> temp >> x >> y >> z >> px >> py >> pz >> iso;
+    if(!skip)
+    {
+      if(iso == 0) particleList.push_back({-211, px, py, -pz, 0, 0, 0});
+      else if(iso == 2) particleList.push_back({211, px, py, -pz, 0, 0, 0});
+    }
+  }
+  ++(reader -> fEventID);
+}
+
+TString STDcQMDPionReader::Print()
+{ return "DcQMDPion reader with source " + fFilename; }
+
+
 
 /***************************************************
 * IQMD

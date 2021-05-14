@@ -39,7 +39,7 @@ InitStatus STImpactParameterMLTask::Init()
   fAllObs = (STVectorF*) ioMan -> GetObject("AllObs");
   if(!fAllObs)
   {
-    fLogger -> Warning(MESSAGE_ORIGIN, "[STImpactParameterMLTAsk] It uses outputp from STObsWriterTask. You MUST put this task before STImpactParameterMLTask");
+    fLogger -> Warning(MESSAGE_ORIGIN, "[STImpactParameterMLTAsk] It uses output from STObsWriterTask. You MUST put this task before STImpactParameterMLTask");
     return kERROR;
   }
 
@@ -48,7 +48,27 @@ InitStatus STImpactParameterMLTask::Init()
   ioMan -> Register("bML", "ST", fImpactParameterML, fIsPersistence);
 
   // startup the python script
-  fPipe.GetOutput();
+  auto list_of_features = fPipe.GetOutput();
+  // trim the string
+  list_of_features.erase(list_of_features.find_last_not_of(" \t\n\r\f\v") + 1);
+  if(list_of_features == "start") 
+  {
+    fLogger -> Info(MESSAGE_ORIGIN, "[STImpactParameterMLTAsk] You are using an old version of LightGBM that uses the default list of 7 observables.");
+    list_of_features = "Mch N N(H-He) ETL ERAT Npt N(H-He)pt";
+  }
+  
+  fLogger -> Info(MESSAGE_ORIGIN, "[STImpactParameterMLTAsk] Observables used in the algorithms are:");
+  fLogger -> Info(MESSAGE_ORIGIN, list_of_features.c_str());
+  std::stringstream ss(list_of_features);
+  std::string temp;
+  while(ss >> temp)
+  {
+    auto it = std::find(ObsHeader.begin(), ObsHeader.end(), temp);
+    if(it == ObsHeader.end()) fLogger -> Fatal(MESSAGE_ORIGIN, ("Feature " + temp + " is not found. Abort.").c_str());
+    fFeatureID.push_back(it - ObsHeader.begin());
+    fFeatureMaxID = (fFeatureMaxID < fFeatureID.back())? fFeatureID.back() : fFeatureMaxID;
+  }
+  
   fLogger -> Info(MESSAGE_ORIGIN, "Python script for impact parameter has started up.");
 
   return kSUCCESS;
@@ -71,15 +91,12 @@ void STImpactParameterMLTask::SetParContainers()
 
 void STImpactParameterMLTask::Exec(Option_t *opt)
 {
-  fPipe.Input(TString::Format("%f %f %f %f %f %f %f", 
-                              fAllObs -> fElements[ObsType::MCh],
-                              fAllObs -> fElements[ObsType::N],
-                              fAllObs -> fElements[ObsType::N_H_He],
-                              fAllObs -> fElements[ObsType::ET],
-                              fAllObs -> fElements[ObsType::ERat],
-                              fAllObs -> fElements[ObsType::Npt],
-                              fAllObs -> fElements[ObsType::N_H_He_pt]).Data());
-
+  std::string line;
+  if(fFeatureMaxID > fAllObs -> fElements.size() - 1)
+    fLogger -> Fatal(MESSAGE_ORIGIN, "LightGBM is asking for features that is not present in output of STObsWriterTask. You mush be using an old STObsWriterTask with new version of LightGBM training file. Please update your STObsWriterTask");
+  for(int i : fFeatureID)
+    line += std::to_string(fAllObs -> fElements[i]) + " ";
+  fPipe.Input(line);
   fImpactParameterML -> fElements[0] = std::stof(fPipe.GetOutput());
 }
 
@@ -88,9 +105,14 @@ void STImpactParameterMLTask::FinishTask()
   fPipe.Input("end");
 }
 
-void STImpactParameterMLTask::TrainAlgorithm(const std::string& obs_filename, const std::string& model_filename)
+void STImpactParameterMLTask::TrainAlgorithm(const std::string& obs_filename, const std::string& model_filename, const std::vector<ObsType>& features)
 {
   std::string VMCDIR(gSystem -> Getenv("VMCWORKDIR"));
-  std::string command = "python " + VMCDIR + "/MachineLearning/ImpactPara/run-7.py " + obs_filename + " " + VMCDIR + "/MachineLearning/ImpactPara/" + model_filename;
+  std::string obsList = " \"";
+  for(auto i = 0; i < features.size(); ++i) 
+    obsList = obsList + ((i == 0)? "" : " ") + ObsHeader[static_cast<int>(features[i])];
+  obsList = obsList + "\"";
+  std::cout << obsList << std::endl;
+  std::string command = "python " + VMCDIR + "/MachineLearning/ImpactPara/run-7.py " + obs_filename + " " + VMCDIR + "/MachineLearning/ImpactPara/" + model_filename + obsList;
   gSystem -> Exec(command.c_str());
 }

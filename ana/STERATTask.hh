@@ -46,10 +46,11 @@ class STERATTask : public FairTask {
     /// Running the task. This will be called when Run() method invoked from FairRun.
     virtual void Exec(Option_t *opt);
     void SetPersistence(Bool_t value) { fIsPersistence = value; };
+    void SetIncludeBackward(Bool_t value=true) { fIncludeBackward = value; }
     void SetImpactParameterTable(const std::string& table_filename);
 
-    static void CreateImpactParameterTable(const std::string& ana_filename, const std::string& output_filename);
-    static void CreateImpactParameterTable(const std::vector<std::string>& ana_filename, const std::string& output_filename);
+    static void CreateImpactParameterTable(const std::string& ana_filename, const std::string& output_filename, const std::string& condition="");
+    static void CreateImpactParameterTable(const std::vector<std::string>& ana_filename, const std::string& output_filename, const std::string& condition="");
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable
@@ -61,11 +62,17 @@ class STERATTask : public FairTask {
     STVectorF *fERAT;
     STVectorF *fET; // sum of transverse ke
     STVectorF *fbERat; // impact parameter from ERAT
+    STVectorF *fERATProton; // ERAT of only proton
     STVectorF *fbMult; // impact parameter from multiplicity
+    STVectorI *fSkip;
+
+    STVectorVec3 *fHvyResVec;
+    STVectorI *fHvyResPDG;
 
     const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
 
     std::string fImpactParameterFilename;
+    Bool_t fIncludeBackward = false;
     TFile *fImpactParameterFile = nullptr;
     TH1F *fMultHist = nullptr;
     TH1F *fERatHist = nullptr;

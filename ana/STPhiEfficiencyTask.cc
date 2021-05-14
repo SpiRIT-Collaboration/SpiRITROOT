@@ -105,12 +105,12 @@ void STPhiEfficiencyTask::Exec(Option_t *opt)
 void STPhiEfficiencyTask::LoadPhiEff(const std::string& eff_filename)
 { fEffFilename = eff_filename; }
 
-void STPhiEfficiencyTask::CreatePhiEffFromData(const std::string& ana_filenames, const std::string& out_filename, int nClus, double poca)
+void STPhiEfficiencyTask::CreatePhiEffFromData(const std::string& ana_filenames, const std::string& out_filename, int nClus, double poca, double bmin, double bmax)
 {
-  STPhiEfficiencyTask::CreatePhiEffFromData(std::vector<std::string>{ana_filenames}, out_filename, nClus, poca);
+  STPhiEfficiencyTask::CreatePhiEffFromData(std::vector<std::string>{ana_filenames}, out_filename, nClus, poca, bmin, bmax);
 }
 
-void STPhiEfficiencyTask::CreatePhiEffFromData(const std::vector<std::string>& ana_filenames, const std::string& out_filename, int nClus, double poca)
+void STPhiEfficiencyTask::CreatePhiEffFromData(const std::vector<std::string>& ana_filenames, const std::string& out_filename, int nClus, double poca, double bmin, double bmax)
 {
   TChain chain("cbmsim");
   for(const auto& filename : ana_filenames)
@@ -126,7 +126,7 @@ void STPhiEfficiencyTask::CreatePhiEffFromData(const std::vector<std::string>& a
   {
     auto hist_name = TString::Format("PhiEfficiency%d", STAnaParticleDB::GetSupportedPDG()[i]);
     TH2F hist(hist_name, "", 40, 0, 3.15, 100, -3.15, 3.15);
-    chain.Project(hist_name, TString::Format("CMVector[%d].fElements.Phi():CMVector[%d].fElements.Theta()", i, i), TString::Format("Prob[%d].fElements*(Prob[%d].fElements > 0.2 && STData[0].vaNRowClusters + STData[0].vaNLayerClusters >%d &&STData[0].recodpoca.Mag() < %f)", i, i, nClus, poca));
+    chain.Project(hist_name, TString::Format("CMVector[%d].fElements.Phi():CMVector[%d].fElements.Theta()", i, i), TString::Format("Prob[%d].fElements*(Prob[%d].fElements > 0.2 && STData[0].vaNRowClusters + STData[0].vaNLayerClusters >%d &&STData[0].recodpoca.Mag() < %f && %f <= bTruth[0].fElements[0] && bTruth[0].fElements[0] <= %f)", i, i, nClus, poca, bmin, bmax));
     
     // pions has less statistics. Need to rebin just for them
     if(std::abs(supportedPDG[i]) == 211) 

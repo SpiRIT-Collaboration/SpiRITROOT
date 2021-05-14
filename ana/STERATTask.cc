@@ -1,4 +1,5 @@
 #include "STERATTask.hh"
+#include "STModelToLabFrameGenerator.hh"
 
 // FAIRROOT classes
 #include "FairRootManager.h"
@@ -41,8 +42,10 @@ InitStatus STERATTask::Init()
 
   fCMVector = (TClonesArray*) ioMan -> GetObject("CMVector");
   fProb = (TClonesArray*) ioMan -> GetObject("Prob");
+  fSkip = (STVectorI*) ioMan -> GetObject("Skip");
   ioMan -> Register("ET", "ST", fET, fIsPersistence);
   ioMan -> Register("ERAT", "ST", fERAT, fIsPersistence);
+ 
 
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   if(!fImpactParameterFilename.empty())
@@ -64,6 +67,9 @@ InitStatus STERATTask::Init()
     }
   }
 
+  if(fIncludeBackward) fLogger -> Info(MESSAGE_ORIGIN, "Will consider backward 2pi for ERAT");
+  else fLogger -> Info(MESSAGE_ORIGIN, "Won't consider backward 2pi for ERAT");
+
   return kSUCCESS;
 }
 
@@ -84,6 +90,9 @@ void STERATTask::SetParContainers()
 
 void STERATTask::Exec(Option_t *opt)
 {
+  if(fSkip)
+    if(fSkip -> fElements[0] == 1) return;
+
   auto data = static_cast<STData*>(fData -> At(0));
   double Et_expected = 0;
   double El_expected = 0;
@@ -96,7 +105,7 @@ void STERATTask::Exec(Option_t *opt)
         if(data -> recodpoca[itrack].Mag() < 20)
         {
           auto& P = static_cast<STVectorVec3*>(fCMVector -> At(i)) -> fElements[itrack];
-          //if(P.z() < 0) continue;
+          if(P.z() < 0) continue;
           double prob = static_cast<STVectorF*>(fProb -> At(i)) -> fElements[itrack];
           double Ei = sqrt(ParticleMass*ParticleMass + P.Mag2());
           double pt = P.Perp();
@@ -105,6 +114,7 @@ void STERATTask::Exec(Option_t *opt)
           El_expected += prob*pl*pl/(ParticleMass + Ei);
         }
     }
+
   fET -> fElements[0] = Et_expected;
   fERAT -> fElements[0] = Et_expected / El_expected;
 
@@ -124,11 +134,11 @@ void STERATTask::SetImpactParameterTable(const std::string& table_filename)
   fImpactParameterFilename = table_filename;
 }
 
-void STERATTask::CreateImpactParameterTable(const std::string& ana_filename, const std::string& output_filename)
-{ STERATTask::CreateImpactParameterTable(std::vector<std::string>{ana_filename}, output_filename); }
+void STERATTask::CreateImpactParameterTable(const std::string& ana_filename, const std::string& output_filename, const std::string& condition)
+{ STERATTask::CreateImpactParameterTable(std::vector<std::string>{ana_filename}, output_filename, condition); }
 
 
-void STERATTask::CreateImpactParameterTable(const std::vector<std::string>& ana_filenames, const std::string& output_filename)
+void STERATTask::CreateImpactParameterTable(const std::vector<std::string>& ana_filenames, const std::string& output_filename, const std::string& condition)
 {
   const int fMultMin = 0;
   const int fMultMax = 500;
@@ -141,7 +151,7 @@ void STERATTask::CreateImpactParameterTable(const std::vector<std::string>& ana_
 
   TFile output(output_filename.c_str(), "RECREATE");
   TH1F mult_hist("Mult", "Mult", fMultMax - fMultMin + 1, fMultMin, fMultMax);
-  chain.Project("Mult", "Sum$(recodpoca.Mag() < 20)", "EventType.fElements != 10 && KatanaZMax.fElements <= 35");
+  chain.Project("Mult", "Sum$(recodpoca.Mag() < 20)", condition.c_str());
   auto cumulative = mult_hist.GetCumulative(false);
   int max_val = double(cumulative -> GetMaximum());
   for(int i = 1; i < cumulative -> GetNbinsX(); ++i)
@@ -150,7 +160,7 @@ void STERATTask::CreateImpactParameterTable(const std::vector<std::string>& ana_
   cumulative -> Write("Mult");
 
   TH1F erat_hist("erat", "erat", fERatBins, fERatMin, fERatMax);
-  chain.Project("erat", "ERAT.fElements");
+  chain.Project("erat", "ERAT.fElements", condition.c_str());
   cumulative = erat_hist.GetCumulative(false);
   max_val = double(cumulative -> GetMaximum());
   for(int i = 1; i < cumulative -> GetNbinsX(); ++i)

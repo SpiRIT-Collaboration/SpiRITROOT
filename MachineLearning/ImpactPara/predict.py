@@ -4,7 +4,11 @@ import numpy as np
 
 if __name__ == '__main__':
   clfs = joblib.load(sys.argv[1])
-  print('start')
+  if len(clfs) > 1 and type(clfs[0]) is list:
+    print(' '.join(clfs[0]))
+    clfs = clfs[1]
+  else:
+    print('start')
   while True:
       data = input()
       if data == 'end':

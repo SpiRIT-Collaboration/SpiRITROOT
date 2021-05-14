@@ -301,12 +301,15 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
                                                     "2y_{x}/y_{beam Lab}", 200, -4, 4);
     auto hist_ptFull = this -> RegisterHistogram<TH1F>(true, TString::Format("%s_ptFullHist", pname.c_str()),
                                                         "2y_{xm}/y_{beam Lab}", 200, -4, 4);
+    auto hist_keTheta = this -> RegisterHistogram<TH2F>(true, TString::Format("%s_KeTheta", pname.c_str()),
+                                                        ";E_{CM}/A (MeV/A);#theta (deg);", 
+							200, 0, 400, 200, 0, 180);
     auto particle = TDatabasePDG::Instance() -> GetParticle(pdg);
     auto pmass = int(particle -> Mass()/STAnaParticleDB::kAu2Gev);
     pmass = (pmass == 0)? 1 : std::abs(pmass);
 
     this -> RegisterRuleWithParticle(pdg, 
-      [this, hist_ana, hist_rap, hist_pt, hist_ptFull, pmass, pdg](const DataPackage& package)
+      [this, hist_ana, hist_rap, hist_pt, hist_ptFull, hist_keTheta, pmass, pdg](const DataPackage& package)
       {
         const auto& data = package.Data();
         for(int i = 0; i < data.multiplicity; ++i)
@@ -318,6 +321,9 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
             if(data.vaMom[i].Mag() > minMom)
             {
               hist_ana -> Fill(y0, package.CMVector(i).Perp()/pmass, package.Weight(i));
+	      double realMass = pmass*STAnaParticleDB::kAu2Gev*1000; // in MeV
+	      hist_keTheta -> Fill((std::sqrt(package.CMVector(i).Mag2() + realMass*realMass) - realMass)/pmass,
+	                           package.CMVector(i).Theta()*TMath::RadToDeg(), package.Weight(i));
               if(package.CMVector(i).Perp()/pmass/package.BeamMom()[0] > fPtThresholdForRap) hist_rap -> Fill(y0, package.Weight(i));
             }
             if(package.CMVector(i).z() > 0 /*package.fragRapidity(i)/(0.5*package.beamRapidity[1]) > -0.2*/)
@@ -338,6 +344,10 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
       std::map<int, TH1D*> ptHists;
       TH1F *CIP_rap = nullptr;
       TH1F *CIP_pt = nullptr;
+      TH1F *p_rap = nullptr;
+      TH1F *d_rap = nullptr;
+      TH1F *t_rap = nullptr;
+
       for(int i = 0; i < fSupportedPDG.size(); ++i)
       {
         const auto hist = ana_hists.at(fSupportedPDG[i]);
@@ -369,6 +379,10 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
         temp -> Rebin();
         temp -> Scale(0.5);
 
+        if(fSupportedPDG[i] == 2212) p_rap = (TH1F*) projx -> Clone("p_rapHistClone");
+        if(fSupportedPDG[i] == 1000010020) d_rap = (TH1F*) projx -> Clone("dp_rapHist");
+        if(fSupportedPDG[i] == 1000010030) t_rap = (TH1F*) projx -> Clone("tp_rapHist");
+
         if(!CIP_rap && !CIP_pt) 
         {
           CIP_rap = (TH1F*) projx -> Clone("CIP_rapHist");
@@ -389,6 +403,18 @@ void STSimpleGraphsTask::RegisterRapidityPlots()
         }
         temp -> Delete();
       }
+
+      if(d_rap && p_rap) 
+      {
+        d_rap -> Divide(p_rap);
+        d_rap -> Write();
+      }
+      if(t_rap && p_rap)
+      {
+        t_rap -> Divide(p_rap);
+        t_rap -> Write();
+      }
+
       if(CIP_rap && CIP_pt) 
       {
         CIP_rap -> Write();
@@ -625,7 +651,7 @@ void STSimpleGraphsTask::RegisterVPlots()
                   v2_counts_withPtCut -> Fill(y0);
                 }
 
-              if(0.15 <  package.FragRapidity(i) &&  package.FragRapidity(i) < 0.3)
+              if(/*0.2 < y0 && y0 < 0.6)*/0.15 <  package.FragRapidity(i) &&  package.FragRapidity(i) < 0.45)
               {
                 v1_pt -> Fill(pt/mass, cos(package.V1RPAngle(i) - phi)*weight);
                 v1_pt_counts -> Fill(pt/mass);

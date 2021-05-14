@@ -38,6 +38,7 @@
 #include <vector>
 #include <functional>
 #include <string>
+#include <unordered_map>
 
 
 class STPIDProbTask : public FairTask {
@@ -60,6 +61,7 @@ class STPIDProbTask : public FairTask {
     void SetMetaFile(const std::string& t_metafile, bool t_update=false);
     void SetPIDFitFile(const std::string& t_fitfile);
     void SetMetaFileUpdate(bool t_update) { fIterateMeta = t_update; };
+    void UseRecoMom(bool val) { fUseRecoMom = val; }
  
     // global function to assist fitting PID lines
     static void FitPID(const std::string& anaFile, const std::string& fitFile);
@@ -72,7 +74,7 @@ class STPIDProbTask : public FairTask {
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TClonesArray *fData;
-    //std::map<int, STVectorF*> fPDGProb;
+    //std::unordered_map<int, STVectorF*> fPDGProb;
     TClonesArray *fPDGProb = nullptr;
     TClonesArray *fSDFromLine = nullptr;
     TCutG *fPIDRegion = nullptr;
@@ -84,15 +86,16 @@ class STPIDProbTask : public FairTask {
     // condition for tracks that goes in the meta data
     int fMinNClus = 20;
     double fMaxDPOCA = 10;
+    bool fUseRecoMom = false;
 
-    std::map<int, TF1*> fBBE;            ///<modified Bethe Bloch equation for different particles 
-    std::map<int, TF1*> fSigma;
-    std::map<int, TCutG*> fGLimit;
-    std::map<int, TH2F> fFlattenHist;
-    std::map<int, TH1F> fMomPosteriorDistribution;
-    std::map<int, TH1F*> fMomPriorDistribution;
-    std::map<int, STVectorF*> fPDGProbMap;
-    std::map<int, STVectorF*> fSDFromLineMap;
+    std::unordered_map<int, TF1*> fBBE;            ///<modified Bethe Bloch equation for different particles 
+    std::unordered_map<int, TF1*> fSigma;
+    std::unordered_map<int, TCutG*> fGLimit;
+    std::unordered_map<int, TH2F> fFlattenHist;
+    std::unordered_map<int, TH1F> fMomPosteriorDistribution;
+    std::unordered_map<int, TH1F*> fMomPriorDistribution;
+    std::unordered_map<int, STVectorF*> fPDGProbMap;
+    std::unordered_map<int, STVectorF*> fSDFromLineMap;
     std::vector<int> fSupportedPDG;
     const std::set<int> fIgnoredPDG = {211, -211}; // This task will not handle pions.
 

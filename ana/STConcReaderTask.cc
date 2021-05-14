@@ -80,6 +80,7 @@ void STConcReaderTask::LoadFromXMLNode(TXMLNode *node)
         for(size_t i = 0; i < g.gl_pathc; ++i)
         {
           chain -> Add(g.gl_pathv[i]);
+          chain -> Add((std::string(g.gl_pathv[i]) + "/cbmsim").c_str());
           fLogger -> Info(MESSAGE_ORIGIN, ("Reading from file " + std::string(g.gl_pathv[i])).c_str());
         }
         globfree(&g);

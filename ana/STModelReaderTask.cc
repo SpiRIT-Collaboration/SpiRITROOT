@@ -33,6 +33,9 @@ STModelReaderTask::STModelReaderTask(TString filename, bool enable_neutrons) : f
 
   fEventID = new TClonesArray("STVectorI");
   fRunID = new TClonesArray("STVectorI");
+
+  fHvyResVec = new STVectorVec3;
+  fHvyResPDG = new STVectorI;
 }
 
 STModelReaderTask::~STModelReaderTask()
@@ -66,6 +69,9 @@ InitStatus STModelReaderTask::Init()
   ioMan -> Register("EventID", "ST", fEventID, fIsPersistence);
   ioMan -> Register("RunID", "ST", fRunID, fIsPersistence);
 
+  ioMan -> Register("HvyResVec", "ST", fHvyResVec, fIsPersistence);
+  ioMan -> Register("HvyResPDG", "ST", fHvyResPDG, fIsPersistence);
+
   if(fRotate)
     fLogger -> Info(MESSAGE_ORIGIN, "The event will be randomly rotated along the beam axis");
   else
@@ -96,6 +102,8 @@ STModelReaderTask::SetParContainers()
 void STModelReaderTask::Exec(Option_t *opt)
 {
   std::vector<STTransportParticle> particleList;
+  fHvyResVec -> fElements.clear();
+  fHvyResPDG -> fElements.clear();
   if(fReader -> GetNext(particleList))
   {
     fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Event %d", fReader -> GetEntry()));
@@ -115,7 +123,7 @@ void STModelReaderTask::Exec(Option_t *opt)
     for(int i = 0; i < data -> multiplicity; ++i)
     {
       const auto& particle = particleList[i];
-      auto p_info = TDatabasePDG::Instance() -> GetParticle(particle.pdg);
+      auto p_info = Elements::PDGToParticleData(particle.pdg);//TDatabasePDG::Instance() -> GetParticle(particle.pdg);
       if(!p_info) continue;
       double Z = p_info -> Charge()/3.;
       if(Z == 0) 
@@ -136,7 +144,7 @@ void STModelReaderTask::Exec(Option_t *opt)
 
       data -> recodpoca[i].SetXYZ(0, 0, 0);
       data -> recoNRowClusters[i] = 100;
-      data -> recoNLayerClusters[i] = 100; 
+      data -> recoNLayerClusters[i] = 100;
       data -> recoMom[i].SetXYZ(fragVect.Px()*1000/std::fabs(Z), fragVect.Py()*1000/std::fabs(Z), fragVect.Pz()*1000/std::fabs(Z));
       data -> recoCharge[i] = (Z > 0) ? 1 : -1;
 
@@ -146,6 +154,7 @@ void STModelReaderTask::Exec(Option_t *opt)
       data -> vaCharge[i] = data -> recoCharge[i];
     }
 
+    std::vector<bool> hvyRes(particleList.size(), true);
     for(int i = 0; i < fSupportedPDG.size(); ++i)
     {
       auto& prob = static_cast<STVectorF*>(fProb -> At(i)) -> fElements;
@@ -153,10 +162,11 @@ void STModelReaderTask::Exec(Option_t *opt)
       auto& eff = static_cast<STVectorF*>(fEff -> At(i)) -> fElements;
       eff.clear();
 
-      for(const auto& particle : particleList)
+      for(int j = 0; j < particleList.size(); ++j)
       {
-        if(fSupportedPDG[i] == particle.pdg)
+        if(fSupportedPDG[i] == particleList[j].pdg)
         {
+          hvyRes[j] = false;
           prob.push_back(1);
           eff.push_back(1);
         }else
@@ -166,7 +176,15 @@ void STModelReaderTask::Exec(Option_t *opt)
         }
       }
     }
-    ++static_cast<STVectorI*>(fEventID -> At(0)) -> fElements[0];
+
+    for(int j = 0; j < particleList.size(); ++j) 
+      if(hvyRes[j] && particleList[j].pdg > 1000000000)
+      {
+        fHvyResVec -> fElements.emplace_back(particleList[j].px*1000, particleList[j].py*1000, particleList[j].pz*1000);
+        fHvyResPDG -> fElements.push_back(particleList[j].pdg);
+      }
+
+    static_cast<STVectorI*>(fEventID -> At(0)) -> fElements[0] = fReader -> GetEntry();
   }else fLogger -> Fatal(MESSAGE_ORIGIN, "Event ID exceeds the length of the TChain");
 }
 

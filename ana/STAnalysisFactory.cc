@@ -42,7 +42,7 @@ STReaderTask* STAnalysisFactory::GetReaderTask()
     reader -> SetBeamAndTarget(std::stoi(settings["beamA"]), std::stoi(settings["targetA"]),
                                std::stof(settings["beamEnergyPerA"]));
     // TEMPORARY. TO BE DELETED
-    //reader -> RotateEvent();
+    reader -> RotateEvent();
     fEntries = reader -> GetNEntries();
     fReader = reader;
     return reader;
@@ -83,6 +83,18 @@ STFilterEventTask* STAnalysisFactory::GetFilterEventTask()
   if(it2 != settings.end()) task -> SetRejectEmpty(true);
   it2 = settings.find("MinBias");
   if(it2 != settings.end()) task -> SetMCMinBias(true);
+  it2 = settings.find("bType");
+  if(it2 != settings.end())
+  {
+    auto bType = it2 -> second;
+    it2 = settings.find("bMin");
+    if(it2 == settings.end()) throw std::runtime_error("bType is found but no bMin is found");
+    double bMin = std::stof(it2 -> second);
+    it2 = settings.find("bMax");
+    if(it2 == settings.end()) throw std::runtime_error("bType is found but no bMax is found");
+    double bMax = std::stof(it2 -> second);
+    task -> SetBCut(bMin, bMax, bType);
+  }
 
   return task;
 }
@@ -288,6 +300,8 @@ STERATTask* STAnalysisFactory::GetERATTask()
   auto attr = this -> fReadNodesToMap(child);
   auto it2 = attr.find("ImpactParameterFile");
   if(it2 != attr.end()) task -> SetImpactParameterTable(it2 -> second);
+  it2 = attr.find("IncludeBackward");
+  if(it2 != attr.end()) task -> SetIncludeBackward(true);
 
   return task;
 }

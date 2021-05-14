@@ -31,6 +31,8 @@ class STAMDHelper;
 class STAMDReader;
 class STDcQMDNewHelper;
 class STDcQMDNewReader;
+class STDcQMDPionHelper;
+class STDcQMDPionReader;
 class STIBUUReader;
 class STDcQMDReader;
 class STHWHelper;
@@ -266,6 +268,7 @@ protected:
   friend class STHWHelper;
   friend class STAMDHelper;
   friend class STDcQMDNewHelper;
+  friend class STDcQMDPionHelper;
   friend class STIQMDHelper;
 
   std::ifstream fFile;
@@ -335,6 +338,20 @@ public:
   STDcQMDNewReader(TString fileName) : STTXTReader(fileName, std::unique_ptr<STDcQMDNewHelper>(new STDcQMDNewHelper)) {};
   virtual TString Print();
 };
+
+class STDcQMDPionHelper : public STReaderHelper
+{
+public:
+  virtual void ReadNextEvent_(STTXTReader* reader, std::vector<STTransportParticle>& particleList, bool skip=false);
+};
+
+class STDcQMDPionReader : public STTXTReader
+{
+public:
+  STDcQMDPionReader(TString fileName) : STTXTReader(fileName, std::unique_ptr<STDcQMDPionHelper>(new STDcQMDPionHelper)) {};
+  virtual TString Print();
+};
+
 
 class STIQMDHelper : public STReaderHelper
 {

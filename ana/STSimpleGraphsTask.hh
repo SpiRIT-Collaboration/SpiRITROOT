@@ -128,7 +128,7 @@ class STSimpleGraphsTask : public FairTask {
 
     // parameters for graph drawing
     // for MC CIN CIP
-    Double_t fPtThresholdForMC = 150;
+    Double_t fPtThresholdForMC = 0;
     // this one is for drawing flow
     Double_t fMidRapThresholdForVs = 0.5;
     Double_t fPtThresholdForVs = 0.;
