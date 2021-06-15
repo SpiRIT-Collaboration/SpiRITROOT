@@ -225,7 +225,8 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     candList -> SetBestPID(bestPID);
     auto bestRecoTrackCand = candList -> GetRecoTrackCand(candList -> GetBestPID());
     auto bestGenfitTrack = bestRecoTrackCand -> GetGenfitTrack();
-    gfTrackArrayToVertex.push_back(bestGenfitTrack);
+    if(bestRecoTrackCand -> GetMomentum().Mag() > 10)
+      gfTrackArrayToVertex.push_back(bestGenfitTrack);
     recoTrackArrayToVertex.push_back(recoTrack);
 
     helixTrack -> SetGenfitID(trackID);

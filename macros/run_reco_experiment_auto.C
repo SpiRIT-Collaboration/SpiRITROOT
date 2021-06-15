@@ -230,6 +230,7 @@ void run_reco_experiment_auto
   }
   // Uncomment if you want to recalculate the vertex using refit tracks.
   genfitVA -> SetUseRave(true);
+  genfitVA -> ShiftBDCAfterSC("../parameters/vertex_shift_Sn" + std::to_string(int(fSystemID/1000)) + ".root", 80);
   genfitVA -> SetZtoProject(-13.2, 1.7, 3); //(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple), this function will project the BDC on the Target.
   
   auto embedCorr = new STEmbedCorrelatorTask();
