@@ -8,6 +8,7 @@ parser.add_argument('input', help='XML file to be modified')
 parser.add_argument('-o', help='Output filename')
 parser.add_argument('--MMin', help='Minimum multiplicity')
 parser.add_argument('--MMax', help='Maximum multiplicity')
+parser.add_argument('--MDPoca', help='')
 parser.add_argument('--ERatMin', help='Minimum ERatcut')
 parser.add_argument('--ERatMax', help='Maximum ERat cut')
 parser.add_argument('--Dir', help='Directory to data source')
@@ -36,6 +37,10 @@ parser.add_argument('--TrueImpFile', help='Truth file from UrQMD such that the t
 parser.add_argument('--ImpModel', help='Model file for impact parameter determination')
 parser.add_argument('--PIDFit', help='PID fit to data')
 parser.add_argument('--PIDPrior', help='PID prior to data')
+parser.add_argument('--UseMLPID', default=False, action='store_true', help='Switch to ML PID')
+parser.add_argument('--bType', help='Type of impact parameter for event filter')
+parser.add_argument('--bMin', help='Minimum impact parameter')
+parser.add_argument('--bMax', help='Maximum impact parameter')
 
 
 
@@ -84,6 +89,7 @@ def main(input, values):
 
   parameter_table = {'MMin': 'TaskList/EventFilterTask/MultiplicityMin',
                      'MMax': 'TaskList/EventFilterTask/MultiplicityMax',
+                     'MDPoca': 'TaskList/EventFilterTask/MultiplicityDPOCA',
                      'ERatMin': 'TaskList/EventFilterTask/ERatMin',
                      'ERatMax': 'TaskList/EventFilterTask/ERatMax',
                      'Dir': 'IOInfo/DataDir',
@@ -105,7 +111,10 @@ def main(input, values):
                      'TrueImpFile': 'TaskList/ObsWriterTask/UrQMDTruthFile',
                      'PIDFit': 'TaskList/PIDProbTask/PIDFit',
                      'PIDPrior': 'TaskList/PIDProbTask/MetaFile',
-                     'ImpModel': 'TaskList/ImpactParameterMLTask/ModelFile'}
+                     'ImpModel': 'TaskList/ImpactParameterMLTask/ModelFile',
+                     'bType': 'TaskList/EventFilterTask/bType',
+                     'bMin': 'TaskList/EventFilterTask/bMin',
+                     'bMax': 'TaskList/EventFilterTask/bMax'}
 
   for key, paths in parameter_table.items():
     value = values[key]
@@ -119,6 +128,10 @@ def main(input, values):
           create_nested_node(root, path).text = value
         else:
           ele.text = value
+
+  if values['UseMLPID']:
+    sh = root.find('TaskList/PIDProbTask')
+    sh.set('Type', 'ML')
 
   if values['AddDir'] is not None:
     ele = root.find('IOInfo')

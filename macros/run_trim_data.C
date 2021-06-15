@@ -106,26 +106,26 @@ void run_trim_data
   eventFilter -> SetVertexXYCut(-15, 15, -225, -185);
   eventFilter -> SetRejectBadEvents();
 
-  auto node = parser.GetXMLDocument()->GetRootNode()->GetChildren();
-  STAnalysisFactory factory(node);
+  //auto node = parser.GetXMLDocument()->GetRootNode()->GetChildren();
+  //STAnalysisFactory factory(node);
 
 
-  auto bdcInfo = new STAddBDCInfoTask();
-  bdcInfo -> SetRunNo(fRunNo);
-  bdcInfo -> SetBeamFile(fBeamData);
+  //auto bdcInfo = new STAddBDCInfoTask();
+  //bdcInfo -> SetRunNo(fRunNo);
+  //bdcInfo -> SetBeamFile(fBeamData);
 
 
   run -> AddTask(reader);
   //run -> AddTask(bdcInfo);
-  auto pidTask = (STPIDProbTask*) factory.GetPIDTask();
-  pidTask -> SetPersistence(false);
-  run -> AddTask(pidTask);
-  auto transTask = factory.GetTransformFrameTask();
-  transTask -> SetPersistence(false);
-  run -> AddTask(transTask);
-  auto eratTask = new STERATTask();
-  //eratTask -> SetPersistence(false);
-  run -> AddTask(eratTask);
+  //auto pidTask = (STPIDProbTask*) factory.GetPIDTask();
+  //pidTask -> SetPersistence(false);
+  //run -> AddTask(pidTask);
+  //auto transTask = factory.GetTransformFrameTask();
+  //transTask -> SetPersistence(false);
+  //run -> AddTask(transTask);
+  //auto eratTask = new STERATTask();
+  ////eratTask -> SetPersistence(false);
+  //run -> AddTask(eratTask);
   run -> AddTask(eventFilter);
   
   run -> Init();

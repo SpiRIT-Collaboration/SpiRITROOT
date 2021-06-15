@@ -45,6 +45,7 @@ class STExampleAnaTask : public FairTask {
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG(); /// load the array of supported particles. Your own particle information array should follows the same order
+    STVectorI *fSkip;                   ///< Skipping instructions from Filter class
     
   ClassDef(STExampleAnaTask, 1);
 };

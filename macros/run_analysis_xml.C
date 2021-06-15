@@ -1,4 +1,4 @@
-void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOutName="", bool iter_unfold=false, int entries_lim=-1, bool iter_PID=false, int ndivisions=0, int job_id=0)
+void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOutName="", bool iter_unfold=false, int entries_lim=-1, int start_id = 0, bool iter_PID=false)
 {
   std::srand(std::time(0));
   gRandom -> SetSeed(std::time(0));
@@ -21,20 +21,13 @@ void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOu
       nentries = entries_lim;
   bool use_rand = true;
   if(use_rand && entries_lim > 0) reader -> RandSample(entries_lim);
-  if(ndivisions > 1)
-  {
-    int n_local_entries = int((nentries + 1)/ndivisions);
-    int start_id = job_id*n_local_entries;
-    if(start_id + n_local_entries > nentries) n_local_entries = nentries - start_id;
-    nentries = n_local_entries;
-    reader -> SetEventID(start_id);
-  }
+  if(start_id > 0) reader -> SetEventID(start_id);
   TString fPathToData = reader -> GetPathToData();
   TString spiritroot = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
   TString par = spiritroot + "parameters/ST.parameters.par";
   TString geo = spiritroot + "geometry/geomSpiRIT.man.root";
-  TString out = fPathToData + fOutName + ((ndivisions <= 1)? Form("_ana.root") : Form("_%d_%d_ana.root", ndivisions, job_id));
-  TString log = fPathToData + fOutName + ((ndivisions <= 1)? Form("_ana.log") : Form("_%d_%d_ana.log", ndivisions, job_id));
+  TString out = fPathToData + fOutName + "_ana.root";
+  TString log = fPathToData + fOutName + "_ana.log";
 
   FairLogger *logger = FairLogger::GetLogger();
   logger -> SetLogToScreen(true);
@@ -54,10 +47,9 @@ void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOu
   std::vector<FairTask*> tasks;
   tasks.push_back(reader);
   auto pidTask = factory.GetPIDTask();
-  if(auto castedPIDTask = dynamic_cast<STPIDProbTask*>(pidTask))
+  if(auto castedPIDTask = dynamic_cast<STPIDProbTask*>(pidTask)) 
     castedPIDTask -> SetMetaFileUpdate(iter_PID);
   tasks.push_back(pidTask);
-
   tasks.push_back(factory.GetPiProbTask());
   tasks.push_back(factory.GetDivideEventTask());
   tasks.push_back(factory.GetTransformFrameTask());
@@ -68,9 +60,9 @@ void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOu
   tasks.push_back(factory.GetFilterEventTask());
   tasks.push_back(factory.GetPhiEfficiencyTask());
   tasks.push_back(factory.GetReactionPlaneTask());
-  tasks.push_back(factory.GetSimpleGraphsTask());
   tasks.push_back(factory.GetObsWriterTask());
   tasks.push_back(factory.GetImpactParameterMLTask());
+  tasks.push_back(factory.GetSimpleGraphsTask());
 
   for(auto task : tasks)
     if(task) run -> AddTask(task);

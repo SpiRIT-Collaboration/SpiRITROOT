@@ -79,6 +79,7 @@ STCSVReaderTask.cc
 STObsWriterTask.cc
 STUrQMDFormatWriterTask.cc
 STImpactParameterMLTask.cc
+STRecordImpParaTask.cc
 ProcessPipe.cc
 )
 

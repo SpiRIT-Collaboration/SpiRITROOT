@@ -388,9 +388,21 @@ void STUrQMDHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTransportP
     std::stringstream ss(line);
     ss >> temp >> reader -> fCurrentB >> temp; 
   }
-  // ignore line 5 to 18
-  for(int i = 5; i <= 18; ++i) std::getline(reader -> fFile, line);
-  // first entry in line 19 is multiplicity
+  // ignore line 5 to when the line starts with "pvec:"
+  bool foundData = false;
+  for(int i = 5; i <= 100; ++i) 
+  {
+    std::getline(reader -> fFile, line);
+    std::stringstream ss(line);
+    ss >> temp;
+    if(temp == "pvec:") 
+    {
+      foundData = true;
+      break;
+    }
+  }
+  if(!foundData) throw std::runtime_error("UrQMD reader cannot find particle data");
+  // first entry in the following line is multiplicity
   int mult;
   std::getline(reader -> fFile, line);
   {

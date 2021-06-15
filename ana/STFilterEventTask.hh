@@ -56,6 +56,7 @@ class STFilterEventTask : public FairTask {
     void SetERatCut(double ERatMin, double ERatMax) { fERatMin = ERatMin; fERatMax = ERatMax; fERatCut = true; };
     void SetBCut(double bmin, double bmax, const std::string& type="ML") { fBMin = bmin; fBMax = bmax; fBType = type; fBCut = true; };
     void SetRejectEmpty(bool val = true) { fRejectEmpty = val; }
+    void SetTriggerBiasCut(int kyotoHits, int katanaZ) { fKyotoHits = kyotoHits; fKatanaZ = katanaZ; fTriggerCut = true;}
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
     /// Setting parameter containers. This will be called inbetween Init() and Run().
@@ -74,6 +75,7 @@ class STFilterEventTask : public FairTask {
     STVectorI *fSkip;                ///< Tell other class to skip events. 1 = skip, 0 = dont' skip
     STVectorF *fERat = nullptr;
     STVectorF *fB = nullptr;
+    STVectorI *fTriggerZ = nullptr;     ///< Simulated trigger condition. Does not exist in real data
 
     std::vector<TCutG*> fCutG;
     std::vector<double> fAcceptance;
@@ -96,6 +98,10 @@ class STFilterEventTask : public FairTask {
     std::string fBType;
     bool fBCut = false;
     int fStatus;
+
+    bool fTriggerCut = false;
+    int fKyotoHits;
+    int fKatanaZ;
     
     
   ClassDef(STFilterEventTask, 1);

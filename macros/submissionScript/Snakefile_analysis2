@@ -4,10 +4,24 @@ from analysisConfig.changeAttr import main as attr_change
 
 step = 3
 mult_output_range = [[mult, mult + step] for mult in np.arange(25, 55, step)] #The desired partition of the analyzed files
-mult_output_range = [[0, mult_output_range[0][0]]]# + mult_output_range + [[mult_output_range[-1][-1], 100]]
+mult_output_range = [[0, mult_output_range[0][0]]] + mult_output_range + [[mult_output_range[-1][-1], 100]]
 iter_samples = 100000
 tot_samples = -1
 phi_eff_overlap = 4
+
+"""
+Inputs: reco conc files from track reconstruction
+They must be separated by multiplicities and put in folders that are named as data/Sn[PROJ_MASS]Mult[M1]_[M2] where M1 < multiplicity <= M2
+e.g. data/Sn108Mult25_28 contains all conc reco files of Sn108 reaction with 25 < multiplicity <= 28
+
+Output: 
+The analyzed files are put in data/Sn[PROJ_MASS]Final/FinalM[LB]_[UB]_PhiCor_ana.root
+LB and UB is the desired upper and lower bound, and it can be different from M1 and M2 from the input
+This script will load files from all approporate folders and set approporate cut
+"""
+
+
+
 
 """
 Don't change anything below
@@ -147,7 +161,7 @@ rule analysis:
       args['MMax'] = str(int(float(args['MMax'])/2))
     if wildcards.status == 'PhiCor':
       args['ObsFile'] = ''
-      args['ImpModel'] = 'urqmd_SM_uni_weighted.pkl'
+      args['ImpModel'] = 'urqmd_shadow_b1_10_SMF.pkl'
     output_filename = output_filename + '_ana.root'
     attr_change(output[0], args)
     os.rename(os.path.join(args['Dir'], output_filename), os.path.join('data', 'Sn' + wildcards.proj + 'Final', output_filename))

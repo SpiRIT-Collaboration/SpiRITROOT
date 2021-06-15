@@ -51,6 +51,15 @@ InitStatus STFilterEventTask::Init()
   if(fBCut)
     fB = (STVectorF*) ioMan -> GetObject(("b" + fBType).c_str());
   if(!fERat) fLogger -> Info(MESSAGE_ORIGIN, "ERAT data cannot be loaded. Will not perform cut on ERAT");
+  if(fTriggerCut) 
+  {
+    fTriggerZ = (STVectorI*) ioMan -> GetObject("KatanaZMax");
+    if(!fTriggerZ) 
+    {
+      fLogger -> Info(MESSAGE_ORIGIN, "KatanaZMax cannot be loaded. There is no Monte Carlo trigger data in the file. Will disable trigger bias cut.");
+      fTriggerCut = false;
+    }
+  }
   return kSUCCESS;
 }
 
@@ -132,6 +141,12 @@ void STFilterEventTask::Exec(Option_t *opt)
   {
     auto b = fB -> fElements[0];
     if(!(fBMin < b && b < fBMax)) fill = false;
+  }
+  if(fTriggerCut)
+  {
+    auto katana = fTriggerZ -> fElements[0];
+    auto kyoto = fTriggerZ -> fElements[1];
+    if(kyoto < fKyotoHits || fKatanaZ <= katana) fill = false;
   }
 
   fSkip -> fElements[0] = (fill)? 0 : 1;

@@ -36,6 +36,7 @@
 #pragma link C++ class STDivideEventTask+;
 #pragma link C++ class STUrQMDFormatWriterTask+;
 #pragma link C++ class STImpactParameterMLTask+;
+#pragma link C++ class STRecordImpParaTask+;
 
 #pragma link C++ class EfficiencyFactory+;
 #pragma link C++ class OrigEfficiencyFactory+;

@@ -622,7 +622,8 @@ void STSimpleGraphsTask::RegisterVPlots()
       {
         const auto& data = package.Data();
         for(int i = 0; i < data.multiplicity; ++i)
-          if(package.Prob(i) > fProbThresholdForVs && package.PhiEff(i) > fPhiEffThresholdForVs)
+          if(package.Prob(i) > fProbThresholdForVs && package.PhiEff(i) > fPhiEffThresholdForVs && 
+	     data.recodpoca[i].Mag() < fMaxDPOCA)
           {
             double y0 = (fNNFrame)? package.LabRapidity(i)/(0.5*package.BeamRapidity()[1]) - 1 : package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);// package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);
             double phi = package.CMVector(i).Phi();

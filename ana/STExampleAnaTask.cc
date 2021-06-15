@@ -28,42 +28,6 @@ STExampleAnaTask::STExampleAnaTask()
 STExampleAnaTask::~STExampleAnaTask()
 {}
 
-double STExampleAnaTask::Correction(const TVector2& Q_vec)
-{
-  double phi = -9999;
-  if(Q_vec.Mod() > 0)
-  {
-    if(fShift && fQx_mean && fQy_mean) 
-    {
-      phi = this -> Shifting(Q_vec);
-      if(fFlat && fAn && fBn) phi = this -> Flattening(phi);
-    }
-    else
-      phi = Q_vec.Phi();
-    phi = (phi > TMath::Pi())? phi - 2*TMath::Pi() : phi;
-  }
-  else phi = -9999;
-  return phi;
-}
-
-double STExampleAnaTask::Shifting(TVector2 Q_vec)
-{
-  Q_vec.SetX((Q_vec.X() - fQx_mean -> GetVal())/fQx_sigma -> GetVal());
-  Q_vec.SetY((Q_vec.Y() - fQy_mean -> GetVal())/fQy_sigma -> GetVal());
-  return  Q_vec.Phi();
-}
-
-double STExampleAnaTask::Flattening(double phi)
-{
-  double delta_phi = 0;
-  for(int i = 0; i < fAn -> fElements.size(); ++i)
-  {
-    int n = i + 1;
-    delta_phi += fAn -> fElements[i]*cos(n*phi) + fBn -> fElements[i]*sin(n*phi);
-  }
-  return phi + delta_phi;
-}
-
 InitStatus STExampleAnaTask::Init()
 {
   STAnaParticleDB::FillTDatabasePDG();
@@ -72,6 +36,8 @@ InitStatus STExampleAnaTask::Init()
     fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RootManager!");
     return kERROR;
   }
+
+  fSkip = (STVectorI*) ioMan -> GetObject("Skip");
 
   return kSUCCESS;
 }
@@ -93,6 +59,9 @@ void STExampleAnaTask::SetParContainers()
 
 void STExampleAnaTask::Exec(Option_t *opt)
 {
+  if(fSkip)
+    if(fSkip -> fElements[0] == 1) return; // skip flag from FilterTask
+
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
     int pdg = fSupportedPDG[i];

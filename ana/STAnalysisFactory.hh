@@ -60,6 +60,7 @@ private:
 
   std::map<std::string, std::string> fReadNodesToMap(TXMLNode *node);
   std::map<std::string, std::string> fReadNodesAttrToMap(TXMLNode *node);
+  TXMLNode* fFindChild(TXMLNode* node, const std::string& childName);
   std::map<std::string, TXMLNode*> fNodes;
   TXMLNode *fIONode = nullptr;
   TXMLNode *fTaskNode = nullptr;

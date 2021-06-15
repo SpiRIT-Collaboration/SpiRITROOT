@@ -74,9 +74,11 @@ STFilterEventTask* STAnalysisFactory::GetFilterEventTask()
 
   auto settings = this -> fReadNodesToMap(child);
   auto task = new STFilterEventTask;
-  task -> SetMultiplicityCut(std::stoi(settings["MultiplicityMin"]),
-                             std::stoi(settings["MultiplicityMax"]),
-                             std::stof(settings["MultiplicityDPOCA"]));
+  if(!settings["MultiplicityMin"].empty() && !settings["MultiplicityMax"].empty() 
+     && !settings["MultiplicityDPOCA"].empty())
+    task -> SetMultiplicityCut(std::stoi(settings["MultiplicityMin"]),
+                               std::stoi(settings["MultiplicityMax"]),
+                               std::stof(settings["MultiplicityDPOCA"]));
   if(!settings["ERatMin"].empty() && !settings["ERatMax"].empty())
     task -> SetERatCut(std::stof(settings["ERatMin"]), std::stof(settings["ERatMax"]));
   auto it2 = settings.find("RejectEmpty");
@@ -94,6 +96,12 @@ STFilterEventTask* STAnalysisFactory::GetFilterEventTask()
     if(it2 == settings.end()) throw std::runtime_error("bType is found but no bMax is found");
     double bMax = std::stof(it2 -> second);
     task -> SetBCut(bMin, bMax, bType);
+  }
+  it2 = settings.find("TriggerBias");
+  if(it2 != settings.end())
+  {
+    auto attr = this -> fReadNodesAttrToMap(this -> fFindChild(child, "TriggerBias"));
+    task -> SetTriggerBiasCut(stoi(attr["KyotoMin"]), stoi(attr["KatanaZMax"])); 
   }
 
   return task;
@@ -441,5 +449,11 @@ std::map<std::string, std::string> STAnalysisFactory::fReadNodesAttrToMap(TXMLNo
   return attrMap;
 };
 
-
+TXMLNode *STAnalysisFactory::fFindChild(TXMLNode *node, const std::string& childName) 
+{
+  for(; node; node = node->GetNextNode())
+    if(node->GetNodeType() == TXMLNode::kXMLElementNode)
+      if(std::string(node -> GetText()) == childName) return node;
+  return nullptr;
+};
 
