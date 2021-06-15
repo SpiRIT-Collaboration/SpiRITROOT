@@ -44,7 +44,7 @@ class STGenfitVATask : public STRecoTask
     void SetFixedVertex(Double_t x, Double_t y, Double_t z);
 
     void SetUseRave(Bool_t val = kTRUE);
-
+    void ShiftBDCAfterSC(const std::string& filename, double threshold);
   private:
     TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fRecoTrackArray = nullptr;
@@ -93,6 +93,10 @@ class STGenfitVATask : public STRecoTask
     Double_t fFieldYOffset = -20.5502; //unit: cm
     Double_t fFieldZOffset = 58.0526;  //unit: cm
 
+    TH1F *fBDCShift = nullptr;
+    TH1F *fBDCYShift = nullptr;
+    TFile *fSCShift = nullptr;
+    double fSCBDCShiftThreshold = 90; // in degrees
 public:     
     //the below is related to BDC shift.
     ST_VertexShift* Vertex_Shifter; 

@@ -280,7 +280,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     bdcVertex -> SetIsGoodBDC();
     bdcVertex -> SetPos(vertexPos);
     LOG(INFO) << Space() << "STGenfitVATask " << "BDC vertex is loaded from MCEventHeader" << FairLogger::endl;
-  }
+  } else LOG(INFO) << Space() << "STGenfitVATask " << "BDC vertex is set as TPC Vertex" << FairLogger::endl;
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();
   for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
@@ -292,17 +292,29 @@ void STGenfitVATask::Exec(Option_t *opt)
     double BDCShiftX = 0; double BDCShiftY = 0; //unit: mm
     
     //the below if for getting the shift value according to the RecoMomentum.
+    TVector3 RecoMom = track->GetMomentumTargetPlane();
     if(IsOption_BDCCorrection==1)
     {
-      TVector3 RecoMom = track->GetMomentumTargetPlane();
       double Phi = RecoMom.Phi()*TMath::RadToDeg();
       double Theta = RecoMom.Theta()*TMath::RadToDeg();
       if(Phi<0) { Phi = Phi+360; }
       Vertex_Shifter->GetShiftValue_Smooth(Theta,Phi,&BDCShiftX,&BDCShiftY);
     }
+
+    if(fBDCShift)
+    {
+      double theta = RecoMom.Theta()*TMath::RadToDeg();
+      if(theta < fSCBDCShiftThreshold) BDCShiftX = fBDCShift -> Interpolate(theta*((RecoMom.x() > 0)? 1 : -1));
+    }
+  
+    if(fBDCYShift)
+    {
+      double mag = RecoMom.Mag();
+      BDCShiftY = fBDCYShift -> Interpolate(mag);
+    }
     
     TVector3 VertexPosShift(BDCShiftX,BDCShiftY,0);
-//    cout<<" Phi: "<<Phi<<" Theta: "<<Theta<<" ShiftX: "<<ShiftX<<" ShiftY: "<<ShiftY<<endl;
+    //cout<<" Phi: "<<Phi<<" Theta: "<<Theta<<" ShiftX: "<<ShiftX<<" ShiftY: "<<ShiftY<<endl;
     
     auto cov = vertex -> GetCov();
     cov(0,0) = abs(cov(0,0));
@@ -629,4 +641,19 @@ void STGenfitVATask::SetFixedVertex(Double_t x, Double_t y, Double_t z)
 void STGenfitVATask::SetUseRave(Bool_t val)
 {
   fUseRave = val;
+}
+
+void STGenfitVATask::ShiftBDCAfterSC(const std::string& filename, double threshold)
+{
+  fSCShift = new TFile(filename.c_str());
+  fSCBDCShiftThreshold = threshold;
+  cout << "== [STGenfitVATask] BDC will be shifted according to values in " << filename << " AFTER space charge correction." << endl;
+  cout << "== [STGenfitVATask] BDC shift will be appled to tracks with theta < " << threshold << " deg. "<< endl;
+  fBDCShift = (TH1F*) fSCShift -> Get("BDCOffset");
+  fBDCYShift = (TH1F*) fSCShift -> Get("BDCYOffset");
+  if(!fBDCShift)
+    cout << "== [STGenfitVATask] No histogram can be read from BDC shift file. Will NOT shift BDC. " << endl;
+  if(!fBDCYShift)
+    cout << "== [STGenfitVATask] No histogram can be read from Y-BDC shift file. Will NOT shift BDC. " << endl;
+
 }
