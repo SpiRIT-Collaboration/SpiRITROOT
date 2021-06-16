@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+  This is an example...
+-->
+<AnalysisConfig>
+    <IOInfo Type="Real">
+        <DataDir>data/Sn108Mult50_55/</DataDir>
+        <RunFirst>2272</RunFirst>
+        <RunLast>2500</RunLast>
+    </IOInfo>
+    <TaskList>
+        <EventFilterTask>
+            <MultiplicityMin>50</MultiplicityMin>
+            <MultiplicityMax>100</MultiplicityMax>
+            <MultiplicityDPOCA>20</MultiplicityDPOCA>
+        </EventFilterTask>
+    
+        <PIDProbTask Type="Bay">
+            <MetaFile>Prior/Meta_Sn108KanekoMult50.root</MetaFile>
+            <PIDFit>PIDFit/PIDSigma_Sn108KanekoMult50.root</PIDFit>
+        </PIDProbTask>
+
+        <PiProbTask>
+            <GausFile>piAna/sliceFit.txt</GausFile>
+        </PiProbTask>
+    
+        <TransformFrameTask>
+            <TargetMass>112</TargetMass>
+            <TargetThickness>0.8</TargetThickness>
+            <EnergyLossFile>../parameters/Sn108Sn112.txt</EnergyLossFile>
+        </TransformFrameTask>
+    
+        <EfficiencyTask>
+            <EfficiencyGroup Type="Orig">
+                <NClus>20</NClus> 
+                <DPoca>20</DPoca> 
+                <Phi>160-220,0-20,320-360</Phi>
+                <MomBins>25</MomBins>
+                <ThetaBins>14</ThetaBins>
+                <UpscaleFactor>10</UpscaleFactor>
+                <PhaseSpaceFactor>1</PhaseSpaceFactor>
+                <UpdateUnfolding>Sn108Unfold.root</UpdateUnfolding>
+                <Particle Name="pi+">
+                   <EffFile>/mnt/spirit/analysis/changj/effDB/effFactory/DataBase/EfficiencyDB_Sn108.root</EffFile>
+                   <MomMin>50</MomMin>
+                   <MomMax>600</MomMax>
+                </Particle>
+                <Particle Name="pi-">
+                   <EffFile>/mnt/spirit/analysis/changj/effDB/effFactory/DataBase/EfficiencyDB_Sn108.root</EffFile>
+                   <MomMin>50</MomMin>
+                   <MomMax>600</MomMax>
+                </Particle>
+            </EfficiencyGroup>
+            <EfficiencyGroup Type="CM">
+                <NClus>15</NClus> 
+                <DPoca>15</DPoca> 
+                <Phi>160-220,0-20,320-360</Phi>
+                <PtBins>15</PtBins>
+                <CMzBins>15</CMzBins>
+                <UpscaleFactor>10</UpscaleFactor>
+                <PhaseSpaceFactor>3</PhaseSpaceFactor>
+                <UpdateUnfolding>Sn108Unfold.root</UpdateUnfolding>
+                <Particle Name="p">
+                   <EffFile>data/embed_dump/MarchCM/Run2899Kaneko_CMProton.root</EffFile>
+                   <PtMin>0</PtMin>
+                   <PtMax>1300</PtMax>
+                   <CMzMin>-1000</CMzMin>
+                   <CMzMax>1000</CMzMax>
+                </Particle>
+                <Particle Name="d">
+                   <EffFile>data/embed_dump/MarchCM/Run2899Kaneko_CMDeuteron.root</EffFile>
+                   <PtMin>0</PtMin>
+                   <PtMax>2000</PtMax>
+                   <CMzMin>-1300</CMzMin>
+                   <CMzMax>1300</CMzMax>
+                </Particle>
+                <Particle Name="t">
+                   <EffFile>data/embed_dump/MarchCM/Run2899Kaneko_CMTriton.root</EffFile>
+                   <PtMin>0</PtMin>
+                   <PtMax>2500</PtMax>
+                   <CMzMin>-2500</CMzMin>
+                   <CMzMax>2500</CMzMax>
+                </Particle>
+                <Particle Name="He3">
+                   <EffFile>data/embed_dump/MarchCM/Run2899Kaneko_CMHe3.root</EffFile>
+                   <PtMin>0</PtMin>
+                   <PtMax>2500</PtMax>
+                   <CMzMin>-1900</CMzMin>
+                   <CMzMax>1900</CMzMax>
+                </Particle>
+                <Particle Name="He4">
+                   <EffFile>data/embed_dump/MarchCM/Run2899Kaneko_CMHe4.root</EffFile>
+                   <PtMin>0</PtMin>
+                   <PtMax>2500</PtMax>
+                   <CMzMin>-2500</CMzMin>
+                   <CMzMax>2500</CMzMax>
+                </Particle>
+                <Particle Name="He6">
+                   <EffFile>data/embed_dump/MarchCM/Run2899_CutTPCCMHe6.root</EffFile>
+                   <PtMin>0</PtMin>
+                   <PtMax>1300</PtMax>
+                   <CMzMin>-1000</CMzMin>
+                   <CMzMax>1000</CMzMax>
+                </Particle>
+            </EfficiencyGroup>
+        </EfficiencyTask>
+      
+        <SimpleGraphsTask>
+            <RapidityPlots></RapidityPlots>
+            <VPlots></VPlots>
+            <PionPlots></PionPlots>
+        </SimpleGraphsTask>
+
+        <ReactionPlaneTask>
+            <PhiEff>PhiEff/Sn108Mult40_45.root</PhiEff>
+        </ReactionPlaneTask>
+
+        <ERATTask>
+            <ImpactParameterFile>ImpactParameter.root</ImpactParameterFile>
+        </ERATTask>
+    </TaskList>
+</AnalysisConfig>

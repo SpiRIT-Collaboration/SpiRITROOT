@@ -9,6 +9,16 @@
     "output" : "log/{rule}.out",
     "error" : "log/{rule}.err"
   },
+  "trim":
+  {
+    "job-name" : "trim.{wildcards}.out",
+    "time" : "00:30:00",
+    "mem" : "4G",
+    "ntasks" : "1",
+    "cpus-per-task" : "1",
+    "output" : "log/{rule}.{wildcards}.out",
+    "error" : "log/{rule}.{wildcards}.err"
+  },
   "IterPIDMeta" :
   {
     "job-name" : "IterPIDMeta",
@@ -168,7 +178,7 @@
     "job-name" : "MC_{wildcards.id}",
     "output" : "log/{params.filename_for_output}_id_{wildcards.id}_MCTransport.out",
     "error" : "log/{params.filename_for_output}_id_{wildcards.id}_MCTransport.err",
-    "time" : "03:59:59",
+    "time" : "13:59:59",
     "mem" : "2000",
     "ntasks" : "1",
     "cpus-per-task" : "1"

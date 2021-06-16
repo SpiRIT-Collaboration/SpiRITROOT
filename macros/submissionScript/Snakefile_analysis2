@@ -14,7 +14,7 @@ Inputs: reco conc files from track reconstruction
 They must be separated by multiplicities and put in folders that are named as data/Sn[PROJ_MASS]Mult[M1]_[M2] where M1 < multiplicity <= M2
 e.g. data/Sn108Mult25_28 contains all conc reco files of Sn108 reaction with 25 < multiplicity <= 28
 
-Output: 
+Output:
 The analyzed files are put in data/Sn[PROJ_MASS]Final/FinalM[LB]_[UB]_PhiCor_ana.root
 LB and UB is the desired upper and lower bound, and it can be different from M1 and M2 from the input
 This script will load files from all approporate folders and set approporate cut
@@ -26,8 +26,8 @@ This script will load files from all approporate folders and set approporate cut
 """
 Don't change anything below
 """
-sys = [132]
-mult_file_ranges = [[0, 25], [25, 35], [35, 40], [40, 45], [45, 50], [50, 55], [55, 100]] #The way raw root files are partitioned
+sys = [108]#,112,124,132]
+mult_file_ranges = [[0, 25], [25, 30], [30, 35], [35, 40], [40, 45], [45, 50], [50, 55], [55, 100]] #The way raw root files are partitioned
 mult_output_files = [] #list of directies from which data is loaded for the desire partition
 # decide what files to load the approporate multiplicity ranges
 for mult_range in mult_output_range:
@@ -43,8 +43,8 @@ for proj in sys:
   for mult_range, output_dir in zip(mult_output_range, mult_output_files):
     output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_PhiCor_ana.root' % (proj, mult_range[0], mult_range[1]))
     #output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_PhiCor_graph.root' % (proj, mult_range[0], mult_range[1]))
-    #output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_First_ana.root' % (proj, mult_range[0], mult_range[1]))
-    #output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_Second_ana.root' % (proj, mult_range[0], mult_range[1]))
+    output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_First_ana.root' % (proj, mult_range[0], mult_range[1]))
+    output_full_dir.append('data/Sn%dFinal/FinalM%d_%d_Second_ana.root' % (proj, mult_range[0], mult_range[1]))
 
 #ruleorder: analysis_res > analysis
 
@@ -58,7 +58,7 @@ rule all:
 rule IterPIDMeta:
   input:
     'Prior/Meta_Sn{proj}Template.root',
-    ancient('analysisConfig/analysisSn{proj}CM.xml')
+    ancient('analysisConfig/analysisSn{proj}CMTemplate.xml')
   output:
     'Prior/Meta_Sn{proj}Mult{output_range1}_{output_range2}.root',
     temp('analysisConfig/analysisSn{proj}CM_M{output_range1}_{output_range2}_temp.xml'),
@@ -89,7 +89,7 @@ rule IterPIDMeta:
 rule IterUnfold:
   input:
     'Unfolding/Sn{proj}Template.root',
-    ancient('analysisConfig/analysisSn{proj}CM.xml'),
+    ancient('analysisConfig/analysisSn{proj}CMTemplate.xml'),
     'Prior/Meta_Sn{proj}Mult{output_range1}_{output_range2}.root',
   output:
     'Unfolding/Sn{proj}Mult{output_range1}_{output_range2}.root',
@@ -120,7 +120,7 @@ rule IterUnfold:
     os.rename(os.path.join(args['Dir'], output_filename), os.path.join('data', 'Sn' + wildcards.proj + 'Final', output_filename))
 
 def input_for_status(wcs):
-  input = [ancient('analysisConfig/analysisSn' + wcs.proj + 'CM.xml'),
+  input = [ancient('analysisConfig/analysisSn' + wcs.proj + 'CMTemplate.xml'),
            'Prior/Meta_Sn%sMult%s_%s.root' % (wcs.proj, wcs.output_range1, wcs.output_range2),
            'Unfolding/Sn%sMult%s_%s.root' % (wcs.proj, wcs.output_range1, wcs.output_range2)]
   if wcs.status != 'NoPhiEff':
@@ -134,7 +134,7 @@ rule analysis:
   input:
     files = input_for_status
   output:
-    'analysisConfig/analysisSn{proj}CMM{output_range1}_{output_range2}_{status}.xml',
+    temp('analysisConfig/analysisSn{proj}CMM{output_range1}_{output_range2}_{status}.xml'),
     'data/Sn{proj}Final/FinalM{output_range1}_{output_range2}_{status}_ana.root'
   params:
     output_dir = output_dir_lambda,
@@ -161,7 +161,7 @@ rule analysis:
       args['MMax'] = str(int(float(args['MMax'])/2))
     if wildcards.status == 'PhiCor':
       args['ObsFile'] = ''
-      args['ImpModel'] = 'urqmd_shadow_b1_10_SMF.pkl'
+      #args['ImpModel'] = 'urqmd_SM_uni_weighted.pkl'
     output_filename = output_filename + '_ana.root'
     attr_change(output[0], args)
     os.rename(os.path.join(args['Dir'], output_filename), os.path.join('data', 'Sn' + wildcards.proj + 'Final', output_filename))
