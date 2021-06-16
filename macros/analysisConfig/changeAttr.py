@@ -12,6 +12,8 @@ parser.add_argument('--MDPoca', help='')
 parser.add_argument('--ERatMin', help='Minimum ERatcut')
 parser.add_argument('--ERatMax', help='Maximum ERat cut')
 parser.add_argument('--Dir', help='Directory to data source')
+parser.add_argument('--RunFirst', help='RunFirst')
+parser.add_argument('--RunLast', help='RunLast')
 parser.add_argument('--AddDir', help='Append directory to data source', nargs='+')
 parser.add_argument('--TgMass', help='Atomic mass of the target')
 parser.add_argument('--PrMass', help='Projectile mass')
@@ -93,6 +95,8 @@ def main(input, values):
                      'ERatMin': 'TaskList/EventFilterTask/ERatMin',
                      'ERatMax': 'TaskList/EventFilterTask/ERatMax',
                      'Dir': 'IOInfo/DataDir',
+		     'RunFirst': 'IOInfo/RunFirst',
+		     'RunLast' : 'IOInfo/RunLast',
                      'Unfold': 'TaskList/EfficiencyTask/UpdateUnfolding',
                      'TgMass': ['TaskList/TransformFrameTask/TargetMass', 'IOInfo/targetA'],
                      'Energy': 'IOInfo/beamEnergyPerA',
