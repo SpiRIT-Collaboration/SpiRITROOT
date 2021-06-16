@@ -66,66 +66,38 @@ void run_trim_data
   //eventFilter -> SetERatCut(fERatMin, fERatMax);
   //int multMin = 0, multMax = 100;
   eventFilter -> SetMultiplicityCut(multMin, multMax, 20);
-  TDOMParser parser;
-  parser.SetValidate(false);
   switch(fSystemID)
   {
     case 124112: 
       eventFilter -> SetBeamFor124Star("../parameters/isotopesCutG124.root");
       eventFilter -> SetVertexCut(-17.84, -11.69);
-      //eventFilter -> SetVertexBDCCut(0.0974, 0.848*3, 0.689, 3*0.803);
       eventFilter -> SetVertexBDCCut(0.0, 0.848*3, 0.0, 3*0.803);
-      //eventFilter -> SetMultiplicityCut(multMin, multMax, 20);
-      parser.ParseFile("analysisConfig/analysisSn124CM.xml");
       break;
     case 132124: 
       eventFilter -> SetBeamCut("../parameters/BeamCut.root", "Sn132"); 
       eventFilter -> SetVertexCut(-18.480, -11.165);
-      //eventFilter -> SetVertexBDCCut(2.69e-1, 3*0.988, 3.71e-1, 3*0.7532);
       eventFilter -> SetVertexBDCCut(0, 3*0.988, 0, 3*0.7532);
-      //eventFilter -> SetMultiplicityCut(multMin, multMax, 20);
-      parser.ParseFile("analysisConfig/analysisSn132CM.xml");
       break;
     case 112124: 
       eventFilter -> SetBeamCut("../parameters/BeamCut.root", "Sn112"); 
       eventFilter -> SetVertexCut(-16.944, -11.727);
-      //eventFilter -> SetVertexBDCCut(-1.55e-1, 3*0.832, -3.18, 3*0.997);
       eventFilter -> SetVertexBDCCut(0.0, 3*0.832, 0.0, 3*0.997);
-      //eventFilter -> SetMultiplicityCut(multMin, multMax, 20);
-      parser.ParseFile("analysisConfig/analysisSn112CM.xml");
       break;
     case 108112: 
       eventFilter -> SetBeamCut("../parameters/BeamCut.root", "Sn108");
       eventFilter -> SetVertexCut(-18.480, -11.165);
-      //eventFilter -> SetVertexBDCCut(-9.25e-3, 3*0.933, -2.80478, 3*0.8424);
       eventFilter -> SetVertexBDCCut(0.0, 3*0.933, 0.0, 3*0.8424);
-      //eventFilter -> SetMultiplicityCut(multMin, multMax, 20);
-      parser.ParseFile("analysisConfig/analysisSn108CM.xml");
       break;
   }
   eventFilter -> SetVertexXYCut(-15, 15, -225, -185);
   eventFilter -> SetRejectBadEvents();
 
-  //auto node = parser.GetXMLDocument()->GetRootNode()->GetChildren();
-  //STAnalysisFactory factory(node);
-
-
   //auto bdcInfo = new STAddBDCInfoTask();
   //bdcInfo -> SetRunNo(fRunNo);
   //bdcInfo -> SetBeamFile(fBeamData);
 
-
   run -> AddTask(reader);
   //run -> AddTask(bdcInfo);
-  //auto pidTask = (STPIDProbTask*) factory.GetPIDTask();
-  //pidTask -> SetPersistence(false);
-  //run -> AddTask(pidTask);
-  //auto transTask = factory.GetTransformFrameTask();
-  //transTask -> SetPersistence(false);
-  //run -> AddTask(transTask);
-  //auto eratTask = new STERATTask();
-  ////eratTask -> SetPersistence(false);
-  //run -> AddTask(eratTask);
   run -> AddTask(eventFilter);
   
   run -> Init();
