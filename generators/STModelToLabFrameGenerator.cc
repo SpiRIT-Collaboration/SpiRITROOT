@@ -382,6 +382,7 @@ void STUrQMDHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTransportP
   for(int i = 1; i <= 3; ++i) std::getline(reader -> fFile, line);
   // impact parameter
   std::getline(reader -> fFile, line);
+
   if(!skip)
   {
     particleList.clear();
@@ -390,27 +391,30 @@ void STUrQMDHelper::ReadNextEvent_(STTXTReader* reader, std::vector<STTransportP
   }
   // ignore line 5 to when the line starts with "pvec:"
   bool foundData = false;
+  bool readMultNextLine = false; // if the line starts with "vec:" instead, multplicity is one line over (don't know why)
   for(int i = 5; i <= 100; ++i) 
   {
     std::getline(reader -> fFile, line);
     std::stringstream ss(line);
     ss >> temp;
-    if(temp == "pvec:") 
+    if(temp == "pvec:" || temp == "vec:") 
     {
       foundData = true;
+      readMultNextLine = temp == "vec:";
       break;
     }
   }
   if(!foundData) throw std::runtime_error("UrQMD reader cannot find particle data");
   // first entry in the following line is multiplicity
   int mult;
+  if(readMultNextLine) std::getline(reader -> fFile, line);
   std::getline(reader -> fFile, line);
   {
     std::stringstream ss(line);
     ss >> mult >> temp;
   }
   // discard one more line
-  std::getline(reader -> fFile, line);
+  if(!readMultNextLine) std::getline(reader -> fFile, line);
   // particle information
   //const std::vector<int> supported_pdg{-211,211,2212,1000010020,1000010030,1000020030,1000020040};
   for(int i = 0; i < mult; ++i)
@@ -835,6 +839,8 @@ Bool_t STModelToLabFrameGenerator::Init()
 
   LOG(INFO) << "Generator configuration " << FairLogger::endl;
   this -> Print();
+
+  return true;
 }
 
 

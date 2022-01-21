@@ -31,7 +31,7 @@ from submissionScript.GlobalConfig import *
 #length = 150
 
 
-localrules: all, GenParForJob
+localrules: GenParForJob
 
 list_of_outputs_prefix = []
 list_of_settings = {'PtRange':[], 'CMzRange':[], 'PhiRange0':[], 'PhiRange1':[], 

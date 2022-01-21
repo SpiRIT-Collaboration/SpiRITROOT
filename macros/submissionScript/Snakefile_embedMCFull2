@@ -72,7 +72,7 @@ rule Compress:
     energyPerN = energy_per_N*1000, #To MeV
   shell:
     '''
-    root -b -l -q 'submissionScript/Compress.C("data/{wildcards.output_dir}/Group_*_ParticleType_{wildcards.particle_type}_s*.reco.v1.04.conc.root", "{output}",{params.fragMass},{params.targetMass},{params.charge},{params.energyPerN})' || true
+    root -b -l -q -e 'EfficiencyInCMFactory::TransformBackToCM("data/{wildcards.output_dir}/Group_*_ParticleType_{wildcards.particle_type}_s*.reco.v1.04.conc.root", "{output}",{params.fragMass},{params.targetMass},{params.charge},{params.energyPerN});abort()' || true
     '''
 
 rule run_reco_new:
@@ -81,7 +81,7 @@ rule run_reco_new:
     digi = expand('{VMCDIR}/macros/data/{bg_dir}/{bg_name}_evts{bg_events}x{bg_threads}_merged.digi.root',VMCDIR=vmc_dir, bg_dir=dir_to_bg, bg_name=filename_bg_source, bg_events=evt_per_jobs, bg_threads = num_threads_per_bg_generation)
   output:
     temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_s{{run_id}}.reco.v1.04.root', VMCDIR=vmc_dir)),
-    temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_s{{run_id}}.reco.v1.04.conc.root', VMCDIR=vmc_dir)),
+    expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_s{{run_id}}.reco.v1.04.conc.root', VMCDIR=vmc_dir),
   resources:
     cpu=1
   params:
@@ -112,7 +112,8 @@ rule run_reco_new:
 
 rule run_mc_new:
   input:
-    expand('{VMCDIR}/macros/data/{{output_dir}}/ParticleType_{{particle_type}}_par.dat', VMCDIR=vmc_dir),
+    par = expand('{VMCDIR}/macros/data/{{output_dir}}/ParticleType_{{particle_type}}_par.dat', VMCDIR=vmc_dir),
+    digi = expand('{VMCDIR}/macros/data/{bg_dir}/{bg_name}_evts{bg_events}x{bg_threads}_merged.digi.root',VMCDIR=vmc_dir, bg_dir=dir_to_bg, bg_name=filename_bg_source, bg_events=evt_per_jobs, bg_threads = num_threads_per_bg_generation)
   output:
     temp(expand('{VMCDIR}/macros/data/{{output_dir}}/Group_{{job_id}}_ParticleType_{{particle_type}}_SARR_{{id}}.mc.root', 
          VMCDIR=vmc_dir)),
@@ -137,7 +138,7 @@ rule run_mc_new:
     OUTPUT={wildcards.output_dir}/Group_{wildcards.job_id}_ParticleType_{wildcards.particle_type}_SARR_{wildcards.id}
     LOGDIR={params.log_dir}/${{OUTPUT}}
     mkdir -p {params.log_dir}/{wildcards.output_dir}
-    root -b -q -l 'run_mc.C("'$OUTPUT'",'$NTOTAL',"","data/",kTRUE,"../macros/data/{wildcards.output_dir}/ParticleType_{wildcards.particle_type}_par.dat",'$SPLIT')' > ${{LOGDIR}}_mc.log
+    root -b -q -l 'run_mc.C("'$OUTPUT'",'$NTOTAL',"","data/",kTRUE,"../macros/data/{wildcards.output_dir}/ParticleType_{wildcards.particle_type}_par.dat",'$SPLIT',"{input.digi}")' > ${{LOGDIR}}_mc.log
     root -b -q -l 'run_digi.C("'$OUTPUT'",{params.beam_rate},"{params.parParameterFile}")' > ${{LOGDIR}}_digi.log
     """
 
@@ -259,5 +260,6 @@ rule get_vertex:
     input_list="{params.suffix}"
     input_list=$( echo ${{input_list// /\\\",\\\"}} )
     root -b -l -q 'submissionScript/GetVertex.C("{output}","{params.prefix}",{{"'${{input_list}}'"}})'
+    sleep 3
     """
 

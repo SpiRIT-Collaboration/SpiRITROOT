@@ -108,11 +108,26 @@ void STUrQMDFormatWriterTask::Exec(Option_t *opt)
 
   if(fSimpleFormat)
   {
-    for(int j = 0; j < data -> multiplicity; ++j)
-      if(data -> recodpoca[j].Mag() < 20 && data -> vaNRowClusters[j] + data -> vaNLayerClusters[j] > 15)
-        fOutput << data -> vadedx[j] << "," << data -> vaMom[j].x() << "," << data -> vaMom[j].y() << "," 
-                << data -> vaMom[j].z() << "," << data -> recoCharge[j] << "," 
-                << data -> vaNRowClusters[j] + data -> vaNLayerClusters[j] << ",Null\n";
+    for(int i = 0; i < fSupportedPDG.size(); ++i) {
+      auto& prob = static_cast<STVectorF*>(fProb -> At(i)) -> fElements;
+      int pdg = fSupportedPDG[i];
+      std::string pname = "Null";
+      if(pdg == 2212) pname = "p";
+      else if(pdg == 1000010020) pname = "d";
+      else if(pdg == 1000010030) pname = "t";
+      else if(pdg == 1000020030) pname = "He3";
+      else if(pdg == 1000020040) pname = "He4";
+      else if(pdg == 211) pname = "pi+";
+      else if(pdg == -211) pname = "pi-";
+      else if(pdg == 2112) pname = "n";
+      for(int j = 0; j < data -> multiplicity; ++j) {
+        if(data -> recodpoca[j].Mag() < 20 && data -> vaNRowClusters[j] + data -> vaNLayerClusters[j] > 15
+	   && prob[j] > 0.5)
+          fOutput << data -> vadedx[j] << "," << data -> vaMom[j].x() << "," << data -> vaMom[j].y() << "," 
+                  << data -> vaMom[j].z() << "," << data -> recoCharge[j] << "," 
+                  << data -> vaNRowClusters[j] + data -> vaNLayerClusters[j] << "," << pname << "\n";
+      }
+    }
   }
   else
   {

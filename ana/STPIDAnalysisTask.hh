@@ -10,9 +10,11 @@
 class STPIDAnalysisTask : public FairTask
 {
 public:
+  enum CUTWIDTH{TIGHT, NORM, LOOSE};
   STPIDAnalysisTask();
 
   void SetBeamA(int t_beamA);
+  void SetCutWidth(CUTWIDTH width);
   virtual InitStatus Init();
   virtual void Exec(Option_t* opt);
   void SetVerbose(Bool_t value = kTRUE);
@@ -25,6 +27,7 @@ private:
 
   Bool_t fIsPersistence;              ///< Persistence check variable
   STDigiPar *fPar;                    ///< Parameter read-out class pointer
+  CUTWIDTH fWidth = CUTWIDTH::NORM;
  
   Bool_t fVerbose;
   TClonesArray *fData = nullptr;

@@ -1,3 +1,5 @@
+#include "FairContFact.h"
+
 void run_trim_data
 (
   int fRunNo,

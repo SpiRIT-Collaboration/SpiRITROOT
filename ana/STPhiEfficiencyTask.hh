@@ -39,8 +39,8 @@ class STPhiEfficiencyTask : public FairTask {
     void SetPersistence(Bool_t value);
     void LoadPhiEff(const std::string& eff_filename);
 
-    static void CreatePhiEffFromData(const std::vector<std::string>& ana_filenames, const std::string& out_filename, int nClus=5, double poca=20, double bmin=0, double bmax=10);
-    static void CreatePhiEffFromData(const std::string& ana_filename, const std::string& out_filename, int nClus=5, double poca=20, double bmin=0, double bmax=10);
+    static void CreatePhiEffFromData(const std::vector<std::string>& ana_filenames, const std::string& out_filename, int nClus=5, double poca=20);
+    static void CreatePhiEffFromData(const std::string& ana_filename, const std::string& out_filename, int nClus=5, double poca=20);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     Bool_t fIsPersistence;              ///< Persistence check variable

@@ -261,13 +261,13 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
   auto BBE = [](double *x, double *par)
   {
     double fitval;
-    //double beta = x[0]/sqrt(x[0]*x[0] + 931.5*par[0]);
-    //return (par[1] + par[6]*x[0])/pow(beta, par[4])*(par[2] - pow(beta, par[4]) - log(par[3] + pow(931.5*par[0]/x[0], par[5])));
-    double x_shifted = x[0] - par[4];
-    return par[0]/x_shifted + par[1]/(x_shifted*x_shifted) + par[2]*x_shifted + par[3];
+    double beta = x[0]/sqrt(x[0]*x[0] + 931.5*par[0]);
+    return (par[1] + par[6]*x[0])/pow(beta, par[4])*(par[2] - pow(beta, par[4]) - log(par[3] + pow(931.5*par[0]/x[0], par[5])));
+    //double x_shifted = x[0] - par[4];
+    //return par[0]/x_shifted + par[1]/(x_shifted*x_shifted) + par[2]*x_shifted + par[3];
   };
 
-  TF1 tBBE("BBE", BBE, 1, 4500, 5);//7);
+  TF1 tBBE("BBE", BBE, 1, 4500, 7);
 
   int nbinsx = 150;
   int nbinsy = 1000;
@@ -279,8 +279,8 @@ void STPIDProbTask::FitPID(const std::string& anaFile, const std::string& fitFil
   TCanvas c1;
   TH2F PID("PID", "PID", nbinsx, momMin, momMax, nbinsy, minDeDx, maxDeDx);
   PID.Sumw2();
-  //tBBE.SetParameters(1,-800,13,190000,-80,6, 0);
-  tBBE.SetParameters(-69925.5, 3.23E+08, -1.26E+13, 0.0301021, 78.2681, 0);
+  tBBE.SetParameters(1,-800,13,190000,-80,6, 0);
+  //tBBE.SetParameters(-69925.5, 3.23E+08, -1.26E+13, 0.0301021, 78.2681, 0);
 
   chain.SetAlias("phi", "(vaMom.Phi() > 0)? vaMom.Phi()*TMath::RadToDeg() : vaMom.Phi()*TMath::RadToDeg() + 360");
   chain.Draw("vadedx:vaMom.Mag()>>PID", 

@@ -18,6 +18,8 @@
 #include "TVirtualMC.h"
 
 #include <iostream>
+#include <stdio.h>
+#include <cstring>
 
 using std::cout;
 using std::endl;
@@ -73,8 +75,10 @@ STDetector::ProcessHits(FairVolume* vol)
     return kFALSE;
 
   fELoss = gMC->Edep();
-  if(fELoss==0)
+
+  if(fELoss==0) 
     return kFALSE;
+
 
   STStack* stack = (STStack*) gMC->GetStack();
 
@@ -107,10 +111,17 @@ STDetector::ProcessHits(FairVolume* vol)
       TVector3(fMom.Px(), fMom.Py(), fMom.Pz()), 
       fTime, fLength, fELoss, fPdg);
 
-  stack->AddPoint(kSPiRIT);
+  if(std::strncmp(gMC -> CurrentVolName(), "kyoto", std::min(5, int(std::strlen(gMC -> CurrentVolName())))) == 0)  {
+    gMC -> StopTrack();
+    return kFALSE;
+  }
 
+  stack->AddPoint(kSPiRIT);
+  
   Double_t stepLength = gMC->TrackStep();
   stack->AddPoint(fVolumeID,fELoss,stepLength);
+
+ 
   return kTRUE;
 }
 

@@ -1,4 +1,4 @@
-void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOutName="", bool iter_unfold=false, int entries_lim=-1, int start_id = 0, bool iter_PID=false)
+void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOutName="", bool iter_unfold=false, int entries_lim=-1, bool iter_PID=false, int start_id = 0)
 {
   std::srand(std::time(0));
   gRandom -> SetSeed(std::time(0));
@@ -72,4 +72,5 @@ void run_analysis_xml(const std::string& xmlFile="analysisNote.xml", TString fOu
 
   cout << "Log    : " << log << endl;
   cout << "Output : " << out << endl;
+  std::exit(0);
 }

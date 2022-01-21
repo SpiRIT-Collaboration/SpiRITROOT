@@ -86,6 +86,7 @@ bool MCBDCInfoLoader::GetEntry(int i)
     fProjA = -999;
     fProjB = -999;
   }
+  return true;
 }
 
 ClassImp(STSingleTrackInCMGenerator);
@@ -105,7 +106,6 @@ STSingleTrackInCMGenerator::~STSingleTrackInCMGenerator()
 void STSingleTrackInCMGenerator::ReadConfig(const std::string& t_config)
 {
   TrackParser parser(t_config);
-
   {
     // load from VMCWORKDIR/parameters
     auto vmc_dir = gSystem->Getenv("VMCWORKDIR");
@@ -135,10 +135,18 @@ void STSingleTrackInCMGenerator::ReadConfig(const std::string& t_config)
   fBeamEnergyPerN = parser.Get<double>("BeamEnergyPerN");
 
   fPdgList.push_back(parser.GetList<int>("Particle")[0]);
-  if(fMCBeamFile.IsNull())
+  if(fNoBeamRotation)
+  {
+    LOG(INFO)<<"Generator will not rotate event by beam angle." <<FairLogger::endl;
+    fBDCInfo = std::unique_ptr<NullInfoLoader>(new NullInfoLoader);
+  } else if(fMCBeamFile.IsNull())
+  {
+    LOG(INFO)<<"Loading BDC beam angle for run " << " " << fVertexReader.GetRunNo() <<FairLogger::endl;
     fBDCInfo = std::unique_ptr<BDCInfoLoader>(new BDCInfoLoader(fVertexReader.GetRunNo(), -13.2));
-  else
+  } else {
+    LOG(INFO)<<"Loading beam angle from: " << fMCBeamFile <<FairLogger::endl;
     fBDCInfo = std::unique_ptr<MCBDCInfoLoader>(new MCBDCInfoLoader(fMCBeamFile));
+  }
 }
 
 

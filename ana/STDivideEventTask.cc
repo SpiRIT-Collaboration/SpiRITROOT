@@ -71,8 +71,8 @@ InitStatus STDivideEventTask::Init()
   fRunID = (TClonesArray*) ioMan -> GetObject("RunID");
 
   ioMan -> Register("TrackID", "ST", fID, fIsPersistence);
-  ioMan -> Register("EventID", "ST", fEventID, fIsPersistence);
-  ioMan -> Register("RunID", "ST", fRunID, fIsPersistence);
+  //ioMan -> Register("EventID", "ST", fEventID, fIsPersistence);
+  //ioMan -> Register("RunID", "ST", fRunID, fIsPersistence);
 
 
 

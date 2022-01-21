@@ -1,8 +1,8 @@
-Tot_Evt = 1300
-Num_Divided = 100
+Tot_Evt = 10000
+Num_Divided = 200
 
-DirName = ['AMD_b3']#UrQMD_b1_10_DR48']#['ImQMD_b3Sn112', 'ImQMD_b5Sn112', 'ImQMD_b7Sn112']
-FileName = ['amdNew_b3']#'urqmd_b1_10_DR48']#'imqmdNew_Varb/imqmdNew_Sn112b3.root', 'imqmdNew_Varb/imqmdNew_Sn112b5.root', 'imqmdNew_Varb/imqmdNew_Sn112b7.root']
+DirName = ['UrQMD_Sn132_b1_10_WithSC_CorTrig']#UrQMD_b1_10_DR48']#['ImQMD_b3Sn112', 'ImQMD_b5Sn112', 'ImQMD_b7Sn112']
+FileName = ['urqmd_b1_10_uniform_SMF']#amdNew_b3']#'urqmd_b1_10_DR48']#'imqmdNew_Varb/imqmdNew_Sn112b3.root', 'imqmdNew_Varb/imqmdNew_Sn112b5.root', 'imqmdNew_Varb/imqmdNew_Sn112b7.root']
 digiCharge = [10.2]
 length = [150]
 #'imqmdNew_sn112sn124_b5_SLy4']
@@ -73,5 +73,5 @@ rule run_transport_reco:
   shell:
     """
     LOGDIR={params.log_dir}/{wildcards.filename}
-    root -b -q -l 'run_reco_mc.C("{wildcards.filename}_DigiCharge{wildcards.digiCharge}_s{wildcards.id}",{wildcards.length},"{wildcards.filename}_DigiCharge{wildcards.digiCharge}_Length{wildcards.length}_s{wildcards.id}")' > ${{LOGDIR}}_{wildcards.id}_{wildcards.length}_reco.log
+    root -b -q -l 'run_reco_mc.C("{wildcards.filename}_DigiCharge{wildcards.digiCharge}_s{wildcards.id}","{wildcards.filename}_DigiCharge{wildcards.digiCharge}_Length{wildcards.length}_s{wildcards.id}")' > ${{LOGDIR}}_{wildcards.id}_{wildcards.length}_reco.log
     """

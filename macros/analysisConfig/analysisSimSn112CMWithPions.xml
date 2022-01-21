@@ -16,7 +16,7 @@
 
         <PIDProbTask Type="Bay">
             <MetaFile>Prior/Meta_SimSn112KanekoMult50.root</MetaFile>
-            <PIDFit>PIDFit/PIDSigma_SimSn112KanekoMult50.root</PIDFit>
+            <PIDFit>PIDFit/PIDSigma_SimSn112.root</PIDFit>
         </PIDProbTask>
 
         <PiProbTask>
@@ -106,7 +106,8 @@
         </EfficiencyTask>
 
         <ERATTask>
-            <ImpactParameterFile>ImpactParameter/urqmd_bTriggered.root</ImpactParameterFile>
+            <!--<IncludeBackward></IncludeBackward>-->
+            <ImpactParameterFile>ImpactParameter/urqmd_bSMFShadowNoTrig.root</ImpactParameterFile>
         </ERATTask>
 
         <PhiEfficiencyTask>

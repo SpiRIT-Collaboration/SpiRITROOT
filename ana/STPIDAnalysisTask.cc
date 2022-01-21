@@ -35,6 +35,11 @@ void STPIDAnalysisTask::SetBeamA(int t_beamA)
     fLogger -> Fatal(MESSAGE_ORIGIN, Form("Mass calibration file PIDCalib_%dSn.root is not found.", t_beamA));
 }
 
+void STPIDAnalysisTask::SetCutWidth(CUTWIDTH width) 
+{
+  fWidth = width;
+}
+
 void
 STPIDAnalysisTask::SetParContainers()
 {
@@ -61,7 +66,7 @@ STPIDAnalysisTask::Init()
     return kERROR;
   }
 
-  LOG(DEBUG) << "Initialization of STPIDAnalysisTaskTask" << FairLogger::endl;
+  LOG(INFO) << "Initialization of STPIDAnalysisTaskTask" << FairLogger::endl;
 
   fData = (TClonesArray*) ioMan -> GetObject("STData");
 
@@ -83,6 +88,12 @@ STPIDAnalysisTask::Init()
   ioMan -> Register("VAPIDNorm", "ST", fVAPIDNorm, fIsPersistence);
   ioMan -> Register("Prob", "ST", fPIDProb, fIsPersistence);
 
+  if(fWidth == CUTWIDTH::TIGHT) fLogger -> Info(MESSAGE_ORIGIN, "Using Tight cut. ");
+  else if(fWidth == CUTWIDTH::NORM) fLogger -> Info(MESSAGE_ORIGIN, "Using Norm cut. ");
+  else fLogger -> Info(MESSAGE_ORIGIN, "Using Loose cut. ");
+
+
+  return kSUCCESS;
 }
 
 void STPIDAnalysisTask::Exec(Option_t *opt)
@@ -93,8 +104,6 @@ void STPIDAnalysisTask::Exec(Option_t *opt)
   fVAPIDTight -> Delete();
   fVAPIDLoose -> Delete();
   fVAPIDNorm -> Delete(); 
-
-  LOG(INFO) << "Identifying particle" << FairLogger::endl;
 
   auto RecoPIDTight = new((*fRecoPIDTight)[0]) STVectorI();
   auto RecoPIDLoose = new((*fRecoPIDLoose)[0]) STVectorI();
@@ -141,12 +150,17 @@ void STPIDAnalysisTask::Exec(Option_t *opt)
     VAPIDLoose->fElements.push_back(this -> GetPIDLoose_(mass, dEdx));
   }
 
+  STVectorI* VAPID = nullptr;
+  if(fWidth == CUTWIDTH::TIGHT) VAPID = VAPIDTight;
+  else if(fWidth == CUTWIDTH::NORM) VAPID = VAPIDNorm;
+  else VAPID = VAPIDLoose;
+
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
     auto& element = static_cast<STVectorF*>(fPIDProb -> At(i)) -> fElements;
     element.resize(mult);
     for(int j = 0; j < mult; ++j)
-      if(VAPIDNorm -> fElements[j] == fSupportedPDG[i]) element[j] = 1;
+      if(VAPID -> fElements[j] == fSupportedPDG[i]) element[j] = 1;
       else element[j] = 0;
   }
 }

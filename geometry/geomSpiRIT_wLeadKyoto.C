@@ -669,11 +669,11 @@ void geomSpiRIT_wLeadKyoto()
   
   Double_t dlKyotoPla = 45.;
   Double_t dwKyotoPla = 5.;
-  Double_t dtKyotoPla = 1.;
+  Double_t dtKyotoPla = 5.;//1.;
   Double_t drKyotoPlaHole = .1;
-  TGeoVolume * kyotoPla = gGeoManager -> MakeBox("kyotoPla",lead,dtKyotoPla/2,dlKyotoPla/2,dwKyotoPla/2);
+  TGeoVolume * kyotoPla = gGeoManager -> MakeBox("kyotoPla",polystyrene,dtKyotoPla/2,dlKyotoPla/2,dwKyotoPla/2);
   
-  TGeoVolume * kyotoPla_in = gGeoManager -> MakeTube("kyotoPla_in",lead,0,drKyotoPlaHole,dlKyotoPla/2+0.1);
+  TGeoVolume * kyotoPla_in = gGeoManager -> MakeTube("kyotoPla_in",polystyrene,0,drKyotoPlaHole,dlKyotoPla/2+0.1);
   TGeoRotation * rotatKyotoPla_in = new TGeoRotation("rotatKyotoPla_in",0,90,0);
   TGeoCombiTrans * combiKyotoPla_in = new TGeoCombiTrans("combiKyotoPla_in",0,0,0,rotatKyotoPla_in);
   combiKyotoPla_in -> RegisterYourself();
@@ -720,7 +720,7 @@ void geomSpiRIT_wLeadKyoto()
   katanaVPlaM       -> SetMedium(lead);
   katanaVPlaR       -> SetMedium(lead);
 
-  for(Int_t ik=0; ik<60; ik++) kyoto[ik] -> SetMedium(lead);
+  for(Int_t ik=0; ik<60; ik++) kyoto[ik] -> SetMedium(polystyrene);
 
 
   // ----------------------------------------------------
@@ -734,6 +734,11 @@ void geomSpiRIT_wLeadKyoto()
   //  *** Note when adding node, that center of TPC is center of active volume.
   // ----------------------------------------------------
 
+  for(Int_t i=0; i<30; i++)
+    tpc -> AddNode(kyoto[i],i+1,transKyotoPlaL[i]);
+  for(Int_t i=0; i<30; i++)
+    tpc -> AddNode(kyoto[i+30],i+1+30,transKyotoPlaR[i]);
+
   tpc -> AddNode(active,1);
   tpc -> AddNode(cageFront,1);
   tpc -> AddNode(cageSide,1);
@@ -745,11 +750,6 @@ void geomSpiRIT_wLeadKyoto()
   tpc -> AddNode(backWindow,1,trbackwindow);
   tpc -> AddNode(topFrame,1);
   tpc -> AddNode(topPlate,1,transTopPlateVolume);
-
-  for(Int_t i=0; i<30; i++)
-    tpc -> AddNode(kyoto[i],i+1,transKyotoPlaL[i]);
-  for(Int_t i=0; i<30; i++)
-    tpc -> AddNode(kyoto[i+30],i+1+30,transKyotoPlaR[i]);
 
   tpc -> AddNode(katanaVPlaL,1,transKatanaVPlaL); 
   tpc -> AddNode(katanaVPlaM,2,transKatanaVPlaM); 

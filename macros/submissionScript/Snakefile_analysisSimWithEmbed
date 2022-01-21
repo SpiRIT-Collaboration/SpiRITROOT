@@ -18,7 +18,7 @@ localrules: AssignEffToXML
 
 rule all:
   input:
-    'data/%s/Final_PhiCor_graph.root' % input_dir,
+    'data/%s/Final_PhiBiasCor_graph.root' % input_dir,
     'data/%s/Res.txt' % input_dir,
     [vmc_dir + '/macros/data/' + input_dir + '/' + filename_bg_source + '_evts%d_s%d_s0.reco.v1.04.conc.root' % (sim_evt_per_jobs, i) for i in range(sim_Num_Divided)],
 
@@ -60,7 +60,7 @@ rule IterPIDMeta:
             'rmTask' : ['EfficiencyTask', 'SimpleGraphsTask', 'ReactionPlaneTask', 'ERATTask'],
             'execarg': 'TempFinal false %d true' % iter_samples,
             'exec': True}
-    for i in range(3):
+    for i in range(2):
       attr_change(output[1], args)
 
 rule IterUnfold:
@@ -88,7 +88,7 @@ rule IterUnfold:
             'rmTask' : ['SimpleGraphsTask', 'ReactionPlaneTask', 'ERATTask'],
             'execarg': 'TempFinal true %d false' % iter_samples,
             'exec': True}
-    for i in range(3):
+    for i in range(2):
       attr_change(output[1], args)
 
 def input_for_status(wcs):
@@ -97,6 +97,8 @@ def input_for_status(wcs):
            'Unfolding/SimSn%d' % proj + wcs.input_dir + '.root']
   if wcs.status != 'NoPhiEff':
     input = input + ['PhiEff/SimSn%d' % proj + wcs.input_dir + '.root']
+  if wcs.status != 'NoPhiEff' and wcs.status != 'PhiCor':
+    input = input + ['PhiEff/BiasCorSimSn%d' % proj + wcs.input_dir + '.root']
   if wcs.status == 'Second':
     input = input + ['data/' + wcs.input_dir + '/Final_First_ana.root']
   return input
@@ -108,7 +110,7 @@ rule analysis:
     eff = vmc_dir + '/macros/data/' + output_dir + '/Embed_ParticleType_Proton.root',
     data = [vmc_dir + '/macros/data/' + input_dir + '/' + filename_bg_source + '_evts%d_s%d_s0.reco.v1.04.conc.root' % (sim_evt_per_jobs, i) for i in range(sim_Num_Divided)]
   output:
-    temp('analysisConfig/analysisSimSn%dCM{input_dir}_{status}.xml' % proj),
+    'analysisConfig/analysisSimSn%dCM{input_dir}_{status}.xml' % proj,
     'data/{input_dir}/Final_{status}_ana.root'
   run:
     with open(input[0]) as f:
@@ -121,8 +123,9 @@ rule analysis:
     args = {'Dir': os.path.join('data',input_dir) + '/',
             'Filename': '*.conc',
             'PhiEff': None if wildcards.status == 'NoPhiEff' else input.files[3],
+            'BiasCor': None if wildcards.status == 'NoPhiEff' or wildcards.status == 'PhiCor' else input.files[4],
             'Divide': True if wildcards.status == 'First' or wildcards.status == 'Second' else False,
-            'Comp': input.files[4] if wildcards.status == 'Second' else None,
+            'Comp': input.files[5] if wildcards.status == 'Second' else None,
             'execarg': 'Final_%s false %d' % (wildcards.status, tot_samples),
             'exec': True}
     attr_change(output[0], args)
@@ -134,8 +137,19 @@ rule PhiEff:
     'PhiEff/SimSn%d{input_dir}.root' % proj
   shell:
     '''
-    root -b -l -q 'submissionScript/GetPhiEff.C({{"{input}"}},"{output}",8,20)' || true
+    root -b -l -q -e 'STAnaParticleDB::EnableChargedParticles();STAnaParticleDB::EnablePions();STPhiEfficiencyTask::CreatePhiEffFromData(vector<string>{{"{input}"}},"{output}",8,20);' || true
     '''
+
+rule PhiBias:
+  input:
+    'data/{input_dir}/Final_PhiCor_ana.root',
+  output:
+    'PhiEff/BiasCorSimSn%d{input_dir}.root' % proj
+  shell:
+   '''
+   root -b -l -q -e 'STReactionPlaneTask::CreateBiasCorrection("{input}","{output}");'
+   '''
+
 
 rule ReactionPlaneResolution:
   input:
@@ -150,10 +164,10 @@ rule ReactionPlaneResolution:
 
 rule GetAccurateGraph:
   input:
-    'data/{input_dir}/Final_PhiCor_ana.root'
+    'data/{input_dir}/Final_PhiBiasCor_ana.root'
   output:
-    'data/{input_dir}/Final_PhiCor_graph.root'
+    'data/{input_dir}/Final_PhiBiasCor_graph.root'
   shell:
     '''
-    root -b -l -q 'run_analysis_graph.C("{input_dir}/Final_PhiCor")' || true
+    root -b -l -q 'run_analysis_graph.C("{input_dir}/Final_PhiBiasCor")' || true
     '''

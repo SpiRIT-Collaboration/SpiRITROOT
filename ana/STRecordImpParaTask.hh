@@ -55,6 +55,7 @@ class STRecordImpParaTask : public FairTask {
     TH1F *fMLHist = nullptr;
     TH1F *fMultHist = nullptr;
     TH1F *fTrueHist = nullptr;
+    TH2F *fMLVsMult = nullptr;
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG(); /// load the array of supported particles. Your own particle information array should follows the same order
     

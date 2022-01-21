@@ -73,6 +73,13 @@ private:
   std::map<int, int> fEventIDToEntry;
 };
 
+class NullInfoLoader : public BeamAngleLoader
+{
+public:
+  NullInfoLoader() { fProjA = fProjB = 0; };
+  virtual bool GetEntry(int i) {return true; };
+};
+
 /***
  *
  * In default, this class produces one proton track in one event with (0., 0., 500.) [MeV] momentum
@@ -107,6 +114,8 @@ class STSingleTrackInCMGenerator : public FairGenerator
 
     // use this if the source is a mc digi file
     void SetMCBeamFile(TString filename) { fMCBeamFile = filename; }
+    // use this if you don't want to perform any beam rotation
+    void SetNoBeamRotation() { fNoBeamRotation = true; }
     void RegisterHeavyIon();
 
   private:
@@ -134,6 +143,7 @@ class STSingleTrackInCMGenerator : public FairGenerator
     VertexReader fParticleReader;
     std::unique_ptr<BeamAngleLoader> fBDCInfo;
     const double      fNucleonMass = 0.9315;
+    Bool_t fNoBeamRotation = false;
 
     ClassDef(STSingleTrackInCMGenerator,1);
 };

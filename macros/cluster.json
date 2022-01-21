@@ -1,13 +1,13 @@
 {
   "__default__" :
   {
-    "job-name" : "default",
+    "job-name" : "{rule}",
     "time" : "15:00:0",
     "mem" : "4G",
     "ntasks" : "1",
     "cpus-per-task" : "1",
-    "output" : "log/{rule}.out",
-    "error" : "log/{rule}.err"
+    "output" : "log/{rule}-%A.out",
+    "error" : "log/{rule}-%A.err"
   },
   "trim":
   {
@@ -231,7 +231,7 @@
     "output" : "log/{wildcards.filename}_id_{wildcards.id}_DigiTransport.out",
     "error" : "log/{wildcards.filename}_id_{wildcards.id}_DigiTransport.err",
     "time" : "03:59:59",
-    "mem" : "6000",
+    "mem" : "4000",
     "ntasks" : "1",
     "cpus-per-task" : "1"
   },

@@ -43,6 +43,10 @@ parser.add_argument('--UseMLPID', default=False, action='store_true', help='Swit
 parser.add_argument('--bType', help='Type of impact parameter for event filter')
 parser.add_argument('--bMin', help='Minimum impact parameter')
 parser.add_argument('--bMax', help='Maximum impact parameter')
+parser.add_argument('--PiNClus', help='Number of clusters used in pion analysis')
+parser.add_argument('--PiDPoca', help='Distance to vertex in pion analysis')
+parser.add_argument('--NClus', help='Number of clusters used in analysis of light fragments')
+parser.add_argument('--DPoca', help='Distance to vertex in analysis of light fragments')
 
 
 
@@ -118,7 +122,11 @@ def main(input, values):
                      'ImpModel': 'TaskList/ImpactParameterMLTask/ModelFile',
                      'bType': 'TaskList/EventFilterTask/bType',
                      'bMin': 'TaskList/EventFilterTask/bMin',
-                     'bMax': 'TaskList/EventFilterTask/bMax'}
+                     'bMax': 'TaskList/EventFilterTask/bMax',
+		     'PiNClus': 'TaskList/EfficiencyTask/EfficiencyGroup[@Type="Orig"]/NClus',
+		     'PiDPoca': 'TaskList/EfficiencyTask/EfficiencyGroup[@Type="Orig"]/DPoca',
+                     'NClus': 'TaskList/EfficiencyTask/EfficiencyGroup[@Type="CM"]/NClus',
+		     'DPoca': 'TaskList/EfficiencyTask/EfficiencyGroup[@Type="CM"]/DPoca'}
 
   for key, paths in parameter_table.items():
     value = values[key]

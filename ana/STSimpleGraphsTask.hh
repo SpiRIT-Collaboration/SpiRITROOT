@@ -35,6 +35,8 @@
 // STL
 #include <vector>
 #include <memory>
+#include <functional>
+#include <unordered_map>
 
 struct DataPackage
 {
@@ -71,7 +73,7 @@ struct DataPackage
    int fPartID; // indicates which element of the tclones array needs to be loaded
    std::vector<float> fWeight; // prob/ 
    std::vector<float> fPtxRap; // x-rapidity distribution. Extended from transverse rapidity assuming uniform phi dist
-   std::map<TCArrType, double> fDefaultValues{{EFF, 1}, {EFFERR, 0}, {PHIEFF, 1}, {V1RPANGLE, 0}, {V2RPANGLE, 0}, {SD, 0}};
+   std::unordered_map<TCArrType, double> fDefaultValues{{EFF, 1}, {EFFERR, 0}, {PHIEFF, 1}, {V1RPANGLE, 0}, {V2RPANGLE, 0}, {SD, 0}};
 };
 
 class STSimpleGraphsTask : public FairTask {
@@ -130,15 +132,22 @@ class STSimpleGraphsTask : public FairTask {
     // for MC CIN CIP
     Double_t fPtThresholdForMC = 0;
     // this one is for drawing flow
+    Double_t fSDThresholdForVs = 2.2;
     Double_t fMidRapThresholdForVs = 0.5;
     Double_t fPtThresholdForVs = 0.;
-    Double_t fProbThresholdForVs = 0.95;
-    Double_t fPhiEffThresholdForVs = 0.2;
+    Double_t fProbThresholdForVs = 0.7;
+    Double_t fPhiEffThresholdForVs = 0.05;
+    Double_t fPhiThresholdForVs = 1000;
     // this one is for rapidity plots
     Double_t fProbThresholdForRap = 0.2;
+    Double_t fProbHe3ThresholdForRap = 0.2;
     Double_t fSDThresholdForRap = 1000;
     Double_t fEffThresholdForRap = 0.05;
     Double_t fPtThresholdForRap = 0;
+    // for pion in-plane and out of plane
+    Double_t fRPAngleForPi = 0;
+    Double_t fRPRangeForPi = 1000; // only accept abs(RP - fRPAngleForPi) < fRPRangeForPi
+    Double_t fPhiRangeForPi = 1000;
     // For drawing PIDs
     int fNYaw = 6;
     int fNPitches = 5;

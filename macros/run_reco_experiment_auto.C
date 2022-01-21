@@ -7,14 +7,12 @@ void run_reco_experiment_auto
   Int_t fRunNo = 2894,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 500,
-  /*0double fLength = 300,*/
   std::vector<Int_t> fSkipEventArray = {},
   TString fMCFile = "",
   TString fPathToData = "", 
   TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement"
 )
 {
-  double fLength = 300;
   /* ======= This part you need initial configuration ========= */
   // Parameter database file - files should be in parameters folder.
   TString systemDB = "systemDB.csv";
@@ -60,14 +58,11 @@ void run_reco_experiment_auto
   if (fIsBeamDataSet) fBeamData = Form(beamDataPathWithFormat.Data(), fRunNo);
   TString fGainMatchingFile = fSpiRITROOTPath + Form("parameters/RelativeGainRun%d.list", fRelativeGainRunID);
 
-  cout << "cp0" << endl;
-
   Int_t start = fSplitNo * fNumEventsInSplit;
   if (start >= fNumEventsInRun) return;
   if (start + fNumEventsInSplit > fNumEventsInRun)
     fNumEventsInSplit = fNumEventsInRun - start;
 
-  cout << "cp1" << endl;
   TString sRunNo   = TString::Itoa(fRunNo, 10);
   TString sSplitNo = TString::Itoa(fSplitNo, 10);
 
@@ -161,7 +156,7 @@ void run_reco_experiment_auto
 
   auto preview = new STEventPreviewTask();
   preview -> SetSkippingEvents(fSkipEventArray);
-  preview -> SetPersistence(true);
+  preview -> SetPersistence(false);
   //preview -> SetSelectingEvents(*events[fRunNo]);
 
   auto psa = new STPSAETask();
@@ -198,7 +193,6 @@ void run_reco_experiment_auto
   auto gfBField = STGFBField::GetInstance("samurai_field_map", "A", fFieldOffsetX, fFieldOffsetY, fFieldOffsetZ);   
 
   auto spaceCharge = new STSpaceChargeCorrectionTask();
-  spaceCharge -> DiscardLengthAfter(fLength);
   spaceCharge -> SetBField(gfBField -> GetFieldMap());
   if (fSheetChargeDensity != 0) {
     spaceCharge -> SetDriftParameters(-4.355e4, -2.18); // omega tau and mu of the Langevin equation
@@ -222,15 +216,15 @@ void run_reco_experiment_auto
   genfitPID -> SetBDCFile("");
   // Only for test
   // genfitPID -> SetConstantField();
-  genfitPID -> SetListPersistence(true);
+  genfitPID -> SetListPersistence(false);
   // Removing shorter length tracklet by distance of adjacent clusters.
   // genfitPID -> SetMaxDCluster(60);
-  /*
+  
   auto genfitVA = new STGenfitVATask();
   genfitVA -> SetPersistence(true);
   // Only for test
   // genfitVA -> SetConstantField();
-  genfitVA -> SetListPersistence(true);
+  genfitVA -> SetListPersistence(false);
   if (fIsBeamDataSet) {
     genfitVA -> SetBeamFile(fBeamData);
     genfitVA -> SetInformationForBDC(fRunNo, fBDCOffsetX, fBDCOffsetY, 0);
@@ -239,7 +233,7 @@ void run_reco_experiment_auto
   genfitVA -> SetUseRave(true);
   genfitVA -> ShiftBDCAfterSC("../parameters/vertex_shift_Sn" + std::to_string(int(fSystemID/1000)) + ".root", 80);
   genfitVA -> SetZtoProject(-13.2, 1.7, 3); //(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple), this function will project the BDC on the Target.
-  */
+  
   auto embedCorr = new STEmbedCorrelatorTask();
   embedCorr -> SetPersistence(true);
 
@@ -256,7 +250,7 @@ void run_reco_experiment_auto
   run -> AddTask(correct);
   run -> AddTask(spaceCharge);
   run -> AddTask(genfitPID);
-  //run -> AddTask(genfitVA);
+  run -> AddTask(genfitVA);
   if(!fMCFile.IsNull())
     run -> AddTask(embedCorr);
   run -> AddTask(smallOutput);

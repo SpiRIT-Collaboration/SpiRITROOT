@@ -1,11 +1,12 @@
 import pandas as pd
 import os
 
-num_threads_per_job = 20
-num_threads_per_reco_job = 20
-tot_events = 200
-run_num = 2899
-SupplePath='/mnt/spirit/analysis/user/tsangc/SpiRITROOT/Picked_run_%04dKaneko/' % run_num
+num_threads_per_job = 10
+num_threads_per_reco_job = 10
+tot_events = 300
+run_num = 2272
+SupplePath='/mnt/spirit/analysis/user/tsangc/SpiRITROOT/Picked_run_2272_Mult40/'
+#SupplePath='/mnt/spirit/analysis/user/tsangc/SpiRITROOT/Picked_run_%04dKaneko/' % run_num
 config_file = 'Pion_test.dat'
 
 """
@@ -39,12 +40,12 @@ rule run_mc:
   input:
     vmc_dir + '/macros/data/{filename}_par.dat'
   output:
-    expand('{VMCDIR}/macros/data/{{filename}}_SARR_{{id}}.mc.root', 
-           VMCDIR=vmc_dir),
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_SARR_{{id}}.mc.root', 
+           VMCDIR=vmc_dir)),
     temp(expand('{VMCDIR}/macros/data/{{filename}}_SARR_{{id}}.params.root', 
          VMCDIR=vmc_dir)), 
-    expand('{VMCDIR}/macros/data/{{filename}}_SARR_{{id}}.digi.root', 
-         VMCDIR=vmc_dir)
+    temp(expand('{VMCDIR}/macros/data/{{filename}}_SARR_{{id}}.digi.root', 
+         VMCDIR=vmc_dir))
   resources:
     cpu=1
   params:
@@ -71,7 +72,7 @@ rule run_reco:
   input:
     expand('{VMCDIR}/macros/data/{{filename}}_SARR_{id}.digi.root', VMCDIR=vmc_dir, id=['%02d' % i for i in range(0, num_threads_per_job)])
   output:
-    expand('{VMCDIR}/macros/data/{{filename}}/run{run_num}_s{{id}}.reco.{version}.root', run_num=run_num, VMCDIR=vmc_dir, version=spiritroot_ver),
+    temp(expand('{VMCDIR}/macros/data/{{filename}}/run{run_num}_s{{id}}.reco.{version}.root', run_num=run_num, VMCDIR=vmc_dir, version=spiritroot_ver)),
     expand('{VMCDIR}/macros/data/{{filename}}/run{run_num}_s{{id}}.reco.{version}.conc.root', run_num=run_num, VMCDIR=vmc_dir, version=spiritroot_ver)
   resources:
     cpu=1

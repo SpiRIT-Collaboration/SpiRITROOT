@@ -26,6 +26,7 @@ public:
 
   void SetVerbose(Bool_t value = kTRUE);
   void SetElectronDrift(Bool_t value = kTRUE);
+  void DiscardLengthAfter(double val) { fMaxZ = val; }
 
   bool SearchForRunPar(const std::string& filename, int run_num);   
 
@@ -37,6 +38,7 @@ private:
   double TPCy = 506.1; //!< Default height of the TPC
   
   TClonesArray *fHitClusterArray = nullptr;
+  double fMaxZ = 200;
 
   STSpaceChargeCorrectionTask(const STSpaceChargeCorrectionTask&);
   STSpaceChargeCorrectionTask operator=(const STSpaceChargeCorrectionTask&);

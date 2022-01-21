@@ -57,6 +57,7 @@ InitStatus STRecordImpParaTask::Init()
     fLogger -> Info(MESSAGE_ORIGIN, "Found bTruth branch. Will plot true impact parameter distribution.");
     fTrueHist = new TH1F("TrueHist", "TrueHist", 20, 0, 10);
   }
+  if(fMultImp && fMLImp) fMLVsMult = new TH2F("MLVsMult", ";Mult;ML", 50, 0, 10, 50, 0, 10);
 
   return kSUCCESS;
 }
@@ -86,7 +87,11 @@ void STRecordImpParaTask::Exec(Option_t *opt)
   if(fMultHist) 
   {
     double bhat = fMultImp -> fElements[0];
-    fMultHist -> Fill(bhat*fBMax + fSmear*gRandom->Uniform(-0.5, 0.5)*(bhat - 1));
+    double b = bhat*fBMax + fSmear*gRandom->Uniform(-0.5, 0.5)*(bhat - 1);
+    fMultHist -> Fill(b);
+    if(fMLVsMult)
+      fMLVsMult -> Fill(b, fMLImp -> fElements[0]);
+
   }
   if(fTrueHist) fTrueHist -> Fill(fTrueImp -> fElements[0]);
 }
@@ -99,6 +104,7 @@ void STRecordImpParaTask::FinishTask()
    if(fMLHist) fMLHist -> Write();
    if(fMultHist) fMultHist -> Write();
    if(fTrueHist) fTrueHist -> Write();
+   if(fMLVsMult) fMLVsMult -> Write();
 }
 
 
