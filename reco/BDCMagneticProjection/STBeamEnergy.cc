@@ -75,13 +75,13 @@ Double_t STBeamEnergy::getAoq() {
   return m_aoq;
 }
 Double_t STBeamEnergy::setMass() {
-  m_mass = /*(Double_t)((Int_t)*/((m_aoq*m_z)*931.494*0.9993774);
+  return m_mass = /*(Double_t)((Int_t)*/((m_aoq*m_z)*931.494*0.9993774);
 }
 Double_t STBeamEnergy::getMass() {
   return m_mass;
 }
 Double_t STBeamEnergy::setEnergy78() {
-  m_energy78 = m_mass*(1/TMath::Sqrt(1 - m_beta78*m_beta78));
+  return m_energy78 = m_mass*(1/TMath::Sqrt(1 - m_beta78*m_beta78));
 }
 
 Double_t STBeamEnergy::getEnergy78() {

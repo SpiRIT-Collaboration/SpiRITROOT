@@ -155,6 +155,7 @@ void run_reco_experiment_auto
   }
 
   auto embedTask = new STEmbedTask();
+  embedTask -> SetPersistence(false);
   embedTask -> SetEventID(start);
   embedTask -> SetEmbedFile(fMCFile);
 

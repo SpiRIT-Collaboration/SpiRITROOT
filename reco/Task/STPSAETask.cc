@@ -194,7 +194,7 @@ void STPSAETask::Exec(Option_t *opt)
 	    {
 	      if(map_embed.at(iPad).size()!=0)
 		{
-		  miss_hits =  abs(map_hit.at(iPad).size() - map_embed.at(iPad).size() - map_data.at(iPad).size());
+		  miss_hits =  abs(int(map_hit.at(iPad).size()) - int(map_embed.at(iPad).size()) - int(map_data.at(iPad).size()));
 		  //	    bool any_missing_hits = (map_hit.at(i).size() + map_embed.at(i).size() != map_data.at(i).size());
 		  
 		  //First we find the hits that match just data without embeded hits
