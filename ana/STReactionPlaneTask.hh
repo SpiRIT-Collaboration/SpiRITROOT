@@ -58,6 +58,9 @@ class STReactionPlaneTask : public FairTask {
     void UseMCReactionPlane(bool val = true, double res = 0) { fUseMCReactionPlane = val; fMCReactionPlaneRes = res*TMath::DegToRad(); }
     void SetMaxTheta(double val) { fThetaCut = val; }
     void SetMidRapidity(double val) { fMidRapidity = val; }
+    void SetPIDCut(double prob, double sd, double dpoca) { fProbVal = prob; fSDVal = sd; fDPocaVal = dpoca; }
+    void SetPhiEffThreshold(double threshold) { fPhiEffThreshold = threshold; }
+    void SetPrepWeight(bool val) { fPrepWeight = val; }
     void UseShifting(bool val = true) { fShift = val; }
     void UseFlattening(bool val = true) {fFlat = val; }
 
@@ -74,18 +77,21 @@ class STReactionPlaneTask : public FairTask {
     TClonesArray *fData;
     TClonesArray *fCMVector;
     TClonesArray *fProb;
+    TClonesArray *fSD;
     TClonesArray *fFragRapidity;
     TClonesArray *fPhiEff;
     TClonesArray *fV1RPAngle;
     TClonesArray *fV2RPAngle;
+    TClonesArray *fQx;
+    TClonesArray *fQy;
     STVectorF *fBeamRapidity;
     STVectorF *fMCRotZ;
 
     STVectorF *fReactionPlane;
     STVectorF *fReactionPlaneV2;
     STVectorF *fQMag;
-    double fThetaCut = 90; // max theta in populating v1 and v2 in lab frame
-    double fMidRapidity = 0.4; // when |y| < fMidRapidity, they will not count towards reaction plane calculation
+    double fThetaCut = 180; // max theta in populating v1 and v2 in lab frame
+    double fMidRapidity = 0; // when |y| < fMidRapidity, they will not count towards reaction plane calculation
     const std::vector<int> fSupportedPDG = STAnaParticleDB::GetSupportedPDG();
 
     double fChargeCoef = 0;
@@ -94,6 +100,11 @@ class STReactionPlaneTask : public FairTask {
     std::vector<double> fParticleCoef; // alternative to the linear combination. Will ignore charge, mass and const coef it this is set
     bool fUseMCReactionPlane = false; // if enabled, will rotate particle using the truth MC rotation angle instead of the infered reaction plane
     double fMCReactionPlaneRes = 0;
+    double fProbVal = 0.9;
+    double fSDVal = 3;
+    double fDPocaVal = 20;
+    double fPhiEffThreshold = 0.05;
+    bool   fPrepWeight = true;
 
     std::string fBiasFilename;
     TFile *fBiasFile = nullptr;

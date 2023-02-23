@@ -88,6 +88,9 @@ void STConcReaderTask::LoadFromXMLNode(TXMLNode *node)
   }
   else fLogger -> Fatal(MESSAGE_ORIGIN, ("Cannot parse dataType " + dataType).c_str());
 
+  if(nodeInfo.find("CompFile") != nodeInfo.end())
+    this -> AlignSample(nodeInfo["CompFile"][0]);
+
   if(chain -> GetEntries() == 0)
     fLogger -> Fatal(MESSAGE_ORIGIN, "No entries is being read from the file!");
   gErrorIgnoreLevel = origLevel;
@@ -97,8 +100,11 @@ void STConcReaderTask::LoadFromXMLNode(TXMLNode *node)
 
 int STConcReaderTask::GetNEntries()
 {
-  if(fChain) return fChain -> GetEntries();
-  else return 0;
+  if(fChain) 
+  {
+    if(fCompChain) return std::min(fCompChain -> GetEntries(), fChain -> GetEntries());
+    else return fChain -> GetEntries();
+  } else return 0;
 }
 
 InitStatus STConcReaderTask::Init()
@@ -183,12 +189,41 @@ STConcReaderTask::SetParContainers()
 
 void STConcReaderTask::Exec(Option_t *opt)
 {
-  if(fTreeSampleID.size() > 0)
+  if(fTreeSampleID.size() > 0 && !fCompFile) // when compfile is present, it overrides eventID
   {
     if(fTreeSampleID_it == fTreeSampleID.end())
       fLogger -> Fatal(MESSAGE_ORIGIN, "There are no more random id to sample.");
     fEventID = *fTreeSampleID_it;
     ++fTreeSampleID_it;
+  }
+
+  if(fCompFile) {
+    if(fCompChain -> GetEntries() <= fCompID) 
+      fEventID = fChain -> GetEntries(); // The end
+    while(fCompChain -> GetEntries() > fCompID && fChain -> GetEntries() > fEventID) 
+    {
+      fChain -> GetEntry(fEventID);
+      int eventID;
+      int runID;
+      if(!fIsTrimmedFile)
+      {
+        eventID = (fMCLoadedID >= 0)? fMCLoadedID : fEventID; 
+        runID = fRunID;
+      } else 
+      {
+        eventID = static_cast<STVectorI*>(fMCEventID -> At(0)) -> fElements[0];
+        runID = static_cast<STVectorI*>(fRunIDArr -> At(0)) -> fElements[0];
+      }
+      if(eventID == static_cast<STVectorI*>(fCompEventID -> At(0)) -> fElements[0] &&
+         runID == static_cast<STVectorI*>(fCompRunIDArr -> At(0)) -> fElements[0])
+      {
+        ++fCompID;
+        if(fCompChain -> GetEntries() > fCompID)
+            fCompChain -> GetEntry(fCompID);
+        break;
+      } else
+        ++fEventID;
+    }
   }
 
   if(fChain -> GetEntries() > fEventID)
@@ -231,5 +266,17 @@ void STConcReaderTask::RandSample(int nevents)
   }
 
 
+}
+void STConcReaderTask::AlignSample(const std::string& compFile) 
+{
+  fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Align run and eventID with trees from %s.", compFile.c_str()));
+  fCompFile = new TFile(compFile.c_str());
+  fCompChain = static_cast<TChain*>(fCompFile -> Get("cbmsim"));
+  if(!fCompChain) fLogger -> Fatal(MESSAGE_ORIGIN, "Cannot load event ID from complementary files. Bewarn that STConcReaderTask::AlignSample only work with trimmed files, not those direct output from STSmallOutputTask.");
+
+  fCompChain -> SetBranchAddress("EventID", &fCompEventID);
+  fCompChain -> SetBranchAddress("RunID", &fCompRunIDArr);
+  fCompID = 0;
+  fCompChain -> GetEntry(fCompID);
 }
    

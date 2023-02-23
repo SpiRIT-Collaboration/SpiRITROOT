@@ -53,6 +53,7 @@ class STDivideEventTask : public FairTask {
     
     TClonesArray *fData = nullptr;
     TClonesArray *fProb = nullptr;
+    TClonesArray *fSD = nullptr;
     TClonesArray *fEff = nullptr;
     TClonesArray *fEventID = nullptr;
     TClonesArray *fRunID = nullptr;

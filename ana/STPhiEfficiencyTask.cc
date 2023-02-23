@@ -95,7 +95,7 @@ void STPhiEfficiencyTask::Exec(Option_t *opt)
       const auto& vec = cmVector -> fElements[j];
       double theta = vec.Theta();
       double phi = vec.Phi();
-      if(TEff && !std::isnan(theta)) eff = TEff -> Interpolate(theta, phi);
+      if(TEff && !std::isnan(theta) && !fOnlyNClusCut) eff = TEff -> Interpolate(theta, phi);
       if(!(data -> vaNRowClusters[j] + data -> vaNLayerClusters[j] > fMinNClusters && data -> recodpoca[j].Mag() < fMaxDPOCA)) eff = 0;
       phiEff.push_back(eff);
     }

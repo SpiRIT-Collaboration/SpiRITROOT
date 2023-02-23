@@ -131,6 +131,7 @@ InitStatus STPiProbTask::Init()
 
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   fProb = (TClonesArray*) ioMan -> GetObject("Prob");
+  fSD = (TClonesArray*) ioMan -> GetObject("SD");
   fSkip = (STVectorI*) ioMan -> GetObject("Skip");
 
   fFlattenPID = new TClonesArray("STVectorF");
@@ -162,7 +163,9 @@ void STPiProbTask::Exec(Option_t *opt)
 
   auto data = static_cast<STData*>(fData -> At(0));
   auto& pip_prob_list = static_cast<STVectorF*>(fProb -> At(fPiPlusID)) -> fElements;
+  auto& pip_sd_list = static_cast<STVectorF*>(fSD -> At(fPiPlusID)) -> fElements;
   auto& pim_prob_list = static_cast<STVectorF*>(fProb -> At(fPiMinusID)) -> fElements;
+  auto& pim_sd_list = static_cast<STVectorF*>(fSD -> At(fPiMinusID)) -> fElements;
   auto& flat_pid = static_cast<STVectorF*>(fFlattenPID -> At(0)) ->fElements;
   flat_pid.clear();
   for(int i = 0; i < data -> multiplicity; ++i)
@@ -220,6 +223,9 @@ void STPiProbTask::Exec(Option_t *opt)
     flat_pid.push_back(flatdedxs05);
     pip_prob_list.push_back(pip_prob);
     pim_prob_list.push_back(pim_prob);
+    // SD not implemented
+    pip_sd_list.push_back(0);
+    pim_sd_list.push_back(0);
   }
 }
 

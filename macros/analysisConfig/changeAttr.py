@@ -47,6 +47,7 @@ parser.add_argument('--PiNClus', help='Number of clusters used in pion analysis'
 parser.add_argument('--PiDPoca', help='Distance to vertex in pion analysis')
 parser.add_argument('--NClus', help='Number of clusters used in analysis of light fragments')
 parser.add_argument('--DPoca', help='Distance to vertex in analysis of light fragments')
+parser.add_argument('--BinaryPhiEff', default=False, action='store_true', help='Only set phi efficiency to either 1 or zero')
 
 
 
@@ -90,6 +91,10 @@ def main(input, values):
     values['MinBias'] = ''
   else:
     values['MinBias'] = None
+  if values['BinaryPhiEff']:
+    values['BinaryPhiEff'] = ''
+  else:
+    values['BinaryPhiEff'] = None
 
 
 
@@ -126,7 +131,8 @@ def main(input, values):
 		     'PiNClus': 'TaskList/EfficiencyTask/EfficiencyGroup[@Type="Orig"]/NClus',
 		     'PiDPoca': 'TaskList/EfficiencyTask/EfficiencyGroup[@Type="Orig"]/DPoca',
                      'NClus': 'TaskList/EfficiencyTask/EfficiencyGroup[@Type="CM"]/NClus',
-		     'DPoca': 'TaskList/EfficiencyTask/EfficiencyGroup[@Type="CM"]/DPoca'}
+		     'DPoca': 'TaskList/EfficiencyTask/EfficiencyGroup[@Type="CM"]/DPoca',
+                     'BinaryPhiEff': 'TaskList/PhiEfficiencyTask/OnlyNClus'}
 
   for key, paths in parameter_table.items():
     value = values[key]
@@ -157,13 +163,15 @@ def main(input, values):
     if values['Comp'] is not None:
       # we will reject EventFilterTask if Comp file is set
       # since we accept all events in the comp file, regardless of EventFilterTask
-      print('Since comp file is set, we will remove EventFilterTask')
-      if values['rmTask'] is None:
-        values['rmTask'] = ['EventFilterTask']
-      else:
-        values['rmTask'] = values['rmTask'] + ['EventFilterTask']
+      #print('Since comp file is set, we will remove EventFilterTask')
+      #if values['rmTask'] is None:
+      #  values['rmTask'] = ['EventFilterTask']
+      #else:
+      #  values['rmTask'] = values['rmTask'] + ['EventFilterTask']
       comp = ET.SubElement(child, 'ComplementaryTo')
       comp.text = values['Comp']
+      child = ET.SubElement(root.find('IOInfo'), 'CompFile')
+      child.text = values['Comp']
 
   if values['rmTask'] is not None:
     for task_name in values['rmTask']:

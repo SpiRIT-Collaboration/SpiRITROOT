@@ -17,7 +17,7 @@ STDivideEventTask::STDivideEventTask() : fComplementaryEvent("cbmsim")
   fLogger = FairLogger::GetLogger(); 
   fComplementaryID = new STVectorI;
   fID = new STVectorI;
-  fSkip = new STVectorI;
+  fSkip = nullptr;//new STVectorI;
 }
 
 STDivideEventTask::~STDivideEventTask()
@@ -56,17 +56,23 @@ InitStatus STDivideEventTask::Init()
     fComplementaryEvent.SetBranchAddress("TrackID", &fComplementaryID);
 
     //fComplementaryEvent.SetBranchAddress("EventID", &fCompEventID);
-    fSkip -> fElements.push_back(0);
-    ioMan -> Register("Skip", "ST", fSkip, fIsPersistence);
+    //fSkip -> fElements.push_back(0);
+    //ioMan -> Register("Skip", "ST", fSkip, fIsPersistence);
   }
   else
   { 
     fLogger -> Info(MESSAGE_ORIGIN, "Will cut every event into half randomly.");
-    fSkip = (STVectorI*) ioMan -> GetObject("Skip");
+    //fSkip = (STVectorI*) ioMan -> GetObject("Skip");
+  }
+  fSkip = (STVectorI*) ioMan -> GetObject("Skip");
+  if(!fSkip) {
+    fLogger -> Error(MESSAGE_ORIGIN, "Skip is not found. You need FilterEvent class for DivideEvent class to work");
+    return kERROR;
   }
   fData = (TClonesArray*) ioMan -> GetObject("STData");
   fProb = (TClonesArray*) ioMan -> GetObject("Prob");
   fEff = (TClonesArray*) ioMan -> GetObject("Eff");
+  fSD = (TClonesArray*) ioMan -> GetObject("SD");
   fEventID = (TClonesArray*) ioMan -> GetObject("EventID");
   fRunID = (TClonesArray*) ioMan -> GetObject("RunID");
 
@@ -101,8 +107,7 @@ void STDivideEventTask::Exec(Option_t *opt)
   auto data = static_cast<STData*>(fData -> At(0));
   if(fComplementaryEvent.GetEntries() == 0)
   {
-    if(fSkip)
-      if(fSkip -> fElements[0] == 1) return; // skip event
+    if(fSkip -> fElements[0] == 1) return; // skip event
 
     for(int i = 0; i < data -> multiplicity; ++i) fID -> fElements.push_back(i);
     std::random_shuffle(fID -> fElements.begin(), fID -> fElements.end());
@@ -113,13 +118,13 @@ void STDivideEventTask::Exec(Option_t *opt)
   {
     auto it = fEventIDToTreeID.find({static_cast<STVectorI*>(fEventID -> At(0)) -> fElements[0], 
                                      static_cast<STVectorI*>(fRunID -> At(0)) -> fElements[0]});
-    if(it == fEventIDToTreeID.end())
-    {
-      FairRunAna::Instance() -> MarkFill(false); // reject events that are not present in the complementary file
-      if(fSkip) fSkip -> fElements[0] = 1;
-      return;
+    int skipFlag = (it == fEventIDToTreeID.end())? 1 : 0;
+    if(fSkip -> fElements[0] != skipFlag) {
+        fLogger -> Info(MESSAGE_ORIGIN, "Event selection from EventFilter class disagrees with ComplementaryEvent file. Will override EventFilter class to force event alignment.");
+        fSkip -> fElements[0] = skipFlag;
+        FairRunAna::Instance() -> MarkFill(skipFlag == 0);
     }
-    else if(fSkip) fSkip -> fElements[0] = 0;
+    if(skipFlag == 1) return;
 
     fComplementaryEvent.GetEntry(it -> second);
     std::vector<int> all_ids;
@@ -183,12 +188,15 @@ void STDivideEventTask::Exec(Option_t *opt)
     {
       order = 0;
       auto prob = static_cast<STVectorF*>(fProb -> At(i));
+      auto sd = static_cast<STVectorF*>(fSD -> At(i));
       for(int id : fID -> fElements) 
       {
         prob -> fElements[order] = prob -> fElements[id];
+        sd -> fElements[order] = sd -> fElements[id];
         ++order;
       }
       prob -> fElements.resize(mult);
+      sd -> fElements.resize(mult);
     }
   }
 

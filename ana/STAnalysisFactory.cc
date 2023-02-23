@@ -342,6 +342,7 @@ STPhiEfficiencyTask* STAnalysisFactory::GetPhiEfficiencyTask()
   auto task = new STPhiEfficiencyTask();
   auto it2 = settings.find("PhiEff");
   if(it2 != settings.end()) task -> LoadPhiEff(it2 -> second);
+  if(settings.find("OnlyNClus") != settings.end()) task -> OnlyNClus(true);
   return task;
 }
 

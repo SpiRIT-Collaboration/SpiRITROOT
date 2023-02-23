@@ -38,6 +38,7 @@ class STPhiEfficiencyTask : public FairTask {
 
     void SetPersistence(Bool_t value);
     void LoadPhiEff(const std::string& eff_filename);
+    void OnlyNClus(bool NClusCut = true) { fOnlyNClusCut = NClusCut; };
 
     static void CreatePhiEffFromData(const std::vector<std::string>& ana_filenames, const std::string& out_filename, int nClus=5, double poca=20);
     static void CreatePhiEffFromData(const std::string& ana_filename, const std::string& out_filename, int nClus=5, double poca=20);
@@ -57,6 +58,7 @@ class STPhiEfficiencyTask : public FairTask {
 
     int fMinNClusters = 0;
     double fMaxDPOCA = 20;
+    bool fOnlyNClusCut = false;
 
   ClassDef(STPhiEfficiencyTask, 1);
 };

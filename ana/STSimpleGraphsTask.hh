@@ -137,7 +137,7 @@ class STSimpleGraphsTask : public FairTask {
     Double_t fPtThresholdForVs = 0.;
     Double_t fProbThresholdForVs = 0.7;
     Double_t fPhiEffThresholdForVs = 0.05;
-    Double_t fPhiThresholdForVs = 1000;
+    std::vector<std::pair<Double_t, Double_t>> fPhiThresholdForVs = {{330, 360}, {0, 20}, {140, 220}};
     // this one is for rapidity plots
     Double_t fProbThresholdForRap = 0.2;
     Double_t fProbHe3ThresholdForRap = 0.2;

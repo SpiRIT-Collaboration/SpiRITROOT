@@ -33,14 +33,10 @@ STReactionPlaneTask::STReactionPlaneTask()
 
   fV1RPAngle = new TClonesArray("STVectorF");
   fV2RPAngle = new TClonesArray("STVectorF");
-  fQx = new TClonesArray("STVectorF");
-  fQy = new TClonesArray("STVectorF");
   for(int i = 0; i < fSupportedPDG.size(); ++i)
   {
     new((*fV1RPAngle)[i]) STVectorF();
     new((*fV2RPAngle)[i]) STVectorF();
-    new((*fQx)[i]) STVectorF();
-    new((*fQy)[i]) STVectorF();
   }
 }
 
@@ -59,6 +55,7 @@ double STReactionPlaneTask::Correction(const TVector2& Q_vec)
     }
     else
       phi = Q_vec.Phi();
+    phi = (phi > TMath::Pi())? phi - 2*TMath::Pi() : phi;
   }
   else phi = -9999;
   return phi;
@@ -129,8 +126,6 @@ InitStatus STReactionPlaneTask::Init()
   ioMan -> Register("QMag", "ST", fQMag, fIsPersistence);
   ioMan -> Register("V1RPAngle", "ST", fV1RPAngle, fIsPersistence);
   ioMan -> Register("V2RPAngle", "ST", fV2RPAngle, fIsPersistence);
-  ioMan -> Register("Qx", "ST", fQx, fIsPersistence);
-  ioMan -> Register("Qy", "ST", fQy, fIsPersistence);
 
   return kSUCCESS;
 }
@@ -168,10 +163,6 @@ void STReactionPlaneTask::Exec(Option_t *opt)
     auto mass = pinfo -> Mass()/STAnaParticleDB::kAu2Gev;
     auto charge = pinfo -> Charge()/3.;
     int pdg = fSupportedPDG[i];
-    auto Qx = static_cast<STVectorF*>(fQx -> At(i));
-    Qx -> fElements.clear();
-    auto Qy = static_cast<STVectorF*>(fQy -> At(i));
-    Qy -> fElements.clear();
 
     for(int j = 0; j < mult; ++j)
     {
@@ -187,8 +178,8 @@ void STReactionPlaneTask::Exec(Option_t *opt)
         {
           double prob_ele = prob -> fElements[j];
           double sd_ele = sd -> fElements[j];
-          if(prob_ele > fProbVal && std::fabs(sd_ele) < fSDVal && data -> vaNRowClusters[j] + data -> vaNLayerClusters[j] > 0 && data -> recodpoca[j].Mag() < fDPocaVal)
-              weight = (std::abs(fSupportedPDG[i]) == 211 || eff < fPhiEffThreshold)? 0 : 1/eff; //prob_ele/eff;
+          if(prob_ele > 0.9 && std::fabs(sd_ele) < 2 && data -> vaNRowClusters[j] + data -> vaNLayerClusters[j] > 10)
+              weight = (std::abs(fSupportedPDG[i]) == 211 || eff < 0.01/*0.25*/)? 0 : prob_ele/eff;
           else
               weight = 0;
 
@@ -197,15 +188,13 @@ void STReactionPlaneTask::Exec(Option_t *opt)
           else weight *= fChargeCoef*charge + fMassCoef*mass + fConstCoef;
 
           // front size pos, back side neg
-          double mag = fPrepWeight? vec.Perp() : 1;
+          double mag = vec.Perp();
           Q_v1.SetMagPhi(mag, phi);
           Q_v2.SetMagPhi(mag, 2*phi);
           if(vec.z() < 0) weight = -weight;
         }
       Q_v1_elements[i].push_back(weight*Q_v1);
       Q_v2_elements[i].push_back(std::fabs(weight)*Q_v2);
-      Qx -> fElements.push_back(weight*Q_v1.X());
-      Qy -> fElements.push_back(weight*Q_v1.Y());
     }
   }
   TVector2 Q_v1_sum(0, 0), Q_v2_sum(0, 0);
@@ -218,7 +207,7 @@ void STReactionPlaneTask::Exec(Option_t *opt)
     fQMag -> fElements[0] = Q_v1_sum.Mod();
     fReactionPlane -> fElements[0] = this -> Correction(Q_v1_sum);
     auto phi = (Q_v2_sum.Mod() > 0)? Q_v2_sum.Phi()/2 : -9999;
-    fReactionPlaneV2 -> fElements[0] = phi;
+    fReactionPlaneV2 -> fElements[0] = (phi > TMath::Pi())? phi - 2*TMath::Pi() : phi;//0.5*((phi > TMath::Pi())? phi - 2*TMath::Pi() : phi);
   }
 
   double mcRotZ = (fUseMCReactionPlane)? gRandom -> Gaus(fMCRotZ -> fElements[0], fMCReactionPlaneRes) : 0;
@@ -235,9 +224,9 @@ void STReactionPlaneTask::Exec(Option_t *opt)
     {
       // eliminate correlation by removing the particle of interest constribution to reaction plane determination
       double phi = (fUseMCReactionPlane)? mcRotZ : this -> Correction((Q_v1_sum - Q_v1_elements[i][j]));
-      v1RPAngle -> fElements.push_back(phi);
+      v1RPAngle -> fElements.push_back((phi > TMath::Pi())? phi - 2*TMath::Pi() : phi);
       phi = (fUseMCReactionPlane)? mcRotZ : (Q_v2_sum - Q_v2_elements[i][j]).Phi()/2;
-      v2RPAngle -> fElements.push_back(phi);
+      v2RPAngle -> fElements.push_back((phi > TMath::Pi())? phi - 2*TMath::Pi() : phi);
     }
   }
 }
@@ -246,14 +235,6 @@ void STReactionPlaneTask::FinishTask()
 {
   auto outfile = FairRootManager::Instance() -> GetOutFile();
   outfile -> cd();
-  TParameter<double>("RPPIDProb", fProbVal).Write();
-  TParameter<double>("RPPIDSD", fSDVal).Write();
-  TParameter<double>("RPPIDPoca", fDPocaVal).Write();
-  TParameter<double>("RPPIDPhiEffThreshold", fPhiEffThreshold).Write();
-  TParameter<double>("RPMidRapidity", fMidRapidity).Write();
-  TParameter<int>("RPPrepWeight", fPrepWeight? 1 : 0).Write();
-
-
   if(fQx_mean && fQx_sigma && fQy_mean && fQy_sigma)
   {
     fQx_mean -> Write();

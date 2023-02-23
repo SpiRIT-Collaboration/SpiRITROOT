@@ -48,6 +48,7 @@ class STPiProbTask : public FairTask {
     STDigiPar *fPar      = nullptr;                 ///< Parameter read-out class pointer
     TClonesArray *fData  = nullptr;
     TClonesArray *fProb  = nullptr;
+    TClonesArray *fSD  = nullptr;
     TClonesArray *fEff   = nullptr;
     STVectorI *fSkip     = nullptr;
     TClonesArray *fFlattenPID = nullptr;

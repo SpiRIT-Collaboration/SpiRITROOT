@@ -620,6 +620,10 @@ void STSimpleGraphsTask::RegisterVPlots()
   auto CIP_pt_v1 = this -> RegisterHistogram<TH1F>(false, "CIP_v1_pt_cumsum", "", 10, 0, 1000);
   auto CIP_v2_counts = this -> RegisterHistogram<TH1F>(false, "CIP_v2_rap_counts", "", 25, -2, 2);
   auto CIP_v2 = this -> RegisterHistogram<TH1F>(false, "CIP_v2_cumsum", "", 25, -2, 2);
+  auto CIP_v2_H_counts = this -> RegisterHistogram<TH1F>(false, "CIP_v2_H_rap_counts", "", 25, -2, 2);
+  auto CIP_v2_H = this -> RegisterHistogram<TH1F>(false, "CIP_v2_H_cumsum", "", 25, -2, 2);
+
+
 
 
   // this only works for proton
@@ -669,24 +673,34 @@ void STSimpleGraphsTask::RegisterVPlots()
     double Z = (std::abs(pdg) == 211)? 0 : particle -> Charge()/3.;
 
     this -> RegisterRuleWithParticle(pdg, 
-      [this, pdg, CIP_v1, CIP_pt_v1, CIP_v2,
+      [this, pdg, CIP_v1, CIP_pt_v1, CIP_v2, CIP_v2_H,
        v1, v2, v1_withPtCut, v2_withPtCut, 
        v1_withLEPtCut, v2_withLEPtCut, v1_counts_withLEPtCut, v2_counts_withLEPtCut,
-       CIP_v1_counts, CIP_pt_v1_counts, CIP_v2_counts,
+       CIP_v1_counts, CIP_pt_v1_counts, CIP_v2_counts, CIP_v2_H_counts,
        v1_counts, v2_counts, 
        v1_counts_withPtCut, v2_counts_withPtCut, 
        v1_pt, v1_pt_counts, mass, Z](const DataPackage& package)
       {
         const auto& data = package.Data();
-        for(int i = 0; i < data.multiplicity; ++i)
+        TVector2 vecTemp; // for phi calculation
+        for(int i = 0; i < data.multiplicity; ++i) 
+        {
+          bool inInterval = false;
+          vecTemp.Set(package.CMVector(i).X(),  package.CMVector(i).Y());
+          double phi =  vecTemp.Phi();
+          for(auto& interval : fPhiThresholdForVs)
+            if(interval.first < phi && phi < interval.second) {
+                inInterval = true;
+                break;
+            }
+          if(!inInterval) continue;
+
           if(std::fabs(package.StdDev(i)) < fSDThresholdForVs && 
           package.Prob(i) > fProbThresholdForVs && 
           package.PhiEff(i) > fPhiEffThresholdForVs && 
-          (std::fabs(package.CMVector(i).Phi()*180/M_PI) < fPhiThresholdForVs) &&
 	  data.recodpoca[i].Mag() < fMaxDPOCA)
           {
             double y0 = (fNNFrame)? package.LabRapidity(i)/(0.5*package.BeamRapidity()[1]) - 1 : package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);// package.FragRapidity(i)/(0.5*package.BeamRapidity()[1]);
-            double phi = package.CMVector(i).Phi();
             double weight = package.Prob(i)/package.PhiEff(i);
             double pt = package.CMVector(i).Perp();
 
@@ -706,6 +720,11 @@ void STSimpleGraphsTask::RegisterVPlots()
 
               CIP_v2 -> Fill(y0, cos2_weight*Z);
               CIP_v2_counts -> Fill(y0, Z);
+
+              if(Z < 1.5) { // only proton isotopes
+                CIP_v2_H -> Fill(y0, cos2_weight*Z);
+                CIP_v2_H_counts -> Fill(y0, Z);
+              }
 
               if(fPtThresholdForVs > 0) 
               {
@@ -739,6 +758,7 @@ void STSimpleGraphsTask::RegisterVPlots()
               }
             }
           }
+        }
       });
 
     this -> RegisterFinishTaskRule([v1, v1_counts, v1_pt, v1_pt_counts, v2, v2_counts, 
@@ -788,14 +808,18 @@ void STSimpleGraphsTask::RegisterVPlots()
       });
   }
 
-  this -> RegisterFinishTaskRule([CIP_v1, CIP_pt_v1, CIP_v2, CIP_v1_counts, CIP_pt_v1_counts, CIP_v2_counts, this]()
+  this -> RegisterFinishTaskRule([CIP_v1, CIP_pt_v1, CIP_v2, CIP_v2_H, CIP_v1_counts, CIP_pt_v1_counts, CIP_v2_counts, CIP_v2_H_counts, this]()
     {
       TParameter<double>("fMidRapThresholdForVs", fMidRapThresholdForVs).Write();
       TParameter<double>("PtThresholdForVs", fPtThresholdForVs).Write();
       TParameter<double>("ProbThresholdForVs", fProbThresholdForVs).Write();
       TParameter<double>("SDThresholdForVs", fSDThresholdForVs).Write();
       TParameter<double>("PhiEffThresholdForVs", fPhiEffThresholdForVs).Write();
-      TParameter<double>("PhiThresholdForVs", fPhiThresholdForVs).Write();
+      for(unsigned int i = 0; i < fPhiThresholdForVs.size(); ++i) 
+      {
+          TParameter<double>(("PhiThresholdForVs" + std::to_string(2*i)).c_str(), fPhiThresholdForVs[i].first).Write();
+          TParameter<double>(("PhiThresholdForVs" + std::to_string(2*i + 1)).c_str(), fPhiThresholdForVs[i].second).Write();
+      }
 
       auto v1_cloned = (TH1F*) CIP_v1 -> Clone("CIP_v1");
       v1_cloned -> Divide(CIP_v1_counts);
@@ -808,6 +832,11 @@ void STSimpleGraphsTask::RegisterVPlots()
       auto v2_cloned = (TH1F*) CIP_v2 -> Clone("CIP_v2");
       v2_cloned -> Divide(CIP_v2_counts);
       v2_cloned -> Write();
+
+      auto v2_H_cloned = (TH1F*) CIP_v2_H -> Clone("CIP_v2_H");
+      v2_H_cloned -> Divide(CIP_v2_H_counts);
+      v2_H_cloned -> Write();
+
     });
 
 }

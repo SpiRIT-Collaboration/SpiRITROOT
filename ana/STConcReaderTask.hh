@@ -68,6 +68,7 @@ class STConcReaderTask : public STReaderTask {
     int GetNEntries();
     void SetEventID(int eventID);
     virtual void RandSample(int nevents);
+    void AlignSample(const std::string& compFile);
   private:
     FairLogger *fLogger;                ///< FairLogger singleton
     STDigiPar* fPar = nullptr;
@@ -83,6 +84,11 @@ class STConcReaderTask : public STReaderTask {
     STData *fSTData = nullptr;
     STVectorF *fMCRotZ = nullptr;
     STVectorI *fKatanaZMax = nullptr;
+    TFile *fCompFile = nullptr;
+    TChain *fCompChain = nullptr;
+    TClonesArray *fCompEventID = nullptr;
+    TClonesArray *fCompRunIDArr = nullptr;
+    int fCompID = 0;
 
     Int_t  fEventID;
     Bool_t fIsPersistence;
