@@ -40,6 +40,7 @@ STDecoderTask::STDecoderTask()
   fExternalNumTbs = kFALSE;
   fNumTbs = 512;
 
+  fUseFRIBDAQ = kFALSE;
   fUseGainCalibration = kFALSE;
   fGainCalibrationFile = "";
   fGainConstant = -9999;
@@ -77,6 +78,7 @@ void STDecoderTask::SetData(Int_t value)                                        
 void STDecoderTask::SetFPNPedestal(Double_t pedestalRMS)                                      { fFPNPedestalRMS = pedestalRMS; }
 void STDecoderTask::SetGGNoiseData(TString filename)                                          { fGGNoiseFile = filename; }
 void STDecoderTask::SetUseGainCalibration(Bool_t value)                                       { fUseGainCalibration = value; }
+void STDecoderTask::SetUseFRIBDAQData(Bool_t value)                                           { fUseFRIBDAQ = value; }
 void STDecoderTask::SetGainCalibrationData(TString filename)                                  { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)  { fGainConstant = constant; fGainLinear = linear; fGainQuadratic = quadratic; }
 void STDecoderTask::SetGainMatchingData(TString filename)                                     { fGainMatchingData = filename; };
@@ -114,7 +116,7 @@ STDecoderTask::Init()
 
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
   
-  fDecoder = new STCore();
+  fDecoder = new STCore(fUseFRIBDAQ);
   fDecoder -> SetUseSeparatedData(fIsSeparatedData);
   for (Int_t iFile = 0; iFile < fDataList[0].size(); iFile++)
     fDecoder -> AddData(fDataList[0].at(iFile));
