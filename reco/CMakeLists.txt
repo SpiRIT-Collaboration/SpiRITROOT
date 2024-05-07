@@ -77,6 +77,11 @@ PID/STPIDTest.cc
 GETDecoder/GETDecoder.cc
 GETDecoder/GETFrameInfo.cc
 
+GETDecoder/RingItemHeader.cc
+GETDecoder/RingItemBodyHeader.cc
+GETDecoder/RingStateChangeItem.cc
+GETDecoder/RingPhysicsEventItem.cc
+
 GETDecoder/GETHeaderBase.cc
 GETDecoder/GETBasicFrameHeader.cc
 GETDecoder/GETLayerHeader.cc

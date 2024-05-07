@@ -5,6 +5,8 @@
 //    Genie Jhang ( geniejhang@majimak.com )
 //  
 //  Log:
+//    - 2024. 05. 01
+//      FRIBDAQ RingItem added
 //    - 2016. 03. 23
 //      MUTANT frame added
 //    - 2015. 11. 09
@@ -35,37 +37,37 @@
 
 ClassImp(GETDecoder);
 
-GETDecoder::GETDecoder()
+GETDecoder::GETDecoder(Bool_t isFRIBDAQ)
 :fFrameInfoArray(NULL), fCoboFrameInfoArray(NULL), fFrameInfo(NULL), fCoboFrameInfo(NULL),
  fHeaderBase(NULL), fBasicFrameHeader(NULL), fLayerHeader(NULL),
  fTopologyFrame(NULL), fBasicFrame(NULL), fCoboFrame(NULL), fLayeredFrame(NULL),
- fMutantFrame(NULL)
+ fMutantFrame(NULL), fRingItemHeader(NULL), fRingItemBodyHeader(NULL), fRingStateChangeItem(NULL), fRingPhysicsEventItem(NULL)
 {
   /**
     * If you use this constructor, you have to add the rawdata using
     * AddData() method and set the file with SetData() method, manually.
    **/
    
-  Initialize();
+  Initialize(isFRIBDAQ);
 }
 
-GETDecoder::GETDecoder(TString filename)
+GETDecoder::GETDecoder(TString filename, Bool_t isFRIBDAQ)
 :fFrameInfoArray(NULL), fCoboFrameInfoArray(NULL), fFrameInfo(NULL), fCoboFrameInfo(NULL),
  fHeaderBase(NULL), fBasicFrameHeader(NULL), fLayerHeader(NULL),
  fTopologyFrame(NULL), fBasicFrame(NULL), fCoboFrame(NULL), fLayeredFrame(NULL),
- fMutantFrame(NULL)
+ fMutantFrame(NULL), fRingItemHeader(NULL), fRingItemBodyHeader(NULL), fRingStateChangeItem(NULL), fRingPhysicsEventItem(NULL)
 {
   /**
     * Automatically add the rawdata file to the list
     * and set the file to read.
    **/
 
-  Initialize();
+  Initialize(isFRIBDAQ);
   AddData(filename);
   SetData(0);
 }
 
-void GETDecoder::Initialize()
+void GETDecoder::Initialize(Bool_t isFRIBDAQ)
 {
   fNumTbs = 512;
 
@@ -73,10 +75,12 @@ void GETDecoder::Initialize()
 
   fIsPositivePolarity = kFALSE;
 
+  fIsFRIBDAQ = isFRIBDAQ;
   fIsDoneAnalyzing = kFALSE;
   fIsDataInfo = kFALSE;
   fIsContinuousData = kTRUE;
   fIsMetaData = kFALSE;
+	fIsFRIBDataEnded = kFALSE;
 
   fDataSize = 0;
   fCurrentDataID = -1;
@@ -118,6 +122,18 @@ void GETDecoder::Initialize()
   if (     fMutantFrame == NULL) fMutantFrame = new GETMutantFrame();
   else                           fMutantFrame -> Clear();
 
+  if (      fRingItemHeader == NULL) fRingItemHeader = new RingItemHeader();
+  else                               fRingItemHeader -> Clear();
+
+  if (  fRingItemBodyHeader == NULL) fRingItemBodyHeader = new RingItemBodyHeader();
+  else                               fRingItemBodyHeader -> Clear();
+
+  if ( fRingStateChangeItem == NULL) fRingStateChangeItem = new RingStateChangeItem();
+  else                               fRingStateChangeItem-> Clear();
+
+  if (fRingPhysicsEventItem == NULL) fRingPhysicsEventItem = new RingPhysicsEventItem();
+  else                               fRingPhysicsEventItem-> Clear();
+
   fPrevDataID = 0;
   fPrevPosition = 0;
 }
@@ -150,6 +166,11 @@ void GETDecoder::Clear() {
            fCoboFrame -> Clear();
         fLayeredFrame -> Clear();
          fMutantFrame -> Clear();
+
+        fRingItemHeader -> Clear();
+    fRingItemBodyHeader -> Clear();
+   fRingStateChangeItem -> Clear();
+  fRingPhysicsEventItem -> Clear();
   
   if (fIsContinuousData) {
 
@@ -157,8 +178,10 @@ void GETDecoder::Clear() {
     std::cout << "== [GETDecoder] Discontinuous data set is set. Leave data list intact!" << std::endl;
 #endif
 
-    fDataList.clear();
+  return;
   }
+  
+  fDataList.clear();
 }
 
 void GETDecoder::SetNumTbs(Int_t value) { fNumTbs = value; } 
@@ -226,43 +249,69 @@ Bool_t GETDecoder::SetData(Int_t index)
   fData.seekg(0);
   
   if (!fIsDataInfo) {
-    fHeaderBase -> Read(fData, kTRUE);
+    if (fIsFRIBDAQ) {
+      fRingItemHeader -> Read(fData, kTRUE);
 
-    std::cout << "== [GETDecoder] Frame Type: ";
-    switch (fHeaderBase -> GetFrameType()) {
-      case GETFRAMETOPOLOGY:
-        fFrameType = kCobo;
-        fTopologyFrame -> Read(fData);
-        std::cout << "Cobo frame (Max. 4 frames)" << std::endl;
-        break;
+      std::cout << "== [GETDecoder] Frame Type: ";
+      switch (fRingItemHeader -> GetType()) {
+        case RINGITEMBEGINRUN:
+        case RINGITEMENDRUN:
+        case RINGITEMPHYSICSEVENT:
+          fFrameType = kFRIBDAQ;
+          SetPseudoTopologyFrame();
+          fIsDataInfo = kTRUE;
+          std::cout << "FRIBDAQ RingItems" << std::endl;
+          break;
 
-      case GETFRAMEMERGEDBYID:
-        fFrameType = kMergedID;
-        std::cout << "Event ID merged frame" << std::endl;
-        break;
+        default:
+          fFrameType = kERROR;
+          fIsDataInfo = kFALSE;
+          std::cout << "ERROR! Something weird is going on!" << std::endl;
+          break;
+      }
+    } else {
+      fHeaderBase -> Read(fData, kTRUE);
 
-      case GETFRAMEMERGEDBYTIME:
-        fFrameType = kMergedTime;
-        std::cout << "Event time merged frame" << std::endl;
-        break;
+      std::cout << "== [GETDecoder] Frame Type: ";
+      switch (fHeaderBase -> GetFrameType()) {
+        case GETFRAMETOPOLOGY:
+          fFrameType = kCobo;
+          fTopologyFrame -> Read(fData);
+          std::cout << "Cobo frame (Max. 4 frames)" << std::endl;
+          break;
 
-      case GETFRAMEMUTANT:
-        fFrameType = kMutant;
-        std::cout << "MUTANT frame" << std::endl;
-        break;
+        case GETFRAMEMERGEDBYID:
+          fFrameType = kMergedID;
+          std::cout << "Event ID merged frame" << std::endl;
+          break;
 
-      default:
-        fFrameType = kBasic;
-        std::cout << "Basic frame" << std::endl;
-        break;
+        case GETFRAMEMERGEDBYTIME:
+          fFrameType = kMergedTime;
+          std::cout << "Event time merged frame" << std::endl;
+          break;
+
+        case GETFRAMEMUTANT:
+          fFrameType = kMutant;
+          std::cout << "MUTANT frame" << std::endl;
+          break;
+
+        default:
+          fFrameType = kBasic;
+          std::cout << "Basic frame" << std::endl;
+          break;
+      }
+
+      fIsDataInfo = kTRUE;
     }
-
-    fIsDataInfo = kTRUE;
   } else {
-    fHeaderBase -> Read(fData, kTRUE);
+    if (fIsFRIBDAQ) {
+      fRingItemHeader -> Read(fData, kTRUE);
+    } else {
+      fHeaderBase -> Read(fData, kTRUE);
 
-    if (fHeaderBase -> GetFrameType() == GETFRAMETOPOLOGY)
-      fTopologyFrame -> Read(fData);
+      if (fHeaderBase -> GetFrameType() == GETFRAMETOPOLOGY)
+        fTopologyFrame -> Read(fData);
+    }
   }
 
   fCurrentDataID = index;
@@ -314,6 +363,7 @@ Int_t GETDecoder::GetNumFrames() {
          break;
 
        case kCobo:
+       case kFRIBDAQ:
          return fCoboFrameInfoArray -> GetEntriesFast();
          break;
      }
@@ -423,14 +473,26 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
               SetData(fCoboFrameInfo -> GetDataID());
 
             fData.seekg(fCoboFrameInfo -> GetStartByte());
-            fCoboFrame -> ReadFrame(fData);
+            if (fIsFRIBDAQ) {
+              fRingItemHeader -> Read(fData, kTRUE);
+              if (fRingItemHeader -> GetType() == RINGITEMPHYSICSEVENT) {
+                fRingItemBodyHeader -> Read(fData);
+                fCoboFrame -> ReadFrame(fData);
+              } else if (fRingItemHeader -> GetType() == RINGITEMBEGINRUN || fRingItemHeader -> GetType() == RINGITEMENDRUN) {
+                std::cerr << "== " << __func__ << " This should never happen! Data corrupted? This is serious error! - 1" << std::endl;
+
+                return NULL;
+              }
+            } else {
+              fCoboFrame -> ReadFrame(fData);
+            }
             fCoboFrameInfo = fCoboFrameInfo -> GetNextInfo();
           }
 
           RestorePreviousState();
 
 #ifdef DEBUG
-      cout << "Returned fCoboFrameInfoIdx: " << fCoboFrameInfoIdx << " with event ID: " << fCoboFrame -> GetFrame(0) -> GetEventID() << endl;
+          cout << "Returned fCoboFrameInfoIdx: " << fCoboFrameInfoIdx << " with event ID: " << fCoboFrame -> GetFrame(0) -> GetEventID() << endl;
 #endif
 
           return fCoboFrame;
@@ -446,10 +508,44 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
 
     ULong64_t startByte = fData.tellg();
 
-    fBasicFrameHeader -> Read(fData);
-    fData.ignore(fBasicFrameHeader -> GetFrameSkip());
+    ULong64_t endByte = 0;
+    if (fIsFRIBDAQ) {
+      fRingItemHeader -> Read(fData, kTRUE);
+      if (fRingItemHeader -> GetType() == RINGITEMPHYSICSEVENT) {
+        fRingItemBodyHeader -> Read(fData);
+        fBasicFrameHeader -> Read(fData);
+        fData.ignore(fBasicFrameHeader -> GetFrameSkip());
 
-    ULong64_t endByte = startByte + fBasicFrameHeader -> GetFrameSize();
+        endByte = fData.tellg();
+      } else if (fRingItemHeader -> GetType() == RINGITEMBEGINRUN) {
+        fRingStateChangeItem -> Read(fData);
+
+        startByte = fData.tellg();
+        fRingItemHeader -> Read(fData, kTRUE);
+        // In this case, below is the only possible case.
+        if (fRingItemHeader -> GetType() == RINGITEMPHYSICSEVENT) {
+          fRingItemBodyHeader -> Read(fData);
+          fBasicFrameHeader -> Read(fData);
+          fData.ignore(fBasicFrameHeader -> GetFrameSkip());
+
+          endByte = fData.tellg();
+        } else {
+          std::cerr << "== " << __func__ << " This should never happen! Data corrupted? This is serious error! - 2" << std::endl;
+        }
+      } else if (fRingItemHeader -> GetType() == RINGITEMENDRUN) {
+        fRingStateChangeItem -> Read(fData);
+
+        fIsFRIBDataEnded = kTRUE;
+
+        CheckEndOfData();
+        continue;
+      }
+    } else {
+      fBasicFrameHeader -> Read(fData);
+      fData.ignore(fBasicFrameHeader -> GetFrameSkip());
+
+      endByte = startByte + fBasicFrameHeader -> GetFrameSize();
+    }
 
     fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(fFrameInfoIdx++);
     fFrameInfo -> SetDataID(fCurrentDataID);
@@ -614,6 +710,88 @@ GETMutantFrame *GETDecoder::GetMutantFrame(Int_t frameID)
   }
 }
 
+GETBasicFrame *GETDecoder::GetRingItem(Int_t frameID)
+{
+  if (frameID == -1)
+    fTargetFrameInfoIdx++;
+  else
+    fTargetFrameInfoIdx = frameID;
+
+  while (kTRUE) {
+    fData.clear();
+
+    if (fIsDoneAnalyzing)
+      if (fTargetFrameInfoIdx > fFrameInfoArray -> GetLast())
+        return NULL;
+
+    if (fFrameInfoIdx > fTargetFrameInfoIdx)
+      fFrameInfoIdx = fTargetFrameInfoIdx;
+
+    fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(fFrameInfoIdx);
+    while (fFrameInfo -> IsFill()) {
+
+#ifdef DEBUG
+      cout << "fFrameInfoIdx: " << fFrameInfoIdx << " fTargetFrameInfoIdx: " << fTargetFrameInfoIdx << endl;
+#endif
+
+      if (fFrameInfoIdx == fTargetFrameInfoIdx) {
+        BackupCurrentState();
+
+        if (fFrameInfo -> GetDataID() != fCurrentDataID)
+          SetData(fFrameInfo -> GetDataID());
+   
+        fData.seekg(fFrameInfo -> GetStartByte());
+        fRingItemHeader -> Read(fData, kTRUE);
+        if (fRingItemHeader -> GetType() == RINGITEMPHYSICSEVENT) {
+          fRingPhysicsEventItem -> Read(fData);
+        } else if (fRingItemHeader -> GetType() == RINGITEMBEGINRUN || fRingItemHeader -> GetType() == RINGITEMENDRUN) {
+          std::cerr << "== " << __func__ << " This should never happen! Data corrupted? This is serious error! - 3" << std::endl;
+        }
+
+        RestorePreviousState();
+
+#ifdef DEBUG
+      cout << "Returned event ID: " << fRingPhysicsEventItem -> GetGETBasicFrame() -> GetEventID() << endl;
+#endif
+
+        return (fRingItemHeader -> GetType() == RINGITEMPHYSICSEVENT ? fRingPhysicsEventItem -> GetGETBasicFrame() : NULL);
+      } else
+        fFrameInfo = (GETFrameInfo *) fFrameInfoArray -> ConstructedAt(++fFrameInfoIdx);
+    }
+
+    ULong64_t startByte = fData.tellg();
+
+    fRingItemHeader -> Read(fData, kTRUE);
+    if (fRingItemHeader -> GetType() == RINGITEMPHYSICSEVENT) {
+      fRingPhysicsEventItem -> Read(fData);
+    } else if (fRingItemHeader -> GetType() == RINGITEMBEGINRUN) {
+      fRingStateChangeItem -> Read(fData);
+
+      startByte = fData.tellg();
+      fRingItemHeader -> Read(fData, kTRUE);
+      // In this case, below is the only possible case.
+      if (fRingItemHeader -> GetType() == RINGITEMPHYSICSEVENT) {
+        fRingPhysicsEventItem -> Read(fData);
+      }
+    } else if (fRingItemHeader -> GetType() == RINGITEMENDRUN) {
+      fIsFRIBDataEnded = kTRUE;
+
+      CheckEndOfData();
+
+      return NULL;
+    }
+
+    ULong64_t endByte = startByte + fRingItemHeader -> GetSize();
+
+    fFrameInfo -> SetDataID(fCurrentDataID);
+    fFrameInfo -> SetStartByte(startByte);
+    fFrameInfo -> SetEndByte(endByte);
+    fFrameInfo -> SetEventID(fRingPhysicsEventItem -> GetGETBasicFrame() -> GetEventID());
+
+    CheckEndOfData();
+  }
+}
+
 void GETDecoder::PrintFrameInfo(Int_t frameID) {
   if (frameID == -1) {
     for (Int_t iEntry = 0; iEntry < fFrameInfoArray -> GetEntriesFast(); iEntry++)
@@ -722,7 +900,7 @@ void GETDecoder::WriteFrame()
 }
 
 void GETDecoder::CheckEndOfData() {
-  if (!fIsMetaData && fFrameInfo -> GetEndByte() == fDataSize)
+  if (!fIsMetaData && fFrameInfo -> GetEndByte() == fDataSize || fIsFRIBDataEnded)
     if (!NextData() && !fIsDoneAnalyzing) {
 
 #ifdef DEBUG
@@ -764,6 +942,7 @@ void GETDecoder::SetPseudoTopologyFrame(Int_t asadMask, Bool_t check) {
 void GETDecoder::GoToEnd() {
   switch (fFrameType) {
     case kCobo:
+    case kFRIBDAQ:
       GetCoboFrame(10000000);
       break;
     case kMergedID:
@@ -783,18 +962,23 @@ void GETDecoder::GoToEnd() {
 }
 
 void GETDecoder::SaveMetaData(Int_t runNo, TString filename, Int_t coboIdx) {
+  TString rootFilename;
   if (filename.IsNull()) {
     TObjArray *split = fDataList.at(0).Tokenize("/");
     filename = Form("metadata/%s.meta%s.root", ((TObjString *) split -> Last()) -> String().Data(), (coboIdx == -1 ? "" : Form(".C%d", coboIdx)));
     delete split;
+
+    gSystem -> Exec(Form("mkdir -p run_%04d/metadata", runNo));
+    rootFilename = Form("run_%04d/%s", runNo, filename.Data());
+  } else {
+    rootFilename = filename;
   }
 
-  gSystem -> Exec(Form("mkdir -p run_%04d/metadata", runNo));
-  TFile *metaFile = new TFile(Form("run_%04d/%s", runNo, filename.Data()), "recreate");
+  TFile *metaFile = new TFile(rootFilename.Data(), "recreate");
 
   UInt_t dataID = 0, eventID = 0, deltaT = 0;
   ULong64_t eventTime = 0, startByte = 0, endByte = 0;
-  TTree *metaTree = new TTree("MetaData", Form("Meta data tree for CoBo %d", coboIdx));
+  TTree *metaTree = new TTree("MetaData", Form("Meta data tree for CoBo %d", (coboIdx == -1 ? 0 : coboIdx)));
   metaTree -> Branch("dataID", &dataID);
   metaTree -> Branch("eventID", &eventID);
   metaTree -> Branch("eventTime", &eventTime);
@@ -820,9 +1004,11 @@ void GETDecoder::SaveMetaData(Int_t runNo, TString filename, Int_t coboIdx) {
   delete metaTree;
   delete metaFile;
 
-  std::ofstream listFile(Form("run_%04d/metadataList.txt", runNo), std::ios::app);
-  listFile << filename << endl;
-  listFile.close();
+  if (runNo != -1) {
+    std::ofstream listFile(Form("run_%04d/metadataList.txt", runNo), std::ios::app);
+    listFile << filename << endl;
+    listFile.close();
+  }
 }
 
 void GETDecoder::LoadMetaData(TString filename) {

@@ -6,6 +6,8 @@
 //    Genie Jhang ( geniejhang@majimak.com )
 //  
 //  Log:
+//    - 2024. 05. 01
+//      FRIBDAQ RingItem added
 //    - 2016. 03. 23
 //      MUTANT frame added
 //    - 2015. 11. 09
@@ -27,6 +29,10 @@
 #include "GETLayeredFrame.hh"
 #include "GETMutantFrame.hh"
 
+#include "RingItemHeader.hh"
+#include "RingStateChangeItem.hh"
+#include "RingPhysicsEventItem.hh"
+
 #include "GETFrameInfo.hh"
 
 #include <fstream>
@@ -43,14 +49,14 @@ class GETDecoder
 {
   public:
     //! Constructor
-    GETDecoder();
+    GETDecoder(Bool_t isFRIBDAQ = kFALSE);
     //! Constructor
-    GETDecoder(TString filename /*!< GRAW filename including path */);
+    GETDecoder(TString filename /*!< GRAW filename including path */, Bool_t isFRIBDAQ = kFALSE);
 
     void Clear(); ///< Clear data information
 
     //! Frame type enumerator
-    enum EFrameType { kBasic, kCobo, kMergedID, kMergedTime, kMutant };
+    enum EFrameType { kERROR, kBasic, kCobo, kMergedID, kMergedTime, kMutant, kFRIBDAQ };
 
     //! Setting the number of time buckets.
     void SetNumTbs(Int_t value = 512);
@@ -82,6 +88,7 @@ class GETDecoder
        GETCoboFrame *GetCoboFrame(Int_t frameID = -1);
     GETLayeredFrame *GetLayeredFrame(Int_t frameID = -1);
      GETMutantFrame *GetMutantFrame(Int_t frameID = -1);
+					 GETBasicFrame *GetRingItem(Int_t frameID = -1);
 
     void PrintFrameInfo(Int_t frameID = -1);
     void PrintCoboFrameInfo(Int_t frameID = -1);
@@ -94,13 +101,16 @@ class GETDecoder
     //! Scan up to the end of file
     void GoToEnd();
     //! Write metadata into ROOT file
-    void SaveMetaData(Int_t runNo, TString filename = "", Int_t coboIdx = -1);
+    void SaveMetaData(Int_t runNo = -1, TString filename = "", Int_t coboIdx = -1);
     //! Load metadata from ROOT file
     void LoadMetaData(TString filename); 
 
+    //! Set topology frame information manually
+    void SetPseudoTopologyFrame(Int_t asadMask = 0xf, Bool_t check = kFALSE);
+
   private:
     //! Initialize variables used in the class.
-    void Initialize();
+    void Initialize(Bool_t isFRIBDAQ);
 
     //! Check the end of file
     void CheckEndOfData();
@@ -109,9 +119,6 @@ class GETDecoder
     void BackupCurrentState();
     //! Restore to the previous frame position
     void RestorePreviousState();
-
-    //! Set topology frame information manually
-    void SetPseudoTopologyFrame(Int_t asadMask, Bool_t check = kFALSE);
 
           GETHeaderBase *fHeaderBase;
     GETBasicFrameHeader *fBasicFrameHeader;
@@ -123,6 +130,12 @@ class GETDecoder
      GETLayeredFrame *fLayeredFrame;
       GETMutantFrame *fMutantFrame;
 
+          RingItemHeader *fRingItemHeader;
+      RingItemBodyHeader *fRingItemBodyHeader;
+
+     RingStateChangeItem *fRingStateChangeItem;
+    RingPhysicsEventItem *fRingPhysicsEventItem;
+
     TClonesArray *fFrameInfoArray;
     TClonesArray *fCoboFrameInfoArray;
     GETFrameInfo *fFrameInfo;
@@ -133,11 +146,13 @@ class GETDecoder
     EFrameType fFrameType;  /// frame type. 0: normal frame, 1: event number merged, 2: event time merged
     ULong64_t fFrameSize; ///
 
+    Bool_t fIsFRIBDAQ;              ///< Flag for processing FRIBDAQ data format
     Bool_t fIsDataInfo;             ///< Flag for data information existance
     Bool_t fIsDoneAnalyzing;        ///< Flag for all the frame info are read
     Bool_t fIsPositivePolarity;     ///< Flag for the signal polarity
     Bool_t fIsContinuousData;       ///< Flag for continuous data set
     Bool_t fIsMetaData;             ///< Flag for checking meta data
+    Bool_t fIsFRIBDataEnded;        ///< Flag for checking the datastream reached end state change item
 
     std::ifstream fData;            ///< Current file data stream
     ULong64_t fDataSize;            ///< Current file size

@@ -31,11 +31,11 @@ class STPlot;
 
 class STCore : public TObject {
   public:
-    STCore();
-    STCore(TString filename);
-    STCore(TString filename, Int_t numTbs, Int_t windowNumTbs = 512, Int_t windowStartTb = 0);
+    STCore(Bool_t isFRIBDAQ = kFALSE);
+    STCore(TString filename, Bool_t isFRIBDAQ = kFALSE);
+    STCore(TString filename, Int_t numTbs, Int_t windowNumTbs = 512, Int_t windowStartTb = 0, Bool_t isFRIBDAQ = kFALSE);
 
-    void Initialize();
+    void Initialize(Bool_t isFRIBDAQ = kFALSE);
 
     Bool_t AddData(TString filename, Int_t coboIdx = 0);
     void SetPositivePolarity(Bool_t value = kTRUE);
@@ -87,6 +87,7 @@ class STCore : public TObject {
     Int_t fNumTbs;
 
     GETDecoder *fDecoderPtr[12];
+    Bool_t fIsFRIBDAQ;
     Bool_t fIsData;
 
     STPedestal *fPedestalPtr[12];

@@ -28,27 +28,29 @@
 
 ClassImp(STCore);
 
-STCore::STCore()
+STCore::STCore(Bool_t isFRIBDAQ)
 {
-  Initialize();
+  Initialize(isFRIBDAQ);
 }
 
-STCore::STCore(TString filename)
+STCore::STCore(TString filename, Bool_t isFRIBDAQ)
 {
-  Initialize();
+  Initialize(isFRIBDAQ);
   AddData(filename);
   SetNumTbs(512);
 }
 
-STCore::STCore(TString filename, Int_t numTbs, Int_t windowNumTbs, Int_t windowStartTb)
+STCore::STCore(TString filename, Int_t numTbs, Int_t windowNumTbs, Int_t windowStartTb, Bool_t isFRIBDAQ)
 {
-  Initialize();
+  Initialize(isFRIBDAQ);
   AddData(filename);
   SetNumTbs(numTbs);
 }
 
-void STCore::Initialize()
+void STCore::Initialize(Bool_t isFRIBDAQ)
 {
+  fIsFRIBDAQ = isFRIBDAQ;
+
   fRawEventPtr = new STRawEvent();
 
   fMapPtr = new STMap();
@@ -66,7 +68,7 @@ void STCore::Initialize()
 
   fPlotPtr = NULL;
 
-  fDecoderPtr[0] = new GETDecoder();
+  fDecoderPtr[0] = new GETDecoder(fIsFRIBDAQ);
 //  fDecoderPtr[0] -> SetDebugMode(1);
   for (Int_t iPad = 0; iPad < 12096; iPad++)
     fPadArray.push_back(new STPad());
@@ -121,7 +123,7 @@ Bool_t STCore::SetData(Int_t value)
       fIsData &= fDecoderPtr[iCobo] -> SetData(value);
       frameType = fDecoderPtr[iCobo] -> GetFrameType();
 
-      if (frameType != GETDecoder::kCobo) {
+      if (frameType != GETDecoder::kCobo && frameType != GETDecoder::kFRIBDAQ) {
         std::cout << cRED << "== [STCore] When using separated data, only accepted are not merged frame data files!" << cNORMAL << std::endl;
 
         fIsData = kFALSE;
@@ -528,7 +530,7 @@ void STCore::SetUseSeparatedData(Bool_t value) {
 
 //    fDecoderPtr[0] -> SetDebugMode(1);
     for (Int_t iCobo = 1; iCobo < 12; iCobo++) {
-      fDecoderPtr[iCobo] = new GETDecoder();
+      fDecoderPtr[iCobo] = new GETDecoder(fIsFRIBDAQ);
       fPedestalPtr[iCobo] = new STPedestal();
       fGainCalibrationPtr[iCobo] = new STGainCalibration();
       fGainMatchingPtr[iCobo] = new STGainMatching();

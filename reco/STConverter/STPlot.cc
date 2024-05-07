@@ -202,6 +202,7 @@ void STPlot::ClickPad()
   fMarkerPadplane -> SetMarkerStyle(4);
   fMarkerPadplane -> SetX(padCenterZ);
   fMarkerPadplane -> SetY(padCenterX);
+  fMarkerPadplane -> SetMarkerColor(2);
   fMarkerPadplane -> SetMarkerSize(2);
   fMarkerPadplane -> Draw("same");
 
