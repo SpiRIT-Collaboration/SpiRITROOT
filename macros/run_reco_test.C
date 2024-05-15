@@ -4,14 +4,14 @@ void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
 
 void run_reco_test
 (
-  Int_t fRunNo = 3154,
+  Int_t fRunNo = 0004,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 500,
   std::vector<Int_t> fSkipEventArray = {},
   TString fMCFile = "",
   TString fPathToData = "", 
-  TString fSupplePath = ""
-  Boot_t fIsFRIBDAQ = false;
+  TString fSupplePath = "",
+  Bool_t fIsFRIBDAQ = true
 )
 {
    cout << "running the macro" << endl;
