@@ -21,7 +21,7 @@ void run_eve
   if (pathToData.IsNull())
     pathToData = spiritroot+"macros/data/";
 
-  TString input     = pathToData + name + ".reco.simp.root";
+  TString input     = pathToData + name + ".reco.test.root";
   TString output    = pathToData + name + ".eve.root";
   TString parameter = spiritroot + "parameters/"  + parname;
   TString geomety   = spiritroot + "geometry/geomSpiRIT.man.root";
@@ -47,6 +47,7 @@ void run_eve
   draw -> SetRendering("helix",      true);
   draw -> SetRendering("cluster",    true);
   draw -> SetRendering("recotrack",  true);
+  draw -> SetRendering("recovertex",  true);
 
   if (dataList.IsNull() == false) {
     if (useMeta)

@@ -4,13 +4,14 @@ void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
 
 void run_reco_test
 (
-  Int_t fRunNo = 0004,
+  Int_t fRunNo = 3154,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 500,
   std::vector<Int_t> fSkipEventArray = {},
   TString fMCFile = "",
   TString fPathToData = "", 
   TString fSupplePath = ""
+  Boot_t fIsFRIBDAQ = false;
 )
 {
    cout << "running the macro" << endl;
@@ -47,6 +48,7 @@ void run_reco_test
   //auto fSheetChargeDensity = fParamSetter -> GetSheetChargeDensity();
   //auto fSystemID = fParamSetter -> GetSystemID();
   //auto fTargetZ = fParamSetter -> GetTargetZ();
+  auto fTargetZ = -13.2;
   //auto fBDCOffsetX = fParamSetter -> GetBDCOffsetX();
   //auto fBDCOffsetY = fParamSetter -> GetBDCOffsetY();
   //auto fGGRunID = fParamSetter -> GetGGRunID();
@@ -92,12 +94,15 @@ void run_reco_test
   TString par = fSpiRITROOTPath+"parameters/"+fParameterFile;
   TString geo = fSpiRITROOTPath+"geometry/geomSpiRIT.man.root";
   TString fRawDataList = TString::Format("%s/list_run%04d.txt",(gSystem -> Getenv("PWD")), fRunNo);
-  TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.simp.root";
-  TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".simp.log";
+  TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.test.root";
+  TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".test.log";
   
   if (TString(gSystem -> Which(".", fRawDataList)).IsNull() && !fUseMeta) {
      cout << "data list not found" << endl;
-    gSystem -> Exec("./createList_FRIBDAQ.sh "+sRunNo);
+     if(fIsFRIBDAQ)
+        gSystem -> Exec("./createList_FRIBDAQ.sh "+sRunNo);
+     else  
+        gSystem -> Exec("./createList.sh "+sRunNo);
   }
      cout << "using data list " << fRawDataList << endl;
 
@@ -119,7 +124,8 @@ void run_reco_test
   run -> GetRuntimeDb() -> setSecondInput(parReader);
 
   STDecoderTask *decoder = new STDecoderTask();
-  decoder -> SetUseFRIBDAQData();
+  if(fIsFRIBDAQ)
+    decoder -> SetUseFRIBDAQData();
   decoder -> SetUseSeparatedData(true);
   decoder -> SetPersistence(true);
   // By default, if SetUseGainCalibration(true) is called, reading gain calibration information from parameter file.
@@ -192,11 +198,34 @@ void run_reco_test
   // This is used to match the TPC-Vertex_Y with the BDC_Y.
   //psa -> SetYPedestalOffset(fYPedestalOffset); // unit: mm
 
+  auto helix = new STHelixTrackingTask();
+  helix -> SetPersistence(true);
+  helix -> SetClusterPersistence(true);
+  // Left, right, top and bottom sides cut
+  helix -> SetClusterCutLRTB(420, -420, -64, -522);
+  // High density region cut
+  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(120, 100, 220), 5); // current use
+  // Changing clustering direction angle and margin. Default: 45 deg with 0 deg margin
+  // helix -> SetClusteringAngleAndMargin(35., 3.);
+
+  auto genfitPID = new STGenfitPIDTask();
+  // In the TPC frame. Here the z position is used when Genfit do the extrapolation.
+  genfitPID -> SetTargetPlane(0, 0, fTargetZ); // unit: mm
+  genfitPID -> SetPersistence(true);
+  genfitPID -> SetBDCFile("");
+  // Only for test
+  // genfitPID -> SetConstantField();
+  genfitPID -> SetListPersistence(true);
+  // Removing shorter length tracklet by distance of adjacent clusters.
+  // genfitPID -> SetMaxDCluster(60);
+
   run -> AddTask(decoder);
   if(!fMCFile.IsNull())
     run -> AddTask(embedTask);
   run -> AddTask(preview);
   run -> AddTask(psa);
+  run -> AddTask(helix);
+  run -> AddTask(genfitPID);
 
   run -> Init();
   run -> Run(0,100);
