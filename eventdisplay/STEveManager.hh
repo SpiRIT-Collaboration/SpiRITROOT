@@ -86,6 +86,7 @@ class STEveManager : public TEveEventManager
     void SetNumHelixSet(Int_t num);           //!< Set number of helix set
     void SetNumCurveSet(Int_t num);           //!< Set number of curve set
     void SetRowLayer(Int_t row, Int_t layer); //!< Set row & layer
+    void SetIsNoFile(Bool_t val) { fIsNoFile = val; }
 
     // GETTERS
     TCanvas*  GetCvsPadPlane();
@@ -186,6 +187,8 @@ class STEveManager : public TEveEventManager
     TEveViewer* fViewer3D = NULL;
 
     TTimer *fSubTaskTimer;
+
+    Bool_t fIsNoFile = false;
 
 
     static STEveManager *fInstance;

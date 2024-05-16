@@ -254,8 +254,11 @@ STEveManager::BuildMenu()
   TGMainFrame* frame = new TGMainFrame(gClient -> GetRoot(), 1000, 600);
 
   FairRootManager* fRootManager = FairRootManager::Instance();
-  TChain* chain = fRootManager -> GetInChain();
-  fTotalNumEntries = chain -> GetEntriesFast();
+
+  if(!fIsNoFile) {
+    TChain* chain = fRootManager -> GetInChain();
+    fTotalNumEntries = chain -> GetEntriesFast();
+  }
 
   /********************************************************************/
 
@@ -270,7 +273,9 @@ STEveManager::BuildMenu()
   TGGroupFrame* frameEventControl = new TGGroupFrame(frameMain,"Control",kVerticalFrame);
   frameEventControl -> SetTitlePos(TGGroupFrame::kLeft);
 
-  TString fileName = FairRootManager::Instance() -> GetInChain() -> GetFile() -> GetName();
+  TString fileName = " ";
+  if(!fIsNoFile)
+    fileName = FairRootManager::Instance() -> GetInChain() -> GetFile() -> GetName();
   TObjString *last = (TObjString*) fileName.Tokenize("/") -> Last();
   fileName = last -> GetString();
 
