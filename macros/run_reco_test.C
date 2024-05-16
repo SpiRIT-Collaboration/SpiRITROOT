@@ -94,8 +94,8 @@ void run_reco_test
   TString par = fSpiRITROOTPath+"parameters/"+fParameterFile;
   TString geo = fSpiRITROOTPath+"geometry/geomSpiRIT.man.root";
   TString fRawDataList = TString::Format("%s/list_run%04d.txt",(gSystem -> Getenv("PWD")), fRunNo);
-  TString out = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".reco.test.root";
-  TString log = fPathToData+"run"+sRunNo+"_s"+sSplitNo+".test.log";
+  TString out = TString::Format("%srun%04d_s%d.reco.test.root", fPathToData.Data(),fRunNo,fSplitNo);
+  TString log = TString::Format("%srun%04d_s%d.reco.test.log", fPathToData.Data(),fRunNo,fSplitNo);
   
   if (TString(gSystem -> Which(".", fRawDataList)).IsNull() && !fUseMeta) {
      cout << "data list not found" << endl;
@@ -224,8 +224,8 @@ void run_reco_test
     run -> AddTask(embedTask);
   run -> AddTask(preview);
   run -> AddTask(psa);
-  run -> AddTask(helix);
-  run -> AddTask(genfitPID);
+  //run -> AddTask(helix);
+  //run -> AddTask(genfitPID);
 
   run -> Init();
   run -> Run(0,100);
