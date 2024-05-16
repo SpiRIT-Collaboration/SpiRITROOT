@@ -71,15 +71,14 @@ void run_eve_online
   eve -> SetIsNoFile(true);
 
   STEveDrawTask *draw = new STEveDrawTask();
-  draw -> SetRendering("mc",         false);
-  draw -> SetRendering("digi",       false);
   draw -> SetRendering("hit",        true);
+  draw -> SetAttributes("hit", -1, -1, 4);
 
   STDecoderTask *decoder = new STDecoderTask();
   if(fIsFRIBDAQ)
     decoder -> SetUseFRIBDAQData();
   decoder -> SetUseSeparatedData(true);
-  decoder -> SetPersistence(true);
+  decoder -> SetPersistence(false);
   // By default, if SetUseGainCalibration(true) is called, reading gain calibration information from parameter file.
   //decoder -> SetUseGainCalibration(true);
   /* Manual calibration parameter setters. You need to provide both calibration root file and reference values to match.
@@ -107,18 +106,14 @@ void run_eve_online
   //decoder -> SetEventList(*events[fRunNo]);
   decoder -> SetEventID(start);
  
-  auto embedTask = new STEmbedTask();
-  embedTask -> SetPersistence(false);
-  embedTask -> SetEventID(start);
-  embedTask -> SetEmbedFile(fMCFile);
-
   auto preview = new STEventPreviewTask();
   preview -> SetSkippingEvents(fSkipEventArray);
-  preview -> SetPersistence(true);
+  preview -> SetPersistence(false);
   //preview -> SetSelectingEvents(*events[fRunNo]);
+  
 
   auto psa = new STPSAETask();
-  psa -> SetPersistence(true);
+  psa -> SetPersistence(false);
   // In case pulse cut threshold need to be changed. (Default: 30)
   // psa -> SetThreshold(value);
   // By default, it uses all the layers.
@@ -135,36 +130,10 @@ void run_eve_online
   // This is used to match the TPC-Vertex_Y with the BDC_Y.
   //psa -> SetYPedestalOffset(fYPedestalOffset); // unit: mm
 
-  auto helix = new STHelixTrackingTask();
-  helix -> SetPersistence(true);
-  helix -> SetClusterPersistence(true);
-  // Left, right, top and bottom sides cut
-  helix -> SetClusterCutLRTB(420, -420, -64, -522);
-  // High density region cut
-  helix -> SetEllipsoidCut(TVector3(0, -260, -11.9084), TVector3(120, 100, 220), 5); // current use
-  // Changing clustering direction angle and margin. Default: 45 deg with 0 deg margin
-  // helix -> SetClusteringAngleAndMargin(35., 3.);
-
-  auto genfitPID = new STGenfitPIDTask();
-  // In the TPC frame. Here the z position is used when Genfit do the extrapolation.
-  genfitPID -> SetTargetPlane(0, 0, fTargetZ); // unit: mm
-  genfitPID -> SetPersistence(true);
-  genfitPID -> SetBDCFile("");
-  // Only for test
-  // genfitPID -> SetConstantField();
-  genfitPID -> SetListPersistence(true);
-  // Removing shorter length tracklet by distance of adjacent clusters.
-  // genfitPID -> SetMaxDCluster(60);
-
-
   eve -> AddTask(decoder);
-  if(!fMCFile.IsNull())
-    eve -> AddTask(embedTask);
   eve -> AddTask(preview);
   eve -> AddTask(psa);
   eve -> AddEveTask(draw);
-  //eve -> AddTask(helix);
-  //eve -> AddTask(genfitPID);
 
   eve -> Init();
   
