@@ -164,6 +164,9 @@ STRiemannTrackingTask.cc
 STGenfitTask.cc
 STSource.cc
 
+STCopyTreeTask.cc
+STMacroTask.cc
+
 STLinearTrackingTask.cc
 
 CurveTracking/STCurveTrackFinder.cc
