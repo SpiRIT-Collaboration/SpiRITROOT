@@ -1040,7 +1040,7 @@ void GETDecoder::LoadMetaData(TString filename) {
 
   delete metaFile;
 
-  if (fFrameType == kCobo) {
+  if (fFrameType == kCobo || fFrameType == kFRIBDAQ) {
     fCoboFrameInfoArray -> Clear("C");
     Int_t coboFrameInfoIdx = 0;
     for (UInt_t iEntry = 0; iEntry < numEntries; iEntry++) {
