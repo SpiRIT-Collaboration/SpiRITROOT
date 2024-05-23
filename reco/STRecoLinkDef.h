@@ -116,4 +116,7 @@
 #pragma link C++ class std::vector<TVector3>+;
 #pragma link C++ class STSmallOutputTask+;
 
+#pragma link C++ class STCopyTreeTask+;
+#pragma link C++ class STMacroTask+;
+
 #endif
