@@ -279,11 +279,13 @@ STEveManager::BuildMenu()
   TObjString *last = (TObjString*) fileName.Tokenize("/") -> Last();
   fileName = last -> GetString();
 
-  TGLabel* labelFileName = new TGLabel(frameEventControl, fileName);
-  TGLabel* labelEventID  = new TGLabel(frameEventControl, TString("No. of events : ") + Form("%lld", fTotalNumEntries));
+  if(!fIsOnline) {
+    TGLabel* labelFileName = new TGLabel(frameEventControl, fileName);
+    TGLabel* labelEventID  = new TGLabel(frameEventControl, TString("No. of events : ") + Form("%lld", fTotalNumEntries));
 
-  frameEventControl -> AddFrame(labelFileName, new TGLayoutHints(kLHintsLeft, 5,5,5,1));
-  frameEventControl -> AddFrame(labelEventID, new TGLayoutHints(kLHintsLeft, 5,5,1,3));
+    frameEventControl -> AddFrame(labelFileName, new TGLayoutHints(kLHintsLeft, 5,5,5,1));
+    frameEventControl -> AddFrame(labelEventID, new TGLayoutHints(kLHintsLeft, 5,5,1,3));
+  }
 
   /********************************************************************/
 
@@ -296,6 +298,8 @@ STEveManager::BuildMenu()
       TGNumberFormat::kNESInteger, TGNumberFormat::kNEAAnyNumber,
       TGNumberFormat::kNELLimitMinMax, 0, fTotalNumEntries - 1);
   fCurrentEventNumberEntry -> Connect("ValueSet(Long_t)","STEveManager", this, "SelectEventButton()");
+  if(fIsOnline)
+    fCurrentEventNumberEntry -> SetState(false);
 
   frameEventEntry -> AddFrame(labelEvent, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 1,2,1,1));
   frameEventEntry -> AddFrame(fCurrentEventNumberEntry, new TGLayoutHints(kLHintsLeft, 1,1,1,1));
@@ -303,16 +307,19 @@ STEveManager::BuildMenu()
   TGTextButton* buttonNextEvent = new TGTextButton(frameEventControl, "Next");
   buttonNextEvent -> Connect("Clicked()", "STEveManager", this, "NextEventButton()");
 
-  TGTextButton* buttonPreviousEvent = new TGTextButton(frameEventControl, "Previous");
-  buttonPreviousEvent -> Connect("Clicked()", "STEveManager", this, "PrevEventButton()");
-
-  TGTextButton* buttonUpdate = new TGTextButton(frameEventControl, "Update");
-  buttonUpdate -> Connect("Clicked()", "STEveManager", this, "SelectEventButton()");
-
   frameEventControl -> AddFrame(frameEventEntry, new TGLayoutHints(kLHintsLeft, 1,1,3,3));
   frameEventControl -> AddFrame(buttonNextEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,1));
-  frameEventControl -> AddFrame(buttonPreviousEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,1,3));
-  frameEventControl -> AddFrame(buttonUpdate, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,3));
+
+  if(!fIsOnline) {
+    TGTextButton* buttonPreviousEvent = new TGTextButton(frameEventControl, "Previous");
+    buttonPreviousEvent -> Connect("Clicked()", "STEveManager", this, "PrevEventButton()");
+
+    TGTextButton* buttonUpdate = new TGTextButton(frameEventControl, "Update");
+    buttonUpdate -> Connect("Clicked()", "STEveManager", this, "SelectEventButton()");
+
+    frameEventControl -> AddFrame(buttonPreviousEvent, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,1,3));
+    frameEventControl -> AddFrame(buttonUpdate, new TGLayoutHints(kLHintsRight | kLHintsExpandX, 5,5,5,3));
+  }
 
   if (EveMode("sb"))
   {

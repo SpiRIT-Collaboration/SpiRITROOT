@@ -86,7 +86,8 @@ class STEveManager : public TEveEventManager
     void SetNumHelixSet(Int_t num);           //!< Set number of helix set
     void SetNumCurveSet(Int_t num);           //!< Set number of curve set
     void SetRowLayer(Int_t row, Int_t layer); //!< Set row & layer
-    void SetIsNoFile(Bool_t val) { fIsNoFile = val; }
+    void SetIsNoFile(Bool_t val) { fIsNoFile = val; }  //!< Set is no root file
+    void SetIsOnline(Bool_t val) { fIsOnline = val; }  //!< Set is online viewer (disables next and update buttons)
 
     // GETTERS
     TCanvas*  GetCvsPadPlane();
@@ -189,6 +190,7 @@ class STEveManager : public TEveEventManager
     TTimer *fSubTaskTimer;
 
     Bool_t fIsNoFile = false;
+    Bool_t fIsOnline = false;
 
 
     static STEveManager *fInstance;

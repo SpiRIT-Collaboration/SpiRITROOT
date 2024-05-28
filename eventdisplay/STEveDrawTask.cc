@@ -392,6 +392,13 @@ STEveDrawTask::DrawHitPoints()
     if (fSetObject[kHitBox]) 
       gEve -> ElementChanged(fBoxHitSet);
   }
+
+  Long64_t currentEvent = fEveManager -> GetCurrentEventEntry();
+  TString title = TString::Format("Event %d", currentEvent);
+  if(fRunNumber > -1)
+     title = TString::Format("Run %04d %s", fRunNumber, title.Data());
+  fPadPlane -> SetTitle(title);
+
 }
 
 void 
@@ -1407,6 +1414,7 @@ STEveDrawTask::UpdateCvsPadPlane()
       paxis -> SetX2NDC(0.94);
     }
   }
+
 
   fCvsPadPlane -> Modified();
   fCvsPadPlane -> Update();
