@@ -4,14 +4,14 @@ void readEventList(TString eventListFile, map<Int_t, vector<Int_t> *> &events);
 
 void run_eve_online
 (
-  Int_t fRunNo = 3154,
+  Int_t fRunNo = 73,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 500,
   std::vector<Int_t> fSkipEventArray = {},
   TString fMCFile = "",
   TString fPathToData = "", 
   TString fSupplePath = "",
-  Bool_t fIsFRIBDAQ = false
+  Bool_t fIsFRIBDAQ = true
 )
 {
    cout << "running the macro" << endl;
@@ -69,10 +69,12 @@ void run_eve_online
   eve -> SetVolumeTransparency(80);   // Set geometry transparency (integer, 0~100)
   eve -> SetViewerPoint(-0.7, 1.1);   // Set camera angle (theta, phi)
   eve -> SetIsNoFile(true);
+  eve -> SetIsOnline(true);
 
   STEveDrawTask *draw = new STEveDrawTask();
   draw -> SetRendering("hit",        true);
   draw -> SetAttributes("hit", -1, -1, 4);
+  draw -> SetRunNumber(fRunNo);
 
   STDecoderTask *decoder = new STDecoderTask();
   if(fIsFRIBDAQ)
