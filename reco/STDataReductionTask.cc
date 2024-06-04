@@ -30,7 +30,7 @@ InitStatus STDataReductionTask::Init()
    fInputEventArray = dynamic_cast<TClonesArray *>(ioMan->GetObject(fInputBranchName));
    if (fInputEventArray == nullptr) {
       FairLogger::GetLogger() -> Fatal(
-                                 MESSAGE_ORIGIN, TString::Format("Cannot find TClonesArray in branch %s!", fInputBranchName).Data()
+                                 MESSAGE_ORIGIN, TString::Format("Cannot find TClonesArray in branch %s!", fInputBranchName.Data()).Data()
                                  );
       return kFATAL;
    }
@@ -61,13 +61,13 @@ void STDataReductionTask::Exec(Option_t *opt)
          auto b = dynamic_cast<TClonesArray *>(ioMan->GetObject(name));
          if (fInputEventArray == nullptr)
             FairLogger::GetLogger() -> Fatal(MESSAGE_ORIGIN, 
-                                             TString::Format("Cannot find branch %s!", name).Data()
+                                             TString::Format("Cannot find branch %s!", name.Data()).Data()
                                             );
 
          auto e = dynamic_cast<STRawEvent *>(b->At(0));
          if (e == nullptr) {
             FairLogger::GetLogger() -> Error(MESSAGE_ORIGIN, 
-                                             TString::Format("Not setting %s", name).Data()
+                                             TString::Format("Not setting %s", name.Data()).Data()
                                             );
             continue;
          }

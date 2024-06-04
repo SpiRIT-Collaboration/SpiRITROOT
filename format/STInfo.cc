@@ -23,7 +23,7 @@ void STInfo::AddAugment(std::shared_ptr<STInfoBase> augment, std::string name)
 
    if (fInfoAugments.find(name) != fInfoAugments.end())
    FairLogger::GetLogger() -> Error(MESSAGE_ORIGIN, 
-                                    TString::Format("STInfo augment %s already exists in this STInfo. If replacement is intentional, use STInfo::ReplaceAugment() instead.", name).Data()
+                                    TString::Format("STInfo augment %s already exists in this STInfo. If replacement is intentional, use STInfo::ReplaceAugment() instead.", name.c_str()).Data()
                                     );
 
    ReplaceAugment(augment, name);

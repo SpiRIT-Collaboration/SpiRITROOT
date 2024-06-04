@@ -263,11 +263,12 @@ STDecoderTask::Exec(Option_t *opt)
   if (fRawEvent == NULL)
     {
       fRawEvent = fDecoder -> GetRawEvent(EventID);
+
       *fRawEventData = *fRawEvent;
     }
 
   CheckSaturation(fRawEvent);
-    
+
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
   new ((*fRawDataEventArray)[0]) STRawEvent(fRawEventData);
 
