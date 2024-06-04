@@ -169,6 +169,8 @@ STMacroTask.cc
 
 STLinearTrackingTask.cc
 
+STDataReductionTask.cc
+
 CurveTracking/STCurveTrackFinder.cc
 CurveTracking/STCurveTrackFitter.cc
 CurveTracking/STCorrCurveTHProx.cc

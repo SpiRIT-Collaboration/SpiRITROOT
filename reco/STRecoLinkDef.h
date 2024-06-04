@@ -118,5 +118,7 @@
 
 #pragma link C++ class STCopyTreeTask+;
 #pragma link C++ class STMacroTask+;
+#pragma link C++ class STDataReductionTask+;
+
 
 #endif
