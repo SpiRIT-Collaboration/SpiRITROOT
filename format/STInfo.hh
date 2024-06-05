@@ -98,6 +98,15 @@ public:
 
    std::string GetDefaultName() override { return T::Class_Name(); }
 
+   TClonesArray *GetArray()
+   {
+      if (fCurrentBranchName != fBranchName.GetBranchName()) {
+         fCurrentBranchName = fBranchName.GetBranchName();
+         fArray = dynamic_cast<TClonesArray *>(FairRootManager::Instance()->GetObject(fCurrentBranchName));
+      }
+      return fArray;
+   }
+
    T *GetInfo() { return Get(); }
    T *Get()
    {
