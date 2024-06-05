@@ -1,5 +1,5 @@
-#ifndef STBRANCH
-#define STBRANCH
+#ifndef STBRANCH_HH
+#define STBRANCH_HH
 
 #include "STDataSubject.hh"
 
