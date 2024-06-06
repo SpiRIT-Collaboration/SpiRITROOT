@@ -41,6 +41,12 @@ InitStatus STDataReductionTask::Init()
 void STDataReductionTask::Exec(Option_t *opt)
 {
    // Get raw event
+   if (fInputEventArray == nullptr) {
+      FairLogger::GetLogger() -> Error(MESSAGE_ORIGIN, "STRawEvent array is null!");
+      FairRunAna::Instance()->MarkFill(false);
+      return;
+   }
+
    if (fInputEventArray->GetEntriesFast() == 0)
       return;
    fEvent = dynamic_cast<STRawEvent *>(fInputEventArray->At(0));
@@ -48,15 +54,16 @@ void STDataReductionTask::Exec(Option_t *opt)
    // If we should skip this event mark bad and don't fill tree
    if (fReductionFunc()) {
       TString logString = 
-         TString::Format("Keeping event %s at %s", fEvent->GetEventID(), FairRootManager::Instance()->GetEntryNr());
+         TString::Format("Keeping event %d at %d", fEvent->GetEventID(), FairRootManager::Instance()->GetEntryNr());
       FairLogger::GetLogger() -> Info(MESSAGE_ORIGIN, logString.Data());
    } else {
-
       TString logString = 
-         TString::Format("Skipping event %s at %s", fEvent->GetEventID(), FairRootManager::Instance()->GetEntryNr());
+         TString::Format("Skipping event %d at %d", fEvent->GetEventID(), FairRootManager::Instance()->GetEntryNr());
       FairLogger::GetLogger() -> Info(MESSAGE_ORIGIN, logString.Data());
+      
 
       FairRootManager *ioMan = FairRootManager::Instance();
+
       for (auto name : fOutputBranchs) {
          auto b = dynamic_cast<TClonesArray *>(ioMan->GetObject(name));
          if (fInputEventArray == nullptr)
@@ -75,4 +82,5 @@ void STDataReductionTask::Exec(Option_t *opt)
       }
       FairRunAna::Instance()->MarkFill(false);
    }
+
 }
