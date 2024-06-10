@@ -7,30 +7,25 @@ TTreeReaderValue<TClonesArray> *recoReader = nullptr;
 STVertex *vertexPtr;
 STRecoTrack *recoPtr;
 
-void Diagnostics(int runNum = 63) {
-    TString outFileName = "PIDwoGG.root";
-    //TString filePath = TString::Format("data/run%04d_s0.reco.test.root", runNum);
-    //TString filePath = "data/multi01OnlyA.root";
+#define cRED "\033[1;31m"
+#define cYELLOW "\033[1;33m"
+#define cNORMAL "\033[0m"
+
+const double pi = 3.1415926;
+
+void Diagnostics() {
+  if (!(gSystem -> Getenv("RUN"))) {
+    cout << endl;
+    cout << cYELLOW << "== Usage: " << cNORMAL << "RUN=" << cRED << "####" << cNORMAL << " root Diagnostic.cpp" << endl;
+    cout << endl;
+    gSystem -> Exit(0);
+  }
+
+  Int_t runNum = atoi(gSystem -> Getenv("RUN"));
+
+    TString filePath = TString::Format("data/run%04d_s0.reco.test.root", runNum);
     tree = new TChain("cbmsim");
-
-    tree->Add("data/run_64.root");
-    tree->Add("data/run_65.root");
-    tree->Add("data/run_72.root");
-    tree->Add("data/run_73.root");
-    tree->Add("data/run_74.root");
-    tree->Add("data/run_75.root");
-    tree->Add("data/run_96.root");
-    tree->Add("data/run_97.root");
-    tree->Add("data/run_98.root");
-
-    //tree->Add("data/run_92.root");
-    //tree->Add("data/run_93.root");
-    //tree->Add("data/run_94.root");
-    //tree->Add("data/run_95.root");
-
-    //tree->Add("data/multi10Less.root");
-    //tree->Add("data/multi10Less_1.root");
-
+    tree->Add(filePath);
 
     reader = new TTreeReader(tree);
 
@@ -41,23 +36,11 @@ void Diagnostics(int runNum = 63) {
     TH1D *vtxHistY = new TH1D("vtxHistY", "vtxHistY", 100, -250, -200);
     TH1D *vtxHistZ = new TH1D("vtxHistZ", "vtxHistZ", 100, -100, 100);
 
-    int nBinsX = 100;
-    double xMin = 1;     // Starting value (log base 10 of this should be an integer if you want nice labels)
-    double xMax = 100000;  // Ending value (log base 10 of this should be an integer if you want nice labels)
-
-// Calculate the bin edges
-    std::vector<double> xBins(nBinsX + 1);
-    double logMin = std::log10(xMin);
-    double logMax = std::log10(xMax);
-    double binWidth = (logMax - logMin) / nBinsX;
-
-    for (int i = 0; i <= nBinsX; ++i) {
-       xBins[i] = std::pow(10, logMin + i * binWidth);
-    }
-
-    TH2D *pidHist = new TH2D("pidHist", "pidHist", nBinsX, xBins.data(), 100, 0, 350);
-    TH1D *multiplicity = new TH1I("multiplicity", "multiplicity", 50, 0, 50);
+    TH2D *pidHist = new TH2D("pidHist", "pidHist", 1000, -1000, 2000, 1000, 0, 1000);
+    TH1I *multiplicity = new TH1I("multiplicity", "multiplicity", 100, 0, 100);
     TH2D *katanaPos = new TH2D("katanaPos", "katanaPos", 130, -260, 260, 50, -15, 15);
+
+    TH2D *thetPhi = new TH2D("thetPhi", "thetPhi", 100, 0, pi / 2, 100, 0, 2 * pi);
 
     int eventCount = tree->GetEntries();
 
@@ -95,6 +78,13 @@ void Diagnostics(int runNum = 63) {
                 auto pos = recoPtr->GetPosKatana();
                 katanaPos->Fill(pos.X(), pos.Y());
                 //cout << "track: " << r << "; mom: " << mom << "; dEdx: " << dedx << endl;
+
+                auto momTar = recoPtr->GetMomentumTargetPlane();
+
+                auto theta = momTar.Theta();
+                auto phi = momTar.Phi();
+
+                thetPhi->Fill(theta, phi + pi);
             }
         }
     }
@@ -116,8 +106,11 @@ void Diagnostics(int runNum = 63) {
     TCanvas *cMul = new TCanvas("cMul", "cMul", 1);
     multiplicity->Draw();
 
-    TCanvas *cKat = new Tacanvas("cKat", "cKat", 1);
+    TCanvas *cKat = new TCanvas("cKat", "cKat", 1);
     katanaPos->Draw("COLZ");
+
+    TCanvas *cThP = new TCanvas("cThP", "cThP", 1);
+    thetPhi->Draw("COLZ");
 
     //TFile *outFile = new TFile(outFileName, "RECREATE");
     //pidHist->Write();
