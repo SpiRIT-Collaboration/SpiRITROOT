@@ -40,7 +40,7 @@ void Diagnostics() {
     TH1I *multiplicity = new TH1I("multiplicity", "multiplicity", 100, 0, 100);
     TH2D *katanaPos = new TH2D("katanaPos", "katanaPos", 130, -260, 260, 50, -15, 15);
 
-    TH2D *thetPhi = new TH2D("thetPhi", "thetPhi", 100, 0, pi / 2, 100, 0, 2 * pi);
+    TH2D *thetPhi = new TH2D("thetPhi", "thetPhi", 100, 0, 90, 100, 0, 360);
 
     int eventCount = tree->GetEntries();
 
@@ -84,7 +84,7 @@ void Diagnostics() {
                 auto theta = momTar.Theta();
                 auto phi = momTar.Phi();
 
-                thetPhi->Fill(theta, phi + pi);
+                thetPhi->Fill(theta / pi * 180, (phi + pi) / pi * 180);
             }
         }
     }
