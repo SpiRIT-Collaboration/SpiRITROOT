@@ -109,9 +109,8 @@ DiagnosticsGUI::~DiagnosticsGUI() {
 }
 
 void DiagnosticsGUI::ProcessRun() {
-    fRunDisp->SetText(TString::Format("%d", fRunNum));
 
-    TString filePath = TString::Format("data/run%04d_s0.reco.test.root", fRunNum);
+    TString filePath = TString::Format("data/run%04d_s0.reco.online.root", fRunNum);
     TFile *file = TFile::Open(filePath);
     if(!file || file->IsZombie()) {
         auto message = TString::Format("Error: Run %04d has not been unpacked! Unpack before plotting.", fRunNum);
@@ -202,6 +201,8 @@ void DiagnosticsGUI::ProcessRun() {
     DrawMul();
     DrawVtxXY();
     DrawVtxZ();
+
+    fRunDisp->SetText(TString::Format("%d", fRunNum));
 }
 
 void DiagnosticsGUI::Init() {
