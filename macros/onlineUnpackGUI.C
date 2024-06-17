@@ -113,7 +113,7 @@ void UnpackGUI::UnpackRun() {
     fStatusText->Resize();
     gClient->NeedRedraw(fStatusText);
 
-    auto macroRunner = TString::Format("root -b -l -q \"run_reco_2024.C(%d, 0, %d, \\\"%s\\\")\"", fRunNum, fNumEvents, fOutForm.Data());
+    auto macroRunner = TString::Format("root -b -l -q \"run_reco_FCfix.C(%d, 0, %d, \\\"%s\\\")\"", fRunNum, fNumEvents, fOutForm.Data());
 
     fUnpackStatus->SetText(TString::Format("Unpacking Run %04d", fRunNum));
     fUnpackStatus->Resize();
