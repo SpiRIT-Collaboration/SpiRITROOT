@@ -97,7 +97,7 @@ InitStatus STHelixTrackingTask::Init()
   if (STRecoTask::Init() == kERROR)
     return kERROR;
 
-  fHitArray = (TClonesArray *) fRootManager -> GetObject("STHit");
+  fHitArray = (TClonesArray *) fRootManager -> GetObject(fInputBranchName);
   if (fHitArray == nullptr) {
     LOG(ERROR) << "Cannot find STHit array!" << FairLogger::endl;
     return kERROR;

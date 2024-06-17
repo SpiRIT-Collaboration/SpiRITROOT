@@ -80,7 +80,7 @@ InitStatus STPSAETask::Init()
     std::cout<<"== [STPSATask] Embedding mode DISABLED"<<std::endl;
   
   fHitArray = new TClonesArray("STHit", 1000);
-  fRootManager -> Register("STHit", "SpiRIT", fHitArray, fIsPersistence);
+  fRootManager -> Register(fOutputBranchName, "SpiRIT", fHitArray, fIsPersistence);
   fEmbedHitArray = new TClonesArray("STHit", 1000);
   fRootManager -> Register("STEmbedHit", "SpiRIT", fEmbedHitArray, fIsPersistence);
   fDataHitArray = new TClonesArray("STHit", 1000);

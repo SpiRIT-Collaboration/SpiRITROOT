@@ -15,6 +15,7 @@ class STHelixTrackingTask : public STRecoTask
     ~STHelixTrackingTask();
 
     virtual void SetClusterPersistence(Bool_t value = kTRUE);
+    void SetInputBranch(TString name){ fInputBranchName = name; };
 
     virtual InitStatus Init();
     virtual void Exec(Option_t *opt);
@@ -36,6 +37,7 @@ class STHelixTrackingTask : public STRecoTask
     TClonesArray *fTrackArray = nullptr;
 
     Bool_t fIsClusterPersistence = kFALSE;
+    TString fInputBranchName = "STHit";
 
     STHelixTrackFinder* fTrackFinder;
 

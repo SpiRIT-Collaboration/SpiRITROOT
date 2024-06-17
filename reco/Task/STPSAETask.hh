@@ -42,6 +42,8 @@ class STPSAETask : public STRecoTask
     void SetGainMatchingData(TString filename);
     void SetPSAPeakFindingOption(Int_t opt);
 
+    void SetOutputBranch(TString name){ fOutputBranchName = name; };
+
     void SetYOffsets(TString fileName);
 
     void SetYPedestalOffset(Double_t offset);
@@ -59,6 +61,8 @@ class STPSAETask : public STRecoTask
     Int_t fPSAPeakFindingOption = 1; //High efficiency set to defualt = 1; 0 is Jung Woo's org method
     TString fYOffsetFileName = "";
     Double_t fYPedestalOffset = 0;
+
+    TString fOutputBranchName = "STHit";
     
     Double_t fThreshold = 30;
     Int_t fLayerLowCut  = -1;
