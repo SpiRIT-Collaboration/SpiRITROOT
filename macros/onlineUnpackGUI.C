@@ -113,7 +113,18 @@ void UnpackGUI::UnpackRun() {
     fStatusText->Resize();
     gClient->NeedRedraw(fStatusText);
 
-    auto macroRunner = TString::Format("root -b -l -q \"run_reco_FCfix.C(%d, 0, %d, \\\"%s\\\")\"", fRunNum, fNumEvents, fOutForm.Data());
+    ofstream parlFile;
+    parlFile.open("input/parInpt.txt");
+
+    for(int i = 4; i < 9; i++) {
+
+      auto macroRunner = TString::Format("root -b -l -q \"run_reco_2024.C(%d, %d, %d, \\\"%s\\\")\"", fRunNum, i, fNumEvents, fOutForm.Data());
+
+      parlFile << macroRunner.Data() << std::endl;
+    }
+    parlFile.close();
+
+    auto parlRunner = TString::Format("./parallel --jobs 5 --joblog ./log.txt < input/parInpt.txt");
 
     fUnpackStatus->SetText(TString::Format("Unpacking Run %04d", fRunNum));
     fUnpackStatus->Resize();
@@ -121,7 +132,7 @@ void UnpackGUI::UnpackRun() {
 
     gSystem->ProcessEvents();
 
-    int exitCode = gSystem->Exec(macroRunner.Data());
+    int exitCode = gSystem->Exec(parlRunner.Data());
 
     if (exitCode == 0) {
         fUnpackStatus->SetText("Unpack status: Finished");

@@ -5,6 +5,7 @@
 #include <TGButton.h>
 #include <TGFrame.h>
 #include <TRootEmbeddedCanvas.h>
+#include <TGFileDialog.h>
 #include <RQ_OBJECT.h>
 
 const double pi = 3.1415926;
@@ -16,7 +17,13 @@ public:
     virtual ~DiagnosticsGUI();
 
     void SetRunNum() { fRunNum = fRunEnt->GetNumberEntry()->GetIntNumber(); }
+    void SetClustCut() { fClustCut = fCutEnt->GetNumberEntry()->GetIntNumber(); }
+    void SetPOCACut() { fPOCACut = fPOCAEnt->GetNumberEntry()->GetNumber(); }
+    void SetVertZPCut() { fVertZPosCut = fVertZPosEnt->GetNumberEntry()->GetNumber(); }
+    void SetVertZSCut() { fVertZSigCut = fVertZSigEnt->GetNumberEntry()->GetNumber(); }
+    void SetCurrentTab(Int_t tab) { fCurrentTab = tab; }
     void ProcessRun();
+    void ToggleEditor();
 
 private:
     TGMainFrame *fMain;
@@ -24,8 +31,20 @@ private:
     TGTab *fTab;
     TGTextEntry *fRunDisp;
     TGNumberEntry *fRunEnt;
+    TGNumberEntry *fCutEnt;
+    TGNumberEntry *fPOCAEnt;
+    TGNumberEntry *fVertZPosEnt;
+    TGNumberEntry *fVertZSigEnt;
+    TGCheckButton *fVertZCheck;
+    TGCheckButton *fTargetCheck;
 
-    Int_t fRunNum = 0;
+    Int_t fRunNum = 1002;
+    Int_t fClustCut = 15;
+    Int_t fCurrentTab = 0;
+    Double_t fPOCACut = 20;
+    Double_t fVertZPosCut = -16.6;
+    Double_t fVertZSigCut = 2;
+    Double_t fTargetXWidth = 30;
 
     TChain *tree = nullptr;
 
@@ -56,20 +75,90 @@ private:
 
 DiagnosticsGUI::DiagnosticsGUI(const TGWindow *p, UInt_t w, UInt_t h) {
     fMain = new TGMainFrame(p, w, h);
+    TGHorizontalFrame *hPlots = new TGHorizontalFrame(fMain, 200, 40);
+
+    TGVerticalFrame *vSidebar =  new TGVerticalFrame(hPlots, 200, 40);
+    // Make Cut Frame
+    TGHorizontalFrame *hCut = new TGHorizontalFrame(vSidebar, 200, 40);
+
+    // Run Input 
+    TGLabel *cutLabel = new TGLabel(hCut, "Cluster Cut");
+    hCut->AddFrame(cutLabel, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fCutEnt = new TGNumberEntry(hCut, 0.005, 9, 999, TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative, TGNumberFormat::kNELLimitMinMax, 0, 9999);
+    fCutEnt->Connect("ValueSet(Int_t)", "DiagnosticsGUI", this, "SetClustCut()");
+    (fCutEnt->GetNumberEntry())->Connect("ReturnPressed()", "DiagnosticsGUI", this, "SetClustCut()");
+    fCutEnt->SetNumber(fClustCut);
+    hCut->AddFrame(fCutEnt, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    vSidebar->AddFrame(hCut, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+
+    TGHorizontalFrame *hPOCA = new TGHorizontalFrame(vSidebar, 200, 40);
+    TGLabel *pocaLabel = new TGLabel(hPOCA, "POCA Cut");
+    hPOCA->AddFrame(pocaLabel, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fPOCAEnt = new TGNumberEntry(hPOCA, 0.005, 9, 999, TGNumberFormat::kNESReal, TGNumberFormat::kNEANonNegative, TGNumberFormat::kNELLimitMinMax, 0, 9999);
+    fPOCAEnt->Connect("ValueSet(Int_t)", "DiagnosticsGUI", this, "SetPOCACut()");
+    (fPOCAEnt->GetNumberEntry())->Connect("ReturnPressed()", "DiagnosticsGUI", this, "SetPOCACut()");
+    fPOCAEnt->SetNumber(fPOCACut);
+    hPOCA->AddFrame(fPOCAEnt, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    vSidebar->AddFrame(hPOCA, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+
+   // Frame for using a vertex Z cut
+    TGVerticalFrame *vVertZ = new TGVerticalFrame(vSidebar, 200, 40);
+    TGHorizontalFrame *hVertZP = new TGHorizontalFrame(vVertZ, 200, 40);
+    TGLabel *vertZPLabel = new TGLabel(hVertZP, "Vertex Z Position");
+    hVertZP->AddFrame(vertZPLabel, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fVertZPosEnt = new TGNumberEntry(hVertZP, 0.005, 9, 999, 
+                                     TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber, TGNumberFormat::kNELLimitMinMax, -9999, 9999);
+    fVertZPosEnt->Connect("ValueSet(Int_t)", "DiagnosticsGUI", this, "SetVertZPCut()");
+    (fVertZPosEnt->GetNumberEntry())->Connect("ReturnPressed()", "DiagnosticsGUI", this, "SetVertZPCut()");
+    fVertZPosEnt->SetNumber(fVertZPosCut);
+    hVertZP->AddFrame(fVertZPosEnt, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    vVertZ->AddFrame(hVertZP, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+
+    TGHorizontalFrame *hVertZS = new TGHorizontalFrame(vVertZ, 200, 40);
+    TGLabel *vertZSLabel = new TGLabel(hVertZS, "Vertex Z Sigma");
+    hVertZS->AddFrame(vertZSLabel, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fVertZSigEnt = new TGNumberEntry(hVertZS, 0.005, 9, 999, 
+                                     TGNumberFormat::kNESReal, TGNumberFormat::kNEANonNegative, TGNumberFormat::kNELLimitMinMax, 0, 9999);
+    fVertZSigEnt->Connect("ValueSet(Int_t)", "DiagnosticsGUI", this, "SetVertZSCut()");
+    (fVertZSigEnt->GetNumberEntry())->Connect("ReturnPressed()", "DiagnosticsGUI", this, "SetVertZSCut()");
+    fVertZSigEnt->SetNumber(fVertZSigCut);
+    hVertZS->AddFrame(fVertZSigEnt, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    vVertZ->AddFrame(hVertZS, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+
+    fVertZCheck = new TGCheckButton(vVertZ, "Use Vertex Z Cut", 1);
+    fVertZCheck->SetState(kButtonUp);
+    vVertZ->AddFrame(fVertZCheck, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    vSidebar->AddFrame(vVertZ, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+
+    TGHorizontalFrame *hTarget = new TGHorizontalFrame(vSidebar, 200, 40);
+    fTargetCheck = new TGCheckButton(hTarget, "Use Target XY Cut", 1);
+    fTargetCheck->SetState(kButtonUp);
+    hTarget->AddFrame(fTargetCheck, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    vSidebar->AddFrame(hTarget, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+
+    hPlots->AddFrame(vSidebar, new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
+
 
     // Make Tabs
-    fTab = new TGTab(fMain, w, h);
+    fTab = new TGTab(hPlots, w, h);
     fTab->AddTab("PID");
     fTab->AddTab("ThetaPhi");
     fTab->AddTab("Multiplicity");
     fTab->AddTab("VertexXY");
     fTab->AddTab("VertexZ");
-    fMain->AddFrame(fTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10,10,10,1));
+    fTab->Connect("Selected(Int_t)", "DiagnosticsGUI", this, "SetCurrentTab(Int_t)");
+    hPlots->AddFrame(fTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10,10,10,1));
     for(int i = 0; i < 5; i++) {
+        //TGHorizontalFrame *htopbar = new TGHorizontalFrame(fTab->GetTabContainer(i), 200, 40 );
+        //TGTextButton *edit = new TGTextButton(htopbar, "&Editor");
+        //edit->Connect("Clicked()", "DiagnosticsGUI", this, "ToggleEditor()");
+        //htopbar->AddFrame(edit, new TGLayoutHints(kLHintsLeft, 5, 5, 3, 4));
+        //(fTab->GetTabContainer(i))->AddFrame(htopbar, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5));
         auto name = TString::Format("Ecanvas%d", i);
         fEcanvas[i] = new TRootEmbeddedCanvas(name, fTab->GetTabContainer(i), 1280, 720);
-        (fTab->GetTabContainer(i))->AddFrame(fEcanvas[i], new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5));
+        (fTab->GetTabContainer(i))->AddFrame(fEcanvas[i], new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
     }
+    fMain->AddFrame(hPlots, new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
 
     // Make Bottom Frame
     TGHorizontalFrame *hframe = new TGHorizontalFrame(fMain, 200, 40);
@@ -109,27 +198,38 @@ DiagnosticsGUI::~DiagnosticsGUI() {
 }
 
 void DiagnosticsGUI::ProcessRun() {
+   pidHist->Reset();
+   thetPhi->Reset();
+   multiplicity->Reset();
+             
+   vtxXY->Reset();
+   vtxVbdcX->Reset();
+   vtxVbdcY->Reset();
+   vtxHistZ->Reset();
 
-    TString filePath = TString::Format("data/run%04d_s00.reco.online.root", fRunNum);
-    TFile *file = TFile::Open(filePath);
-    if(!file || file->IsZombie()) {
-        auto message = TString::Format("Error: Run %04d has not been unpacked! Unpack before plotting.", fRunNum);
-        new TGMsgBox(gClient->GetRoot(), fMain, "Error", message, kMBIconExclamation, kMBOk);
-        if(file) {
-            file->Close();
-            delete file;
-        }
-        return;
-    }
-    file->Close();
-    delete file;
+   TString testPath = TString::Format("data/run%04d_s00.reco.online.root", fRunNum);
+   TFile *file = TFile::Open(testPath);
+   if(!file || file->IsZombie()) {
+      auto message = TString::Format("Error: Run %04d has not been unpacked! Unpack before plotting.", fRunNum);
+      new TGMsgBox(gClient->GetRoot(), fMain, "Error", message, kMBIconExclamation, kMBOk);
+      if(file) {
+         file->Close();
+         delete file;
+      }
+      return;
+   }
+   file->Close();
+   delete file;
 
-    if(tree != nullptr) {
-        delete tree;
-        tree = nullptr;
-    }
-    tree = new TChain("cbmsim");
-    tree->Add(filePath);
+   if(tree != nullptr) {
+      delete tree;
+      tree = nullptr;
+   }
+   tree = new TChain("cbmsim");
+   
+   TString filePath = TString::Format("data/run%04d_s*.reco.online.root", fRunNum);
+
+   tree->Add(filePath);
 
     if(reader != nullptr) {
         delete reader;
@@ -157,12 +257,16 @@ void DiagnosticsGUI::ProcessRun() {
         vertexPtr = dynamic_cast<STVertex *>((*vertexReader)->At(0));
 
         //std::cout << i << std::endl;
+        //
+
+        TVector3 vertex;
 
         if(vertexPtr == NULL) {
-            cout << "vertexPtr is null" << endl;
+            //cout << "vertexPtr is null" << endl;
+            continue;
         }
         if(vertexPtr != NULL) {
-            auto vertex = vertexPtr->GetPos();
+            vertex = vertexPtr->GetPos();
             //cout << "vertex: (" << vertex.X() << ", " << vertex.Y() << ", " << vertex.Z() << ")" << endl;
 
             vtxXY->Fill(vertex.X(), vertex.Y() + 225);
@@ -171,6 +275,11 @@ void DiagnosticsGUI::ProcessRun() {
             vtxHistZ->Fill(vertex.Z());
         }
 
+        if(fVertZCheck->IsDown() && (vertex.Z() < fVertZPosCut - fVertZSigCut * 3 || vertex.Z() > fVertZPosCut + fVertZSigCut * 3))
+            continue;
+        if(fTargetCheck->IsDown() && (vertex.X() < -fTargetXWidth / 2. || vertex.X() > fTargetXWidth / 2.))
+            continue;
+
         for(int r = 0; r < trackCount; r++) {
             recoPtr = dynamic_cast<STRecoTrack *>((*recoReader)->At(r));
 
@@ -178,21 +287,28 @@ void DiagnosticsGUI::ProcessRun() {
                 cout << "recoPtr is null" << endl;
             }
             if(recoPtr != NULL) {
-                auto mom = recoPtr->GetMomentum().Mag();
-                auto dedx = recoPtr->GetdEdxWithCut(0, 0.7, 0.5);
+               if(recoPtr->GetNumLayerClusters() + recoPtr->GetNumRowClusters() > fClustCut && (recoPtr->GetPOCAVertex() - vertex).Mag() < fPOCACut) {
+                  auto mom = recoPtr->GetMomentum().Mag();
+                  auto dedx = recoPtr->GetdEdxWithCut(0, 0.7, 0.5);
+                  auto charge = recoPtr->GetCharge();
+                  auto gfCharge = recoPtr->GetGenfitCharge();
 
-                pidHist->Fill(mom, dedx);
+                  //if(charge != gfCharge)
+                     //cout << "charges were different" << endl;
 
-                auto pos = recoPtr->GetPosKatana();
-                //katanaPos->Fill(pos.X(), pos.Y());
-                //cout << "track: " << r << "; mom: " << mom << "; dEdx: " << dedx << endl;
+                  pidHist->Fill(mom * gfCharge, dedx);
 
-                auto momTar = recoPtr->GetMomentumTargetPlane();
+                  auto pos = recoPtr->GetPosKatana();
+                  //katanaPos->Fill(pos.X(), pos.Y());
+                  //cout << "track: " << r << "; mom: " << mom << "; dEdx: " << dedx << endl;
 
-                auto theta = momTar.Theta();
-                auto phi = momTar.Phi();
+                  auto momTar = recoPtr->GetMomentumTargetPlane();
 
-                thetPhi->Fill(theta / pi * 180, (phi + pi) / pi * 180);
+                  auto theta = momTar.Theta();
+                  auto phi = momTar.Phi();
+
+                  thetPhi->Fill(theta / pi * 180, (phi + pi) / pi * 180);
+               }
             }
         }
     }
@@ -214,7 +330,7 @@ void DiagnosticsGUI::Init() {
     vtxXY = new TH2D("vtxXY", "vtxXY", 100, -25, 25, 100, -25, 25);
     vtxVbdcX = new TH2D("vtxVbdcX", "vtxVbdcX", 100, -25, 25, 100, -25, 25);
     vtxVbdcY = new TH2D("vtxVbdcY", "vtxVbdcY", 100, -25, 25, 100, -25, 25);
-    vtxHistZ = new TH1D("vtxHistZ", "vtxHistZ", 100, -100, 100);
+    vtxHistZ = new TH1D("vtxHistZ", "vtxHistZ", 1000, -500, 800);
 }
 
 void DiagnosticsGUI::DrawPID() {
@@ -222,7 +338,9 @@ void DiagnosticsGUI::DrawPID() {
     TCanvas *canvas = fEcanvas[0]->GetCanvas();
     canvas->Clear();
     canvas->cd();
+    gStyle->SetPalette(55);
     pidHist->Draw("COLZ");
+   //pidHist->Draw("");
     canvas->Update();
 }
 
@@ -261,6 +379,12 @@ void DiagnosticsGUI::DrawVtxZ() {
     vtxHistZ->Draw();
     canvas->Update();
 }
+
+ void DiagnosticsGUI::ToggleEditor() {
+    TCanvas *canvas = fEcanvas[fCurrentTab]->GetCanvas();
+    //canvas->ToggleEditor();
+    canvas->EditorBar();
+ }
 
 
 
