@@ -275,6 +275,7 @@ void STCore::ProcessCobo(Int_t coboIdx)
 {
   GETCoboFrame *coboFrame = fDecoderPtr[coboIdx] -> GetCoboFrame(fTargetFrameID);
 
+
   if (coboFrame == NULL) {
     fRawEventPtr -> SetIsGood(kFALSE);
 
@@ -427,6 +428,8 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
 
     fRawEventPtr -> SetEventID(fCurrentEventID[0]);
 
+    std::cout << "currentEventID:" << fCurrentEventID[0] << std::endl;
+
     for (Int_t iRow = 0; iRow < 108; iRow++) {
       for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
         STPad *pad = fPadArray.at(iRow*112 + iLayer);
@@ -434,7 +437,7 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
           fRawEventPtr -> SetPad(pad);
       }
     }
-
+    std::cout << "numPads:" << fRawEventPtr -> GetNumPads() << "; ptrGood:" << fRawEventPtr -> IsGood() << std::endl;
     if (fRawEventPtr -> GetNumPads() == 0 && fRawEventPtr -> IsGood() == kFALSE)
       return NULL; 
     else

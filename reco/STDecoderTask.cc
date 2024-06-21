@@ -93,7 +93,7 @@ void STDecoderTask::SetDataList(TString list)
   TString dataFileWithPath;
   Int_t iCobo = -1;
   while (dataFileWithPath.ReadLine(listFile)) {
-    if (dataFileWithPath.Contains("s."))
+    if (dataFileWithPath.Contains("s.") || (fUseFRIBDAQ && dataFileWithPath.Contains(Form("cobo%02d", iCobo))))
       this -> AddData(dataFileWithPath, iCobo);
     else {
       iCobo++;
