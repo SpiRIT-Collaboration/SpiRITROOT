@@ -15,8 +15,13 @@ void generateMetadata() {
   }
 
   Int_t runNo = atoi(gSystem -> Getenv("RUN"));
+  Bool_t fIsFRIBDAQ = true;
 
-  gSystem -> Exec(Form("./createList.sh %d", runNo));
+  if(fIsFRIBDAQ)
+    gSystem -> Exec(Form("./createList_FRIBDAQ.sh %d", runNo));
+  else
+    gSystem -> Exec(Form("./createList.sh %d", runNo));
+
   TString fDataFile = Form("list_run%04d.txt", runNo);
   gSystem -> Exec(Form("mkdir -p run_%04d/metadata", runNo));
 
@@ -26,9 +31,9 @@ void generateMetadata() {
 
   STCore *fCore = nullptr;
   if (!fUseSeparatedData) {
-    fCore = new STCore(fDataFile);
+    fCore = new STCore(fDataFile, fIsFRIBDAQ);
   } else {
-    fCore = new STCore();
+    fCore = new STCore(fIsFRIBDAQ);
     fCore -> SetUseSeparatedData(fUseSeparatedData);
 
     TString dataFileWithPath = fDataFile;
@@ -36,10 +41,13 @@ void generateMetadata() {
     TString buffer;
     Int_t iCobo = -1;
     while (dataFileWithPath.ReadLine(listFile)) {
-      if (dataFileWithPath.Contains("s."))
-        fCore -> AddData(dataFileWithPath, iCobo);
-      else {
+      if (dataFileWithPath.Contains("00.evt")) {
         iCobo++;
+        cout << "#Cobo: " << iCobo << "; dataFilePath: " << dataFileWithPath << endl;
+        fCore -> AddData(dataFileWithPath, iCobo);
+      }
+      else {
+        cout << "Cobo: " << iCobo << "; dataFilePath: " << dataFileWithPath << endl;
         fCore -> AddData(dataFileWithPath, iCobo);
       }
     }
