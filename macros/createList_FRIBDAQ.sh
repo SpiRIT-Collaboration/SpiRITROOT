@@ -16,12 +16,12 @@ RUN=$1
 LOCATION=${HOSTNAME:0:4}
 if [ $LOCATION == "span" ]
 then
-  DATAPATH=/data # SPANA01
+  DATAPATH=/data/spdaq04/data/fribdaq # SPANA01
 elif [ $LOCATION == "ricc" ]
 then
   DATAPATH=/data/Q15264/rawdata # RICC
 else
-  DATAPATH=/mnt/spirit/analysis/changj/SpiRITROOT.050624/macros/data
+  DATAPATH=/data/spdaq04/data/fribdaq/
 fi
 
 printf -v RUN "%04g" $RUN
