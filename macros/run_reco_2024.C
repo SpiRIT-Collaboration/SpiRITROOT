@@ -2,15 +2,16 @@
 
 void run_reco_2024
 (
-  Int_t fRunNo = 3154,
+  Int_t fRunNo = 89,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 10,
   TString fOutForm = "reco.2024",
+  Bool_t fUseMeta = kFALSE,
   std::vector<Int_t> fSkipEventArray = {},
   TString fMCFile = "",
   TString fPathToData = "", 
   TString fSupplePath = "",
-  Bool_t fIsFRIBDAQ = false
+  Bool_t fIsFRIBDAQ = true
 )
 {
    cout << "running the macro" << endl;
@@ -25,7 +26,7 @@ void run_reco_2024
   TString beamDataPathWithFormat = "";
 
   // Meta data path
-  Bool_t fUseMeta = kFALSE;
+  
   //TString fSupplePath = "/mnt/spirit/rawdata/misc/rawdataSupplement";
 
   // Use relative gain matching - Amplify low gain section
@@ -137,6 +138,7 @@ void run_reco_2024
   // decoder -> SetGainReference(constant, linear, quadratic);
   //if (fIsGGDataSet)
     //decoder -> SetGGNoiseData(fGGData);
+cout << fRawDataList << endl;
   decoder -> SetDataList(fRawDataList);
   //decoder -> SetEventID(start);
   decoder -> SetTbRange(30, 257); 
