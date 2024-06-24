@@ -561,7 +561,7 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
     else if (fCoboFrameInfo -> GetEventID() == fFrameInfo -> GetEventID())
       fCoboFrameInfo -> SetNextInfo(fFrameInfo); 
     else {
-      Int_t iChecker = (fCoboFrameInfoIdx - 10 < 0 ? 0 : fCoboFrameInfoIdx - 10);
+      Int_t iChecker = (fCoboFrameInfoIdx - 200 < 0 ? 0 : fCoboFrameInfoIdx - 200);
       while (GETFrameInfo *checkCoboFrameInfo = (GETFrameInfo *) fCoboFrameInfoArray -> ConstructedAt(iChecker)) {
         if (checkCoboFrameInfo -> IsFill()) {
           if (checkCoboFrameInfo -> GetEventID() == fFrameInfo -> GetEventID()) {

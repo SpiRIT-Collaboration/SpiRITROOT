@@ -564,6 +564,7 @@ void STCore::GoToEnd(Int_t coboIdx)
 void STCore::GenerateMetaData(Int_t runNo)
 {
   if (fIsSeparatedData) {
+     /*
     std::thread cobo0([this]() { this -> GoToEnd(0); });
     std::thread cobo1([this]() { this -> GoToEnd(1); });
     std::thread cobo2([this]() { this -> GoToEnd(2); });
@@ -588,6 +589,19 @@ void STCore::GenerateMetaData(Int_t runNo)
     cobo9.join();
     cobo10.join();
     cobo11.join();
+    */
+     GoToEnd(0);
+     GoToEnd(1);
+     GoToEnd(2);
+     GoToEnd(3);
+     GoToEnd(4);
+     GoToEnd(5);
+     GoToEnd(6);
+     GoToEnd(7);
+     GoToEnd(8);
+     GoToEnd(9);
+     GoToEnd(10);
+     GoToEnd(11);
 
     for (Int_t iCobo = 0; iCobo < 12; iCobo++)
       fDecoderPtr[iCobo] -> SaveMetaData(runNo, "", iCobo);
