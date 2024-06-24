@@ -531,14 +531,12 @@ void STCore::SetUseSeparatedData(Bool_t value) {
     std::cout << cYELLOW << "== [STCore] You set the decoder to analyze seperated data files." << std::endl;
     std::cout << "            Make sure to call this method right after the instance created!" << cNORMAL << std::endl;
 
-//    fDecoderPtr[0] -> SetDebugMode(1);
     for (Int_t iCobo = 1; iCobo < 12; iCobo++) {
       fDecoderPtr[iCobo] = new GETDecoder(fIsFRIBDAQ);
       fPedestalPtr[iCobo] = new STPedestal();
       fGainCalibrationPtr[iCobo] = new STGainCalibration();
       fGainMatchingPtr[iCobo] = new STGainMatching();
       fGGNoisePtr[iCobo] = new STGGNoiseSubtractor();
-//      fDecoderPtr[iCobo] -> SetDebugMode(1);
     }
   }
 }

@@ -172,13 +172,13 @@ void GETDecoder::Clear() {
    fRingStateChangeItem -> Clear();
   fRingPhysicsEventItem -> Clear();
   
-  if (fIsContinuousData) {
+  if (!fIsContinuousData) {
 
 #ifdef DEBUG
     std::cout << "== [GETDecoder] Discontinuous data set is set. Leave data list intact!" << std::endl;
 #endif
 
-  return;
+    return;
   }
   
   fDataList.clear();

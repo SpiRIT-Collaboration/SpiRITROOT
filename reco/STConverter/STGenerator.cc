@@ -36,18 +36,20 @@ using std::ifstream;
 
 ClassImp(STGenerator)
 
-STGenerator::STGenerator()
+STGenerator::STGenerator(Bool_t isFRIBData)
 {
   fMode = kError;
+  fIsFRIBData = isFRIBData;
   fIsPositivePolarity = kFALSE;
   fIsSeparatedData = kFALSE;
 
   fParReader = NULL;
 }
 
-STGenerator::STGenerator(TString mode)
+STGenerator::STGenerator(TString mode, Bool_t isFRIBData)
 {
   fMode = kError;
+  fIsFRIBData = isFRIBData;
   SetMode(mode);
   fIsPositivePolarity = kFALSE;
   fIsSeparatedData = kFALSE;
@@ -107,7 +109,7 @@ STGenerator::SetMode(TString mode)
     return;
   }
 
-  fCore = new STCore();
+  fCore = new STCore(fIsFRIBData);
 }
 
 void
