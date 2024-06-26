@@ -13,26 +13,40 @@ public:
     UnpackGUI(const TGWindow *p, UInt_t w, UInt_t h);
     virtual ~UnpackGUI();
 
-    void SetRunNum() { fRunNum = fRunEnt->GetNumberEntry()->GetIntNumber(); }
-    void SetNumEvents() { fNumEvents = fEventsEnt->GetNumberEntry()->GetIntNumber(); }
+    void SetRunNum();
+    void SetNumEvents();
+    void SetParlNum();
     void UnpackRun();
 
     void UnpackFinish();
 
 private:
     TGMainFrame *fMain;
+    TGTextEntry *fRunDisp;
     TGNumberEntry *fRunEnt;
+    TGTextEntry *fEventsDisp;
     TGNumberEntry *fEventsEnt;
+    TGTextEntry *fParlDisp;
+    TGNumberEntry *fParlEnt;
     TGLabel *fStatusText;
     TGLabel *fUnpackStatus;
     TGTextButton *fUnpack;
+    TGTextButton *fRunSet;
+    TGTextButton *fEventsSet;
+    TGTextButton *fParlSet;
+    TGCheckButton *fOnlineCheck;
+    TGCheckButton *fLGMatchCheck = nullptr;
+    TGCheckButton *fMetadataCheck;
+    TGComboBox *fSrcMach;
 
     Int_t fRunNum = 0;
     Int_t fNumEvents = 1000;
+    Int_t fParlNum = 5;
 
     const TString fStatusReady = "Ready to unpack!";
     const TString fStatusBusy = "Unpacking in progress. Please wait.";
-    const TString fOutForm = "reco.online";
+    const TString fOnlineForm = "reco.online";
+    const TString fDefaultForm = "reco.2024";
 
     bool CheckUnpack();
 
@@ -50,10 +64,16 @@ UnpackGUI::UnpackGUI(const TGWindow *p, UInt_t w, UInt_t h) {
     // Run Input 
     TGLabel *runLabel = new TGLabel(hframe, "Run Number");
     hframe->AddFrame(runLabel, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fRunDisp = new TGTextEntry(hframe);
+    fRunDisp->SetEnabled(0);
+    hframe->AddFrame(fRunDisp, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
     fRunEnt = new TGNumberEntry(hframe, 0.005, 9, 999, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive, TGNumberFormat::kNELLimitMinMax, 0, 9999);
     fRunEnt->Connect("ValueSet(Int_t)", "UnpackGUI", this, "SetRunNum()");
     (fRunEnt->GetNumberEntry())->Connect("ReturnPressed()", "UnpackGUI", this, "SetRunNum()");
     hframe->AddFrame(fRunEnt, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fRunSet = new TGTextButton(hframe, "&Set");
+    fRunSet->Connect("Clicked()", "UnpackGUI", this, "SetRunNum()");
+    hframe->AddFrame(fRunSet, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
     fMain->AddFrame(hframe, new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
 
     // Events Input Frame
@@ -62,12 +82,39 @@ UnpackGUI::UnpackGUI(const TGWindow *p, UInt_t w, UInt_t h) {
     // Events Input 
     TGLabel *eventsLabel = new TGLabel(hEframe, "Events");
     hEframe->AddFrame(eventsLabel, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fEventsDisp = new TGTextEntry(hEframe);
+    fEventsDisp->SetEnabled(0);
+    hEframe->AddFrame(fEventsDisp, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
     fEventsEnt = new TGNumberEntry(hEframe, 0.005, 9, 999, TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative, TGNumberFormat::kNELLimitMinMax, 0, 9999);
     fEventsEnt->SetIntNumber(fNumEvents);
     fEventsEnt->Connect("ValueSet(Int_t)", "UnpackGUI", this, "SetNumEvents()");
     (fEventsEnt->GetNumberEntry())->Connect("ReturnPressed()", "UnpackGUI", this, "SetNumEvents()");
     hEframe->AddFrame(fEventsEnt, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fEventsSet = new TGTextButton(hEframe, "&Set");
+    fEventsSet->Connect("Clicked()", "UnpackGUI", this, "SetNumEvents()");
+    hEframe->AddFrame(fEventsSet, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
     fMain->AddFrame(hEframe, new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
+
+    // Parallel Input Frame
+    TGHorizontalFrame *hPframe = new TGHorizontalFrame(fMain, 200, 40);
+
+    // Parallel Input 
+    TGLabel *parlLabel = new TGLabel(hPframe, "# Processes");
+    hPframe->AddFrame(parlLabel, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fParlDisp = new TGTextEntry(hPframe);
+    fParlDisp->SetEnabled(0);
+    hPframe->AddFrame(fParlDisp, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fParlEnt = new TGNumberEntry(hPframe, 0.005, 9, 999, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive, TGNumberFormat::kNELLimitMinMax, 1, 9999);
+    fParlEnt->SetIntNumber(fParlNum);
+    fParlEnt->Connect("ValueSet(Int_t)", "UnpackGUI", this, "SetParlNum()");
+    (fParlEnt->GetNumberEntry())->Connect("ReturnPressed()", "UnpackGUI", this, "SetParlNum()");
+    hPframe->AddFrame(fParlEnt, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fParlSet = new TGTextButton(hPframe, "&Set");
+    fParlSet->Connect("Clicked()", "UnpackGUI", this, "SetParlNum()");
+    hPframe->AddFrame(fParlSet, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fMain->AddFrame(hPframe, new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
+    
+
 
     // Status 
     TGHorizontalFrame *hStatusFrame = new TGHorizontalFrame(fMain, 200, 40);
@@ -81,6 +128,21 @@ UnpackGUI::UnpackGUI(const TGWindow *p, UInt_t w, UInt_t h) {
 
     // Buttons Frame
     TGHorizontalFrame *hUframe = new TGHorizontalFrame(fMain, 200, 40);
+    //fLGMatchCheck = new TGCheckButton(hUframe, "Low Gain", 1);
+    //fLGMatchCheck->SetState(kButtonUp);
+    //hUframe->AddFrame(fLGMatchCheck, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fMetadataCheck = new TGCheckButton(hUframe, "Metadata", 1);
+    fMetadataCheck->SetState(kButtonUp);
+    hUframe->AddFrame(fMetadataCheck, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fOnlineCheck = new TGCheckButton(hUframe, "Online", 1);
+    fOnlineCheck->SetState(kButtonUp);
+    hUframe->AddFrame(fOnlineCheck, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    fSrcMach = new TGComboBox(hUframe, 100);
+    fSrcMach->AddEntry("spdaq01", 0);
+    fSrcMach->AddEntry("spdaq04", 1);
+    fSrcMach->Resize(100, 20);
+    fSrcMach->Select(1);
+    hUframe->AddFrame(fSrcMach, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
     // Button for processing run
     fUnpack = new TGTextButton(hUframe, "&Unpack");
     fUnpack->Connect("Clicked()", "UnpackGUI", this, "UnpackRun()");
@@ -116,15 +178,35 @@ void UnpackGUI::UnpackRun() {
     ofstream parlFile;
     parlFile.open("input/parInpt.txt");
 
-    for(int i = 4; i < 9; i++) {
+    TString outForm = fDefaultForm;
+    if(fOnlineCheck->IsDown())
+       outForm = fOnlineForm;
 
-      auto macroRunner = TString::Format("root -b -l -q \"run_reco_2024.C(%d, %d, %d, \\\"%s\\\")\"", fRunNum, i, fNumEvents, fOutForm.Data());
+    TString gainMatch = "";
+    if(fLGMatchCheck != nullptr)
+       if(fLGMatchCheck->IsDown())
+          gainMatch = "RelativeGain1045.list";
+
+    TString metadata = "kFALSE";
+    if(fMetadataCheck->IsDown())
+       metadata = "kTRUE";
+
+   auto srcID = fSrcMach->GetSelectedEntry()->EntryId();
+   TString srcMach = "";
+   if(srcID == 0)
+      srcMach = "spdaq01";
+   if(srcID == 1)
+      srcMach = "spdaq04";
+   
+    for(int i = 0; i < fParlNum; i++) {
+      auto macroRunner = TString::Format("root -b -l -q \"run_reco_2024.C(%d, %d, %d, \\\"%s\\\", \\\"%s\\\", \\\"%s\\\", %s)\"",
+                                         fRunNum, i, fNumEvents, outForm.Data(), gainMatch.Data(), srcMach.Data(), metadata.Data());
 
       parlFile << macroRunner.Data() << std::endl;
     }
     parlFile.close();
 
-    auto parlRunner = TString::Format("./parallel --jobs 5 --joblog ./log.txt < input/parInpt.txt");
+    auto parlRunner = TString::Format("./parallel --jobs %d --joblog ./log.txt < input/parInpt.txt", fParlNum);
 
     fUnpackStatus->SetText(TString::Format("Unpacking Run %04d", fRunNum));
     fUnpackStatus->Resize();
@@ -153,7 +235,10 @@ void UnpackGUI::UnpackFinish() {
 }
 
 bool UnpackGUI::CheckUnpack() {
-    TString filePath = TString::Format("data/run%04d_s00.%s.root", fRunNum, fOutForm.Data());
+    TString outForm = fDefaultForm;
+    if(fOnlineCheck->IsDown())
+       outForm = fOnlineForm;
+    TString filePath = TString::Format("data/run%04d_s00.%s.root", fRunNum, outForm.Data());
     TFile *file = TFile::Open(filePath);
     if(!file || file->IsZombie()) {
         auto message = TString::Format("Error: Run %04d did not unpack! No File!", fRunNum);
@@ -197,6 +282,21 @@ void UnpackGUI::SetReady() {
     fStatusText->SetText(fStatusReady);
     fStatusText->Resize();
     fStatusText->Layout();
+}
+
+void UnpackGUI::SetRunNum() { 
+   fRunNum = fRunEnt->GetNumberEntry()->GetIntNumber(); 
+   fRunDisp->SetText(TString::Format("%d", fRunNum));
+}
+   
+void UnpackGUI::SetNumEvents() { 
+   fNumEvents = fEventsEnt->GetNumberEntry()->GetIntNumber(); 
+   fEventsDisp->SetText(TString::Format("%d", fNumEvents));
+}
+
+void UnpackGUI::SetParlNum() { 
+   fParlNum = fParlEnt->GetNumberEntry()->GetIntNumber(); 
+   fParlDisp->SetText(TString::Format("%d", fParlNum));
 }
 
 void onlineUnpackGUI() {

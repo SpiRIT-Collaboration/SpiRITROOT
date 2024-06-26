@@ -11,7 +11,7 @@ STRawEvent *rawEventPtr;
 
 const double pi = 3.1415926;
 
-double threshold = 20;
+double threshold = 5;
 
 void NegPlot() {
   if (!(gSystem -> Getenv("RUN"))) {
@@ -23,7 +23,7 @@ void NegPlot() {
 
   Int_t runNum = atoi(gSystem -> Getenv("RUN"));
 
-    TString filePath = TString::Format("data/run%04d_s0.reco.test.root", runNum);
+    TString filePath = TString::Format("data/run%04d_s00.reco.2024.root", runNum);
     tree = new TChain("cbmsim");
     tree->Add(filePath);
 
@@ -32,6 +32,9 @@ void NegPlot() {
     rawEventReader = new TTreeReaderValue<TClonesArray>(*reader, "STRawEvent");
 
     TH2D *beamHist = new TH2D("beamHist", "beamHist", 112, 0, 1344, 108, -432, 432);
+
+    TH1D *beamEnd = new TH1D("beamEnd", "beamEnd", 108, -432, 432);
+    TH1D *beamMid = new TH1D("beamMid", "beamMid", 108, -432, 432);
 
     int eventCount = tree->GetEntries();
 
@@ -61,6 +64,10 @@ void NegPlot() {
                     if(maxADC < threshold) {
                         auto currVal = beamHist->GetBinContent(layer + 1, row + 1);
                         beamHist->SetBinContent(layer + 1, row + 1, currVal + 1);
+                        if(layer == 111)
+                           beamEnd->Fill(row);
+                        if(layer == 83)
+                           beamMid->Fill(row);
                     }
                 }
             }
@@ -68,4 +75,10 @@ void NegPlot() {
     }
 
     beamHist->Draw("COLZ");
+
+    TFile *file = new TFile("NegOut.root", "RECREATE");
+    beamHist->Write();
+    beamEnd->Write();
+    beamMid->Write();
+    file->Close();
 }

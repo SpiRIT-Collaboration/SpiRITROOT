@@ -24,6 +24,7 @@ public:
     void SetCurrentTab(Int_t tab) { fCurrentTab = tab; }
     void ProcessRun();
     void ToggleEditor();
+    void PopOutCanvas();
 
 private:
     TGMainFrame *fMain;
@@ -37,39 +38,70 @@ private:
     TGNumberEntry *fVertZSigEnt;
     TGCheckButton *fVertZCheck;
     TGCheckButton *fTargetCheck;
+    TGCheckButton *fOnlineCheck;
 
-    Int_t fRunNum = 1002;
+    Int_t fRunNum = 1045;
     Int_t fClustCut = 15;
     Int_t fCurrentTab = 0;
     Double_t fPOCACut = 20;
-    Double_t fVertZPosCut = -16.6;
-    Double_t fVertZSigCut = 2;
+    Double_t fVertZPosCut = -27.7;
+    Double_t fVertZSigCut = 1.9;
     Double_t fTargetXWidth = 30;
+    Double_t fThreshold = 5;
+
+    TCanvas *cPop = nullptr;
 
     TChain *tree = nullptr;
 
     TTreeReader *reader = nullptr;
     TTreeReaderValue<TClonesArray> *vertexReader = nullptr;
     TTreeReaderValue<TClonesArray> *recoReader = nullptr;
+    TTreeReaderValue<TClonesArray> *rawEventReader = nullptr;
 
     STVertex *vertexPtr;
     STRecoTrack *recoPtr;
+    STRawEvent *rawEventPtr;
 
     TH2D *pidHist;
     TH2D *thetPhi;
     TH1I *multiplicity;
 
     TH2D *vtxXY;
+    TH2D *bdcXY;
+    TH2D *tbdcXY;
     TH2D *vtxVbdcX;
     TH2D *vtxVbdcY;
+    TH2D *vtxVtbdcX;
+    TH2D *vtxVtbdcY;
     TH1D *vtxHistZ;
+    TH1D *vtxX;
+    TH1D *vtxY;
+
+    TH2D *tbdcVbdcX;
+    TH2D *tbdcVbdcY;
+    TH1D *bdcX;
+    TH1D *bdcY;
+    TH1D *bdcA;
+    TH1D *bdcB;
+    TH1D *tbdcX;
+    TH1D *tbdcY;
+    TH1D *tbdcA;
+    TH1D *tbdcB;
+
+    TH2D *beamHist;
+    TH1D *beamEnd; 
+    TH1D *beamMid; 
 
     void Init();
-    void DrawPID();
-    void DrawTP();
-    void DrawMul();
-    void DrawVtxXY();
-    void DrawVtxZ();
+    void DrawPID(Int_t tab);
+    void DrawTP(Int_t tab);
+    void DrawMul(Int_t tab);
+    void DrawVtxXY(Int_t tab);
+    void DrawVtxXY2(Int_t tab);
+    void DrawBDC(Int_t tab);
+    void DrawBDC2(Int_t tab);
+    void DrawVtxZ(Int_t tab);
+    void DrawBeam(Int_t tab);
 
 };
 
@@ -81,7 +113,6 @@ DiagnosticsGUI::DiagnosticsGUI(const TGWindow *p, UInt_t w, UInt_t h) {
     // Make Cut Frame
     TGHorizontalFrame *hCut = new TGHorizontalFrame(vSidebar, 200, 40);
 
-    // Run Input 
     TGLabel *cutLabel = new TGLabel(hCut, "Cluster Cut");
     hCut->AddFrame(cutLabel, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
     fCutEnt = new TGNumberEntry(hCut, 0.005, 9, 999, TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative, TGNumberFormat::kNELLimitMinMax, 0, 9999);
@@ -145,10 +176,14 @@ DiagnosticsGUI::DiagnosticsGUI(const TGWindow *p, UInt_t w, UInt_t h) {
     fTab->AddTab("ThetaPhi");
     fTab->AddTab("Multiplicity");
     fTab->AddTab("VertexXY");
+    //fTab->AddTab("VertexXY2");
+    fTab->AddTab("BDC");
+    //fTab->AddTab("BDCangles");
     fTab->AddTab("VertexZ");
+    //fTab->AddTab("BeamTrack");
     fTab->Connect("Selected(Int_t)", "DiagnosticsGUI", this, "SetCurrentTab(Int_t)");
     hPlots->AddFrame(fTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10,10,10,1));
-    for(int i = 0; i < 5; i++) {
+    for(int i = 0; i < 6; i++) {
         //TGHorizontalFrame *htopbar = new TGHorizontalFrame(fTab->GetTabContainer(i), 200, 40 );
         //TGTextButton *edit = new TGTextButton(htopbar, "&Editor");
         //edit->Connect("Clicked()", "DiagnosticsGUI", this, "ToggleEditor()");
@@ -162,6 +197,14 @@ DiagnosticsGUI::DiagnosticsGUI(const TGWindow *p, UInt_t w, UInt_t h) {
 
     // Make Bottom Frame
     TGHorizontalFrame *hframe = new TGHorizontalFrame(fMain, 200, 40);
+
+    TGTextButton *popOut = new TGTextButton(hframe, "&Pop Out");
+    popOut->Connect("Clicked()", "DiagnosticsGUI", this, "PopOutCanvas()");
+    hframe->AddFrame(popOut, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+
+    fOnlineCheck = new TGCheckButton(hframe, "Online", 1);
+    fOnlineCheck->SetState(kButtonUp);
+    hframe->AddFrame(fOnlineCheck, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
 
     // Run Input 
     TGLabel *runLabel = new TGLabel(hframe, "Run Number");
@@ -205,9 +248,33 @@ void DiagnosticsGUI::ProcessRun() {
    vtxXY->Reset();
    vtxVbdcX->Reset();
    vtxVbdcY->Reset();
+   vtxVtbdcX->Reset();
+   vtxVtbdcY->Reset();
    vtxHistZ->Reset();
 
-   TString testPath = TString::Format("data/run%04d_s00.reco.online.root", fRunNum);
+   bdcXY->Reset();
+   tbdcXY->Reset();
+   tbdcVbdcX->Reset();
+   tbdcVbdcY->Reset();
+   vtxX->Reset();
+   vtxY->Reset();
+
+   bdcX->Reset();
+   bdcY->Reset();
+   bdcA->Reset();
+   bdcB->Reset();
+   tbdcX->Reset();
+   tbdcY->Reset();
+   tbdcA->Reset();
+   tbdcB->Reset();
+
+   TString format;
+   if(fOnlineCheck->IsDown())
+      format = "reco.online";
+   else
+      format = "reco.2024";
+
+   TString testPath = TString::Format("data/run%04d_s00.%s.root", fRunNum, format.Data());
    TFile *file = TFile::Open(testPath);
    if(!file || file->IsZombie()) {
       auto message = TString::Format("Error: Run %04d has not been unpacked! Unpack before plotting.", fRunNum);
@@ -226,8 +293,8 @@ void DiagnosticsGUI::ProcessRun() {
       tree = nullptr;
    }
    tree = new TChain("cbmsim");
-   
-   TString filePath = TString::Format("data/run%04d_s*.reco.online.root", fRunNum);
+
+   TString filePath = TString::Format("data/run%04d_s*.%s.root", fRunNum, format.Data());
 
    tree->Add(filePath);
 
@@ -247,17 +314,104 @@ void DiagnosticsGUI::ProcessRun() {
         recoReader = nullptr;
     }
     recoReader = new TTreeReaderValue<TClonesArray>(*reader, "STRecoTrack");
+    if(rawEventReader != nullptr) {
+        delete rawEventReader;
+        rawEventReader = nullptr;
+    }
+    rawEventReader = new TTreeReaderValue<TClonesArray>(*reader, "STRawEvent");
+
 
     int eventCount = tree->GetEntries();
 
+
+    Double_t tbdc_x;
+    Double_t tbdc_y;
+    Double_t tbdc_a;
+    Double_t tbdc_b;
+    Double_t bdc_x;
+    Double_t bdc_y;
+    Double_t bdc_a;
+    Double_t bdc_b;
+
+    bool useBDC = true;
+
+    auto fBDCProjection = new STBDCProjection(TString(gSystem -> Getenv("VMCWORKDIR")) + "/parameters/ReducedBMap.txt");
+    //fBDCProjection -> setBeam(runNum);
+
+    TString fBeamData = Form("/data/s063/exp/exp2406_s063/anaroot/users/shift/bdc_rootfiles/bdc_%d.root", fRunNum);
+    auto fBeamFile = new TFile(fBeamData);
+    TTree *fBeamTree;
+    if(!fBeamFile) {
+       cout << "ERROR: BDC file does not exist!" << endl;
+       cout << "Ignoring BDC." << endl;
+       useBDC = false;
+    }
+    else {
+       fBeamTree= (TTree *) fBeamFile -> Get("TBDC");
+       if(!fBeamTree) {
+         cout << "ERROR: BDC tree is missing!" << endl;
+         cout << "Ignoring BDC." << endl;
+         useBDC = false;
+       }
+       else {
+         fBeamTree -> SetBranchAddress("target_x", &tbdc_x);
+         fBeamTree -> SetBranchAddress("target_y", &tbdc_y);
+         fBeamTree -> SetBranchAddress("target_a", &tbdc_a);
+         fBeamTree -> SetBranchAddress("target_b", &tbdc_b);
+         fBeamTree -> SetBranchAddress("bdc2x", &bdc_x);
+         fBeamTree -> SetBranchAddress("bdc2y", &bdc_y);
+         fBeamTree -> SetBranchAddress("bdcax", &bdc_a);
+         fBeamTree -> SetBranchAddress("bdcby", &bdc_b);
+       }
+    }
+
+    if(useBDC) {
+      if(eventCount > fBeamTree->GetEntriesFast()) {
+         cout << "ERROR: BDC file does not have enough events!" << endl;
+         cout << "Ignoring BDC." << endl;
+         useBDC = false;
+      }
+    }
+
     for(int i = 0; i < eventCount; i++) {
         reader->Next();
+        if(useBDC)
+           fBeamTree->GetEntry(i);
         auto trackCount = recoReader->Get()->GetEntries();
         multiplicity->Fill(trackCount);
-        vertexPtr = dynamic_cast<STVertex *>((*vertexReader)->At(0));
 
-        //std::cout << i << std::endl;
-        //
+        /*rawEventPtr = dynamic_cast<STRawEvent *>((*rawEventReader)->At(0));
+        if(rawEventPtr == NULL) {
+            cout << "rawEventPtr is null" << endl;
+        }
+        if(rawEventPtr != NULL) {
+            for(int layer = 0; layer < 112; layer++) {
+                for(int row = 0; row < 60; row++) {
+                    auto pad = rawEventPtr->GetPad(row, layer);
+                    auto adc = pad->GetADC();
+                    double maxADC = 0;
+                    for(int r = 0; r < 512 / 2; r++) {
+                        if(pad->GetADC(r) > maxADC) {
+                            maxADC = pad->GetADC(r);
+                            if(maxADC > fThreshold)
+                                break;
+                        }
+                    }
+                    //cout << maxADC << endl;
+
+                    if(maxADC < fThreshold) {
+                        auto currVal = beamHist->GetBinContent(layer + 1, row + 1);
+                        beamHist->SetBinContent(layer + 1, row + 1, currVal + 1);
+                        if(layer == 111)
+                           beamEnd->Fill(row);
+                        if(layer == 83)
+                           beamMid->Fill(row);
+                    }
+                }
+            }
+        }*/
+
+        vertexPtr = dynamic_cast<STVertex *>((*vertexReader)->At(0));
 
         TVector3 vertex;
 
@@ -269,10 +423,41 @@ void DiagnosticsGUI::ProcessRun() {
             vertex = vertexPtr->GetPos();
             //cout << "vertex: (" << vertex.X() << ", " << vertex.Y() << ", " << vertex.Z() << ")" << endl;
 
-            vtxXY->Fill(vertex.X(), vertex.Y() + 225);
-            //vtxVbdcX->Fill(vertex.X(), fBDCProjection -> getX());
-            //vtxVbdcY->Fill(vertex.Y(), fBDCProjection -> getY());
             vtxHistZ->Fill(vertex.Z());
+
+            if(fVertZCheck->IsDown() && (vertex.Z() < fVertZPosCut - fVertZSigCut * 3 || vertex.Z() > fVertZPosCut + fVertZSigCut * 3))
+               continue;
+
+            vtxXY->Fill(vertex.X(), vertex.Y() + 240);
+            if(useBDC) {
+               //Double_t ProjectedAtZ = -580.4 - 27.7;  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
+               Double_t ProjectedAtZ = -589 - (27.7 - (592.644 - 580.4));  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
+               //fBDCProjection -> ProjectParticle(bdc_x, bdc_y, -5667.52, bdc_a, bdc_y, 124. / 54., 377.2 * 124, ProjectedAtZ, 123.90589);//-580.4,-583.904
+               //auto pBDC_X = fBDCProjection->getX();
+               //auto pBDC_Y = fBDCProjection->getY();
+               //auto pBDC_A = fBDCProjection->getA();
+               //auto pBDC_B = fBDCProjection->getB();
+
+               //vtxVbdcX->Fill(vertex.X(), pBDC_X);
+               //vtxVbdcY->Fill(vertex.Y() + 240, pBDC_Y);
+               vtxVtbdcX->Fill(vertex.X(), tbdc_x);
+               vtxVtbdcY->Fill(vertex.Y() + 240, tbdc_y);
+               vtxX->Fill(vertex.X());
+               vtxY->Fill(vertex.Y() + 240);
+
+               //tbdcVbdcX->Fill(tbdc_x, pBDC_X);
+               //tbdcVbdcY->Fill(tbdc_y, pBDC_Y);
+               //bdcXY->Fill(pBDC_X, pBDC_Y);
+               //bdcX->Fill(pBDC_X);
+               //bdcY->Fill(pBDC_Y);
+               //bdcA->Fill(pBDC_A);
+               //bdcB->Fill(pBDC_B);
+               tbdcXY->Fill(tbdc_x, tbdc_y);
+               tbdcX->Fill(tbdc_x);
+               tbdcY->Fill(tbdc_y);
+               tbdcA->Fill(tbdc_a);
+               tbdcB->Fill(tbdc_b);
+            }
         }
 
         if(fVertZCheck->IsDown() && (vertex.Z() < fVertZPosCut - fVertZSigCut * 3 || vertex.Z() > fVertZPosCut + fVertZSigCut * 3))
@@ -312,30 +497,179 @@ void DiagnosticsGUI::ProcessRun() {
             }
         }
     }
-    DrawPID();
-    DrawTP();
-    DrawMul();
-    DrawVtxXY();
-    DrawVtxZ();
+    DrawPID(0);
+    DrawTP(1);
+    DrawMul(2);
+    //DrawVtxXY(3);
+    DrawVtxXY2(3);
+    //DrawBDC2(5);
+    DrawBDC(4);
+    DrawVtxZ(5);
+    //DrawBeam(6);
 
     fRunDisp->SetText(TString::Format("%d", fRunNum));
 }
 
 void DiagnosticsGUI::Init() {
 
-    pidHist = new TH2D("pidHist", "pidHist", 1000, -1000, 2000, 1000, 0, 1000);
+    pidHist = new TH2D("pidHist", "pidHist", 1000, -500, 2000, 1000, 0, 1000);
+    pidHist->SetTitle("PID");
+    pidHist->GetXaxis()->SetTitle("p/Z (MeV/c)");
+    pidHist->GetXaxis()->CenterTitle();
+    pidHist->GetYaxis()->SetTitle("dE/dx (ADC/mm)");
+    pidHist->GetYaxis()->CenterTitle();
     thetPhi = new TH2D("thetPhi", "thetPhi", 100, 0, 90, 100, 0, 360);
+    thetPhi->SetTitle("Theta vs Phi");
+    thetPhi->GetXaxis()->SetTitle("theta (deg)");
+    thetPhi->GetXaxis()->CenterTitle();
+    thetPhi->GetYaxis()->SetTitle("phi (deg)");
+    thetPhi->GetYaxis()->CenterTitle();
     multiplicity = new TH1I("multiplicity", "multiplicity", 100, 0, 100);
+    multiplicity->SetTitle("Track Multiplicity");
+    multiplicity->GetXaxis()->SetTitle("number of tracks");
+    multiplicity->GetXaxis()->CenterTitle();
+    multiplicity->GetYaxis()->SetTitle("counts");
+    multiplicity->GetYaxis()->CenterTitle();
 
-    vtxXY = new TH2D("vtxXY", "vtxXY", 100, -25, 25, 100, -25, 25);
-    vtxVbdcX = new TH2D("vtxVbdcX", "vtxVbdcX", 100, -25, 25, 100, -25, 25);
-    vtxVbdcY = new TH2D("vtxVbdcY", "vtxVbdcY", 100, -25, 25, 100, -25, 25);
+    vtxXY = new TH2D("vtxXY", "vtxXY", 200, -50, 50, 200, -50, 50);
+    vtxXY->SetTitle("Vertex position");
+    vtxXY->GetXaxis()->SetTitle("X (mm)");
+    vtxXY->GetXaxis()->SetTitleSize(0.05);
+    vtxXY->GetXaxis()->SetLabelSize(0.05);
+    vtxXY->GetXaxis()->CenterTitle();
+    vtxXY->GetYaxis()->SetTitle("Y (mm)");
+    vtxXY->GetYaxis()->SetTitleSize(0.05);
+    vtxXY->GetYaxis()->SetLabelSize(0.05);
+    vtxXY->GetYaxis()->CenterTitle();
+    bdcXY = new TH2D("bdcXY", "bdcXY", 200, -50, 50, 200, -50, 50);
+    bdcXY->SetTitle("BDC projection to target");
+    bdcXY->GetXaxis()->SetTitle("X (mm)");
+    bdcXY->GetXaxis()->SetTitleSize(0.05);
+    bdcXY->GetXaxis()->SetLabelSize(0.05);
+    bdcXY->GetXaxis()->CenterTitle();
+    bdcXY->GetYaxis()->SetTitle("Y (mm)");
+    bdcXY->GetYaxis()->SetTitleSize(0.05);
+    bdcXY->GetYaxis()->SetLabelSize(0.05);
+    bdcXY->GetYaxis()->CenterTitle();
+    tbdcXY = new TH2D("tbdcXY", "tbdcXY", 200, -50, 50, 200, -50, 50);
+    tbdcXY->SetTitle("BDC projection to target");
+    tbdcXY->GetXaxis()->SetTitle("X (mm)");
+    tbdcXY->GetXaxis()->SetTitleSize(0.05);
+    tbdcXY->GetXaxis()->SetLabelSize(0.05);
+    tbdcXY->GetXaxis()->CenterTitle();
+    tbdcXY->GetYaxis()->SetTitle("Y (mm)");
+    tbdcXY->GetYaxis()->SetTitleSize(0.05);
+    tbdcXY->GetYaxis()->SetLabelSize(0.05);
+    tbdcXY->GetYaxis()->CenterTitle();
+    vtxVbdcX = new TH2D("vtxVbdcX", "vtxVbdcX", 200, -50, 50, 200, -50, 50);
+    vtxVbdcX->SetTitle("Vertex X vs BDC projection X");
+    vtxVbdcX->GetXaxis()->SetTitle("Vertex X (mm)");
+    vtxVbdcX->GetXaxis()->SetTitleSize(0.05);
+    vtxVbdcX->GetXaxis()->SetLabelSize(0.05);
+    vtxVbdcX->GetXaxis()->CenterTitle();
+    vtxVbdcX->GetYaxis()->SetTitle("BDC X (mm)");
+    vtxVbdcX->GetYaxis()->SetTitleSize(0.05);
+    vtxVbdcX->GetYaxis()->SetLabelSize(0.05);
+    vtxVbdcX->GetYaxis()->CenterTitle();
+    vtxVbdcY = new TH2D("vtxVbdcY", "vtxVbdcY", 200, -50, 50, 200, -50, 50);
+    vtxVbdcY->SetTitle("Vertex Y vs BDC projection Y");
+    vtxVbdcY->GetXaxis()->SetTitle("Vertex Y (mm)");
+    vtxVbdcY->GetXaxis()->SetTitleSize(0.05);
+    vtxVbdcY->GetXaxis()->SetLabelSize(0.05);
+    vtxVbdcY->GetXaxis()->CenterTitle();
+    vtxVbdcY->GetYaxis()->SetTitle("BDC Y (mm)");
+    vtxVbdcY->GetYaxis()->SetTitleSize(0.05);
+    vtxVbdcY->GetYaxis()->SetLabelSize(0.05);
+    vtxVbdcY->GetYaxis()->CenterTitle();
+    vtxVtbdcX = new TH2D("vtxVtbdcX", "vtxVtbdcX", 200, -50, 50, 200, -50, 50);
+    vtxVtbdcX->SetTitle("Vertex X vs BDC projection X");
+    vtxVtbdcX->GetXaxis()->SetTitle("Vertex X (mm)");
+    vtxVtbdcX->GetXaxis()->SetTitleSize(0.05);
+    vtxVtbdcX->GetXaxis()->SetLabelSize(0.05);
+    vtxVtbdcX->GetXaxis()->CenterTitle();
+    vtxVtbdcX->GetYaxis()->SetTitle("BDC X (mm)");
+    vtxVtbdcX->GetYaxis()->SetTitleSize(0.05);
+    vtxVtbdcX->GetYaxis()->SetLabelSize(0.05);
+    vtxVtbdcX->GetYaxis()->CenterTitle();
+    vtxVtbdcY = new TH2D("vtxVtbdcY", "vtxVtbdcY", 200, -50, 50, 200, -50, 50);
+    vtxVtbdcY->SetTitle("Vertex Y vs BDC projection Y");
+    vtxVtbdcY->GetXaxis()->SetTitle("Vertex Y (mm)");
+    vtxVtbdcY->GetXaxis()->SetTitleSize(0.05);
+    vtxVtbdcY->GetXaxis()->SetLabelSize(0.05);
+    vtxVtbdcY->GetXaxis()->CenterTitle();
+    vtxVtbdcY->GetYaxis()->SetTitle("BDC Y (mm)");
+    vtxVtbdcY->GetYaxis()->SetTitleSize(0.05);
+    vtxVtbdcY->GetYaxis()->SetLabelSize(0.05);
+    vtxVtbdcY->GetYaxis()->CenterTitle();
     vtxHistZ = new TH1D("vtxHistZ", "vtxHistZ", 1000, -500, 800);
+    vtxHistZ->SetTitle("Vertex Z Position");
+    vtxHistZ->GetXaxis()->SetTitle("Vertex Z (mm)");
+    //vtxHistZ->GetXaxis()->SetTitleSize(0.05);
+    //vtxHistZ->GetXaxis()->SetLabelSize(0.05);
+    vtxHistZ->GetXaxis()->CenterTitle();
+    vtxHistZ->GetYaxis()->SetTitle("Counts");
+    //vtxHistZ->GetYaxis()->SetTitleSize(0.05);
+    //vtxHistZ->GetYaxis()->SetLabelSize(0.05);
+    vtxHistZ->GetYaxis()->CenterTitle();
+    vtxX = new TH1D("vtxX", "vtxX", 200, -50, 50);
+    vtxX->SetTitle("Vertex X Position");
+    vtxX->GetXaxis()->SetTitle("Vertex X (mm)");
+    vtxX->GetXaxis()->SetTitleSize(0.05);
+    vtxX->GetXaxis()->SetLabelSize(0.05);
+    vtxX->GetXaxis()->CenterTitle();
+    vtxX->GetYaxis()->SetTitle("Counts");
+    vtxX->GetYaxis()->SetTitleSize(0.05);
+    vtxX->GetYaxis()->SetLabelSize(0.05);
+    vtxX->GetYaxis()->CenterTitle();
+    vtxY = new TH1D("vtxY", "vxtY", 200, -50, 50);
+    vtxY->SetTitle("Vertex Y Position");
+    vtxY->GetXaxis()->SetTitle("Vertex Y (mm)");
+    vtxY->GetXaxis()->SetTitleSize(0.05);
+    vtxY->GetXaxis()->SetLabelSize(0.05);
+    vtxY->GetXaxis()->CenterTitle();
+    vtxY->GetYaxis()->SetTitle("Counts");
+    vtxY->GetYaxis()->SetTitleSize(0.05);
+    vtxY->GetYaxis()->SetLabelSize(0.05);
+    vtxY->GetYaxis()->CenterTitle();
+
+    tbdcVbdcX = new TH2D("tbdcVbdcX", "tbdcVbdcX", 200, -50, 50, 200, -50, 50);
+    tbdcVbdcY = new TH2D("tbdcVbdcY", "tbdcVbdcY", 200, -50, 50, 200, -50, 50);
+    bdcX = new TH1D("bdcX", "bdcX", 200, -50, 50);
+    bdcY = new TH1D("bdcY", "bdcY", 200, -50, 50);
+    bdcA = new TH1D("bdcA", "bdcA", 100, -3.14, 3.14);
+    bdcB = new TH1D("bdcB", "bdcB", 100, -3.14, 3.14);
+    tbdcX = new TH1D("tbdcX", "tbdcX", 200, -50, 50);
+    tbdcX->SetTitle("BDC Projection X");
+    tbdcX->GetXaxis()->SetTitle("BDC projection X (mm)");
+    tbdcX->GetXaxis()->SetTitleSize(0.05);
+    tbdcX->GetXaxis()->SetLabelSize(0.05);
+    tbdcX->GetXaxis()->CenterTitle();
+    tbdcX->GetYaxis()->SetTitle("Counts");
+    tbdcX->GetYaxis()->SetTitleSize(0.05);
+    tbdcX->GetYaxis()->SetLabelSize(0.05);
+    tbdcX->GetYaxis()->CenterTitle();
+    tbdcY = new TH1D("tbdcY", "tbdcY", 200, -50, 50);
+    tbdcY->SetTitle("BDC Projection Y");
+    tbdcY->GetXaxis()->SetTitle("BDC projection Y (mm)");
+    tbdcY->GetXaxis()->SetTitleSize(0.05);
+    tbdcY->GetXaxis()->SetLabelSize(0.05);
+    tbdcY->GetXaxis()->CenterTitle();
+    tbdcY->GetYaxis()->SetTitle("Counts");
+    tbdcY->GetYaxis()->SetTitleSize(0.05);
+    tbdcY->GetYaxis()->SetLabelSize(0.05);
+    tbdcY->GetYaxis()->CenterTitle();
+    tbdcA = new TH1D("tbdcA", "tbdcA", 100, -3.14, 3.14);
+    tbdcB = new TH1D("tbdcB", "tbdcB", 100, -3.14, 3.14);
+
+    beamHist = new TH2D("beamHist", "beamHist", 112, 0, 1344, 108, -432, 432);
+
+    beamEnd = new TH1D("beamEnd", "beamEnd", 108, -432, 432);
+    beamMid = new TH1D("beamMid", "beamMid", 108, -432, 432);
 }
 
-void DiagnosticsGUI::DrawPID() {
+void DiagnosticsGUI::DrawPID(Int_t tab) {
     std::cout << "Drawing PID" << endl;
-    TCanvas *canvas = fEcanvas[0]->GetCanvas();
+    TCanvas *canvas = fEcanvas[tab]->GetCanvas();
     canvas->Clear();
     canvas->cd();
     gStyle->SetPalette(55);
@@ -344,39 +678,138 @@ void DiagnosticsGUI::DrawPID() {
     canvas->Update();
 }
 
-void DiagnosticsGUI::DrawTP() {
-    TCanvas *canvas = fEcanvas[1]->GetCanvas();
+void DiagnosticsGUI::DrawTP(Int_t tab) {
+    TCanvas *canvas = fEcanvas[tab]->GetCanvas();
     canvas->Clear();
     canvas->cd();
     thetPhi->Draw("COLZ");
     canvas->Update();
 }
 
-void DiagnosticsGUI::DrawMul() {
-    TCanvas *canvas = fEcanvas[2]->GetCanvas();
+void DiagnosticsGUI::DrawMul(Int_t tab) {
+    TCanvas *canvas = fEcanvas[tab]->GetCanvas();
     canvas->Clear();
     canvas->cd();
     multiplicity->Draw();
     canvas->Update();
 }
 
-void DiagnosticsGUI::DrawVtxXY() {
-    TCanvas *canvas = fEcanvas[3]->GetCanvas();
+void DiagnosticsGUI::DrawVtxXY(Int_t tab) {
+    TCanvas *canvas = fEcanvas[tab]->GetCanvas();
     canvas->Clear();
     canvas->Divide(2,2);
     canvas->cd(1);
     vtxXY->Draw("COLZ");
     gPad->Modified();
     canvas->Update();
+    canvas->cd(2);
+    bdcXY->Draw("COLZ");
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(3);
+    vtxVbdcX->Draw("COLZ");
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(4);
+    vtxVbdcY->Draw("COLZ");
+    gPad->Modified();
+    canvas->Update();
     canvas->cd();
     canvas->Update();
 }
 
-void DiagnosticsGUI::DrawVtxZ() {
-    TCanvas *canvas = fEcanvas[4]->GetCanvas();
+void DiagnosticsGUI::DrawVtxXY2(Int_t tab) {
+    TCanvas *canvas = fEcanvas[tab]->GetCanvas();
+    canvas->Clear();
+    canvas->Divide(2,2);
+    canvas->cd(1);
+    vtxXY->Draw("COLZ");
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(2);
+    tbdcXY->Draw("COLZ");
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(3);
+    vtxVtbdcX->Draw("COLZ");
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(4);
+    vtxVtbdcY->Draw("COLZ");
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd();
+    canvas->Update();
+}
+
+void DiagnosticsGUI::DrawBDC(Int_t tab) {
+    TCanvas *canvas = fEcanvas[tab]->GetCanvas();
+    canvas->Clear();
+    canvas->Divide(2,2);
+    canvas->cd(1);
+    vtxX->Draw();
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(2);
+    vtxY->Draw();
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(3);
+    tbdcX->Draw();
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(4);
+    tbdcY->Draw();
+    gPad->Modified();
+    canvas->Update();
+    /*canvas->cd(5);
+    bdcX->Draw();
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(6);
+    bdcY->Draw();
+    gPad->Modified();
+    canvas->Update();*/
+    canvas->cd();
+    canvas->Update();
+}
+
+void DiagnosticsGUI::DrawBDC2(Int_t tab) {
+    TCanvas *canvas = fEcanvas[tab]->GetCanvas();
+    canvas->Clear();
+    canvas->Divide(2,2);
+    canvas->cd(1);
+    tbdcXY->Draw("COLZ");
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(2);
+    bdcXY->Draw("COLZ");
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(3);
+    tbdcVbdcX->Draw("COLZ");
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd(4);
+    tbdcVbdcY->Draw("COLZ");
+    gPad->Modified();
+    canvas->Update();
+    canvas->cd();
+    canvas->Update();
+}
+
+void DiagnosticsGUI::DrawVtxZ(Int_t tab) {
+    TCanvas *canvas = fEcanvas[tab]->GetCanvas();
     canvas->Clear();
     canvas->cd();
     vtxHistZ->Draw();
+    canvas->Update();
+}
+
+void DiagnosticsGUI::DrawBeam(Int_t tab) {
+    TCanvas *canvas = fEcanvas[tab]->GetCanvas();
+    canvas->Clear();
+    beamHist->Draw("COLZ");
     canvas->Update();
 }
 
@@ -386,7 +819,17 @@ void DiagnosticsGUI::DrawVtxZ() {
     canvas->EditorBar();
  }
 
-
+ void DiagnosticsGUI::PopOutCanvas() {
+    TCanvas *canvas = fEcanvas[fCurrentTab]->GetCanvas();
+    if(cPop != nullptr ) {
+       delete cPop;
+       cPop = nullptr;
+    }
+    cPop = new TCanvas("cPop", "cPop", 1);
+    cPop->cd();
+    canvas->DrawClonePad();
+    //cPop->Update();
+ }
 
 void diagGUI() {
     //TApplication theApp("App", 0, 0);
