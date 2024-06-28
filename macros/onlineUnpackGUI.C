@@ -137,12 +137,12 @@ UnpackGUI::UnpackGUI(const TGWindow *p, UInt_t w, UInt_t h) {
     fOnlineCheck = new TGCheckButton(hUframe, "Online", 1);
     fOnlineCheck->SetState(kButtonUp);
     hUframe->AddFrame(fOnlineCheck, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
-    fSrcMach = new TGComboBox(hUframe, 100);
-    fSrcMach->AddEntry("spdaq01", 0);
-    fSrcMach->AddEntry("spdaq04", 1);
-    fSrcMach->Resize(100, 20);
-    fSrcMach->Select(1);
-    hUframe->AddFrame(fSrcMach, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
+    //fSrcMach = new TGComboBox(hUframe, 100);
+    //fSrcMach->AddEntry("spdaq01", 0);
+    //fSrcMach->AddEntry("spdaq04", 1);
+    //fSrcMach->Resize(100, 20);
+    //fSrcMach->Select(1);
+    //hUframe->AddFrame(fSrcMach, new TGLayoutHints(kLHintsCenterX, 5, 5, 3, 4));
     // Button for processing run
     fUnpack = new TGTextButton(hUframe, "&Unpack");
     fUnpack->Connect("Clicked()", "UnpackGUI", this, "UnpackRun()");
@@ -191,16 +191,18 @@ void UnpackGUI::UnpackRun() {
     if(fMetadataCheck->IsDown())
        metadata = "kTRUE";
 
-   auto srcID = fSrcMach->GetSelectedEntry()->EntryId();
+   /*auto srcID = fSrcMach->GetSelectedEntry()->EntryId();
    TString srcMach = "";
    if(srcID == 0)
       srcMach = "spdaq01";
    if(srcID == 1)
-      srcMach = "spdaq04";
+      srcMach = "spdaq04";*/
    
     for(int i = 0; i < fParlNum; i++) {
-      auto macroRunner = TString::Format("root -b -l -q \"run_reco_2024.C(%d, %d, %d, \\\"%s\\\", \\\"%s\\\", \\\"%s\\\", %s)\"",
-                                         fRunNum, i, fNumEvents, outForm.Data(), gainMatch.Data(), srcMach.Data(), metadata.Data());
+      //auto macroRunner = TString::Format("root -b -l -q \"run_reco_2024.C(%d, %d, %d, \\\"%s\\\", \\\"%s\\\", \\\"%s\\\", %s)\"",
+      //                                   fRunNum, i, fNumEvents, outForm.Data(), gainMatch.Data(), srcMach.Data(), metadata.Data());
+      auto macroRunner = TString::Format("root -b -l -q \"run_reco_2024.C(%d, %d, %d, \\\"%s\\\", %s)\"",
+                                         fRunNum, i, fNumEvents, outForm.Data(), metadata.Data());
 
       parlFile << macroRunner.Data() << std::endl;
     }
@@ -213,6 +215,8 @@ void UnpackGUI::UnpackRun() {
     gClient->NeedRedraw(fUnpackStatus);
 
     gSystem->ProcessEvents();
+
+    gSystem->Exec(TString::Format("./createList_FRIBDAQ.sh %d", fRunNum).Data());
 
     int exitCode = gSystem->Exec(parlRunner.Data());
 
