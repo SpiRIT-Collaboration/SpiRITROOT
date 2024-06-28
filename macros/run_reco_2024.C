@@ -2,11 +2,13 @@
 
 void run_reco_2024
 (
-  Int_t fRunNo = 89,
+  Int_t fRunNo = 1117,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 10,
   TString fOutForm = "reco.2024",
   Bool_t fUseMeta = kFALSE,
+  TString fGainMatch = "",
+  TString fDataMach = "spdaq04",
   std::vector<Int_t> fSkipEventArray = {},
   TString fMCFile = "",
   TString fPathToData = "", 
@@ -31,6 +33,9 @@ void run_reco_2024
 
   // Use relative gain matching - Amplify low gain section
   Bool_t fUseGainMatching = kFALSE;
+  if(fGainMatch != "")
+      fUseGainMatching = kTRUE;
+
   /* ========================================================== */
 
   TString fSpiRITROOTPath = TString(gSystem -> Getenv("VMCWORKDIR"))+"/";
@@ -56,13 +61,15 @@ void run_reco_2024
 
   cout << "done with pars" << endl;
 
-  auto fIsGGDataSet = !ggDataPathWithFormat.IsNull();
+  //auto fIsGGDataSet = !ggDataPathWithFormat.IsNull();
+  auto fIsGGDataSet = true;
   auto fIsBeamDataSet = !beamDataPathWithFormat.IsNull();
-  TString fGGData = "";
+  TString fGGData = "ggNoiseSubtractionMacro/ggNoise_1159.root";
   TString fBeamData = "";
   //if (fIsGGDataSet)   fGGData = Form(ggDataPathWithFormat.Data(), fGGRunID);
   //if (fIsBeamDataSet) fBeamData = Form(beamDataPathWithFormat.Data(), fRunNo);
   //TString fGainMatchingFile = fSpiRITROOTPath + Form("parameters/RelativeGainRun%d.list", fRelativeGainRunID);
+  TString fGainMatchingFile = fSpiRITROOTPath + Form("parameters/%s", fGainMatch.Data());
 
   cout << "set gain matching file" << endl;
 
@@ -93,18 +100,25 @@ void run_reco_2024
 
   TString par = fSpiRITROOTPath+"parameters/"+fParameterFile;
   TString geo = fSpiRITROOTPath+"geometry/geomSpiRIT.man.root";
-  TString fRawDataList = TString::Format("%s/list_run%04d.txt",(gSystem -> Getenv("PWD")), fRunNo);
+  TString fRawDataList = "";
+  fRawDataList = TString::Format("%s/list_run%04d.txt",(gSystem -> Getenv("PWD")), fRunNo);
   TString out = TString::Format("%srun%04d_s%02d.%s.root", fPathToData.Data(),fRunNo,fSplitNo,fOutForm.Data());
   TString log = TString::Format("%srun%04d_s%02d.%s.log", fPathToData.Data(),fRunNo,fSplitNo,fOutForm.Data());
   
   if (TString(gSystem -> Which(".", fRawDataList)).IsNull() && !fUseMeta) {
-     cout << "data list not found" << endl;
+     //cout << "data list not found" << endl;
      if(fIsFRIBDAQ)
         gSystem -> Exec("./createList_FRIBDAQ.sh "+sRunNo);
+     //else if(fIsFRIBDAQ && fDataMach == "spdaq01")
+        //gSystem -> Exec("./createList_FRIBDAQ_spdaq01.sh "+sRunNo);
+     //else if(fIsFRIBDAQ) {
+        //cout << "ERROR: " << fDataMach << " does not match a known data location." << endl << "Aborting!" << endl;
+        //return;
+     //}
      else  
         gSystem -> Exec("./createList.sh "+sRunNo);
   }
-     cout << "using data list " << fRawDataList << endl;
+     //cout << "using data list " << fRawDataList << endl;
 
   TString fMetaDataList;
   if (fUseMeta) {
@@ -113,7 +127,7 @@ void run_reco_2024
   }
 
   FairLogger *logger = FairLogger::GetLogger();
-  logger -> SetLogToScreen(false);
+  //logger -> SetLogToScreen(false);
 
   //FairLogger::SetLogVerbosity(FairLogger::kSilent);
 
@@ -134,17 +148,17 @@ void run_reco_2024
   //decoder -> SetUseGainCalibration(true);
   /* Manual calibration parameter setters. You need to provide both calibration root file and reference values to match.
    * Use default automatic one if you're not sure what you're doing. */
-  // decoder -> SetGainCalibrationData("filename.root");
+  //decoder -> SetGainCalibrationData("filename.root");
   // decoder -> SetGainReference(constant, linear, quadratic);
-  //if (fIsGGDataSet)
-    //decoder -> SetGGNoiseData(fGGData);
-cout << fRawDataList << endl;
+  if (fIsGGDataSet)
+    decoder -> SetGGNoiseData(fGGData);
+  cout << fRawDataList << endl;
   decoder -> SetDataList(fRawDataList);
   //decoder -> SetEventID(start);
   decoder -> SetTbRange(30, 257); 
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
-  //if (fUseGainMatching)
-    //decoder -> SetGainMatchingData(fGainMatchingFile);
+  if (fUseGainMatching)
+    decoder -> SetGainMatchingData(fGainMatchingFile);
   // Method to select events to reconstruct
   // Format of the input file:
   //        runid eventid
@@ -194,8 +208,8 @@ cout << fRawDataList << endl;
   // Default: Rensheng's peak finding method 1. Finds small peaks
   // psa -> SetPSAPeakFindingOption(0);
   // Low gain calibration. Don't forget you need to uncomment decoder part, too.
-  //if (fUseGainMatching)
-    //psa -> SetGainMatchingData(fGainMatchingFile);
+  if (fUseGainMatching)
+    psa -> SetGainMatchingData(fGainMatchingFile);
   // Statistically matching time jitter in different CoBos
   psa -> SetYOffsets(fSpiRITROOTPath + "parameters/yOffsetCalibration.dat");
   // This is used to match the TPC-Vertex_Y with the BDC_Y.
