@@ -52,7 +52,7 @@ void run_reco_2024
   //auto fParamSetter = new STParameters(fRunNo, fSystemDB, fRunDB);
   //auto fNumEventsInRun = fParamSetter -> GetNumTotalEvents();
   //auto fParameterFile = fParamSetter -> GetParameterFile();
-  auto fParameterFile = "ST.parameters.Commissioning_201604.par";
+  auto fParameterFile = "ST.parameters.2024Sprint.par";
   //auto fYPedestalOffset = fParamSetter -> GetYPedestal();
   //auto fFieldOffsetX = fParamSetter -> GetFieldOffsetX();
   //auto fFieldOffsetY = fParamSetter -> GetFieldOffsetY();
