@@ -2,7 +2,7 @@
 
 void run_reco_2024
 (
-  Int_t fRunNo = 1117,
+  Int_t fRunNo = 1295,
   Int_t fSplitNo = 0,
   Int_t fNumEventsInSplit = 10,
   TString fOutForm = "reco.2024",
@@ -16,6 +16,8 @@ void run_reco_2024
   Bool_t fIsFRIBDAQ = true
 )
 {
+  Bool_t fIsFishtank = true;
+  Bool_t fIsRIKEN = false;
    cout << "running the macro" << endl;
   /* ======= This part you need initial configuration ========= */
   // Parameter database file - files should be in parameters folder.
@@ -26,6 +28,11 @@ void run_reco_2024
   // If you don't need either of them, pass it blank.
   TString ggDataPathWithFormat = "";
   TString beamDataPathWithFormat = "";
+  if(fIsFishtank)
+     beamDataPathWithFormat = "/mnt/cephfs/hira/SPIRIT_2024/beam_VETO_KATANA_data/bdc_rootfiles/bdc_%d.root";
+  else if(fIsRIKEN)
+     beamDataPathWithFormat = "";
+
 
   // Meta data path
   
@@ -56,18 +63,21 @@ void run_reco_2024
   auto fTargetZ = -13.2;
   //auto fBDCOffsetX = fParamSetter -> GetBDCOffsetX();
   //auto fBDCOffsetY = fParamSetter -> GetBDCOffsetY();
+  auto fBDCOffsetX = -2.84168;
+  auto fBDCOffsetY = -237.892;
   //auto fGGRunID = fParamSetter -> GetGGRunID();
   //auto fRelativeGainRunID = fParamSetter -> GetRelativeGainRunID();
 
   cout << "done with pars" << endl;
 
-  //auto fIsGGDataSet = !ggDataPathWithFormat.IsNull();
-  auto fIsGGDataSet = true;
+  auto fIsGGDataSet = !ggDataPathWithFormat.IsNull();
+  //auto fIsGGDataSet = true;
   auto fIsBeamDataSet = !beamDataPathWithFormat.IsNull();
-  TString fGGData = "ggNoiseSubtractionMacro/ggNoise_1159.root";
+  //TString fGGData = "ggNoiseSubtractionMacro/ggNoise_1159.root";
+  TString fGGData = "";
   TString fBeamData = "";
   //if (fIsGGDataSet)   fGGData = Form(ggDataPathWithFormat.Data(), fGGRunID);
-  //if (fIsBeamDataSet) fBeamData = Form(beamDataPathWithFormat.Data(), fRunNo);
+  if (fIsBeamDataSet) fBeamData = Form(beamDataPathWithFormat.Data(), fRunNo);
   //TString fGainMatchingFile = fSpiRITROOTPath + Form("parameters/RelativeGainRun%d.list", fRelativeGainRunID);
   TString fGainMatchingFile = fSpiRITROOTPath + Form("parameters/%s", fGainMatch.Data());
 
@@ -153,7 +163,9 @@ void run_reco_2024
   if (fIsGGDataSet)
     decoder -> SetGGNoiseData(fGGData);
   cout << fRawDataList << endl;
+  cout << "setting data list" << endl;
   decoder -> SetDataList(fRawDataList);
+  cout << "data list set" << endl;
   //decoder -> SetEventID(start);
   decoder -> SetTbRange(30, 257); 
   // Low gain calibration. Don't forget you need to uncomment PSA part, too.
@@ -236,6 +248,21 @@ void run_reco_2024
   // Removing shorter length tracklet by distance of adjacent clusters.
   // genfitPID -> SetMaxDCluster(60);
 
+  auto genfitVA = new STGenfitVATask();
+  genfitVA -> SetIs2024Data();
+  genfitVA -> SetPersistence(true);
+  // Only for test
+  // genfitVA -> SetConstantField();
+  genfitVA -> SetListPersistence(true);
+  if (fIsBeamDataSet) {
+    genfitVA -> SetBeamFile(fBeamData);
+    genfitVA -> SetInformationForBDC(fRunNo, fBDCOffsetX, fBDCOffsetY, 0);
+  }
+  // Uncomment if you want to recalculate the vertex using refit tracks.
+  genfitVA -> SetUseRave(true);
+  //genfitVA -> ShiftBDCAfterSC("../parameters/vertex_shift_Sn" + std::to_string(int(fSystemID/1000)) + ".root", 80);
+  genfitVA -> SetZtoProject(-21.3, 2.24, 3); //(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple), this function will project the BDC on the Target.
+
   run -> AddTask(decoder);
   if(!fMCFile.IsNull())
     run -> AddTask(embedTask);
@@ -243,6 +270,7 @@ void run_reco_2024
   run -> AddTask(psa);
   run -> AddTask(helix);
   run -> AddTask(genfitPID);
+  run -> AddTask(genfitVA);
 
   run -> Init();
   //run -> Run(0,1000);
