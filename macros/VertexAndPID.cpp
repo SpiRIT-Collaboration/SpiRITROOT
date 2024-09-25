@@ -25,9 +25,11 @@ void VertexAndPID(int runNum = 1283) {
 
     reader = new TTreeReader(tree);
 
+    //VAVertex and VATracks use the vertex from the BDC
     //vertexReader = new TTreeReaderValue<TClonesArray>(*reader, "VAVertex");
     //recoReader = new TTreeReaderValue<TClonesArray>(*reader, "VATracks");
 
+    //STVertex and STRecoTrack use the vertex from the tracks
     vertexReader = new TTreeReaderValue<TClonesArray>(*reader, "STVertex");
     recoReader = new TTreeReaderValue<TClonesArray>(*reader, "STRecoTrack");
 
