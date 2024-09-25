@@ -26,7 +26,7 @@ void run_reco_2024
 
   // Data paths - must have one %d for run number
   // If you don't need either of them, pass it blank.
-  TString ggDataPathWithFormat = "";
+  TString ggDataPathWithFormat = "ggNoiseSubtractionMacro/ggNoise%d.root";
   TString beamDataPathWithFormat = "";
   if(fIsFishtank)
      beamDataPathWithFormat = "/mnt/cephfs/hira/SPIRIT_2024/beam_VETO_KATANA_data/bdc_rootfiles/bdc_%d.root";
@@ -52,7 +52,7 @@ void run_reco_2024
   //auto fParamSetter = new STParameters(fRunNo, fSystemDB, fRunDB);
   //auto fNumEventsInRun = fParamSetter -> GetNumTotalEvents();
   //auto fParameterFile = fParamSetter -> GetParameterFile();
-  auto fParameterFile = "ST.parameters.2024Sprint.par";
+  auto fParameterFile = "ST.parameters.2024Spring.par";
   //auto fYPedestalOffset = fParamSetter -> GetYPedestal();
   //auto fFieldOffsetX = fParamSetter -> GetFieldOffsetX();
   //auto fFieldOffsetY = fParamSetter -> GetFieldOffsetY();
@@ -66,6 +66,7 @@ void run_reco_2024
   auto fBDCOffsetX = -2.84168;
   auto fBDCOffsetY = -237.892;
   //auto fGGRunID = fParamSetter -> GetGGRunID();
+  auto fGGRunID = 1177;
   //auto fRelativeGainRunID = fParamSetter -> GetRelativeGainRunID();
 
   cout << "done with pars" << endl;
@@ -76,7 +77,7 @@ void run_reco_2024
   //TString fGGData = "ggNoiseSubtractionMacro/ggNoise_1159.root";
   TString fGGData = "";
   TString fBeamData = "";
-  //if (fIsGGDataSet)   fGGData = Form(ggDataPathWithFormat.Data(), fGGRunID);
+  if (fIsGGDataSet)   fGGData = Form(ggDataPathWithFormat.Data(), fGGRunID);
   if (fIsBeamDataSet) fBeamData = Form(beamDataPathWithFormat.Data(), fRunNo);
   //TString fGainMatchingFile = fSpiRITROOTPath + Form("parameters/RelativeGainRun%d.list", fRelativeGainRunID);
   TString fGainMatchingFile = fSpiRITROOTPath + Form("parameters/%s", fGainMatch.Data());
