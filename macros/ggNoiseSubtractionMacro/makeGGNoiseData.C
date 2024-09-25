@@ -12,7 +12,7 @@
 TString fParameterFile = "ST.parameters.par";
 
 // Set the output filename with the extension. Checking filename is automatically determined.
-TString fOutputFilename = "";
+TString fOutputFilename = "ggNoise1193.root";
 
 // FPN pedestal range selection threshold
 Int_t fFPNThreshold = 5;
@@ -32,7 +32,10 @@ Bool_t fUseSeparatedData = kTRUE;
 // If set use separated data files, data file list should be set. 
 // Voltage list, data file list and data dir above are neglected.
 // Only data used in the list file below.
-TString fDataList = "";
+TString fDataList = "../list_run1193.txt";
+
+// Set if using FRIBDAQ
+Bool_t fIsFRIBDAQ = true;
 
 //////////////////////////////////////////////////////////
 //                                                      //
@@ -44,10 +47,12 @@ void makeGGNoiseData() {
   TString workDir = gSystem -> Getenv("VMCWORKDIR");
   TString parameterDir = workDir + "/parameters/";
 
-  STGenerator *fGenerator = new STGenerator("ggNoise");
+  STGenerator *fGenerator = new STGenerator("ggNoise", kTRUE);
   fGenerator -> SetUseSeparatedData(fUseSeparatedData);
   fGenerator -> SetParameterFile(parameterDir + fParameterFile);
   fGenerator -> SetFPNPedestal(fFPNThreshold);
+
+
 
   if (!fUseSeparatedData) 
     fGenerator -> AddData(fDataDir + "/" + fData);
@@ -56,11 +61,22 @@ void makeGGNoiseData() {
     TString dataFileWithPath;
     Int_t iCobo = -1;
     while (dataFileWithPath.ReadLine(listFile)) {
-      if (dataFileWithPath.Contains("s."))
-        fGenerator -> AddData(dataFileWithPath, iCobo);
+      if(fIsFRIBDAQ) {
+        if (dataFileWithPath.Contains("00.")) {
+          iCobo++;
+          fGenerator -> AddData(dataFileWithPath, iCobo);
+        }
+        else {
+          fGenerator -> AddData(dataFileWithPath, iCobo);
+        }
+      }
       else {
-        iCobo++;
-        fGenerator -> AddData(dataFileWithPath, iCobo);
+        if (dataFileWithPath.Contains("s."))
+          fGenerator -> AddData(dataFileWithPath, iCobo);
+        else {
+          iCobo++;
+          fGenerator -> AddData(dataFileWithPath, iCobo);
+        }
       }
     }
   }

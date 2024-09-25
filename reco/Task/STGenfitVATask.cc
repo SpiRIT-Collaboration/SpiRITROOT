@@ -118,25 +118,32 @@ STGenfitVATask::Init()
     fRootManager -> Register("BDCVertex", "SpiRIT", fBDCVertexArray, kTRUE);
   }
 
-  if (!fBeamFilename.IsNull())
-  {
+  if (!fBeamFilename.IsNull()) {
     fBeamFile = new TFile(fBeamFilename);
-    fBeamTree = (TTree *) fBeamFile -> Get("TBeam");
-    fBeamTree -> SetBranchAddress("z", &fZ);
-    fBeamTree -> SetBranchAddress("aoq", &fAoQ);
-    fBeamTree -> SetBranchAddress("beta37", &fBeta37);
     fBDCTree = (TTree *) fBeamFile -> Get("TBDC");
-    fBDCTree -> SetBranchAddress("bdc1x", &fBDC1x);
-    fBDCTree -> SetBranchAddress("bdc1y", &fBDC1y);
-    fBDCTree -> SetBranchAddress("bdc2x", &fBDC2x);
-    fBDCTree -> SetBranchAddress("bdc2y", &fBDC2y);
-    fBDCTree -> SetBranchAddress("bdcax", &fBDCax);
-    fBDCTree -> SetBranchAddress("bdcby", &fBDCby);
+    if (fIs2024Data) {
+      fBDCTree -> SetBranchAddress("target_x", &fTarget_x);
+      fBDCTree -> SetBranchAddress("target_y", &fTarget_y);
+      fBDCTree -> SetBranchAddress("target_a", &fTarget_a);
+      fBDCTree -> SetBranchAddress("target_b", &fTarget_b);
+    }
+    else {
+      fBeamTree = (TTree *) fBeamFile -> Get("TBeam");
+      fBeamTree -> SetBranchAddress("z", &fZ);
+      fBeamTree -> SetBranchAddress("aoq", &fAoQ);
+      fBeamTree -> SetBranchAddress("beta37", &fBeta37);
+      fBDCTree -> SetBranchAddress("bdc1x", &fBDC1x);
+      fBDCTree -> SetBranchAddress("bdc1y", &fBDC1y);
+      fBDCTree -> SetBranchAddress("bdc2x", &fBDC2x);
+      fBDCTree -> SetBranchAddress("bdc2y", &fBDC2y);
+      fBDCTree -> SetBranchAddress("bdcax", &fBDCax);
+      fBDCTree -> SetBranchAddress("bdcby", &fBDCby);
 
-    fBeamEnergy = new STBeamEnergy();
-    fBeamEnergy -> setBeam(fRunNo);
-    fBDCProjection = new STBDCProjection(TString(gSystem -> Getenv("VMCWORKDIR")) + "/parameters/ReducedBMap.txt");
-    fBDCProjection -> setBeam(fRunNo);
+      fBeamEnergy = new STBeamEnergy();
+      fBeamEnergy -> setBeam(fRunNo);
+      fBDCProjection = new STBDCProjection(TString(gSystem -> Getenv("VMCWORKDIR")) + "/parameters/ReducedBMap.txt");
+      fBDCProjection -> setBeam(fRunNo);
+    }
   }
 
   if (fRecoHeader != nullptr) {
@@ -201,28 +208,34 @@ void STGenfitVATask::Exec(Option_t *opt)
   auto vertexPos = vertex -> GetPos(); //this position is TPC Vertex
   Bool_t goodBDC = kTRUE;
   if (!fBeamFilename.IsNull()) {
-    fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
     fBDCTree -> GetEntry(fEventHeader -> GetEventID() - 1);
-    fBeamEnergy -> reset(fZ, fAoQ, fBeta37);
+    if(!fIs2024Data) {
+      fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
+      fBeamEnergy -> reset(fZ, fAoQ, fBeta37);
 
-    fBeamInfo -> fBeamAoQ = fAoQ;
-    fBeamInfo -> fBeamZ = fZ;
+      fBeamInfo -> fBeamAoQ = fAoQ;
+      fBeamInfo -> fBeamZ = fZ;
 
-    Double_t E1 = fBeamEnergy -> getCorrectedEnergy();
+      Double_t E1 = fBeamEnergy -> getCorrectedEnergy();
 
-    if (fZ > 0 && fZ < 75 && fAoQ > 1. && fAoQ < 3 && fBDC1x > -999 && fBDC1y > -999 && fBDC2x > -999 && fBDC2y > -999) {
+      if (fZ > 0 && fZ < 75 && fAoQ > 1. && fAoQ < 3 && fBDC1x > -999 && fBDC1y > -999 && fBDC2x > -999 && fBDC2y > -999) {
 //      Double_t ProjectedAtZ = -580.4 + vertex -> GetPos().Z();  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
-      Double_t ProjectedAtZ = -580.4 + (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z());  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
+        Double_t ProjectedAtZ = -580.4 + (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z());  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
 //      double ProjectedAtZ=-592.644;//////mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
-      fBDCProjection -> ProjectParticle(fBDC2x, fBDC2y, -2160., fBDCax, fBDCby, fZ, E1, ProjectedAtZ, fBeamEnergy -> getMass());//-580.4,-583.904
+        fBDCProjection -> ProjectParticle(fBDC2x, fBDC2y, -2160., fBDCax, fBDCby, fZ, E1, ProjectedAtZ, fBeamEnergy -> getMass());//-580.4,-583.904
 
-      vertex -> SetIsGoodBDC();
-    } else
-      goodBDC = kFALSE;
+        vertex -> SetIsGoodBDC();
+      } else
+        goodBDC = kFALSE;
+    }
+    else {
+        vertex -> SetIsGoodBDC();
+    }
 
     if (!goodBDC)
       LOG(INFO) << Space() << "STGenfitVATask " << "Bad BDC!" << FairLogger::endl;
     else {
+      if(!fIs2024Data) {
       fBeamInfo -> fXTargetPlane = fBDCProjection -> getX();
       fBeamInfo -> fYTargetPlane = fBDCProjection -> getY();
       fBeamInfo -> fRotationAngleATargetPlane = fBDCProjection -> getA();
@@ -231,6 +244,14 @@ void STGenfitVATask::Exec(Option_t *opt)
       fBeamInfo -> fBeamVelocityTargetPlane = fBDCProjection -> getBeta();
 
       vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z()) + fOffsetZ);
+      }
+      else {
+        fBeamInfo -> fXTargetPlane = fTarget_x;
+        fBeamInfo -> fYTargetPlane = fTarget_y;
+        fBeamInfo -> fRotationAngleATargetPlane = fTarget_a;
+        fBeamInfo -> fRotationAngleBTargetPlane = fTarget_b;
+        vertexPos = TVector3(fTarget_x + fOffsetX, fTarget_y + fOffsetY, (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z()) + fOffsetZ);
+      }
 
       auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
       bdcVertex -> SetIsGoodBDC();

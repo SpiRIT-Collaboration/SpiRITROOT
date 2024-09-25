@@ -45,6 +45,8 @@ class STGenfitVATask : public STRecoTask
 
     void SetUseRave(Bool_t val = kTRUE);
     void ShiftBDCAfterSC(const std::string& filename, double threshold);
+
+    void SetIs2024Data(Bool_t val = kTRUE) { fIs2024Data = val; }
   private:
     TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fRecoTrackArray = nullptr;
@@ -59,6 +61,8 @@ class STGenfitVATask : public STRecoTask
 
     bool fIsListPersistence = false;
     bool fIsSamurai = true;
+
+    Bool_t fIs2024Data = false;
 
     Bool_t fUseRave = kFALSE;
     Bool_t fUseMCBeam = kFALSE;
@@ -75,6 +79,7 @@ class STGenfitVATask : public STRecoTask
     Double_t fZ, fAoQ, fBeta37;
     TTree *fBDCTree;
     Double_t fBDC1x, fBDC1y, fBDC2x, fBDC2y, fBDCax, fBDCby;
+    Double_t fTarget_x, fTarget_y, fTarget_a, fTarget_b;
 
     Int_t fRunNo;
     Double_t fOffsetX, fOffsetY, fOffsetZ;

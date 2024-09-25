@@ -21,7 +21,7 @@ elif [ $LOCATION == "ricc" ]
 then
   DATAPATH=/data/Q15264/rawdata # RICC
 else
-  DATAPATH=/data/spdaq04/data/fribdaq/
+  DATAPATH=/mnt/cephfs/hira/SPIRIT_2024/SPIRIT_TPC_data/fribdaq
 fi
 
 printf -v RUN "%04g" $RUN
