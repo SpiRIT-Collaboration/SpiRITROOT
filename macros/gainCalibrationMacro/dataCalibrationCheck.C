@@ -30,6 +30,9 @@ TString fDataList = "list.txt";
 // FPN pedestal range selection threshold
 Int_t fFPNThreshold = 5;
 
+// FRIBDAQ data
+Bool_t fIsFRIBDAQ = kTRUE;
+
 //////////////////////////////////////////////////////////
 //                                                      //
 //   Don't edit the below if you don't know about it.   //
@@ -59,7 +62,7 @@ void dataCalibrationCheck() {
       fCore[iCore] = new STCore*[fNumVoltages];
 
       for (Int_t iData = 0; iData < fNumVoltages; iData++)
-        fCore[iCore][iData] = new STCore(fData[iData]);
+        fCore[iCore][iData] = new STCore(fData[iData], fIsFRIBDAQ);
     }
   } else {
     std::vector<TString> dataFiles[12];

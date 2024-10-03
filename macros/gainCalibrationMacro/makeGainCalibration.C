@@ -38,6 +38,9 @@ Bool_t fUseSeparatedData = kTRUE;
 // Only data used in the list file below.
 TString fDataList = "list.txt";
 
+// FRIBDAQ dat
+Bool_t fIsFRIBDAQ = kTRUE;
+
 //////////////////////////////////////////////////////////
 //                                                      //
 //   Don't edit the below if you don't know about it.   //
@@ -48,7 +51,7 @@ void makeGainCalibration() {
   TString workDir = gSystem -> Getenv("VMCWORKDIR");
   TString parameterDir = workDir + "/parameters/";
 
-  STGenerator *fGenerator = new STGenerator("gain");
+  STGenerator *fGenerator = new STGenerator("gain", fIsFRIBDAQ);
   fGenerator -> SetUseSeparatedData(fUseSeparatedData);
   fGenerator -> SetParameterFile(parameterDir + fParameterFile);
   fGenerator -> SetFPNPedestal(fFPNThreshold);
