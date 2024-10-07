@@ -80,7 +80,7 @@ void GETDecoder::Initialize(Bool_t isFRIBDAQ)
   fIsDataInfo = kFALSE;
   fIsContinuousData = kTRUE;
   fIsMetaData = kFALSE;
-	fIsFRIBDataEnded = kFALSE;
+  fIsFRIBDataEnded = kFALSE;
 
   fDataSize = 0;
   fCurrentDataID = -1;
@@ -144,6 +144,7 @@ void GETDecoder::Clear() {
   fIsDoneAnalyzing = kFALSE;
   fIsDataInfo = kFALSE;
   fIsMetaData = kFALSE;
+  fIsFRIBDataEnded = kFALSE;
 
   fDataSize = 0;
   fCurrentDataID = -1;
