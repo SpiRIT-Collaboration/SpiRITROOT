@@ -275,8 +275,8 @@ if __name__ == '__main__':
   # lets try different a
   fig, ax = plt.subplots()
   #strengths = np.linspace(0.0)
-  beam_files = ['_132Sn_BeamTrack.data', '_124Sn_BeamTrack.data', '_108Sn_BeamTrack.data', '_112Sn_BeamTrack.data']
-  beam_name = ['132Sn', '124Sn', '108Sn', '112Sn']
+  beam_files = ['_132Sn_BeamTrack.data', '_124Sn_BeamTrack.data', '_108Sn_BeamTrack.data', '_112Sn_BeamTrack.data', '_124Xe_BeamTrack.data']
+  beam_name = ['132Sn', '124Sn', '108Sn', '112Sn', '124Xe']
   strengths_and_beamfile = [(3.14e-8*factor,0, beam_file) for beam_file in beam_files for factor in range(0,2)]
   strengthsBF_and_beamfile = [(0, 3.14e-8, beam_file) for beam_file in beam_files]
 
