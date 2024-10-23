@@ -56,7 +56,7 @@ private:
 class STSpaceCharge
 {
   public:
-    enum class Projectile{Sn108, Sn112, Sn124, Sn132};
+    enum class Projectile{Sn108, Sn112, Sn124, Sn132, Xe124};
 
     STSpaceCharge(double width=864, double length=1344, double height=506.1);  //!< Default constructor
     // inputs: size of the TPC in mm
