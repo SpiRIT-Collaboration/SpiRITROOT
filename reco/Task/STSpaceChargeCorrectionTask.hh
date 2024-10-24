@@ -29,6 +29,8 @@ public:
 
   bool SearchForRunPar(const std::string& filename, int run_num);   
 
+  void UpdateEDrift();
+
 private:
   Bool_t fVerbose; // testing with cout 
   Bool_t fIsDrift; // flag to make space charge effect optional

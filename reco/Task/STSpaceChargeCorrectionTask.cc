@@ -140,3 +140,9 @@ bool STSpaceChargeCorrectionTask::SearchForRunPar(const std::string& filename, i
 }
 
 
+void STSpaceChargeCorrectionTask::UpdateEDrift()
+{
+   if(fIsDrift) this -> CalculateEDrift(fDigiPar->GetDriftVelocity(), true);
+}
+
+
