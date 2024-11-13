@@ -92,7 +92,8 @@ STSpaceCharge::STSpaceCharge(double width, double length, double height)
             {Projectile::Sn112, "112Sn"}, 
             {Projectile::Sn124, "124Sn"}, 
             {Projectile::Sn132, "132Sn"},
-            {Projectile::Xe124, "124Xe"}})
+            {Projectile::Xe124, "124Xe"},
+            {Projectile::Xe136, "136Xe"}})
 {
   fSCLogger = FairLogger::GetLogger();
   fSCLogger->Debug(MESSAGE_ORIGIN,"Defaul Constructor of STSpaceCharge");
