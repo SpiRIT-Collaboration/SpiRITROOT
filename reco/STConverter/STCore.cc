@@ -274,8 +274,8 @@ Bool_t STCore::SetAGETMap(TString filename)
 void STCore::ProcessCobo(Int_t coboIdx)
 {
   GETCoboFrame *coboFrame = fDecoderPtr[coboIdx] -> GetCoboFrame(fTargetFrameID);
-
-
+   
+   
   if (coboFrame == NULL) {
     fRawEventPtr -> SetIsGood(kFALSE);
 
@@ -313,6 +313,8 @@ void STCore::ProcessCobo(Int_t coboIdx)
           else
             fGGNoisePtr[coboIdx] -> SubtractNoise(row, layer, rawadc, adc);
         }
+
+
 
         if (fIsGainCalibrationData)
           fGainCalibrationPtr[coboIdx] -> CalibrateADC(row, layer, fNumTbs, adc);
@@ -428,7 +430,7 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
 
     fRawEventPtr -> SetEventID(fCurrentEventID[0]);
 
-    std::cout << "currentEventID:" << fCurrentEventID[0] << std::endl;
+//    std::cout << "currentEventID:" << fCurrentEventID[0] << std::endl;
 
     for (Int_t iRow = 0; iRow < 108; iRow++) {
       for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
@@ -437,11 +439,12 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
           fRawEventPtr -> SetPad(pad);
       }
     }
-    std::cout << "numPads:" << fRawEventPtr -> GetNumPads() << "; ptrGood:" << fRawEventPtr -> IsGood() << std::endl;
+    //std::cout << "numPads:" << fRawEventPtr -> GetNumPads() << "; ptrGood:" << fRawEventPtr -> IsGood() << std::endl;
+
     if (fRawEventPtr -> GetNumPads() == 0 && fRawEventPtr -> IsGood() == kFALSE)
-      return NULL; 
+       return NULL;
     else
-      return fRawEventPtr;
+       return fRawEventPtr;
   } else {
     fRawEventPtr -> Clear();
     for (Int_t iPad = 0; iPad < 12096; iPad++)
@@ -559,7 +562,12 @@ void STCore::GoToEnd(Int_t coboIdx)
   fDecoderPtr[coboIdx] -> GoToEnd();
 }
 
-void STCore::GenerateMetaData(Int_t runNo)
+void STCore::GoToEvent(Int_t eventNo, Int_t coboIdx)
+{
+  fDecoderPtr[coboIdx] -> GoToEvent(eventNo);
+}
+
+void STCore::GenerateMetaData(Int_t runNo, Int_t eventNo)
 {
   if (fIsSeparatedData) {
      /*
@@ -588,18 +596,34 @@ void STCore::GenerateMetaData(Int_t runNo)
     cobo10.join();
     cobo11.join();
     */
-     GoToEnd(0);
-     GoToEnd(1);
-     GoToEnd(2);
-     GoToEnd(3);
-     GoToEnd(4);
-     GoToEnd(5);
-     GoToEnd(6);
-     GoToEnd(7);
-     GoToEnd(8);
-     GoToEnd(9);
-     GoToEnd(10);
-     GoToEnd(11);
+    if(eventNo == -1) {
+        GoToEnd(0);
+        GoToEnd(1);
+        GoToEnd(2);
+        GoToEnd(3);
+        GoToEnd(4);
+        GoToEnd(5);
+        GoToEnd(6);
+        GoToEnd(7);
+        GoToEnd(8);
+        GoToEnd(9);
+        GoToEnd(10);
+        GoToEnd(11);
+    }
+    else {
+       GoToEvent(eventNo, 0);
+       GoToEvent(eventNo, 1);
+       GoToEvent(eventNo, 2);
+       GoToEvent(eventNo, 3);
+       GoToEvent(eventNo, 4);
+       GoToEvent(eventNo, 5);
+       GoToEvent(eventNo, 6);
+       GoToEvent(eventNo, 7);
+       GoToEvent(eventNo, 8);
+       GoToEvent(eventNo, 9);
+       GoToEvent(eventNo, 10);
+       GoToEvent(eventNo, 11);
+    }
 
     for (Int_t iCobo = 0; iCobo < 12; iCobo++)
       fDecoderPtr[iCobo] -> SaveMetaData(runNo, "", iCobo);

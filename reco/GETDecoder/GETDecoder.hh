@@ -100,6 +100,8 @@ class GETDecoder
 
     //! Scan up to the end of file
     void GoToEnd();
+    //! Scan up to a specific event number
+    void GoToEvent(Int_t eventNo);
     //! Write metadata into ROOT file
     void SaveMetaData(Int_t runNo = -1, TString filename = "", Int_t coboIdx = -1);
     //! Load metadata from ROOT file

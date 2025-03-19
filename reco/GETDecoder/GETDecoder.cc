@@ -553,6 +553,7 @@ GETCoboFrame *GETDecoder::GetCoboFrame(Int_t frameID)
     fFrameInfo -> SetStartByte(startByte);
     fFrameInfo -> SetEndByte(endByte);
     fFrameInfo -> SetEventID(fBasicFrameHeader -> GetEventID());
+    fFrameInfo -> SetEventTime(fBasicFrameHeader -> GetEventTime());
 
   //  std::cout << "fFrameInfo -> GetEndByte(): " << fFrameInfo -> GetEndByte() << " fData.tellg(): " << fData.tellg() << " fDataSize: " << fDataSize << std::endl;
     CheckEndOfData();
@@ -955,6 +956,28 @@ void GETDecoder::GoToEnd() {
       break;
     case kMutant:
       GetMutantFrame(10000000);
+      break;
+    default:
+      std::cout << "== [GETDecoder] Nothing to store!" << std::endl;
+      break;
+  }
+}
+
+void GETDecoder::GoToEvent(Int_t eventNo) {
+  switch (fFrameType) {
+    case kCobo:
+    case kFRIBDAQ:
+      GetCoboFrame(eventNo);
+      break;
+    case kMergedID:
+    case kMergedTime:
+      GetLayeredFrame(eventNo);
+      break;
+    case kBasic:
+      GetBasicFrame(eventNo);
+      break;
+    case kMutant:
+      GetMutantFrame(eventNo);
       break;
     default:
       std::cout << "== [GETDecoder] Nothing to store!" << std::endl;

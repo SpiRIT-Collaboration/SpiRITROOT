@@ -75,7 +75,8 @@ class STCore : public TObject {
     STPlot *GetSTPlot();
 
     void GoToEnd(Int_t coboIdx = 0);
-    void GenerateMetaData(Int_t runNo);
+    void GoToEvent(Int_t eventNo, Int_t coboIdx = 0);
+    void GenerateMetaData(Int_t runNo, Int_t eventNo = -1);
     void LoadMetaData(TString filename, Int_t coboIdx = -1);
 
   private:
