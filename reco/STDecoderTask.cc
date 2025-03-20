@@ -52,6 +52,7 @@ STDecoderTask::STDecoderTask()
   fEndTb = -1;
 
   fIsPersistence = kFALSE;
+  fIsAuxPersistence = kFALSE;
   
   fPar = NULL;
   fRawEventArray = new TClonesArray("STRawEvent");
@@ -60,6 +61,8 @@ STDecoderTask::STDecoderTask()
   fRawEvent = NULL;
   fChain = NULL;
   fEventArray = nullptr;
+
+  fAuxHeaderBranch = "STAuxHeader";
   
   fIsSeparatedData = kFALSE;
 
@@ -115,9 +118,13 @@ STDecoderTask::Init()
   }
 
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
+
+  fAuxHeader = new STAuxHeader();
+  ioMan -> Register(fAuxHeaderBranch, "SpiRIT", fAuxHeader, fIsAuxPersistence);
   
   fDecoder = new STCore(fUseFRIBDAQ);
   fDecoder -> SetUseSeparatedData(fIsSeparatedData);
+  fDecoder -> SetAuxHeader(fAuxHeader);
   for (Int_t iFile = 0; iFile < fDataList[0].size(); iFile++)
     fDecoder -> AddData(fDataList[0].at(iFile));
 
@@ -250,9 +257,11 @@ STDecoderTask::Exec(Option_t *opt)
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStart("DecoderTask");
 #endif
+  fAuxHeader -> Clear();
   fRawEventArray -> Delete();
   fRawDataEventArray -> Delete();
   int EventID = fEventID;
+  fAuxHeader -> SetTpcEventNum(EventID);
   if(fEventIDList.size() > 0) 
   {
     if(fEventIDList.size() > fEventID) EventID = fEventIDList[fEventID] - 1; // Run number starts at 1

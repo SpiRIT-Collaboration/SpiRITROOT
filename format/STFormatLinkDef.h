@@ -31,6 +31,8 @@
 #pragma link C++ class STVectorI+;
 #pragma link C++ class STVectorVec3+;
 
+#pragma link C++ class STAuxHeader+;
+
 #pragma link C++ class STdEdxPoint+;
 #pragma link C++ class STRecoTrack+;
 #pragma link C++ class STRecoTrackCand+;

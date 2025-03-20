@@ -22,6 +22,7 @@
 #include "STGainMatching.hh"
 #include "STGGNoiseSubtractor.hh"
 #include "STPlot.hh"
+#include "STAuxHeader.hh"
 
 #include "GETDecoder.hh"
 
@@ -74,6 +75,9 @@ class STCore : public TObject {
     STMap *GetSTMap();
     STPlot *GetSTPlot();
 
+    void SetAuxHeader(STAuxHeader *header) { fAuxHeader = header; }
+
+
     void GoToEnd(Int_t coboIdx = 0);
     void GoToEvent(Int_t eventNo, Int_t coboIdx = 0);
     void GenerateMetaData(Int_t runNo, Int_t eventNo = -1);
@@ -111,8 +115,11 @@ class STCore : public TObject {
 
     Int_t fCurrentEventID[12];
     Int_t fTargetFrameID;
+    ULong_t fCurrentTime[12];
 
     Bool_t fIsSeparatedData;
+
+    STAuxHeader *fAuxHeader;
 
   ClassDef(STCore, 1);
 };

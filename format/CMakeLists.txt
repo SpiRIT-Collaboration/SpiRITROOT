@@ -61,6 +61,7 @@ STDataSubject.cc
 STDataObserver.cc
 STBranch.cc
 STInfo.cc
+STAuxHeader.cc
 )
 
 CHANGE_FILE_EXTENSION(*.cc *.hh HEADERS "${SRCS}")

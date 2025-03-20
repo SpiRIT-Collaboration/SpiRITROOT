@@ -23,6 +23,16 @@ Int_t GETCoboFrame::GetEventID() {
   return eventID;
 }
 
+ULong_t GETCoboFrame::GetEventTime() {
+  Int_t eventTime = fFrame[0].GetEventTime();
+
+  for (Int_t iFrame = 1; iFrame < fNumFrames; iFrame++)
+    if (fFrame[0].GetEventTime() != fFrame[iFrame].GetEventTime())
+      return -1;
+
+  return eventTime;
+}
+
         Int_t  GETCoboFrame::GetNumFrames()        { return fNumFrames; }
 GETBasicFrame *GETCoboFrame::GetFrames()           { return fFrame; }
 GETBasicFrame *GETCoboFrame::GetFrame(Int_t index) { return &fFrame[index]; }

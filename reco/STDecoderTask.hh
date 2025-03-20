@@ -22,6 +22,7 @@
 #include "STMap.hh"
 #include "STPedestal.hh"
 #include "STRawEvent.hh"
+#include "STAuxHeader.hh"
 
 #include "STDigiPar.hh"
 
@@ -86,6 +87,9 @@ class STDecoderTask : public FairTask {
 
     /// If set, decoded raw data is written in ROOT file with STRawEvent class.
     void SetPersistence(Bool_t value = kTRUE);
+    void SetAuxPersistence(Bool_t value = kTRUE) { fIsAuxPersistence = value; }
+
+    void SetAuxBranch(TString name = "STAuxHeader") { fAuxHeaderBranch = name; }
   
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
@@ -132,6 +136,7 @@ class STDecoderTask : public FairTask {
     Int_t fNumTbs;                      ///< The number of time buckets
 
     Bool_t fIsPersistence;              ///< Persistence check variable
+    Bool_t fIsAuxPersistence;              ///< Persistence check variable
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TChain *fChain;
@@ -141,6 +146,8 @@ class STDecoderTask : public FairTask {
     TClonesArray *fRawDataEventArray;   ///< STRawEvent container just data
     STRawEvent *fRawEvent;              ///< Current raw event for data + MC
     STRawEvent *fRawEventData;          ///< Current raw event for just data
+
+    STAuxHeader *fAuxHeader = nullptr;
   
     Bool_t fOldData;                    ///< Set to decode old data
     Bool_t fIsSeparatedData;            ///< Set to use separated data files
@@ -148,6 +155,8 @@ class STDecoderTask : public FairTask {
     Long64_t fEventIDLast;              ///< Last event ID 
     Long64_t fEventID;                  ///< Event ID for STSource
     std::vector<int> fEventIDList;      ///< List of events to be ran
+
+    TString fAuxHeaderBranch;
 
     Double_t fGainMatchingDataScale[112][108] = {{0}};
 

@@ -18,6 +18,7 @@
 #include "STMap.hh"
 #include "STPedestal.hh"
 #include "STRawEvent.hh"
+#include "STAuxHeader.hh"
 
 #include "GETCoboFrame.hh"
 #include "GETLayeredFrame.hh"
@@ -52,6 +53,7 @@ void STCore::Initialize(Bool_t isFRIBDAQ)
   fIsFRIBDAQ = isFRIBDAQ;
 
   fRawEventPtr = new STRawEvent();
+  fAuxHeader = NULL;
 
   fMapPtr = new STMap();
   fIsNegativePolarity = kTRUE;
@@ -283,6 +285,7 @@ void STCore::ProcessCobo(Int_t coboIdx)
   }
 
   fCurrentEventID[coboIdx] = coboFrame -> GetEventID();
+  fCurrentTime[coboIdx] = coboFrame -> GetEventTime();
   Int_t numFrames = coboFrame -> GetNumFrames();
   for (Int_t iFrame = 0; iFrame < numFrames; iFrame++) {
     GETBasicFrame *frame = coboFrame -> GetFrame(iFrame);
@@ -430,6 +433,9 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
 
     fRawEventPtr -> SetEventID(fCurrentEventID[0]);
 
+    if(fAuxHeader != NULL)
+      fAuxHeader -> SetTpcTime(fCurrentTime[0]);
+
 //    std::cout << "currentEventID:" << fCurrentEventID[0] << std::endl;
 
     for (Int_t iRow = 0; iRow < 108; iRow++) {
@@ -440,6 +446,7 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
       }
     }
     //std::cout << "numPads:" << fRawEventPtr -> GetNumPads() << "; ptrGood:" << fRawEventPtr -> IsGood() << std::endl;
+
 
     if (fRawEventPtr -> GetNumPads() == 0 && fRawEventPtr -> IsGood() == kFALSE)
        return NULL;
@@ -461,6 +468,13 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
       return NULL;
 
     fRawEventPtr -> SetEventID(layeredFrame -> GetEventID());
+
+    if(fAuxHeader == NULL) {
+      std::cout << "fAuxHeader is Null" << std::endl;
+    }
+    else {
+      fAuxHeader -> SetTpcTime(layeredFrame -> GetEventTime());
+    }
 
     Int_t numFrames = layeredFrame -> GetNItems();
     for (Int_t iFrame = 0; iFrame < numFrames; iFrame++) {
