@@ -149,7 +149,7 @@ void run_reco_LinkTest
     decoder -> SetUseFRIBDAQData();
   decoder -> SetUseSeparatedData(true);
   decoder -> SetPersistence(true);
-  decoder -> SetAuxPersistence(true);
+  decoder -> SetAuxPersistence(false);
   // By default, if SetUseGainCalibration(true) is called, reading gain calibration information from parameter file.
   //decoder -> SetUseGainCalibration(true);
   /* Manual calibration parameter setters. You need to provide both calibration root file and reference values to match.
@@ -182,7 +182,14 @@ void run_reco_LinkTest
 
   //decoder -> SetEventList(*events[fRunNo]);
   decoder -> SetEventID(start);
- 
+
+
+  auto bdcFilename = TString::Format("./bdc_files/bdc_%04d.root", fRunNo);
+  STLinkDAQTask *linker = new STLinkDAQTask();
+  linker -> SetInputTree(bdcFilename.Data(), "TBDC");
+  linker -> SetPersistence(true);
+  linker -> SetSearchRadius(1e-4);
+
   
   if (fUseMeta) 
   {
@@ -260,6 +267,7 @@ void run_reco_LinkTest
   genfitVA -> SetZtoProject(-21.3, 2.24, 3); //(Double_t peakZ, Double_t sigma, Double_t sigmaMultiple), this function will project the BDC on the Target.
 
   run -> AddTask(decoder);
+  run -> AddTask(linker);
   if(!fMCFile.IsNull())
     run -> AddTask(embedTask);
   run -> AddTask(preview);

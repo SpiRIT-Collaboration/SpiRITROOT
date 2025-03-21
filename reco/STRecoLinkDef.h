@@ -120,5 +120,7 @@
 #pragma link C++ class STMacroTask+;
 #pragma link C++ class STDataReductionTask+;
 
+#pragma link C++ class STLinkDAQTask+;
+
 
 #endif

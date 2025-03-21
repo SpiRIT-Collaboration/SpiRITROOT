@@ -12,7 +12,7 @@ void CheckReco(int runNum = 1635) {
 
     reader = new TTreeReader(tree);
 
-    auxHeaderReader = new TTreeReaderValue<STAuxHeader>(*reader, "STAuxHeader");
+    auxHeaderReader = new TTreeReaderValue<STAuxHeader>(*reader, "STAuxHeaderLinked");
     eventHeaderReader = new TTreeReaderValue<STEventHeader>(*reader, "STEventHeader");
 
     auto outFilename = TString::Format("recoTime%04d.txt", runNum);
@@ -32,8 +32,9 @@ void CheckReco(int runNum = 1635) {
         auto time = auxHeader->GetTpcTime();
         auto eventNum = auxHeader->GetTpcEventNum();
         auto eventID = eventHeader->GetEventID();
+        auto bdcID = auxHeader->GetBdcID();
 
-        output << eventNum << "  " << eventID << "  " << time << "  " << endl;
+        output << eventNum << "  " << eventID << "  " << bdcID << "  " << time << "  " << endl;
 
     }
 

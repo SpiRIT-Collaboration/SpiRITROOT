@@ -69,6 +69,7 @@ Task/STMCEventTask.cc
 Task/ST_VertexShift.cc
 Task/STSpaceChargeCorrectionTask.cc
 Task/STSmallOutputTask.cc
+Task/STLinkDAQTask.cc
 
 Corrections/STCorrection.cc
 

@@ -5,6 +5,7 @@ ULong64_t TimeStamp; //bdc
 
 TChain *fBdcTree;
 
+UInt_t fBdcID = -1;
 
 ULong64_t fBdcTimestamp = 0;
 ULong64_t fTpcTimestamp = 0;
@@ -187,6 +188,7 @@ void Exec()
    // LOG(info) << match;
    if (match == 0) {
       // Record timestamps
+      fBdcID = fBdcTreeIndex - 1;
       return;
    }
 
@@ -214,6 +216,7 @@ void Exec()
          if (CheckMatch() == 0) {
             cout << "Found match!" << std::endl;
             fBdcTreeIndex = currentIndex;
+            fBdcID = fBdcTreeIndex - 1;
 
             return;
          }
@@ -278,7 +281,7 @@ void LinkDAQTest(int runNum) {
     auto outFilename = TString::Format("linked_TpcCut%04d.txt", runNum);
     fOutput.open(outFilename.Data());
 
-    fOutput << "EventNum  EventID  MetaDataTime  RikenTime" << endl; 
+    fOutput << "EventNum  EventID  BDCID  MetaDataTime  RikenTime" << endl; 
 
    tree->GetEntry(0);
    int prevEventID = eventID - 1;
@@ -303,7 +306,7 @@ void LinkDAQTest(int runNum) {
 
       Exec();
       if(kMarkFill)
-         fOutput << eventID - initEventID << "  " << eventID << "  " << eventTime << "  " << TimeStamp << endl;
+         fOutput << eventID - initEventID << "  " << eventID << "  " << fBdcID << "  " << eventTime << "  " << TimeStamp << endl;
       prevEventID = eventID;
    }
 
