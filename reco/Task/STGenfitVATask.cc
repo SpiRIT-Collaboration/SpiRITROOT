@@ -196,11 +196,11 @@ void STGenfitVATask::Exec(Option_t *opt)
   vertex -> SetIsCollisionVertex();
   if (fPeakZ != -9999 && (vertex -> GetPos().Z() > fPeakZ - fSigmaMultiple*fSigma && vertex -> GetPos().Z() < fPeakZ + fSigmaMultiple*fSigma))
     vertex -> SetIsTargetVertex();
-  else if (TMath::Abs(vertex -> GetPos().Z() + 10) < 20) // -30 < vz < 10 
+  else if (TMath::Abs(vertex -> GetPos().Z() + 20) < 30) // -50 < vz < 10 
     vertex -> SetIsTargetVertex();
 
   if (!vertex -> IsTargetVertex()) {
-    LOG(INFO) << Space() << "STGenfitVATask vertex z position is out of (-30, 10) range! Not adding vertex in!" << FairLogger::endl;
+    LOG(INFO) << Space() << "STGenfitVATask vertex z position is out of (-50, 10) range! Not adding vertex in!" << FairLogger::endl;
 
     return; // if the event is not vertex event, not add vertex in
   }
