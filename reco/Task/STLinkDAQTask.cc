@@ -111,14 +111,12 @@ Int_t STLinkDAQTask::SyncStart()
    }
 
 
-   if (scaledIntervals[0][0] - 1 < fSearchRadius && scaledIntervals[1][1] -1 < fSearchRadius) {
-      if(!(scaledIntervals[0][0] < 1) && !(scaledIntervals[1][1] < 1)) {
-         std::cout << "No DAQ offset found. Continuing DAQ Linking." << std::endl;
-         return 0;
-      }
+   if (abs(scaledIntervals[0][0] - 1) < fSearchRadius && abs(scaledIntervals[1][1] - 1) < fSearchRadius) {
+      std::cout << "No DAQ offset found. Continuing DAQ Linking." << std::endl;
+      return 0;
    }
 
-   if(scaledIntervals[1][0] - 1 < fSearchRadius && !(scaledIntervals[1][0] < 1)) {
+   if(abs(scaledIntervals[1][0] - 1) < fSearchRadius) {
       std::cout << "DAQ offset found. Extra TPC event at start." << std::endl;
       fBdcTreeIndex--;
       std::cout << "BDC index reduced by 1. Continuing DAQ Linking." << std::endl;
@@ -127,7 +125,7 @@ Int_t STLinkDAQTask::SyncStart()
       return 0;
    }
 
-   if(scaledIntervals[0][1] - 1 < fSearchRadius && !(scaledIntervals[0][1] < 1)) {
+   if(abs(scaledIntervals[0][1] - 1) < fSearchRadius) {
       std::cout << "DAQ offset found. Extra BDC event at start." << std::endl;
       fBdcTreeIndex++;
       std::cout << "BDC index increased by 1. Continuing DAQ Linking." << std::endl;
@@ -171,7 +169,7 @@ Int_t STLinkDAQTask::CheckMatch()
 
    double scaledInterval = GetScaledInterval(fIntervalBdc, fIntervalTpc);
 
-   if (scaledInterval - 1 < fSearchRadius && !(scaledInterval - 1 < 0))
+   if (abs(scaledInterval - 1) < fSearchRadius)
       return 0;
 
    std::cout << "TPC Timestamp: %d" << fTpcTimestamp << "BDC Timestamp: " << fBdcTimestamp << std::endl
