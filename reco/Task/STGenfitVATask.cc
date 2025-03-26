@@ -92,7 +92,14 @@ STGenfitVATask::Init()
       fBeamFilename = "";
       fFixedVertexX = fFixedVertexY = fFixedVertexZ = -9999;
     }
-    
+  }
+
+  if(fIs2024Data) {
+    fAuxHeader = (STAuxHeader *) fRootManager -> GetObject(fAuxBranchName);
+    if (fAuxHeader == nullptr) {
+        fLogger -> Fatal(MESSAGE_ORIGIN, TString::Format("Cannot find STAuxHeader array in branch %s !", fAuxBranchName).Data());
+        return kFATAL;
+    }
   }
 
   fVATrackArray = new TClonesArray("STRecoTrack");
@@ -208,8 +215,8 @@ void STGenfitVATask::Exec(Option_t *opt)
   auto vertexPos = vertex -> GetPos(); //this position is TPC Vertex
   Bool_t goodBDC = kTRUE;
   if (!fBeamFilename.IsNull()) {
-    fBDCTree -> GetEntry(fEventHeader -> GetEventID() - 1);
     if(!fIs2024Data) {
+      fBDCTree -> GetEntry(fEventHeader -> GetEventID() - 1);
       fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
       fBeamEnergy -> reset(fZ, fAoQ, fBeta37);
 
@@ -229,6 +236,7 @@ void STGenfitVATask::Exec(Option_t *opt)
         goodBDC = kFALSE;
     }
     else {
+        fBDCTree -> GetEntry(fAuxHeader -> GetBdcID());
         vertex -> SetIsGoodBDC();
     }
 

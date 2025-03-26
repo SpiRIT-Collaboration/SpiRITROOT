@@ -2,6 +2,7 @@
 ULong64_t eventTime; //metadata
 UInt_t eventID; //metadata
 ULong64_t TimeStamp; //bdc
+Double_t target_x; //bdc projection target X
 
 TChain *fBdcTree;
 
@@ -267,6 +268,7 @@ void LinkDAQTest(int runNum) {
       return;
    }
    fBdcTree -> SetBranchAddress("TimeStamp", &TimeStamp);
+   fBdcTree -> SetBranchAddress("target_x", &target_x);
 
    auto total = tree->GetEntries();
    auto rikenTot = fBdcTree->GetEntries();
@@ -281,7 +283,7 @@ void LinkDAQTest(int runNum) {
     auto outFilename = TString::Format("linked_TpcCut%04d.txt", runNum);
     fOutput.open(outFilename.Data());
 
-    fOutput << "EventNum  EventID  BDCID  MetaDataTime  RikenTime" << endl; 
+    fOutput << "EventNum  EventID  BDCID  MetaDataTime  RikenTime  target_x" << endl; 
 
    tree->GetEntry(0);
    int prevEventID = eventID - 1;
@@ -306,7 +308,7 @@ void LinkDAQTest(int runNum) {
 
       Exec();
       if(kMarkFill)
-         fOutput << eventID - initEventID << "  " << eventID << "  " << fBdcID << "  " << eventTime << "  " << TimeStamp << endl;
+         fOutput << eventID - initEventID << "  " << eventID << "  " << fBdcID << "  " << eventTime << "  " << TimeStamp << "  " << target_x << endl;
       prevEventID = eventID;
    }
 

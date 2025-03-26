@@ -29,7 +29,7 @@ void run_reco_LinkTest
   TString ggDataPathWithFormat = "";
   TString beamDataPathWithFormat = "";
   if(fIsFishtank)
-     beamDataPathWithFormat = "";
+     beamDataPathWithFormat = "./bdc_files/bdc_%04d.root";
   else if(fIsRIKEN)
      beamDataPathWithFormat = "";
 
@@ -184,9 +184,9 @@ void run_reco_LinkTest
   decoder -> SetEventID(start);
 
 
-  auto bdcFilename = TString::Format("./bdc_files/bdc_%04d.root", fRunNo);
+  //auto bdcFilename = TString::Format("./bdc_files/bdc_%04d.root", fRunNo);
   STLinkDAQTask *linker = new STLinkDAQTask();
-  linker -> SetInputTree(bdcFilename.Data(), "TBDC");
+  linker -> SetInputTree(fBeamData, "TBDC");
   linker -> SetPersistence(true);
   linker -> SetSearchRadius(1e-4);
 
@@ -271,10 +271,10 @@ void run_reco_LinkTest
   if(!fMCFile.IsNull())
     run -> AddTask(embedTask);
   run -> AddTask(preview);
-  //run -> AddTask(psa);
-  //run -> AddTask(helix);
-  //run -> AddTask(genfitPID);
-  //run -> AddTask(genfitVA);
+  run -> AddTask(psa);
+  run -> AddTask(helix);
+  run -> AddTask(genfitPID);
+  run -> AddTask(genfitVA);
 
   run -> Init();
   //run -> Run(0,1000);

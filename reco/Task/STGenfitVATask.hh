@@ -19,6 +19,7 @@
 #include "STBDCProjection.hh"
 #include "ST_VertexShift.hh"
 #include "STBeamInfo.hh"
+#include "STAuxHeader.hh"
 
 class STGenfitVATask : public STRecoTask
 {
@@ -29,6 +30,8 @@ class STGenfitVATask : public STRecoTask
 
     void SetListPersistence(bool val = true) { fIsListPersistence = val; }
     void SetPersistence(bool val = true) { fIsPersistence = val; }
+
+    void SetAuxBranch(TString name) { fAuxBranchName = name; }
 
     void SetClusteringType(Int_t type);
     void SetConstantField();
@@ -58,6 +61,9 @@ class STGenfitVATask : public STRecoTask
     STBeamInfo   *fBeamInfo = nullptr;
     FairMCEventHeader *fMCEventHeader = nullptr;
     STFairMCEventHeader *fSTMCEventHeader = nullptr;
+
+    STAuxHeader *fAuxHeader;       // AtRawEvent
+    TString fAuxBranchName{"STAuxHeaderLinked"}; // Name if AtRawEvent branch
 
     bool fIsListPersistence = false;
     bool fIsSamurai = true;
