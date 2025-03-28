@@ -60,6 +60,8 @@ private:
 
    Double_t GetScaledInterval(ULong64_t intervalBDC, ULong64_t intervalTPC);
 
+   Int_t fFirstEvent{0};
+
    void DoFirstEvent();
    Int_t SyncStart();
    bool UpdateTimestamps();
@@ -79,6 +81,8 @@ public:
    void SetBdcTimestamp(TString name) { fBdcTimeName = name; }
 
    void SetSearchRadius(Double_t radius) { fSearchRadius = radius; }
+
+   void SetFirstEvent(Int_t val) { fFirstEvent = val; }
 
    virtual InitStatus Init() override;
    virtual void Exec(Option_t *opt) override;

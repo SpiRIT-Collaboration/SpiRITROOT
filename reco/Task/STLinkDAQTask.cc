@@ -77,14 +77,14 @@ InitStatus STLinkDAQTask::Init()
 
 void STLinkDAQTask::DoFirstEvent()
 {
-   bdcTree->GetEntry(0);
+   bdcTree->GetEntry(fFirstEvent);
    fBdcTimestamp = fBdcTS;
    fTpcTimestamp = fInputAuxHeader->GetTpcTime();
 
    fLogger -> Info(MESSAGE_ORIGIN, TString::Format("Initial timestamps: %d  %d", fTpcTimestamp, fBdcTimestamp).Data());
    kFirstEvent = false;
    FairRunAna::Instance()->MarkFill(false);
-   fBdcTreeIndex = 1;
+   fBdcTreeIndex = fFirstEvent + 1;
    fTpcTreeIndex = 1;
 }
 

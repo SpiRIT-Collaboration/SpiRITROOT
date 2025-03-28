@@ -189,6 +189,7 @@ void run_reco_LinkTest
   linker -> SetInputTree(fBeamData, "TBDC");
   linker -> SetPersistence(true);
   linker -> SetSearchRadius(1e-4);
+  linker->SetFirstEvent(start);
 
   
   if (fUseMeta) 
