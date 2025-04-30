@@ -51,6 +51,7 @@ STRecoHeader.cc
 STMCRecoMatching.cc
 STdEdxPoint.cc
 STRecoTrack.cc
+STRecoTrack2024.cc
 STRecoTrackCand.cc
 STRecoTrackCandList.cc
 STMCEventHeader.cc

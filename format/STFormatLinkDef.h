@@ -35,6 +35,7 @@
 
 #pragma link C++ class STdEdxPoint+;
 #pragma link C++ class STRecoTrack+;
+#pragma link C++ class STRecoTrack2024+;
 #pragma link C++ class STRecoTrackCand+;
 #pragma link C++ class STRecoTrackCandList+;
 
