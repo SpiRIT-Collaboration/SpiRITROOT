@@ -56,7 +56,7 @@ STGenfitPIDTask::Init()
   fCandListArray = new TClonesArray("STRecoTrackCandList");
   fRootManager -> Register("STCandList", "SpiRIT", fCandListArray, fIsListPersistence);
 
-  fRecoTrackArray = new TClonesArray("STRecoTrack");
+  fRecoTrackArray = new TClonesArray("STRecoTrack2024");
   fRootManager -> Register("STRecoTrack", "SpiRIT", fRecoTrackArray, fIsPersistence);
 
   fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldXOffset, fFieldYOffset, fFieldZOffset);
@@ -115,7 +115,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     Int_t trackID = fCandListArray -> GetEntriesFast();
 
     auto candList = (STRecoTrackCandList *) fCandListArray -> ConstructedAt(trackID);
-    auto recoTrack = (STRecoTrack *) fRecoTrackArray -> ConstructedAt(trackID);
+    auto recoTrack = (STRecoTrack2024 *) fRecoTrackArray -> ConstructedAt(trackID);
     recoTrack -> SetRecoID(fRecoTrackArray->GetEntries()-1);
     recoTrack -> SetHelixID(iHelix);
     recoTrack -> SetHelixTrack(helixTrack);
@@ -234,12 +234,15 @@ void STGenfitPIDTask::Exec(Option_t *opt)
     helixTrack -> SetGenfitMomentum(bestRecoTrackCand -> GetMomentum().Mag());
 
     TVector3 kyotoL, kyotoR, katana, neuland;
+    TVector3 windowPos;
     fGenfitTest -> GetPosOnPlanes(bestRecoTrackCand -> GetGenfitTrack(), kyotoL, kyotoR, katana, neuland);
+    fGenfitTest -> GetWindowPos(bestRecoTrackCand -> GetGenfitTrack(), windowPos);
     bestRecoTrackCand -> Copy(recoTrack);
     recoTrack -> SetPosKyotoL(kyotoL);
     recoTrack -> SetPosKyotoR(kyotoR);
     recoTrack -> SetPosKatana(katana);
     recoTrack -> SetPosNeuland(neuland);
+    recoTrack -> SetPosWindow(windowPos);
 
     auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
     recoTrack -> SetChi2(fitStatus -> getChi2());

@@ -7,6 +7,7 @@
 #include "STGenfitTest2.hh"
 #include "STPIDTest.hh"
 #include "STRecoTrack.hh"
+#include "STRecoTrack2024.hh"
 #include "STRecoTrackCand.hh"
 #include "STRecoTrackCandList.hh"
 #include "STVertex.hh"

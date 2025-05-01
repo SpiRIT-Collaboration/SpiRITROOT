@@ -102,7 +102,7 @@ STGenfitVATask::Init()
     }
   }
 
-  fVATrackArray = new TClonesArray("STRecoTrack");
+  fVATrackArray = new TClonesArray("STRecoTrack2024");
   fRootManager -> Register("VATracks", "SpiRIT", fVATrackArray, fIsPersistence);
 
   fCandListArray = new TClonesArray("STRecoTrackCandList");
@@ -365,7 +365,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     Int_t trackID = fCandListArray -> GetEntriesFast();
 
     auto candList = (STRecoTrackCandList *) fCandListArray -> ConstructedAt(trackID);
-    auto vaTrack = (STRecoTrack *) fVATrackArray -> ConstructedAt(trackID);
+    auto vaTrack = (STRecoTrack2024 *) fVATrackArray -> ConstructedAt(trackID);
     vaTrack -> SetParentID(iTrack);
 
     auto helixTrack = (STHelixTrack *) fHelixTrackArray -> At(track -> GetHelixID());
@@ -444,7 +444,9 @@ void STGenfitVATask::Exec(Option_t *opt)
 //    helixTrack -> SetGenfitMomentum(bestRecoTrackCand -> GetMomentum().Mag());
 
     TVector3 kyotoL, kyotoR, katana, neuland;
+    TVector3 windowPos;
     fGenfitTest -> GetPosOnPlanes(bestRecoTrackCand -> GetGenfitTrack(), kyotoL, kyotoR, katana, neuland);
+    fGenfitTest -> GetWindowPos(bestRecoTrackCand -> GetGenfitTrack(), windowPos);
     bestRecoTrackCand -> Copy(vaTrack);
     vaTrack -> SetHelixID(helixTrack -> GetTrackID());
     vaTrack -> SetRecoID(helixTrack -> GetGenfitID());
@@ -452,6 +454,9 @@ void STGenfitVATask::Exec(Option_t *opt)
     vaTrack -> SetPosKyotoR(kyotoR);
     vaTrack -> SetPosKatana(katana);
     vaTrack -> SetPosNeuland(neuland);
+    vaTrack -> SetPosWindow(windowPos);
+
+
 
     auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
     vaTrack -> SetChi2(fitStatus -> getChi2());

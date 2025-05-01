@@ -65,6 +65,10 @@ STGenfitTest2::STGenfitTest2(bool loadSamurai, Double_t xOffset, Double_t yOffse
   TVector3 normalTarget(0, 0, 1);
   fTargetPlane = genfit::SharedPlanePtr(new genfit::DetPlane(posTarget, normalTarget));
 
+  TVector3 posWindow(0, 0, 0);
+  TVector3 normalWindow(0, 0, 1);
+  fWindowPlane = genfit::SharedPlanePtr(new genfit::DetPlane(posWindow, normalWindow));
+
   TVector3 posKyotoL(75.8, -21.33, 84.5);
   TVector3 normalKyotoL(-1, 0, 0);
   fKyotoLPlane = genfit::SharedPlanePtr(new genfit::DetPlane(posKyotoL, normalKyotoL));
@@ -472,6 +476,27 @@ void STGenfitTest2::GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVe
   try { 
     trackRep -> extrapolateToPlane(fitState, fNeulandPlane); 
     neuland = 10*fitState.getPos();
+  } catch (genfit::Exception &e) {
+  }
+}
+
+void STGenfitTest2::GetWindowPos(genfit::Track *gfTrack, TVector3 &windowPos)
+{
+  genfit::RKTrackRep *trackRep;
+  genfit::MeasuredStateOnPlane fitState;
+  genfit::FitStatus *fitStatus;
+
+  try {
+    trackRep = (genfit::RKTrackRep *) gfTrack -> getTrackRep(0);
+    fitState = gfTrack -> getFittedState();
+    fitStatus = gfTrack -> getFitStatus(trackRep);
+  } catch (genfit::Exception &e) {
+    return;
+  }
+
+  try { 
+    trackRep -> extrapolateToPlane(fitState, fWindowPlane); 
+    windowPos = 10*fitState.getPos();
   } catch (genfit::Exception &e) {
   }
 }

@@ -46,6 +46,7 @@ class STGenfitTest2
     void GetTrackParameters(genfit::Track *gfTrack, TVector3 &mom, TVector3 &momentumTargetPlane, TVector3 &posTargetPlane);
     void GetPosOnPlanes(genfit::Track *gfTrack, TVector3 &kyotoL, TVector3 &kyotoR, TVector3 &katana, TVector3 &neuland);
     void GetMomentumWithVertex(genfit::Track *gfTrack, TVector3 vertex, TVector3 &momVertex, TVector3 &pocaVertex);
+    void GetWindowPos(genfit::Track *gfTrack, TVector3 &windowPos);
 
     bool GetdEdxPointsByLength(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray);
     bool GetdEdxPointsByLayerRow(genfit::Track *gfTrack, STHelixTrack *helixTrack, vector<STdEdxPoint> *dEdxPointArray, bool ignoreFirst = false);
@@ -79,6 +80,7 @@ class STGenfitTest2
 
     genfit::DetPlane *fTargetDetPlane = nullptr;
     genfit::SharedPlanePtr fTargetPlane;
+    genfit::SharedPlanePtr fWindowPlane;
 
     genfit::SharedPlanePtr fKyotoLPlane;
     genfit::SharedPlanePtr fKyotoRPlane;
