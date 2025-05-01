@@ -182,7 +182,7 @@ void STGenfitVATask::Exec(Option_t *opt)
   fGenfitTest -> Init();
 
   vector<genfit::Track *> gfTrackArrayToVertex;
-  vector<STRecoTrack *> vaTrackArrayToVertex;
+  vector<STRecoTrack2024 *> vaTrackArrayToVertex;
 
   Int_t chosenVID = 0;
 
@@ -313,7 +313,7 @@ void STGenfitVATask::Exec(Option_t *opt)
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();
   for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
-    auto track = (STRecoTrack *) fRecoTrackArray -> At(iTrack);
+    auto track = (STRecoTrack2024 *) fRecoTrackArray -> At(iTrack);
 
     if (track -> GetVertexID() != chosenVID)
       continue;

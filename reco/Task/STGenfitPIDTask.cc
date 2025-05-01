@@ -103,7 +103,7 @@ void STGenfitPIDTask::Exec(Option_t *opt)
   fGenfitTest -> Init();
 
   vector<genfit::Track *> gfTrackArrayToVertex;
-  vector<STRecoTrack *> recoTrackArrayToVertex;
+  vector<STRecoTrack2024 *> recoTrackArrayToVertex;
 
   Int_t numTrackCand = fHelixTrackArray -> GetEntriesFast();
   for (Int_t iHelix = 0; iHelix < numTrackCand; iHelix++)
