@@ -32,6 +32,9 @@ STSpaceChargeCorrectionTask::Init()
   LOG(DEBUG) << "Initilization of STSpaceChargeCorrectionTask" << FairLogger::endl;
   fHitClusterArray = (TClonesArray*) fRootManager->GetObject("STHitCluster");
 
+  if(fUseLocalRate)
+    fAuxHeader = (STAuxHeader *) fRootManager -> GetObject("STAuxHeader");
+
   TPCx = fDigiPar->GetPadPlaneX();
   TPCz = fDigiPar->GetPadPlaneZ();
   this -> SetTPCSize(TPCx, TPCz, TPCy);
@@ -50,6 +53,24 @@ void STSpaceChargeCorrectionTask::Exec(Option_t* option)
   LOG(DEBUG) << "Exec of STSpaceChargeCorrectionTask" << FairLogger::endl;
   if(fIsDrift)
   {
+    if(fUseLocalRate) 
+    {
+      if(fTSbuffer.size() < fRateEvents)
+        fTSbuffer.push_back(fAuxHeader->GetTpcTime());
+      else
+        fTSbuffer[fEvents % fRateEvents] = fAuxHeader->GetTpcTime();
+
+      if(fEvents > 0 && fEvents % fEventFrequency == 0)
+      {
+        Double_t timeDiff = fTSbuffer[fEvents % fRateEvents] - fTSbuffer[(fEvents + 1) % fRateEvents];
+        auto rate = fRateEvents / timeDiff;
+
+        SetSheetChargeDensity(fDensityScale * rate);
+        UpdateEDrift();
+      }
+      fEvents++;
+    }
+
     int nClusters = fHitClusterArray->GetEntries();
     for(int iCluster = 0; iCluster < nClusters; ++iCluster) 
     {
@@ -137,6 +158,14 @@ bool STSpaceChargeCorrectionTask::SearchForRunPar(const std::string& filename, i
   // it will exit the loop when it reaches the end of the file
   LOG(INFO) << "Run " << run_num << " is not found in file " << filename << FairLogger::endl;
   return false;
+}
+
+void STSpaceChargeCorrectionTask::SetLocalRate(Double_t scale, Int_t events, Int_t frequency) 
+{
+  fDensityScale = scale;
+  fRateEvents = events;
+  fEventFrequency = frequency;
+  fUseLocalRate = true;
 }
 
 

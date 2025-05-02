@@ -6,6 +6,7 @@
 #include "FairLogger.h"
 #include <string>
 // SPiRIT-TPC class headers
+#include "STAuxHeader.hh"
 #include "STSpaceCharge.hh"
 #include "STDigiPar.hh"
 #include "STRecoTask.hh"
@@ -29,11 +30,25 @@ public:
 
   bool SearchForRunPar(const std::string& filename, int run_num);   
 
+  void SetLocalRate(Double_t scale, Int_t events, Int_t frequency);
+
+
+
   void UpdateEDrift();
 
 private:
   Bool_t fVerbose; // testing with cout 
   Bool_t fIsDrift; // flag to make space charge effect optional
+
+  STAuxHeader *fAuxHeader = nullptr;
+
+  Bool_t fUseLocalRate{false}; // flag to use the timestamp to obtain charge density
+  Int_t fRateEvents; // how many events to average over for the rate
+  Int_t fEventFrequency; // how many events between E-field updates
+  Double_t fDensityScale; // scaling factor for density. Density = fDensityScale * local_event_rate 
+
+  std::vector<ULong_t> fTSbuffer; // buffer for storing previous timestamps
+  Int_t fEvents{0}; // number of events so far
 
   double TPCx, TPCz; //!< widht and length of the TPC respectively (in mm)
   double TPCy = 506.1; //!< Default height of the TPC
