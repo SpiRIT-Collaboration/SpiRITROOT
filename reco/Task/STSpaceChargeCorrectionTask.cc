@@ -60,7 +60,7 @@ void STSpaceChargeCorrectionTask::Exec(Option_t* option)
       else
         fTSbuffer[fEvents % fRateEvents] = fAuxHeader->GetTpcTime();
 
-      if(fEvents > 0 && fEvents % fEventFrequency == 0)
+      if(fEvents > fRateEvents && fEvents % fEventFrequency == 0)
       {
         Double_t timeDiff = fTSbuffer[fEvents % fRateEvents] - fTSbuffer[(fEvents + 1) % fRateEvents];
         auto rate = fRateEvents / timeDiff;
