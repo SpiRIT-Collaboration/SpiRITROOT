@@ -58,7 +58,11 @@ void STSpaceChargeCorrectionTask::Exec(Option_t* option)
       auto eventNum = fAuxHeader->GetTpcEventNum();
       if(!fFirstEventDone || eventNum % fEventFrequency == 0)
       {
-        auto rate = fRateHist -> GetBinContent(fRateHist->FindBin(eventNum));
+        double rate = 0;
+        if(eventNum > fRateHist -> GetBinLowEdge(fRateHist -> GetNbinsX()) + fRateHist -> GetBinWidth(fRateHist -> GetNbinsX()))
+          rate = fRateHist -> GetBinContent(fRateHist -> GetNbinsX());
+        else 
+          rate = fRateHist -> GetBinContent(fRateHist->FindBin(eventNum));
         SetSheetChargeDensity(fDensityScale * rate);
         UpdateEDrift();
         fFirstEventDone = true;
