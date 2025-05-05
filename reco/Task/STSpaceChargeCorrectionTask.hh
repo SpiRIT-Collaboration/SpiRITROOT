@@ -30,9 +30,7 @@ public:
 
   bool SearchForRunPar(const std::string& filename, int run_num);   
 
-  void SetLocalRate(Double_t scale, Int_t events, Int_t frequency);
-
-
+  void SetLocalRate(Double_t scale, TString filename, TString histname = "timeHist500", Int_t frequency = 500);
 
   void UpdateEDrift();
 
@@ -43,12 +41,12 @@ private:
   STAuxHeader *fAuxHeader = nullptr;
 
   Bool_t fUseLocalRate{false}; // flag to use the timestamp to obtain charge density
-  Int_t fRateEvents; // how many events to average over for the rate
   Int_t fEventFrequency; // how many events between E-field updates
-  Double_t fDensityScale; // scaling factor for density. Density = fDensityScale * local_event_rate 
+  Double_t fDensityScale; // scaling factor for density. Density = fDensityScale * rate from rateHist 
+  Bool_t fFirstEventDone{false}; // flag to see if the rate was set for the first event when using the local rate
 
-  std::vector<ULong_t> fTSbuffer; // buffer for storing previous timestamps
-  Int_t fEvents{0}; // number of events so far
+  TH1D *fRateHist; //histogram for the rate.
+
 
   double TPCx, TPCz; //!< widht and length of the TPC respectively (in mm)
   double TPCy = 506.1; //!< Default height of the TPC

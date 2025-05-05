@@ -55,20 +55,14 @@ void STSpaceChargeCorrectionTask::Exec(Option_t* option)
   {
     if(fUseLocalRate) 
     {
-      if(fTSbuffer.size() < fRateEvents)
-        fTSbuffer.push_back(fAuxHeader->GetTpcTime());
-      else
-        fTSbuffer[fEvents % fRateEvents] = fAuxHeader->GetTpcTime();
-
-      if(fEvents > fRateEvents && fEvents % fEventFrequency == 0)
+      auto eventNum = fAuxHeader->GetTpcEventNum();
+      if(!fFirstEventDone || eventNum % fEventFrequency == 0)
       {
-        Double_t timeDiff = fTSbuffer[fEvents % fRateEvents] - fTSbuffer[(fEvents + 1) % fRateEvents];
-        auto rate = fRateEvents / timeDiff;
-
+        auto rate = fRateHist -> GetBinContent(fRateHist->FindBin(eventNum));
         SetSheetChargeDensity(fDensityScale * rate);
         UpdateEDrift();
+        fFirstEventDone = true;
       }
-      fEvents++;
     }
 
     int nClusters = fHitClusterArray->GetEntries();
@@ -160,14 +154,14 @@ bool STSpaceChargeCorrectionTask::SearchForRunPar(const std::string& filename, i
   return false;
 }
 
-void STSpaceChargeCorrectionTask::SetLocalRate(Double_t scale, Int_t events, Int_t frequency) 
+void STSpaceChargeCorrectionTask::SetLocalRate(Double_t scale, TString filename, TString histname, Int_t frequency)
 {
   fDensityScale = scale;
-  fRateEvents = events;
   fEventFrequency = frequency;
+  TFile *ratefile = new TFile(filename.Data());
+  fRateHist = (TH1D *)ratefile -> Get(histname.Data());
   fUseLocalRate = true;
 }
-
 
 void STSpaceChargeCorrectionTask::UpdateEDrift()
 {
