@@ -63,7 +63,7 @@ void STSpaceChargeCorrectionTask::Exec(Option_t* option)
           rate = fRateHist -> GetBinContent(fRateHist -> GetNbinsX());
         else 
           rate = fRateHist -> GetBinContent(fRateHist->FindBin(eventNum));
-        SetSheetChargeDensity(fDensityScale * rate);
+        SetSheetChargeDensity(fDensityScaleSlope * rate * rate + fDensityScaleInter * rate);
         UpdateEDrift();
         fFirstEventDone = true;
       }
@@ -158,9 +158,10 @@ bool STSpaceChargeCorrectionTask::SearchForRunPar(const std::string& filename, i
   return false;
 }
 
-void STSpaceChargeCorrectionTask::SetLocalRate(Double_t scale, TString filename, TString histname, Int_t frequency)
+void STSpaceChargeCorrectionTask::SetLocalRate(Double_t scale_s, Double_t scale_i, TString filename, TString histname, Int_t frequency)
 {
-  fDensityScale = scale;
+  fDensityScaleSlope = scale_s;
+  fDensityScaleInter = scale_i;
   fEventFrequency = frequency;
   TFile *ratefile = new TFile(filename.Data());
   fRateHist = (TH1D *)ratefile -> Get(histname.Data());

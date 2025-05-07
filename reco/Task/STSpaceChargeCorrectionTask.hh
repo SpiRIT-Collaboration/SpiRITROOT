@@ -30,7 +30,7 @@ public:
 
   bool SearchForRunPar(const std::string& filename, int run_num);   
 
-  void SetLocalRate(Double_t scale, TString filename, TString histname = "timeHist500", Int_t frequency = 500);
+  void SetLocalRate(Double_t scale_s, Double_t scale_i, TString filename, TString histname = "timeHist500", Int_t frequency = 500);
 
   void UpdateEDrift();
 
@@ -42,7 +42,8 @@ private:
 
   Bool_t fUseLocalRate{false}; // flag to use the timestamp to obtain charge density
   Int_t fEventFrequency; // how many events between E-field updates
-  Double_t fDensityScale; // scaling factor for density. Density = fDensityScale * rate from rateHist 
+  Double_t fDensityScaleSlope; // scaling factor slope for density. Density = (slope * rate + inter) * rate
+  Double_t fDensityScaleInter; // scaling factor interceptfor density. Density = (slope * rate + inter) * rate
   Bool_t fFirstEventDone{false}; // flag to see if the rate was set for the first event when using the local rate
 
   TH1D *fRateHist; //histogram for the rate.
