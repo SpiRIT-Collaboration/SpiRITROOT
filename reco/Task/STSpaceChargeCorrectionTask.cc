@@ -59,12 +59,16 @@ void STSpaceChargeCorrectionTask::Exec(Option_t* option)
       if(!fFirstEventDone || eventNum % fEventFrequency == 0)
       {
         double rate = 0;
-        if(eventNum > fRateHist -> GetBinLowEdge(fRateHist -> GetNbinsX()) + fRateHist -> GetBinWidth(fRateHist -> GetNbinsX()))
+        if(eventNum > fRateHist -> GetBinLowEdge(fRateHist -> GetNbinsX()))
           rate = fRateHist -> GetBinContent(fRateHist -> GetNbinsX());
         else 
           rate = fRateHist -> GetBinContent(fRateHist->FindBin(eventNum));
-        SetSheetChargeDensity(fDensityScaleSlope * rate * rate + fDensityScaleInter * rate);
-        UpdateEDrift();
+          auto density = fDensityScaleSlope * rate * rate + fDensityScaleInter * rate;
+          if(density >= 0) 
+          {
+            SetSheetChargeDensity(density);
+            UpdateEDrift();
+          }
         fFirstEventDone = true;
       }
     }
