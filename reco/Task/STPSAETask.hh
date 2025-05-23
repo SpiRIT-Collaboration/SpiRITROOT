@@ -48,6 +48,8 @@ class STPSAETask : public STRecoTask
 
     void SetYPedestalOffset(Double_t offset);
 
+    void SetDriftVelocity(Double_t val);
+
   private:
     TClonesArray *fRawEventArray = nullptr;
     TClonesArray *fRawEmbedEventArray = nullptr;
@@ -78,6 +80,9 @@ class STPSAETask : public STRecoTask
 
     Bool_t fIsEmbedding = false;
     STDigiPar *fPar = NULL;
+
+    Double_t fDriftVelocity = 5.45;
+    Bool_t fSetDriftVelocity = false;
 
   ClassDef(STPSAETask, 1)
 };

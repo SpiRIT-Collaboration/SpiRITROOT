@@ -102,6 +102,8 @@ InitStatus STPSAETask::Init()
     fPSA -> SetYPedestalOffset(fYPedestalOffset);
     std::cout << "== [STPSATask] y pedestal offset is set with " << fYPedestalOffset << " mm. Event will be shifted upward!" << std::endl;
   }
+  if(fSetDriftVelocity)
+    fPSA -> SetDriftVelocity(fDriftVelocity);
 
   fShapingTime = fPSA -> GetShapingTime();
   fPSA -> SetPSAPeakFindingOption(fPSAPeakFindingOption);
@@ -267,3 +269,9 @@ void STPSAETask::SetGainMatchingScale(Double_t val) { fGainMatchingScale = val; 
 void STPSAETask::SetGainMatchingData(TString filename) { fGainMatchingData = filename; }
 void STPSAETask::SetYOffsets(TString fileName) { fYOffsetFileName = fileName; }
 void STPSAETask::SetYPedestalOffset(Double_t offset) { fYPedestalOffset = offset; }
+
+void STPSAETask::SetDriftVelocity(Double_t val)
+{
+  fDriftVelocity = val;
+  fSetDriftVelocity = true;
+}
