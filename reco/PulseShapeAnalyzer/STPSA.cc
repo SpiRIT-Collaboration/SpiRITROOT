@@ -202,3 +202,9 @@ void STPSA::SetYPedestalOffset(Double_t offset)
 {
   fYPedestalOffset = offset;
 }
+
+void STPSA::SetDriftVelocity(Double_t val)
+{
+  fDriftVelocity = val;
+  fTbToYConv = -fTBTime * fDriftVelocity / 100.;
+}

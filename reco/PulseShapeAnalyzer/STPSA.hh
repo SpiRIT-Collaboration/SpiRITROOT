@@ -52,7 +52,7 @@ class STPSA
 
     void SetYPedestalOffset(Double_t offset);
 
-    void SetDriftVelocity(Double_t driftVelocity) {fDriftVelocity = driftVelocity; }
+    void SetDriftVelocity(Double_t val);
 
   protected:
     FairLogger *fLogger;      ///< logger pointer
