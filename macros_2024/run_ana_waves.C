@@ -193,6 +193,7 @@ void run_ana_waves
   macro -> AddFunction(waves::Exec);
 
   run -> AddTask(decoder);
+  run -> AddTask(macro);
 
   run -> Init();
   //run -> Run(0,1000);
