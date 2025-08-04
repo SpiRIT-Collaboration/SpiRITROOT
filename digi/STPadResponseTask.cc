@@ -104,7 +104,13 @@ STPadResponseTask::Init()
   fNRows   = fXPadPlane/fPadSizeRow; // 108
   fNLayers = fZPadPlane/fPadSizeLayer; // 112
 
-  fTbOffset = fPar->GetAnodeWirePlaneY()/(fPar->GetDriftVelocity()/100.);
+  if(!fSetDriftVelocity)
+    fDriftVelocity = fPar->GetDriftVelocity() / 100; // cm/us to mm/ns
+  
+  if(fTimeOffset == 0)
+    fTbOffset = fPar->GetAnodeWirePlaneY()/(fDriftVelocity);
+  else
+    fTbOffset = fTimeOffset;
 
   fElectronicsJitter.clear();
   for(int i = 0; i < fNLayers; ++i)
@@ -126,10 +132,11 @@ STPadResponseTask::Init()
     else fLogger->Info(MESSAGE_ORIGIN, ("Electronics jitter is disabled as file " + fElectronicsJitterFilename + " cannot be loaded").c_str());
   }
 
-  fDriftVelocity = fPar->GetDriftVelocity() / 100; // cm/us to mm/ns
 
   InitDummy();
   InitPRF();
+
+  std::cout << "fTbOffset: " << fTbOffset << std::endl;
 
   return kSUCCESS;
 }
@@ -150,6 +157,7 @@ STPadResponseTask::Exec(Option_t* option)
   ReInitDummy();
 
   Int_t nElectrons = fElectronArray -> GetEntries();
+  //cout << "fTbOffset: " << fTbOffset << endl;
   for(Int_t iElectron=0; iElectron<nElectrons; iElectron++)
   {
     fElectron = (STDriftedElectron*) fElectronArray -> At(iElectron);
@@ -161,6 +169,8 @@ STPadResponseTask::Exec(Option_t* option)
                   +fTbOffset; 
     Int_t iWire  = fElectron->GetIWire();
     Int_t gain   = fElectron->GetGain();
+
+    //cout << "tEl: " << tEl << endl;
 
     Int_t row   = (xEl+fXPadPlane/2)/fPadSizeRow;
     /** 
@@ -180,6 +190,8 @@ STPadResponseTask::Exec(Option_t* option)
     Int_t iTb   = tEl/fTBTime;
     if(iTb>fNTbs) continue;
     if(iTb < 0) iTb = 0;
+
+    //cout << "iTb: " << iTb << endl;
 
     gain /= fGainMatchingDataScale[layer][row];
 
@@ -345,5 +357,13 @@ STPadResponseTask::InitPRF()
 }
 
 void STPadResponseTask::SetPersistence(Bool_t value)  { fIsPersistence = value; }
+
+void STPadResponseTask::SetTimeOffset(Double_t offset) { fTimeOffset = offset; }
+
+void STPadResponseTask::SetDriftVelocity(Double_t val)
+{
+  fDriftVelocity = val;
+  fSetDriftVelocity = true;
+}
 
 ClassImp(STPadResponseTask);

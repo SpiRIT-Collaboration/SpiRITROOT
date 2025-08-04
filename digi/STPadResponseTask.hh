@@ -60,6 +60,8 @@ class STPadResponseTask : public FairTask
     void AssumeGausPRF(Bool_t val = kTRUE) { fAssumeGausPRF = val; };
     void SetElectronicsJitterFile(TString filename) { fElectronicsJitterFilename = filename.Data(); };
     void SetGainMatchingData(TString filename);
+    void SetDriftVelocity(Double_t val);
+    void SetTimeOffset(Double_t offset);
 
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
@@ -118,6 +120,9 @@ class STPadResponseTask : public FairTask
      */
     Double_t fFillRatio[3][5];
     std::vector<std::vector<double>> fGainMatchingDataScale; //!<
+
+    Double_t fTimeOffset = 0;
+    Bool_t fSetDriftVelocity = false;
 
 
 

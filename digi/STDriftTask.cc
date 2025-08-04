@@ -116,7 +116,10 @@ STDriftTask::Init()
   fCoefT    = fPar->GetCoefDiffusionTrans()*sqrt(10.); // [cm^(-1/2)] to [mm^(-1/2)]
   fCoefL    = fPar->GetCoefDiffusionLong()*sqrt(10.);  // [cm^(-1/2)] to [mm^(-1/2)]
   fGain     = fPar->GetGain();
-  fYDriftOffset = fPar->GetYDriftOffset();
+  if(fYDriftOffset == 0)
+    fYDriftOffset = fPar->GetYDriftOffset();
+  if(fSetDriftVelocity)
+    fVelDrift = fDriftVelocity / 100;
 
   if(fSpline)
     fInterpolator = BichselCorrection(fSpecies);
@@ -285,6 +288,12 @@ Double_t STDriftTask::BichselCorrection(Int_t pdg, Double_t value)
   return this->BichselCorrection(pname, value);
 }
 
+void STDriftTask::SetDriftVelocity(Double_t val)
+{
+  fDriftVelocity = val;
+  fSetDriftVelocity = true;
+}
+
 ROOT::Math::Interpolator* STDriftTask::BichselCorrection(TString species)
 {
   const volatile Int_t n = 75;
@@ -362,5 +371,6 @@ ROOT::Math::Interpolator* STDriftTask::BichselCorrection(TString species)
   return myinter;
 
 } 
+
 
 ClassImp(STDriftTask);

@@ -165,6 +165,7 @@ STRiemannTrackingTask.cc
 STGenfitTask.cc
 STSource.cc
 
+STAuxHeaderTask.cc
 STCopyTreeTask.cc
 STMacroTask.cc
 

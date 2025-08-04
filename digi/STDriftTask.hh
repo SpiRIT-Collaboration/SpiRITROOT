@@ -57,7 +57,10 @@ class STDriftTask : public FairTask
    void SetSplineInterpolation(Bool_t value = kFALSE);
    Double_t BichselCorrection(TString species, Double_t value);
    Double_t BichselCorrection(Int_t pdg, Double_t value);
+   void SetDriftVelocity(Double_t val);
+   void SetYDriftOffset(Double_t val) { fYDriftOffset = val; }
    ROOT::Math::Interpolator* BichselCorrection(TString species);
+
   
   private:
     Bool_t fIsPersistence;  ///< Persistence check variable
@@ -100,6 +103,9 @@ class STDriftTask : public FairTask
     Double_t fCoefL;    //!< Longitudinal diffusion coefficient. [mm^(-1/2)]
     Double_t fGain;     //!< Gain.
     Double_t fYDriftOffset; //!< offset for drift time
+
+    Double_t fDriftVelocity = 5.45;
+    Bool_t fSetDriftVelocity = false;
 
     TF1 *polya_highgain = new TF1("polya_highgain","(1/1024.)*(pow(1.41,1.41)/TMath::Gamma(1.41))*pow(x/1024.,1.41-1)*exp(-1.41*(x/1024.))",0,10000);
 
