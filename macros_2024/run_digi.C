@@ -199,8 +199,6 @@ void run_digi(TString name = "test",
   //fSpaceChargeTask->SetProjectile(STSpaceCharge::Projectile::Sn132); // changed from Sn132 to Xe124 to test 07/16/2025 // No projectile dependence on rigidity effect
   //fSpaceChargeTask->SetSheetChargeDensity(beamrate); // sheet charge density for run 2899
   fSpaceChargeTask -> SetLocalRate(fSCslope, fSCinter, fRateFile);
-  //if (beamrate >= 0)
-    fRun->AddTask(fSpaceChargeTask);
 
   // Set digitization tasks
   STDriftTask *fDriftTask = new STDriftTask(); // all tasks are set to false, I need to check this 07/16/2025
@@ -209,7 +207,6 @@ void run_digi(TString name = "test",
   fDriftTask->SetVerbose(false);
   fDriftTask->SetDriftVelocity(fDriftVelocity);
   fDriftTask->SetYDriftOffset(fTimeOffset);
-  fRun->AddTask(fDriftTask);
 
   STPadResponseTask *fPadResponseTask = new STPadResponseTask();
   fPadResponseTask->SetPersistence(false);
@@ -218,7 +215,6 @@ void run_digi(TString name = "test",
   fPadResponseTask->SetGainMatchingData(gainCalibFile.Data());
   fPadResponseTask->SetDriftVelocity(fDriftVelocity / 100.);
   //fPadResponseTask->SetTimeOffset(fTimeOffset);
-  fRun->AddTask(fPadResponseTask);
 
   /*******************************************************************************
   // This class simulates dead pads due to drift electrons from the beam
@@ -229,14 +225,11 @@ void run_digi(TString name = "test",
   STSimulateBeamTask *beamTask = new STSimulateBeamTask();
   beamTask->SetDeadPadOnBeam(workDir + "/input/ProbDeadPad.root", "Sn132");
   beamTask->SetHeavyFragments(workDir + "/SpaceCharge/potential/_132Sn_BeamTrack.data", -203.3, 5000000, 4.3); // changed from Sn132 to Xe124 to test 07/16/2025 // No projectile dependence on rigidity effect
-  if (simulateBeam) 
-    fRun->AddTask(beamTask);
 
   STElectronicsTask *fElectronicsTask = new STElectronicsTask();
   fElectronicsTask->SetPersistence(true);
   fElectronicsTask->SetADCConstant(1.);
   fElectronicsTask->SetGainMatchingData(gainCalibFile.Data());
-  fRun->AddTask(fElectronicsTask);
 
   //////////////////////////////////////////////////////////
   //                                                      //
@@ -280,6 +273,15 @@ void run_digi(TString name = "test",
   FairRuntimeDb *fDb = fRun->GetRuntimeDb();
   fDb->setFirstInput(fMCPar);
   fDb->setSecondInput(fDigiPar);
+
+  //=====||Add Tasks to Run||=====//
+  fRun->AddTask(fSpaceChargeTask);
+  fRun->AddTask(fDriftTask);
+  fRun->AddTask(fPadResponseTask);
+  if (simulateBeam) 
+    fRun->AddTask(beamTask);
+  fRun->AddTask(fElectronicsTask);
+  //=====||End Add Tasks||=====//
 
   // -----------------------------------------------------------------
   // Run initialization
