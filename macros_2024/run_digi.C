@@ -158,7 +158,6 @@ void run_digi(TString name = "test",
   auxHead -> SetInputBranch("MCAuxHeader");
   auxHead -> SetAuxBranch("DigiAuxHeader");
   auxHead -> SetPersistence();
-  fRun -> AddTask(auxHead);
 
   // Set space charge task
   // uncomment the following to enable space charge
@@ -275,6 +274,7 @@ void run_digi(TString name = "test",
   fDb->setSecondInput(fDigiPar);
 
   //=====||Add Tasks to Run||=====//
+  fRun -> AddTask(auxHead);
   fRun->AddTask(fSpaceChargeTask);
   fRun->AddTask(fDriftTask);
   fRun->AddTask(fPadResponseTask);
