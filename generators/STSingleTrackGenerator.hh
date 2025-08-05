@@ -12,6 +12,8 @@
 #include "TVector3.h"
 #include "TCutG.h"
 
+#include "STAuxHeaderTask.hh"
+
 #include <map>
 #include <vector>
 #include <sstream>
@@ -104,6 +106,7 @@ class STSingleTrackGenerator : public FairGenerator
 
     // set primary vertex. (target center is used as default. see constructor)
     void SetPrimaryVertex(TVector3 v) { fPrimaryVertex = v; }
+    void SetPrimaryVertex(Double_t x, Double_t y, Double_t z) { fPrimaryVertex = {x, y, z}; }
 
     // set momentum for particle.
     void SetMomentum(TVector3 m)   { fMomentum = m; }
@@ -147,6 +150,8 @@ class STSingleTrackGenerator : public FairGenerator
     { fIsDiscretePhi = kTRUE; fNStepPhi = s; SetPhiLimit(p0,p1); }
 
     void RegisterHeavyIon();
+
+    void SetAuxHeaderTask(STAuxHeaderTask *task) { fAuxHeaderTask = task ;}
 
   private:
     Int_t    fNEvents;
@@ -194,6 +199,8 @@ class STSingleTrackGenerator : public FairGenerator
 
     VertexReader fVertexReader;   
     VertexReader fParticleReader;
+
+    STAuxHeaderTask *fAuxHeaderTask;
 
     ClassDef(STSingleTrackGenerator,1);
 };

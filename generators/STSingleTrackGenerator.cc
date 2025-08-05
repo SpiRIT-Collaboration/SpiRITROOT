@@ -286,6 +286,8 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
           fVertexReader.LoopOver();
       }
       vertex = fVertexReader.GetVertex();
+      if(fAuxHeaderTask)
+        fAuxHeaderTask -> SetEventNum(fVertexReader.GetEventID());
       fVertexReader.Next();
   } 
 

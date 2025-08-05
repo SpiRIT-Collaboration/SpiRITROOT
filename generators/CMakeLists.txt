@@ -6,6 +6,7 @@ ${BASE_INCLUDE_DIRECTORIES}
 # Add all the folders having header files you used in the code.
 ${CMAKE_SOURCE_DIR}/generators
 ${CMAKE_SOURCE_DIR}/format
+${CMAKE_SOURCE_DIR}/reco
 
 )
 
