@@ -572,7 +572,17 @@ void STGenfitVATask::Exec(Option_t *opt)
       Double_t effCurvature2;
       Double_t effCurvature3;
       Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vertex -> GetPos(), effCurvature1, effCurvature2, effCurvature3, true);
-      vaTrack -> SetCharge(charge);
+      
+      // If DetermineCharge failed (returned 0), use effCurvature1 directly
+      if (charge == 0) {
+        charge = effCurvature1 > 0 ? -1 : 1;
+      }
+      
+      // Ensure charge is normalized to exactly ±1 (failsafe for edge cases)
+      if (charge < 0) charge = -1;
+      else if (charge > 0) charge = 1;
+      
+      vaTrack -> SetCharge((Int_t)charge);
       vaTrack -> SetEffCurvature1(effCurvature1);
       vaTrack -> SetEffCurvature2(effCurvature2);
       vaTrack -> SetEffCurvature3(effCurvature3);
@@ -586,22 +596,18 @@ void STGenfitVATask::Exec(Option_t *opt)
       // Single track fallback - use robust charge determination
       for (auto vaTrack : vaTrackArrayToVertex) {
         Double_t effCurvature1, effCurvature2, effCurvature3;
-        TVector3 defaultVertex(0, -19.00, -2.1);  // Use beam vertex position
-
-        Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, defaultVertex, effCurvature1, effCurvature2, effCurvature3, true);
-
+        // Use actual vertex position from current event instead of hardcoded default
+        TVector3 eventVertex = vertexPos;  // Use the real vertex position
+        Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, eventVertex, effCurvature1, effCurvature2, effCurvature3, true);
         vaTrack -> SetGenfitCharge((Int_t)charge);  // Store calculated charge for comparison
-
         // If DetermineCharge failed (returned 0), use effCurvature1 directly
         if (charge == 0) {
           charge = effCurvature1 > 0 ? -1 : 1;
           LOG(INFO) << "VA DetermineCharge failed, using effCurvature1 fallback: " << charge;
         }
-
-        // Ensure charge is normalized to exactly ±1
+        // Ensure charge is normalized to exactly ±1 (failsafe for edge cases)
         if (charge < 0) charge = -1;
         else if (charge > 0) charge = 1;
-
         vaTrack -> SetCharge((Int_t)charge);  // Use properly determined charge
         vaTrack -> SetEffCurvature1(effCurvature1);
         vaTrack -> SetEffCurvature2(effCurvature2);
@@ -649,7 +655,17 @@ void STGenfitVATask::Exec(Option_t *opt)
             Double_t effCurvature2;
             Double_t effCurvature3;
             Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vaVertex -> getPos(), effCurvature1, effCurvature2, effCurvature3);
-            vaTrack -> SetCharge(charge);
+            
+            // If DetermineCharge failed (returned 0), use effCurvature1 directly
+            if (charge == 0) {
+              charge = effCurvature1 > 0 ? -1 : 1;
+            }
+            
+            // Ensure charge is normalized to exactly ±1 (failsafe for edge cases)
+            if (charge < 0) charge = -1;
+            else if (charge > 0) charge = 1;
+            
+            vaTrack -> SetCharge((Int_t)charge);
             vaTrack -> SetEffCurvature1(effCurvature1);
             vaTrack -> SetEffCurvature2(effCurvature2);
             vaTrack -> SetEffCurvature3(effCurvature3);
