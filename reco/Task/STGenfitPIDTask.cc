@@ -366,8 +366,30 @@ void STGenfitPIDTask::Exec(Option_t *opt)
   LOG(INFO) << Space() << "STRecoTrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
 
   if (gfTrackArrayToVertex.size() < 2) {
-    for (auto recoTrack : recoTrackArrayToVertex)
-      recoTrack -> SetCharge(1);
+    // Single track fallback - use robust charge determination
+    for (auto recoTrack : recoTrackArrayToVertex) {
+      Double_t effCurvature1, effCurvature2, effCurvature3;
+      TVector3 defaultVertex(0, -19.00, -2.1);  // Use beam vertex position
+
+      Double_t charge = fGenfitTest -> DetermineCharge(recoTrack, defaultVertex, effCurvature1, effCurvature2, effCurvature3, true);
+
+      recoTrack -> SetGenfitCharge((Int_t)charge);  // Store calculated charge for comparison
+
+      // If DetermineCharge failed (returned 0), use effCurvature1 directly
+      if (charge == 0) {
+        charge = effCurvature1 > 0 ? -1 : 1;
+        LOG(INFO) << "DetermineCharge failed, using effCurvature1 fallback: " << charge;
+      }
+
+      // Final check: ensure charge is properly set to +1 or -1
+      if (charge < 0) charge = -1;
+        else if (charge > 0) charge = 1;
+
+      recoTrack -> SetCharge((Int_t)charge);  // Use properly determined charge
+      recoTrack -> SetEffCurvature1(effCurvature1);
+      recoTrack -> SetEffCurvature2(effCurvature2);
+      recoTrack -> SetEffCurvature3(effCurvature3);
+    }
     return;
   }
 

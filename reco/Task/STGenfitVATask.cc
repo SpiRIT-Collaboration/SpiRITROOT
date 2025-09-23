@@ -583,8 +583,30 @@ void STGenfitVATask::Exec(Option_t *opt)
 
   if (fUseRave) {
     if (gfTrackArrayToVertex.size() < 2) {
-      for (auto vaTrack : vaTrackArrayToVertex)
-        vaTrack -> SetCharge(1);
+      // Single track fallback - use robust charge determination
+      for (auto vaTrack : vaTrackArrayToVertex) {
+        Double_t effCurvature1, effCurvature2, effCurvature3;
+        TVector3 defaultVertex(0, -19.00, -2.1);  // Use beam vertex position
+
+        Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, defaultVertex, effCurvature1, effCurvature2, effCurvature3, true);
+
+        vaTrack -> SetGenfitCharge((Int_t)charge);  // Store calculated charge for comparison
+
+        // If DetermineCharge failed (returned 0), use effCurvature1 directly
+        if (charge == 0) {
+          charge = effCurvature1 > 0 ? -1 : 1;
+          LOG(INFO) << "VA DetermineCharge failed, using effCurvature1 fallback: " << charge;
+        }
+
+        // Ensure charge is normalized to exactly ±1
+        if (charge < 0) charge = -1;
+        else if (charge > 0) charge = 1;
+
+        vaTrack -> SetCharge((Int_t)charge);  // Use properly determined charge
+        vaTrack -> SetEffCurvature1(effCurvature1);
+        vaTrack -> SetEffCurvature2(effCurvature2);
+        vaTrack -> SetEffCurvature3(effCurvature3);
+      }
       return;
     }
 
