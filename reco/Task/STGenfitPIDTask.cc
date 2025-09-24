@@ -365,12 +365,6 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
   LOG(INFO) << Space() << "STRecoTrack " << fRecoTrackArray -> GetEntriesFast() << FairLogger::endl;
 
-  if (gfTrackArrayToVertex.size() < 2) {
-    for (auto recoTrack : recoTrackArrayToVertex)
-      recoTrack -> SetCharge(1);
-    return;
-  }
-
   if (!fBDCName.IsNull()) {
     fTreeBDC -> GetEntry(fEventHeader -> GetEventID());
     TVector3 posBDC(0.1*fXBDC,0.1*(fYBDC-227),0.1*(fZBDC+580.4));
@@ -423,7 +417,17 @@ void STGenfitPIDTask::Exec(Option_t *opt)
           Double_t effCurvature2;
           Double_t effCurvature3;
           Double_t charge = fGenfitTest -> DetermineCharge(recoTrack, vertex -> getPos(), effCurvature1, effCurvature2, effCurvature3);
-          recoTrack -> SetCharge(charge);
+          
+          // If DetermineCharge failed (returned 0), use effCurvature1 directly
+          if (charge == 0) {
+            charge = effCurvature1 > 0 ? -1 : 1;
+          }
+          
+          // Ensure charge is normalized to exactly ±1 (failsafe for edge cases)
+          if (charge < 0) charge = -1;
+          else if (charge > 0) charge = 1;
+          
+          recoTrack -> SetCharge((Int_t)charge);
           recoTrack -> SetEffCurvature1(effCurvature1);
           recoTrack -> SetEffCurvature2(effCurvature2);
           recoTrack -> SetEffCurvature3(effCurvature3);
@@ -433,6 +437,34 @@ void STGenfitPIDTask::Exec(Option_t *opt)
 
     new ((*fVertexArray)[iVert]) STVertex(*vertex);
     delete vertex;
+  }
+
+  // Single track fallback - moved here to use reconstructed vertex
+  if (gfTrackArrayToVertex.size() < 2) {
+    for (auto recoTrack : recoTrackArrayToVertex) {
+      Double_t effCurvature1, effCurvature2, effCurvature3;
+      // Use the first reconstructed vertex if available, otherwise use target plane
+      TVector3 vertexPos;
+      if (vertices.size() > 0) {
+        vertexPos = vertices[0] -> getPos();  // Use first available vertex
+      } else {
+        vertexPos = TVector3(fTargetX, fTargetY, fTargetZ);  // Use target plane as fallback
+      }
+      Double_t charge = fGenfitTest -> DetermineCharge(recoTrack, vertexPos, effCurvature1, effCurvature2, effCurvature3, true);
+      recoTrack -> SetGenfitCharge((Int_t)charge);  // Store calculated charge for comparison
+      // If DetermineCharge failed (returned 0), use effCurvature1 directly
+      if (charge == 0) {
+        charge = effCurvature1 > 0 ? -1 : 1;
+        LOG(INFO) << "DetermineCharge failed, using effCurvature1 fallback: " << charge;
+      }
+      // Ensure charge is normalized to exactly ±1 (failsafe for edge cases)
+      if (charge < 0) charge = -1;
+      else if (charge > 0) charge = 1;
+      recoTrack -> SetCharge((Int_t)charge);  // Use properly determined charge
+      recoTrack -> SetEffCurvature1(effCurvature1);
+      recoTrack -> SetEffCurvature2(effCurvature2);
+      recoTrack -> SetEffCurvature3(effCurvature3);
+    }
   }
 
   LOG(INFO) << Space() << "STVertex " << fVertexArray -> GetEntriesFast() << FairLogger::endl;
