@@ -16,12 +16,15 @@
 // FAIRROOT classes
 #include "FairTask.h"
 #include "FairLogger.h"
+#include "FairRunAna.h"
 
 // SPiRITROOT classes
 #include "STCore.hh"
 #include "STMap.hh"
 #include "STPedestal.hh"
 #include "STRawEvent.hh"
+#include "STAuxHeader.hh"
+#include "STEventHeader.hh"
 
 #include "STDigiPar.hh"
 
@@ -73,6 +76,13 @@ class STEmbedTask : public FairTask {
     STRawEvent *fRawEvent;              ///< Current raw event for data + MC
     STRawEvent *fRawEventMC;            ///< Current raw event for MC run  
     STRawEvent *fRawEventData;          ///< Current raw event for just data
+    STAuxHeader *fDataAuxHeader;        ///< Current aux header for the data
+    STAuxHeader *fEmbedAuxHeader;       ///< Current aux header for embeded event
+    STEventHeader *fEventHeader;        ///< Current event header
+
+    FairRunAna *fRunAna;                ///< Pointer to fair runa ana
+
+    Bool_t fMatchEventNum;              ///< Flag for event matching using AuxHeader Event Number
   
   ClassDef(STEmbedTask, 1);
 };

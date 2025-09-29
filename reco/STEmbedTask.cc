@@ -48,6 +48,13 @@ STEmbedTask::Init()
     return kERROR;
   }
 
+  fRunAna = FairRunAna::Instance();
+  if (fRunAna == nullptr) {
+    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RunAna!");
+
+    return kERROR;
+  }
+
   //Check if embedding is turned on
   if (!fEmbedFile.EqualTo(""))
     {
@@ -62,6 +69,11 @@ STEmbedTask::Init()
 
       fChain -> SetBranchAddress("STRawEvent", &fEventArray);
       fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
+      if(fMatchEventNum) {
+        fChain -> SetBranchAddress("DigiAuxHeader", &fEmbedAuxHeader);
+        fDataAuxHeader = (STAuxHeader*) ioMan -> GetObject("STAuxHeaderLinked");
+        fEventHeader = (STEventHeader*) ioMan -> GetObject("STEventHeader");
+      }
 
       ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
       ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
@@ -103,12 +115,38 @@ STEmbedTask::Exec(Option_t *opt)
 
   fRawEvent = (STRawEvent*) fRawEventArray -> At(0);
   Int_t numPads = fRawEvent -> GetNumPads();
-  
 
   new ((*fRawDataEventArray)[0]) STRawEvent(fRawEvent);
   
- 
-  if( (fEventID % fChain->GetEntries()) < fChain->GetEntries())
+  if(fMatchEventNum) {
+    auto eventNum = fDataAuxHeader->GetTpcEventNum();
+    int embedNum = 0;
+    if(fEventID < 0) {
+      fEventID = 0;
+      fChain -> GetEntry(fEventID);
+      embedNum = fEmbedAuxHeader->GetTpcEventNum();
+      if(eventNum > embedNum) {
+        for(; fEventID < fChain->GetEntries(); fEventID++) {
+          fChain->GetEntry(fEventID);
+          embedNum = fEmbedAuxHeader->GetTpcEventNum();
+          if(eventNum == embedNum|| eventNum < embedNum) {
+            continue;
+          }
+        }
+      }
+    }
+    fChain -> GetEntry(fEventID);
+    embedNum = fEmbedAuxHeader->GetTpcEventNum();
+    if(eventNum != embedNum) {
+      fEventHeader->SetIsBadEvent();
+      fRunAna->MarkFill(false);  
+      return;
+    }
+    fRawEventMC = (STRawEvent *) fEventArray -> At(0);
+    if(fEventID < fChain -> GetEntries() - 1)
+      fEventID++;
+  }
+  else if( (fEventID % fChain->GetEntries()) < fChain->GetEntries())
   {
     int fMCEventID = fEventID % fChain -> GetEntries();
     fChain -> GetEntry(fMCEventID);
