@@ -56,6 +56,7 @@ class STEmbedTask : public FairTask {
     virtual void Exec(Option_t *opt);
     void SetPersistence(Bool_t value);
 
+    void SetMatchEvents(Bool_t value = true) { fMatchEventNum = value; }
 
     void SetEventID(Long64_t eventid);
   private:
