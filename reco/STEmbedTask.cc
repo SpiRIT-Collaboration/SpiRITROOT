@@ -147,7 +147,7 @@ STEmbedTask::Exec(Option_t *opt)
         }
       }
     }
-    std::cout << "getting main entry for embed check" << std::endl;
+    std::cout << "getting main entry for embed check " << fEventID << std::endl;
     fChain -> GetEntry(fEventID);
     embedNum = fEmbedAuxHeader->GetTpcEventNum();
     if(eventNum != embedNum) {
