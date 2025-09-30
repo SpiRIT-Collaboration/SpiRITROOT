@@ -146,6 +146,10 @@ STEmbedTask::Exec(Option_t *opt)
         }
       }
     }
+    if(fEventID >= fChain->GetEntries()) {
+      fEventHeader->SetIsBadEvent();
+      FairRunAna::Instance()->MarkFill(false);
+    }
     fChain -> GetEntry(fEventID);
     embedNum = fEmbedAuxHeader->GetTpcEventNum();
     if(eventNum != embedNum) {
@@ -155,8 +159,6 @@ STEmbedTask::Exec(Option_t *opt)
       return;
     }
     fRawEventMC = (STRawEvent *) fEventArray -> At(0);
-    if(fEventID < fChain -> GetEntries() - 1)
-      fEventID++;
   }
   else if( (fEventID % fChain->GetEntries()) < fChain->GetEntries())
   {
