@@ -72,7 +72,15 @@ STEmbedTask::Init()
       if(fMatchEventNum) {
         fChain -> SetBranchAddress("DigiAuxHeader", &fEmbedAuxHeader);
         fDataAuxHeader = (STAuxHeader*) ioMan -> GetObject("STAuxHeaderLinked");
+        if (fDataAuxHeader == nullptr) {
+          fLogger -> Fatal(MESSAGE_ORIGIN, TString::Format("Cannot find STAuxHeader in branch %s !", "STAuxHeaderLnked").Data());
+          return kFATAL;
+        }
         fEventHeader = (STEventHeader*) ioMan -> GetObject("STEventHeader");
+        if (fEventHeader == nullptr) {
+          fLogger -> Fatal(MESSAGE_ORIGIN, TString::Format("Cannot find STEventHeader in branch %s !", "STEventHeader").Data());
+          return kFATAL;
+        }
       }
 
       ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
@@ -119,6 +127,8 @@ STEmbedTask::Exec(Option_t *opt)
   new ((*fRawDataEventArray)[0]) STRawEvent(fRawEvent);
   
   if(fMatchEventNum) {
+    if(fDataAuxHeader == nullptr)
+      return;
     auto eventNum = fDataAuxHeader->GetTpcEventNum();
     int embedNum = 0;
     if(fEventID < 0) {
