@@ -22,6 +22,7 @@ STEmbedTask::STEmbedTask()
   fRawEventArray = new TClonesArray("STRawEvent");
   fRawEmbedEventArray = new TClonesArray("STRawEvent");
   fRawDataEventArray = new TClonesArray("STRawEvent");
+  fEmbedAuxHeader = new STAuxHeader();
   fRawEventMC = NULL;
   fRawEventData = new STRawEvent();
   fRawEvent = NULL;
@@ -134,11 +135,9 @@ STEmbedTask::Exec(Option_t *opt)
     if(fEventID < 0) {
       fEventID = 0;
       fChain -> GetEntry(fEventID);
-     std::cout << "Embed Entry 0 obtained" << std::endl;
       embedNum = fEmbedAuxHeader->GetTpcEventNum();
       if(eventNum > embedNum) {
         for(; fEventID < fChain->GetEntries(); fEventID++) {
-          std::cout << "getting entry " << fEventID << " of " << fChain->GetEntries() << std::endl;
           fChain->GetEntry(fEventID);
           embedNum = fEmbedAuxHeader->GetTpcEventNum();
           if(eventNum == embedNum|| eventNum < embedNum) {
@@ -147,7 +146,6 @@ STEmbedTask::Exec(Option_t *opt)
         }
       }
     }
-    std::cout << "getting main entry for embed check " << fEventID << std::endl;
     fChain -> GetEntry(fEventID);
     embedNum = fEmbedAuxHeader->GetTpcEventNum();
     if(eventNum != embedNum) {
