@@ -150,7 +150,8 @@ STEmbedTask::Exec(Option_t *opt)
     embedNum = fEmbedAuxHeader->GetTpcEventNum();
     if(eventNum != embedNum) {
       fEventHeader->SetIsBadEvent();
-      fRunAna->MarkFill(false);  
+      FairRunAna::Instance()->MarkFill(false);
+      //fRunAna->MarkFill(false);  
       return;
     }
     fRawEventMC = (STRawEvent *) fEventArray -> At(0);
