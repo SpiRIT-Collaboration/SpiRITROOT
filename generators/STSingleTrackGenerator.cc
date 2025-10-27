@@ -372,6 +372,15 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
         momentum.SetPhi(pIndex*(fPhiRange[1]-fPhiRange[0])/(Double_t)fNStepPhi);
       }
 
+      if(fUniRandomMultiLimit) {
+        Double_t phi = -999.;
+        Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
+        while(!InPhiLimits(phi)) {
+          phi  = gRandom->Uniform(fPhiRange[0], fPhiRange[1]);
+        }
+        momentum.SetMagThetaPhi(momentum.Mag(), randTheta, phi);
+      }
+
 
       if(fIsCocktail||fBrho!=0.)
         momentum.SetMag(0.3*fBrho*GetQ(pdg));
@@ -431,5 +440,14 @@ Int_t STSingleTrackGenerator::GetA(Int_t pdg)
   else
     return 0;
 
+}
+
+Bool_t STSingleTrackGenerator::InPhiLimits(Double_t phi) {
+  for(auto limits : fPhiVector) {
+    if(limits.first < phi && limits.second > phi) {
+      return true;
+    }
+  }
+  return false;
 }
 

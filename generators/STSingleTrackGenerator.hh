@@ -121,6 +121,7 @@ class STSingleTrackGenerator : public FairGenerator
     // set random direction flag
     void SetUniformRandomDirection(Bool_t f) { fUniRandomDirection = f; }
     void SetSphericalRandomDirection(Bool_t f) { fSpheRandomDirection = f; }
+    void SetUniformMultiplePhiLimits(Bool_t f) { fUniRandomMultiLimit = f; }
     // use with random direction. change the range of angles
     void SetThetaPhiLimit(Double_t t0, Double_t t1, Double_t p0, Double_t p1)
     { fThetaRange[0] = t0; fThetaRange[1] = t1; fPhiRange[0] = p0; fPhiRange[1] = p1; }
@@ -130,6 +131,8 @@ class STSingleTrackGenerator : public FairGenerator
     void SetGausPhi(Double_t mean, Double_t sd) {fGausPhi = kTRUE; fGausPhiMean = mean; fGausPhiSD = sd;}
     void SetGausTheta(Double_t mean, Double_t sd) {fGausTheta = kTRUE; fGausThetaMean = mean; fGausThetaSD = sd;}
     void SetPhaseSpaceCut(const std::string& filename);
+
+    void AddPhiLimit(Double_t p0, Double_t p1) { fPhiVector.push_back(std::make_pair(p0, p1)); }
 
     // set parameters as cocktail beam run, argument is E/A setting
     void SetCocktailEvent(Double_t);
@@ -166,8 +169,10 @@ class STSingleTrackGenerator : public FairGenerator
     Bool_t   fSpheRandomDirection; // spherical distribution within -180<phi<180 deg, 0<theta<90 deg.
     Bool_t   fUniTheta;
     Bool_t   fUniPhi;
+    Bool_t   fUniRandomMultiLimit;  // uniform distribution within multiple phi ranges. Ranges set by AddPhiLimit() function.
     Double_t fThetaRange[2];
     Double_t fPhiRange[2];
+    std::vector<std::pair<Double_t, Double_t>> fPhiVector;
     Bool_t   fGausMomentum;
     Double_t fGausMomentumMean;
     Double_t fGausMomentumSD;
@@ -191,6 +196,8 @@ class STSingleTrackGenerator : public FairGenerator
 
     Int_t GetQ(Int_t);
     Int_t GetA(Int_t);
+
+    Bool_t InPhiLimits(Double_t phi);
 
     std::string  fVertexFile;
 
