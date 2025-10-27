@@ -135,6 +135,8 @@ STSingleTrackGenerator::STSingleTrackGenerator()
   fPhiRange[0] = -TMath::Pi();
   fPhiRange[1] = TMath::Pi();
 
+  fAuxHeaderTask = nullptr;
+
   RegisterHeavyIon();
 
 }
@@ -286,8 +288,10 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
           fVertexReader.LoopOver();
       }
       vertex = fVertexReader.GetVertex();
-      if(fAuxHeaderTask)
+      if(fAuxHeaderTask != nullptr) {
+          std::cout << "Setting Aux Header Event ID: " << fVertexReader.GetEventID() << std::endl;
         fAuxHeaderTask -> SetEventNum(fVertexReader.GetEventID());
+      }
       fVertexReader.Next();
   } 
 

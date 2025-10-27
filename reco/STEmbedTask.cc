@@ -62,6 +62,7 @@ STEmbedTask::Init()
       std::cout << "== [STEmbedTask] Setting up embed mode" << std::endl;
       fChain = new TChain("cbmsim");
       fChain -> Add(fEmbedFile);
+      std::cout << "Entries: " << fChain->GetEntries() << std::endl;
       if(fChain -> GetListOfFiles() -> GetEntries() == 0)
       {
          std::cout << "== [STEmbedTask] Embed file does not Exist!" << std::endl;
@@ -132,16 +133,18 @@ STEmbedTask::Exec(Option_t *opt)
       return;
     auto eventNum = fDataAuxHeader->GetTpcEventNum();
     int embedNum = 0;
-    if(fEventID < 0) {
+    if(fEventID <= 0) {
       fEventID = 0;
       fChain -> GetEntry(fEventID);
       embedNum = fEmbedAuxHeader->GetTpcEventNum();
+      std::cout << "eventNum: " << eventNum << "; embedNum: " << embedNum << "; EventID: " << fEventID << std::endl;
       if(eventNum > embedNum) {
         for(; fEventID < fChain->GetEntries(); fEventID++) {
           fChain->GetEntry(fEventID);
           embedNum = fEmbedAuxHeader->GetTpcEventNum();
+          std::cout << "eventNum: " << eventNum << "; embedNum: " << embedNum << "; EventID: " << fEventID << std::endl;
           if(eventNum == embedNum|| eventNum < embedNum) {
-            continue;
+            break;
           }
         }
       }
@@ -152,6 +155,7 @@ STEmbedTask::Exec(Option_t *opt)
     }
     fChain -> GetEntry(fEventID);
     embedNum = fEmbedAuxHeader->GetTpcEventNum();
+    std::cout << "eventNum: " << eventNum << "; embedNum: " << embedNum << "; EventID: " << fEventID << std::endl;
     if(eventNum != embedNum) {
       fEventHeader->SetIsBadEvent();
       FairRunAna::Instance()->MarkFill(false);

@@ -16,6 +16,7 @@ private:
     TString fAuxHeaderBranch = "STAuxHeader";
     TString fInputAuxHeaderBranch = "";
     Bool_t fIsPersistence = kFALSE;              ///< Persistence check variable
+    Bool_t fDoEventID = kTRUE;
 
     Int_t fEventID;
 
@@ -30,6 +31,7 @@ public:
     void SetPersistence(Bool_t value = kTRUE) { fIsPersistence = value; }
     void SetAuxBranch(TString name = "STAuxHeader") { fAuxHeaderBranch = name; }
     void SetInputBranch(TString name = "MCAuxHeader") { fInputAuxHeaderBranch = name; }
+    void SetDoEventID(Bool_t value = kTRUE) { fDoEventID = value; } 
 
     void SetEventNum(Int_t value);
 };

@@ -37,10 +37,12 @@ InitStatus STAuxHeaderTask::Init()
 
 void STAuxHeaderTask::Exec(Option_t *opt)
 {
-    if(fInputAuxHeader)
-        SetEventNum(fInputAuxHeader -> GetTpcEventNum());
-    else
-        SetEventNum(fEventID++);
+    if(fDoEventID) {
+        if(fInputAuxHeader)
+            SetEventNum(fInputAuxHeader -> GetTpcEventNum());
+        else
+            SetEventNum(fEventID++);
+    }
 }
 
 void STAuxHeaderTask::SetEventNum(Int_t value)
