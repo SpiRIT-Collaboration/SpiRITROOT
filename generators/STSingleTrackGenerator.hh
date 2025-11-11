@@ -128,6 +128,7 @@ class STSingleTrackGenerator : public FairGenerator
     void SetThetaLimit(Double_t t0, Double_t t1) { fThetaRange[0] = t0; fThetaRange[1] = t1; }
     void SetPhiLimit(Double_t p0, Double_t p1)   { fPhiRange[0] = p0; fPhiRange[1] = p1; }
     void SetGausMomentum(Double_t mean, Double_t sd) {fGausMomentum = kTRUE; fGausMomentumMean = mean; fGausMomentumSD = sd;}
+    void SetExponentialMomentum(Double_t T_MeV, Double_t minMom, Double_t maxMom) {fExpMomentum = kTRUE; fExpTemperature = T_MeV; fMomentumRange[0] = minMom; fMomentumRange[1] = maxMom;}
     void SetGausPhi(Double_t mean, Double_t sd) {fGausPhi = kTRUE; fGausPhiMean = mean; fGausPhiSD = sd;}
     void SetGausTheta(Double_t mean, Double_t sd) {fGausTheta = kTRUE; fGausThetaMean = mean; fGausThetaSD = sd;}
     void SetPhaseSpaceCut(const std::string& filename);
@@ -176,6 +177,8 @@ class STSingleTrackGenerator : public FairGenerator
     Bool_t   fGausMomentum;
     Double_t fGausMomentumMean;
     Double_t fGausMomentumSD;
+    Bool_t   fExpMomentum;
+    Double_t fExpTemperature;
     Bool_t   fGausTheta;
     Double_t fGausThetaMean;
     Double_t fGausThetaSD;

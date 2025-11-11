@@ -7,6 +7,7 @@
 #include "TParticlePDG.h"
 #include "TRandom.h"
 #include "TFile.h"
+#include "TF1.h"
 
 void VertexReader::OpenFile(const std::string& t_filename)
 {
@@ -124,7 +125,8 @@ STSingleTrackGenerator::STSingleTrackGenerator()
   fIsCocktail(kFALSE), fBrho(0.),
   fIsDiscreteTheta(kFALSE), fIsDiscretePhi(kFALSE),
   fNStepTheta(0), fNStepPhi(0),
-  fGausMomentum(kFALSE), fGausMomentumMean(0), fGausMomentumSD(0)
+  fGausMomentum(kFALSE), fGausMomentumMean(0), fGausMomentumSD(0),
+  fExpMomentum(kFALSE), fExpTemperature(25.0)
 {
   fPdgList.clear();
   fMomentum.SetXYZ(0., 0., .5);
@@ -322,6 +324,20 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
       if(fGausMomentum){
         Double_t mom = gRandom->Gaus(fGausMomentumMean, fGausMomentumSD);
         momentum.SetMag(fabs(mom));
+      }
+
+      if(fExpMomentum){
+        // Get particle mass from PDG database
+        TParticlePDG* part = TDatabasePDG::Instance()->GetParticle(pdg);
+        Double_t mass_GeV = part ? part->Mass() : 0.938272; // default to proton mass if not found
+        
+        // Create temporary function for exponential momentum distribution
+        TF1 expFunc("temp_exp_mom", "x*x * exp(-(sqrt(x*x + [1]*[1]) - [1])/([0]/1000.0))", 
+                    fMomentumRange[0], fMomentumRange[1]);
+        expFunc.SetParameters(fExpTemperature, mass_GeV);
+        
+        Double_t mom = expFunc.GetRandom();
+        momentum.SetMag(mom);
       }
 
       if(fUniRandomDirection){
