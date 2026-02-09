@@ -41,7 +41,7 @@ InitStatus STEmbedCorrelatorTask::Init()
     LOG(ERROR) << "Cannot find MCTrack array!" << FairLogger::endl;
     return kERROR;
   }
-  
+
   fEmbedTrackArray = new TClonesArray("STEmbedTrack");
   fRootManager -> Register("STEmbedTrack", "SpiRIT", fEmbedTrackArray, fIsPersistence);
 
@@ -51,7 +51,7 @@ InitStatus STEmbedCorrelatorTask::Init()
 void STEmbedCorrelatorTask::Exec(Option_t *opt)
 {
   fEmbedTrackArray -> Delete();
-  
+
   if (fEventHeader -> IsBadEvent())
     {
       STEmbedTrack *embedTrack = (STEmbedTrack *) fEmbedTrackArray -> ConstructedAt(0);
@@ -60,13 +60,13 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
 
   if(fMCTrackArray == NULL)
     return;
-  
+
   auto numReco = fRecoTrackArray -> GetEntries();
   auto numMC   = fMCTrackArray -> GetEntries();
 
-  
+
   int num_corr = 0;// number of tracks correlated
-  
+
   for (auto iMC = 0; iMC < numMC; iMC++)
     {
       auto MCTrack = (STMCTrack *) fMCTrackArray -> At(iMC);
@@ -79,49 +79,56 @@ void STEmbedCorrelatorTask::Exec(Option_t *opt)
       std::vector<STRecoTrack *> *recotrack_ary = new std::vector<STRecoTrack *>(0);
       //      std::vector< std::pair<STRecoTrack *, Double_t>> pair_vec;
       std::vector<EmbedTrack> e_track_vec;
-      
+
       for (auto iReco = 0; iReco < numReco; iReco++)
-	{
-	  auto recoTrack = (STRecoTrack *) fRecoTrackArray -> At(iReco);
-	  //BDC reconstructed tracks(vaTracs) have the recoID set and we match to iReco
-	  //position in array. Since we only copy embed tracks in this class we need to save recoID pos
-	  recoTrack -> SetRecoID(iReco);
-	
+        {
+          auto recoTrack = (STRecoTrack *) fRecoTrackArray -> At(iReco);
+          //BDC reconstructed tracks(vaTracs) have the recoID set and we match to iReco
+          //position in array. Since we only copy embed tracks in this class we need to save recoID pos
+          recoTrack -> SetRecoID(iReco);
 
-	  double fract_embed_clusters = static_cast<double>(recoTrack -> GetNumEmbedClusters())/static_cast<double>(recoTrack -> GetNumRowClusters() + recoTrack -> GetNumLayerClusters());
 
-	  if(recoTrack -> IsEmbed() == false)
-	    continue;
-	  //less than 5 embed clusters are not significant tracks
-	  if(recoTrack -> GetNumEmbedClusters() < 5)
-	    continue;
-	  //<50% embed clusters not a significant embeded track. Mixed with too many other clusters from real tracks.
-	  if(fract_embed_clusters < .5 )
-	    continue;
+          double fract_embed_clusters = static_cast<double>(recoTrack -> GetNumEmbedClusters())/static_cast<double>(recoTrack -> GetNumRowClusters() + recoTrack -> GetNumLayerClusters());
 
-	  EmbedTrack e_track;
-	  e_track.reco     = recoTrack;
-	  e_track.fract    = fract_embed_clusters;
-	  e_track.numEmbed = recoTrack->GetNumEmbedClusters();
+          if(recoTrack -> IsEmbed() == false)
+            continue;
+          //less than 5 embed clusters are not significant tracks
+          if(recoTrack -> GetNumEmbedClusters() < 5)
+            continue;
+          //<50% embed clusters not a significant embeded track. Mixed with too many other clusters from real tracks.
+          if(fract_embed_clusters < .5 )
+            continue;
 
-	  e_track_vec.push_back(e_track);
-	}
+          EmbedTrack e_track;
+          e_track.reco     = recoTrack;
+          e_track.fract    = fract_embed_clusters;
+          e_track.numEmbed = recoTrack->GetNumEmbedClusters();
 
- 
-      auto comp_fcn = [] (EmbedTrack &a, EmbedTrack &b)
-	{ return ( (a.fract > b.fract) && (a.numEmbed > b.numEmbed) ); };
+          e_track_vec.push_back(e_track);
+        }
+
 
       for(auto el : e_track_vec)
-	{
-	  recotrack_ary -> push_back(el.reco);
-	  num_corr++;
-	}
+        {
+          recotrack_ary -> push_back(el.reco);
+          num_corr++;
+        }
+
+      auto momMCMag = mom_mc.Mag();
+      auto momCompare = [momMCMag] (STRecoTrack *a, STRecoTrack *b)
+      {
+          double momA = a -> GetMomentum().Mag();
+          double momB = b -> GetMomentum().Mag();
+          return std::fabs(momA - momMCMag) < std::fabs(momB - momMCMag);
+      };
+
+      std::sort(recotrack_ary -> begin(), recotrack_ary -> end(), momCompare);
 
       //Always create embedTrack if there is MC track input
       //Failed correlation will give -999,-999,-999, momentum
 
       STEmbedTrack *embedTrack = (STEmbedTrack *) fEmbedTrackArray -> ConstructedAt(iMC);
-      embedTrack -> SetInitialTrack(MCTrack);	  
+      embedTrack -> SetInitialTrack(MCTrack);
       embedTrack -> SetRecoTrackArray(recotrack_ary);
       LOG(INFO) << Space() << "STEmbedTrack "<< recotrack_ary -> size()  << FairLogger::endl;
     }
@@ -141,8 +148,8 @@ Bool_t STEmbedCorrelatorTask::CheckMomCorr(STMCTrack *mctrack, STRecoTrack *reco
   double z_diff = (mc_mom.Pz()  - reco_mom.Pz())/mc_mom.Pz();
 
   IsCorr = (abs(x_diff) < .02 && abs(y_diff) < .02 && abs(z_diff) < .02);
-  
+
   LOG(INFO) << Space() << "Debug" << abs(x_diff)<<" "<<abs(y_diff)<<" "<<abs(z_diff)<< FairLogger::endl;
-	      
+
   return IsCorr;
 }
