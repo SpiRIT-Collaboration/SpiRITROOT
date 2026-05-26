@@ -112,6 +112,7 @@ STGenfitVATask::Init()
   fRootManager -> Register("VAVertex", "SpiRIT", fVAVertexArray, fIsPersistence);
 
   fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldXOffset, fFieldYOffset, fFieldZOffset);
+  fGenfitTest -> SetTargetPlane(fTargetX*0.1, fTargetY*0.1, fTargetZ*0.1); // Target plane position unit mm -> cm
   fPIDTest = new STPIDTest();
 
   fBeamInfo = new STBeamInfo();
@@ -728,4 +729,11 @@ void STGenfitVATask::ShiftBDCAfterSC(const std::string& filename, double thresho
   if(!fBDCYShift)
     cout << "== [STGenfitVATask] No histogram can be read from Y-BDC shift file. Will NOT shift BDC. " << endl;
 
+}
+
+void STGenfitVATask::SetTargetPlane(Double_t x, Double_t y, Double_t z)
+{
+  fTargetX = x;
+  fTargetY = y;
+  fTargetZ = z;
 }
