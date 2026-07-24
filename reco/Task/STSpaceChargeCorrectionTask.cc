@@ -39,10 +39,11 @@ STSpaceChargeCorrectionTask::Init()
   TPCz = fDigiPar->GetPadPlaneZ();
   this -> SetTPCSize(TPCx, TPCz, TPCy);
 
-  const double EField = 127.4; // V/cm
+  const double EField = 132.7; // 127.4; // V/cm
   const double BField = 0.5; // T
-  this -> InferDriftParameters(fDigiPar->GetDriftVelocity(), EField, BField);
-  if(fIsDrift) this -> CalculateEDrift(fDigiPar->GetDriftVelocity(), true);
+  const double driftVelocity = fUseExternalDriftVelocity ? fDriftVelocity : fDigiPar->GetDriftVelocity();
+  this -> InferDriftParameters(driftVelocity, EField, BField);
+  if(fIsDrift) this -> CalculateEDrift(driftVelocity, true);
   else LOG(INFO) << "Space Chrage displacement is disabled" << FairLogger::endl;
   return kSUCCESS;
 }
@@ -92,7 +93,7 @@ void STSpaceChargeCorrectionTask::Exec(Option_t* option)
       else cluster -> SetX(new_x);
       
       if(new_z < 0) cluster -> SetZ(0);
-      if(new_z >= TPCz) cluster -> SetZ(TPCz - 1);
+      else if(new_z >= TPCz) cluster -> SetZ(TPCz - 1);
       else cluster -> SetZ(new_z);
     }
     LOG(INFO) << Space() << "Shift Clusters for space-charge effect" << FairLogger::endl;
@@ -101,6 +102,11 @@ void STSpaceChargeCorrectionTask::Exec(Option_t* option)
 
 void STSpaceChargeCorrectionTask::SetVerbose(Bool_t value) { fVerbose = value; }
 void STSpaceChargeCorrectionTask::SetElectronDrift(Bool_t value) { fIsDrift = value; }
+void STSpaceChargeCorrectionTask::SetDriftVelocity(Double_t value)
+{
+  fDriftVelocity = value;
+  fUseExternalDriftVelocity = kTRUE;
+}
 bool STSpaceChargeCorrectionTask::SearchForRunPar(const std::string& filename, int run_num)
 {
   // RunInfo.dat in parameters folder should contains information about a run
@@ -174,7 +180,8 @@ void STSpaceChargeCorrectionTask::SetLocalRate(Double_t scale_s, Double_t scale_
 
 void STSpaceChargeCorrectionTask::UpdateEDrift()
 {
-   if(fIsDrift) this -> CalculateEDrift(fDigiPar->GetDriftVelocity(), true);
+   const double driftVelocity = fUseExternalDriftVelocity ? fDriftVelocity : fDigiPar->GetDriftVelocity();
+   if(fIsDrift) this -> CalculateEDrift(driftVelocity, true);
 }
 
 

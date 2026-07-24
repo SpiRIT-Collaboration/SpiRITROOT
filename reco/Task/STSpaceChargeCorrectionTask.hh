@@ -27,6 +27,7 @@ public:
 
   void SetVerbose(Bool_t value = kTRUE);
   void SetElectronDrift(Bool_t value = kTRUE);
+  void SetDriftVelocity(Double_t value);
 
   bool SearchForRunPar(const std::string& filename, int run_num);   
 
@@ -37,6 +38,8 @@ public:
 private:
   Bool_t fVerbose; // testing with cout 
   Bool_t fIsDrift; // flag to make space charge effect optional
+  Bool_t fUseExternalDriftVelocity{kFALSE};
+  Double_t fDriftVelocity{0.};
 
   STAuxHeader *fAuxHeader = nullptr;
 

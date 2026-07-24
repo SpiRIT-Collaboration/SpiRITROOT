@@ -289,7 +289,7 @@ std::function<TVector3(const TVector3&)> STSpaceCharge::GetEFieldWrapper()
       double ez = fEz->Interpolate(rot_x, y, rot_z);
       double rot_ex = ex*cos(fRotateXZ) + ez*sin(fRotateXZ);
       double rot_ez = -ex*sin(fRotateXZ) + ez*cos(fRotateXZ);
-      if(ey >= -10) ey = -124.7;
+      if(ey >= -10) ey = -132.7; //-124.7;
       return TVector3(rot_ex, ey, rot_ez);
     };
 }
