@@ -8,6 +8,43 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <vector>
+
+namespace {
+Long64_t gSCDebugTpcEventNum = -1;
+Double_t gSCDebugLocalRate = -1.0;
+Double_t gSCDebugSheetDensity = 0.0;
+Int_t gSCDebugUseNominalBFieldInEOM = 0;
+std::vector<TVector3> gSCDebugRawDispMM;
+std::vector<Double_t> gSCDebugYAppliedMM;
+std::vector<Double_t> gSCDebugYModelMM;
+std::vector<Int_t> gSCDebugRawWasClipped;
+} // namespace
+
+extern "C" Long64_t STSCGetDebugTpcEventNum() { return gSCDebugTpcEventNum; }
+extern "C" Double_t STSCGetDebugLocalRate() { return gSCDebugLocalRate; }
+extern "C" Double_t STSCGetDebugSheetDensity() { return gSCDebugSheetDensity; }
+extern "C" Int_t STSCGetDebugUseNominalBFieldInEOM() { return gSCDebugUseNominalBFieldInEOM; }
+extern "C" Int_t STSCGetDebugRawDisplacementCount() { return static_cast<Int_t>(gSCDebugRawDispMM.size()); }
+extern "C" Int_t STSCGetDebugYDisplacementAt(Int_t idx, Double_t* yApplied, Double_t* yModel)
+{
+  if (idx < 0 || idx >= static_cast<Int_t>(gSCDebugYAppliedMM.size()))
+    return 0;
+  if (yApplied) *yApplied = gSCDebugYAppliedMM[idx];
+  if (yModel) *yModel = (idx < static_cast<Int_t>(gSCDebugYModelMM.size())) ? gSCDebugYModelMM[idx] : gSCDebugYAppliedMM[idx];
+  return 1;
+}
+extern "C" Int_t STSCGetDebugRawDisplacementAt(Int_t idx, Double_t* dx, Double_t* dy, Double_t* dz, Int_t* clipped)
+{
+  if (idx < 0 || idx >= static_cast<Int_t>(gSCDebugRawDispMM.size()))
+    return 0;
+  const TVector3& v = gSCDebugRawDispMM[idx];
+  if (dx) *dx = v.X();
+  if (dy) *dy = v.Y();
+  if (dz) *dz = v.Z();
+  if (clipped) *clipped = (idx < static_cast<Int_t>(gSCDebugRawWasClipped.size())) ? gSCDebugRawWasClipped[idx] : 0;
+  return 1;
+}
 
 // Root class headers
 #include "FairRun.h"
@@ -52,51 +89,103 @@ STSpaceChargeCorrectionTask::Init()
 void STSpaceChargeCorrectionTask::Exec(Option_t* option)
 {
   LOG(DEBUG) << "Exec of STSpaceChargeCorrectionTask" << FairLogger::endl;
+
+  gSCDebugRawDispMM.clear();
+  gSCDebugYAppliedMM.clear();
+  gSCDebugYModelMM.clear();
+  gSCDebugRawWasClipped.clear();
+  gSCDebugTpcEventNum = -1;
+  gSCDebugLocalRate = -1.0;
+  gSCDebugUseNominalBFieldInEOM = this->GetUseNominalBFieldInEOM() ? 1 : 0;
+
   if(fIsDrift)
   {
-    if(fUseLocalRate) 
+    if(fUseLocalRate && fAuxHeader != nullptr && fRateHist != nullptr)
     {
       auto eventNum = fAuxHeader->GetTpcEventNum();
+      gSCDebugTpcEventNum = eventNum;
+
+      double rate = 0.0;
+      if(eventNum > fRateHist->GetBinLowEdge(fRateHist->GetNbinsX()))
+        rate = fRateHist->GetBinContent(fRateHist->GetNbinsX());
+      else
+        rate = fRateHist->GetBinContent(fRateHist->FindBin(eventNum));
+      gSCDebugLocalRate = rate;
+
       if(!fFirstEventDone || eventNum % fEventFrequency == 0)
       {
-        double rate = 0;
-        if(eventNum > fRateHist -> GetBinLowEdge(fRateHist -> GetNbinsX()))
-          rate = fRateHist -> GetBinContent(fRateHist -> GetNbinsX());
-        else 
-          rate = fRateHist -> GetBinContent(fRateHist->FindBin(eventNum));
-          auto density = fDensityScaleSlope * rate * rate + fDensityScaleInter * rate;
-          if(density >= 0) 
-          {
-            SetSheetChargeDensity(density);
-            UpdateEDrift();
-          }
+        auto density = fDensityScaleSlope * rate * rate + fDensityScaleInter * rate;
+        if(density >= 0)
+        {
+          SetSheetChargeDensity(density);
+          UpdateEDrift();
+        }
         fFirstEventDone = true;
       }
     }
 
+    gSCDebugSheetDensity = this->GetSheetChargeDensity();
+
     int nClusters = fHitClusterArray->GetEntries();
-    for(int iCluster = 0; iCluster < nClusters; ++iCluster) 
+    gSCDebugRawDispMM.reserve(nClusters);
+    gSCDebugYAppliedMM.reserve(nClusters);
+    gSCDebugYModelMM.reserve(nClusters);
+    gSCDebugRawWasClipped.reserve(nClusters);
+
+    for(int iCluster = 0; iCluster < nClusters; ++iCluster)
     {
-      auto cluster = static_cast<STHitCluster*>(fHitClusterArray -> At(iCluster));
+      auto cluster = static_cast<STHitCluster*>(fHitClusterArray->At(iCluster));
       double orig_x = cluster->GetX()/10; // convert mm to cm
-      double orig_y = cluster->GetY()/10; // convert mm to c;
-      double orig_z = cluster->GetZ()/10; // convert mm to c;
-      double new_x, new_y, new_z; 
-      this -> DisplaceElectrons(orig_x, orig_y, orig_z, new_x, new_y, new_z);
+      double orig_y = cluster->GetY()/10; // convert mm to cm
+      double orig_z = cluster->GetZ()/10; // convert mm to cm
+      double new_x, new_y, new_z;
+      this->DisplaceElectrons(orig_x, orig_y, orig_z, new_x, new_y, new_z);
+
+      const double model_dy_cm = this->GetYDisplacementModel(orig_x, orig_y, orig_z);
+      const double raw_dx_mm = (new_x - orig_x) * 10.0;
+      const double raw_dy_model_mm = model_dy_cm * 10.0;
+      const double raw_dz_mm = (new_z - orig_z) * 10.0;
+      gSCDebugRawDispMM.emplace_back(raw_dx_mm, raw_dy_model_mm, raw_dz_mm);
+
+      const double y_applied_mm = (new_y - orig_y) * 10.0;
+      gSCDebugYAppliedMM.emplace_back(y_applied_mm);
+      gSCDebugYModelMM.emplace_back(raw_dy_model_mm);
+
       // convert cm back to mm
       new_x *= 10;
       new_y *= 10;
       new_z *= 10;
 
-      if(new_x < -TPCx/2.) cluster -> SetX(-TPCx/2.);
-      else if(new_x > TPCx/2.) cluster -> SetX(TPCx/2.);
-      else cluster -> SetX(new_x);
-      
-      if(new_z < 0) cluster -> SetZ(0);
-      else if(new_z >= TPCz) cluster -> SetZ(TPCz - 1);
-      else cluster -> SetZ(new_z);
+      Bool_t wasClipped = kFALSE;
+      if(new_x < -TPCx/2.) {
+        cluster->SetX(-TPCx/2.);
+        wasClipped = kTRUE;
+      }
+      else if(new_x > TPCx/2.) {
+        cluster->SetX(TPCx/2.);
+        wasClipped = kTRUE;
+      }
+      else cluster->SetX(new_x);
+
+      if(fApplyYCorrection) cluster->SetY(new_y);
+
+      if(new_z < 0) {
+        cluster->SetZ(0);
+        wasClipped = kTRUE;
+      }
+      else if(new_z >= TPCz) {
+        cluster->SetZ(TPCz - 1);
+        wasClipped = kTRUE;
+      }
+      else cluster->SetZ(new_z);
+
+      gSCDebugRawWasClipped.emplace_back(wasClipped ? 1 : 0);
     }
     LOG(INFO) << Space() << "Shift Clusters for space-charge effect" << FairLogger::endl;
+  }
+  else
+  {
+    gSCDebugSheetDensity = this->GetSheetChargeDensity();
   }
 }
 
@@ -107,6 +196,7 @@ void STSpaceChargeCorrectionTask::SetDriftVelocity(Double_t value)
   fDriftVelocity = value;
   fUseExternalDriftVelocity = kTRUE;
 }
+void STSpaceChargeCorrectionTask::SetApplyYCorrection(Bool_t value) { fApplyYCorrection = value; }
 bool STSpaceChargeCorrectionTask::SearchForRunPar(const std::string& filename, int run_num)
 {
   // RunInfo.dat in parameters folder should contains information about a run

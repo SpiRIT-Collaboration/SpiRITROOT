@@ -24,12 +24,15 @@ public:
   EquationOfMotion(const FieldFunc& t_EField,
                    const FieldFunc& t_BField,
                    double t_mu,
-                   double t_wtau);
+                   double t_wtau,
+                   double t_b_ref,
+                   bool t_use_local_b_scaling = true);
   TVector3 operator()(const TVector3& t_pos, double t_t);
 private:
   FieldFunc EField_;
   FieldFunc BField_;
-  double mu_, wtau_;
+  double mu_, wtau_, b_ref_;
+  bool use_local_b_scaling_;
 };
 
 TVector3 RK4Stepper(EquationOfMotion& t_eom, const TVector3& t_pos, double t_t, double t_dt);
@@ -38,15 +41,14 @@ class ElectronDrifter
 {
 public:
   ElectronDrifter(double t_dt, EquationOfMotion& t_eom);
-  ElectronDrifter& DriftUntil(const std::function<bool(const TVector3&, double)>&);
+  ElectronDrifter& DriftUntil(const std::function<double(const TVector3&, double)>&);
   TVector3 DriftFrom(const TVector3& t_pos);
   double GetDriftTime();
 
 private:
   const double dt_;
   double t_;
-  const double ymax_ = 0; // stopping condition
-  std::function<bool(const TVector3&, double)> stop_cond_; // setoping condition
+  std::function<double(const TVector3&, double)> stop_criterion_; // stop when criterion crosses zero
   EquationOfMotion eom_;
 };
 
@@ -69,6 +71,8 @@ class STSpaceCharge
     void SetSheetChargeDensity(Double_t value, Double_t bf = 0);
     void SetProjectile(Projectile t_proj);
     void SetDriftParameters(double mu, double wtau);
+    void SetUseNominalBFieldInEOM(Bool_t value = kTRUE);
+      void SetUseComputedYDisplacement(Bool_t value = kFALSE);
     void InferDriftParameters(double drift_vel, double e_field, double b_field);
 
     void ShiftDisplacementMap(double x, double y, double z);
@@ -79,6 +83,11 @@ class STSpaceCharge
 
     void DisplaceElectrons(double x, double y, double z, 
                            double& x_out, double& y_out, double& z_out);
+      double GetYDisplacementModel(double x, double y, double z) const;
+
+    Double_t GetSheetChargeDensity() const { return fSheetChargeDensity; }
+    Double_t GetBackFlowDensity() const { return fBackFlowDensity; }
+    Bool_t GetUseNominalBFieldInEOM() const { return fUseNominalBFieldInEOM; }
   private:
     void fFinalizeEField();
     std::function<TVector3(const TVector3&)> GetEFieldWrapper();
@@ -92,6 +101,7 @@ class STSpaceCharge
 
     TH3D *fDispX;//!< Calculated electron displacement map
     TH3D *fDispY;//!< Calculated electron displacement map
+      TH3D *fDispYModel;//!< Model-predicted Y displacement map (not necessarily applied)
     TH3D *fDispZ;//!< Calculated electron displacement map
   
     double fWidth, fLength, fHeight;// physical size of the TPC.
@@ -105,7 +115,9 @@ class STSpaceCharge
     double fBinsX, fBinsY, fBinsZ; // number of bines to divide the displacement map
     double fOffsetX, fOffsetY, fOffsetZ;
     double fRotateXZ;
-    double fmu, fwtau;
+    double fmu, fwtau, fBRef;
+    Bool_t fUseNominalBFieldInEOM;
+      Bool_t fUseComputedYDisplacement;
     STSpaceCharge(const STSpaceCharge&);
     STSpaceCharge operator=(const STSpaceCharge&);
 
