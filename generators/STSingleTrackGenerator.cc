@@ -7,6 +7,7 @@
 #include "TParticlePDG.h"
 #include "TRandom.h"
 #include "TFile.h"
+#include "TF1.h"
 
 void VertexReader::OpenFile(const std::string& t_filename)
 {
@@ -124,7 +125,8 @@ STSingleTrackGenerator::STSingleTrackGenerator()
   fIsCocktail(kFALSE), fBrho(0.),
   fIsDiscreteTheta(kFALSE), fIsDiscretePhi(kFALSE),
   fNStepTheta(0), fNStepPhi(0),
-  fGausMomentum(kFALSE), fGausMomentumMean(0), fGausMomentumSD(0)
+  fGausMomentum(kFALSE), fGausMomentumMean(0), fGausMomentumSD(0),
+  fExpMomentum(kFALSE), fExpTemperature(25.0)
 {
   fPdgList.clear();
   fMomentum.SetXYZ(0., 0., .5);
@@ -134,6 +136,8 @@ STSingleTrackGenerator::STSingleTrackGenerator()
   fThetaRange[1] = TMath::Pi()/2.;
   fPhiRange[0] = -TMath::Pi();
   fPhiRange[1] = TMath::Pi();
+
+  fAuxHeaderTask = nullptr;
 
   RegisterHeavyIon();
 
@@ -286,6 +290,10 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
           fVertexReader.LoopOver();
       }
       vertex = fVertexReader.GetVertex();
+      if(fAuxHeaderTask != nullptr) {
+          std::cout << "Setting Aux Header Event ID: " << fVertexReader.GetEventID() << std::endl;
+        fAuxHeaderTask -> SetEventNum(fVertexReader.GetEventID());
+      }
       fVertexReader.Next();
   } 
 
@@ -316,6 +324,20 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
       if(fGausMomentum){
         Double_t mom = gRandom->Gaus(fGausMomentumMean, fGausMomentumSD);
         momentum.SetMag(fabs(mom));
+      }
+
+      if(fExpMomentum){
+        // Get particle mass from PDG database
+        TParticlePDG* part = TDatabasePDG::Instance()->GetParticle(pdg);
+        Double_t mass_GeV = part ? part->Mass() : 0.938272; // default to proton mass if not found
+        
+        // Create temporary function for exponential momentum distribution
+        TF1 expFunc("temp_exp_mom", "x*x * exp(-(sqrt(x*x + [1]*[1]) - [1])/([0]/1000.0))", 
+                    fMomentumRange[0], fMomentumRange[1]);
+        expFunc.SetParameters(fExpTemperature, mass_GeV);
+        
+        Double_t mom = expFunc.GetRandom();
+        momentum.SetMag(mom);
       }
 
       if(fUniRandomDirection){
@@ -364,6 +386,15 @@ Bool_t STSingleTrackGenerator::ReadEvent(FairPrimaryGenerator* primGen)
       if(fIsDiscretePhi){
         auto pIndex = (Int_t)gRandom->Uniform(0,fNStepPhi);
         momentum.SetPhi(pIndex*(fPhiRange[1]-fPhiRange[0])/(Double_t)fNStepPhi);
+      }
+
+      if(fUniRandomMultiLimit) {
+        Double_t phi = -999.;
+        Double_t randTheta = gRandom->Uniform(fThetaRange[0],fThetaRange[1]);
+        while(!InPhiLimits(phi)) {
+          phi  = gRandom->Uniform(fPhiRange[0], fPhiRange[1]);
+        }
+        momentum.SetMagThetaPhi(momentum.Mag(), randTheta, phi);
       }
 
 
@@ -425,5 +456,14 @@ Int_t STSingleTrackGenerator::GetA(Int_t pdg)
   else
     return 0;
 
+}
+
+Bool_t STSingleTrackGenerator::InPhiLimits(Double_t phi) {
+  for(auto limits : fPhiVector) {
+    if(limits.first < phi && limits.second > phi) {
+      return true;
+    }
+  }
+  return false;
 }
 

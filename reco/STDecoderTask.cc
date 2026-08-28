@@ -40,6 +40,7 @@ STDecoderTask::STDecoderTask()
   fExternalNumTbs = kFALSE;
   fNumTbs = 512;
 
+  fUseFRIBDAQ = kFALSE;
   fUseGainCalibration = kFALSE;
   fGainCalibrationFile = "";
   fGainConstant = -9999;
@@ -51,6 +52,7 @@ STDecoderTask::STDecoderTask()
   fEndTb = -1;
 
   fIsPersistence = kFALSE;
+  fIsAuxPersistence = kFALSE;
   
   fPar = NULL;
   fRawEventArray = new TClonesArray("STRawEvent");
@@ -59,6 +61,8 @@ STDecoderTask::STDecoderTask()
   fRawEvent = NULL;
   fChain = NULL;
   fEventArray = nullptr;
+
+  fAuxHeaderBranch = "STAuxHeader";
   
   fIsSeparatedData = kFALSE;
 
@@ -77,6 +81,7 @@ void STDecoderTask::SetData(Int_t value)                                        
 void STDecoderTask::SetFPNPedestal(Double_t pedestalRMS)                                      { fFPNPedestalRMS = pedestalRMS; }
 void STDecoderTask::SetGGNoiseData(TString filename)                                          { fGGNoiseFile = filename; }
 void STDecoderTask::SetUseGainCalibration(Bool_t value)                                       { fUseGainCalibration = value; }
+void STDecoderTask::SetUseFRIBDAQData(Bool_t value)                                           { fUseFRIBDAQ = value; }
 void STDecoderTask::SetGainCalibrationData(TString filename)                                  { fGainCalibrationFile = filename; }
 void STDecoderTask::SetGainReference(Double_t constant, Double_t linear, Double_t quadratic)  { fGainConstant = constant; fGainLinear = linear; fGainQuadratic = quadratic; }
 void STDecoderTask::SetGainMatchingData(TString filename)                                     { fGainMatchingData = filename; };
@@ -91,7 +96,7 @@ void STDecoderTask::SetDataList(TString list)
   TString dataFileWithPath;
   Int_t iCobo = -1;
   while (dataFileWithPath.ReadLine(listFile)) {
-    if (dataFileWithPath.Contains("s."))
+    if (dataFileWithPath.Contains("s.") || (fUseFRIBDAQ && dataFileWithPath.Contains(Form("cobo%02d", iCobo))))
       this -> AddData(dataFileWithPath, iCobo);
     else {
       iCobo++;
@@ -113,9 +118,13 @@ STDecoderTask::Init()
   }
 
   ioMan -> Register("STRawEvent", "SPiRIT", fRawEventArray, fIsPersistence);
+
+  fAuxHeader = new STAuxHeader();
+  ioMan -> Register(fAuxHeaderBranch, "SpiRIT", fAuxHeader, fIsAuxPersistence);
   
-  fDecoder = new STCore();
+  fDecoder = new STCore(fUseFRIBDAQ);
   fDecoder -> SetUseSeparatedData(fIsSeparatedData);
+  fDecoder -> SetAuxHeader(fAuxHeader);
   for (Int_t iFile = 0; iFile < fDataList[0].size(); iFile++)
     fDecoder -> AddData(fDataList[0].at(iFile));
 
@@ -248,9 +257,11 @@ STDecoderTask::Exec(Option_t *opt)
 #ifdef TASKTIMER
   STDebugLogger::Instance() -> TimerStart("DecoderTask");
 #endif
+  fAuxHeader -> Clear();
   fRawEventArray -> Delete();
   fRawDataEventArray -> Delete();
   int EventID = fEventID;
+  fAuxHeader -> SetTpcEventNum(EventID);
   if(fEventIDList.size() > 0) 
   {
     if(fEventIDList.size() > fEventID) EventID = fEventIDList[fEventID] - 1; // Run number starts at 1
@@ -261,11 +272,12 @@ STDecoderTask::Exec(Option_t *opt)
   if (fRawEvent == NULL)
     {
       fRawEvent = fDecoder -> GetRawEvent(EventID);
+
       *fRawEventData = *fRawEvent;
     }
 
   CheckSaturation(fRawEvent);
-    
+
   new ((*fRawEventArray)[0]) STRawEvent(fRawEvent);
   new ((*fRawDataEventArray)[0]) STRawEvent(fRawEventData);
 

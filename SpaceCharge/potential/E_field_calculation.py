@@ -20,7 +20,7 @@ class TPCGrid:
   Height = 50.61
   Length = 144.35#134.
   
-  Vbottom = -124.7*Height#-7023.5#6463
+  Vbottom = -132.7*Height #-124.7*Height#-7023.5#6463
   Vtop = 0
 
   def __init__(self, dx=1, dy=2, dz=1):#h=1.4):#1.4):
@@ -275,8 +275,8 @@ if __name__ == '__main__':
   # lets try different a
   fig, ax = plt.subplots()
   #strengths = np.linspace(0.0)
-  beam_files = ['_132Sn_BeamTrack.data', '_124Sn_BeamTrack.data', '_108Sn_BeamTrack.data', '_112Sn_BeamTrack.data']
-  beam_name = ['132Sn', '124Sn', '108Sn', '112Sn']
+  beam_files = ['_132Sn_BeamTrack.data', '_124Sn_BeamTrack.data', '_108Sn_BeamTrack.data', '_112Sn_BeamTrack.data', '_124Xe_BeamTrack.data', '_136Xe_BeamTrack.data']
+  beam_name = ['132Sn', '124Sn', '108Sn', '112Sn', '124Xe', '136Xe']
   strengths_and_beamfile = [(3.14e-8*factor,0, beam_file) for beam_file in beam_files for factor in range(0,2)]
   strengthsBF_and_beamfile = [(0, 3.14e-8, beam_file) for beam_file in beam_files]
 
@@ -286,7 +286,8 @@ if __name__ == '__main__':
   pool.close()
   pool.join()
 
-  results, resultsBF = results[:-4], results[-4:]
+  n_beams = len(beam_files)
+  results, resultsBF = results[:-n_beams], results[-n_beams:]
   # homogeneous solution
   print('Export result to ROOT')
   for beam_file, homo_result, nohomo_result, bf_result in zip(beam_name, results[::2], results[1::2], resultsBF):

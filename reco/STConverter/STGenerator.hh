@@ -26,8 +26,8 @@ using std::unique;
 
 class STGenerator : public TObject {
   public:
-    STGenerator();
-    STGenerator(TString mode);
+    STGenerator(Bool_t isFRIBData = kFALSE);
+    STGenerator(TString mode, Bool_t isFRIBData = kFALSE);
     ~STGenerator();
 
     void SetMode(TString mode);
@@ -61,6 +61,7 @@ class STGenerator : public TObject {
     STParReader *fParReader;
     TString fOutputFile;
 
+    Bool_t fIsFRIBData;
     Bool_t fIsPositivePolarity;
     Bool_t fIsStoreRMS;
     Int_t fSumRMSCut;

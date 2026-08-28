@@ -1,0 +1,10 @@
+The following line will run the run_reco_2024 script for 2500 events starting from event 0 and will yield a file format of "data/run1286_s00.reco.2024.root"
+
+root -b -l -q "run_reco_2024.C(1286, 0, 2500, \"reco.2024\", kFALSE)"
+
+To change the number of events unpacked, change the 2500.
+To change the starting event, change the "0". It will not start from the new number, but rather it will start at that number times the number of events to unpack. This would allow for running the unpacker on several processes at once. In the following the first line would run 2500 events from event 0, the second would run 2500 events starting from 2500 and the third would run 2500 events starting from 5000.
+
+root -b -l -q "run_reco_2024.C(1286, 0, 2500, \"reco.2024\", kFALSE)"
+root -b -l -q "run_reco_2024.C(1286, 1, 2500, \"reco.2024\", kFALSE)"
+root -b -l -q "run_reco_2024.C(1286, 2, 2500, \"reco.2024\", kFALSE)"

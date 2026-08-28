@@ -89,6 +89,7 @@ class STEveDrawTask : public STEveTask
                        Color_t color = -1);
     void SetThresholdRange(TString name, Double_t min, Double_t max);
     void SetPulserData(TString pulserData);
+    void SetRunNumber(Int_t num) { fRunNumber = num; }
 
     static void ClickSelectedPadPlane();
     void DrawPadByPosition(Double_t x, Double_t z);
@@ -140,6 +141,9 @@ class STEveDrawTask : public STEveTask
     Long64_t fCurrentEvent = -2;
     Int_t    fCurrentRow   = -1;
     Int_t    fCurrentLayer = -1;
+
+    /// Run info
+    Int_t fRunNumber = -1;
 
     /// Flags
     Bool_t fSet2dPlotRangeFlag = kFALSE;

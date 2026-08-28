@@ -22,6 +22,7 @@ STEmbedTask::STEmbedTask()
   fRawEventArray = new TClonesArray("STRawEvent");
   fRawEmbedEventArray = new TClonesArray("STRawEvent");
   fRawDataEventArray = new TClonesArray("STRawEvent");
+  fEmbedAuxHeader = new STAuxHeader();
   fRawEventMC = NULL;
   fRawEventData = new STRawEvent();
   fRawEvent = NULL;
@@ -48,12 +49,20 @@ STEmbedTask::Init()
     return kERROR;
   }
 
+  fRunAna = FairRunAna::Instance();
+  if (fRunAna == nullptr) {
+    fLogger -> Error(MESSAGE_ORIGIN, "Cannot find RunAna!");
+
+    return kERROR;
+  }
+
   //Check if embedding is turned on
   if (!fEmbedFile.EqualTo(""))
     {
       std::cout << "== [STEmbedTask] Setting up embed mode" << std::endl;
       fChain = new TChain("cbmsim");
       fChain -> Add(fEmbedFile);
+      std::cout << "Entries: " << fChain->GetEntries() << std::endl;
       if(fChain -> GetListOfFiles() -> GetEntries() == 0)
       {
          std::cout << "== [STEmbedTask] Embed file does not Exist!" << std::endl;
@@ -62,6 +71,19 @@ STEmbedTask::Init()
 
       fChain -> SetBranchAddress("STRawEvent", &fEventArray);
       fChain -> SetBranchAddress("STMCTrack", &fEmbedTrackArray);
+      if(fMatchEventNum) {
+        fChain -> SetBranchAddress("DigiAuxHeader", &fEmbedAuxHeader);
+        fDataAuxHeader = (STAuxHeader*) ioMan -> GetObject("STAuxHeaderLinked");
+        if (fDataAuxHeader == nullptr) {
+          fLogger -> Fatal(MESSAGE_ORIGIN, TString::Format("Cannot find STAuxHeader in branch %s !", "STAuxHeaderLnked").Data());
+          return kFATAL;
+        }
+        fEventHeader = (STEventHeader*) ioMan -> GetObject("STEventHeader");
+        if (fEventHeader == nullptr) {
+          fLogger -> Fatal(MESSAGE_ORIGIN, TString::Format("Cannot find STEventHeader in branch %s !", "STEventHeader").Data());
+          return kFATAL;
+        }
+      }
 
       ioMan -> Register("STRawEmbedEvent", "SPiRIT", fRawEmbedEventArray, fIsPersistence);
       ioMan -> Register("STRawDataEvent", "SPiRIT", fRawDataEventArray, fIsPersistence);
@@ -103,12 +125,46 @@ STEmbedTask::Exec(Option_t *opt)
 
   fRawEvent = (STRawEvent*) fRawEventArray -> At(0);
   Int_t numPads = fRawEvent -> GetNumPads();
-  
 
   new ((*fRawDataEventArray)[0]) STRawEvent(fRawEvent);
   
- 
-  if( (fEventID % fChain->GetEntries()) < fChain->GetEntries())
+  if(fMatchEventNum) {
+    if(fDataAuxHeader == nullptr)
+      return;
+    auto eventNum = fDataAuxHeader->GetTpcEventNum();
+    int embedNum = 0;
+    if(fEventID <= 0) {
+      fEventID = 0;
+      fChain -> GetEntry(fEventID);
+      embedNum = fEmbedAuxHeader->GetTpcEventNum();
+      std::cout << "eventNum: " << eventNum << "; embedNum: " << embedNum << "; EventID: " << fEventID << std::endl;
+      if(eventNum > embedNum) {
+        for(; fEventID < fChain->GetEntries(); fEventID++) {
+          fChain->GetEntry(fEventID);
+          embedNum = fEmbedAuxHeader->GetTpcEventNum();
+          std::cout << "eventNum: " << eventNum << "; embedNum: " << embedNum << "; EventID: " << fEventID << std::endl;
+          if(eventNum == embedNum|| eventNum < embedNum) {
+            break;
+          }
+        }
+      }
+    }
+    if(fEventID >= fChain->GetEntries()) {
+      fEventHeader->SetIsBadEvent();
+      FairRunAna::Instance()->MarkFill(false);
+    }
+    fChain -> GetEntry(fEventID);
+    embedNum = fEmbedAuxHeader->GetTpcEventNum();
+    std::cout << "eventNum: " << eventNum << "; embedNum: " << embedNum << "; EventID: " << fEventID << std::endl;
+    if(eventNum != embedNum) {
+      fEventHeader->SetIsBadEvent();
+      FairRunAna::Instance()->MarkFill(false);
+      //fRunAna->MarkFill(false);  
+      return;
+    }
+    fRawEventMC = (STRawEvent *) fEventArray -> At(0);
+  }
+  else if( (fEventID % fChain->GetEntries()) < fChain->GetEntries())
   {
     int fMCEventID = fEventID % fChain -> GetEntries();
     fChain -> GetEntry(fMCEventID);

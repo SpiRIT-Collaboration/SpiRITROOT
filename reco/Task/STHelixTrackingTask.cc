@@ -97,7 +97,7 @@ InitStatus STHelixTrackingTask::Init()
   if (STRecoTask::Init() == kERROR)
     return kERROR;
 
-  fHitArray = (TClonesArray *) fRootManager -> GetObject("STHit");
+  fHitArray = (TClonesArray *) fRootManager -> GetObject(fInputBranchName);
   if (fHitArray == nullptr) {
     LOG(ERROR) << "Cannot find STHit array!" << FairLogger::endl;
     return kERROR;
@@ -147,4 +147,8 @@ void STHelixTrackingTask::Exec(Option_t *opt)
   }
 
   LOG(INFO) << Space() << "STHelixTrack " << fTrackArray -> GetEntriesFast() << FairLogger::endl;
+  if(fPrintTime) {
+    TTimeStamp ts;
+    LOG(INFO) << "Timestamp " << ts.AsString("s") << FairLogger::endl;
+  }
 }

@@ -31,8 +31,11 @@
 #pragma link C++ class STVectorI+;
 #pragma link C++ class STVectorVec3+;
 
+#pragma link C++ class STAuxHeader+;
+
 #pragma link C++ class STdEdxPoint+;
 #pragma link C++ class STRecoTrack+;
+#pragma link C++ class STRecoTrack2024+;
 #pragma link C++ class STRecoTrackCand+;
 #pragma link C++ class STRecoTrackCandList+;
 
@@ -45,5 +48,11 @@
 #pragma link C++ class std::vector<Short_t>+;
 #pragma link C++ class std::vector<Float_t>+;
 #pragma link C++ class std::vector<STSlimPad>+;
+
+#pragma link C++ class STInfo - !;
+
+
+
+
 
 #endif

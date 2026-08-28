@@ -1,7 +1,8 @@
 void run_eve
 (
-  TString name = "run3000_s0", 
-  TString pathToData = "/Users/ejungwoo/spiritroot/macros/data/",
+  TString name = "run3154_s0", 
+  TString pathToData = "./data/",
+  //TString pathToData = "/Users/ejungwoo/spiritroot/macros/data/",
   TString parname = "ST.parameters.Commissioning_201604.par",
   /*
    * - If dataList is "", deactivate single pad data,
@@ -9,8 +10,8 @@ void run_eve
    *   XXX This may cause serious speed problem if meta data is not set.
    *   (depending on the system) if startEventID is not correct, pad may not match.
   */
-  TString dataList = "list_run3000.txt",
-    Int_t runNo = 3000,
+  TString dataList = "",
+    Int_t runNo = 3154,
     Int_t startEventID = 0,
    Bool_t useMeta = false,
   TString supplePath = "/data/Q16264/rawdataSupplement"
@@ -20,7 +21,7 @@ void run_eve
   if (pathToData.IsNull())
     pathToData = spiritroot+"macros/data/";
 
-  TString input     = pathToData + name + ".reco.root";
+  TString input     = pathToData + name + ".reco.test.root";
   TString output    = pathToData + name + ".eve.root";
   TString parameter = spiritroot + "parameters/"  + parname;
   TString geomety   = spiritroot + "geometry/geomSpiRIT.man.root";
@@ -46,6 +47,7 @@ void run_eve
   draw -> SetRendering("helix",      true);
   draw -> SetRendering("cluster",    true);
   draw -> SetRendering("recotrack",  true);
+  draw -> SetRendering("recovertex",  true);
 
   if (dataList.IsNull() == false) {
     if (useMeta)

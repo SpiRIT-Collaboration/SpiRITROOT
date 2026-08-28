@@ -12,6 +12,7 @@
 #include "STGenfitTest2.hh"
 #include "STPIDTest.hh"
 #include "STRecoTrack.hh"
+#include "STRecoTrack2024.hh"
 #include "STRecoTrackCand.hh"
 #include "STRecoTrackCandList.hh"
 #include "STVertex.hh"
@@ -19,6 +20,7 @@
 #include "STBDCProjection.hh"
 #include "ST_VertexShift.hh"
 #include "STBeamInfo.hh"
+#include "STAuxHeader.hh"
 
 class STGenfitVATask : public STRecoTask
 {
@@ -29,6 +31,8 @@ class STGenfitVATask : public STRecoTask
 
     void SetListPersistence(bool val = true) { fIsListPersistence = val; }
     void SetPersistence(bool val = true) { fIsPersistence = val; }
+
+    void SetAuxBranch(TString name) { fAuxBranchName = name; }
 
     void SetClusteringType(Int_t type);
     void SetConstantField();
@@ -45,6 +49,10 @@ class STGenfitVATask : public STRecoTask
 
     void SetUseRave(Bool_t val = kTRUE);
     void ShiftBDCAfterSC(const std::string& filename, double threshold);
+
+    void SetIs2024Data(Bool_t val = kTRUE) { fIs2024Data = val; }
+
+    void SetTargetPlane(Double_t x, Double_t y, Double_t z);
   private:
     TClonesArray *fHelixTrackArray = nullptr;
     TClonesArray *fRecoTrackArray = nullptr;
@@ -57,8 +65,13 @@ class STGenfitVATask : public STRecoTask
     FairMCEventHeader *fMCEventHeader = nullptr;
     STFairMCEventHeader *fSTMCEventHeader = nullptr;
 
+    STAuxHeader *fAuxHeader;       // AtRawEvent
+    TString fAuxBranchName{"STAuxHeaderLinked"}; // Name if AtRawEvent branch
+
     bool fIsListPersistence = false;
     bool fIsSamurai = true;
+
+    Bool_t fIs2024Data = false;
 
     Bool_t fUseRave = kFALSE;
     Bool_t fUseMCBeam = kFALSE;
@@ -75,6 +88,13 @@ class STGenfitVATask : public STRecoTask
     Double_t fZ, fAoQ, fBeta37;
     TTree *fBDCTree;
     Double_t fBDC1x, fBDC1y, fBDC2x, fBDC2y, fBDCax, fBDCby;
+    Double_t fTarget_x, fTarget_y, fTarget_a, fTarget_b;
+
+    // Target plane position in mm.
+    // Default position is set from the dimension measurement.
+    Double_t fTargetX = 0;
+    Double_t fTargetY = -213.3;
+    Double_t fTargetZ = -13.2;
 
     Int_t fRunNo;
     Double_t fOffsetX, fOffsetY, fOffsetZ;

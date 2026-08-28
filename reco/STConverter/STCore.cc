@@ -18,6 +18,7 @@
 #include "STMap.hh"
 #include "STPedestal.hh"
 #include "STRawEvent.hh"
+#include "STAuxHeader.hh"
 
 #include "GETCoboFrame.hh"
 #include "GETLayeredFrame.hh"
@@ -28,28 +29,31 @@
 
 ClassImp(STCore);
 
-STCore::STCore()
+STCore::STCore(Bool_t isFRIBDAQ)
 {
-  Initialize();
+  Initialize(isFRIBDAQ);
 }
 
-STCore::STCore(TString filename)
+STCore::STCore(TString filename, Bool_t isFRIBDAQ)
 {
-  Initialize();
+  Initialize(isFRIBDAQ);
   AddData(filename);
   SetNumTbs(512);
 }
 
-STCore::STCore(TString filename, Int_t numTbs, Int_t windowNumTbs, Int_t windowStartTb)
+STCore::STCore(TString filename, Int_t numTbs, Int_t windowNumTbs, Int_t windowStartTb, Bool_t isFRIBDAQ)
 {
-  Initialize();
+  Initialize(isFRIBDAQ);
   AddData(filename);
   SetNumTbs(numTbs);
 }
 
-void STCore::Initialize()
+void STCore::Initialize(Bool_t isFRIBDAQ)
 {
+  fIsFRIBDAQ = isFRIBDAQ;
+
   fRawEventPtr = new STRawEvent();
+  fAuxHeader = NULL;
 
   fMapPtr = new STMap();
   fIsNegativePolarity = kTRUE;
@@ -66,7 +70,7 @@ void STCore::Initialize()
 
   fPlotPtr = NULL;
 
-  fDecoderPtr[0] = new GETDecoder();
+  fDecoderPtr[0] = new GETDecoder(fIsFRIBDAQ);
 //  fDecoderPtr[0] -> SetDebugMode(1);
   for (Int_t iPad = 0; iPad < 12096; iPad++)
     fPadArray.push_back(new STPad());
@@ -121,7 +125,7 @@ Bool_t STCore::SetData(Int_t value)
       fIsData &= fDecoderPtr[iCobo] -> SetData(value);
       frameType = fDecoderPtr[iCobo] -> GetFrameType();
 
-      if (frameType != GETDecoder::kCobo) {
+      if (frameType != GETDecoder::kCobo && frameType != GETDecoder::kFRIBDAQ) {
         std::cout << cRED << "== [STCore] When using separated data, only accepted are not merged frame data files!" << cNORMAL << std::endl;
 
         fIsData = kFALSE;
@@ -272,7 +276,8 @@ Bool_t STCore::SetAGETMap(TString filename)
 void STCore::ProcessCobo(Int_t coboIdx)
 {
   GETCoboFrame *coboFrame = fDecoderPtr[coboIdx] -> GetCoboFrame(fTargetFrameID);
-
+   
+   
   if (coboFrame == NULL) {
     fRawEventPtr -> SetIsGood(kFALSE);
 
@@ -280,6 +285,7 @@ void STCore::ProcessCobo(Int_t coboIdx)
   }
 
   fCurrentEventID[coboIdx] = coboFrame -> GetEventID();
+  fCurrentTime[coboIdx] = coboFrame -> GetEventTime();
   Int_t numFrames = coboFrame -> GetNumFrames();
   for (Int_t iFrame = 0; iFrame < numFrames; iFrame++) {
     GETBasicFrame *frame = coboFrame -> GetFrame(iFrame);
@@ -310,6 +316,8 @@ void STCore::ProcessCobo(Int_t coboIdx)
           else
             fGGNoisePtr[coboIdx] -> SubtractNoise(row, layer, rawadc, adc);
         }
+
+
 
         if (fIsGainCalibrationData)
           fGainCalibrationPtr[coboIdx] -> CalibrateADC(row, layer, fNumTbs, adc);
@@ -425,6 +433,11 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
 
     fRawEventPtr -> SetEventID(fCurrentEventID[0]);
 
+    if(fAuxHeader != NULL)
+      fAuxHeader -> SetTpcTime(fCurrentTime[0]);
+
+//    std::cout << "currentEventID:" << fCurrentEventID[0] << std::endl;
+
     for (Int_t iRow = 0; iRow < 108; iRow++) {
       for (Int_t iLayer = 0; iLayer < 112; iLayer++) {
         STPad *pad = fPadArray.at(iRow*112 + iLayer);
@@ -432,11 +445,13 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
           fRawEventPtr -> SetPad(pad);
       }
     }
+    //std::cout << "numPads:" << fRawEventPtr -> GetNumPads() << "; ptrGood:" << fRawEventPtr -> IsGood() << std::endl;
+
 
     if (fRawEventPtr -> GetNumPads() == 0 && fRawEventPtr -> IsGood() == kFALSE)
-      return NULL; 
+       return NULL;
     else
-      return fRawEventPtr;
+       return fRawEventPtr;
   } else {
     fRawEventPtr -> Clear();
     for (Int_t iPad = 0; iPad < 12096; iPad++)
@@ -453,6 +468,13 @@ STRawEvent *STCore::GetRawEvent(Long64_t frameID)
       return NULL;
 
     fRawEventPtr -> SetEventID(layeredFrame -> GetEventID());
+
+    if(fAuxHeader == NULL) {
+      std::cout << "fAuxHeader is Null" << std::endl;
+    }
+    else {
+      fAuxHeader -> SetTpcTime(layeredFrame -> GetEventTime());
+    }
 
     Int_t numFrames = layeredFrame -> GetNItems();
     for (Int_t iFrame = 0; iFrame < numFrames; iFrame++) {
@@ -526,14 +548,12 @@ void STCore::SetUseSeparatedData(Bool_t value) {
     std::cout << cYELLOW << "== [STCore] You set the decoder to analyze seperated data files." << std::endl;
     std::cout << "            Make sure to call this method right after the instance created!" << cNORMAL << std::endl;
 
-//    fDecoderPtr[0] -> SetDebugMode(1);
     for (Int_t iCobo = 1; iCobo < 12; iCobo++) {
-      fDecoderPtr[iCobo] = new GETDecoder();
+      fDecoderPtr[iCobo] = new GETDecoder(fIsFRIBDAQ);
       fPedestalPtr[iCobo] = new STPedestal();
       fGainCalibrationPtr[iCobo] = new STGainCalibration();
       fGainMatchingPtr[iCobo] = new STGainMatching();
       fGGNoisePtr[iCobo] = new STGGNoiseSubtractor();
-//      fDecoderPtr[iCobo] -> SetDebugMode(1);
     }
   }
 }
@@ -556,9 +576,15 @@ void STCore::GoToEnd(Int_t coboIdx)
   fDecoderPtr[coboIdx] -> GoToEnd();
 }
 
-void STCore::GenerateMetaData(Int_t runNo)
+void STCore::GoToEvent(Int_t eventNo, Int_t coboIdx)
+{
+  fDecoderPtr[coboIdx] -> GoToEvent(eventNo);
+}
+
+void STCore::GenerateMetaData(Int_t runNo, Int_t eventNo)
 {
   if (fIsSeparatedData) {
+     /*
     std::thread cobo0([this]() { this -> GoToEnd(0); });
     std::thread cobo1([this]() { this -> GoToEnd(1); });
     std::thread cobo2([this]() { this -> GoToEnd(2); });
@@ -583,6 +609,35 @@ void STCore::GenerateMetaData(Int_t runNo)
     cobo9.join();
     cobo10.join();
     cobo11.join();
+    */
+    if(eventNo == -1) {
+        GoToEnd(0);
+        GoToEnd(1);
+        GoToEnd(2);
+        GoToEnd(3);
+        GoToEnd(4);
+        GoToEnd(5);
+        GoToEnd(6);
+        GoToEnd(7);
+        GoToEnd(8);
+        GoToEnd(9);
+        GoToEnd(10);
+        GoToEnd(11);
+    }
+    else {
+       GoToEvent(eventNo, 0);
+       GoToEvent(eventNo, 1);
+       GoToEvent(eventNo, 2);
+       GoToEvent(eventNo, 3);
+       GoToEvent(eventNo, 4);
+       GoToEvent(eventNo, 5);
+       GoToEvent(eventNo, 6);
+       GoToEvent(eventNo, 7);
+       GoToEvent(eventNo, 8);
+       GoToEvent(eventNo, 9);
+       GoToEvent(eventNo, 10);
+       GoToEvent(eventNo, 11);
+    }
 
     for (Int_t iCobo = 0; iCobo < 12; iCobo++)
       fDecoderPtr[iCobo] -> SaveMetaData(runNo, "", iCobo);

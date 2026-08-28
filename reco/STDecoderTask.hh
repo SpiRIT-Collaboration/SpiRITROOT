@@ -22,6 +22,7 @@
 #include "STMap.hh"
 #include "STPedestal.hh"
 #include "STRawEvent.hh"
+#include "STAuxHeader.hh"
 
 #include "STDigiPar.hh"
 
@@ -61,6 +62,8 @@ class STDecoderTask : public FairTask {
     void SetFPNPedestal(Double_t rms);
     /// Setting the gating grid nose data file
     void SetGGNoiseData(TString filename);
+    /// Setting use FRIBDAQ data
+    void SetUseFRIBDAQData(Bool_t value = kTRUE);
     /// Setting use gain calibration data file. If there's no file specified by user using two methods below, it'll use the one in parameter files.
     void SetUseGainCalibration(Bool_t value = kTRUE);
     /// Setting gain calibration data file. If not set, gain is not calibrated.
@@ -84,6 +87,9 @@ class STDecoderTask : public FairTask {
 
     /// If set, decoded raw data is written in ROOT file with STRawEvent class.
     void SetPersistence(Bool_t value = kTRUE);
+    void SetAuxPersistence(Bool_t value = kTRUE) { fIsAuxPersistence = value; }
+
+    void SetAuxBranch(TString name = "STAuxHeader") { fAuxHeaderBranch = name; }
   
     /// Initializing the task. This will be called when Init() method invoked from FairRun.
     virtual InitStatus Init();
@@ -115,6 +121,7 @@ class STDecoderTask : public FairTask {
 
     TString fGGNoiseFile;               ///< Gating grid noise data file
 
+    Bool_t fUseFRIBDAQ;                 ///< Use FRIBDAQ data
     Bool_t fUseGainCalibration;         ///< Use gain calibration data
     TString fGainCalibrationFile;       ///< Gain calibration data file name
     Double_t fGainConstant;             ///< Gain calibration reference constant
@@ -129,6 +136,7 @@ class STDecoderTask : public FairTask {
     Int_t fNumTbs;                      ///< The number of time buckets
 
     Bool_t fIsPersistence;              ///< Persistence check variable
+    Bool_t fIsAuxPersistence;              ///< Persistence check variable
   
     STDigiPar *fPar;                    ///< Parameter read-out class pointer
     TChain *fChain;
@@ -138,6 +146,8 @@ class STDecoderTask : public FairTask {
     TClonesArray *fRawDataEventArray;   ///< STRawEvent container just data
     STRawEvent *fRawEvent;              ///< Current raw event for data + MC
     STRawEvent *fRawEventData;          ///< Current raw event for just data
+
+    STAuxHeader *fAuxHeader = nullptr;
   
     Bool_t fOldData;                    ///< Set to decode old data
     Bool_t fIsSeparatedData;            ///< Set to use separated data files
@@ -145,6 +155,8 @@ class STDecoderTask : public FairTask {
     Long64_t fEventIDLast;              ///< Last event ID 
     Long64_t fEventID;                  ///< Event ID for STSource
     std::vector<int> fEventIDList;      ///< List of events to be ran
+
+    TString fAuxHeaderBranch;
 
     Double_t fGainMatchingDataScale[112][108] = {{0}};
 

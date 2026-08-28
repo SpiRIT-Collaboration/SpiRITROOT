@@ -25,6 +25,10 @@
 
 #pragma link C++ class GETDecoder+;
 #pragma link C++ class GETFrameInfo+;
+#pragma link C++ class RingItemHeader+;
+#pragma link C++ class RingItemBodyHeader+;
+#pragma link C++ class RingStateChangeItem+;
+#pragma link C++ class RingPhysicsEventItem+;
 #pragma link C++ class GETHeaderBase+;
 #pragma link C++ class GETBasicFrameHeader+; 
 #pragma link C++ class GETLayerHeader+;
@@ -111,5 +115,13 @@
 
 #pragma link C++ class std::vector<TVector3>+;
 #pragma link C++ class STSmallOutputTask+;
+
+#pragma link C++ class STAuxHeaderTask+;
+#pragma link C++ class STCopyTreeTask+;
+#pragma link C++ class STMacroTask+;
+#pragma link C++ class STDataReductionTask+;
+
+#pragma link C++ class STLinkDAQTask+;
+
 
 #endif

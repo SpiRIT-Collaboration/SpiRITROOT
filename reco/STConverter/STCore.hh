@@ -22,6 +22,7 @@
 #include "STGainMatching.hh"
 #include "STGGNoiseSubtractor.hh"
 #include "STPlot.hh"
+#include "STAuxHeader.hh"
 
 #include "GETDecoder.hh"
 
@@ -31,11 +32,11 @@ class STPlot;
 
 class STCore : public TObject {
   public:
-    STCore();
-    STCore(TString filename);
-    STCore(TString filename, Int_t numTbs, Int_t windowNumTbs = 512, Int_t windowStartTb = 0);
+    STCore(Bool_t isFRIBDAQ = kFALSE);
+    STCore(TString filename, Bool_t isFRIBDAQ = kFALSE);
+    STCore(TString filename, Int_t numTbs, Int_t windowNumTbs = 512, Int_t windowStartTb = 0, Bool_t isFRIBDAQ = kFALSE);
 
-    void Initialize();
+    void Initialize(Bool_t isFRIBDAQ = kFALSE);
 
     Bool_t AddData(TString filename, Int_t coboIdx = 0);
     void SetPositivePolarity(Bool_t value = kTRUE);
@@ -74,8 +75,12 @@ class STCore : public TObject {
     STMap *GetSTMap();
     STPlot *GetSTPlot();
 
+    void SetAuxHeader(STAuxHeader *header) { fAuxHeader = header; }
+
+
     void GoToEnd(Int_t coboIdx = 0);
-    void GenerateMetaData(Int_t runNo);
+    void GoToEvent(Int_t eventNo, Int_t coboIdx = 0);
+    void GenerateMetaData(Int_t runNo, Int_t eventNo = -1);
     void LoadMetaData(TString filename, Int_t coboIdx = -1);
 
   private:
@@ -87,6 +92,7 @@ class STCore : public TObject {
     Int_t fNumTbs;
 
     GETDecoder *fDecoderPtr[12];
+    Bool_t fIsFRIBDAQ;
     Bool_t fIsData;
 
     STPedestal *fPedestalPtr[12];
@@ -109,8 +115,11 @@ class STCore : public TObject {
 
     Int_t fCurrentEventID[12];
     Int_t fTargetFrameID;
+    ULong_t fCurrentTime[12];
 
     Bool_t fIsSeparatedData;
+
+    STAuxHeader *fAuxHeader;
 
   ClassDef(STCore, 1);
 };

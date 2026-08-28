@@ -69,6 +69,7 @@ Task/STMCEventTask.cc
 Task/ST_VertexShift.cc
 Task/STSpaceChargeCorrectionTask.cc
 Task/STSmallOutputTask.cc
+Task/STLinkDAQTask.cc
 
 Corrections/STCorrection.cc
 
@@ -76,6 +77,11 @@ PID/STPIDTest.cc
 
 GETDecoder/GETDecoder.cc
 GETDecoder/GETFrameInfo.cc
+
+GETDecoder/RingItemHeader.cc
+GETDecoder/RingItemBodyHeader.cc
+GETDecoder/RingStateChangeItem.cc
+GETDecoder/RingPhysicsEventItem.cc
 
 GETDecoder/GETHeaderBase.cc
 GETDecoder/GETBasicFrameHeader.cc
@@ -159,7 +165,13 @@ STRiemannTrackingTask.cc
 STGenfitTask.cc
 STSource.cc
 
+STAuxHeaderTask.cc
+STCopyTreeTask.cc
+STMacroTask.cc
+
 STLinearTrackingTask.cc
+
+STDataReductionTask.cc
 
 CurveTracking/STCurveTrackFinder.cc
 CurveTracking/STCurveTrackFitter.cc

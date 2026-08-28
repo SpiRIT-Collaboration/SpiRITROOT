@@ -20,6 +20,8 @@
 // STL
 #include <iostream>
 
+ClassImp(GETFileChecker)
+
 TString
 GETFileChecker::CheckFile(TString filename, Bool_t print)
 {

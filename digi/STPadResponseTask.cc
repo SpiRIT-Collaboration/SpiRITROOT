@@ -104,7 +104,11 @@ STPadResponseTask::Init()
   fNRows   = fXPadPlane/fPadSizeRow; // 108
   fNLayers = fZPadPlane/fPadSizeLayer; // 112
 
-  fTbOffset = fPar->GetAnodeWirePlaneY()/(fPar->GetDriftVelocity()/100.);
+  if(!fSetDriftVelocity)
+    fDriftVelocity = fPar->GetDriftVelocity() / 100; // cm/us to mm/ns
+
+  fTbOffset = fPar->GetAnodeWirePlaneY()/(fDriftVelocity);
+  
 
   fElectronicsJitter.clear();
   for(int i = 0; i < fNLayers; ++i)
@@ -126,7 +130,6 @@ STPadResponseTask::Init()
     else fLogger->Info(MESSAGE_ORIGIN, ("Electronics jitter is disabled as file " + fElectronicsJitterFilename + " cannot be loaded").c_str());
   }
 
-  fDriftVelocity = fPar->GetDriftVelocity() / 100; // cm/us to mm/ns
 
   InitDummy();
   InitPRF();
@@ -345,5 +348,11 @@ STPadResponseTask::InitPRF()
 }
 
 void STPadResponseTask::SetPersistence(Bool_t value)  { fIsPersistence = value; }
+
+void STPadResponseTask::SetDriftVelocity(Double_t val)
+{
+  fDriftVelocity = val;
+  fSetDriftVelocity = true;
+}
 
 ClassImp(STPadResponseTask);

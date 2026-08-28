@@ -92,10 +92,17 @@ STGenfitVATask::Init()
       fBeamFilename = "";
       fFixedVertexX = fFixedVertexY = fFixedVertexZ = -9999;
     }
-    
   }
 
-  fVATrackArray = new TClonesArray("STRecoTrack");
+  if(fIs2024Data) {
+    fAuxHeader = (STAuxHeader *) fRootManager -> GetObject(fAuxBranchName);
+    if (fAuxHeader == nullptr) {
+        fLogger -> Fatal(MESSAGE_ORIGIN, TString::Format("Cannot find STAuxHeader array in branch %s !", fAuxBranchName).Data());
+        return kFATAL;
+    }
+  }
+
+  fVATrackArray = new TClonesArray("STRecoTrack2024");
   fRootManager -> Register("VATracks", "SpiRIT", fVATrackArray, fIsPersistence);
 
   fCandListArray = new TClonesArray("STRecoTrackCandList");
@@ -105,6 +112,7 @@ STGenfitVATask::Init()
   fRootManager -> Register("VAVertex", "SpiRIT", fVAVertexArray, fIsPersistence);
 
   fGenfitTest = new STGenfitTest2(fIsSamurai, fFieldXOffset, fFieldYOffset, fFieldZOffset);
+  fGenfitTest -> SetTargetPlane(fTargetX*0.1, fTargetY*0.1, fTargetZ*0.1); // Target plane position unit mm -> cm
   fPIDTest = new STPIDTest();
 
   fBeamInfo = new STBeamInfo();
@@ -118,25 +126,32 @@ STGenfitVATask::Init()
     fRootManager -> Register("BDCVertex", "SpiRIT", fBDCVertexArray, kTRUE);
   }
 
-  if (!fBeamFilename.IsNull())
-  {
+  if (!fBeamFilename.IsNull()) {
     fBeamFile = new TFile(fBeamFilename);
-    fBeamTree = (TTree *) fBeamFile -> Get("TBeam");
-    fBeamTree -> SetBranchAddress("z", &fZ);
-    fBeamTree -> SetBranchAddress("aoq", &fAoQ);
-    fBeamTree -> SetBranchAddress("beta37", &fBeta37);
     fBDCTree = (TTree *) fBeamFile -> Get("TBDC");
-    fBDCTree -> SetBranchAddress("bdc1x", &fBDC1x);
-    fBDCTree -> SetBranchAddress("bdc1y", &fBDC1y);
-    fBDCTree -> SetBranchAddress("bdc2x", &fBDC2x);
-    fBDCTree -> SetBranchAddress("bdc2y", &fBDC2y);
-    fBDCTree -> SetBranchAddress("bdcax", &fBDCax);
-    fBDCTree -> SetBranchAddress("bdcby", &fBDCby);
+    if (fIs2024Data) {
+      fBDCTree -> SetBranchAddress("target_x", &fTarget_x);
+      fBDCTree -> SetBranchAddress("target_y", &fTarget_y);
+      fBDCTree -> SetBranchAddress("target_a", &fTarget_a);
+      fBDCTree -> SetBranchAddress("target_b", &fTarget_b);
+    }
+    else {
+      fBeamTree = (TTree *) fBeamFile -> Get("TBeam");
+      fBeamTree -> SetBranchAddress("z", &fZ);
+      fBeamTree -> SetBranchAddress("aoq", &fAoQ);
+      fBeamTree -> SetBranchAddress("beta37", &fBeta37);
+      fBDCTree -> SetBranchAddress("bdc1x", &fBDC1x);
+      fBDCTree -> SetBranchAddress("bdc1y", &fBDC1y);
+      fBDCTree -> SetBranchAddress("bdc2x", &fBDC2x);
+      fBDCTree -> SetBranchAddress("bdc2y", &fBDC2y);
+      fBDCTree -> SetBranchAddress("bdcax", &fBDCax);
+      fBDCTree -> SetBranchAddress("bdcby", &fBDCby);
 
-    fBeamEnergy = new STBeamEnergy();
-    fBeamEnergy -> setBeam(fRunNo);
-    fBDCProjection = new STBDCProjection(TString(gSystem -> Getenv("VMCWORKDIR")) + "/parameters/ReducedBMap.txt");
-    fBDCProjection -> setBeam(fRunNo);
+      fBeamEnergy = new STBeamEnergy();
+      fBeamEnergy -> setBeam(fRunNo);
+      fBDCProjection = new STBDCProjection(TString(gSystem -> Getenv("VMCWORKDIR")) + "/parameters/ReducedBMap.txt");
+      fBDCProjection -> setBeam(fRunNo);
+    }
   }
 
   if (fRecoHeader != nullptr) {
@@ -168,7 +183,7 @@ void STGenfitVATask::Exec(Option_t *opt)
   fGenfitTest -> Init();
 
   vector<genfit::Track *> gfTrackArrayToVertex;
-  vector<STRecoTrack *> vaTrackArrayToVertex;
+  vector<STRecoTrack2024 *> vaTrackArrayToVertex;
 
   Int_t chosenVID = 0;
 
@@ -189,11 +204,11 @@ void STGenfitVATask::Exec(Option_t *opt)
   vertex -> SetIsCollisionVertex();
   if (fPeakZ != -9999 && (vertex -> GetPos().Z() > fPeakZ - fSigmaMultiple*fSigma && vertex -> GetPos().Z() < fPeakZ + fSigmaMultiple*fSigma))
     vertex -> SetIsTargetVertex();
-  else if (TMath::Abs(vertex -> GetPos().Z() + 10) < 20) // -30 < vz < 10 
+  else if (TMath::Abs(vertex -> GetPos().Z() + 20) < 30) // -50 < vz < 10 
     vertex -> SetIsTargetVertex();
 
   if (!vertex -> IsTargetVertex()) {
-    LOG(INFO) << Space() << "STGenfitVATask vertex z position is out of (-30, 10) range! Not adding vertex in!" << FairLogger::endl;
+    LOG(INFO) << Space() << "STGenfitVATask vertex z position is out of (-50, 10) range! Not adding vertex in!" << FairLogger::endl;
 
     return; // if the event is not vertex event, not add vertex in
   }
@@ -201,28 +216,35 @@ void STGenfitVATask::Exec(Option_t *opt)
   auto vertexPos = vertex -> GetPos(); //this position is TPC Vertex
   Bool_t goodBDC = kTRUE;
   if (!fBeamFilename.IsNull()) {
-    fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
-    fBDCTree -> GetEntry(fEventHeader -> GetEventID() - 1);
-    fBeamEnergy -> reset(fZ, fAoQ, fBeta37);
+    if(!fIs2024Data) {
+      fBDCTree -> GetEntry(fEventHeader -> GetEventID() - 1);
+      fBeamTree -> GetEntry(fEventHeader -> GetEventID() - 1);
+      fBeamEnergy -> reset(fZ, fAoQ, fBeta37);
 
-    fBeamInfo -> fBeamAoQ = fAoQ;
-    fBeamInfo -> fBeamZ = fZ;
+      fBeamInfo -> fBeamAoQ = fAoQ;
+      fBeamInfo -> fBeamZ = fZ;
 
-    Double_t E1 = fBeamEnergy -> getCorrectedEnergy();
+      Double_t E1 = fBeamEnergy -> getCorrectedEnergy();
 
-    if (fZ > 0 && fZ < 75 && fAoQ > 1. && fAoQ < 3 && fBDC1x > -999 && fBDC1y > -999 && fBDC2x > -999 && fBDC2y > -999) {
+      if (fZ > 0 && fZ < 75 && fAoQ > 1. && fAoQ < 3 && fBDC1x > -999 && fBDC1y > -999 && fBDC2x > -999 && fBDC2y > -999) {
 //      Double_t ProjectedAtZ = -580.4 + vertex -> GetPos().Z();  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
-      Double_t ProjectedAtZ = -580.4 + (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z());  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
+        Double_t ProjectedAtZ = -580.4 + (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z());  // mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
 //      double ProjectedAtZ=-592.644;//////mid target = -592.644, start pad plane =-580.4, end of pad plane = 763.6
-      fBDCProjection -> ProjectParticle(fBDC2x, fBDC2y, -2160., fBDCax, fBDCby, fZ, E1, ProjectedAtZ, fBeamEnergy -> getMass());//-580.4,-583.904
+        fBDCProjection -> ProjectParticle(fBDC2x, fBDC2y, -2160., fBDCax, fBDCby, fZ, E1, ProjectedAtZ, fBeamEnergy -> getMass());//-580.4,-583.904
 
-      vertex -> SetIsGoodBDC();
-    } else
-      goodBDC = kFALSE;
+        vertex -> SetIsGoodBDC();
+      } else
+        goodBDC = kFALSE;
+    }
+    else {
+        fBDCTree -> GetEntry(fAuxHeader -> GetBdcID());
+        vertex -> SetIsGoodBDC();
+    }
 
     if (!goodBDC)
       LOG(INFO) << Space() << "STGenfitVATask " << "Bad BDC!" << FairLogger::endl;
     else {
+      if(!fIs2024Data) {
       fBeamInfo -> fXTargetPlane = fBDCProjection -> getX();
       fBeamInfo -> fYTargetPlane = fBDCProjection -> getY();
       fBeamInfo -> fRotationAngleATargetPlane = fBDCProjection -> getA();
@@ -231,6 +253,14 @@ void STGenfitVATask::Exec(Option_t *opt)
       fBeamInfo -> fBeamVelocityTargetPlane = fBDCProjection -> getBeta();
 
       vertexPos = TVector3(fBDCProjection -> getX() + fOffsetX, fBDCProjection -> getY() + fOffsetY, (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z()) + fOffsetZ);
+      }
+      else {
+        fBeamInfo -> fXTargetPlane = fTarget_x;
+        fBeamInfo -> fYTargetPlane = fTarget_y;
+        fBeamInfo -> fRotationAngleATargetPlane = fTarget_a;
+        fBeamInfo -> fRotationAngleBTargetPlane = fTarget_b;
+        vertexPos = TVector3(fTarget_x + fOffsetX, fTarget_y + fOffsetY, (fPeakZ != -9999 ? fPeakZ : vertex -> GetPos().Z()) + fOffsetZ);
+      }
 
       auto bdcVertex = (STVertex *) fBDCVertexArray -> ConstructedAt(0);
       bdcVertex -> SetIsGoodBDC();
@@ -284,7 +314,7 @@ void STGenfitVATask::Exec(Option_t *opt)
 
   auto numTracks = fRecoTrackArray -> GetEntriesFast();
   for (auto iTrack = 0; iTrack < numTracks; iTrack++) {
-    auto track = (STRecoTrack *) fRecoTrackArray -> At(iTrack);
+    auto track = (STRecoTrack2024 *) fRecoTrackArray -> At(iTrack);
 
     if (track -> GetVertexID() != chosenVID)
       continue;
@@ -336,7 +366,7 @@ void STGenfitVATask::Exec(Option_t *opt)
     Int_t trackID = fCandListArray -> GetEntriesFast();
 
     auto candList = (STRecoTrackCandList *) fCandListArray -> ConstructedAt(trackID);
-    auto vaTrack = (STRecoTrack *) fVATrackArray -> ConstructedAt(trackID);
+    auto vaTrack = (STRecoTrack2024 *) fVATrackArray -> ConstructedAt(trackID);
     vaTrack -> SetParentID(iTrack);
 
     auto helixTrack = (STHelixTrack *) fHelixTrackArray -> At(track -> GetHelixID());
@@ -415,7 +445,9 @@ void STGenfitVATask::Exec(Option_t *opt)
 //    helixTrack -> SetGenfitMomentum(bestRecoTrackCand -> GetMomentum().Mag());
 
     TVector3 kyotoL, kyotoR, katana, neuland;
+    TVector3 windowPos;
     fGenfitTest -> GetPosOnPlanes(bestRecoTrackCand -> GetGenfitTrack(), kyotoL, kyotoR, katana, neuland);
+    fGenfitTest -> GetWindowPos(bestRecoTrackCand -> GetGenfitTrack(), windowPos);
     bestRecoTrackCand -> Copy(vaTrack);
     vaTrack -> SetHelixID(helixTrack -> GetTrackID());
     vaTrack -> SetRecoID(helixTrack -> GetGenfitID());
@@ -423,6 +455,9 @@ void STGenfitVATask::Exec(Option_t *opt)
     vaTrack -> SetPosKyotoR(kyotoR);
     vaTrack -> SetPosKatana(katana);
     vaTrack -> SetPosNeuland(neuland);
+    vaTrack -> SetPosWindow(windowPos);
+
+
 
     auto fitStatus = bestGenfitTrack -> getFitStatus(bestGenfitTrack -> getTrackRep(0));
     vaTrack -> SetChi2(fitStatus -> getChi2());
@@ -538,7 +573,17 @@ void STGenfitVATask::Exec(Option_t *opt)
       Double_t effCurvature2;
       Double_t effCurvature3;
       Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vertex -> GetPos(), effCurvature1, effCurvature2, effCurvature3, true);
-      vaTrack -> SetCharge(charge);
+      
+      // If DetermineCharge failed (returned 0), use effCurvature1 directly
+      if (charge == 0) {
+        charge = effCurvature1 > 0 ? -1 : 1;
+      }
+      
+      // Ensure charge is normalized to exactly ±1 (failsafe for edge cases)
+      if (charge < 0) charge = -1;
+      else if (charge > 0) charge = 1;
+      
+      vaTrack -> SetCharge((Int_t)charge);
       vaTrack -> SetEffCurvature1(effCurvature1);
       vaTrack -> SetEffCurvature2(effCurvature2);
       vaTrack -> SetEffCurvature3(effCurvature3);
@@ -549,8 +594,26 @@ void STGenfitVATask::Exec(Option_t *opt)
 
   if (fUseRave) {
     if (gfTrackArrayToVertex.size() < 2) {
-      for (auto vaTrack : vaTrackArrayToVertex)
-        vaTrack -> SetCharge(1);
+      // Single track fallback - use robust charge determination
+      for (auto vaTrack : vaTrackArrayToVertex) {
+        Double_t effCurvature1, effCurvature2, effCurvature3;
+        // Use actual vertex position from current event instead of hardcoded default
+        TVector3 eventVertex = vertexPos;  // Use the real vertex position
+        Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, eventVertex, effCurvature1, effCurvature2, effCurvature3, true);
+        vaTrack -> SetGenfitCharge((Int_t)charge);  // Store calculated charge for comparison
+        // If DetermineCharge failed (returned 0), use effCurvature1 directly
+        if (charge == 0) {
+          charge = effCurvature1 > 0 ? -1 : 1;
+          LOG(INFO) << "VA DetermineCharge failed, using effCurvature1 fallback: " << charge;
+        }
+        // Ensure charge is normalized to exactly ±1 (failsafe for edge cases)
+        if (charge < 0) charge = -1;
+        else if (charge > 0) charge = 1;
+        vaTrack -> SetCharge((Int_t)charge);  // Use properly determined charge
+        vaTrack -> SetEffCurvature1(effCurvature1);
+        vaTrack -> SetEffCurvature2(effCurvature2);
+        vaTrack -> SetEffCurvature3(effCurvature3);
+      }
       return;
     }
 
@@ -593,7 +656,17 @@ void STGenfitVATask::Exec(Option_t *opt)
             Double_t effCurvature2;
             Double_t effCurvature3;
             Double_t charge = fGenfitTest -> DetermineCharge(vaTrack, vaVertex -> getPos(), effCurvature1, effCurvature2, effCurvature3);
-            vaTrack -> SetCharge(charge);
+            
+            // If DetermineCharge failed (returned 0), use effCurvature1 directly
+            if (charge == 0) {
+              charge = effCurvature1 > 0 ? -1 : 1;
+            }
+            
+            // Ensure charge is normalized to exactly ±1 (failsafe for edge cases)
+            if (charge < 0) charge = -1;
+            else if (charge > 0) charge = 1;
+            
+            vaTrack -> SetCharge((Int_t)charge);
             vaTrack -> SetEffCurvature1(effCurvature1);
             vaTrack -> SetEffCurvature2(effCurvature2);
             vaTrack -> SetEffCurvature3(effCurvature3);
@@ -656,4 +729,11 @@ void STGenfitVATask::ShiftBDCAfterSC(const std::string& filename, double thresho
   if(!fBDCYShift)
     cout << "== [STGenfitVATask] No histogram can be read from Y-BDC shift file. Will NOT shift BDC. " << endl;
 
+}
+
+void STGenfitVATask::SetTargetPlane(Double_t x, Double_t y, Double_t z)
+{
+  fTargetX = x;
+  fTargetY = y;
+  fTargetZ = z;
 }
