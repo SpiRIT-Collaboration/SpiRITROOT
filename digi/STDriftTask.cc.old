@@ -158,9 +158,6 @@ STDriftTask::Exec(Option_t* option)
 
   for(Int_t iPoint=0; iPoint<nMCPoints; iPoint++) {
     fMCPoint = (STMCPoint*) fMCPointArray->At(iPoint);
-    if(fCheckParticleID)
-      if(fMCPoint->GetPDG() != fParticleID)
-        continue;
     Double_t eLoss = 0.;
     if(fSpline)
     {
@@ -374,12 +371,6 @@ ROOT::Math::Interpolator* STDriftTask::BichselCorrection(TString species)
   return myinter;
 
 } 
-
-void STDriftTask::SetParticleID(Int_t value)
-{
-  fParticleID = value;
-  fCheckParticleID = true;
-}
 
 
 ClassImp(STDriftTask);

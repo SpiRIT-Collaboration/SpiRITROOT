@@ -7,6 +7,8 @@
 #include "STHelixTrack.hh"
 #include "STHelixTrackFinder.hh"
 
+#include "TTimeStamp.h"
+
 class STHelixTrackingTask : public STRecoTask
 {
   public:
@@ -28,6 +30,8 @@ class STHelixTrackingTask : public STRecoTask
     void SetEllipsoidCut(TVector3 center, TVector3 radii, Double_t margin);
 
     void SetClusteringAngleAndMargin(Double_t angle, Double_t margin);
+
+    void SetPrintTime(Bool_t val){ fPrintTime = val; }
   
     STHelixTrackFinder *GetTrackFinder();
 
@@ -58,6 +62,8 @@ class STHelixTrackingTask : public STRecoTask
 
     Double_t fClusteringAngle = 45.;
     Double_t fClusteringMargin = 0.;
+
+    Bool_t fPrintTime = false;
 
   ClassDef(STHelixTrackingTask, 2)
 };

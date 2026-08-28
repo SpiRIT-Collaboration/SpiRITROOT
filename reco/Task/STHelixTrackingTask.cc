@@ -147,4 +147,8 @@ void STHelixTrackingTask::Exec(Option_t *opt)
   }
 
   LOG(INFO) << Space() << "STHelixTrack " << fTrackArray -> GetEntriesFast() << FairLogger::endl;
+  if(fPrintTime) {
+    TTimeStamp ts;
+    LOG(INFO) << "Timestamp " << ts.AsString("s") << FairLogger::endl;
+  }
 }
